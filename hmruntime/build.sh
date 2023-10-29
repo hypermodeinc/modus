@@ -1,4 +1,5 @@
 #!/bin/bash
+pushd `dirname $0` > /dev/null
 
 rm -rf protos
 mkdir -p protos
@@ -11,3 +12,5 @@ protoc \
   hm.proto
 
 go build
+
+popd > /dev/null
