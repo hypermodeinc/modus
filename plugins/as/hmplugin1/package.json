@@ -9,10 +9,6 @@
   },
   "author": "Dgraph Labs, Inc.",
   "license": "MIT",
-  "devDependencies": {
-    "@assemblyscript/wasi-shim": "^0.1.0",
-    "assemblyscript": "^0.27.14"
-  },
   "type": "module",
   "exports": {
     ".": {
@@ -21,6 +17,15 @@
     }
   },
   "dependencies": {
-    "hypermode-as": "file:../hypermode-as"
+    "hypermode-as": "file:../hypermode-as",
+    "json-as": "^0.5.65"
+  },
+  "devDependencies": {
+    "@assemblyscript/wasi-shim": "^0.1.0",
+    "assemblyscript": "^0.27.14",
+    "visitor-as": "^0.11.4"
+  },
+  "overrides": {
+    "assemblyscript": "$assemblyscript"
   }
 }

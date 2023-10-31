@@ -229,7 +229,8 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// Write the result
-		writeDataAsJson(w, result)
+		isJson := info.Function.ReturnType == protos.HMType_JSON
+		writeDataAsJson(w, result, isJson)
 
 	} else if req.Parents != nil {
 
@@ -246,7 +247,8 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// Write the result
-		writeDataAsJson(w, results)
+		isJson := info.Function.ReturnType == protos.HMType_JSON
+		writeDataAsJson(w, results, isJson)
 
 	} else {
 		w.WriteHeader(http.StatusBadRequest)
@@ -254,7 +256,32 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func writeDataAsJson(w http.ResponseWriter, data any) {
+func writeDataAsJson(w http.ResponseWriter, data any, isJson bool) {
+
+	if isJson {
+
+		switch data := data.(type) {
+		case string:
+			w.Header().Set("Content-Type", "application/json")
+			w.Write([]byte(data))
+		case []string:
+			w.Header().Set("Content-Type", "application/json")
+			w.Write([]byte{'['})
+			for i, s := range data {
+				if i > 0 {
+					w.Write([]byte{','})
+				}
+				w.Write([]byte(s))
+			}
+			w.Write([]byte{']'})
+		default:
+			w.WriteHeader(http.StatusInternalServerError)
+			fmt.Println("failed to serialize result data")
+		}
+
+		return
+	}
+
 	output, err := json.Marshal(data)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -262,11 +289,29 @@ func writeDataAsJson(w http.ResponseWriter, data any) {
 		return
 	}
 
+	w.Header().Set("Content-Type", "application/json")
 	w.Write(output)
 }
 
 func convertParam(ctx context.Context, mod wasm.Module, hmType protos.HMType, wasmType wasm.ValueType, val any) (uint64, error) {
 	switch hmType {
+
+	case protos.HMType_BOOL:
+		b, ok := val.(bool)
+		if !ok {
+			return 0, fmt.Errorf("input value is not a bool")
+		}
+
+		// Note, booleans are passed as i32 in wasm
+		if wasmType != wasm.ValueTypeI32 {
+			return 0, fmt.Errorf("parameter is not defined as a bool on the function")
+		}
+
+		if b {
+			return 1, nil
+		} else {
+			return 0, nil
+		}
 
 	case protos.HMType_INT:
 		n, err := val.(json.Number).Int64()
@@ -314,22 +359,9 @@ func convertParam(ctx context.Context, mod wasm.Module, hmType protos.HMType, wa
 		mod.Memory().Write(ptr, buf)
 		return uint64(ptr), nil
 
-	case protos.HMType_BOOL:
-		b, ok := val.(bool)
-		if !ok {
-			return 0, fmt.Errorf("input value is not a bool")
-		}
-
-		// Note, booleans are passed as i32 in wasm
-		if wasmType != wasm.ValueTypeI32 {
-			return 0, fmt.Errorf("parameter is not defined as a bool on the function")
-		}
-
-		if b {
-			return 1, nil
-		} else {
-			return 0, nil
-		}
+	case protos.HMType_JSON:
+		// TODO
+		return 0, fmt.Errorf("JSON input parameters are not yet supported")
 
 	default:
 		return 0, fmt.Errorf("unknown parameter type")
@@ -338,13 +370,25 @@ func convertParam(ctx context.Context, mod wasm.Module, hmType protos.HMType, wa
 
 func convertResult(mem wasm.Memory, hmType protos.HMType, wasmType wasm.ValueType, res uint64) (any, error) {
 
-	// TODO: Do we need to handle unsigned ints differently?
-
 	switch hmType {
 	case protos.HMType_VOID:
 		return nil, nil
 
+	case protos.HMType_BOOL:
+		if wasmType != wasm.ValueTypeI32 {
+			return nil, fmt.Errorf("return type is not defined as an bool on the function")
+		}
+
+		if res == 1 {
+			return true, nil
+		} else {
+			return false, nil
+		}
+
 	case protos.HMType_INT:
+
+		// TODO: Do we need to handle unsigned ints differently?
+
 		switch wasmType {
 		case wasm.ValueTypeI32:
 			return wasm.DecodeI32(res), nil
@@ -369,7 +413,7 @@ func convertResult(mem wasm.Memory, hmType protos.HMType, wasmType wasm.ValueTyp
 			return nil, fmt.Errorf("return type is not defined as a float on the function")
 		}
 
-	case protos.HMType_STRING:
+	case protos.HMType_STRING, protos.HMType_JSON:
 		// Note, strings are passed as a pointer to a string in wasm memory
 		if wasmType != wasm.ValueTypeI32 {
 			return nil, fmt.Errorf("return type is not defined as a string on the function")
@@ -377,17 +421,6 @@ func convertResult(mem wasm.Memory, hmType protos.HMType, wasmType wasm.ValueTyp
 
 		buf := readBuffer(mem, uint32(res))
 		return decodeUTF16(buf), nil
-
-	case protos.HMType_BOOL:
-		if wasmType != wasm.ValueTypeI32 {
-			return nil, fmt.Errorf("return type is not defined as an bool on the function")
-		}
-
-		if res == 1 {
-			return true, nil
-		} else {
-			return false, nil
-		}
 
 	default:
 		return nil, fmt.Errorf("unknown return type")
