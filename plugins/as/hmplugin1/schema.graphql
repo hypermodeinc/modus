@@ -7,6 +7,7 @@
 type Query {
   add(a: Int!, b: Int!): Int! @lambda
   getFullName(firstName: String!, lastName: String!): String! @lambda
+  getPeople: [Person!]! @lambda
 }
 
 type Person {

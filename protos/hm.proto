@@ -17,14 +17,9 @@ message HMParameter {
 
 enum HMType {
   VOID = 0;   // return only
-  INT = 1;    // signed int32
-  FLOAT = 2;  // signed float32
-  STRING = 3;
-  BOOL = 4;
-
-  // TODO
-  // ID = 5;
-  // INT64 = 6;
-  // DATETIME = 7;
-  // VECTOR = 8;
+  BOOL = 1;
+  INT = 2;    // signed int32
+  FLOAT = 3;  // signed float32
+  STRING = 4;
+  JSON = 5;   // string formatted as JSON
 }

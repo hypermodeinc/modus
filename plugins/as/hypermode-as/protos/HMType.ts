@@ -5,8 +5,9 @@
 
 export enum HMType {
   VOID = 0,
-  INT = 1,
-  FLOAT = 2,
-  STRING = 3,
-  BOOL = 4,
+  BOOL = 1,
+  INT = 2,
+  FLOAT = 3,
+  STRING = 4,
+  JSON = 5,
 }
