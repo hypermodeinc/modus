@@ -127,6 +127,8 @@ func registerFunction(ctx context.Context, mod wasm.Module, schema functionSchem
 	// TODO: this presumes there's no naming conflicts
 	resolver := schema.Resolver()
 	functionsMap[resolver] = info
+
+	fmt.Printf("Registered function \"%s\" for resolver \"%s\"\n", fnName, resolver)
 }
 
 func validateFunction(info functionInfo) error {
