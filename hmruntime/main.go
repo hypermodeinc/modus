@@ -223,7 +223,7 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// Write the result
-		isJson := false //TODO //info.Schema.FieldDef.Type.??
+		isJson := info.Schema.FieldDef.Type.NamedType == ""
 		writeDataAsJson(w, result, isJson)
 
 	} else if req.Parents != nil {
@@ -241,7 +241,7 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// Write the result
-		isJson := false // TODO
+		isJson := info.Schema.FieldDef.Type.NamedType == ""
 		writeDataAsJson(w, results, isJson)
 
 	} else {
@@ -338,7 +338,7 @@ func convertParam(ctx context.Context, mod wasm.Module, schemaType ast.Type, was
 			return 0, fmt.Errorf("parameter is not defined as a float on the function")
 		}
 
-	case "String", "Id":
+	case "String", "Id", "":
 		s, ok := val.(string)
 		if !ok {
 			return 0, fmt.Errorf("input value is not a string")
@@ -402,7 +402,7 @@ func convertResult(mem wasm.Memory, schemaType ast.Type, wasmType wasm.ValueType
 			return nil, fmt.Errorf("return type is not defined as a float on the function")
 		}
 
-	case "String", "Id":
+	case "String", "Id", "":
 		// Note, strings are passed as a pointer to a string in wasm memory
 		if wasmType != wasm.ValueTypeI32 {
 			return nil, fmt.Errorf("return type is not defined as a string on the function")
