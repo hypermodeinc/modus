@@ -93,6 +93,8 @@ func loadPlugin(ctx context.Context, name string) (wasm.Module, error) {
 		return nil, fmt.Errorf("failed to instantiate the plugin: %v", err)
 	}
 
+	fmt.Printf("Loaded plugin \"%s\"\n", name)
+
 	// Get the GraphQL schema from Dgraph and use it to register the functions in this plugin.
 	schema := getGQLSchema(ctx)
 	infos := getFunctionSchemaInfos(schema)
@@ -113,31 +115,23 @@ func registerFunction(ctx context.Context, mod wasm.Module, schema functionSchem
 		return
 	}
 
-	// // Get the function's parameters and return type from wasm.
-	// def := fn.Definition()
-	// paramTypes := def.ParamTypes()
-	// resultTypes := def.ResultTypes()
+	// Validate the function info.
+	info := functionInfo{&mod, &fn, &schema}
+	err := validateFunction(info)
+	if err != nil {
+		fmt.Printf("function %s is invalid: %v\n", fnName, err)
+		return
+	}
 
-	// // Verify that the function's parameters match the schema.
-	// // TODO: Validate parameter types match the schema, not just number of parameters.
-	// args := schema.FieldDef.Arguments
-	// if len(args) != len(paramTypes) {
-	// 	fmt.Printf("function %s has %d parameters, but %d were registered\n", fnName, len(paramTypes), len(args))
-	// 	return
-	// }
-
-	// // Verify that the function has a return type.
-	// // NOTE: We could support void return types, but we'd need to add a Void scalar to Dgraph.
-	// // TODO: Validate return type match the schema, not just its existance.
-	// if len(resultTypes) != 1 {
-	// 	fmt.Printf("function %s has no return type\n", fnName)
-	// 	return
-	// }
-
-	// Save the function and module info into the map.
+	// Save the function info into the map.
 	// TODO: this presumes there's no naming conflicts
 	resolver := schema.Resolver()
-	functionsMap[resolver] = functionInfo{&mod, &fn, &schema}
+	functionsMap[resolver] = info
+}
+
+func validateFunction(info functionInfo) error {
+	// TODO: validate that the function definition matches the schema
+	return nil
 }
 
 func callFunction(ctx context.Context, info functionInfo, inputs map[string]any) (any, error) {
