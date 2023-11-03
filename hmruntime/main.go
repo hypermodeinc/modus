@@ -11,12 +11,10 @@ import (
 	"unicode/utf16"
 	"unsafe"
 
-	"hmruntime/protos"
-
+	"github.com/dgraph-io/gqlparser/ast"
 	"github.com/tetratelabs/wazero"
 	wasm "github.com/tetratelabs/wazero/api"
 	wasi "github.com/tetratelabs/wazero/imports/wasi_snapshot_preview1"
-	"google.golang.org/protobuf/proto"
 )
 
 // TODO: standardize logging and output error handling throughout
@@ -24,22 +22,24 @@ import (
 
 var runtime wazero.Runtime
 
-type FuncInfo struct {
+type functionInfo struct {
 	Module   *wasm.Module
-	Function *protos.HMFunction
+	Function *wasm.Function
+	Schema   *functionSchemaInfo
 }
 
 // map of resolver to registered function info
 // TODO: this probably isn't robust enough for production
-var functionsMap = make(map[string]FuncInfo)
+var functionsMap = make(map[string]functionInfo)
 
 func main() {
+	ctx := context.Background()
+
 	// Parse command-line flags
 	var port = flag.Int("port", 8686, "The HTTP port to listen on.")
 	flag.Parse()
 
 	// Initialize the WebAssembly runtime
-	ctx := context.Background()
 	runtime = initWasmRuntime(ctx)
 	defer runtime.Close(ctx)
 
@@ -70,57 +70,9 @@ func initWasmRuntime(ctx context.Context) wazero.Runtime {
 	// Enable WASI support
 	wasi.MustInstantiate(ctx, runtime)
 
-	// Define host functions
-	_, err := runtime.NewHostModuleBuilder("host").
-		NewFunctionBuilder().WithFunc(registerFunction).Export("registerFunction").
-		Instantiate(ctx)
-	if err != nil {
-		panic(err)
-	}
+	// TODO: Define host functions
 
 	return runtime
-}
-
-func registerFunction(ctx context.Context, mod wasm.Module, msg uint32) {
-	mem := mod.Memory()
-	buf := readBuffer(mem, msg)
-
-	var info protos.HMFunction
-	err := proto.Unmarshal(buf, &info)
-	if err != nil {
-		fmt.Println("error deserializing function proto:", err)
-		return
-	}
-
-	// Make sure the named function exists in the module and parameters match up.
-	fn := mod.ExportedFunction(info.Name)
-	if fn == nil {
-		fmt.Printf("function %s not found in module\n", info.Name)
-		return
-	}
-
-	def := fn.Definition()
-	paramTypes := def.ParamTypes()
-	resultTypes := def.ResultTypes()
-
-	if len(info.Parameters) != len(paramTypes) {
-		fmt.Printf("function %s has %d parameters, but %d were registered\n", info.Name, len(paramTypes), len(info.Parameters))
-		return
-	}
-
-	// Validate number of return types.
-	// NOTE: It's currently not possible to have more than one return type.
-	if info.ReturnType == protos.HMType_VOID && len(resultTypes) != 0 {
-		fmt.Printf("function %s has no return type, but %d were registered\n", info.Name, len(resultTypes))
-		return
-	} else if info.ReturnType != protos.HMType_VOID && len(resultTypes) != 1 {
-		fmt.Printf("function %s has one return type, but %d were registered\n", info.Name, len(resultTypes))
-		return
-	}
-
-	// Save the function and module info into the map.
-	// TODO: this presumes there's no naming conflicts
-	functionsMap[info.Resolver] = FuncInfo{&mod, &info}
 }
 
 func loadPlugin(ctx context.Context, name string) (wasm.Module, error) {
@@ -134,51 +86,102 @@ func loadPlugin(ctx context.Context, name string) (wasm.Module, error) {
 	}
 
 	// Instantiate the plugin as a module.
-	// This will invoke the plugin's _start function,
-	// which will call back into registerFunction as needed.
+	// NOTE: This will also invoke the plugin's `_start` function,
+	// which will call any top-level code in the plugin.
 	mod, err := runtime.Instantiate(ctx, plugin)
 	if err != nil {
 		return nil, fmt.Errorf("failed to instantiate the plugin: %v", err)
 	}
 
+	// Get the GraphQL schema from Dgraph and use it to register the functions in this plugin.
+	schema := getGQLSchema(ctx)
+	infos := getFunctionSchemaInfos(schema)
+	for _, info := range infos {
+		registerFunction(ctx, mod, info)
+	}
+
 	return mod, nil
 }
 
-func callFunction(ctx context.Context, mod wasm.Module, fn wasm.Function, info FuncInfo, inputs map[string]any) (any, error) {
+func registerFunction(ctx context.Context, mod wasm.Module, schema functionSchemaInfo) {
 
+	// Find the function in the module.
+	fnName := schema.FunctionName()
+	fn := mod.ExportedFunction(fnName)
+	if fn == nil {
+		fmt.Printf("function %s not found in module\n", fnName)
+		return
+	}
+
+	// // Get the function's parameters and return type from wasm.
+	// def := fn.Definition()
+	// paramTypes := def.ParamTypes()
+	// resultTypes := def.ResultTypes()
+
+	// // Verify that the function's parameters match the schema.
+	// // TODO: Validate parameter types match the schema, not just number of parameters.
+	// args := schema.FieldDef.Arguments
+	// if len(args) != len(paramTypes) {
+	// 	fmt.Printf("function %s has %d parameters, but %d were registered\n", fnName, len(paramTypes), len(args))
+	// 	return
+	// }
+
+	// // Verify that the function has a return type.
+	// // NOTE: We could support void return types, but we'd need to add a Void scalar to Dgraph.
+	// // TODO: Validate return type match the schema, not just its existance.
+	// if len(resultTypes) != 1 {
+	// 	fmt.Printf("function %s has no return type\n", fnName)
+	// 	return
+	// }
+
+	// Save the function and module info into the map.
+	// TODO: this presumes there's no naming conflicts
+	resolver := schema.Resolver()
+	functionsMap[resolver] = functionInfo{&mod, &fn, &schema}
+}
+
+func callFunction(ctx context.Context, info functionInfo, inputs map[string]any) (any, error) {
+
+	mod := *info.Module
+	mem := mod.Memory()
+
+	fn := *info.Function
 	def := fn.Definition()
 	paramTypes := def.ParamTypes()
-	mem := mod.Memory()
+
+	schema := *info.Schema
+	fnName := schema.FunctionName()
+	resolver := schema.Resolver()
 
 	// Get parameters to pass as input to the plugin function
 	// Note that we can't use def.ParamNames() because they are only available when the plugin
 	// is compiled in debug mode. They're striped by optimization in release mode.
-	// Instead, we can use the parameter names from registration.
-	// Also note, that the order of registered params should match order of params in wasm.
+	// Instead, we can use the argument names from the schema.
+	// Also note, that the order of the arguments from schema should match order of params in wasm.
 	params := make([]uint64, len(paramTypes))
-	for i, p := range info.Function.Parameters {
-		val := inputs[p.Name]
+	for i, arg := range schema.FunctionArgs() {
+		val := inputs[arg.Name]
 		if val == nil {
-			return nil, fmt.Errorf("parameter %s is missing", p.Name)
+			return nil, fmt.Errorf("parameter %s is missing", arg.Name)
 		}
 
-		param, err := convertParam(ctx, mod, p.Type, paramTypes[i], val)
+		param, err := convertParam(ctx, mod, *arg.Type, paramTypes[i], val)
 		if err != nil {
-			return nil, fmt.Errorf("parameter %s is invalid: %v", p.Name, err)
+			return nil, fmt.Errorf("parameter %s is invalid: %v", arg.Name, err)
 		}
 
 		params[i] = param
 	}
 
 	// Call the wasm function
-	log.Printf("calling function \"%s\" for resolver \"%s\"\n", info.Function.Name, info.Function.Resolver)
+	fmt.Printf("calling function \"%s\" for resolver \"%s\"\n", fnName, resolver)
 	res, err := fn.Call(ctx, params...)
 	if err != nil {
 		return nil, err
 	}
 
 	// Get the result
-	result, err := convertResult(mem, info.Function.ReturnType, def.ResultTypes()[0], res[0])
+	result, err := convertResult(mem, *schema.FieldDef.Type, def.ResultTypes()[0], res[0])
 	if err != nil {
 		return nil, fmt.Errorf("failed to convert result: %v", err)
 	}
@@ -200,22 +203,13 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 	}
 
 	info := functionsMap[req.Resolver]
-	mod := *info.Module
-	fnName := info.Function.Name
-
-	fn := mod.ExportedFunction(fnName)
-	if fn == nil {
-		w.WriteHeader(http.StatusNotFound)
-		fmt.Fprintf(w, "The function \"%s\" was not found.", fnName)
-		return
-	}
-
+	fnName := info.Schema.FunctionName()
 	ctx := r.Context()
 
 	if req.Args != nil {
 
 		// Call the function, passing in the args from the request
-		result, err := callFunction(ctx, mod, fn, info, req.Args)
+		result, err := callFunction(ctx, info, req.Args)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			fmt.Printf("Failed to call function \"%s\": %v", fnName, err)
@@ -229,7 +223,7 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// Write the result
-		isJson := info.Function.ReturnType == protos.HMType_JSON
+		isJson := false //TODO //info.Schema.FieldDef.Type.??
 		writeDataAsJson(w, result, isJson)
 
 	} else if req.Parents != nil {
@@ -238,7 +232,7 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 
 		// Call the function for each parent
 		for i, parent := range req.Parents {
-			results[i], err = callFunction(ctx, mod, fn, info, parent)
+			results[i], err = callFunction(ctx, info, parent)
 			if err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
 				fmt.Printf("Failed to call function \"%s\": %v", fnName, err)
@@ -247,7 +241,7 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// Write the result
-		isJson := info.Function.ReturnType == protos.HMType_JSON
+		isJson := false // TODO
 		writeDataAsJson(w, results, isJson)
 
 	} else {
@@ -293,10 +287,11 @@ func writeDataAsJson(w http.ResponseWriter, data any, isJson bool) {
 	w.Write(output)
 }
 
-func convertParam(ctx context.Context, mod wasm.Module, hmType protos.HMType, wasmType wasm.ValueType, val any) (uint64, error) {
-	switch hmType {
+func convertParam(ctx context.Context, mod wasm.Module, schemaType ast.Type, wasmType wasm.ValueType, val any) (uint64, error) {
 
-	case protos.HMType_BOOL:
+	switch schemaType.NamedType {
+
+	case "Boolean":
 		b, ok := val.(bool)
 		if !ok {
 			return 0, fmt.Errorf("input value is not a bool")
@@ -313,7 +308,7 @@ func convertParam(ctx context.Context, mod wasm.Module, hmType protos.HMType, wa
 			return 0, nil
 		}
 
-	case protos.HMType_INT:
+	case "Int":
 		n, err := val.(json.Number).Int64()
 		if err != nil {
 			return 0, fmt.Errorf("input value is not an int")
@@ -328,7 +323,7 @@ func convertParam(ctx context.Context, mod wasm.Module, hmType protos.HMType, wa
 			return 0, fmt.Errorf("parameter is not defined as an int on the function")
 		}
 
-	case protos.HMType_FLOAT:
+	case "Float":
 		n, err := val.(json.Number).Float64()
 		if err != nil {
 			return 0, fmt.Errorf("input value is not a float")
@@ -343,7 +338,7 @@ func convertParam(ctx context.Context, mod wasm.Module, hmType protos.HMType, wa
 			return 0, fmt.Errorf("parameter is not defined as a float on the function")
 		}
 
-	case protos.HMType_STRING:
+	case "String", "Id":
 		s, ok := val.(string)
 		if !ok {
 			return 0, fmt.Errorf("input value is not a string")
@@ -359,22 +354,16 @@ func convertParam(ctx context.Context, mod wasm.Module, hmType protos.HMType, wa
 		mod.Memory().Write(ptr, buf)
 		return uint64(ptr), nil
 
-	case protos.HMType_JSON:
-		// TODO
-		return 0, fmt.Errorf("JSON input parameters are not yet supported")
-
 	default:
-		return 0, fmt.Errorf("unknown parameter type")
+		return 0, fmt.Errorf("unknown parameter type: %s", schemaType.NamedType)
 	}
 }
 
-func convertResult(mem wasm.Memory, hmType protos.HMType, wasmType wasm.ValueType, res uint64) (any, error) {
+func convertResult(mem wasm.Memory, schemaType ast.Type, wasmType wasm.ValueType, res uint64) (any, error) {
 
-	switch hmType {
-	case protos.HMType_VOID:
-		return nil, nil
+	switch schemaType.NamedType {
 
-	case protos.HMType_BOOL:
+	case "Boolean":
 		if wasmType != wasm.ValueTypeI32 {
 			return nil, fmt.Errorf("return type is not defined as an bool on the function")
 		}
@@ -385,7 +374,7 @@ func convertResult(mem wasm.Memory, hmType protos.HMType, wasmType wasm.ValueTyp
 			return false, nil
 		}
 
-	case protos.HMType_INT:
+	case "Int":
 
 		// TODO: Do we need to handle unsigned ints differently?
 
@@ -400,7 +389,7 @@ func convertResult(mem wasm.Memory, hmType protos.HMType, wasmType wasm.ValueTyp
 			return nil, fmt.Errorf("return type is not defined as an int on the function")
 		}
 
-	case protos.HMType_FLOAT:
+	case "Float":
 
 		switch wasmType {
 		case wasm.ValueTypeF32:
@@ -413,7 +402,7 @@ func convertResult(mem wasm.Memory, hmType protos.HMType, wasmType wasm.ValueTyp
 			return nil, fmt.Errorf("return type is not defined as a float on the function")
 		}
 
-	case protos.HMType_STRING, protos.HMType_JSON:
+	case "String", "Id":
 		// Note, strings are passed as a pointer to a string in wasm memory
 		if wasmType != wasm.ValueTypeI32 {
 			return nil, fmt.Errorf("return type is not defined as a string on the function")
