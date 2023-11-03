@@ -405,11 +405,10 @@ func convertResult(mem wasm.Memory, schemaType ast.Type, wasmType wasm.ValueType
 	case "String", "Id", "":
 		// Note, strings are passed as a pointer to a string in wasm memory
 		if wasmType != wasm.ValueTypeI32 {
-			return nil, fmt.Errorf("return type is not defined as a string on the function")
+			return nil, fmt.Errorf("return type was not a pointer")
 		}
 
-		buf := readBuffer(mem, uint32(res))
-		return decodeUTF16(buf), nil
+		return readString(mem, uint32(res))
 
 	default:
 		return nil, fmt.Errorf("unknown return type")
@@ -427,7 +426,32 @@ type graphRequest struct {
 	Resolver string           `json:"resolver"`
 }
 
-func readBuffer(mem wasm.Memory, offset uint32) []byte {
+func readString(mem wasm.Memory, offset uint32) (string, error) {
+
+	// AssemblyScript managed objects have their classid stored 8 bytes before the offset.
+	// See https://www.assemblyscript.org/runtime.html#memory-layout
+
+	// Read the class id.
+	id, ok := mem.ReadUint32Le(offset - 8)
+	if !ok {
+		return "", fmt.Errorf("failed to read class id of the WASM object")
+	}
+
+	// Make sure the pointer is to a string.
+	if id != uint32(asString) {
+		return "", fmt.Errorf("pointer is not to a string")
+	}
+
+	// Read from the buffer and decode it as a string.
+	buf, err := readBuffer(mem, offset)
+	if err != nil {
+		return "", err
+	}
+
+	return decodeUTF16(buf), nil
+}
+
+func readBuffer(mem wasm.Memory, offset uint32) ([]byte, error) {
 
 	// The length of AssemblyScript managed objects is stored 4 bytes before the offset.
 	// See https://www.assemblyscript.org/runtime.html#memory-layout
@@ -435,16 +459,16 @@ func readBuffer(mem wasm.Memory, offset uint32) []byte {
 	// Read the length.
 	len, ok := mem.ReadUint32Le(offset - 4)
 	if !ok {
-		return nil
+		return nil, fmt.Errorf("failed to read buffer length")
 	}
 
 	// Now read the data into the buffer.
 	buf, ok := mem.Read(offset, len)
 	if !ok {
-		return nil
+		return nil, fmt.Errorf("failed to read buffer data from WASM memory")
 	}
 
-	return buf
+	return buf, nil
 }
 
 // See https://www.assemblyscript.org/runtime.html#memory-layout
