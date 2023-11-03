@@ -17,7 +17,6 @@
     }
   },
   "dependencies": {
-    "hypermode-as": "file:../hypermode-as",
     "json-as": "^0.5.65"
   },
   "devDependencies": {
