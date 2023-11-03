@@ -93,6 +93,8 @@ func loadPlugin(ctx context.Context, name string) (wasm.Module, error) {
 		return nil, fmt.Errorf("failed to instantiate the plugin: %v", err)
 	}
 
+	fmt.Printf("Loaded plugin \"%s\"\n", name)
+
 	// Get the GraphQL schema from Dgraph and use it to register the functions in this plugin.
 	schema := getGQLSchema(ctx)
 	infos := getFunctionSchemaInfos(schema)
@@ -113,31 +115,25 @@ func registerFunction(ctx context.Context, mod wasm.Module, schema functionSchem
 		return
 	}
 
-	// // Get the function's parameters and return type from wasm.
-	// def := fn.Definition()
-	// paramTypes := def.ParamTypes()
-	// resultTypes := def.ResultTypes()
+	// Validate the function info.
+	info := functionInfo{&mod, &fn, &schema}
+	err := validateFunction(info)
+	if err != nil {
+		fmt.Printf("function %s is invalid: %v\n", fnName, err)
+		return
+	}
 
-	// // Verify that the function's parameters match the schema.
-	// // TODO: Validate parameter types match the schema, not just number of parameters.
-	// args := schema.FieldDef.Arguments
-	// if len(args) != len(paramTypes) {
-	// 	fmt.Printf("function %s has %d parameters, but %d were registered\n", fnName, len(paramTypes), len(args))
-	// 	return
-	// }
-
-	// // Verify that the function has a return type.
-	// // NOTE: We could support void return types, but we'd need to add a Void scalar to Dgraph.
-	// // TODO: Validate return type match the schema, not just its existance.
-	// if len(resultTypes) != 1 {
-	// 	fmt.Printf("function %s has no return type\n", fnName)
-	// 	return
-	// }
-
-	// Save the function and module info into the map.
+	// Save the function info into the map.
 	// TODO: this presumes there's no naming conflicts
 	resolver := schema.Resolver()
-	functionsMap[resolver] = functionInfo{&mod, &fn, &schema}
+	functionsMap[resolver] = info
+
+	fmt.Printf("Registered function \"%s\" for resolver \"%s\"\n", fnName, resolver)
+}
+
+func validateFunction(info functionInfo) error {
+	// TODO: validate that the function definition matches the schema
+	return nil
 }
 
 func callFunction(ctx context.Context, info functionInfo, inputs map[string]any) (any, error) {
@@ -405,11 +401,10 @@ func convertResult(mem wasm.Memory, schemaType ast.Type, wasmType wasm.ValueType
 	case "String", "Id", "":
 		// Note, strings are passed as a pointer to a string in wasm memory
 		if wasmType != wasm.ValueTypeI32 {
-			return nil, fmt.Errorf("return type is not defined as a string on the function")
+			return nil, fmt.Errorf("return type was not a pointer")
 		}
 
-		buf := readBuffer(mem, uint32(res))
-		return decodeUTF16(buf), nil
+		return readString(mem, uint32(res))
 
 	default:
 		return nil, fmt.Errorf("unknown return type")
@@ -427,7 +422,32 @@ type graphRequest struct {
 	Resolver string           `json:"resolver"`
 }
 
-func readBuffer(mem wasm.Memory, offset uint32) []byte {
+func readString(mem wasm.Memory, offset uint32) (string, error) {
+
+	// AssemblyScript managed objects have their classid stored 8 bytes before the offset.
+	// See https://www.assemblyscript.org/runtime.html#memory-layout
+
+	// Read the class id.
+	id, ok := mem.ReadUint32Le(offset - 8)
+	if !ok {
+		return "", fmt.Errorf("failed to read class id of the WASM object")
+	}
+
+	// Make sure the pointer is to a string.
+	if id != uint32(asString) {
+		return "", fmt.Errorf("pointer is not to a string")
+	}
+
+	// Read from the buffer and decode it as a string.
+	buf, err := readBuffer(mem, offset)
+	if err != nil {
+		return "", err
+	}
+
+	return decodeUTF16(buf), nil
+}
+
+func readBuffer(mem wasm.Memory, offset uint32) ([]byte, error) {
 
 	// The length of AssemblyScript managed objects is stored 4 bytes before the offset.
 	// See https://www.assemblyscript.org/runtime.html#memory-layout
@@ -435,16 +455,16 @@ func readBuffer(mem wasm.Memory, offset uint32) []byte {
 	// Read the length.
 	len, ok := mem.ReadUint32Le(offset - 4)
 	if !ok {
-		return nil
+		return nil, fmt.Errorf("failed to read buffer length")
 	}
 
 	// Now read the data into the buffer.
 	buf, ok := mem.Read(offset, len)
 	if !ok {
-		return nil
+		return nil, fmt.Errorf("failed to read buffer data from WASM memory")
 	}
 
-	return buf
+	return buf, nil
 }
 
 // See https://www.assemblyscript.org/runtime.html#memory-layout
