@@ -4,17 +4,25 @@ This is an example Hypermode plugin, written in [AssemblyScript](https://www.ass
 
 ## Dependencies
 
-The following must be installed on your development workstation or build server:
+First, install [Node.js](https://nodejs.org/) version 18 or newer
+on your development workstation or build server
 
-- [Node.js](https://nodejs.org/) version 18 or newer
-- The [Protocol Buffer Compiler](https://grpc.io/docs/protoc-installation/) (`protoc`)
+Then, install package dependencies:
+
+```sh
+npm install
+```
 
 ## Building
 
-_NOTE: The `hypermode-as` library must be built first, or you will get an error when building the plugin._
+To build the plugin:
 
-To build the plugin, run the `build.sh` script.
+```sh
+npm run asbuild
+```
 
 This will create both a `debug` and `release` build of the app.
+Output files are located in the `build` folder.
+
 Currently, only the `release.wasm` file is used.
 In the future, the other files will help support testing and debugging.

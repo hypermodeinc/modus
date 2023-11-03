@@ -1,8 +1,7 @@
-# This is just a sample schema, that pairs with this plugin.
-# For now, @lambda is used - but that will change in the future.
-# This shows two separate query lambdas, and one field lambda,
-# that are resolved by Hypermode functions.
-# (The old Dgraph Lambda server is not used.)
+# This sample schema shows how to use the functions defined in this plugin.
+
+# this directive will eventually be built-in, and will replace @lambda
+directive @hm_function(name: String, args: [String!]) on FIELD_DEFINITION
 
 type Query {
   add(a: Int!, b: Int!): Int! @lambda
@@ -14,5 +13,5 @@ type Person {
     id: ID!
     firstName: String!
     lastName: String!
-    fullName: String @lambda
+    fullName: String @lambda @hm_function(name: "getFullName", args: ["firstName", "lastName"])
 }

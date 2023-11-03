@@ -1,26 +1,13 @@
-import { register } from "hypermode-as/assembly"
-import { HMType } from "hypermode-as/protos/HMType"
 import { JSON } from "json-as/assembly";
-
-// TODO: find a way to automatically supply this schema/type info so the user doesn't have to.
-register("Query.add", "add", ["a", "b"], [HMType.INT, HMType.INT], HMType.INT);
-register("Query.getFullName", "getFullName", ["firstName", "lastName"], [HMType.STRING, HMType.STRING], HMType.STRING);
-register("Person.fullName", "getFullName", ["firstName", "lastName"], [HMType.STRING, HMType.STRING], HMType.STRING);
-register("Query.getPeople", "getPeople", [], [], HMType.JSON);
 
 export function add(a: i32, b: i32): i32 {
   return a + b;
 }
 
 export function getFullName(firstName: string, lastName: string): string {
-
-  // We can use the Person class here.
-  const p = new Person(firstName, lastName);
-  return p.fullName;
-
-  // This works too, and is more concise.
-  // return `${firstName} ${lastName}`;
+  return `${firstName} ${lastName}`;
 }
+
 
 // This would be ideal, as it returns an array of Person objects.
 // However, it doesn't work because we don't yet know how to read the objects on the host.

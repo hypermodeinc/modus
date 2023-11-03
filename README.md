@@ -39,11 +39,17 @@ docker run --name <CONTAINER_NAME> \
 
 ### Hypermode Plugins
 
-Compile the `hypermode-as` library and `hmplugin1` plugin, by running the following:
+First, ensure you have [Node.js](https://nodejs.org/) 18 or higher installed.
+
+Then, compile the `hmplugin1` example plugin, by running the following:
 
 ```
-./plugins/as/buildall.sh
+cd plugins/as/hmplugin1
+npm install
+npm run asbuild
 ```
+
+The `build` subfolder will contain the compiled plugin.
 
 ### Hypermode Runtime
 
