@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 
 	"google.golang.org/grpc"
@@ -15,7 +16,7 @@ import (
 	"github.com/dgraph-io/gqlparser/validator"
 )
 
-func queryDQL(ctx context.Context, q string) []byte {
+func queryDQL(ctx context.Context, q string) ([]byte, error) {
 
 	// TODO: This should use a persistent connection (or a pool of them)
 	// TODO: The server endpoint should also be configurable
@@ -24,19 +25,22 @@ func queryDQL(ctx context.Context, q string) []byte {
 	creds := grpc.WithTransportCredentials(insecure.NewCredentials())
 	conn, err := grpc.Dial("localhost:9080", creds)
 	if err != nil {
-		log.Fatal(err)
+		return nil, fmt.Errorf("error connecting to Dgraph: %v", err)
 	}
 
+	// create a client and transaction
 	client := dgo.NewDgraphClient(api.NewDgraphClient(conn))
 	txn := client.NewReadOnlyTxn()
 	defer txn.Discard(ctx)
 
+	// query dgraph
 	response, err := txn.Query(ctx, q)
 	if err != nil {
-		log.Fatal(err)
+		return nil, fmt.Errorf("error querying Dgraph: %v", err)
 	}
 
-	return response.GetJson()
+	// return the response
+	return response.GetJson(), err
 }
 
 type schemaResponse struct {
@@ -47,17 +51,20 @@ type schemaResponse struct {
 
 var schemaQuery = "{node(func:uid(0x1)){dgraph.graphql.schema}}"
 
-func getGQLSchema(ctx context.Context) string {
+func getGQLSchema(ctx context.Context) (string, error) {
 
-	r := queryDQL(ctx, schemaQuery)
-
-	var sr schemaResponse
-	err := json.Unmarshal(r, &sr)
+	r, err := queryDQL(ctx, schemaQuery)
 	if err != nil {
-		log.Fatal(err)
+		return "", fmt.Errorf("error getting GraphQL schema from Dgraph: %v", err)
 	}
 
-	return sr.Node[0].Schema
+	var sr schemaResponse
+	err = json.Unmarshal(r, &sr)
+	if err != nil {
+		return "", fmt.Errorf("error deserializing JSON of GraphQL schema: %v", err)
+	}
+
+	return sr.Node[0].Schema, nil
 }
 
 type functionSchemaInfo struct {

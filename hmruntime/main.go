@@ -17,7 +17,6 @@ import (
 	wasi "github.com/tetratelabs/wazero/imports/wasi_snapshot_preview1"
 )
 
-// TODO: standardize logging and output error handling throughout
 // TODO: abstract AssemblyScript-specific details
 
 var runtime wazero.Runtime
@@ -96,31 +95,35 @@ func loadPlugin(ctx context.Context, name string) (wasm.Module, error) {
 	fmt.Printf("Loaded plugin \"%s\"\n", name)
 
 	// Get the GraphQL schema from Dgraph and use it to register the functions in this plugin.
-	schema := getGQLSchema(ctx)
+	schema, err := getGQLSchema(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get GraphQL schema: %v", err)
+	}
 	infos := getFunctionSchemaInfos(schema)
 	for _, info := range infos {
-		registerFunction(ctx, mod, info)
+		err = registerFunction(ctx, mod, info)
+		if err != nil {
+			return nil, fmt.Errorf("failed to register function \"%s\": %v", info.FunctionName(), err)
+		}
 	}
 
 	return mod, nil
 }
 
-func registerFunction(ctx context.Context, mod wasm.Module, schema functionSchemaInfo) {
+func registerFunction(ctx context.Context, mod wasm.Module, schema functionSchemaInfo) error {
 
 	// Find the function in the module.
 	fnName := schema.FunctionName()
 	fn := mod.ExportedFunction(fnName)
 	if fn == nil {
-		fmt.Printf("function %s not found in module\n", fnName)
-		return
+		return fmt.Errorf("function %s not found in module", fnName)
 	}
 
 	// Validate the function info.
 	info := functionInfo{&mod, &fn, &schema}
 	err := validateFunction(info)
 	if err != nil {
-		fmt.Printf("function %s is invalid: %v\n", fnName, err)
-		return
+		return fmt.Errorf("function %s is invalid: %v", fnName, err)
 	}
 
 	// Save the function info into the map.
@@ -129,6 +132,7 @@ func registerFunction(ctx context.Context, mod wasm.Module, schema functionSchem
 	functionsMap[resolver] = info
 
 	fmt.Printf("Registered function \"%s\" for resolver \"%s\"\n", fnName, resolver)
+	return nil
 }
 
 func validateFunction(info functionInfo) error {
@@ -170,7 +174,7 @@ func callFunction(ctx context.Context, info functionInfo, inputs map[string]any)
 	}
 
 	// Call the wasm function
-	fmt.Printf("calling function \"%s\" for resolver \"%s\"\n", fnName, resolver)
+	fmt.Printf("Calling function \"%s\" for resolver \"%s\"\n", fnName, resolver)
 	res, err := fn.Call(ctx, params...)
 	if err != nil {
 		return nil, err
@@ -194,7 +198,7 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 	err := dec.Decode(&req)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		fmt.Println("Failed to decode request body: ", err)
+		log.Println("Failed to decode request body: ", err)
 		return
 	}
 
@@ -208,7 +212,7 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 		result, err := callFunction(ctx, info, req.Args)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			fmt.Printf("Failed to call function \"%s\": %v", fnName, err)
+			log.Printf("Failed to call function \"%s\": %v", fnName, err)
 			return
 		}
 
@@ -220,7 +224,10 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 
 		// Write the result
 		isJson := info.Schema.FieldDef.Type.NamedType == ""
-		writeDataAsJson(w, result, isJson)
+		err = writeDataAsJson(w, result, isJson)
+		if err != nil {
+			log.Println(err)
+		}
 
 	} else if req.Parents != nil {
 
@@ -231,22 +238,25 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 			results[i], err = callFunction(ctx, info, parent)
 			if err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
-				fmt.Printf("Failed to call function \"%s\": %v", fnName, err)
+				log.Printf("Failed to call function \"%s\": %v", fnName, err)
 				return
 			}
 		}
 
 		// Write the result
 		isJson := info.Schema.FieldDef.Type.NamedType == ""
-		writeDataAsJson(w, results, isJson)
+		err = writeDataAsJson(w, results, isJson)
+		if err != nil {
+			log.Println(err)
+		}
 
 	} else {
 		w.WriteHeader(http.StatusBadRequest)
-		fmt.Println("Request must have either args or parents.")
+		log.Println("Request must have either args or parents.")
 	}
 }
 
-func writeDataAsJson(w http.ResponseWriter, data any, isJson bool) {
+func writeDataAsJson(w http.ResponseWriter, data any, isJson bool) error {
 
 	if isJson {
 
@@ -266,21 +276,21 @@ func writeDataAsJson(w http.ResponseWriter, data any, isJson bool) {
 			w.Write([]byte{']'})
 		default:
 			w.WriteHeader(http.StatusInternalServerError)
-			fmt.Println("failed to serialize result data")
+			return fmt.Errorf("failed to serialize result data")
 		}
 
-		return
+		return nil
 	}
 
 	output, err := json.Marshal(data)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Println("Failed to serialize result data: ", err)
-		return
+		return fmt.Errorf("failed to serialize result data:", err)
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(output)
+	return nil
 }
 
 func convertParam(ctx context.Context, mod wasm.Module, schemaType ast.Type, wasmType wasm.ValueType, val any) (uint64, error) {
