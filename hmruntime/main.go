@@ -64,7 +64,9 @@ func main() {
 func initWasmRuntime(ctx context.Context) wazero.Runtime {
 
 	// Create the runtime
-	runtime := wazero.NewRuntime(ctx)
+	cfg := wazero.NewRuntimeConfig().
+		WithCloseOnContextDone(true)
+	runtime := wazero.NewRuntimeWithConfig(ctx, cfg)
 
 	// Enable WASI support
 	wasi.MustInstantiate(ctx, runtime)
