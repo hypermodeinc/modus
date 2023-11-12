@@ -103,7 +103,7 @@ func loadPlugin(ctx context.Context, name string) (wasm.Module, error) {
 	for _, info := range infos {
 		err = registerFunction(ctx, mod, info)
 		if err != nil {
-			return nil, fmt.Errorf("failed to register function \"%s\": %v", info.FunctionName(), err)
+			fmt.Printf("Failed to register function \"%s\": %v\n", info.FunctionName(), err)
 		}
 	}
 
