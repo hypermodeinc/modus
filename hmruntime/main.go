@@ -64,7 +64,9 @@ func main() {
 func initWasmRuntime(ctx context.Context) wazero.Runtime {
 
 	// Create the runtime
-	runtime := wazero.NewRuntime(ctx)
+	cfg := wazero.NewRuntimeConfig().
+		WithCloseOnContextDone(true)
+	runtime := wazero.NewRuntimeWithConfig(ctx, cfg)
 
 	// Enable WASI support
 	wasi.MustInstantiate(ctx, runtime)
@@ -84,10 +86,13 @@ func loadPlugin(ctx context.Context, name string) (wasm.Module, error) {
 		return nil, fmt.Errorf("failed to load the plugin: %v", err)
 	}
 
+	cfg := wazero.NewModuleConfig().
+		WithStdout(os.Stdout).WithStderr(os.Stderr)
+
 	// Instantiate the plugin as a module.
 	// NOTE: This will also invoke the plugin's `_start` function,
 	// which will call any top-level code in the plugin.
-	mod, err := runtime.Instantiate(ctx, plugin)
+	mod, err := runtime.InstantiateWithConfig(ctx, plugin, cfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to instantiate the plugin: %v", err)
 	}
@@ -103,7 +108,7 @@ func loadPlugin(ctx context.Context, name string) (wasm.Module, error) {
 	for _, info := range infos {
 		err = registerFunction(ctx, mod, info)
 		if err != nil {
-			return nil, fmt.Errorf("failed to register function \"%s\": %v", info.FunctionName(), err)
+			fmt.Printf("Failed to register function \"%s\": %v\n", info.FunctionName(), err)
 		}
 	}
 
@@ -203,6 +208,12 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 	}
 
 	info := functionsMap[req.Resolver]
+	if info.Function == nil {
+		w.WriteHeader(http.StatusBadRequest)
+		log.Printf("No function registered for resolver \"%s\"", req.Resolver)
+		return
+	}
+
 	fnName := info.Schema.FunctionName()
 	ctx := r.Context()
 
@@ -212,7 +223,7 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 		result, err := callFunction(ctx, info, req.Args)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			log.Printf("Failed to call function \"%s\": %v", fnName, err)
+			log.Printf("Error calling function \"%s\": %v", fnName, err)
 			return
 		}
 
@@ -238,7 +249,7 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 			results[i], err = callFunction(ctx, info, parent)
 			if err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
-				log.Printf("Failed to call function \"%s\": %v", fnName, err)
+				log.Printf("Error calling function \"%s\": %v", fnName, err)
 				return
 			}
 		}
@@ -355,9 +366,7 @@ func convertParam(ctx context.Context, mod wasm.Module, schemaType ast.Type, was
 			return 0, fmt.Errorf("parameter is not defined as a string on the function")
 		}
 
-		buf := encodeUTF16(s)
-		ptr := allocateWasmMemory(ctx, mod, len(buf), asString)
-		mod.Memory().Write(ptr, buf)
+		ptr := writeString(ctx, mod, s)
 		return uint64(ptr), nil
 
 	default:
@@ -432,6 +441,13 @@ type graphRequest struct {
 	Resolver string           `json:"resolver"`
 }
 
+func writeString(ctx context.Context, mod wasm.Module, s string) uint32 {
+	buf := encodeUTF16(s)
+	ptr := allocateWasmMemory(ctx, mod, len(buf), asString)
+	mod.Memory().Write(ptr, buf)
+	return ptr
+}
+
 func readString(mem wasm.Memory, offset uint32) (string, error) {
 
 	// AssemblyScript managed objects have their classid stored 8 bytes before the offset.
@@ -468,6 +484,11 @@ func readBuffer(mem wasm.Memory, offset uint32) ([]byte, error) {
 		return nil, fmt.Errorf("failed to read buffer length")
 	}
 
+	// Handle empty buffers.
+	if len == 0 {
+		return []byte{}, nil
+	}
+
 	// Now read the data into the buffer.
 	buf, ok := mem.Read(offset, len)
 	if !ok {
@@ -495,6 +516,12 @@ func allocateWasmMemory(ctx context.Context, mod wasm.Module, len int, class asC
 }
 
 func decodeUTF16(bytes []byte) string {
+
+	// Make sure the buffer is valid.
+	if len(bytes) == 0 || len(bytes)%2 != 0 {
+		return ""
+	}
+
 	// Reinterpret []byte as []uint16 to avoid excess copying.
 	// This works because we can presume the system is little-endian.
 	ptr := unsafe.Pointer(&bytes[0])
