@@ -84,10 +84,13 @@ func loadPlugin(ctx context.Context, name string) (wasm.Module, error) {
 		return nil, fmt.Errorf("failed to load the plugin: %v", err)
 	}
 
+	cfg := wazero.NewModuleConfig().
+		WithStdout(os.Stdout).WithStderr(os.Stderr)
+
 	// Instantiate the plugin as a module.
 	// NOTE: This will also invoke the plugin's `_start` function,
 	// which will call any top-level code in the plugin.
-	mod, err := runtime.Instantiate(ctx, plugin)
+	mod, err := runtime.InstantiateWithConfig(ctx, plugin, cfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to instantiate the plugin: %v", err)
 	}
