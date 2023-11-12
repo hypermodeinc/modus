@@ -203,6 +203,12 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 	}
 
 	info := functionsMap[req.Resolver]
+	if info.Function == nil {
+		w.WriteHeader(http.StatusBadRequest)
+		log.Printf("No function registered for resolver \"%s\"", req.Resolver)
+		return
+	}
+
 	fnName := info.Schema.FunctionName()
 	ctx := r.Context()
 
