@@ -355,9 +355,7 @@ func convertParam(ctx context.Context, mod wasm.Module, schemaType ast.Type, was
 			return 0, fmt.Errorf("parameter is not defined as a string on the function")
 		}
 
-		buf := encodeUTF16(s)
-		ptr := allocateWasmMemory(ctx, mod, len(buf), asString)
-		mod.Memory().Write(ptr, buf)
+		ptr := writeString(ctx, mod, s)
 		return uint64(ptr), nil
 
 	default:
@@ -430,6 +428,13 @@ type graphRequest struct {
 	Args     map[string]any   `json:"args"`
 	Parents  []map[string]any `json:"parents"`
 	Resolver string           `json:"resolver"`
+}
+
+func writeString(ctx context.Context, mod wasm.Module, s string) uint32 {
+	buf := encodeUTF16(s)
+	ptr := allocateWasmMemory(ctx, mod, len(buf), asString)
+	mod.Memory().Write(ptr, buf)
+	return ptr
 }
 
 func readString(mem wasm.Memory, offset uint32) (string, error) {
