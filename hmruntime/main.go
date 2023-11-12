@@ -223,7 +223,7 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 		result, err := callFunction(ctx, info, req.Args)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			log.Printf("Failed to call function \"%s\": %v", fnName, err)
+			log.Printf("Error calling function \"%s\": %v", fnName, err)
 			return
 		}
 
@@ -249,7 +249,7 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 			results[i], err = callFunction(ctx, info, parent)
 			if err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
-				log.Printf("Failed to call function \"%s\": %v", fnName, err)
+				log.Printf("Error calling function \"%s\": %v", fnName, err)
 				return
 			}
 		}
