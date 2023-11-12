@@ -4,9 +4,9 @@
 directive @hm_function(name: String, args: [String!]) on FIELD_DEFINITION
 
 type Query {
-  add(a: Int!, b: Int!): Int! @lambda
-  getFullName(firstName: String!, lastName: String!): String! @lambda
-  getPeople: [Person!]! @lambda
+  add(a: Int!, b: Int!): Int! @lambda @hm_function
+  getFullName(firstName: String!, lastName: String!): String! @lambda @hm_function
+  getPeople: [Person!]! @lambda @hm_function
 }
 
 type Person {

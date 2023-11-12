@@ -140,12 +140,12 @@ func getFunctionSchemaInfos(schema string) []functionSchemaInfo {
 		log.Fatal(err)
 	}
 
-	// Find all fields with the @lambda directive
+	// Find all fields with the @hm_function directive
 	var results []functionSchemaInfo
 	for _, def := range doc.Definitions {
 		if def.Kind == ast.Object {
 			for _, field := range def.Fields {
-				if field.Directives.ForName("lambda") != nil {
+				if field.Directives.ForName("hm_function") != nil {
 					results = append(results, functionSchemaInfo{def, field})
 				}
 			}
