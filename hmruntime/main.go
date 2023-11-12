@@ -71,7 +71,13 @@ func initWasmRuntime(ctx context.Context) wazero.Runtime {
 	// Enable WASI support
 	wasi.MustInstantiate(ctx, runtime)
 
-	// TODO: Define host functions
+	// Define host functions
+	b := runtime.NewHostModuleBuilder("hypermode")
+	b.NewFunctionBuilder().WithFunc(hostQueryDQL).Export("queryDQL")
+	_, err := b.Instantiate(ctx)
+	if err != nil {
+		log.Panicf("failed to instantiate the hypermode module: %v", err)
+	}
 
 	return runtime
 }
