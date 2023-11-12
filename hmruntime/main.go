@@ -468,6 +468,11 @@ func readBuffer(mem wasm.Memory, offset uint32) ([]byte, error) {
 		return nil, fmt.Errorf("failed to read buffer length")
 	}
 
+	// Handle empty buffers.
+	if len == 0 {
+		return []byte{}, nil
+	}
+
 	// Now read the data into the buffer.
 	buf, ok := mem.Read(offset, len)
 	if !ok {
@@ -495,6 +500,12 @@ func allocateWasmMemory(ctx context.Context, mod wasm.Module, len int, class asC
 }
 
 func decodeUTF16(bytes []byte) string {
+
+	// Make sure the buffer is valid.
+	if len(bytes) == 0 || len(bytes)%2 != 0 {
+		return ""
+	}
+
 	// Reinterpret []byte as []uint16 to avoid excess copying.
 	// This works because we can presume the system is little-endian.
 	ptr := unsafe.Pointer(&bytes[0])
