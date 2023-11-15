@@ -49,7 +49,7 @@ type schemaResponse struct {
 	} `json:"node"`
 }
 
-var schemaQuery = "{node(func:uid(0x1)){dgraph.graphql.schema}}"
+var schemaQuery = "{node(func:has(dgraph.graphql.schema)){dgraph.graphql.schema}}"
 
 func getGQLSchema(ctx context.Context) (string, error) {
 
