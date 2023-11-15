@@ -63,13 +63,15 @@ hmruntime
 
 ### Run the example
 
-Update the schema:
+Run this script:
 
-```
-curl -X POST localhost:8080/admin/schema --data-binary '@plugins/as/hmplugin1/schema.graphql'
+```sh
+./plugins/as/hmplugin1/loaddata.sh
 ```
 
-Try some graphql queries on `http://localhost:8080/graphql`:
+It connects to Dgraph on `localhost:8080`, and applies the `schema.graphql` and `sampledata.graphql` files.
+
+Now try some graphql queries on `http://localhost:8080/graphql`:
 
 ```graphql
 {
