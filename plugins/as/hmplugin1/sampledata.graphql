@@ -1,0 +1,17 @@
+mutation {
+  # Clear any existing people first 
+  deletePerson(filter: {}) {
+    deleted: numUids
+  }
+
+  # Add some people
+  addPerson(input: [
+    { firstName: "Harry", lastName: "Potter" },
+    { firstName: "Hermione", lastName: "Granger" },
+    { firstName: "Ron", lastName: "Weasley" },
+    { firstName: "Albus", lastName: "Dumbledore" },
+    { firstName: "Luna", lastName: "Lovegood" }
+  ]) {
+    added: numUids
+  }
+}
