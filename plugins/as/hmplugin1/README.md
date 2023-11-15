@@ -26,3 +26,8 @@ Output files are located in the `build` folder.
 
 Currently, only the `release.wasm` file is used.
 In the future, the other files will help support testing and debugging.
+
+## Schema and Sample Data
+
+The `loaddata.sh` script can be used to populate schema and sample data.
+It connects to Dgraph on `localhost:8080`, and applies the `schema.graphql` and `sampledata.graphql` files.

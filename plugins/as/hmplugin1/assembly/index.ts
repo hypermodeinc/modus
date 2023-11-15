@@ -35,9 +35,8 @@ export function queryPeople(): string {
   data.people.forEach(p => {
     p.fullName = `${p.firstName} ${p.lastName}`;
   });
-  const s = JSON.stringify(data.people);
-  console.log(s);
-  return s;
+
+  return JSON.stringify(data.people);
 }
 
 // @ts-ignore
