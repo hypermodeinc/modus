@@ -4,7 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
+	"net/http"
+	"strings"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -41,6 +44,26 @@ func queryDQL(ctx context.Context, q string) ([]byte, error) {
 
 	// return the response
 	return response.GetJson(), err
+}
+
+func queryGQL(ctx context.Context, q string) ([]byte, error) {
+	reqBody := strings.NewReader(q)
+	resp, err := http.Post("http://localhost:8080/graphql", "application/graphql", reqBody)
+	if err != nil {
+		return nil, fmt.Errorf("error sending GraphQL query: %v", err)
+	}
+
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("GraphQL query failed with status code %d", resp.StatusCode)
+	}
+
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("error reading GraphQL response: %v", err)
+	}
+
+	return respBody, nil
 }
 
 type schemaResponse struct {

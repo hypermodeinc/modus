@@ -17,6 +17,7 @@
     }
   },
   "dependencies": {
+    "assemblyscript-json": "^1.1.0",
     "json-as": "^0.5.65"
   },
   "devDependencies": {

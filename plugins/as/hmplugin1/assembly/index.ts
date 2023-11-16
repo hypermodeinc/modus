@@ -1,5 +1,6 @@
 import { JSON } from "json-as/assembly";
-import { queryDQL } from "./hypermode";
+import { JSON as DynJSON } from "assemblyscript-json/assembly";
+import { queryDQL, queryGQL, GQLExtensions } from "./hypermode";
 
 export function add(a: i32, b: i32): i32 {
   return a + b;
@@ -20,7 +21,7 @@ export function getPeople(): string {
   return JSON.stringify(people);
 }
 
-export function queryPeople(): string {
+export function queryPeople1(): string {
   const results = queryDQL(`
     {
       people(func: type(Person)) {
@@ -31,7 +32,7 @@ export function queryPeople(): string {
     }
   `);
 
-  const data = JSON.parse<PersonQueryResponse>(results);
+  const data = JSON.parse<PeopleData>(results);
   data.people.forEach(p => {
     p.fullName = `${p.firstName} ${p.lastName}`;
   });
@@ -39,16 +40,51 @@ export function queryPeople(): string {
   return JSON.stringify(data.people);
 }
 
+export function queryPeople2(): string {
+  const results = queryGQL(`
+    {
+      people: queryPerson {
+        id
+        firstName
+        lastName
+        fullName
+      }
+    }
+  `);
+
+  // This works, but we get no concrete objects:
+  // const resp = <DynJSON.Obj> DynJSON.parse(results);
+  // return resp.getObj("data")!.getArr("people")!.stringify();
+
+  // This is better, but still not great:
+  const resp = JSON.parse<PeopleGQLResponse>(results);
+
+  // Ideally, we'd like to do this:
+  // const resp = JSON.parse<GQLResponse<PeopleData>>(results);
+  // but we're blocked by https://github.com/JairusSW/as-json/issues/53
+  
+  const people = resp.data.people;
+  const duration = resp.extensions!.tracing.duration / 1000000.0;
+  console.log(`Duration: ${duration}ms`);
+  return JSON.stringify(people);
+}
+
 // @ts-ignore
 @json
-class PersonQueryResponse {
+class PeopleGQLResponse {
+    data!: PeopleData;
+    extensions: GQLExtensions | null = null;
+}
+
+// @ts-ignore
+@json
+class PeopleData {
   people!: Person[];
 }
 
 // @ts-ignore
 @json
 class Person {
-
   id: string | null = null;
   firstName: string = "";
   lastName: string = "";

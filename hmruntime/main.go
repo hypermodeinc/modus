@@ -74,6 +74,7 @@ func initWasmRuntime(ctx context.Context) wazero.Runtime {
 	// Define host functions
 	b := runtime.NewHostModuleBuilder("hypermode")
 	b.NewFunctionBuilder().WithFunc(hostQueryDQL).Export("queryDQL")
+	b.NewFunctionBuilder().WithFunc(hostQueryGQL).Export("queryGQL")
 	_, err := b.Instantiate(ctx)
 	if err != nil {
 		log.Panicf("failed to instantiate the hypermode module: %v", err)
