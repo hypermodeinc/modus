@@ -46,7 +46,7 @@ Then, compile the `hmplugin1` example plugin, by running the following:
 ```
 cd plugins/as/hmplugin1
 npm install
-npm run asbuild
+npm run build
 ```
 
 The `build` subfolder will contain the compiled plugin.

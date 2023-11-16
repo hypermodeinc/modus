@@ -1,6 +1,5 @@
 import { JSON } from "json-as/assembly";
-import { JSON as DynJSON } from "assemblyscript-json/assembly";
-import { queryDQL, queryGQL, GQLExtensions } from "./hypermode";
+import { queryDQL, queryGQL, GQLExtensions } from "hypermode-as";
 
 export function add(a: i32, b: i32): i32 {
   return a + b;
@@ -52,17 +51,11 @@ export function queryPeople2(): string {
     }
   `);
 
-  // This works, but we get no concrete objects:
-  // const resp = <DynJSON.Obj> DynJSON.parse(results);
-  // return resp.getObj("data")!.getArr("people")!.stringify();
-
-  // This is better, but still not great:
-  const resp = JSON.parse<PeopleGQLResponse>(results);
-
   // Ideally, we'd like to do this:
   // const resp = JSON.parse<GQLResponse<PeopleData>>(results);
   // but we're blocked by https://github.com/JairusSW/as-json/issues/53
   
+  const resp = JSON.parse<PeopleGQLResponse>(results);
   const people = resp.data.people;
   const duration = resp.extensions!.tracing.duration / 1000000.0;
   console.log(`Duration: ${duration}ms`);

@@ -1,9 +1,3 @@
-// This file will eventually be separated into a library.
-
-import { Date } from "date";
-export declare function queryDQL(q: string): string;
-export declare function queryGQL(q: string): string;
-
 // @ts-ignore
 @json
 export class GQLResponse<T> {

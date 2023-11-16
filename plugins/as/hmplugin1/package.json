@@ -3,26 +3,20 @@
   "version": "1.0.0",
   "description": "Hypermode Example Plugin",
   "scripts": {
-    "asbuild:debug": "asc assembly/index.ts --target debug",
-    "asbuild:release": "asc assembly/index.ts --target release",
-    "asbuild": "npm run asbuild:debug && npm run asbuild:release"
+    "build:debug": "asc assembly/index.ts --target debug",
+    "build:release": "asc assembly/index.ts --target release",
+    "build": "npm run build:debug && npm run build:release"
   },
-  "author": "Dgraph Labs, Inc.",
+  "author": "Hypermode, Inc.",
   "license": "MIT",
   "type": "module",
-  "exports": {
-    ".": {
-      "import": "./build/release.js",
-      "types": "./build/release.d.ts"
-    }
-  },
   "dependencies": {
-    "assemblyscript-json": "^1.1.0",
-    "json-as": "^0.5.65"
+    "hypermode-as": "file:../hypermode-as",
+    "json-as": "^0.5.67"
   },
   "devDependencies": {
     "@assemblyscript/wasi-shim": "^0.1.0",
-    "assemblyscript": "^0.27.14",
+    "assemblyscript": "^0.27.18",
     "visitor-as": "^0.11.4"
   },
   "overrides": {
