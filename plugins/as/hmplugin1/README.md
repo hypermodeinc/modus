@@ -18,7 +18,7 @@ npm install
 To build the plugin:
 
 ```sh
-npm run asbuild
+npm run build
 ```
 
 This will create both a `debug` and `release` build of the app.
