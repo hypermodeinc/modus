@@ -17,7 +17,24 @@ func hostQueryDQL(ctx context.Context, mod wasm.Module, pq uint32) uint32 {
 
 	r, err := queryDQL(ctx, q)
 	if err != nil {
-		log.Println("error querying Dgraph:", err)
+		log.Println("error querying Dgraph via DQL:", err)
+		return 0
+	}
+
+	return writeString(ctx, mod, string(r))
+}
+
+func hostQueryGQL(ctx context.Context, mod wasm.Module, pq uint32) uint32 {
+	mem := mod.Memory()
+	q, err := readString(mem, pq)
+	if err != nil {
+		log.Println("error reading query string from wasm memory:", err)
+		return 0
+	}
+
+	r, err := queryGQL(ctx, q)
+	if err != nil {
+		log.Println("error querying Dgraph via GQL:", err)
 		return 0
 	}
 
