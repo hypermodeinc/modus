@@ -26,13 +26,7 @@ npm install hypermode-as
 
 # Testing
 
-We use [as-pect](https://as-pect.gitbook.io/as-pect/) for testing.
-Tests are located in the `assembly/__tests__` folder.
-At the moment, there are only the example tests provided with as-pect.
-We will add Hypermode-specific tests soon, and remove the examples.
+TBD
 
-To run the tests:
-
-```sh
-npm run test
-```
+We previously considered [as-pect](https://as-pect.gitbook.io/as-pect/),
+but it appears to be unmaintained presently.
