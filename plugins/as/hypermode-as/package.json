@@ -6,10 +6,10 @@
   "license": "MIT",
   "type": "module",
   "dependencies": {
-    "json-as": "^0.5.67"
+    "json-as": "^0.6.3"
   },
   "devDependencies": {
-    "assemblyscript": "^0.27.18",
+    "assemblyscript": "^0.27.20",
     "visitor-as": "^0.11.4"
   },
   "overrides": {
