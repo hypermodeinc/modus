@@ -10,13 +10,12 @@ export function getFullName(firstName: string, lastName: string): string {
 }
 
 export function getPeople(): string {
-
   const people = [
     <Person> {firstName: "Bob", lastName: "Smith"},
     <Person> {firstName: "Alice", lastName: "Jones"}
   ];
 
-  // Non-scalar values must be returned as JSON.
+  people.forEach(p => p.updateFullName());
   return JSON.stringify(people);
 }
 
@@ -31,12 +30,9 @@ export function queryPeople1(): string {
     }
   `;
 
-  const data = queryDQL<PeopleData>(query);
-  data.people.forEach(p => {
-    p.fullName = `${p.firstName} ${p.lastName}`;
-  });
-
-  return JSON.stringify(data.people);
+  const people = queryDQL<PeopleData>(query).people
+  people.forEach(p => p.updateFullName());
+  return JSON.stringify(people);
 }
 
 export function queryPeople2(): string {
@@ -53,11 +49,13 @@ export function queryPeople2(): string {
   
   const results = queryGQL<PeopleGQLResults>(query);
   const people = results.data.people;
+
   const tracing = results.extensions!.tracing;
   const duration = tracing.duration / 1000000.0;
   console.log(`Start: ${tracing.startTime.toISOString()}`);
   console.log(`End: ${tracing.endTime.toISOString()}`);
   console.log(`Duration: ${duration}ms`);
+
   return JSON.stringify(people);
 }
 
@@ -81,4 +79,8 @@ class Person {
   firstName: string = "";
   lastName: string = "";
   fullName: string | null = null;
+
+  updateFullName(): void {
+    this.fullName = `${this.firstName} ${this.lastName}`;
+  }
 };
