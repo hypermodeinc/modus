@@ -12,8 +12,8 @@ export function getFullName(firstName: string, lastName: string): string {
 export function getPeople(): string {
 
   const people = [
-    Person.Create("Bob", "Smith"),
-    Person.Create("Alice", "Jones"),
+    <Person> {firstName: "Bob", lastName: "Smith"},
+    <Person> {firstName: "Alice", lastName: "Jones"}
   ];
 
   // Non-scalar values must be returned as JSON.
@@ -81,11 +81,4 @@ class Person {
   firstName: string = "";
   lastName: string = "";
   fullName: string | null = null;
-
-  static Create(firstName: string, lastName: string): Person {
-    const p = new Person();
-    p.firstName = firstName;
-    p.lastName = lastName;
-    return p;
-  }
 };
