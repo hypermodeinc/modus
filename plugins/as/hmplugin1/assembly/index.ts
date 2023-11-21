@@ -58,6 +58,8 @@ export function queryPeople2(): string {
   const resp = JSON.parse<PeopleGQLResponse>(results);
   const people = resp.data.people;
   const duration = resp.extensions!.tracing.duration / 1000000.0;
+  console.log(`Start: ${resp.extensions!.tracing.startTime.toISOString()}`);
+  console.log(`End: ${resp.extensions!.tracing.endTime.toISOString()}`);
   console.log(`Duration: ${duration}ms`);
   return JSON.stringify(people);
 }

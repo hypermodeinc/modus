@@ -12,15 +12,12 @@ export class GQLExtensions {
     tracing!: GQLTracing;
 }
 
-// TODO: Use Date instead of string when this is fixed:
-// https://github.com/JairusSW/as-json/issues/54
-
 // @ts-ignore
 @json
 class GQLTracing {
     version!: u32;
-    startTime!: string; // Date
-    endTime!: string;  // Date
+    startTime!: Date
+    endTime!: Date
     duration!: u32;
     execution: GQLExecution | null = null;
 }
