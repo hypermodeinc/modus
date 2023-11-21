@@ -1,4 +1,4 @@
-import { JSON } from "json-as/assembly";
+import { JSON } from "json-as";
 import { queryDQL, queryGQL, GQLExtensions } from "hypermode-as";
 
 export function add(a: i32, b: i32): i32 {
@@ -10,18 +10,17 @@ export function getFullName(firstName: string, lastName: string): string {
 }
 
 export function getPeople(): string {
-
   const people = [
-    Person.Create("Bob", "Smith"),
-    Person.Create("Alice", "Jones"),
+    <Person> {firstName: "Bob", lastName: "Smith"},
+    <Person> {firstName: "Alice", lastName: "Jones"}
   ];
 
-  // Non-scalar values must be returned as JSON.
+  people.forEach(p => p.updateFullName());
   return JSON.stringify(people);
 }
 
 export function queryPeople1(): string {
-  const results = queryDQL(`
+  const query = `
     {
       people(func: type(Person)) {
         id: uid
@@ -29,18 +28,15 @@ export function queryPeople1(): string {
         lastName: Person.lastName
       }
     }
-  `);
+  `;
 
-  const data = JSON.parse<PeopleData>(results);
-  data.people.forEach(p => {
-    p.fullName = `${p.firstName} ${p.lastName}`;
-  });
-
-  return JSON.stringify(data.people);
+  const people = queryDQL<PeopleData>(query).people
+  people.forEach(p => p.updateFullName());
+  return JSON.stringify(people);
 }
 
 export function queryPeople2(): string {
-  const results = queryGQL(`
+  const query = `
     {
       people: queryPerson {
         id
@@ -49,24 +45,23 @@ export function queryPeople2(): string {
         fullName
       }
     }
-  `);
-
-  // Ideally, we'd like to do this:
-  // const resp = JSON.parse<GQLResponse<PeopleData>>(results);
-  // but we're blocked by https://github.com/JairusSW/as-json/issues/53
+  `;
   
-  const resp = JSON.parse<PeopleGQLResponse>(results);
-  const people = resp.data.people;
-  const duration = resp.extensions!.tracing.duration / 1000000.0;
-  console.log(`Start: ${resp.extensions!.tracing.startTime.toISOString()}`);
-  console.log(`End: ${resp.extensions!.tracing.endTime.toISOString()}`);
+  const results = queryGQL<PeopleGQLResults>(query);
+  const people = results.data.people;
+
+  const tracing = results.extensions!.tracing;
+  const duration = tracing.duration / 1000000.0;
+  console.log(`Start: ${tracing.startTime.toISOString()}`);
+  console.log(`End: ${tracing.endTime.toISOString()}`);
   console.log(`Duration: ${duration}ms`);
+
   return JSON.stringify(people);
 }
 
 // @ts-ignore
 @json
-class PeopleGQLResponse {
+class PeopleGQLResults {
     data!: PeopleData;
     extensions: GQLExtensions | null = null;
 }
@@ -85,10 +80,7 @@ class Person {
   lastName: string = "";
   fullName: string | null = null;
 
-  static Create(firstName: string, lastName: string): Person {
-    const p = new Person();
-    p.firstName = firstName;
-    p.lastName = lastName;
-    return p;
+  updateFullName(): void {
+    this.fullName = `${this.firstName} ${this.lastName}`;
   }
 };

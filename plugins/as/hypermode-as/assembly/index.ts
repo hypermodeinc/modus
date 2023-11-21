@@ -1,9 +1,26 @@
-// @ts-ignore
-@json
-export class GQLResponse<T> {
-    data!: T;
-    extensions: GQLExtensions | null = null;
+import * as host from "./hypermode";
+import { JSON } from "json-as/assembly";
+
+export function queryDQL<TData>(query: string): TData {
+    const results = host.queryDQL(query);
+    return JSON.parse<TData>(results);
 }
+
+export function queryGQL<TResults>(query: string): TResults {
+
+    // Preferablly this would return `GQLResponse<TResults>`,
+    // but we're blocked by https://github.com/JairusSW/as-json/issues/53
+
+    const response = host.queryGQL(query);
+    return JSON.parse<TResults>(response);
+}
+
+// // @ts-ignore
+// @json
+// export class GQLResponse<T> {
+//     data!: T;
+//     extensions: GQLExtensions | null = null;
+// }
 
 // @ts-ignore
 @json
