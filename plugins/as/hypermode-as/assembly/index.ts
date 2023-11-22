@@ -1,5 +1,5 @@
 import * as host from "./hypermode";
-import { JSON } from "json-as/assembly";
+import { JSON } from "json-as";
 
 export function queryDQL<TData>(query: string): TData {
     const results = host.queryDQL(query);
