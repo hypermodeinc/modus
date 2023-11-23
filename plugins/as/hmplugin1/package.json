@@ -12,11 +12,11 @@
   },
   "dependencies": {
     "hypermode-as": "file:../hypermode-as",
-    "json-as": "^0.6.3"
+    "json-as": "^0.6.4"
   },
   "devDependencies": {
     "@assemblyscript/wasi-shim": "^0.1.0",
-    "assemblyscript": "^0.27.20",
+    "assemblyscript": "^0.27.21",
     "visitor-as": "^0.11.4"
   },
   "overrides": {

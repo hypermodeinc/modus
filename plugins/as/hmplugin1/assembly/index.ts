@@ -1,5 +1,5 @@
 import { JSON } from "json-as";
-import { queryDQL, queryGQL, GQLExtensions } from "hypermode-as";
+import { queryDQL, queryGQL } from "hypermode-as";
 
 export function add(a: i32, b: i32): i32 {
   return a + b;
@@ -47,23 +47,16 @@ export function queryPeople2(): string {
     }
   `;
   
-  const results = queryGQL<PeopleGQLResults>(query);
-  const people = results.data.people;
+  const results = queryGQL<PeopleData>(query);
 
+  // completely optional, but let's log some tracing info
   const tracing = results.extensions!.tracing;
   const duration = tracing.duration / 1000000.0;
   console.log(`Start: ${tracing.startTime.toISOString()}`);
   console.log(`End: ${tracing.endTime.toISOString()}`);
   console.log(`Duration: ${duration}ms`);
 
-  return JSON.stringify(people);
-}
-
-// @ts-ignore
-@json
-class PeopleGQLResults {
-    data!: PeopleData;
-    extensions: GQLExtensions | null = null;
+  return JSON.stringify(results.data.people);
 }
 
 // @ts-ignore
