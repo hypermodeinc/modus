@@ -362,7 +362,7 @@ func convertParam(ctx context.Context, mod wasm.Module, schemaType ast.Type, was
 			return 0, fmt.Errorf("parameter is not defined as a float on the function")
 		}
 
-	case "String", "Id", "":
+	case "String", "ID", "":
 		s, ok := val.(string)
 		if !ok {
 			return 0, fmt.Errorf("input value is not a string")
@@ -424,7 +424,7 @@ func convertResult(mem wasm.Memory, schemaType ast.Type, wasmType wasm.ValueType
 			return nil, fmt.Errorf("return type is not defined as a float on the function")
 		}
 
-	case "String", "Id", "":
+	case "String", "ID", "":
 		// Note, strings are passed as a pointer to a string in wasm memory
 		if wasmType != wasm.ValueTypeI32 {
 			return nil, fmt.Errorf("return type was not a pointer")
@@ -433,7 +433,7 @@ func convertResult(mem wasm.Memory, schemaType ast.Type, wasmType wasm.ValueType
 		return readString(mem, uint32(res))
 
 	default:
-		return nil, fmt.Errorf("unknown return type")
+		return nil, fmt.Errorf("unknown return type: %s", schemaType.NamedType)
 	}
 }
 
