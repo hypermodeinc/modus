@@ -12,13 +12,12 @@ The following must be installed on your development workstation or build server:
 
 ## Building
 
-To build the server, run the `build.sh` script.
-This will generate the required protobuf stubs, then compile the program.
+To build the Hypermode runtime server: `go build`
 
 ## Running
 
 - To run the compiled program, invoke the `hmruntime` binary.
-- To run from code (while developing), use `go run main.go` instead.
+- To run from code (while developing), use `go run .` instead.
 
 ## Notes
 

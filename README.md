@@ -51,17 +51,7 @@ npm run build
 
 The `build` subfolder will contain the compiled plugin.
 
-### Hypermode Runtime
-
-Now build and run the Hypermode Runtime:
-
-```
-cd hmruntime
-./build.sh
-hmruntime
-```
-
-### Run the example
+### Load schema and data
 
 Run this script:
 
@@ -71,7 +61,26 @@ Run this script:
 
 It connects to Dgraph on `localhost:8080`, and applies the `schema.graphql` and `sampledata.graphql` files.
 
-Now try some graphql queries on `http://localhost:8080/graphql`:
+### Hypermode Runtime
+
+Now build and run the Hypermode Runtime:
+
+```
+cd hmruntime
+go build
+hmruntime
+```
+
+Alternatively, you can run the Go code directly:
+
+```
+cd hmruntime
+go run .
+```
+
+### Run the example
+
+Try some graphql queries on `http://localhost:8080/graphql`:
 
 ```graphql
 {
@@ -124,16 +133,3 @@ You can now also query for data:
 ```
 
 Again, the `fullName` field is populated by calling `getFullName` in `hmplugin1`.
-
-## Next Steps
-
-This barely scratches the surface, using the Hypermode Runtime as a replacement
-for the [Dgraph Lambda server](https://github.com/dgraph-io/dgraph-lambda).
-
-Next we will need to figure out the following:
-
-- How to pass typed objects as both input and output
-- How to call one plugin from another
-- How to query the database
-- How to call AI models
-- Which other built-in host functions we want to provide.
