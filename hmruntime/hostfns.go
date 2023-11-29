@@ -7,34 +7,34 @@ import (
 	wasm "github.com/tetratelabs/wazero/api"
 )
 
-func hostQueryDQL(ctx context.Context, mod wasm.Module, pq uint32) uint32 {
+func hostExecuteDQL(ctx context.Context, mod wasm.Module, pStmt uint32, isMutation uint32) uint32 {
 	mem := mod.Memory()
-	q, err := readString(mem, pq)
+	stmt, err := readString(mem, pStmt)
 	if err != nil {
-		log.Println("error reading query string from wasm memory:", err)
+		log.Println("error reading DQL statement from wasm memory:", err)
 		return 0
 	}
 
-	r, err := queryDQL(ctx, q)
+	r, err := executeDQL(ctx, stmt, isMutation != 0)
 	if err != nil {
-		log.Println("error querying Dgraph via DQL:", err)
+		log.Println("error executing DQL statement:", err)
 		return 0
 	}
 
 	return writeString(ctx, mod, string(r))
 }
 
-func hostQueryGQL(ctx context.Context, mod wasm.Module, pq uint32) uint32 {
+func hostExecuteGQL(ctx context.Context, mod wasm.Module, pStmt uint32) uint32 {
 	mem := mod.Memory()
-	q, err := readString(mem, pq)
+	stmt, err := readString(mem, pStmt)
 	if err != nil {
-		log.Println("error reading query string from wasm memory:", err)
+		log.Println("error reading GraphQL string from wasm memory:", err)
 		return 0
 	}
 
-	r, err := queryGQL(ctx, q)
+	r, err := executeGQL(ctx, stmt)
 	if err != nil {
-		log.Println("error querying Dgraph via GQL:", err)
+		log.Println("error executing GraphQL operation:", err)
 		return 0
 	}
 

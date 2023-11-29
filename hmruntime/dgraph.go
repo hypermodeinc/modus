@@ -9,53 +9,52 @@ import (
 	"net/http"
 	"strings"
 
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
-
-	"github.com/dgraph-io/dgo/v230"
-	"github.com/dgraph-io/dgo/v230/protos/api"
 	"github.com/dgraph-io/gqlparser/ast"
 	"github.com/dgraph-io/gqlparser/parser"
 	"github.com/dgraph-io/gqlparser/validator"
 )
 
-func queryDQL(ctx context.Context, q string) ([]byte, error) {
+func executeDQL(ctx context.Context, stmt string, isMutation bool) ([]byte, error) {
+	reqBody := strings.NewReader(stmt)
 
-	// TODO: This should use a persistent connection (or a pool of them)
-	// TODO: The server endpoint should also be configurable
-
-	// connect to dgraph server
-	creds := grpc.WithTransportCredentials(insecure.NewCredentials())
-	conn, err := grpc.Dial("localhost:9080", creds)
-	if err != nil {
-		return nil, fmt.Errorf("error connecting to Dgraph: %v", err)
+	host := "http://localhost:8080" // TODO: make this configurable
+	var endpoint, contentType string
+	if isMutation {
+		endpoint = "/mutate?commitNow=true"
+		contentType = "application/rdf"
+	} else {
+		endpoint = "/query"
+		contentType = "application/dql"
 	}
 
-	// create a client and transaction
-	client := dgo.NewDgraphClient(api.NewDgraphClient(conn))
-	txn := client.NewReadOnlyTxn()
-	defer txn.Discard(ctx)
-
-	// query dgraph
-	response, err := txn.Query(ctx, q)
+	resp, err := http.Post(host+endpoint, contentType, reqBody)
 	if err != nil {
-		return nil, fmt.Errorf("error querying Dgraph: %v", err)
-	}
-
-	// return the response
-	return response.GetJson(), err
-}
-
-func queryGQL(ctx context.Context, q string) ([]byte, error) {
-	reqBody := strings.NewReader(q)
-	resp, err := http.Post("http://localhost:8080/graphql", "application/graphql", reqBody)
-	if err != nil {
-		return nil, fmt.Errorf("error sending GraphQL query: %v", err)
+		return nil, fmt.Errorf("error posting DQL statement: %v", err)
 	}
 
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("GraphQL query failed with status code %d", resp.StatusCode)
+		return nil, fmt.Errorf("DQL operation failed with status code %d", resp.StatusCode)
+	}
+
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("error reading DQL response: %v", err)
+	}
+
+	return respBody, nil
+}
+
+func executeGQL(ctx context.Context, stmt string) ([]byte, error) {
+	reqBody := strings.NewReader(stmt)
+	resp, err := http.Post("http://localhost:8080/graphql", "application/graphql", reqBody)
+	if err != nil {
+		return nil, fmt.Errorf("error posting GraphQL statement: %v", err)
+	}
+
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("GraphQL operation failed with status code %d", resp.StatusCode)
 	}
 
 	respBody, err := io.ReadAll(resp.Body)
@@ -64,6 +63,10 @@ func queryGQL(ctx context.Context, q string) ([]byte, error) {
 	}
 
 	return respBody, nil
+}
+
+type dqlResponse[T any] struct {
+	Data T `json:"data"`
 }
 
 type schemaResponse struct {
@@ -76,18 +79,18 @@ var schemaQuery = "{node(func:has(dgraph.graphql.schema)){dgraph.graphql.schema}
 
 func getGQLSchema(ctx context.Context) (string, error) {
 
-	r, err := queryDQL(ctx, schemaQuery)
+	r, err := executeDQL(ctx, schemaQuery, false)
 	if err != nil {
 		return "", fmt.Errorf("error getting GraphQL schema from Dgraph: %v", err)
 	}
 
-	var sr schemaResponse
-	err = json.Unmarshal(r, &sr)
+	var response dqlResponse[schemaResponse]
+	err = json.Unmarshal(r, &response)
 	if err != nil {
 		return "", fmt.Errorf("error deserializing JSON of GraphQL schema: %v", err)
 	}
 
-	return sr.Node[0].Schema, nil
+	return response.Data.Node[0].Schema, nil
 }
 
 type functionSchemaInfo struct {

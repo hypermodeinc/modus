@@ -73,8 +73,8 @@ func initWasmRuntime(ctx context.Context) wazero.Runtime {
 
 	// Define host functions
 	b := runtime.NewHostModuleBuilder("hypermode")
-	b.NewFunctionBuilder().WithFunc(hostQueryDQL).Export("queryDQL")
-	b.NewFunctionBuilder().WithFunc(hostQueryGQL).Export("queryGQL")
+	b.NewFunctionBuilder().WithFunc(hostExecuteDQL).Export("executeDQL")
+	b.NewFunctionBuilder().WithFunc(hostExecuteGQL).Export("executeGQL")
 	_, err := b.Instantiate(ctx)
 	if err != nil {
 		log.Panicf("failed to instantiate the hypermode module: %v", err)
@@ -390,11 +390,7 @@ func convertResult(mem wasm.Memory, schemaType ast.Type, wasmType wasm.ValueType
 			return nil, fmt.Errorf("return type is not defined as an bool on the function")
 		}
 
-		if res == 1 {
-			return true, nil
-		} else {
-			return false, nil
-		}
+		return res != 0, nil
 
 	case "Int":
 
