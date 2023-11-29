@@ -1,5 +1,5 @@
 import { JSON } from "json-as";
-import { queryDQL, queryGQL } from "hypermode-as";
+import { dql, graphql } from "hypermode-as";
 
 export function add(a: i32, b: i32): i32 {
   return a + b;
@@ -30,14 +30,15 @@ export function queryPeople1(): string {
     }
   `;
 
-  const people = queryDQL<PeopleData>(query).people
+  const response = dql.query<PeopleData>(query);
+  const people = response.data.people;
   people.forEach(p => p.updateFullName());
   return JSON.stringify(people);
 }
 
 export function queryPeople2(): string {
-  const query = `
-    {
+  const statement = `
+    query {
       people: queryPerson {
         id
         firstName
@@ -47,7 +48,7 @@ export function queryPeople2(): string {
     }
   `;
   
-  const results = queryGQL<PeopleData>(query);
+  const results = graphql.execute<PeopleData>(statement);
 
   // completely optional, but let's log some tracing info
   const tracing = results.extensions!.tracing;
@@ -59,8 +60,23 @@ export function queryPeople2(): string {
   return JSON.stringify(results.data.people);
 }
 
-export function newPerson(firstName: string, lastName: string): string {
-  const query = `
+export function newPerson1(firstName: string, lastName: string): string {
+  const statement = `
+    {
+      set {
+        _:x <Person.firstName> "${firstName}" .
+        _:x <Person.lastName> "${lastName}" .
+        _:x <dgraph.type> "Person" .
+      }
+    }
+  `;
+
+  const response = dql.mutate(statement);
+  return response.data.uids.get("x")!;
+}
+
+export function newPerson2(firstName: string, lastName: string): string {
+  const statement = `
     mutation {
       addPerson(input: [{firstName: "${firstName}", lastName: "${lastName}" }]) {
         people: person {
@@ -70,7 +86,7 @@ export function newPerson(firstName: string, lastName: string): string {
     }
   `;
 
-  const response = queryGQL<AddPersonPayload>(query);
+  const response = graphql.execute<AddPersonPayload>(statement);
   return response.data.addPerson.people[0].id!; 
 }
 

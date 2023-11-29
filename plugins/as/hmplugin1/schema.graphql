@@ -12,7 +12,8 @@ type Query {
 }
 
 type Mutation {
-  newPerson(firstName: String!, lastName: String!): Id! @lambda @hm_function
+  newPerson1(firstName: String!, lastName: String!): String! @lambda @hm_function
+  newPerson2(firstName: String!, lastName: String!): String! @lambda @hm_function
 }
 
 type Person {
