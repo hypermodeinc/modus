@@ -59,10 +59,19 @@ export function queryPeople2(): string {
   return JSON.stringify(results.data.people);
 }
 
-// @ts-ignore
-@json
-class PeopleData {
-  people!: Person[];
+export function newPerson(firstName: string, lastName: string): string {
+  const query = `
+    mutation {
+      addPerson(input: [{firstName: "${firstName}", lastName: "${lastName}" }]) {
+        people: person {
+          id
+        }
+      }
+    }
+  `;
+
+  const response = queryGQL<AddPersonPayload>(query);
+  return response.data.addPerson.people[0].id!; 
 }
 
 // @ts-ignore
@@ -77,3 +86,15 @@ class Person {
     this.fullName = `${this.firstName} ${this.lastName}`;
   }
 };
+
+// @ts-ignore
+@json
+class PeopleData {
+  people!: Person[];
+}
+
+// @ts-ignore
+@json
+class AddPersonPayload {
+  addPerson!: PeopleData;
+}

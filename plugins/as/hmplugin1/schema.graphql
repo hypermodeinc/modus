@@ -11,6 +11,10 @@ type Query {
   queryPeople2: [Person!]! @lambda @hm_function
 }
 
+type Mutation {
+  newPerson(firstName: String!, lastName: String!): Id! @lambda @hm_function
+}
+
 type Person {
     id: ID!
     firstName: String!
