@@ -420,13 +420,16 @@ func convertResult(mem wasm.Memory, schemaType ast.Type, wasmType wasm.ValueType
 			return nil, fmt.Errorf("return type is not defined as a float on the function")
 		}
 
-	case "String", "ID", "":
+	case "String", "":
 		// Note, strings are passed as a pointer to a string in wasm memory
 		if wasmType != wasm.ValueTypeI32 {
 			return nil, fmt.Errorf("return type was not a pointer")
 		}
 
 		return readString(mem, uint32(res))
+
+	case "ID":
+		return nil, fmt.Errorf("the ID scalar is not allowed for function return types (use String instead)")
 
 	default:
 		return nil, fmt.Errorf("unknown return type: %s", schemaType.NamedType)
