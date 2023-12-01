@@ -90,6 +90,37 @@ export function newPerson2(firstName: string, lastName: string): string {
   return response.data.addPerson.people[0].id!; 
 }
 
+function getPersonCount(): i32 {
+  const statement = `
+    query {
+      aggregatePerson {
+        count
+      }
+    }
+  `;
+
+  const response = graphql.execute<AggregatePersonResult>(statement);
+  return response.data.aggregatePerson.count;
+}
+
+export function getRandomPerson(): string {
+  const count = getPersonCount();
+  const offset = <u32> Math.floor(Math.random() * count);
+  const statement = `
+    query {
+      people: queryPerson(first: 1, offset: ${offset}) {
+        id
+        firstName
+        lastName
+        fullName
+      }
+    }
+  `;
+  
+  const results = graphql.execute<PeopleData>(statement);
+  return JSON.stringify(results.data.people[0]);
+}
+
 // @ts-ignore
 @json
 class Person {
@@ -113,4 +144,16 @@ class PeopleData {
 @json
 class AddPersonPayload {
   addPerson!: PeopleData;
+}
+
+// @ts-ignore
+@json
+class AggregatePersonResult {
+  aggregatePerson!: GQLAggregateValues;
+}
+
+// @ts-ignore
+@json
+class GQLAggregateValues {
+  count: u32 = 0;
 }
