@@ -240,8 +240,14 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		// Determine if the result is already JSON
+		isJson := false
+		fieldType := info.Schema.FieldDef.Type.NamedType
+		if _, ok := result.(string); ok && fieldType != "String" {
+			isJson = true
+		}
+
 		// Write the result
-		isJson := info.Schema.FieldDef.Type.NamedType == ""
 		err = writeDataAsJson(w, result, isJson)
 		if err != nil {
 			log.Println(err)
