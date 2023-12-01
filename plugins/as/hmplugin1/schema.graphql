@@ -9,6 +9,7 @@ type Query {
   getPeople: [Person!]! @lambda @hm_function
   queryPeople1: [Person!]! @lambda @hm_function
   queryPeople2: [Person!]! @lambda @hm_function
+  getRandomPerson: Person! @lambda @hm_function
 }
 
 type Mutation {
