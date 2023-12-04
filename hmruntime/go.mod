@@ -1,6 +1,6 @@
 module hmruntime
 
-go 1.21.3
+go 1.21
 
 require (
 	github.com/dgraph-io/gqlparser v1.2.1

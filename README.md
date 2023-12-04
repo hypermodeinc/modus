@@ -22,6 +22,7 @@ Like Lambda, it listens for HTTP on port `8686` on the `/graphql-worker` endpoin
 Thus, you can tell Dgraph to use it when starting Dgraph Alpha:
 
 ```
+dgraph zero
 dgraph alpha --graphql lambda-url=http://localhost:8686/graphql-worker
 ```
 
@@ -40,6 +41,15 @@ docker run --name <CONTAINER_NAME> \
 ### Hypermode Plugins
 
 First, ensure you have [Node.js](https://nodejs.org/) 18 or higher installed.
+
+
+Recommended: Install [nvm](https://github.com/nvm-sh/nvm/blob/master/README.md) and use it to install Node.js 20:
+
+```
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.3/install.sh | bash
+nvm install 20
+nvm use 20
+```
 
 Then, compile the `hmplugin1` example plugin, by running the following:
 
@@ -68,7 +78,7 @@ Now build and run the Hypermode Runtime:
 ```
 cd hmruntime
 go build
-hmruntime
+./hmruntime
 ```
 
 Alternatively, you can run the Go code directly:
