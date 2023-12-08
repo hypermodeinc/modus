@@ -93,17 +93,26 @@ func getGQLSchema(ctx context.Context) (string, error) {
 	return response.Data.Node[0].Schema, nil
 }
 
-type functionSchemaInfo struct {
+type functionInfo struct {
+	PluginName string
+	Schema     functionSchema
+}
+
+type functionSchema struct {
 	ObjectDef *ast.Definition
 	FieldDef  *ast.FieldDefinition
 }
 
-func (info functionSchemaInfo) Resolver() string {
-	return info.ObjectDef.Name + "." + info.FieldDef.Name
+func (info functionInfo) FunctionName() string {
+	return info.Schema.FunctionName()
 }
 
-func (info functionSchemaInfo) FunctionName() string {
-	f := info.FieldDef
+func (schema functionSchema) Resolver() string {
+	return schema.ObjectDef.Name + "." + schema.FieldDef.Name
+}
+
+func (schema functionSchema) FunctionName() string {
+	f := schema.FieldDef
 
 	// If @hm_function(name: "name") is specified, use that.
 	d := f.Directives.ForName("hm_function")
@@ -118,8 +127,8 @@ func (info functionSchemaInfo) FunctionName() string {
 	return f.Name
 }
 
-func (info functionSchemaInfo) FunctionArgs() ast.ArgumentDefinitionList {
-	f := info.FieldDef
+func (schema functionSchema) FunctionArgs() ast.ArgumentDefinitionList {
+	f := schema.FieldDef
 
 	// If @hm_function(args: ["arg1", "arg2"]) is specified, use that.
 	// The arguments must correspond to field names on the same parent object.
@@ -135,9 +144,9 @@ func (info functionSchemaInfo) FunctionArgs() ast.ArgumentDefinitionList {
 				var argName string
 				for _, val := range v.([]interface{}) {
 					argName = val.(string)
-					fld := info.ObjectDef.Fields.ForName(argName)
+					fld := schema.ObjectDef.Fields.ForName(argName)
 					if fld == nil {
-						log.Printf("Field %s.%s does not exist", info.ObjectDef.Name, argName)
+						log.Printf("Field %s.%s does not exist", schema.ObjectDef.Name, argName)
 						continue
 					}
 					arg := ast.ArgumentDefinition{
@@ -158,25 +167,33 @@ func (info functionSchemaInfo) FunctionArgs() ast.ArgumentDefinitionList {
 	return f.Arguments
 }
 
-func getFunctionSchemaInfos(schema string) []functionSchemaInfo {
+func getFunctionSchema(ctx context.Context) ([]functionSchema, error) {
 
-	// Parse the schema
-	doc, err := parser.ParseSchemas(validator.Prelude, &ast.Source{Input: schema})
+	// Get the GraphQL schema from Dgraph.
+	schema, err := getGQLSchema(ctx)
 	if err != nil {
-		log.Fatal(err)
+		return nil, fmt.Errorf("failed to retrieve GraphQL schema: %v", err)
 	}
 
-	// Find all fields with the @hm_function directive
-	var results []functionSchemaInfo
+	// Parse the schema
+	doc, parseErr := parser.ParseSchemas(validator.Prelude, &ast.Source{Input: schema})
+	if parseErr != nil {
+		return nil, fmt.Errorf("failed to parse GraphQL schema: %+v", parseErr)
+	}
+
+	// Find all fields with the @hm_function directive and add their schema info
+	// to the map, using the resolver as a key.
+	var results []functionSchema
 	for _, def := range doc.Definitions {
 		if def.Kind == ast.Object {
 			for _, field := range def.Fields {
 				if field.Directives.ForName("hm_function") != nil {
-					results = append(results, functionSchemaInfo{def, field})
+					schema := functionSchema{def, field}
+					results = append(results, schema)
 				}
 			}
 		}
 	}
 
-	return results
+	return results, nil
 }
