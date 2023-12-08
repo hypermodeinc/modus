@@ -5,30 +5,28 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"unicode/utf16"
 	"unsafe"
 
 	"github.com/dgraph-io/gqlparser/ast"
+	"github.com/google/uuid"
 	"github.com/tetratelabs/wazero"
 	wasm "github.com/tetratelabs/wazero/api"
-	wasi "github.com/tetratelabs/wazero/imports/wasi_snapshot_preview1"
 )
 
 // TODO: abstract AssemblyScript-specific details
 
 var runtime wazero.Runtime
 
-type functionInfo struct {
-	Module   *wasm.Module
-	Function *wasm.Function
-	Schema   *functionSchemaInfo
-}
+// map that holds the compiled modules for each plugin
+var compiledModules = make(map[string]wazero.CompiledModule)
 
-// map of resolver to registered function info
-// TODO: this probably isn't robust enough for production
+// map that holds the function info for each resolver
 var functionsMap = make(map[string]functionInfo)
 
 func main() {
@@ -39,15 +37,21 @@ func main() {
 	flag.Parse()
 
 	// Initialize the WebAssembly runtime
-	runtime = initWasmRuntime(ctx)
+	var err error
+	runtime, err = initWasmRuntime(ctx)
+	if err != nil {
+		log.Fatalln(err)
+	}
 	defer runtime.Close(ctx)
 
 	// Load plugins
-	// TODO: This will need work:
-	// - Plugins should probably be loaded from a repository, not from disk.
-	// - We'll need to figure out how to handle plugin updates.
-	// - We'll need to figure out hot/warm/cold plugin loading.
-	_, err := loadPlugin(ctx, "hmplugin1") // for now just hardcoded
+	err = loadPlugins(ctx)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	// Register functions
+	err = registerFunctions(ctx)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -61,109 +65,126 @@ func main() {
 	// TODO: Shutdown gracefully
 }
 
-func initWasmRuntime(ctx context.Context) wazero.Runtime {
+func loadPlugins(ctx context.Context) error {
+	// TODO: This will need work:
+	// - Plugins should probably be loaded from a repository, not from disk.
+	// - We'll need to figure out how to handle plugin updates.
+	// - We'll need to figure out hot/warm/cold plugin loading.
+	// For now, we have just one hardcoded plugin.
+	return loadPluginModule(ctx, "hmplugin1")
+}
+
+func registerFunctions(ctx context.Context) error {
+
+	// Get the function schema info from the database.
+	funcSchemas, err := getFunctionSchema(ctx)
+	if err != nil {
+		return err
+	}
+
+	// Build a map of resolvers to function info, including the plugin name.
+	// This presumes there are no duplicate exported function names across plugins.
+	// TODO: Figure out how to handle function name conflicts.
+	for _, schema := range funcSchemas {
+		for pluginName, cm := range compiledModules {
+			for _, fn := range cm.ExportedFunctions() {
+				fnName := fn.ExportNames()[0]
+				if strings.EqualFold(fnName, schema.FunctionName()) {
+					info := functionInfo{pluginName, schema}
+					resolver := schema.Resolver()
+					functionsMap[resolver] = info
+					fmt.Printf("Registered function '%s' for resolver '%s'\n", fnName, resolver)
+				}
+			}
+		}
+	}
+
+	return nil
+}
+
+func initWasmRuntime(ctx context.Context) (wazero.Runtime, error) {
 
 	// Create the runtime
 	cfg := wazero.NewRuntimeConfig().
 		WithCloseOnContextDone(true)
 	runtime := wazero.NewRuntimeWithConfig(ctx, cfg)
 
-	// Enable WASI support
-	wasi.MustInstantiate(ctx, runtime)
-
-	// Define host functions
-	b := runtime.NewHostModuleBuilder("hypermode")
-	b.NewFunctionBuilder().WithFunc(hostExecuteDQL).Export("executeDQL")
-	b.NewFunctionBuilder().WithFunc(hostExecuteGQL).Export("executeGQL")
-	_, err := b.Instantiate(ctx)
+	// Connect WASI host functions
+	err := instantiateWasiFunctions(ctx, runtime)
 	if err != nil {
-		log.Panicf("failed to instantiate the hypermode module: %v", err)
+		return nil, err
 	}
 
-	return runtime
+	// Connect Hypermode host functions
+	err = instantiateHostFunctions(ctx, runtime)
+	if err != nil {
+		return nil, err
+	}
+
+	return runtime, nil
 }
 
-func loadPlugin(ctx context.Context, name string) (wasm.Module, error) {
+func loadPluginModule(ctx context.Context, name string) error {
 
-	// Load the plugin plugin.
 	// TODO: Load the plugin from some repository instead of disk.
 	path := "../plugins/as/" + name + "/build/release.wasm"
 	plugin, err := os.ReadFile(path)
 	if err != nil {
-		return nil, fmt.Errorf("failed to load the plugin: %v", err)
+		return fmt.Errorf("failed to load the plugin: %v", err)
 	}
 
+	// Compile the plugin into a module.
+	cm, err := runtime.CompileModule(ctx, plugin)
+	if err != nil {
+		return fmt.Errorf("failed to compile the plugin: %v", err)
+	}
+
+	// Store the compiled module for later retrieval.
+	compiledModules[name] = cm
+	return nil
+}
+
+type buffers struct {
+	Stdout *strings.Builder
+	Stderr *strings.Builder
+}
+
+func getModuleInstance(ctx context.Context, pluginName string) (wasm.Module, buffers, error) {
+
+	// Create string buffers to capture stdout and stderr.
+	// Still write to the console, but also capture the output in the buffers.
+	buf := buffers{&strings.Builder{}, &strings.Builder{}}
+	wOut := io.MultiWriter(os.Stdout, buf.Stdout)
+	wErr := io.MultiWriter(os.Stderr, buf.Stderr)
+
+	// Get the compiled module.
+	compiled, ok := compiledModules[pluginName]
+	if !ok {
+		return nil, buf, fmt.Errorf("no compiled module found for plugin '%s'", pluginName)
+	}
+
+	// Configure the module instance.
 	cfg := wazero.NewModuleConfig().
-		WithStdout(os.Stdout).WithStderr(os.Stderr)
+		WithName(pluginName + "_" + uuid.NewString()).
+		WithStdout(wOut).WithStderr(wErr)
 
 	// Instantiate the plugin as a module.
 	// NOTE: This will also invoke the plugin's `_start` function,
 	// which will call any top-level code in the plugin.
-	mod, err := runtime.InstantiateWithConfig(ctx, plugin, cfg)
+	mod, err := runtime.InstantiateModule(ctx, compiled, cfg)
 	if err != nil {
-		return nil, fmt.Errorf("failed to instantiate the plugin: %v", err)
+		return nil, buf, fmt.Errorf("failed to instantiate the plugin module: %v", err)
 	}
 
-	fmt.Printf("Loaded plugin \"%s\"\n", name)
-
-	// Get the GraphQL schema from Dgraph and use it to register the functions in this plugin.
-	schema, err := getGQLSchema(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get GraphQL schema: %v", err)
-	}
-	infos := getFunctionSchemaInfos(schema)
-	for _, info := range infos {
-		err = registerFunction(ctx, mod, info)
-		if err != nil {
-			fmt.Printf("Failed to register function \"%s\": %v\n", info.FunctionName(), err)
-		}
-	}
-
-	return mod, nil
+	return mod, buf, nil
 }
 
-func registerFunction(ctx context.Context, mod wasm.Module, schema functionSchemaInfo) error {
-
-	// Find the function in the module.
-	fnName := schema.FunctionName()
+func callFunction(ctx context.Context, mod wasm.Module, info functionInfo, inputs map[string]any) (any, error) {
+	fnName := info.FunctionName()
 	fn := mod.ExportedFunction(fnName)
-	if fn == nil {
-		return fmt.Errorf("function %s not found in module", fnName)
-	}
-
-	// Validate the function info.
-	info := functionInfo{&mod, &fn, &schema}
-	err := validateFunction(info)
-	if err != nil {
-		return fmt.Errorf("function %s is invalid: %v", fnName, err)
-	}
-
-	// Save the function info into the map.
-	// TODO: this presumes there's no naming conflicts
-	resolver := schema.Resolver()
-	functionsMap[resolver] = info
-
-	fmt.Printf("Registered function \"%s\" for resolver \"%s\"\n", fnName, resolver)
-	return nil
-}
-
-func validateFunction(info functionInfo) error {
-	// TODO: validate that the function definition matches the schema
-	return nil
-}
-
-func callFunction(ctx context.Context, info functionInfo, inputs map[string]any) (any, error) {
-
-	mod := *info.Module
-	mem := mod.Memory()
-
-	fn := *info.Function
 	def := fn.Definition()
 	paramTypes := def.ParamTypes()
-
-	schema := *info.Schema
-	fnName := schema.FunctionName()
-	resolver := schema.Resolver()
+	schema := info.Schema
 
 	// Get parameters to pass as input to the plugin function
 	// Note that we can't use def.ParamNames() because they are only available when the plugin
@@ -186,13 +207,14 @@ func callFunction(ctx context.Context, info functionInfo, inputs map[string]any)
 	}
 
 	// Call the wasm function
-	fmt.Printf("Calling function \"%s\" for resolver \"%s\"\n", fnName, resolver)
+	fmt.Printf("Calling function '%s' for resolver '%s'\n", fnName, schema.Resolver())
 	res, err := fn.Call(ctx, params...)
 	if err != nil {
 		return nil, err
 	}
 
 	// Get the result
+	mem := mod.Memory()
 	result, err := convertResult(mem, *schema.FieldDef.Type, def.ResultTypes()[0], res[0])
 	if err != nil {
 		return nil, fmt.Errorf("failed to convert result: %v", err)
@@ -214,23 +236,36 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	info := functionsMap[req.Resolver]
-	if info.Function == nil {
+	// Get the function info for the resolver
+	info, ok := functionsMap[req.Resolver]
+	if !ok {
 		w.WriteHeader(http.StatusBadRequest)
-		log.Printf("No function registered for resolver \"%s\"", req.Resolver)
+		log.Printf("No function registered for resolver '%s'", req.Resolver)
 		return
 	}
 
-	fnName := info.Schema.FunctionName()
+	// Get a module instance for this request.
+	// Each request will get its own instance of the plugin module,
+	// so that we can run multiple requests in parallel without risk
+	// of corrupting the module's memory.
 	ctx := r.Context()
+	mod, buf, err := getModuleInstance(ctx, info.PluginName)
+	if err != nil {
+		log.Println(err)
+		writeErrorResponse(w, err)
+		return
+	}
+	defer mod.Close(ctx)
 
+	fnName := info.FunctionName()
 	if req.Args != nil {
 
 		// Call the function, passing in the args from the request
-		result, err := callFunction(ctx, info, req.Args)
+		result, err := callFunction(ctx, mod, info, req.Args)
 		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			log.Printf("Error calling function \"%s\": %v", fnName, err)
+			err := fmt.Errorf("error calling function '%s': %v", fnName, err)
+			log.Println(err)
+			writeErrorResponse(w, err, buf.Stdout.String(), buf.Stderr.String())
 			return
 		}
 
@@ -259,10 +294,11 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 
 		// Call the function for each parent
 		for i, parent := range req.Parents {
-			results[i], err = callFunction(ctx, info, parent)
+			results[i], err = callFunction(ctx, mod, info, parent)
 			if err != nil {
-				w.WriteHeader(http.StatusInternalServerError)
-				log.Printf("Error calling function \"%s\": %v", fnName, err)
+				err := fmt.Errorf("error calling function '%s': %v", fnName, err)
+				log.Println(err)
+				writeErrorResponse(w, err, buf.Stdout.String(), buf.Stderr.String())
 				return
 			}
 		}
@@ -278,6 +314,28 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		log.Println("Request must have either args or parents.")
 	}
+}
+
+func writeErrorResponse(w http.ResponseWriter, err error, msgs ...string) {
+	w.WriteHeader(http.StatusInternalServerError)
+
+	// Dgraph lambda expects a JSON response similar to a GraphQL error response
+	w.Header().Set("Content-Type", "application/json")
+	resp := HMErrorResponse{Errors: []HMError{}}
+
+	// Emit messages first
+	for _, msg := range msgs {
+		for _, line := range strings.Split(msg, "\n") {
+			if len(line) > 0 {
+				resp.Errors = append(resp.Errors, HMError{Message: line})
+			}
+		}
+	}
+
+	// Emit the error last
+	resp.Errors = append(resp.Errors, HMError{Message: err.Error()})
+
+	json.NewEncoder(w).Encode(resp)
 }
 
 func writeDataAsJson(w http.ResponseWriter, data any, isJson bool) error {
@@ -299,8 +357,9 @@ func writeDataAsJson(w http.ResponseWriter, data any, isJson bool) error {
 			}
 			w.Write([]byte{']'})
 		default:
-			w.WriteHeader(http.StatusInternalServerError)
-			return fmt.Errorf("failed to serialize result data")
+			err := fmt.Errorf("unexpected result type: %T", data)
+			log.Println(err)
+			writeErrorResponse(w, err)
 		}
 
 		return nil
@@ -308,8 +367,9 @@ func writeDataAsJson(w http.ResponseWriter, data any, isJson bool) error {
 
 	output, err := json.Marshal(data)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return fmt.Errorf("failed to serialize result data:", err)
+		err := fmt.Errorf("failed to serialize result data: %s", err)
+		log.Println(err)
+		writeErrorResponse(w, err)
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -551,4 +611,12 @@ func encodeUTF16(str string) []byte {
 	ptr := unsafe.Pointer(&words[0])
 	bytes := unsafe.Slice((*byte)(ptr), len(words)*2)
 	return bytes
+}
+
+type HMErrorResponse struct {
+	Errors []HMError `json:"errors"`
+}
+
+type HMError struct {
+	Message string `json:"message"`
 }
