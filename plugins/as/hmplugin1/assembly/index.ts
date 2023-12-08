@@ -132,7 +132,7 @@ class Person {
   updateFullName(): void {
     this.fullName = `${this.firstName} ${this.lastName}`;
   }
-};
+}
 
 // @ts-ignore
 @json
@@ -156,4 +156,10 @@ class AggregatePersonResult {
 @json
 class GQLAggregateValues {
   count: u32 = 0;
+}
+
+export function testError(): void {
+  console.log("hello");
+  console.log("howdy");
+  throw new Error("This is a test error");
 }
