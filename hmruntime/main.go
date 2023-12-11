@@ -10,11 +10,13 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 	"unicode/utf16"
 	"unsafe"
 
 	"github.com/dgraph-io/gqlparser/ast"
 	"github.com/google/uuid"
+	"github.com/radovskyb/watcher"
 	"github.com/tetratelabs/wazero"
 	wasm "github.com/tetratelabs/wazero/api"
 )
@@ -66,12 +68,28 @@ func main() {
 }
 
 func loadPlugins(ctx context.Context) error {
+
+	// For now, we have just one hardcoded plugin.
+	const pluginName = "hmplugin1"
+
 	// TODO: This will need work:
 	// - Plugins should probably be loaded from a repository, not from disk.
 	// - We'll need to figure out how to handle plugin updates.
 	// - We'll need to figure out hot/warm/cold plugin loading.
-	// For now, we have just one hardcoded plugin.
-	return loadPluginModule(ctx, "hmplugin1")
+
+	err := loadPluginModule(ctx, pluginName)
+	if err != nil {
+		return err
+	}
+
+	// Temporarily, watch for changes to the plugin so we can reload it.
+	// TODO: Remove this when we have a better way to handle plugin updates.
+	err = watchForPluginChanges(ctx, pluginName)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func registerFunctions(ctx context.Context) error {
@@ -96,6 +114,21 @@ func registerFunctions(ctx context.Context) error {
 					fmt.Printf("Registered function '%s' for resolver '%s'\n", fnName, resolver)
 				}
 			}
+		}
+	}
+
+	// Cleanup any previously registered functions that are no longer in the schema.
+	for resolver, info := range functionsMap {
+		found := false
+		for _, schema := range funcSchemas {
+			if strings.EqualFold(info.FunctionName(), schema.FunctionName()) {
+				found = true
+				break
+			}
+		}
+		if !found {
+			delete(functionsMap, resolver)
+			fmt.Printf("Unregistered old function '%s' for resolver '%s'\n", info.FunctionName(), resolver)
 		}
 	}
 
@@ -126,8 +159,15 @@ func initWasmRuntime(ctx context.Context) (wazero.Runtime, error) {
 
 func loadPluginModule(ctx context.Context, name string) error {
 
+	cmOld, reloading := compiledModules[name]
+	if reloading {
+		fmt.Printf("Reloading plugin '%s'\n", name)
+	} else {
+		fmt.Printf("Loading plugin '%s'\n", name)
+	}
+
 	// TODO: Load the plugin from some repository instead of disk.
-	path := "../plugins/as/" + name + "/build/release.wasm"
+	path := getPathForPlugin(name)
 	plugin, err := os.ReadFile(path)
 	if err != nil {
 		return fmt.Errorf("failed to load the plugin: %v", err)
@@ -141,6 +181,12 @@ func loadPluginModule(ctx context.Context, name string) error {
 
 	// Store the compiled module for later retrieval.
 	compiledModules[name] = cm
+
+	// When reloading, close the old module.
+	if reloading {
+		cmOld.Close(ctx)
+	}
+
 	return nil
 }
 
@@ -177,6 +223,63 @@ func getModuleInstance(ctx context.Context, pluginName string) (wasm.Module, buf
 	}
 
 	return mod, buf, nil
+}
+
+func getPathForPlugin(name string) string {
+	// TODO: Decide whether to load the plugin in debug or release mode.
+	// For now use debug, so we get better stack traces on errors.
+	return "../plugins/as/" + name + "/build/debug.wasm"
+}
+
+func watchForPluginChanges(ctx context.Context, name string) error {
+	// Watch the plugin so we can reload it when it changes.
+	// TODO: This is temporary until we have a better way to handle plugin updates.
+
+	w := watcher.New()
+	w.SetMaxEvents(1)
+	w.FilterOps(watcher.Write)
+
+	go func() {
+		for {
+			select {
+			case <-w.Event:
+				// Reload the plugin module.
+				err := loadPluginModule(ctx, name)
+				if err != nil {
+					log.Fatalf("failed to reload plugin: %v\n", err)
+				}
+
+				// Also re-register functions, in case there have been schema changes.
+				err = registerFunctions(ctx)
+				if err != nil {
+					log.Fatalln(err)
+				}
+
+			case err := <-w.Error:
+				log.Fatalf("failure while watching plugin file: %v\n", err)
+			case <-w.Closed:
+				return
+			case <-ctx.Done():
+				w.Close()
+				return
+			}
+		}
+	}()
+
+	path := getPathForPlugin(name)
+	err := w.Add(path)
+	if err != nil {
+		return fmt.Errorf("failed to watch plugin file: %v", err)
+	}
+
+	go func() {
+		err = w.Start(time.Second * 1)
+		if err != nil {
+			log.Fatalf("failed to start file watcher: %v\n", err)
+		}
+	}()
+
+	return nil
 }
 
 func callFunction(ctx context.Context, mod wasm.Module, info functionInfo, inputs map[string]any) (any, error) {
