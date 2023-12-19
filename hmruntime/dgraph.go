@@ -17,7 +17,7 @@ import (
 func executeDQL(ctx context.Context, stmt string, isMutation bool) ([]byte, error) {
 	reqBody := strings.NewReader(stmt)
 
-	host := "http://localhost:8080" // TODO: make this configurable
+	host := *dgraphUrl
 	var endpoint, contentType string
 	if isMutation {
 		endpoint = "/mutate?commitNow=true"
@@ -47,7 +47,7 @@ func executeDQL(ctx context.Context, stmt string, isMutation bool) ([]byte, erro
 
 func executeGQL(ctx context.Context, stmt string) ([]byte, error) {
 	reqBody := strings.NewReader(stmt)
-	resp, err := http.Post("http://localhost:8080/graphql", "application/graphql", reqBody)
+	resp, err := http.Post(fmt.Sprintf("%s/graphql", *dgraphUrl), "application/graphql", reqBody)
 	if err != nil {
 		return nil, fmt.Errorf("error posting GraphQL statement: %v", err)
 	}
