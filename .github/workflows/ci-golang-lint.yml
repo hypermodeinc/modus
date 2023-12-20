@@ -1,0 +1,34 @@
+name: ci-golang-lint
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
+jobs:
+    golang-lint:
+        if: github.event_name == 'pull_request'
+        name: lint
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v3
+            - name: Setup Go
+              uses: actions/setup-go@v4
+              with:
+                go-version: '>=1.20.0'
+            - run: go version
+            - name: golang-lint
+              env:
+                GOGC: 10
+              uses: golangci/golangci-lint-action@v3
+              with:
+                version: latest
+                working-directory: hmruntime
+                only-new-issues: true
+                skip-pkg-cache: true
+                skip-build-cache: true
+                args: --timeout=10m
