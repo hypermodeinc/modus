@@ -52,7 +52,10 @@ func (c *ClerkAPI) Login() error {
 
 	body, _ := io.ReadAll(resp.Body)
 	var signInResponse SignInResponse
-	json.Unmarshal(body, &signInResponse)
+	err = json.Unmarshal(body, &signInResponse)
+	if err != nil {
+		return err
+	}
 	token := signInResponse.Token
 
 	// Second POST request to get the JWT
@@ -73,7 +76,10 @@ func (c *ClerkAPI) Login() error {
 
 	body, _ = io.ReadAll(resp.Body)
 	var session ClientSession
-	json.Unmarshal(body, &session)
+	err = json.Unmarshal(body, &session)
+	if err != nil {
+		return err
+	}
 	c.JWT = session.LastActiveToken.JWT
 
 	return nil
