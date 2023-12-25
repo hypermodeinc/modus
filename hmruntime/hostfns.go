@@ -26,6 +26,7 @@ func instantiateHostFunctions(ctx context.Context, runtime wazero.Runtime) error
 	// Each host function should get a line here:
 	b.NewFunctionBuilder().WithFunc(hostExecuteDQL).Export("executeDQL")
 	b.NewFunctionBuilder().WithFunc(hostExecuteGQL).Export("executeGQL")
+	b.NewFunctionBuilder().WithFunc(hostInvokeClassifier).Export("invokeClassifier")
 
 	_, err := b.Instantiate(ctx)
 	if err != nil {
