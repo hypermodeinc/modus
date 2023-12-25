@@ -141,6 +141,10 @@ func hostInvokeClassifier(ctx context.Context, mod wasm.Module, modelId uint32, 
 		return 0
 	}
 	svc, err := aws.GetSecretManagerSession()
+	if err != nil {
+		log.Println("error getting secret manager session:", err)
+		return 0
+	}
 	secretValue, err := svc.GetSecretValue(&secretsmanager.GetSecretValueInput{
 		SecretId: &endpoint,
 	})
