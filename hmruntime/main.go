@@ -31,11 +31,14 @@ var compiledModules = make(map[string]wazero.CompiledModule)
 // map that holds the function info for each resolver
 var functionsMap = make(map[string]functionInfo)
 
+var dgraphUrl *string
+
 func main() {
 	ctx := context.Background()
 
 	// Parse command-line flags
 	var port = flag.Int("port", 8686, "The HTTP port to listen on.")
+	dgraphUrl = flag.String("dgraph", "http://localhost:8080", "The Dgraph url to connect to.")
 	flag.Parse()
 
 	// Initialize the WebAssembly runtime

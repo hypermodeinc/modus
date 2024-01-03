@@ -14,10 +14,13 @@ The following must be installed on your development workstation or build server:
 
 To build the Hypermode runtime server: `go build`
 
+To build the docker image: `docker build -t hmruntime .`
+
 ## Running
 
 - To run the compiled program, invoke the `hmruntime` binary.
 - To run from code (while developing), use `go run .` instead.
+- To run using docker containers, use `docker run -p 8686:8686 -v <PLUGINS_PATH>:/plugins hmruntime:latest hmruntime --dgraph=http://host.docker.internal:8080`.
 
 ## Notes
 
