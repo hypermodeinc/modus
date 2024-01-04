@@ -14,7 +14,6 @@ export abstract class dql {
 
     private static execute<TData>(query: string, isMutation: bool): DQLResponse<TData> {
         const response = host.executeDQL(query, isMutation);
-        console.log(response);
         return JSON.parse<DQLResponse<TData>>(response);
     }
 }
