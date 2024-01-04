@@ -32,6 +32,7 @@ var compiledModules = make(map[string]wazero.CompiledModule)
 var functionsMap = make(map[string]functionInfo)
 
 var dgraphUrl *string
+var pluginsPath *string
 
 func main() {
 	ctx := context.Background()
@@ -39,6 +40,7 @@ func main() {
 	// Parse command-line flags
 	var port = flag.Int("port", 8686, "The HTTP port to listen on.")
 	dgraphUrl = flag.String("dgraph", "http://localhost:8080", "The Dgraph url to connect to.")
+	pluginsPath = flag.String("plugins", "../plugins/as", "The path to the plugins directory.")
 	flag.Parse()
 
 	// Initialize the WebAssembly runtime
@@ -71,22 +73,45 @@ func main() {
 }
 
 func loadPlugins(ctx context.Context) error {
+	entries, err := os.ReadDir(*pluginsPath)
+	if err != nil {
+		return fmt.Errorf("failed to read plugins directory: %v", err)
+	}
 
-	// For now, we have just one hardcoded plugin.
-	const pluginName = "hmplugin1"
+	for _, entry := range entries {
 
-	// TODO: This will need work:
-	// - Plugins should probably be loaded from a repository, not from disk.
-	// - We'll need to figure out how to handle plugin updates.
-	// - We'll need to figure out hot/warm/cold plugin loading.
+		// Determine if the entry represents a plugin.
+		var pluginName string
+		entryName := entry.Name()
+		if entry.IsDir() {
+			pluginName = entryName
+			path := fmt.Sprintf("%s/%s/build/debug.wasm", *pluginsPath, pluginName)
+			if _, err := os.Stat(path); err != nil {
+				continue
+			}
+		} else if strings.HasSuffix(entryName, ".wasm") {
+			pluginName = strings.TrimSuffix(entryName, ".wasm")
+		} else {
+			continue
+		}
+
+		// Load the plugin
+		err := loadPlugin(ctx, pluginName)
+		if err != nil {
+			log.Printf("Failed to load plugin '%s': %v\n", pluginName, err)
+		}
+	}
+
+	return nil
+}
+
+func loadPlugin(ctx context.Context, pluginName string) error {
 
 	err := loadPluginModule(ctx, pluginName)
 	if err != nil {
 		return err
 	}
 
-	// Temporarily, watch for changes to the plugin so we can reload it.
-	// TODO: Remove this when we have a better way to handle plugin updates.
 	err = watchForPluginChanges(ctx, pluginName)
 	if err != nil {
 		return err
@@ -169,8 +194,11 @@ func loadPluginModule(ctx context.Context, name string) error {
 		fmt.Printf("Loading plugin '%s'\n", name)
 	}
 
-	// TODO: Load the plugin from some repository instead of disk.
-	path := getPathForPlugin(name)
+	path, err := getPathForPlugin(name)
+	if err != nil {
+		return fmt.Errorf("failed to get path for plugin: %v", err)
+	}
+
 	plugin, err := os.ReadFile(path)
 	if err != nil {
 		return fmt.Errorf("failed to load the plugin: %v", err)
@@ -228,10 +256,21 @@ func getModuleInstance(ctx context.Context, pluginName string) (wasm.Module, buf
 	return mod, buf, nil
 }
 
-func getPathForPlugin(name string) string {
-	// TODO: Decide whether to load the plugin in debug or release mode.
-	// For now use debug, so we get better stack traces on errors.
-	return "../plugins/as/" + name + "/build/debug.wasm"
+func getPathForPlugin(name string) (string, error) {
+
+	// Normally the plugin will be directly in the plugins directory, by filename.
+	path := *pluginsPath + "/" + name + ".wasm"
+	if _, err := os.Stat(path); err == nil {
+		return path, nil
+	}
+
+	// For local development, the plugin will be in a subdirectory and we'll use the debug.wasm file.
+	path = *pluginsPath + "/" + name + "/build/debug.wasm"
+	if _, err := os.Stat(path); err == nil {
+		return path, nil
+	}
+
+	return "", fmt.Errorf("compiled wasm file not found for plugin '%s'", name)
 }
 
 func watchForPluginChanges(ctx context.Context, name string) error {
@@ -269,8 +308,12 @@ func watchForPluginChanges(ctx context.Context, name string) error {
 		}
 	}()
 
-	path := getPathForPlugin(name)
-	err := w.Add(path)
+	path, err := getPathForPlugin(name)
+	if err != nil {
+		return fmt.Errorf("failed to get path for plugin: %v", err)
+	}
+
+	err = w.Add(path)
 	if err != nil {
 		return fmt.Errorf("failed to watch plugin file: %v", err)
 	}
