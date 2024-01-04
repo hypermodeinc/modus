@@ -73,22 +73,45 @@ func main() {
 }
 
 func loadPlugins(ctx context.Context) error {
+	entries, err := os.ReadDir(*pluginsPath)
+	if err != nil {
+		return fmt.Errorf("failed to read plugins directory: %v", err)
+	}
 
-	// For now, we have just one hardcoded plugin.
-	const pluginName = "hmplugin1"
+	for _, entry := range entries {
 
-	// TODO: This will need work:
-	// - Plugins should probably be loaded from a repository, not from disk.
-	// - We'll need to figure out how to handle plugin updates.
-	// - We'll need to figure out hot/warm/cold plugin loading.
+		// Determine if the entry represents a plugin.
+		var pluginName string
+		entryName := entry.Name()
+		if entry.IsDir() {
+			pluginName = entryName
+			path := fmt.Sprintf("%s/%s/build/debug.wasm", *pluginsPath, pluginName)
+			if _, err := os.Stat(path); err != nil {
+				continue
+			}
+		} else if strings.HasSuffix(entryName, ".wasm") {
+			pluginName = strings.TrimSuffix(entryName, ".wasm")
+		} else {
+			continue
+		}
+
+		// Load the plugin
+		err := loadPlugin(ctx, pluginName)
+		if err != nil {
+			log.Printf("Failed to load plugin '%s': %v\n", pluginName, err)
+		}
+	}
+
+	return nil
+}
+
+func loadPlugin(ctx context.Context, pluginName string) error {
 
 	err := loadPluginModule(ctx, pluginName)
 	if err != nil {
 		return err
 	}
 
-	// Temporarily, watch for changes to the plugin so we can reload it.
-	// TODO: Remove this when we have a better way to handle plugin updates.
 	err = watchForPluginChanges(ctx, pluginName)
 	if err != nil {
 		return err
