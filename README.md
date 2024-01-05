@@ -33,9 +33,10 @@ For example:
 
 ```
 docker run --name <CONTAINER_NAME> \
-  -d -p "8080:8080" -p "9080:9080" \
-  -v <DGRAPH_DATA_PATH>:/dgraph dgraph/standalone:latest
-  --env=DGRAPH_ALPHA_GRAPHQL=lambda-url=http://host.docker.internal:8686/graphql-worker
+  -d -p 8080:8080 -p 9080:9080 \
+  -v <DGRAPH_DATA_PATH>:/dgraph \
+  --env=DGRAPH_ALPHA_GRAPHQL=lambda-url=http://host.docker.internal:8686/graphql-worker \
+  dgraph/standalone:latest
 ```
 
 ### Hypermode Plugins
