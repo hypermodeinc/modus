@@ -9,6 +9,8 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"reflect"
+	"regexp"
 	"strings"
 	"time"
 	"unicode/utf16"
@@ -63,6 +65,12 @@ func main() {
 		log.Fatalln(err)
 	}
 
+	// Watch for changes
+	err = watchPluginDirectory(ctx)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
 	// Start the HTTP server
 	fmt.Printf("Listening on port %d...\n", *port)
 	http.HandleFunc("/graphql-worker", handleRequest)
@@ -96,25 +104,10 @@ func loadPlugins(ctx context.Context) error {
 		}
 
 		// Load the plugin
-		err := loadPlugin(ctx, pluginName)
+		err := loadPluginModule(ctx, pluginName)
 		if err != nil {
 			log.Printf("Failed to load plugin '%s': %v\n", pluginName, err)
 		}
-	}
-
-	return nil
-}
-
-func loadPlugin(ctx context.Context, pluginName string) error {
-
-	err := loadPluginModule(ctx, pluginName)
-	if err != nil {
-		return err
-	}
-
-	err = watchForPluginChanges(ctx, pluginName)
-	if err != nil {
-		return err
 	}
 
 	return nil
@@ -129,32 +122,40 @@ func registerFunctions(ctx context.Context) error {
 	}
 
 	// Build a map of resolvers to function info, including the plugin name.
-	// This presumes there are no duplicate exported function names across plugins.
-	// TODO: Figure out how to handle function name conflicts.
-	for _, schema := range funcSchemas {
-		for pluginName, cm := range compiledModules {
+	// If there are function name conflicts between plugins, the last plugin loaded wins.
+	for pluginName, cm := range compiledModules {
+		for _, schema := range funcSchemas {
 			for _, fn := range cm.ExportedFunctions() {
 				fnName := fn.ExportNames()[0]
 				if strings.EqualFold(fnName, schema.FunctionName()) {
 					info := functionInfo{pluginName, schema}
 					resolver := schema.Resolver()
+					oldInfo, existed := functionsMap[resolver]
+					if existed && reflect.DeepEqual(oldInfo, info) {
+						continue
+					}
 					functionsMap[resolver] = info
-					fmt.Printf("Registered function '%s' for resolver '%s'\n", fnName, resolver)
+					if existed {
+						fmt.Printf("Re-registered %s to use %s in %s\n", resolver, fnName, pluginName)
+					} else {
+						fmt.Printf("Registered %s to use %s in %s\n", resolver, fnName, pluginName)
+					}
 				}
 			}
 		}
 	}
 
-	// Cleanup any previously registered functions that are no longer in the schema.
+	// Cleanup any previously registered functions that are no longer in the schema or loaded modules.
 	for resolver, info := range functionsMap {
-		found := false
+		foundSchema := false
 		for _, schema := range funcSchemas {
 			if strings.EqualFold(info.FunctionName(), schema.FunctionName()) {
-				found = true
+				foundSchema = true
 				break
 			}
 		}
-		if !found {
+		_, foundModule := compiledModules[info.PluginName]
+		if !foundSchema || !foundModule {
 			delete(functionsMap, resolver)
 			fmt.Printf("Unregistered old function '%s' for resolver '%s'\n", info.FunctionName(), resolver)
 		}
@@ -186,7 +187,6 @@ func initWasmRuntime(ctx context.Context) (wazero.Runtime, error) {
 }
 
 func loadPluginModule(ctx context.Context, name string) error {
-
 	cmOld, reloading := compiledModules[name]
 	if reloading {
 		fmt.Printf("Reloading plugin '%s'\n", name)
@@ -217,6 +217,19 @@ func loadPluginModule(ctx context.Context, name string) error {
 	if reloading {
 		cmOld.Close(ctx)
 	}
+
+	return nil
+}
+
+func unloadPluginModule(ctx context.Context, name string) error {
+	cmOld, found := compiledModules[name]
+	if !found {
+		return fmt.Errorf("plugin not found '%s'", name)
+	}
+
+	fmt.Printf("Unloading plugin '%s'\n", name)
+	delete(compiledModules, name)
+	cmOld.Close(ctx)
 
 	return nil
 }
@@ -273,32 +286,60 @@ func getPathForPlugin(name string) (string, error) {
 	return "", fmt.Errorf("compiled wasm file not found for plugin '%s'", name)
 }
 
-func watchForPluginChanges(ctx context.Context, name string) error {
-	// Watch the plugin so we can reload it when it changes.
-	// TODO: This is temporary until we have a better way to handle plugin updates.
+func getPluginNameFromPath(path string) (string, error) {
+	if !strings.HasSuffix(path, ".wasm") {
+		return "", fmt.Errorf("path does not point to a wasm file: %s", path)
+	}
 
+	parts := strings.Split(path, "/")
+
+	// For local development
+	if strings.HasSuffix(path, "/build/debug.wasm") {
+		return parts[len(parts)-3], nil
+	} else if strings.HasSuffix(path, "/build/release.wasm") {
+		return "", nil
+	}
+
+	return strings.TrimSuffix(parts[len(parts)-1], ".wasm"), nil
+}
+
+func watchPluginDirectory(ctx context.Context) error {
 	w := watcher.New()
-	w.SetMaxEvents(1)
-	w.FilterOps(watcher.Write)
+	w.AddFilterHook(watcher.RegexFilterHook(regexp.MustCompile(`^.+\.wasm$`), false))
 
 	go func() {
 		for {
 			select {
-			case <-w.Event:
-				// Reload the plugin module.
-				err := loadPluginModule(ctx, name)
+			case evt := <-w.Event:
+
+				pluginName, err := getPluginNameFromPath(evt.Path)
 				if err != nil {
-					log.Fatalf("failed to reload plugin: %v\n", err)
+					log.Printf("failed to get plugin name: %v\n", err)
+				}
+				if pluginName == "" {
+					continue
 				}
 
-				// Also re-register functions, in case there have been schema changes.
+				switch evt.Op {
+				case watcher.Create, watcher.Write:
+					err = loadPluginModule(ctx, pluginName)
+					if err != nil {
+						log.Printf("failed to load plugin: %v\n", err)
+					}
+				case watcher.Remove:
+					err = unloadPluginModule(ctx, pluginName)
+					if err != nil {
+						log.Printf("failed to unload plugin: %v\n", err)
+					}
+				}
+
 				err = registerFunctions(ctx)
 				if err != nil {
-					log.Fatalln(err)
+					log.Printf("failed to register functions: %v\n", err)
 				}
 
 			case err := <-w.Error:
-				log.Fatalf("failure while watching plugin file: %v\n", err)
+				log.Fatalf("failure while watching plugin directory: %v\n", err)
 			case <-w.Closed:
 				return
 			case <-ctx.Done():
@@ -308,14 +349,9 @@ func watchForPluginChanges(ctx context.Context, name string) error {
 		}
 	}()
 
-	path, err := getPathForPlugin(name)
+	err := w.AddRecursive(*pluginsPath)
 	if err != nil {
-		return fmt.Errorf("failed to get path for plugin: %v", err)
-	}
-
-	err = w.Add(path)
-	if err != nil {
-		return fmt.Errorf("failed to watch plugin file: %v", err)
+		return fmt.Errorf("failed to watch plugins directory: %v", err)
 	}
 
 	go func() {
