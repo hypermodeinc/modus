@@ -1,3 +1,6 @@
+/*
+ * Copyright 2023 Hypermode, Inc.
+ */
 package main
 
 import (
