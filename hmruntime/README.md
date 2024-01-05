@@ -8,7 +8,6 @@ Hypermode Plugins and executes their Hypermode Functions.
 The following must be installed on your development workstation or build server:
 
 - A [Go](https://go.dev/) compiler, of at least the version specified in [`go.mod`](./go.mod)
-- The [Protocol Buffer Compiler](https://grpc.io/docs/protoc-installation/) (`protoc`)
 
 ## Building
 
