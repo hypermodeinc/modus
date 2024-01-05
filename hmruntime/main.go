@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"reflect"
 	"regexp"
 	"strings"
 	"time"
@@ -121,17 +122,24 @@ func registerFunctions(ctx context.Context) error {
 	}
 
 	// Build a map of resolvers to function info, including the plugin name.
-	// This presumes there are no duplicate exported function names across plugins.
-	// TODO: Figure out how to handle function name conflicts.
-	for _, schema := range funcSchemas {
-		for pluginName, cm := range compiledModules {
+	// If there are function name conflicts between plugins, the last plugin loaded wins.
+	for pluginName, cm := range compiledModules {
+		for _, schema := range funcSchemas {
 			for _, fn := range cm.ExportedFunctions() {
 				fnName := fn.ExportNames()[0]
 				if strings.EqualFold(fnName, schema.FunctionName()) {
 					info := functionInfo{pluginName, schema}
 					resolver := schema.Resolver()
+					oldInfo, existed := functionsMap[resolver]
+					if existed && reflect.DeepEqual(oldInfo, info) {
+						continue
+					}
 					functionsMap[resolver] = info
-					fmt.Printf("Registered function '%s' for resolver '%s'\n", fnName, resolver)
+					if existed {
+						fmt.Printf("Re-registered %s to use %s in %s\n", resolver, fnName, pluginName)
+					} else {
+						fmt.Printf("Registered %s to use %s in %s\n", resolver, fnName, pluginName)
+					}
 				}
 			}
 		}
