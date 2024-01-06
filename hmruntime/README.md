@@ -8,7 +8,6 @@ Hypermode Plugins and executes their Hypermode Functions.
 The following must be installed on your development workstation or build server:
 
 - A [Go](https://go.dev/) compiler, of at least the version specified in [`go.mod`](./go.mod)
-- The [Protocol Buffer Compiler](https://grpc.io/docs/protoc-installation/) (`protoc`)
 
 ## Building
 
@@ -24,9 +23,3 @@ To build the docker image, from the root directory: `docker build -t hypermode/r
   - To just use the default `hmplugin1` sample plugin, use `docker run -p 8686:8686 hypermode/runtime --dgraph=http://host.docker.internal:8080`.
   - Or, mount a plugins directory on the host, use `docker run -p 8686:8686 -v <PLUGINS_PATH>:/plugins hypermode/runtime --dgraph=http://host.docker.internal:8080`.
     - For example `-v ./plugins/as:/plugins`
-
-## Notes
-
-Currently, the `hmplugin1` plugin is hardcoded, so be sure to compile it before
-running this.  In the future, plugins will be developed independently of the runtime,
-and loaded from a database or repository.
