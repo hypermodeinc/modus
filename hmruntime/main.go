@@ -86,7 +86,7 @@ func main() {
 func loadPlugins(ctx context.Context) error {
 	entries, err := os.ReadDir(*pluginsPath)
 	if err != nil {
-		return fmt.Errorf("failed to read plugins directory: %v", err)
+		return fmt.Errorf("failed to read plugins directory: %w", err)
 	}
 
 	for _, entry := range entries {
@@ -199,18 +199,18 @@ func loadPluginModule(ctx context.Context, name string) error {
 
 	path, err := getPathForPlugin(name)
 	if err != nil {
-		return fmt.Errorf("failed to get path for plugin: %v", err)
+		return fmt.Errorf("failed to get path for plugin: %w", err)
 	}
 
 	plugin, err := os.ReadFile(path)
 	if err != nil {
-		return fmt.Errorf("failed to load the plugin: %v", err)
+		return fmt.Errorf("failed to load the plugin: %w", err)
 	}
 
 	// Compile the plugin into a module.
 	cm, err := runtime.CompileModule(ctx, plugin)
 	if err != nil {
-		return fmt.Errorf("failed to compile the plugin: %v", err)
+		return fmt.Errorf("failed to compile the plugin: %w", err)
 	}
 
 	// Store the compiled module for later retrieval.
@@ -266,7 +266,7 @@ func getModuleInstance(ctx context.Context, pluginName string) (wasm.Module, buf
 	// which will call any top-level code in the plugin.
 	mod, err := runtime.InstantiateModule(ctx, compiled, cfg)
 	if err != nil {
-		return nil, buf, fmt.Errorf("failed to instantiate the plugin module: %v", err)
+		return nil, buf, fmt.Errorf("failed to instantiate the plugin module: %w", err)
 	}
 
 	return mod, buf, nil
@@ -354,7 +354,7 @@ func watchPluginDirectory(ctx context.Context) error {
 
 	err := w.AddRecursive(*pluginsPath)
 	if err != nil {
-		return fmt.Errorf("failed to watch plugins directory: %v", err)
+		return fmt.Errorf("failed to watch plugins directory: %w", err)
 	}
 
 	go func() {
@@ -388,7 +388,7 @@ func callFunction(ctx context.Context, mod wasm.Module, info functionInfo, input
 
 		param, err := convertParam(ctx, mod, *arg.Type, paramTypes[i], val)
 		if err != nil {
-			return nil, fmt.Errorf("parameter %s is invalid: %v", arg.Name, err)
+			return nil, fmt.Errorf("parameter %s is invalid: %w", arg.Name, err)
 		}
 
 		params[i] = param
@@ -405,7 +405,7 @@ func callFunction(ctx context.Context, mod wasm.Module, info functionInfo, input
 	mem := mod.Memory()
 	result, err := convertResult(mem, *schema.FieldDef.Type, def.ResultTypes()[0], res[0])
 	if err != nil {
-		return nil, fmt.Errorf("failed to convert result: %v", err)
+		return nil, fmt.Errorf("failed to convert result: %w", err)
 	}
 
 	return result, nil
@@ -451,7 +451,7 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 		// Call the function, passing in the args from the request
 		result, err := callFunction(ctx, mod, info, req.Args)
 		if err != nil {
-			err := fmt.Errorf("error calling function '%s': %v", fnName, err)
+			err := fmt.Errorf("error calling function '%s': %w", fnName, err)
 			log.Println(err)
 			writeErrorResponse(w, err, buf.Stdout.String(), buf.Stderr.String())
 			return
@@ -484,7 +484,7 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 		for i, parent := range req.Parents {
 			results[i], err = callFunction(ctx, mod, info, parent)
 			if err != nil {
-				err := fmt.Errorf("error calling function '%s': %v", fnName, err)
+				err := fmt.Errorf("error calling function '%s': %w", fnName, err)
 				log.Println(err)
 				writeErrorResponse(w, err, buf.Stdout.String(), buf.Stderr.String())
 				return

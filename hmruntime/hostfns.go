@@ -23,7 +23,7 @@ func instantiateHostFunctions(ctx context.Context, runtime wazero.Runtime) error
 
 	_, err := b.Instantiate(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to instantiate the %s module: %v", HostModuleName, err)
+		return fmt.Errorf("failed to instantiate the %s module: %w", HostModuleName, err)
 	}
 
 	return nil

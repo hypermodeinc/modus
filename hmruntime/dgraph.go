@@ -32,7 +32,7 @@ func executeDQL(ctx context.Context, stmt string, isMutation bool) ([]byte, erro
 
 	resp, err := http.Post(host+endpoint, contentType, reqBody)
 	if err != nil {
-		return nil, fmt.Errorf("error posting DQL statement: %v", err)
+		return nil, fmt.Errorf("error posting DQL statement: %w", err)
 	}
 
 	defer resp.Body.Close()
@@ -42,7 +42,7 @@ func executeDQL(ctx context.Context, stmt string, isMutation bool) ([]byte, erro
 
 	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("error reading DQL response: %v", err)
+		return nil, fmt.Errorf("error reading DQL response: %w", err)
 	}
 
 	return respBody, nil
@@ -52,7 +52,7 @@ func executeGQL(ctx context.Context, stmt string) ([]byte, error) {
 	reqBody := strings.NewReader(stmt)
 	resp, err := http.Post(fmt.Sprintf("%s/graphql", *dgraphUrl), "application/graphql", reqBody)
 	if err != nil {
-		return nil, fmt.Errorf("error posting GraphQL statement: %v", err)
+		return nil, fmt.Errorf("error posting GraphQL statement: %w", err)
 	}
 
 	defer resp.Body.Close()
@@ -62,7 +62,7 @@ func executeGQL(ctx context.Context, stmt string) ([]byte, error) {
 
 	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("error reading GraphQL response: %v", err)
+		return nil, fmt.Errorf("error reading GraphQL response: %w", err)
 	}
 
 	return respBody, nil
@@ -84,13 +84,13 @@ func getGQLSchema(ctx context.Context) (string, error) {
 
 	r, err := executeDQL(ctx, schemaQuery, false)
 	if err != nil {
-		return "", fmt.Errorf("error getting GraphQL schema from Dgraph: %v", err)
+		return "", fmt.Errorf("error getting GraphQL schema from Dgraph: %w", err)
 	}
 
 	var response dqlResponse[schemaResponse]
 	err = json.Unmarshal(r, &response)
 	if err != nil {
-		return "", fmt.Errorf("error deserializing JSON of GraphQL schema: %v", err)
+		return "", fmt.Errorf("error deserializing JSON of GraphQL schema: %w", err)
 	}
 
 	data := response.Data
@@ -180,7 +180,7 @@ func getFunctionSchema(ctx context.Context) ([]functionSchema, error) {
 	// Get the GraphQL schema from Dgraph.
 	schema, err := getGQLSchema(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve GraphQL schema: %v", err)
+		return nil, fmt.Errorf("failed to retrieve GraphQL schema: %w", err)
 	}
 
 	// Parse the schema
