@@ -93,7 +93,12 @@ func getGQLSchema(ctx context.Context) (string, error) {
 		return "", fmt.Errorf("error deserializing JSON of GraphQL schema: %v", err)
 	}
 
-	return response.Data.Node[0].Schema, nil
+	data := response.Data
+	if len(data.Node) == 0 {
+		return "", fmt.Errorf("no GraphQL schema found in Dgraph")
+	}
+
+	return data.Node[0].Schema, nil
 }
 
 type functionInfo struct {
