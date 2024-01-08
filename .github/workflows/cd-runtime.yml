@@ -51,7 +51,7 @@ jobs:
         run: |
           docker build -f Dockerfile -t hypermode/runtime:main-${{ env.RUNTIME_GIT_SHA }} --platform linux/amd64 .
           docker tag hypermode/runtime:main-${{ env.RUNTIME_GIT_SHA }} ${{ vars.AWS_ACCOUNT_ID }}.dkr.ecr.${{ vars.AWS_REGION }}.amazonaws.com/hypermode/runtime:main-${{ env.RUNTIME_GIT_SHA }}
-          docker tag hypermode/runtime:main-${{ env.RUNTIME_GIT_SHA }} ${{ vars.AWS_ACCOUNT_ID }}.dkr.ecr.${{ vars.AWS_REGION }}.amazonaws.com/hypermode/runtime:latest
+          # docker tag hypermode/runtime:main-${{ env.RUNTIME_GIT_SHA }} ${{ vars.AWS_ACCOUNT_ID }}.dkr.ecr.${{ vars.AWS_REGION }}.amazonaws.com/hypermode/runtime:latest
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
@@ -63,7 +63,7 @@ jobs:
       - name: Push Images to ECR
         run: |
           docker push ${{ vars.AWS_ACCOUNT_ID }}.dkr.ecr.${{ vars.AWS_REGION }}.amazonaws.com/hypermode/runtime:main-${{ env.RUNTIME_GIT_SHA }} 
-          docker push ${{ vars.AWS_ACCOUNT_ID }}.dkr.ecr.${{ vars.AWS_REGION }}.amazonaws.com/hypermode/runtime:latest
+          # docker push ${{ vars.AWS_ACCOUNT_ID }}.dkr.ecr.${{ vars.AWS_REGION }}.amazonaws.com/hypermode/runtime:latest
   runtime-build-workflow-dispatch:
     if: ${{ github.event_name == 'workflow_dispatch' }}
     environment: '${{ github.event.inputs.environment }}'
