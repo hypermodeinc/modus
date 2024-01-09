@@ -2,6 +2,7 @@
 FROM --platform=$BUILDPLATFORM golang:alpine as runtime-builder
 WORKDIR /src
 COPY hmruntime/ ./
+ARG TARGETOS TARGETARCH
 RUN GOOS=$TARGETOS GOARCH=$TARGETARCH go build .
 
 # build example plugin
