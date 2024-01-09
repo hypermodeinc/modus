@@ -5,7 +5,9 @@ package main
 
 import (
 	"context"
+	"errors"
 	"log"
+	"net/url"
 	"time"
 )
 
@@ -23,7 +25,12 @@ func monitorGqlSchema(ctx context.Context) {
 		for {
 			schema, err := getGQLSchema(ctx)
 			if err != nil {
-				log.Printf("failed to retrieve GraphQL schema: %v", err)
+				var urlErr *url.Error
+				if errors.As(err, &urlErr) {
+					log.Printf("Failed to connect to Dgraph: %v", urlErr)
+				} else {
+					log.Printf("Failed to retrieve GraphQL schema: %v", err)
+				}
 			} else if schema != gqlSchema {
 				if gqlSchema == "" {
 					log.Printf("Schema loaded")
