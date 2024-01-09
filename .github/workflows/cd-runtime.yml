@@ -47,11 +47,6 @@ jobs:
           RUNTIME_GIT_SHA=$(git rev-parse --short HEAD)
           echo "runtime git sha "$RUNTIME_GIT_SHA
           echo "RUNTIME_GIT_SHA=$RUNTIME_GIT_SHA" >> $GITHUB_ENV
-      - name: Make Runtime Docker Image
-        run: |
-          docker build -f Dockerfile -t hypermode/runtime:main-${{ env.RUNTIME_GIT_SHA }} --platform linux/amd64 .
-          docker tag hypermode/runtime:main-${{ env.RUNTIME_GIT_SHA }} ${{ vars.AWS_ACCOUNT_ID }}.dkr.ecr.${{ vars.AWS_REGION }}.amazonaws.com/hypermode/runtime:main-${{ env.RUNTIME_GIT_SHA }}
-          docker tag hypermode/runtime:main-${{ env.RUNTIME_GIT_SHA }} ${{ vars.AWS_ACCOUNT_ID }}.dkr.ecr.${{ vars.AWS_REGION }}.amazonaws.com/hypermode/runtime:latest
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
@@ -60,10 +55,13 @@ jobs:
           aws-region: '${{ vars.AWS_REGION }}'
       - name: Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v1
-      - name: Push Images to ECR
+      - name: Make and push runtime docker image
         run: |
-          docker push ${{ vars.AWS_ACCOUNT_ID }}.dkr.ecr.${{ vars.AWS_REGION }}.amazonaws.com/hypermode/runtime:main-${{ env.RUNTIME_GIT_SHA }} 
-          docker push ${{ vars.AWS_ACCOUNT_ID }}.dkr.ecr.${{ vars.AWS_REGION }}.amazonaws.com/hypermode/runtime:latest
+          docker buildx build --push \
+          --platform linux/amd64,linux/arm64 \
+          --tag ${{ vars.AWS_ACCOUNT_ID }}.dkr.ecr.${{ vars.AWS_REGION }}.amazonaws.com/hypermode/runtime:main-${{ env.RUNTIME_GIT_SHA }} \
+          --tag ${{ vars.AWS_ACCOUNT_ID }}.dkr.ecr.${{ vars.AWS_REGION }}.amazonaws.com/hypermode/runtime:latest
+          .
   runtime-build-workflow-dispatch:
     if: ${{ github.event_name == 'workflow_dispatch' }}
     environment: '${{ github.event.inputs.environment }}'
@@ -104,10 +102,6 @@ jobs:
           RUNTIME_GIT_SHA=$(git rev-parse --short HEAD)
           echo "runtime git sha "$RUNTIME_GIT_SHA
           echo "RUNTIME_GIT_SHA=$RUNTIME_GIT_SHA" >> $GITHUB_ENV
-      - name: Make Runtime Docker Image
-        run: |
-          docker build -f Dockerfile -t hypermode/runtime:${{ env.RUNTIME_RELEASE_VERSION }}-${{ env.RUNTIME_GIT_SHA }} --platform linux/amd64 .
-          docker tag hypermode/runtime:${{ env.RUNTIME_RELEASE_VERSION }}-${{ env.RUNTIME_GIT_SHA }} ${{ vars.AWS_ACCOUNT_ID }}.dkr.ecr.${{ vars.AWS_REGION }}.amazonaws.com/hypermode/runtime:${{ env.RUNTIME_RELEASE_VERSION }}-${{ env.RUNTIME_GIT_SHA }}
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
@@ -116,6 +110,9 @@ jobs:
           aws-region: '${{ vars.AWS_REGION }}'
       - name: Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v1
-      - name: Push Images to ECR
+      - name: Make and push runtime docker image
         run: |
-          docker push ${{ vars.AWS_ACCOUNT_ID }}.dkr.ecr.${{ vars.AWS_REGION }}.amazonaws.com/hypermode/runtime:${{ env.RUNTIME_RELEASE_VERSION }}-${{ env.RUNTIME_GIT_SHA }}
+          docker buildx build --push \
+          --platform linux/amd64,linux/arm64 \
+          --tag ${{ vars.AWS_ACCOUNT_ID }}.dkr.ecr.${{ vars.AWS_REGION }}.amazonaws.com/hypermode/runtime:${{ env.RUNTIME_RELEASE_VERSION }}-${{ env.RUNTIME_GIT_SHA }} \
+          .
