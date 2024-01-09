@@ -36,6 +36,10 @@ var compiledModules = make(map[string]wazero.CompiledModule)
 // map that holds the function info for each resolver
 var functionsMap = make(map[string]functionInfo)
 
+// channel and flag used to signal the HTTP server
+var serverReady chan bool = make(chan bool)
+var serverWaiting = true
+
 var dgraphUrl *string
 var pluginsPath *string
 
@@ -62,19 +66,21 @@ func main() {
 		log.Fatalln(err)
 	}
 
-	// Register functions
-	err = registerFunctions(ctx)
-	if err != nil {
-		log.Fatalln(err)
-	}
+	// Watch for registration requests
+	monitorRegistration(ctx)
 
-	// Watch for changes
+	// Watch for schema changes
+	monitorGqlSchema(ctx)
+
+	// Watch for plugin changes
 	err = watchPluginDirectory(ctx)
 	if err != nil {
 		log.Fatalln(err)
 	}
 
-	// Start the HTTP server
+	// Start the HTTP server when we're ready
+	<-serverReady
+	serverWaiting = false
 	fmt.Printf("Listening on port %d...\n", *port)
 	http.HandleFunc("/graphql-worker", handleRequest)
 	err = http.ListenAndServe(fmt.Sprintf(":%d", *port), nil)
@@ -116,10 +122,10 @@ func loadPlugins(ctx context.Context) error {
 	return nil
 }
 
-func registerFunctions(ctx context.Context) error {
+func registerFunctions(gqlSchema string) error {
 
-	// Get the function schema info from the database.
-	funcSchemas, err := getFunctionSchema(ctx)
+	// Get the function schema from the GraphQL schema.
+	funcSchemas, err := getFunctionSchema(gqlSchema)
 	if err != nil {
 		return err
 	}
@@ -162,6 +168,11 @@ func registerFunctions(ctx context.Context) error {
 			delete(functionsMap, resolver)
 			fmt.Printf("Unregistered old function '%s' for resolver '%s'\n", info.FunctionName(), resolver)
 		}
+	}
+
+	// If the HTTP server is waiting, signal that we're ready.
+	if serverWaiting {
+		serverReady <- true
 	}
 
 	return nil
@@ -336,10 +347,8 @@ func watchPluginDirectory(ctx context.Context) error {
 					}
 				}
 
-				err = registerFunctions(ctx)
-				if err != nil {
-					log.Printf("failed to register functions: %v\n", err)
-				}
+				// Signal that we need to register functions
+				register <- true
 
 			case err := <-w.Error:
 				log.Fatalf("failure while watching plugin directory: %v\n", err)

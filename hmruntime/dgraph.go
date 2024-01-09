@@ -175,13 +175,7 @@ func (schema functionSchema) FunctionArgs() ast.ArgumentDefinitionList {
 	return f.Arguments
 }
 
-func getFunctionSchema(ctx context.Context) ([]functionSchema, error) {
-
-	// Get the GraphQL schema from Dgraph.
-	schema, err := getGQLSchema(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve GraphQL schema: %w", err)
-	}
+func getFunctionSchema(schema string) ([]functionSchema, error) {
 
 	// Parse the schema
 	doc, parseErr := parser.ParseSchemas(validator.Prelude, &ast.Source{Input: schema})
