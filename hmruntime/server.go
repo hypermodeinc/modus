@@ -142,7 +142,10 @@ func writeErrorResponse(w http.ResponseWriter, err error, msgs ...string) {
 	// Emit the error last
 	resp.Errors = append(resp.Errors, HMError{Message: err.Error()})
 
-	json.NewEncoder(w).Encode(resp)
+	encErr := json.NewEncoder(w).Encode(resp)
+	if encErr != nil {
+		log.Printf("Failed to encode error response: %v\n", encErr)
+	}
 }
 
 func writeDataAsJson(w http.ResponseWriter, data any, isJson bool) error {
@@ -152,17 +155,32 @@ func writeDataAsJson(w http.ResponseWriter, data any, isJson bool) error {
 		switch data := data.(type) {
 		case string:
 			w.Header().Set("Content-Type", "application/json")
-			w.Write([]byte(data))
+			n, err := w.Write([]byte(data))
+			if err != nil || n != len(data) {
+				return fmt.Errorf("failed to write result data: %w", err)
+			}
 		case []string:
 			w.Header().Set("Content-Type", "application/json")
-			w.Write([]byte{'['})
+			n, err := w.Write([]byte{'['})
+			if err != nil || n != 1 {
+				return fmt.Errorf("failed to write result data: %w", err)
+			}
 			for i, s := range data {
 				if i > 0 {
-					w.Write([]byte{','})
+					n, err = w.Write([]byte{','})
+					if err != nil || n != 1 {
+						return fmt.Errorf("failed to write result data: %w", err)
+					}
 				}
-				w.Write([]byte(s))
+				n, err = w.Write([]byte(s))
+				if err != nil || n != len(s) {
+					return fmt.Errorf("failed to write result data: %w", err)
+				}
 			}
-			w.Write([]byte{']'})
+			n, err = w.Write([]byte{']'})
+			if err != nil || n != 1 {
+				return fmt.Errorf("failed to write result data: %w", err)
+			}
 		default:
 			err := fmt.Errorf("unexpected result type: %T", data)
 			log.Println(err)
@@ -180,6 +198,10 @@ func writeDataAsJson(w http.ResponseWriter, data any, isJson bool) error {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	w.Write(output)
+	_, err = w.Write(output)
+	if err != nil {
+		return fmt.Errorf("failed to write result data: %s", err)
+	}
+
 	return nil
 }
