@@ -12,16 +12,12 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"reflect"
-	"regexp"
 	"strings"
-	"time"
 	"unicode/utf16"
 	"unsafe"
 
 	"github.com/dgraph-io/gqlparser/ast"
 	"github.com/google/uuid"
-	"github.com/radovskyb/watcher"
 	"github.com/tetratelabs/wazero"
 	wasm "github.com/tetratelabs/wazero/api"
 )
@@ -29,12 +25,6 @@ import (
 // TODO: abstract AssemblyScript-specific details
 
 var runtime wazero.Runtime
-
-// map that holds the compiled modules for each plugin
-var compiledModules = make(map[string]wazero.CompiledModule)
-
-// map that holds the function info for each resolver
-var functionsMap = make(map[string]functionInfo)
 
 // channel and flag used to signal the HTTP server
 var serverReady chan bool = make(chan bool)
@@ -87,95 +77,6 @@ func main() {
 	log.Fatalln(err)
 
 	// TODO: Shutdown gracefully
-}
-
-func loadPlugins(ctx context.Context) error {
-	entries, err := os.ReadDir(*pluginsPath)
-	if err != nil {
-		return fmt.Errorf("failed to read plugins directory: %w", err)
-	}
-
-	for _, entry := range entries {
-
-		// Determine if the entry represents a plugin.
-		var pluginName string
-		entryName := entry.Name()
-		if entry.IsDir() {
-			pluginName = entryName
-			path := fmt.Sprintf("%s/%s/build/debug.wasm", *pluginsPath, pluginName)
-			if _, err := os.Stat(path); err != nil {
-				continue
-			}
-		} else if strings.HasSuffix(entryName, ".wasm") {
-			pluginName = strings.TrimSuffix(entryName, ".wasm")
-		} else {
-			continue
-		}
-
-		// Load the plugin
-		err := loadPluginModule(ctx, pluginName)
-		if err != nil {
-			log.Printf("Failed to load plugin '%s': %v\n", pluginName, err)
-		}
-	}
-
-	return nil
-}
-
-func registerFunctions(gqlSchema string) error {
-
-	// Get the function schema from the GraphQL schema.
-	funcSchemas, err := getFunctionSchema(gqlSchema)
-	if err != nil {
-		return err
-	}
-
-	// Build a map of resolvers to function info, including the plugin name.
-	// If there are function name conflicts between plugins, the last plugin loaded wins.
-	for pluginName, cm := range compiledModules {
-		for _, schema := range funcSchemas {
-			for _, fn := range cm.ExportedFunctions() {
-				fnName := fn.ExportNames()[0]
-				if strings.EqualFold(fnName, schema.FunctionName()) {
-					info := functionInfo{pluginName, schema}
-					resolver := schema.Resolver()
-					oldInfo, existed := functionsMap[resolver]
-					if existed && reflect.DeepEqual(oldInfo, info) {
-						continue
-					}
-					functionsMap[resolver] = info
-					if existed {
-						fmt.Printf("Re-registered %s to use %s in %s\n", resolver, fnName, pluginName)
-					} else {
-						fmt.Printf("Registered %s to use %s in %s\n", resolver, fnName, pluginName)
-					}
-				}
-			}
-		}
-	}
-
-	// Cleanup any previously registered functions that are no longer in the schema or loaded modules.
-	for resolver, info := range functionsMap {
-		foundSchema := false
-		for _, schema := range funcSchemas {
-			if strings.EqualFold(info.FunctionName(), schema.FunctionName()) {
-				foundSchema = true
-				break
-			}
-		}
-		_, foundModule := compiledModules[info.PluginName]
-		if !foundSchema || !foundModule {
-			delete(functionsMap, resolver)
-			fmt.Printf("Unregistered old function '%s' for resolver '%s'\n", info.FunctionName(), resolver)
-		}
-	}
-
-	// If the HTTP server is waiting, signal that we're ready.
-	if serverWaiting {
-		serverReady <- true
-	}
-
-	return nil
 }
 
 func initWasmRuntime(ctx context.Context) (wazero.Runtime, error) {
@@ -281,99 +182,6 @@ func getModuleInstance(ctx context.Context, pluginName string) (wasm.Module, buf
 	}
 
 	return mod, buf, nil
-}
-
-func getPathForPlugin(name string) (string, error) {
-
-	// Normally the plugin will be directly in the plugins directory, by filename.
-	path := *pluginsPath + "/" + name + ".wasm"
-	if _, err := os.Stat(path); err == nil {
-		return path, nil
-	}
-
-	// For local development, the plugin will be in a subdirectory and we'll use the debug.wasm file.
-	path = *pluginsPath + "/" + name + "/build/debug.wasm"
-	if _, err := os.Stat(path); err == nil {
-		return path, nil
-	}
-
-	return "", fmt.Errorf("compiled wasm file not found for plugin '%s'", name)
-}
-
-func getPluginNameFromPath(path string) (string, error) {
-	if !strings.HasSuffix(path, ".wasm") {
-		return "", fmt.Errorf("path does not point to a wasm file: %s", path)
-	}
-
-	parts := strings.Split(path, "/")
-
-	// For local development
-	if strings.HasSuffix(path, "/build/debug.wasm") {
-		return parts[len(parts)-3], nil
-	} else if strings.HasSuffix(path, "/build/release.wasm") {
-		return "", nil
-	}
-
-	return strings.TrimSuffix(parts[len(parts)-1], ".wasm"), nil
-}
-
-func watchPluginDirectory(ctx context.Context) error {
-	w := watcher.New()
-	w.AddFilterHook(watcher.RegexFilterHook(regexp.MustCompile(`^.+\.wasm$`), false))
-
-	go func() {
-		for {
-			select {
-			case evt := <-w.Event:
-
-				pluginName, err := getPluginNameFromPath(evt.Path)
-				if err != nil {
-					log.Printf("failed to get plugin name: %v\n", err)
-				}
-				if pluginName == "" {
-					continue
-				}
-
-				switch evt.Op {
-				case watcher.Create, watcher.Write:
-					err = loadPluginModule(ctx, pluginName)
-					if err != nil {
-						log.Printf("failed to load plugin: %v\n", err)
-					}
-				case watcher.Remove:
-					err = unloadPluginModule(ctx, pluginName)
-					if err != nil {
-						log.Printf("failed to unload plugin: %v\n", err)
-					}
-				}
-
-				// Signal that we need to register functions
-				register <- true
-
-			case err := <-w.Error:
-				log.Fatalf("failure while watching plugin directory: %v\n", err)
-			case <-w.Closed:
-				return
-			case <-ctx.Done():
-				w.Close()
-				return
-			}
-		}
-	}()
-
-	err := w.AddRecursive(*pluginsPath)
-	if err != nil {
-		return fmt.Errorf("failed to watch plugins directory: %w", err)
-	}
-
-	go func() {
-		err = w.Start(time.Second * 1)
-		if err != nil {
-			log.Fatalf("failed to start file watcher: %v\n", err)
-		}
-	}()
-
-	return nil
 }
 
 func callFunction(ctx context.Context, mod wasm.Module, info functionInfo, inputs map[string]any) (any, error) {
