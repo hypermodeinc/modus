@@ -1,8 +1,9 @@
 # build hmruntime binary
-FROM golang:alpine as runtime-builder
+FROM --platform=$BUILDPLATFORM golang:alpine as runtime-builder
 WORKDIR /src
 COPY hmruntime/ ./
-RUN go build .
+ARG TARGETOS TARGETARCH
+RUN GOOS=$TARGETOS GOARCH=$TARGETARCH go build .
 
 # build example plugin
 FROM node:20-alpine as plugin-builder
