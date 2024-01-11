@@ -4,9 +4,9 @@ go 1.21
 
 require (
 	github.com/dgraph-io/gqlparser v1.2.1
-	github.com/google/uuid v1.4.0
+	github.com/google/uuid v1.5.0
 	github.com/radovskyb/watcher v1.0.7
-	github.com/tetratelabs/wazero v1.5.0
+	github.com/tetratelabs/wazero v1.6.0
 )
 
 require (
