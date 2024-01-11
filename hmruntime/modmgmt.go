@@ -45,7 +45,7 @@ func initWasmRuntime(ctx context.Context) (wazero.Runtime, error) {
 }
 
 func loadPluginModule(ctx context.Context, name string) error {
-	cmOld, reloading := compiledModules[name]
+	_, reloading := compiledModules[name]
 	if reloading {
 		fmt.Printf("Reloading plugin '%s'\n", name)
 	} else {
@@ -71,10 +71,11 @@ func loadPluginModule(ctx context.Context, name string) error {
 	// Store the compiled module for later retrieval.
 	compiledModules[name] = cm
 
-	// When reloading, close the old module.
-	if reloading {
-		cmOld.Close(ctx)
-	}
+	// TODO: We should close the old module, but that leaves the _new_ module in an invalid state,
+	// giving an error when querying: "source module must be compiled before instantiation"
+	// if reloading {
+	// 	cmOld.Close(ctx)
+	// }
 
 	return nil
 }
