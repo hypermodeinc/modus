@@ -29,11 +29,11 @@ func main() {
 
 	// Initialize the WebAssembly runtime
 	var err error
-	runtime, err = initWasmRuntime(ctx)
+	wasmRuntime, err = initWasmRuntime(ctx)
 	if err != nil {
 		log.Fatalln(err)
 	}
-	defer runtime.Close(ctx)
+	defer wasmRuntime.Close(ctx)
 
 	// Load plugins
 	err = loadPlugins(ctx)

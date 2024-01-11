@@ -8,14 +8,16 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"runtime"
 	"strings"
 
 	"github.com/google/uuid"
 	"github.com/tetratelabs/wazero"
 	wasm "github.com/tetratelabs/wazero/api"
+	"github.com/tetratelabs/wazero/experimental/opt"
 )
 
-var runtime wazero.Runtime
+var wasmRuntime wazero.Runtime
 
 type buffers struct {
 	Stdout *strings.Builder
@@ -25,8 +27,17 @@ type buffers struct {
 func initWasmRuntime(ctx context.Context) (wazero.Runtime, error) {
 
 	// Create the runtime
-	cfg := wazero.NewRuntimeConfig().
-		WithCloseOnContextDone(true)
+	var cfg wazero.RuntimeConfig
+	if runtime.GOARCH == "arm64" {
+		// Use the experimental optimizing compiler for ARM64 to improve performance.
+		// This is not yet available for other architectures.
+		// See https://github.com/tetratelabs/wazero/releases/tag/v1.6.0
+		cfg = opt.NewRuntimeConfigOptimizingCompiler()
+	} else {
+		cfg = wazero.NewRuntimeConfig()
+	}
+
+	cfg = cfg.WithCloseOnContextDone(true)
 	runtime := wazero.NewRuntimeWithConfig(ctx, cfg)
 
 	// Connect WASI host functions
@@ -63,7 +74,7 @@ func loadPluginModule(ctx context.Context, name string) error {
 	}
 
 	// Compile the plugin into a module.
-	cm, err := runtime.CompileModule(ctx, plugin)
+	cm, err := wasmRuntime.CompileModule(ctx, plugin)
 	if err != nil {
 		return fmt.Errorf("failed to compile the plugin: %w", err)
 	}
@@ -115,7 +126,7 @@ func getModuleInstance(ctx context.Context, pluginName string) (wasm.Module, buf
 	// Instantiate the plugin as a module.
 	// NOTE: This will also invoke the plugin's `_start` function,
 	// which will call any top-level code in the plugin.
-	mod, err := runtime.InstantiateModule(ctx, compiled, cfg)
+	mod, err := wasmRuntime.InstantiateModule(ctx, compiled, cfg)
 	if err != nil {
 		return nil, buf, fmt.Errorf("failed to instantiate the plugin module: %w", err)
 	}
