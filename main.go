@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 )
 
 // channel and flag used to signal the HTTP server
@@ -26,6 +27,14 @@ func main() {
 	dgraphUrl = flag.String("dgraph", "http://localhost:8080", "The Dgraph url to connect to.")
 	pluginsPath = flag.String("plugins", "./plugins", "The path to the plugins directory.")
 	flag.Parse()
+
+	// Ensure the plugins directory exists.
+	if _, err := os.Stat(*pluginsPath); os.IsNotExist(err) {
+		err := os.MkdirAll(*pluginsPath, 0755)
+		if err != nil {
+			log.Fatalln(fmt.Errorf("failed to create plugins directory: %w", err))
+		}
+	}
 
 	// Initialize the WebAssembly runtime
 	var err error
