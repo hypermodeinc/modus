@@ -16,6 +16,17 @@ import (
 )
 
 func loadPlugins(ctx context.Context) error {
+
+	// If the plugins path is a single plugin's base directory, load the single plugin.
+	if _, err := os.Stat(*pluginsPath + "/build/debug.wasm"); err == nil {
+		pluginName, _ := getPluginNameFromPath(*pluginsPath)
+		err := loadPluginModule(ctx, pluginName)
+		if err != nil {
+			log.Printf("Failed to load plugin '%s': %v\n", pluginName, err)
+		}
+	}
+
+	// Otherwise, load all plugins in the plugins directory.
 	entries, err := os.ReadDir(*pluginsPath)
 	if err != nil {
 		return fmt.Errorf("failed to read plugins directory: %w", err)
@@ -117,6 +128,12 @@ func getPathForPlugin(name string) (string, error) {
 
 	// For local development, the plugin will be in a subdirectory and we'll use the debug.wasm file.
 	path = *pluginsPath + "/" + name + "/build/debug.wasm"
+	if _, err := os.Stat(path); err == nil {
+		return path, nil
+	}
+
+	// Or, the plugins path might pointing to a single plugin's base directory.
+	path = *pluginsPath + "/build/debug.wasm"
 	if _, err := os.Stat(path); err == nil {
 		return path, nil
 	}
