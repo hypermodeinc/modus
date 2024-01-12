@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path"
 	"regexp"
 	"strings"
 	"time"
@@ -19,7 +20,7 @@ func loadPlugins(ctx context.Context) error {
 
 	// If the plugins path is a single plugin's base directory, load the single plugin.
 	if _, err := os.Stat(*pluginsPath + "/build/debug.wasm"); err == nil {
-		pluginName, _ := getPluginNameFromPath(*pluginsPath)
+		pluginName := path.Base(*pluginsPath)
 		err := loadPluginModule(ctx, pluginName)
 		if err != nil {
 			log.Printf("Failed to load plugin '%s': %v\n", pluginName, err)
