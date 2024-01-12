@@ -62,7 +62,9 @@ When starting the runtime, you may sometimes need to use the following command l
 
 - `--port` - The port that the runtime will listen for HTTP requests on.  Defaults to `8686`.
 - `--dgraph` - The URL to the Dgraph Alpha endpoint.  Defaults to `http://localhost:8080`.
-- `--plugins` - The folder that the runtime will look for plugins in.  Defaults to `./plugins`.
+- `--plugins` (or `--plugin`) - The folder that the runtime will look for plugins in.  Defaults to `./plugins`.
+
+_Note: You can use either `-` or `--` prefixes, and you can add parameters with either a space or `=`._
 
 ## Working locally with plugins
 
@@ -79,7 +81,7 @@ and are working on a plugin in the `examples` folder, such as `hmplugin1`.  You 
 runtime like so:
 
 ```
-go run . --plugins ../hypermode-as/examples/hmplugin1
+go run . --plugin ../hypermode-as/examples/hmplugin1
 ```
 
 Or, if you are working on more than one plugin simultaneously you can use their parent directory:
