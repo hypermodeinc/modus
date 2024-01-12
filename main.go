@@ -24,7 +24,7 @@ func main() {
 	// Parse command-line flags
 	var port = flag.Int("port", 8686, "The HTTP port to listen on.")
 	dgraphUrl = flag.String("dgraph", "http://localhost:8080", "The Dgraph url to connect to.")
-	pluginsPath = flag.String("plugins", "../plugins/as", "The path to the plugins directory.")
+	pluginsPath = flag.String("plugins", "./plugins", "The path to the plugins directory.")
 	flag.Parse()
 
 	// Initialize the WebAssembly runtime
