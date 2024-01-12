@@ -62,7 +62,37 @@ When starting the runtime, you may sometimes need to use the following command l
 
 - `--port` - The port that the runtime will listen for HTTP requests on.  Defaults to `8686`.
 - `--dgraph` - The URL to the Dgraph Alpha endpoint.  Defaults to `http://localhost:8080`.
-- `--plugins` - The folder that the runtime will look for plugins in.  Defaults to `./plugins`.
+- `--plugins` (or `--plugin`) - The folder that the runtime will look for plugins in.  Defaults to `./plugins`.
+
+_Note: You can use either `-` or `--` prefixes, and you can add parameters with either a space or `=`._
+
+## Working locally with plugins
+
+Regardless of whether you use Docker or not, it is often useful to be developing both the runtime
+and a plugin at the same time.  This is especially true if you are developing a new host function
+for the runtime, and need to expose it via the `hypermode-as` library.
+
+To facilitate this, you can point the runtime's plugins path to the root folder of any plugin's
+source code.  The runtime will use the `build/debug.wasm` file, and will pick up changes
+automatically when rebuilding the plugin.
+
+For example, you may have the `runtime` and `hypermode-as` repos in the same parent directory,
+and are working on a plugin in the `examples` folder, such as `hmplugin1`.  You can start the
+runtime like so:
+
+```
+go run . --plugin ../hypermode-as/examples/hmplugin1
+```
+
+Or, if you are working on more than one plugin simultaneously you can use their parent directory:
+
+```
+go run . --plugins ../hypermode-as/examples
+```
+
+However, be aware that if there are conflicts between function names in the plugins,
+the last one loaded byt the runtime will take precedence.  Thus, it's usually better to work
+on one plugin at a time.
 
 ## Dgraph Setup
 
