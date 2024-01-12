@@ -1,20 +1,70 @@
-# Hypermode Runtime and Plugins
+# Hypermode Runtime
 
-This repository contains the server-side code for the Hypermode Runtime.
+This repository contains the source code for the _Hypermode Runtime_.
 
-It also currently contains the client-side code for Hypermode Plugins,
-but that will eventually be moved to a separate repository as the project matures.
+The runtime loads and executes _plugins_ containing _Hypermode Functions_.
 
-## Projects
+To get started with Hypermode Functions written in AssemblyScript, visit the
+[`hypermode-as`](https://github.com/gohypermode/hypermode-as) repository.
 
-See the separate `README.md` files in each project for further details:
+## Docker Setup
 
-- [`hmruntime`](./hmruntime) - The Hypermode Runtime service, written in Go
-- [`plugins/as`](./plugins/as) - Plugin library and example, written in AssemblyScript
+To build a Docker image for the Hypermode Runtime:
 
-## Getting Started
+```
+docker build -t hypermode/runtime .
+```
 
-### Dgraph Setup
+Then you can run that image.  Port `8686` should be exposed.
+
+```
+docker run -p 8686:8686 -v <PLUGINS_PATH>:/plugins hypermode/runtime --dgraph=<DGRAPH_ALPHA_URL>
+```
+
+Replace the following:
+- `<PLUGINS_PATH>` should be the local path to the folder where you will load plugins from.
+  - You can use paths such as `./plugins` or `~/plugins` etc. depending on where you want to keep your plugin files.
+- `<DGRAPH_ALPHA_URL>` should be the URL to the Dgraph Alpha endpoint you are connecting the runtime to.
+  - To connect to Dgraph running in another docker container, use `host.docker.internal`.
+
+Optionally, you may also wish to give the container a specific name using the `--name` flag.
+For example, to start a new Docker container named `hmruntime`, looking for plugins in a local `./plugins` folder,
+and connecting to a local Dgraph docker image:
+
+```
+docker run --name hmruntime -p 8686:8686 -v ./plugins:/plugins hypermode/runtime --dgraph=http://host.docker.internal:8080
+```
+
+_Note, if you have previously created a container with the same name, then delete it first with `docker rm hmruntime`._
+
+## Building without Docker
+
+If needed, you can compile and run the Hypermode Runtime without using Docker.
+This is most common for local development.
+
+Be sure that you have Go installed in your dev environment, at the version specified in the [.go-version](./go-verson) file, or higher.
+Then you can either run the Runtime code directly from source:
+
+```
+go run .
+```
+
+Or, you can build the `hmruntime` executable and then run that:
+
+```
+go build
+./hmruntime
+```
+
+### Command Line Arguments
+
+When starting the runtime, you may sometimes need to use the following command line arguments:
+
+- `--port` - The port that the runtime will listen for HTTP requests on.  Defaults to `8686`.
+- `--dgraph` - The URL to the Dgraph Alpha endpoint.  Defaults to `http://localhost:8080`.
+- `--plugins` - The folder that the runtime will look for plugins in.  Defaults to `./plugins`.
+
+## Dgraph Setup
 
 Currently, the Hypermode Runtime service emulates parts of the 
 [Dgraph Lambda](https://dgraph.io/docs/graphql/lambda/lambda-overview/) protocol.
@@ -38,109 +88,3 @@ docker run --name <CONTAINER_NAME> \
   --env=DGRAPH_ALPHA_GRAPHQL=lambda-url=http://host.docker.internal:8686/graphql-worker \
   dgraph/standalone:latest
 ```
-
-### Hypermode Plugins
-
-First, ensure you have [Node.js](https://nodejs.org/) 18 or higher installed.
-
-
-Recommended: Install [nvm](https://github.com/nvm-sh/nvm/blob/master/README.md) and use it to install Node.js 20:
-
-```
-curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.3/install.sh | bash
-nvm install 20
-nvm use 20
-```
-
-Then, compile the `hmplugin1` example plugin, by running the following:
-
-```
-cd plugins/as/hmplugin1
-npm install
-npm run build
-```
-
-The `build` subfolder will contain the compiled plugin.
-
-### Load schema and data
-
-Run this script:
-
-```sh
-./plugins/as/hmplugin1/loaddata.sh
-```
-
-It connects to Dgraph on `localhost:8080`, and applies the `schema.graphql` and `sampledata.graphql` files.
-
-### Hypermode Runtime
-
-Now build and run the Hypermode Runtime:
-
-```
-cd hmruntime
-go build
-./hmruntime
-```
-
-Alternatively, you can run the Go code directly:
-
-```
-cd hmruntime
-go run .
-```
-
-### Run the example
-
-Try some graphql queries on `http://localhost:8080/graphql`:
-
-```graphql
-{
-  add(a: 123, b: 456)
-}
-```
-
-```graphql
-{
-  getFullName(firstName: "John", lastName:"Doe")
-}
-```
-
-These will invoke the respective Hypermode functions within `hmplugin1`.
-
-Next, try adding some data:
-
-```graphql
-
-mutation {
-  addPerson(input: [
-    { firstName: "Harry", lastName: "Potter" },
-    { firstName: "Tom", lastName: "Riddle" },
-    { firstName: "Albus", lastName: "Dumbledore" }
-    ]) {
-    person {
-      id
-      firstName
-      lastName
-      fullName
-    }
-  }
-}
-```
-
-In the response, notice how the `fullName` field is returned,
-which is the output from calling the `getFullName` function in `hmplugin1`.
-
-You can now also query for data:
-
-```graphql
-{
-  queryPerson {
-    id
-    firstName
-    lastName
-    fullName
-  }
-}
-```
-
-Again, the `fullName` field is populated by calling `getFullName` in `hmplugin1`.
