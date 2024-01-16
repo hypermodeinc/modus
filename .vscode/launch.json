@@ -1,0 +1,18 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "runtime",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}",
+            "env": {
+                "ENV": "dev",
+                "AWS_REGION":"us-west-2",
+                "AWS_PROFILE":"hm-cp-staging",
+                "AWS_SDK_LOAD_CONFIG": "true"
+              }
+        }
+    ]
+}
