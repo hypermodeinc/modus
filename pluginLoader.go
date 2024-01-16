@@ -104,7 +104,16 @@ func watchPluginDirectory(ctx context.Context) error {
 		}
 	}()
 
-	err := w.AddRecursive(*pluginsPath)
+	// Test if symlinks are supported
+	_, err := os.Lstat(*pluginsPath)
+	if err == nil {
+		// They are, so we can watch recursively (local dev workflow).
+		err = w.AddRecursive(*pluginsPath)
+	} else {
+		// They are not.  Just watch the single directory (production workflow).
+		err = w.Add(*pluginsPath)
+	}
+
 	if err != nil {
 		return fmt.Errorf("failed to watch plugins directory: %w", err)
 	}
