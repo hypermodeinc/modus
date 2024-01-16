@@ -22,7 +22,7 @@ import (
 func executeDQL(ctx context.Context, stmt string, isMutation bool) ([]byte, error) {
 	reqBody := strings.NewReader(stmt)
 
-	host := *DgraphUrl
+	host := *dgraphUrl
 	var endpoint, contentType string
 	if isMutation {
 		endpoint = "/mutate?commitNow=true"
@@ -52,7 +52,7 @@ func executeDQL(ctx context.Context, stmt string, isMutation bool) ([]byte, erro
 
 func executeGQL(ctx context.Context, stmt string) ([]byte, error) {
 	reqBody := strings.NewReader(stmt)
-	resp, err := http.Post(fmt.Sprintf("%s/graphql", *DgraphUrl), "application/graphql", reqBody)
+	resp, err := http.Post(fmt.Sprintf("%s/graphql", *dgraphUrl), "application/graphql", reqBody)
 	if err != nil {
 		return nil, fmt.Errorf("error posting GraphQL statement: %w", err)
 	}
@@ -218,7 +218,7 @@ var httpClient = &http.Client{
 }
 
 func getModelEndpoint(mid string) (string, error) {
-	serviceURL := fmt.Sprintf("%s/admin", *DgraphUrl)
+	serviceURL := fmt.Sprintf("%s/admin", *dgraphUrl)
 
 	query := `
 		query GetModelSpec {

@@ -16,7 +16,7 @@ import (
 var serverReady chan bool = make(chan bool)
 var serverWaiting = true
 
-var DgraphUrl *string
+var dgraphUrl *string
 var pluginsPath *string
 
 func main() {
@@ -24,7 +24,7 @@ func main() {
 
 	// Parse command-line flags
 	var port = flag.Int("port", 8686, "The HTTP port to listen on.")
-	DgraphUrl = flag.String("dgraph", "http://localhost:8080", "The Dgraph url to connect to.")
+	dgraphUrl = flag.String("dgraph", "http://localhost:8080", "The Dgraph url to connect to.")
 
 	pluginsPath = flag.String("plugins", "./plugins", "The path to the plugins directory.")
 	flag.StringVar(pluginsPath, "plugin", "./plugins", "alias for -plugins")
