@@ -97,7 +97,7 @@ func watchPluginDirectory(ctx context.Context) error {
 				register <- true
 
 			case err := <-w.Error:
-				log.Fatalf("failure while watching plugin directory: %v\n", err)
+				log.Printf("failure while watching plugin directory: %v\n", err)
 			case <-w.Closed:
 				return
 			case <-ctx.Done():
