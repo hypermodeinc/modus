@@ -207,6 +207,12 @@ type ModelSpec struct {
 	Type     string `json:"type"`
 	Endpoint string `json:"endpoint"`
 }
+type ModelSpecInfo struct {
+	Model ModelSpec `json:"model"`
+}
+type ModelSpecPayload struct {
+	Data ModelSpecInfo `json:"data"`
+}
 
 const (
 	alphaService    string = "%v-alpha-service"
@@ -222,7 +228,7 @@ func getModelEndpoint(mid string) (string, error) {
 
 	query := `
 		query GetModelSpec {
-			getModelSpec(id: "` + mid + `") {
+			model:getModelSpec(id: "` + mid + `") {
 				id
 				type
 				endpoint
@@ -262,7 +268,7 @@ func getModelEndpoint(mid string) (string, error) {
 	}
 
 	// Create an instance of the ModelSpec struct
-	var spec ModelSpec
+	var spec ModelSpecPayload
 
 	// Unmarshal the JSON data into the ModelSpec struct
 	err = json.Unmarshal(body, &spec)
@@ -270,13 +276,13 @@ func getModelEndpoint(mid string) (string, error) {
 		return "", fmt.Errorf("error unmarshaling response body: %w", err)
 	}
 
-	if spec.ID != mid {
+	if spec.Data.Model.ID != mid {
 		return "", fmt.Errorf("error: ID does not match")
 	}
 
-	if spec.Type != classifierModel {
+	if spec.Data.Model.Type != classifierModel {
 		return "", fmt.Errorf("error: model type is not classifier")
 	}
 
-	return spec.Endpoint, nil
+	return spec.Data.Model.Endpoint, nil
 }
