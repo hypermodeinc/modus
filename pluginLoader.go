@@ -16,6 +16,9 @@ import (
 	"github.com/radovskyb/watcher"
 )
 
+// Polling interval to check for new plugins
+const pluginRefreshInterval time.Duration = time.Second * 5
+
 func loadPlugins(ctx context.Context) error {
 
 	// If the plugins path is a single plugin's base directory, load the single plugin.
@@ -94,7 +97,7 @@ func watchPluginDirectory(ctx context.Context) error {
 				register <- true
 
 			case err := <-w.Error:
-				log.Fatalf("failure while watching plugin directory: %v\n", err)
+				log.Printf("failure while watching plugin directory: %v\n", err)
 			case <-w.Closed:
 				return
 			case <-ctx.Done():
@@ -119,7 +122,7 @@ func watchPluginDirectory(ctx context.Context) error {
 	}
 
 	go func() {
-		err = w.Start(time.Second * 1)
+		err = w.Start(pluginRefreshInterval)
 		if err != nil {
 			log.Fatalf("failed to start file watcher: %v\n", err)
 		}
