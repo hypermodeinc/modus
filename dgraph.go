@@ -227,8 +227,8 @@ func getModelEndpoint(mid string) (string, error) {
 	serviceURL := fmt.Sprintf("%s/admin", *dgraphUrl)
 
 	query := `
-		query GetModelSpec {
-			model:getModelSpec(id: "` + mid + `") {
+		query GetModelSpec($id: String!) {
+			model:getModelSpec(id: $id) {
 				id
 				type
 				endpoint
@@ -237,7 +237,7 @@ func getModelEndpoint(mid string) (string, error) {
 
 	payload := map[string]interface{}{
 		"query":     query,
-		"variables": map[string]string{},
+		"variables": map[string]string{"id": mid},
 	}
 
 	// Convert payload to JSON
