@@ -71,8 +71,6 @@ func hostExecuteGQL(ctx context.Context, mod wasm.Module, pStmt uint32) uint32 {
 }
 
 type ClassifierResult struct {
-	Label         string            `json:"label"`
-	Confidence    float64           `json:"confidence"`
 	Probabilities []ClassifierLabel `json:"probabilities"`
 }
 
@@ -105,7 +103,7 @@ func hostInvokeClassifier(ctx context.Context, mod wasm.Module, modelId uint32, 
 		return 0
 	}
 
-	// POST to embedding service
+	// POST to model endpoint
 	postBody, _ := json.Marshal(map[string]string{
 		"uid": sentence,
 	})
@@ -126,7 +124,7 @@ func hostInvokeClassifier(ctx context.Context, mod wasm.Module, modelId uint32, 
 		return 0
 	}
 	secretValue, err := svc.GetSecretValue(&secretsmanager.GetSecretValueInput{
-		SecretId: &endpoint,
+		SecretId: &mid,
 	})
 	if err != nil {
 		log.Println("error getting secret:", err)
