@@ -261,7 +261,7 @@ func getModelEndpoint(mid string) (string, error) {
 
 	payload := map[string]interface{}{
 		"query":     query,
-		"variables": map[string]interface{}{"id": mid},
+		"variables": map[string]string{"id": mid},
 	}
 
 	// Convert payload to JSON
