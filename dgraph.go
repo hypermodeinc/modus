@@ -50,14 +50,38 @@ func executeDQL(ctx context.Context, stmt string, isMutation bool) ([]byte, erro
 	return respBody, nil
 }
 
-func executeGQL(ctx context.Context, stmt string) ([]byte, error) {
-	reqBody := strings.NewReader(stmt)
-	resp, err := http.Post(fmt.Sprintf("%s/graphql", *dgraphUrl), "application/graphql", reqBody)
+func executeGQL(ctx context.Context, stmt string, vars map[string]string) ([]byte, error) {
+	payload := map[string]interface{}{
+		"query":     stmt,
+		"variables": vars,
+	}
+
+	// Convert payload to JSON
+	jsonPayload, err := json.Marshal(payload)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling payload: %w", err)
+	}
+
+	// Create the HTTP request
+	req, err := http.NewRequest("POST", fmt.Sprintf("%s/graphql", *dgraphUrl), bytes.NewBuffer(jsonPayload))
+	if err != nil {
+		return nil, fmt.Errorf("error creating request: %w", err)
+	}
+
+	// Set headers
+	req.Header.Set("Content-Type", "application/json")
+
+	// Perform the request
+	resp, err := httpClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("error posting GraphQL statement: %w", err)
 	}
-
 	defer resp.Body.Close()
+
+	if err != nil {
+		return nil, fmt.Errorf("error reading response body: %w", err)
+	}
+
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("GraphQL operation failed with status code %d", resp.StatusCode)
 	}
@@ -237,7 +261,7 @@ func getModelEndpoint(mid string) (string, error) {
 
 	payload := map[string]interface{}{
 		"query":     query,
-		"variables": map[string]string{"id": mid},
+		"variables": map[string]interface{}{"id": mid},
 	}
 
 	// Convert payload to JSON

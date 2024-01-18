@@ -53,7 +53,7 @@ func hostExecuteDQL(ctx context.Context, mod wasm.Module, pStmt uint32, isMutati
 	return writeString(ctx, mod, string(r))
 }
 
-func hostExecuteGQL(ctx context.Context, mod wasm.Module, pStmt uint32) uint32 {
+func hostExecuteGQL(ctx context.Context, mod wasm.Module, pStmt uint32, pVars uint32) uint32 {
 	mem := mod.Memory()
 	stmt, err := readString(mem, pStmt)
 	if err != nil {
@@ -61,7 +61,15 @@ func hostExecuteGQL(ctx context.Context, mod wasm.Module, pStmt uint32) uint32 {
 		return 0
 	}
 
-	r, err := executeGQL(ctx, stmt)
+	varsBytes, err := readBuffer(mem, pVars)
+
+	vars := make(map[string]string)
+	if err := json.Unmarshal(varsBytes, &vars); err != nil {
+		log.Println("error unmarshaling GraphQL variables:", err)
+		return 0
+	}
+
+	r, err := executeGQL(ctx, stmt, vars)
 	if err != nil {
 		log.Println("error executing GraphQL operation:", err)
 		return 0
