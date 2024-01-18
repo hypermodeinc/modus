@@ -4,6 +4,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -11,6 +12,7 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/dgraph-io/gqlparser/ast"
 	"github.com/dgraph-io/gqlparser/parser"
@@ -198,4 +200,89 @@ func getFunctionSchema(schema string) ([]functionSchema, error) {
 	}
 
 	return results, nil
+}
+
+type ModelSpec struct {
+	ID       string `json:"id"`
+	Type     string `json:"type"`
+	Endpoint string `json:"endpoint"`
+}
+type ModelSpecInfo struct {
+	Model ModelSpec `json:"model"`
+}
+type ModelSpecPayload struct {
+	Data ModelSpecInfo `json:"data"`
+}
+
+const (
+	alphaService    string = "%v-alpha-service"
+	classifierModel string = "classifier"
+)
+
+var httpClient = &http.Client{
+	Timeout: 10 * time.Second,
+}
+
+func getModelEndpoint(mid string) (string, error) {
+	serviceURL := fmt.Sprintf("%s/admin", *dgraphUrl)
+
+	query := `
+		query GetModelSpec($id: String!) {
+			model:getModelSpec(id: $id) {
+				id
+				type
+				endpoint
+			}
+		}`
+
+	payload := map[string]interface{}{
+		"query":     query,
+		"variables": map[string]string{"id": mid},
+	}
+
+	// Convert payload to JSON
+	jsonPayload, err := json.Marshal(payload)
+	if err != nil {
+		return "", fmt.Errorf("error marshaling payload: %w", err)
+	}
+
+	// Create the HTTP request
+	req, err := http.NewRequest("POST", serviceURL, bytes.NewBuffer(jsonPayload))
+	if err != nil {
+		return "", fmt.Errorf("error creating request: %w", err)
+	}
+
+	// Set headers
+	req.Header.Set("Content-Type", "application/json")
+
+	// Perform the request
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("error making request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("error reading response body: %w", err)
+	}
+
+	// Create an instance of the ModelSpec struct
+	var spec ModelSpecPayload
+
+	// Unmarshal the JSON data into the ModelSpec struct
+	err = json.Unmarshal(body, &spec)
+	if err != nil {
+		return "", fmt.Errorf("error unmarshaling response body: %w", err)
+	}
+
+	if spec.Data.Model.ID != mid {
+		return "", fmt.Errorf("error: ID does not match")
+	}
+
+	if spec.Data.Model.Type != classifierModel {
+		return "", fmt.Errorf("error: model type is not classifier")
+	}
+
+	return spec.Data.Model.Endpoint, nil
 }

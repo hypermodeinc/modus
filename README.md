@@ -37,13 +37,22 @@ docker run --name hmruntime -p 8686:8686 -v ./plugins:/plugins hypermode/runtime
 
 _Note, if you have previously created a container with the same name, then delete it first with `docker rm hmruntime`._
 
+## AWS Setup
+
+in the `launch.json` you will find the runtime uses the `hm-cp-staging`, which is necessary for secrets management. For local testing, you must save that profile in `~/.aws/config`. Reach out to the runtime team for the credentials.
+
+Then run `aws sso login --profile hm-cp-staging` to login to the profile.
+
 ## Building without Docker
 
 If needed, you can compile and run the Hypermode Runtime without using Docker.
 This is most common for local development.
 
 Be sure that you have Go installed in your dev environment, at the version specified in the [.go-version](./go-verson) file, or higher.
-Then you can either run the Runtime code directly from source:
+
+You can run the code directly using VSCode's debugger.
+
+Alternatively you can either run the Runtime code directly from source:
 
 ```
 go run .

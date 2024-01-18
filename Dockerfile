@@ -1,8 +1,7 @@
 # build hmruntime binary
 FROM --platform=$BUILDPLATFORM golang:alpine as builder
 WORKDIR /src
-COPY go.mod go.sum ./
-COPY *.go ./
+COPY ./ ./
 ARG TARGETOS TARGETARCH
 RUN GOOS=$TARGETOS GOARCH=$TARGETARCH go build .
 
