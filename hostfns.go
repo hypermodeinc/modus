@@ -57,14 +57,18 @@ func hostExecuteGQL(ctx context.Context, mod wasm.Module, pStmt uint32, pVars ui
 	mem := mod.Memory()
 	stmt, err := readString(mem, pStmt)
 	if err != nil {
-		log.Println("error reading GraphQL string from wasm memory:", err)
+		log.Println("error reading GraphQL query string from wasm memory:", err)
 		return 0
 	}
 
-	varsBytes, err := readBuffer(mem, pVars)
+	sVars, err := readString(mem, pVars)
+	if err != nil {
+		log.Println("error reading GraphQL variables string from wasm memory:", err)
+		return 0
+	}
 
 	vars := make(map[string]string)
-	if err := json.Unmarshal(varsBytes, &vars); err != nil {
+	if err := json.Unmarshal([]byte(sVars), &vars); err != nil {
 		log.Println("error unmarshaling GraphQL variables:", err)
 		return 0
 	}
