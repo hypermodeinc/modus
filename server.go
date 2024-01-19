@@ -6,6 +6,9 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"hmruntime/config"
+	"hmruntime/functions"
+	"hmruntime/plugins"
 	"log"
 	"net/http"
 	"strings"
@@ -44,7 +47,7 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get the function info for the resolver
-	info, ok := functionsMap[req.Resolver]
+	info, ok := config.FunctionsMap[req.Resolver]
 	if !ok {
 		w.WriteHeader(http.StatusBadRequest)
 		log.Printf("No function registered for resolver '%s'", req.Resolver)
@@ -56,7 +59,7 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 	// so that we can run multiple requests in parallel without risk
 	// of corrupting the module's memory.
 	ctx := r.Context()
-	mod, buf, err := getModuleInstance(ctx, info.PluginName)
+	mod, buf, err := plugins.GetModuleInstance(ctx, info.PluginName)
 	if err != nil {
 		log.Println(err)
 		writeErrorResponse(w, err)
@@ -68,7 +71,7 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 	if req.Args != nil {
 
 		// Call the function, passing in the args from the request
-		result, err := callFunction(ctx, mod, info, req.Args)
+		result, err := functions.CallFunction(ctx, mod, info, req.Args)
 		if err != nil {
 			err := fmt.Errorf("error calling function '%s': %w", fnName, err)
 			log.Println(err)
@@ -101,7 +104,7 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 
 		// Call the function for each parent
 		for i, parent := range req.Parents {
-			results[i], err = callFunction(ctx, mod, info, parent)
+			results[i], err = functions.CallFunction(ctx, mod, info, parent)
 			if err != nil {
 				err := fmt.Errorf("error calling function '%s': %w", fnName, err)
 				log.Println(err)
@@ -204,4 +207,13 @@ func writeDataAsJson(w http.ResponseWriter, data any, isJson bool) error {
 	}
 
 	return nil
+}
+
+func startServer(port *int) error {
+	// Start the HTTP server when we're ready
+	<-config.ServerReady
+	config.ServerWaiting = false
+	fmt.Printf("Listening on port %d...\n", *port)
+	http.HandleFunc("/graphql-worker", handleRequest)
+	return http.ListenAndServe(fmt.Sprintf(":%d", *port), nil)
 }

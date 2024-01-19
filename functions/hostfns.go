@@ -1,7 +1,7 @@
 /*
  * Copyright 2023 Hypermode, Inc.
  */
-package main
+package functions
 
 import (
 	"bytes"
@@ -9,9 +9,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"hmruntime/aws"
+	"hmruntime/dgraph"
 	"io"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/aws/aws-sdk-go/service/secretsmanager"
 	"github.com/tetratelabs/wazero"
@@ -20,7 +22,11 @@ import (
 
 const HostModuleName = "hypermode"
 
-func instantiateHostFunctions(ctx context.Context, runtime wazero.Runtime) error {
+var httpClient = &http.Client{
+	Timeout: 10 * time.Second,
+}
+
+func InstantiateHostFunctions(ctx context.Context, runtime wazero.Runtime) error {
 	b := runtime.NewHostModuleBuilder(HostModuleName)
 
 	// Each host function should get a line here:
@@ -44,7 +50,7 @@ func hostExecuteDQL(ctx context.Context, mod wasm.Module, pStmt uint32, isMutati
 		return 0
 	}
 
-	r, err := executeDQL(ctx, stmt, isMutation != 0)
+	r, err := dgraph.ExecuteDQL(ctx, stmt, isMutation != 0)
 	if err != nil {
 		log.Println("error executing DQL statement:", err)
 		return 0
@@ -73,7 +79,7 @@ func hostExecuteGQL(ctx context.Context, mod wasm.Module, pStmt uint32, pVars ui
 		return 0
 	}
 
-	r, err := executeGQL(ctx, stmt, vars)
+	r, err := dgraph.ExecuteGQL(ctx, stmt, vars)
 	if err != nil {
 		log.Println("error executing GraphQL operation:", err)
 		return 0
@@ -109,7 +115,7 @@ func hostInvokeClassifier(ctx context.Context, mod wasm.Module, modelId uint32, 
 		return 0
 	}
 
-	endpoint, err := getModelEndpoint(mid)
+	endpoint, err := dgraph.GetModelEndpoint(mid)
 	if err != nil {
 		log.Println("error getting model endpoint:", err)
 		return 0

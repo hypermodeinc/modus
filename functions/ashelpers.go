@@ -1,7 +1,7 @@
 /*
  * Copyright 2023 Hypermode, Inc.
  */
-package main
+package functions
 
 import (
 	"context"
