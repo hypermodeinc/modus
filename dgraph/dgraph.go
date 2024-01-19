@@ -1,7 +1,7 @@
 /*
  * Copyright 2023 Hypermode, Inc.
  */
-package main
+package dgraph
 
 import (
 	"bytes"
@@ -19,10 +19,12 @@ import (
 	"github.com/dgraph-io/gqlparser/validator"
 )
 
-func executeDQL(ctx context.Context, stmt string, isMutation bool) ([]byte, error) {
+var DgraphUrl *string
+
+func ExecuteDQL(ctx context.Context, stmt string, isMutation bool) ([]byte, error) {
 	reqBody := strings.NewReader(stmt)
 
-	host := *dgraphUrl
+	host := *DgraphUrl
 	var endpoint, contentType string
 	if isMutation {
 		endpoint = "/mutate?commitNow=true"
@@ -50,9 +52,9 @@ func executeDQL(ctx context.Context, stmt string, isMutation bool) ([]byte, erro
 	return respBody, nil
 }
 
-func executeGQL(ctx context.Context, stmt string) ([]byte, error) {
+func ExecuteGQL(ctx context.Context, stmt string) ([]byte, error) {
 	reqBody := strings.NewReader(stmt)
-	resp, err := http.Post(fmt.Sprintf("%s/graphql", *dgraphUrl), "application/graphql", reqBody)
+	resp, err := http.Post(fmt.Sprintf("%s/graphql", *DgraphUrl), "application/graphql", reqBody)
 	if err != nil {
 		return nil, fmt.Errorf("error posting GraphQL statement: %w", err)
 	}
@@ -82,9 +84,9 @@ type schemaResponse struct {
 
 var schemaQuery = "{node(func:has(dgraph.graphql.schema)){dgraph.graphql.schema}}"
 
-func getGQLSchema(ctx context.Context) (string, error) {
+func GetGQLSchema(ctx context.Context) (string, error) {
 
-	r, err := executeDQL(ctx, schemaQuery, false)
+	r, err := ExecuteDQL(ctx, schemaQuery, false)
 	if err != nil {
 		return "", fmt.Errorf("error getting GraphQL schema from Dgraph: %w", err)
 	}
@@ -103,7 +105,7 @@ func getGQLSchema(ctx context.Context) (string, error) {
 	return data.Node[0].Schema, nil
 }
 
-type functionInfo struct {
+type FunctionInfo struct {
 	PluginName string
 	Schema     functionSchema
 }
@@ -113,7 +115,7 @@ type functionSchema struct {
 	FieldDef  *ast.FieldDefinition
 }
 
-func (info functionInfo) FunctionName() string {
+func (info FunctionInfo) FunctionName() string {
 	return info.Schema.FunctionName()
 }
 
@@ -177,7 +179,7 @@ func (schema functionSchema) FunctionArgs() ast.ArgumentDefinitionList {
 	return f.Arguments
 }
 
-func getFunctionSchema(schema string) ([]functionSchema, error) {
+func GetFunctionSchema(schema string) ([]functionSchema, error) {
 
 	// Parse the schema
 	doc, parseErr := parser.ParseSchemas(validator.Prelude, &ast.Source{Input: schema})
@@ -223,8 +225,8 @@ var httpClient = &http.Client{
 	Timeout: 10 * time.Second,
 }
 
-func getModelEndpoint(mid string) (string, error) {
-	serviceURL := fmt.Sprintf("%s/admin", *dgraphUrl)
+func GetModelEndpoint(mid string) (string, error) {
+	serviceURL := fmt.Sprintf("%s/admin", *DgraphUrl)
 
 	query := `
 		query GetModelSpec($id: String!) {

@@ -7,33 +7,29 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"hmruntime/config"
+	"hmruntime/dgraph"
+	"hmruntime/functions"
+	"hmruntime/plugins"
 	"log"
-	"net/http"
 	"os"
 )
-
-// channel and flag used to signal the HTTP server
-var serverReady chan bool = make(chan bool)
-var serverWaiting = true
-
-var dgraphUrl *string
-var pluginsPath *string
 
 func main() {
 	ctx := context.Background()
 
 	// Parse command-line flags
 	var port = flag.Int("port", 8686, "The HTTP port to listen on.")
-	dgraphUrl = flag.String("dgraph", "http://localhost:8080", "The Dgraph url to connect to.")
+	dgraph.DgraphUrl = flag.String("dgraph", "http://localhost:8080", "The Dgraph url to connect to.")
 
-	pluginsPath = flag.String("plugins", "./plugins", "The path to the plugins directory.")
-	flag.StringVar(pluginsPath, "plugin", "./plugins", "alias for -plugins")
+	config.PluginsPath = flag.String("plugins", "./plugins", "The path to the plugins directory.")
+	flag.StringVar(config.PluginsPath, "plugin", "./plugins", "alias for -plugins")
 
 	flag.Parse()
 
 	// Ensure the plugins directory exists.
-	if _, err := os.Stat(*pluginsPath); os.IsNotExist(err) {
-		err := os.MkdirAll(*pluginsPath, 0755)
+	if _, err := os.Stat(*config.PluginsPath); os.IsNotExist(err) {
+		err := os.MkdirAll(*config.PluginsPath, 0755)
 		if err != nil {
 			log.Fatalln(fmt.Errorf("failed to create plugins directory: %w", err))
 		}
@@ -41,36 +37,31 @@ func main() {
 
 	// Initialize the WebAssembly runtime
 	var err error
-	wasmRuntime, err = initWasmRuntime(ctx)
+	config.WasmRuntime, err = plugins.InitWasmRuntime(ctx)
 	if err != nil {
 		log.Fatalln(err)
 	}
-	defer wasmRuntime.Close(ctx)
+	defer config.WasmRuntime.Close(ctx)
 
 	// Load plugins
-	err = loadPlugins(ctx)
+	err = plugins.LoadPlugins(ctx)
 	if err != nil {
 		log.Fatalln(err)
 	}
 
 	// Watch for registration requests
-	monitorRegistration(ctx)
+	functions.MonitorRegistration(ctx)
 
 	// Watch for schema changes
-	monitorGqlSchema(ctx)
+	functions.MonitorGqlSchema(ctx)
 
 	// Watch for plugin changes
-	err = watchPluginDirectory(ctx)
+	err = plugins.WatchPluginDirectory(ctx)
 	if err != nil {
 		log.Fatalln(err)
 	}
 
-	// Start the HTTP server when we're ready
-	<-serverReady
-	serverWaiting = false
-	fmt.Printf("Listening on port %d...\n", *port)
-	http.HandleFunc("/graphql-worker", handleRequest)
-	err = http.ListenAndServe(fmt.Sprintf(":%d", *port), nil)
+	err = startServer(port)
 	log.Fatalln(err)
 
 	// TODO: Shutdown gracefully

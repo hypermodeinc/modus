@@ -1,11 +1,12 @@
 /*
  * Copyright 2023 Hypermode, Inc.
  */
-package main
+package plugins
 
 import (
 	"context"
 	"fmt"
+	"hmruntime/config"
 	"log"
 	"os"
 	"path"
@@ -19,11 +20,11 @@ import (
 // Polling interval to check for new plugins
 const pluginRefreshInterval time.Duration = time.Second * 5
 
-func loadPlugins(ctx context.Context) error {
+func LoadPlugins(ctx context.Context) error {
 
 	// If the plugins path is a single plugin's base directory, load the single plugin.
-	if _, err := os.Stat(*pluginsPath + "/build/debug.wasm"); err == nil {
-		pluginName := path.Base(*pluginsPath)
+	if _, err := os.Stat(*config.PluginsPath + "/build/debug.wasm"); err == nil {
+		pluginName := path.Base(*config.PluginsPath)
 		err := loadPluginModule(ctx, pluginName)
 		if err != nil {
 			log.Printf("Failed to load plugin '%s': %v\n", pluginName, err)
@@ -31,7 +32,7 @@ func loadPlugins(ctx context.Context) error {
 	}
 
 	// Otherwise, load all plugins in the plugins directory.
-	entries, err := os.ReadDir(*pluginsPath)
+	entries, err := os.ReadDir(*config.PluginsPath)
 	if err != nil {
 		return fmt.Errorf("failed to read plugins directory: %w", err)
 	}
@@ -43,7 +44,7 @@ func loadPlugins(ctx context.Context) error {
 		entryName := entry.Name()
 		if entry.IsDir() {
 			pluginName = entryName
-			path := fmt.Sprintf("%s/%s/build/debug.wasm", *pluginsPath, pluginName)
+			path := fmt.Sprintf("%s/%s/build/debug.wasm", *config.PluginsPath, pluginName)
 			if _, err := os.Stat(path); err != nil {
 				continue
 			}
@@ -63,7 +64,7 @@ func loadPlugins(ctx context.Context) error {
 	return nil
 }
 
-func watchPluginDirectory(ctx context.Context) error {
+func WatchPluginDirectory(ctx context.Context) error {
 	w := watcher.New()
 	w.AddFilterHook(watcher.RegexFilterHook(regexp.MustCompile(`^.+\.wasm$`), false))
 
@@ -94,7 +95,7 @@ func watchPluginDirectory(ctx context.Context) error {
 				}
 
 				// Signal that we need to register functions
-				register <- true
+				config.Register <- true
 
 			case err := <-w.Error:
 				log.Printf("failure while watching plugin directory: %v\n", err)
@@ -108,13 +109,13 @@ func watchPluginDirectory(ctx context.Context) error {
 	}()
 
 	// Test if symlinks are supported
-	_, err := os.Lstat(*pluginsPath)
+	_, err := os.Lstat(*config.PluginsPath)
 	if err == nil {
 		// They are, so we can watch recursively (local dev workflow).
-		err = w.AddRecursive(*pluginsPath)
+		err = w.AddRecursive(*config.PluginsPath)
 	} else {
 		// They are not.  Just watch the single directory (production workflow).
-		err = w.Add(*pluginsPath)
+		err = w.Add(*config.PluginsPath)
 	}
 
 	if err != nil {
@@ -134,19 +135,19 @@ func watchPluginDirectory(ctx context.Context) error {
 func getPathForPlugin(name string) (string, error) {
 
 	// Normally the plugin will be directly in the plugins directory, by filename.
-	path := *pluginsPath + "/" + name + ".wasm"
+	path := *config.PluginsPath + "/" + name + ".wasm"
 	if _, err := os.Stat(path); err == nil {
 		return path, nil
 	}
 
 	// For local development, the plugin will be in a subdirectory and we'll use the debug.wasm file.
-	path = *pluginsPath + "/" + name + "/build/debug.wasm"
+	path = *config.PluginsPath + "/" + name + "/build/debug.wasm"
 	if _, err := os.Stat(path); err == nil {
 		return path, nil
 	}
 
 	// Or, the plugins path might pointing to a single plugin's base directory.
-	path = *pluginsPath + "/build/debug.wasm"
+	path = *config.PluginsPath + "/build/debug.wasm"
 	if _, err := os.Stat(path); err == nil {
 		return path, nil
 	}

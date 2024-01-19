@@ -1,11 +1,13 @@
 /*
  * Copyright 2023 Hypermode, Inc.
  */
-package main
+package functions
 
 import (
 	"context"
 	"errors"
+	"hmruntime/config"
+	"hmruntime/dgraph"
 	"log"
 	"net/url"
 	"time"
@@ -17,13 +19,13 @@ const schemaRefreshInterval time.Duration = time.Second * 5
 // Holds the current GraphQL schema
 var gqlSchema string
 
-func monitorGqlSchema(ctx context.Context) {
+func MonitorGqlSchema(ctx context.Context) {
 	go func() {
 		ticker := time.NewTicker(schemaRefreshInterval)
 		defer ticker.Stop()
 
 		for {
-			schema, err := getGQLSchema(ctx)
+			schema, err := dgraph.GetGQLSchema(ctx)
 			if err != nil {
 				var urlErr *url.Error
 				if errors.As(err, &urlErr) {
@@ -39,7 +41,7 @@ func monitorGqlSchema(ctx context.Context) {
 				}
 
 				// Signal that we need to register functions
-				register <- true
+				config.Register <- true
 
 				gqlSchema = schema
 			}
