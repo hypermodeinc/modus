@@ -10,10 +10,10 @@
             "env": {
                 "ENV": "dev",
                 "AWS_REGION":"us-west-2",
-                "AWS_PROFILE":"hm-cp-staging",
+                "AWS_PROFILE":"hm-rumtime",
                 "AWS_SDK_LOAD_CONFIG": "true"
               },
-              "args": ["--dgraph", "http://localhost:8080", "--plugins", "/Users/jairadhakrishnan/plugins/"]
+              "args": ["--dgraph", "http://localhost:8080", "--plugins", "~/plugins"]
         }
     ]
 }
