@@ -1,37 +1,23 @@
 /*
  * Copyright 2023 Hypermode, Inc.
  */
-package monitor
+package functions
 
 import (
 	"context"
 	"fmt"
+	"hmruntime/config"
 	"hmruntime/dgraph"
 	"log"
 	"reflect"
 	"strings"
-
-	"github.com/tetratelabs/wazero"
 )
-
-// map that holds the compiled modules for each plugin
-var CompiledModules = make(map[string]wazero.CompiledModule)
-
-// map that holds the function info for each resolver
-var FunctionsMap = make(map[string]dgraph.FunctionInfo)
-
-// Channel used to signal that registration is needed
-var Register chan bool = make(chan bool)
-
-// channel and flag used to signal the HTTP server
-var ServerReady chan bool = make(chan bool)
-var ServerWaiting = true
 
 func MonitorRegistration(ctx context.Context) {
 	go func() {
 		for {
 			select {
-			case <-Register:
+			case <-config.Register:
 				log.Printf("Registering functions")
 				err := registerFunctions(gqlSchema)
 				if err != nil {
@@ -54,18 +40,18 @@ func registerFunctions(gqlSchema string) error {
 
 	// Build a map of resolvers to function info, including the plugin name.
 	// If there are function name conflicts between plugins, the last plugin loaded wins.
-	for pluginName, cm := range CompiledModules {
+	for pluginName, cm := range config.CompiledModules {
 		for _, schema := range funcSchemas {
 			for _, fn := range cm.ExportedFunctions() {
 				fnName := fn.ExportNames()[0]
 				if strings.EqualFold(fnName, schema.FunctionName()) {
 					info := dgraph.FunctionInfo{PluginName: pluginName, Schema: schema}
 					resolver := schema.Resolver()
-					oldInfo, existed := FunctionsMap[resolver]
+					oldInfo, existed := config.FunctionsMap[resolver]
 					if existed && reflect.DeepEqual(oldInfo, info) {
 						continue
 					}
-					FunctionsMap[resolver] = info
+					config.FunctionsMap[resolver] = info
 					if existed {
 						fmt.Printf("Re-registered %s to use %s in %s\n", resolver, fnName, pluginName)
 					} else {
@@ -77,7 +63,7 @@ func registerFunctions(gqlSchema string) error {
 	}
 
 	// Cleanup any previously registered functions that are no longer in the schema or loaded modules.
-	for resolver, info := range FunctionsMap {
+	for resolver, info := range config.FunctionsMap {
 		foundSchema := false
 		for _, schema := range funcSchemas {
 			if strings.EqualFold(info.FunctionName(), schema.FunctionName()) {
@@ -85,16 +71,16 @@ func registerFunctions(gqlSchema string) error {
 				break
 			}
 		}
-		_, foundModule := CompiledModules[info.PluginName]
+		_, foundModule := config.CompiledModules[info.PluginName]
 		if !foundSchema || !foundModule {
-			delete(FunctionsMap, resolver)
+			delete(config.FunctionsMap, resolver)
 			fmt.Printf("Unregistered old function '%s' for resolver '%s'\n", info.FunctionName(), resolver)
 		}
 	}
 
 	// If the HTTP server is waiting, signal that we're ready.
-	if ServerWaiting {
-		ServerReady <- true
+	if config.ServerWaiting {
+		config.ServerReady <- true
 	}
 
 	return nil

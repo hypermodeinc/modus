@@ -6,8 +6,8 @@ package plugins
 import (
 	"context"
 	"fmt"
+	"hmruntime/config"
 	"hmruntime/functions"
-	"hmruntime/monitor"
 	"io"
 	"os"
 	"runtime"
@@ -17,9 +17,8 @@ import (
 	"github.com/tetratelabs/wazero"
 	wasm "github.com/tetratelabs/wazero/api"
 	"github.com/tetratelabs/wazero/experimental/opt"
+	wasi "github.com/tetratelabs/wazero/imports/wasi_snapshot_preview1"
 )
-
-var WasmRuntime wazero.Runtime
 
 type buffers struct {
 	Stdout *strings.Builder
@@ -58,7 +57,7 @@ func InitWasmRuntime(ctx context.Context) (wazero.Runtime, error) {
 }
 
 func loadPluginModule(ctx context.Context, name string) error {
-	_, reloading := monitor.CompiledModules[name]
+	_, reloading := config.CompiledModules[name]
 	if reloading {
 		fmt.Printf("Reloading plugin '%s'\n", name)
 	} else {
@@ -76,13 +75,13 @@ func loadPluginModule(ctx context.Context, name string) error {
 	}
 
 	// Compile the plugin into a module.
-	cm, err := WasmRuntime.CompileModule(ctx, plugin)
+	cm, err := config.WasmRuntime.CompileModule(ctx, plugin)
 	if err != nil {
 		return fmt.Errorf("failed to compile the plugin: %w", err)
 	}
 
 	// Store the compiled module for later retrieval.
-	monitor.CompiledModules[name] = cm
+	config.CompiledModules[name] = cm
 
 	// TODO: We should close the old module, but that leaves the _new_ module in an invalid state,
 	// giving an error when querying: "source module must be compiled before instantiation"
@@ -94,13 +93,13 @@ func loadPluginModule(ctx context.Context, name string) error {
 }
 
 func unloadPluginModule(ctx context.Context, name string) error {
-	cmOld, found := monitor.CompiledModules[name]
+	cmOld, found := config.CompiledModules[name]
 	if !found {
 		return fmt.Errorf("plugin not found '%s'", name)
 	}
 
 	fmt.Printf("Unloading plugin '%s'\n", name)
-	delete(monitor.CompiledModules, name)
+	delete(config.CompiledModules, name)
 	cmOld.Close(ctx)
 
 	return nil
@@ -115,7 +114,7 @@ func GetModuleInstance(ctx context.Context, pluginName string) (wasm.Module, buf
 	wErr := io.MultiWriter(os.Stderr, buf.Stderr)
 
 	// Get the compiled module.
-	compiled, ok := monitor.CompiledModules[pluginName]
+	compiled, ok := config.CompiledModules[pluginName]
 	if !ok {
 		return nil, buf, fmt.Errorf("no compiled module found for plugin '%s'", pluginName)
 	}
@@ -128,10 +127,24 @@ func GetModuleInstance(ctx context.Context, pluginName string) (wasm.Module, buf
 	// Instantiate the plugin as a module.
 	// NOTE: This will also invoke the plugin's `_start` function,
 	// which will call any top-level code in the plugin.
-	mod, err := WasmRuntime.InstantiateModule(ctx, compiled, cfg)
+	mod, err := config.WasmRuntime.InstantiateModule(ctx, compiled, cfg)
 	if err != nil {
 		return nil, buf, fmt.Errorf("failed to instantiate the plugin module: %w", err)
 	}
 
 	return mod, buf, nil
+}
+
+func instantiateWasiFunctions(ctx context.Context, runtime wazero.Runtime) error {
+	b := runtime.NewHostModuleBuilder(wasi.ModuleName)
+	wasi.NewFunctionExporter().ExportFunctions(b)
+
+	// If we ever need to override any of the WASI functions, we can do so here.
+
+	_, err := b.Instantiate(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to instantiate the %s module: %w", wasi.ModuleName, err)
+	}
+
+	return nil
 }

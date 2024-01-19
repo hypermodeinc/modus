@@ -13,6 +13,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/aws/aws-sdk-go/service/secretsmanager"
 	"github.com/tetratelabs/wazero"
@@ -20,6 +21,10 @@ import (
 )
 
 const HostModuleName = "hypermode"
+
+var httpClient = &http.Client{
+	Timeout: 10 * time.Second,
+}
 
 func InstantiateHostFunctions(ctx context.Context, runtime wazero.Runtime) error {
 	b := runtime.NewHostModuleBuilder(HostModuleName)
@@ -139,7 +144,7 @@ func hostInvokeClassifier(ctx context.Context, mod wasm.Module, modelId uint32, 
 	modelKey := *secretValue.SecretString
 
 	req.Header.Set("x-api-key", modelKey)
-	resp, err := dgraph.HttpClient.Do(req)
+	resp, err := httpClient.Do(req)
 
 	//Handle Error
 	if err != nil {

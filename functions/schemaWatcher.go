@@ -1,11 +1,12 @@
 /*
  * Copyright 2023 Hypermode, Inc.
  */
-package monitor
+package functions
 
 import (
 	"context"
 	"errors"
+	"hmruntime/config"
 	"hmruntime/dgraph"
 	"log"
 	"net/url"
@@ -40,7 +41,7 @@ func MonitorGqlSchema(ctx context.Context) {
 				}
 
 				// Signal that we need to register functions
-				Register <- true
+				config.Register <- true
 
 				gqlSchema = schema
 			}

@@ -6,8 +6,8 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"hmruntime/config"
 	"hmruntime/functions"
-	"hmruntime/monitor"
 	"hmruntime/plugins"
 	"log"
 	"net/http"
@@ -47,7 +47,7 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get the function info for the resolver
-	info, ok := monitor.FunctionsMap[req.Resolver]
+	info, ok := config.FunctionsMap[req.Resolver]
 	if !ok {
 		w.WriteHeader(http.StatusBadRequest)
 		log.Printf("No function registered for resolver '%s'", req.Resolver)
@@ -207,4 +207,13 @@ func writeDataAsJson(w http.ResponseWriter, data any, isJson bool) error {
 	}
 
 	return nil
+}
+
+func startServer(port *int) error {
+	// Start the HTTP server when we're ready
+	<-config.ServerReady
+	config.ServerWaiting = false
+	fmt.Printf("Listening on port %d...\n", *port)
+	http.HandleFunc("/graphql-worker", handleRequest)
+	return http.ListenAndServe(fmt.Sprintf(":%d", *port), nil)
 }

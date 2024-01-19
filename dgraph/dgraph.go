@@ -221,7 +221,7 @@ const (
 	classifierModel string = "classifier"
 )
 
-var HttpClient = &http.Client{
+var httpClient = &http.Client{
 	Timeout: 10 * time.Second,
 }
 
@@ -258,7 +258,7 @@ func GetModelEndpoint(mid string) (string, error) {
 	req.Header.Set("Content-Type", "application/json")
 
 	// Perform the request
-	resp, err := HttpClient.Do(req)
+	resp, err := httpClient.Do(req)
 	if err != nil {
 		return "", fmt.Errorf("error making request: %w", err)
 	}
