@@ -27,6 +27,7 @@ func instantiateHostFunctions(ctx context.Context, runtime wazero.Runtime) error
 	b.NewFunctionBuilder().WithFunc(hostExecuteDQL).Export("executeDQL")
 	b.NewFunctionBuilder().WithFunc(hostExecuteGQL).Export("executeGQL")
 	b.NewFunctionBuilder().WithFunc(hostInvokeClassifier).Export("invokeClassifier")
+	b.NewFunctionBuilder().WithFunc(hostExecuteLocalPost).Export("executeLocalPost")
 
 	_, err := b.Instantiate(ctx)
 	if err != nil {
@@ -64,6 +65,29 @@ func hostExecuteGQL(ctx context.Context, mod wasm.Module, pStmt uint32) uint32 {
 	r, err := executeGQL(ctx, stmt)
 	if err != nil {
 		log.Println("error executing GraphQL operation:", err)
+		return 0
+	}
+
+	return writeString(ctx, mod, string(r))
+}
+
+func hostExecuteLocalPost(ctx context.Context, mod wasm.Module, pEndpoint uint32, pStmt uint32) uint32 {
+	mem := mod.Memory()
+	stmt, err := readString(mem, pStmt)
+	if err != nil {
+		log.Println("error reading POST body from wasm memory:", err)
+		return 0
+	}
+
+	endpoint, err := readString(mem, pEndpoint)
+	if err != nil {
+		log.Println("error reading POST endpoint from wasm memory:", err)
+		return 0
+	}
+
+	r, err := executeLocalPostInternal(ctx, endpoint, stmt)
+	if err != nil {
+		log.Println("error executing POST to local server:", err)
 		return 0
 	}
 

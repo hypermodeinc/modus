@@ -70,6 +70,34 @@ func executeGQL(ctx context.Context, stmt string) ([]byte, error) {
 	return respBody, nil
 }
 
+// TODO: move out of dgraph.go since this is a generic post to python flask or similar
+// usage executeLocalPostInternal(ctx, "cluster", "{requestParam1: 'rp1', param2: 'p2'}" )
+func executeLocalPostInternal(ctx context.Context, endpoint string, stmt string) ([]byte, error) {
+	reqBody := strings.NewReader(stmt)
+	resp, err := http.Post("http://localhost:5000/"+endpoint, "application/json", reqBody)
+	if err != nil {
+		log.Println("Error executing POST")
+		return nil, fmt.Errorf("error calling local POST request: %v", err)
+	}
+
+	defer resp.Body.Close()
+	respBody, err := io.ReadAll(resp.Body)
+
+	if resp.StatusCode != http.StatusOK {
+		log.Println("POST error:", string(respBody))
+		if err != nil {
+			return nil, fmt.Errorf("error reading POST response: %v", err)
+		}
+		return nil, fmt.Errorf("POST operation failed with status code %d", resp.StatusCode)
+	}
+
+	if err != nil { // error, but statuscode is ok - unsure this happens
+		return nil, fmt.Errorf("error reading POST response: %v", err)
+	}
+
+	return respBody, nil
+}
+
 type dqlResponse[T any] struct {
 	Data T `json:"data"`
 }
