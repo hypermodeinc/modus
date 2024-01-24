@@ -174,8 +174,15 @@ func hostInvokeClassifier(ctx context.Context, mod wasm.Module, modelId uint32, 
 	// snippet only
 	var result ClassifierResponse
 	if err := json.Unmarshal(body, &result); err != nil { // Parse []byte to go struct pointer
-		fmt.Println("Can not unmarshal JSON")
+		log.Printf("Can not unmarshal JSON with error %v", err)
+		return 0
 	}
+
+	if len(result.Uid.Probabilities) == 0 {
+		log.Printf("Unexpected body returned from classifier, body: %v", string(body))
+		return 0
+	}
+
 	str, _ := json.Marshal(result.Uid)
 	// return a string
 	return writeString(ctx, mod, string(str))
