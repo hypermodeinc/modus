@@ -50,7 +50,7 @@ func ExecuteDQL(ctx context.Context, stmt string, vars map[string]string, isMuta
 	host := *DgraphUrl
 	var endpoint string
 	if isMutation {
-		endpoint = "/mutate"
+		endpoint = "/mutate?commitNow=true"
 	} else {
 		endpoint = "/query"
 	}
