@@ -21,7 +21,7 @@ import (
 var DgraphUrl *string
 
 func executePostRequestWithVars(stmt string, vars map[string]string, endpoint string) (*http.Response, error) {
-	payload := map[string]interface{}{
+	payload := map[string]any{
 		"query":     stmt,
 		"variables": vars,
 	}
@@ -175,7 +175,7 @@ func (schema functionSchema) FunctionArgs() ast.ArgumentDefinitionList {
 			if err == nil {
 				var list ast.ArgumentDefinitionList
 				var argName string
-				for _, val := range v.([]interface{}) {
+				for _, val := range v.([]any) {
 					argName = val.(string)
 					fld := schema.ObjectDef.Fields.ForName(argName)
 					if fld == nil {
@@ -258,9 +258,9 @@ func GetModelEndpoint(mid string) (string, error) {
 			}
 		}`
 
-	payload := map[string]interface{}{
+	payload := map[string]any{
 		"query":     query,
-		"variables": map[string]interface{}{"id": mid},
+		"variables": map[string]any{"id": mid},
 	}
 
 	// Convert payload to JSON
