@@ -11,7 +11,6 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/dgraph-io/gqlparser/ast"
@@ -21,25 +20,47 @@ import (
 
 var DgraphUrl *string
 
-func ExecuteDQL(ctx context.Context, stmt string, isMutation bool) ([]byte, error) {
-	reqBody := strings.NewReader(stmt)
-
-	host := *DgraphUrl
-	var endpoint, contentType string
-	if isMutation {
-		endpoint = "/mutate?commitNow=true"
-		contentType = "application/rdf"
-	} else {
-		endpoint = "/query"
-		contentType = "application/dql"
+func executePostRequestWithVars(stmt string, vars map[string]string, endpoint string) (*http.Response, error) {
+	payload := map[string]any{
+		"query":     stmt,
+		"variables": vars,
 	}
 
-	resp, err := http.Post(host+endpoint, contentType, reqBody)
+	// Convert payload to JSON
+	jsonPayload, err := json.Marshal(payload)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling payload: %w", err)
+	}
+
+	// Create the HTTP request
+	req, err := http.NewRequest("POST", endpoint, bytes.NewBuffer(jsonPayload))
+	if err != nil {
+		return nil, fmt.Errorf("error creating request: %w", err)
+	}
+
+	// Set headers
+	req.Header.Set("Content-Type", "application/json")
+
+	// Perform the request
+	return httpClient.Do(req)
+
+}
+
+func ExecuteDQL(ctx context.Context, stmt string, vars map[string]string, isMutation bool) ([]byte, error) {
+	host := *DgraphUrl
+	var endpoint string
+	if isMutation {
+		endpoint = "/mutate?commitNow=true"
+	} else {
+		endpoint = "/query"
+	}
+
+	resp, err := executePostRequestWithVars(stmt, vars, host+endpoint)
 	if err != nil {
 		return nil, fmt.Errorf("error posting DQL statement: %w", err)
 	}
-
 	defer resp.Body.Close()
+
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("DQL operation failed with status code %d", resp.StatusCode)
 	}
@@ -52,14 +73,14 @@ func ExecuteDQL(ctx context.Context, stmt string, isMutation bool) ([]byte, erro
 	return respBody, nil
 }
 
-func ExecuteGQL(ctx context.Context, stmt string) ([]byte, error) {
-	reqBody := strings.NewReader(stmt)
-	resp, err := http.Post(fmt.Sprintf("%s/graphql", *DgraphUrl), "application/graphql", reqBody)
+func ExecuteGQL(ctx context.Context, stmt string, vars map[string]string) ([]byte, error) {
+	// Perform the request
+	resp, err := executePostRequestWithVars(stmt, vars, fmt.Sprintf("%s/graphql", *DgraphUrl))
 	if err != nil {
 		return nil, fmt.Errorf("error posting GraphQL statement: %w", err)
 	}
-
 	defer resp.Body.Close()
+
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("GraphQL operation failed with status code %d", resp.StatusCode)
 	}
@@ -86,7 +107,7 @@ var schemaQuery = "{node(func:has(dgraph.graphql.schema)){dgraph.graphql.schema}
 
 func GetGQLSchema(ctx context.Context) (string, error) {
 
-	r, err := ExecuteDQL(ctx, schemaQuery, false)
+	r, err := ExecuteDQL(ctx, schemaQuery, nil, false)
 	if err != nil {
 		return "", fmt.Errorf("error getting GraphQL schema from Dgraph: %w", err)
 	}
@@ -154,7 +175,7 @@ func (schema functionSchema) FunctionArgs() ast.ArgumentDefinitionList {
 			if err == nil {
 				var list ast.ArgumentDefinitionList
 				var argName string
-				for _, val := range v.([]interface{}) {
+				for _, val := range v.([]any) {
 					argName = val.(string)
 					fld := schema.ObjectDef.Fields.ForName(argName)
 					if fld == nil {
@@ -237,9 +258,9 @@ func GetModelEndpoint(mid string) (string, error) {
 			}
 		}`
 
-	payload := map[string]interface{}{
+	payload := map[string]any{
 		"query":     query,
-		"variables": map[string]string{"id": mid},
+		"variables": map[string]any{"id": mid},
 	}
 
 	// Convert payload to JSON

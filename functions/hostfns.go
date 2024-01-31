@@ -42,7 +42,7 @@ func InstantiateHostFunctions(ctx context.Context, runtime wazero.Runtime) error
 	return nil
 }
 
-func hostExecuteDQL(ctx context.Context, mod wasm.Module, pStmt uint32, isMutation uint32) uint32 {
+func hostExecuteDQL(ctx context.Context, mod wasm.Module, pStmt uint32, pVars uint32, isMutation uint32) uint32 {
 	mem := mod.Memory()
 	stmt, err := readString(mem, pStmt)
 	if err != nil {
@@ -50,7 +50,19 @@ func hostExecuteDQL(ctx context.Context, mod wasm.Module, pStmt uint32, isMutati
 		return 0
 	}
 
-	r, err := dgraph.ExecuteDQL(ctx, stmt, isMutation != 0)
+	sVars, err := readString(mem, pVars)
+	if err != nil {
+		log.Println("error reading DQL variables string from wasm memory:", err)
+		return 0
+	}
+
+	vars := make(map[string]string)
+	if err := json.Unmarshal([]byte(sVars), &vars); err != nil {
+		log.Println("error unmarshaling GraphQL variables:", err)
+		return 0
+	}
+
+	r, err := dgraph.ExecuteDQL(ctx, stmt, vars, isMutation != 0)
 	if err != nil {
 		log.Println("error executing DQL statement:", err)
 		return 0
@@ -59,15 +71,27 @@ func hostExecuteDQL(ctx context.Context, mod wasm.Module, pStmt uint32, isMutati
 	return writeString(ctx, mod, string(r))
 }
 
-func hostExecuteGQL(ctx context.Context, mod wasm.Module, pStmt uint32) uint32 {
+func hostExecuteGQL(ctx context.Context, mod wasm.Module, pStmt uint32, pVars uint32) uint32 {
 	mem := mod.Memory()
 	stmt, err := readString(mem, pStmt)
 	if err != nil {
-		log.Println("error reading GraphQL string from wasm memory:", err)
+		log.Println("error reading GraphQL query string from wasm memory:", err)
 		return 0
 	}
 
-	r, err := dgraph.ExecuteGQL(ctx, stmt)
+	sVars, err := readString(mem, pVars)
+	if err != nil {
+		log.Println("error reading GraphQL variables string from wasm memory:", err)
+		return 0
+	}
+
+	vars := make(map[string]string)
+	if err := json.Unmarshal([]byte(sVars), &vars); err != nil {
+		log.Println("error unmarshaling GraphQL variables:", err)
+		return 0
+	}
+
+	r, err := dgraph.ExecuteGQL(ctx, stmt, vars)
 	if err != nil {
 		log.Println("error executing GraphQL operation:", err)
 		return 0
