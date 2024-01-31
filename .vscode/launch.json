@@ -13,7 +13,7 @@
                 "AWS_PROFILE":"hm-rumtime",
                 "AWS_SDK_LOAD_CONFIG": "true"
               },
-              "args": ["--dgraph", "http://localhost:8080", "--plugins", "~/plugins/"]
+              "args": ["--dgraph", "http://localhost:8080", "--plugins", "/Users/jairadhakrishnan/go/src/github.com/gohypermode/hypermode-as/examples/hmplugin1/"]
         }
     ]
 }
