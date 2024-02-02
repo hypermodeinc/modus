@@ -1,8 +1,5 @@
 name: ci-aqua-security-trivy-tests
 on:
-  push:
-    branches:
-      - main
   pull_request:
     types:
       - opened
