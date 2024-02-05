@@ -109,21 +109,23 @@ type ClassifierLabel struct {
 	Probability float64 `json:"probability"`
 }
 
-type ClassifierResponse struct {
-	Uid ClassifierResult `json:"uid"`
-}
-
-func hostInvokeClassifier(ctx context.Context, mod wasm.Module, modelId uint32, psentence uint32) uint32 {
+func hostInvokeClassifier(ctx context.Context, mod wasm.Module, modelId uint32, psentenceMap uint32) uint32 {
 	mem := mod.Memory()
 	mid, err := readString(mem, modelId)
+	fmt.Println("reading model id from wasm memory:", mid)
 	if err != nil {
 		log.Println("error reading model id from wasm memory:", err)
 		return 0
 	}
-	fmt.Println("reading model id from wasm memory:", mid)
-	sentence, err := readString(mem, psentence)
+	sentenceMapStr, err := readString(mem, psentenceMap)
 	if err != nil {
-		log.Println("error reading sentence string from wasm memory:", err)
+		log.Println("error reading sentence map string from wasm memory:", err)
+		return 0
+	}
+
+	sentenceMap := make(map[string]string)
+	if err := json.Unmarshal([]byte(sentenceMapStr), &sentenceMap); err != nil {
+		log.Println("error unmarshaling sentence map:", err)
 		return 0
 	}
 
@@ -134,9 +136,7 @@ func hostInvokeClassifier(ctx context.Context, mod wasm.Module, modelId uint32, 
 	}
 
 	// POST to model endpoint
-	postBody, _ := json.Marshal(map[string]string{
-		"uid": sentence,
-	})
+	postBody, _ := json.Marshal(sentenceMap)
 	requestBody := bytes.NewBuffer(postBody)
 	//Leverage Go's HTTP Post function to make request
 
@@ -184,19 +184,23 @@ func hostInvokeClassifier(ctx context.Context, mod wasm.Module, modelId uint32, 
 	}
 
 	// snippet only
-	var result ClassifierResponse
+	var result map[string]ClassifierResult
 	if err := json.Unmarshal(body, &result); err != nil { // Parse []byte to go struct pointer
 		log.Printf("Can not unmarshal JSON with error %v", err)
 		return 0
 	}
 
-	if len(result.Uid.Probabilities) == 0 {
+	if len(result) == 0 {
 		log.Printf("Unexpected body returned from classifier, body: %v", string(body))
 		return 0
 	}
 
-	str, _ := json.Marshal(result.Uid)
+	res, err := json.Marshal(result)
+	if err != nil {
+		log.Println("error marshaling classifier result:", err)
+		return 0
+	}
 	// return a string
-	return writeString(ctx, mod, string(str))
+	return writeString(ctx, mod, string(res))
 
 }
