@@ -24,9 +24,7 @@ jobs:
                 go test -v 2>&1 ./... | go-junit-report -set-exit-code > report.xml
             - name: Generate Test Summary
               if: always()
-              uses: dorny/test-reporter@v1
+              uses: test-summary/action@v2
               with:
-                name: Unit Tests
-                path: report.xml
-                reporter: jest-junit
+                paths: "report.xml"
               
