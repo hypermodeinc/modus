@@ -238,15 +238,14 @@ type ModelSpecPayload struct {
 }
 
 const (
-	alphaService    string = "%v-alpha-service"
-	classifierModel string = "classifier"
+	alphaService string = "%v-alpha-service"
 )
 
 var httpClient = &http.Client{
 	Timeout: 10 * time.Second,
 }
 
-func GetModelEndpoint(mid string) (string, error) {
+func GetModelSpec(mid string) (ModelSpec, error) {
 	serviceURL := fmt.Sprintf("%s/admin", *DgraphUrl)
 
 	query := `
@@ -266,13 +265,13 @@ func GetModelEndpoint(mid string) (string, error) {
 	// Convert payload to JSON
 	jsonPayload, err := json.Marshal(payload)
 	if err != nil {
-		return "", fmt.Errorf("error marshaling payload: %w", err)
+		return ModelSpec{}, fmt.Errorf("error marshaling payload: %w", err)
 	}
 
 	// Create the HTTP request
 	req, err := http.NewRequest("POST", serviceURL, bytes.NewBuffer(jsonPayload))
 	if err != nil {
-		return "", fmt.Errorf("error creating request: %w", err)
+		return ModelSpec{}, fmt.Errorf("error creating request: %w", err)
 	}
 
 	// Set headers
@@ -281,13 +280,13 @@ func GetModelEndpoint(mid string) (string, error) {
 	// Perform the request
 	resp, err := httpClient.Do(req)
 	if err != nil {
-		return "", fmt.Errorf("error making request: %w", err)
+		return ModelSpec{}, fmt.Errorf("error making request: %w", err)
 	}
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return "", fmt.Errorf("error reading response body: %w", err)
+		return ModelSpec{}, fmt.Errorf("error reading response body: %w", err)
 	}
 
 	// Create an instance of the ModelSpec struct
@@ -296,16 +295,12 @@ func GetModelEndpoint(mid string) (string, error) {
 	// Unmarshal the JSON data into the ModelSpec struct
 	err = json.Unmarshal(body, &spec)
 	if err != nil {
-		return "", fmt.Errorf("error unmarshaling response body: %w", err)
+		return ModelSpec{}, fmt.Errorf("error unmarshaling response body: %w", err)
 	}
 
 	if spec.Data.Model.ID != mid {
-		return "", fmt.Errorf("error: ID does not match")
+		return ModelSpec{}, fmt.Errorf("error: ID does not match")
 	}
 
-	if spec.Data.Model.Type != classifierModel {
-		return "", fmt.Errorf("error: model type is not classifier")
-	}
-
-	return spec.Data.Model.Endpoint, nil
+	return spec.Data.Model, nil
 }

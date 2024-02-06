@@ -20,7 +20,11 @@ import (
 	wasm "github.com/tetratelabs/wazero/api"
 )
 
-const HostModuleName = "hypermode"
+const (
+	HostModuleName  string = "hypermode"
+	classifierModel string = "classifier"
+	embeddingModel  string = "embedding"
+)
 
 var httpClient = &http.Client{
 	Timeout: 10 * time.Second,
@@ -33,6 +37,7 @@ func InstantiateHostFunctions(ctx context.Context, runtime wazero.Runtime) error
 	b.NewFunctionBuilder().WithFunc(hostExecuteDQL).Export("executeDQL")
 	b.NewFunctionBuilder().WithFunc(hostExecuteGQL).Export("executeGQL")
 	b.NewFunctionBuilder().WithFunc(hostInvokeClassifier).Export("invokeClassifier")
+	b.NewFunctionBuilder().WithFunc(hostComputeEmbedding).Export("computeEmbedding")
 
 	_, err := b.Instantiate(ctx)
 	if err != nil {
@@ -109,60 +114,64 @@ type ClassifierLabel struct {
 	Probability float64 `json:"probability"`
 }
 
-type ClassifierResponse struct {
-	Uid ClassifierResult `json:"uid"`
-}
-
-func hostInvokeClassifier(ctx context.Context, mod wasm.Module, modelId uint32, psentence uint32) uint32 {
+func textModelSetup(mod wasm.Module, modelId uint32, psentenceMap uint32) (string, map[string]string, dgraph.ModelSpec, error) {
 	mem := mod.Memory()
 	mid, err := readString(mem, modelId)
+	fmt.Println("reading model id from wasm memory:", mid)
 	if err != nil {
 		log.Println("error reading model id from wasm memory:", err)
-		return 0
+		return "", map[string]string{}, dgraph.ModelSpec{}, err
 	}
-	fmt.Println("reading model id from wasm memory:", mid)
-	sentence, err := readString(mem, psentence)
+	sentenceMapStr, err := readString(mem, psentenceMap)
 	if err != nil {
-		log.Println("error reading sentence string from wasm memory:", err)
-		return 0
+		log.Println("error reading sentence map string from wasm memory:", err)
+		return "", map[string]string{}, dgraph.ModelSpec{}, err
 	}
 
-	endpoint, err := dgraph.GetModelEndpoint(mid)
+	sentenceMap := make(map[string]string)
+	if err := json.Unmarshal([]byte(sentenceMapStr), &sentenceMap); err != nil {
+		log.Println("error unmarshaling sentence map:", err)
+		return "", map[string]string{}, dgraph.ModelSpec{}, err
+	}
+
+	spec, err := dgraph.GetModelSpec(mid)
 	if err != nil {
 		log.Println("error getting model endpoint:", err)
-		return 0
+		return "", map[string]string{}, dgraph.ModelSpec{}, err
 	}
 
+	return mid, sentenceMap, spec, nil
+}
+
+func postToModelEndpoint(sentenceMap map[string]string, spec dgraph.ModelSpec, mid string) ([]byte, error) {
 	// POST to model endpoint
-	postBody, _ := json.Marshal(map[string]string{
-		"uid": sentence,
-	})
+	postBody, _ := json.Marshal(sentenceMap)
 	requestBody := bytes.NewBuffer(postBody)
 	//Leverage Go's HTTP Post function to make request
 
 	req, err := http.NewRequest(
 		http.MethodPost,
-		endpoint,
+		spec.Endpoint,
 		requestBody)
 	if err != nil {
 		log.Println("error buidling request:", err)
-		return 0
+		return []byte{}, err
 	}
 	svc, err := aws.GetSecretManagerSession()
 	if err != nil {
 		log.Println("error getting secret manager session:", err)
-		return 0
+		return []byte{}, err
 	}
 	secretValue, err := svc.GetSecretValue(&secretsmanager.GetSecretValueInput{
 		SecretId: &mid,
 	})
 	if err != nil {
 		log.Println("error getting secret:", err)
-		return 0
+		return []byte{}, err
 	}
 	if secretValue.SecretString == nil {
 		log.Println("secret string was empty")
-		return 0
+		return []byte{}, err
 	}
 
 	modelKey := *secretValue.SecretString
@@ -173,30 +182,82 @@ func hostInvokeClassifier(ctx context.Context, mod wasm.Module, modelId uint32, 
 	//Handle Error
 	if err != nil {
 		log.Printf("An Error Occured %v", err)
-		return 0
+		return []byte{}, err
 	}
 	defer resp.Body.Close()
 	//Read the response body
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		log.Printf("An Error Occured %v", err)
+		return []byte{}, err
+	}
+	return body, nil
+}
+
+func hostInvokeClassifier(ctx context.Context, mod wasm.Module, modelId uint32, psentenceMap uint32) uint32 {
+	mid, sentenceMap, spec, err := textModelSetup(mod, modelId, psentenceMap)
+
+	if spec.Type != classifierModel {
+		log.Println("error: model type is not classifier")
 		return 0
 	}
 
-	// snippet only
-	var result ClassifierResponse
-	if err := json.Unmarshal(body, &result); err != nil { // Parse []byte to go struct pointer
+	body, err := postToModelEndpoint(sentenceMap, spec, mid)
+	if err != nil {
+		log.Println("error posting to model endpoint:", err)
+		return 0
+	}
+
+	var result map[string]ClassifierResult
+	if err := json.Unmarshal(body, &result); err != nil {
 		log.Printf("Can not unmarshal JSON with error %v", err)
 		return 0
 	}
 
-	if len(result.Uid.Probabilities) == 0 {
+	if len(result) == 0 {
 		log.Printf("Unexpected body returned from classifier, body: %v", string(body))
 		return 0
 	}
 
-	str, _ := json.Marshal(result.Uid)
+	res, err := json.Marshal(result)
+	if err != nil {
+		log.Println("error marshalling classifier result:", err)
+		return 0
+	}
 	// return a string
-	return writeString(ctx, mod, string(str))
+	return writeString(ctx, mod, string(res))
+}
 
+func hostComputeEmbedding(ctx context.Context, mod wasm.Module, modelId uint32, psentenceMap uint32) uint32 {
+	mid, sentenceMap, spec, err := textModelSetup(mod, modelId, psentenceMap)
+
+	if spec.Type != embeddingModel {
+		log.Println("error: model type is not embedding")
+		return 0
+	}
+
+	body, err := postToModelEndpoint(sentenceMap, spec, mid)
+	if err != nil {
+		log.Println("error posting to model endpoint:", err)
+		return 0
+	}
+
+	var result map[string]string
+	if err := json.Unmarshal(body, &result); err != nil {
+		log.Printf("Can not unmarshal JSON with error %v", err)
+		return 0
+	}
+
+	if len(result) == 0 {
+		log.Printf("Unexpected body returned from embedding, body: %v", string(body))
+		return 0
+	}
+
+	res, err := json.Marshal(result)
+	if err != nil {
+		log.Println("error marshalling embedding result:", err)
+		return 0
+	}
+	// return a string
+	return writeString(ctx, mod, string(res))
 }
