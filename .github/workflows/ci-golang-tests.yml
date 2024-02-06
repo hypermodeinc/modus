@@ -9,7 +9,7 @@ on:
 jobs:
     golang-lint:
         if: github.event_name == 'pull_request'
-        name: lint
+        name: test
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v3
