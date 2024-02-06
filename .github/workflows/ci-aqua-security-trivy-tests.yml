@@ -8,8 +8,6 @@ on:
       - ready_for_review
     branches:
       - main 
-  schedule:
-    - cron: "0 0 * * *"
 permissions: read-all
 jobs:
   build:
