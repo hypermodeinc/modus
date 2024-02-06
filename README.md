@@ -152,3 +152,21 @@ export AWS_PROFILE=hm-runtime; ./hmruntime --plugins <your plugin folder>
 
 ```
 You can omit the export if the environment variable is already set.
+
+### Unit Testing
+
+Unit tests are created using Go's [built-in unit test support](https://go.dev/doc/tutorial/add-a-test).
+
+To run all tests in the project:
+
+```sh
+go test ./...
+```
+
+Or, you can just run tests in specific folders.  For example:
+
+```sh
+go test ./functions
+```
+
+Tests can also be run from VS Code's Testing panel, and are run automatically for pull requests.
