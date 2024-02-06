@@ -37,37 +37,6 @@ docker run --name hmruntime -p 8686:8686 -v ./plugins:/plugins hypermode/runtime
 
 _Note, if you have previously created a container with the same name, then delete it first with `docker rm hmruntime`._
 
-## AWS Setup
-Runtime may access AWS Secret manager, so we need to use an AWS Profile.
-
-```
-export AWS_PROFILE=hm-runtime
-```
-Have the `hm-runtime` profile and sso session configured in `~/.aws/config` file.
-
-To work in Sandbox declare the following profile:
-```
-[profile hm-runtime]
-sso_session = hm-runtime
-sso_account_id = 436061841671
-sso_role_name = Hypermode-EKS-Cluster-Admin
-[sso-session hm-runtime]
-sso_start_url = https://d-92674fec42.awsapps.com/start#
-sso_region = us-west-2
-sso_registration_scopes = sso:account:access
-```
-
-If you are using VSCode launcher, check `launch.json` and verify the profile `hm-runtime`.
-
-Then run `aws sso login --profile hm-runtime` to login to the profile.
-After SSO login you can start the runtime 
-
-```
-export AWS_PROFILE=hm-runtime; ./hmruntime --plugins <your plugin folder>
-
-```
-You can omit the export if the environment variable is already set.
-
 ## Building without Docker
 
 If needed, you can compile and run the Hypermode Runtime without using Docker.
@@ -152,3 +121,34 @@ docker run --name <CONTAINER_NAME> \
   --env=DGRAPH_ALPHA_GRAPHQL=lambda-url=http://host.docker.internal:8686/graphql-worker \
   dgraph/standalone:latest
 ```
+
+## AWS Setup
+Runtime may access AWS Secret manager, so we need to use an AWS Profile.
+
+```
+export AWS_PROFILE=hm-runtime
+```
+Have the `hm-runtime` profile and sso session configured in `~/.aws/config` file.
+
+To work in Sandbox declare the following profile:
+```
+[profile hm-runtime]
+sso_session = hm-runtime
+sso_account_id = 436061841671
+sso_role_name = Hypermode-EKS-Cluster-Admin
+[sso-session hm-runtime]
+sso_start_url = https://d-92674fec42.awsapps.com/start#
+sso_region = us-west-2
+sso_registration_scopes = sso:account:access
+```
+
+If you are using VSCode launcher, check `launch.json` and verify the profile `hm-runtime`.
+
+Then run `aws sso login --profile hm-runtime` to login to the profile.
+After SSO login you can start the runtime 
+
+```
+export AWS_PROFILE=hm-runtime; ./hmruntime --plugins <your plugin folder>
+
+```
+You can omit the export if the environment variable is already set.
