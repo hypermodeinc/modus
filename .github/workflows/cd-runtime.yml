@@ -32,14 +32,14 @@ jobs:
         env:
           TOKEN: ${{ secrets.GO_PRIVATE_MODULES }}
         run: git config --global url."https://admin-hypermode:${TOKEN}@github.com".insteadOf "https://github.com"
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Get Go Version
         run: |
           #!/bin/bash
           GOVERSION=$({ [ -f .go-version ] && cat .go-version; })
           echo "GOVERSION=$GOVERSION" >> $GITHUB_ENV
       - name: Set up Go
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v5
         with:
           go-version: ${{ env.GOVERSION }}
       - name: Runtime Git SHA
@@ -48,13 +48,13 @@ jobs:
           echo "runtime git sha "$RUNTIME_GIT_SHA
           echo "RUNTIME_GIT_SHA=$RUNTIME_GIT_SHA" >> $GITHUB_ENV
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: '${{ vars.AWS_ROLE }}'
           role-session-name: CD_RUNTIME
           aws-region: '${{ vars.AWS_REGION }}'
       - name: Login to Amazon ECR
-        uses: aws-actions/amazon-ecr-login@v1
+        uses: aws-actions/amazon-ecr-login@v2
       - name: Make and push runtime docker image
         run: |
           docker buildx create --name multiarch_builder --driver docker-container --use --bootstrap
@@ -73,7 +73,7 @@ jobs:
         env:
           TOKEN: ${{ secrets.GO_PRIVATE_MODULES }}
         run: git config --global url."https://admin-hypermode:${TOKEN}@github.com".insteadOf "https://github.com"
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           ref: '${{ github.event.inputs.releasetag }}'
       - name: Get Go Version
@@ -82,7 +82,7 @@ jobs:
           GOVERSION=$({ [ -f .go-version ] && cat .go-version; })
           echo "GOVERSION=$GOVERSION" >> $GITHUB_ENV
       - name: Set up Go
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v5
         with:
           go-version: ${{ env.GOVERSION }}
       - name: Set Runtime Release Version
@@ -105,13 +105,13 @@ jobs:
           echo "runtime git sha "$RUNTIME_GIT_SHA
           echo "RUNTIME_GIT_SHA=$RUNTIME_GIT_SHA" >> $GITHUB_ENV
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: '${{ vars.AWS_ROLE }}'
           role-session-name: CD_RUNTIME
           aws-region: '${{ vars.AWS_REGION }}'
       - name: Login to Amazon ECR
-        uses: aws-actions/amazon-ecr-login@v1
+        uses: aws-actions/amazon-ecr-login@v2
       - name: Make and push runtime docker image
         run: |
           docker buildx create --name multiarch_builder --driver docker-container --use --bootstrap
