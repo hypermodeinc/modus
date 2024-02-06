@@ -12,9 +12,9 @@ jobs:
         name: test
         runs-on: ubuntu-latest
         steps:
-            - uses: actions/checkout@v3
+            - uses: actions/checkout@v4
             - name: Setup Go
-              uses: actions/setup-go@v4
+              uses: actions/setup-go@v5
               with:
                 go-version: '>=1.20.0'
             - run: go version
@@ -24,7 +24,9 @@ jobs:
                 go test -v 2>&1 ./... | go-junit-report -set-exit-code > report.xml
             - name: Generate Test Summary
               if: always()
-              uses: test-summary/action@v2
+              uses: dorny/test-reporter@v1
               with:
-                paths: "report.xml"
+                name: Unit Tests
+                path: report.xml
+                reporter: jest-junit
               
