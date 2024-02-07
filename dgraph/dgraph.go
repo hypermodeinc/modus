@@ -5,14 +5,10 @@
 package dgraph
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
-	"io"
+	"hmruntime/utils"
 	"log"
-	"net/http"
-	"time"
 
 	"github.com/dgraph-io/gqlparser/ast"
 	"github.com/dgraph-io/gqlparser/parser"
@@ -21,102 +17,64 @@ import (
 
 var DgraphUrl *string
 
-func executePostRequestWithVars(stmt string, vars map[string]string, endpoint string) (*http.Response, error) {
-	payload := map[string]any{
-		"query":     stmt,
-		"variables": vars,
-	}
-
-	// Convert payload to JSON
-	jsonPayload, err := json.Marshal(payload)
-	if err != nil {
-		return nil, fmt.Errorf("error marshaling payload: %w", err)
-	}
-
-	// Create the HTTP request
-	req, err := http.NewRequest("POST", endpoint, bytes.NewBuffer(jsonPayload))
-	if err != nil {
-		return nil, fmt.Errorf("error creating request: %w", err)
-	}
-
-	// Set headers
-	req.Header.Set("Content-Type", "application/json")
-
-	// Perform the request
-	return httpClient.Do(req)
-
+type dgraphRequest struct {
+	Query     string            `json:"query"`
+	Variables map[string]string `json:"variables"`
 }
 
-func ExecuteDQL(ctx context.Context, stmt string, vars map[string]string, isMutation bool) ([]byte, error) {
-	host := *DgraphUrl
-	var endpoint string
+func ExecuteDQL[TResponse any](ctx context.Context, stmt string, vars map[string]string, isMutation bool) (TResponse, error) {
+	var url string
 	if isMutation {
-		endpoint = "/mutate?commitNow=true"
+		url = *DgraphUrl + "/mutate?commitNow=true"
 	} else {
-		endpoint = "/query"
+		url = *DgraphUrl + "/query"
 	}
 
-	resp, err := executePostRequestWithVars(stmt, vars, host+endpoint)
+	request := dgraphRequest{
+		Query:     stmt,
+		Variables: vars,
+	}
+
+	response, err := utils.PostHttp[TResponse](url, request, nil)
 	if err != nil {
-		return nil, fmt.Errorf("error posting DQL statement: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("DQL operation failed with status code %d", resp.StatusCode)
+		return response, fmt.Errorf("error posting DQL statement: %w", err)
 	}
 
-	respBody, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("error reading DQL response: %w", err)
-	}
-
-	return respBody, nil
+	return response, nil
 }
 
-func ExecuteGQL(ctx context.Context, stmt string, vars map[string]string) ([]byte, error) {
-	// Perform the request
-	resp, err := executePostRequestWithVars(stmt, vars, fmt.Sprintf("%s/graphql", *DgraphUrl))
+func ExecuteGQL[TResponse any](ctx context.Context, stmt string, vars map[string]string) (TResponse, error) {
+	url := *DgraphUrl + "/graphql"
+	request := dgraphRequest{
+		Query:     stmt,
+		Variables: vars,
+	}
+
+	response, err := utils.PostHttp[TResponse](url, request, nil)
 	if err != nil {
-		return nil, fmt.Errorf("error posting GraphQL statement: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("GraphQL operation failed with status code %d", resp.StatusCode)
+		return response, fmt.Errorf("error posting GraphQL statement: %w", err)
 	}
 
-	respBody, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("error reading GraphQL response: %w", err)
-	}
-
-	return respBody, nil
+	return response, nil
 }
-
-type dqlResponse[T any] struct {
-	Data T `json:"data"`
-}
-
-type schemaResponse struct {
-	Node []struct {
-		Schema string `json:"dgraph.graphql.schema"`
-	} `json:"node"`
-}
-
-var schemaQuery = "{node(func:has(dgraph.graphql.schema)){dgraph.graphql.schema}}"
 
 func GetGQLSchema(ctx context.Context) (string, error) {
 
-	r, err := ExecuteDQL(ctx, schemaQuery, nil, false)
-	if err != nil {
-		return "", fmt.Errorf("error getting GraphQL schema from Dgraph: %w", err)
+	type DqlResponse[T any] struct {
+		Data T `json:"data"`
 	}
 
-	var response dqlResponse[schemaResponse]
-	err = json.Unmarshal(r, &response)
+	type SchemaResponse struct {
+		Node []struct {
+			Schema string `json:"dgraph.graphql.schema"`
+		} `json:"node"`
+	}
+
+	const query = "{node(func:has(dgraph.graphql.schema)){dgraph.graphql.schema}}"
+
+	response, err := ExecuteDQL[DqlResponse[SchemaResponse]](ctx, query, nil, false)
 	if err != nil {
-		return "", fmt.Errorf("error deserializing JSON of GraphQL schema: %w", err)
+		return "", fmt.Errorf("error getting GraphQL schema from Dgraph: %w", err)
 	}
 
 	data := response.Data
@@ -166,7 +124,7 @@ func (schema functionSchema) FunctionArgs() ast.ArgumentDefinitionList {
 
 	// If @hm_function(args: ["arg1", "arg2"]) is specified, use that.
 	// The arguments must correspond to field names on the same parent object.
-	// The types will be assertained from the corresponding fields.
+	// The types will be ascertained from the corresponding fields.
 	// This is the case for fields on types other than Query and Mutation.
 	d := f.Directives.ForName("hm_function")
 	if d != nil {
@@ -238,15 +196,7 @@ type ModelSpecPayload struct {
 	Data ModelSpecInfo `json:"data"`
 }
 
-const (
-	alphaService string = "%v-alpha-service"
-)
-
-var httpClient = &http.Client{
-	Timeout: 10 * time.Second,
-}
-
-func GetModelSpec(mid string) (ModelSpec, error) {
+func GetModelSpec(modelId string) (ModelSpec, error) {
 	serviceURL := fmt.Sprintf("%s/admin", *DgraphUrl)
 
 	query := `
@@ -258,50 +208,20 @@ func GetModelSpec(mid string) (ModelSpec, error) {
 			}
 		}`
 
-	payload := map[string]any{
+	request := map[string]any{
 		"query":     query,
-		"variables": map[string]any{"id": mid},
+		"variables": map[string]any{"id": modelId},
 	}
 
-	// Convert payload to JSON
-	jsonPayload, err := json.Marshal(payload)
+	response, err := utils.PostHttp[ModelSpecPayload](serviceURL, request, nil)
 	if err != nil {
-		return ModelSpec{}, fmt.Errorf("error marshaling payload: %w", err)
+		return ModelSpec{}, fmt.Errorf("error getting model spec: %w", err)
 	}
 
-	// Create the HTTP request
-	req, err := http.NewRequest("POST", serviceURL, bytes.NewBuffer(jsonPayload))
-	if err != nil {
-		return ModelSpec{}, fmt.Errorf("error creating request: %w", err)
-	}
-
-	// Set headers
-	req.Header.Set("Content-Type", "application/json")
-
-	// Perform the request
-	resp, err := httpClient.Do(req)
-	if err != nil {
-		return ModelSpec{}, fmt.Errorf("error making request: %w", err)
-	}
-	defer resp.Body.Close()
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return ModelSpec{}, fmt.Errorf("error reading response body: %w", err)
-	}
-
-	// Create an instance of the ModelSpec struct
-	var spec ModelSpecPayload
-
-	// Unmarshal the JSON data into the ModelSpec struct
-	err = json.Unmarshal(body, &spec)
-	if err != nil {
-		return ModelSpec{}, fmt.Errorf("error unmarshaling response body: %w", err)
-	}
-
-	if spec.Data.Model.ID != mid {
+	spec := response.Data.Model
+	if spec.ID != modelId {
 		return ModelSpec{}, fmt.Errorf("error: ID does not match")
 	}
 
-	return spec.Data.Model, nil
+	return spec, nil
 }
