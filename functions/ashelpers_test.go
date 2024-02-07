@@ -2,6 +2,7 @@ package functions
 
 import (
 	"bytes"
+	"hmruntime/testutils"
 	"testing"
 )
 
@@ -27,6 +28,21 @@ func Test_EncodeUTF16(t *testing.T) {
 func Test_DecodeUTF16(t *testing.T) {
 
 	str := decodeUTF16(testUTF16)
+
+	if str != testString {
+		t.Errorf("expected %s, got %s", testString, str)
+	}
+}
+
+func Test_ReadWriteString(t *testing.T) {
+	f := testutils.NewWasmTestFixture()
+	defer f.Close()
+
+	ptr := writeString(f.Context, f.Module, testString)
+	str, err := readString(f.Memory, ptr)
+	if err != nil {
+		t.Error(err)
+	}
 
 	if str != testString {
 		t.Errorf("expected %s, got %s", testString, str)
