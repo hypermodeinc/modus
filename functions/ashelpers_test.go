@@ -48,3 +48,19 @@ func Test_ReadWriteString(t *testing.T) {
 		t.Errorf("expected %s, got %s", testString, str)
 	}
 }
+
+func Test_ReadWriteBuffer(t *testing.T) {
+	f := testutils.NewWasmTestFixture()
+	defer f.Close()
+
+	buf := []byte{0x01, 0x02, 0x03, 0x04}
+	ptr := writeBuffer(f.Context, f.Module, buf)
+	b, err := readBuffer(f.Memory, ptr)
+	if err != nil {
+		t.Error(err)
+	}
+
+	if !bytes.Equal(buf, b) {
+		t.Errorf("expected %x, got %x", buf, b)
+	}
+}

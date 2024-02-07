@@ -14,7 +14,15 @@ import (
 
 func writeString(ctx context.Context, mod wasm.Module, s string) uint32 {
 	buf := encodeUTF16(s)
-	ptr := allocateWasmMemory(ctx, mod, len(buf), asString)
+	return writeObject(ctx, mod, buf, asString)
+}
+
+func writeBuffer(ctx context.Context, mod wasm.Module, buf []byte) uint32 {
+	return writeObject(ctx, mod, buf, asBytes)
+}
+
+func writeObject(ctx context.Context, mod wasm.Module, buf []byte, class asClass) uint32 {
+	ptr := allocateWasmMemory(ctx, mod, len(buf), class)
 	mod.Memory().Write(ptr, buf)
 	return ptr
 }
