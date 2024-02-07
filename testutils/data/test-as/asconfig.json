@@ -1,0 +1,8 @@
+{
+  "extends": "./node_modules/@assemblyscript/wasi-shim/asconfig.json",
+  "options": {
+    "exportRuntime": true,
+    "outFile": "test-as.wasm",
+    "debug": true
+  }
+}
