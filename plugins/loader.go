@@ -1,6 +1,7 @@
 /*
  * Copyright 2023 Hypermode, Inc.
  */
+
 package plugins
 
 import (
