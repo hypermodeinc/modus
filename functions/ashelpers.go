@@ -17,13 +17,13 @@ func writeString(ctx context.Context, mod wasm.Module, s string) uint32 {
 	return writeObject(ctx, mod, buf, asString)
 }
 
-func writeBuffer(ctx context.Context, mod wasm.Module, buf []byte) uint32 {
-	return writeObject(ctx, mod, buf, asBytes)
+func writeBytes(ctx context.Context, mod wasm.Module, b []byte) uint32 {
+	return writeObject(ctx, mod, b, asBytes)
 }
 
-func writeObject(ctx context.Context, mod wasm.Module, buf []byte, class asClass) uint32 {
-	ptr := allocateWasmMemory(ctx, mod, len(buf), class)
-	mod.Memory().Write(ptr, buf)
+func writeObject(ctx context.Context, mod wasm.Module, b []byte, class asClass) uint32 {
+	ptr := allocateWasmMemory(ctx, mod, len(b), class)
+	mod.Memory().Write(ptr, b)
 	return ptr
 }
 
@@ -44,7 +44,7 @@ func readString(mem wasm.Memory, offset uint32) (string, error) {
 	}
 
 	// Read from the buffer and decode it as a string.
-	buf, err := readBuffer(mem, offset)
+	buf, err := readBytes(mem, offset)
 	if err != nil {
 		return "", err
 	}
@@ -52,7 +52,7 @@ func readString(mem wasm.Memory, offset uint32) (string, error) {
 	return decodeUTF16(buf), nil
 }
 
-func readBuffer(mem wasm.Memory, offset uint32) ([]byte, error) {
+func readBytes(mem wasm.Memory, offset uint32) ([]byte, error) {
 
 	// The length of AssemblyScript managed objects is stored 4 bytes before the offset.
 	// See https://www.assemblyscript.org/runtime.html#memory-layout
