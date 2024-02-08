@@ -7,7 +7,6 @@ package functions
 import (
 	"context"
 	"fmt"
-	"hmruntime/config"
 	"hmruntime/host"
 	"hmruntime/schema"
 	"log"
@@ -25,7 +24,7 @@ func MonitorRegistration(ctx context.Context) {
 	go func() {
 		for {
 			select {
-			case <-config.Register:
+			case <-host.RegistrationRequest:
 				log.Printf("Registering functions")
 				err := registerFunctions(gqlSchema)
 				if err != nil {

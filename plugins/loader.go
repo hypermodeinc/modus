@@ -135,7 +135,7 @@ func WatchPluginDirectory(ctx context.Context) error {
 				}
 
 				// Signal that we need to register functions
-				config.Register <- true
+				host.RegistrationRequest <- true
 
 			case err := <-w.Error:
 				log.Printf("failure while watching plugin directory: %v\n", err)

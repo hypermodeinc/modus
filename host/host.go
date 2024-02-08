@@ -11,3 +11,6 @@ var WasmRuntime wazero.Runtime
 
 // map that holds the compiled modules for each plugin
 var CompiledModules = make(map[string]wazero.CompiledModule)
+
+// Channel used to signal that registration is needed
+var RegistrationRequest chan bool = make(chan bool)
