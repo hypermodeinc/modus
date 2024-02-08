@@ -66,6 +66,7 @@ When starting the runtime, you may sometimes need to use the following command l
 - `--port` - The port that the runtime will listen for HTTP requests on.  Defaults to `8686`.
 - `--dgraph` - The URL to the Dgraph Alpha endpoint.  Defaults to `http://localhost:8080`.
 - `--plugins` (or `--plugin`) - The folder that the runtime will look for plugins in.  Defaults to `./plugins`.
+- `--noreload` - Disables automatic reloading of plugins.
 
 _Note: You can use either `-` or `--` prefixes, and you can add parameters with either a space or `=`._
 
