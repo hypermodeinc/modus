@@ -66,6 +66,12 @@ func LoadPlugins(ctx context.Context) error {
 }
 
 func WatchPluginDirectory(ctx context.Context) error {
+
+	if config.NoReload {
+		fmt.Println("NOTE: Automatic plugin reloading is disabled.  Restart the server to load new or modified plugins.")
+		return nil
+	}
+
 	w := watcher.New()
 	w.AddFilterHook(watcher.RegexFilterHook(regexp.MustCompile(`^.+\.wasm$`), false))
 

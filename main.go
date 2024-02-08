@@ -26,6 +26,8 @@ func main() {
 	config.PluginsPath = flag.String("plugins", "./plugins", "The path to the plugins directory.")
 	flag.StringVar(config.PluginsPath, "plugin", "./plugins", "alias for -plugins")
 
+	flag.BoolVar(&config.NoReload, "noreload", false, "Disable automatic plugin reloading.")
+
 	flag.Parse()
 
 	// Ensure the plugins directory exists.
