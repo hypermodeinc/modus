@@ -9,7 +9,6 @@ import (
 	"flag"
 	"fmt"
 	"hmruntime/config"
-	"hmruntime/dgraph"
 	"hmruntime/functions"
 	"hmruntime/host"
 	"hmruntime/plugins"
@@ -22,7 +21,8 @@ func main() {
 
 	// Parse command-line flags
 	var port = flag.Int("port", 8686, "The HTTP port to listen on.")
-	dgraph.DgraphUrl = flag.String("dgraph", "http://localhost:8080", "The Dgraph url to connect to.")
+
+	flag.StringVar(&config.DgraphUrl, "dgraph", "http://localhost:8080", "The Dgraph url to connect to.")
 
 	flag.StringVar(&config.PluginsPath, "plugins", "./plugins", "The path to the plugins directory.")
 	flag.StringVar(&config.PluginsPath, "plugin", "./plugins", "alias for -plugins")

@@ -7,10 +7,9 @@ package dgraph
 import (
 	"context"
 	"fmt"
+	"hmruntime/config"
 	"hmruntime/utils"
 )
-
-var DgraphUrl *string
 
 type dgraphRequest struct {
 	Query     string            `json:"query"`
@@ -20,9 +19,9 @@ type dgraphRequest struct {
 func ExecuteDQL[TResponse any](ctx context.Context, stmt string, vars map[string]string, isMutation bool) (TResponse, error) {
 	var url string
 	if isMutation {
-		url = *DgraphUrl + "/mutate?commitNow=true"
+		url = config.DgraphUrl + "/mutate?commitNow=true"
 	} else {
-		url = *DgraphUrl + "/query"
+		url = config.DgraphUrl + "/query"
 	}
 
 	request := dgraphRequest{
@@ -39,7 +38,7 @@ func ExecuteDQL[TResponse any](ctx context.Context, stmt string, vars map[string
 }
 
 func ExecuteGQL[TResponse any](ctx context.Context, stmt string, vars map[string]string) (TResponse, error) {
-	url := *DgraphUrl + "/graphql"
+	url := config.DgraphUrl + "/graphql"
 	request := dgraphRequest{
 		Query:     stmt,
 		Variables: vars,
@@ -93,7 +92,7 @@ type ModelSpecPayload struct {
 }
 
 func GetModelSpec(modelId string) (ModelSpec, error) {
-	serviceURL := fmt.Sprintf("%s/admin", *DgraphUrl)
+	serviceURL := fmt.Sprintf("%s/admin", config.DgraphUrl)
 
 	query := `
 		query GetModelSpec($id: String!) {
