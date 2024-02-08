@@ -7,7 +7,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"hmruntime/config"
 	"hmruntime/functions"
 	"hmruntime/plugins"
 	"log"
@@ -242,9 +241,11 @@ func handleAdminRequest(w http.ResponseWriter, r *http.Request) {
 }
 
 func startServer(port *int) error {
-	// Start the HTTP server when we're ready
-	<-config.ServerReady
-	config.ServerWaiting = false
+
+	// Block until the initial registration process is complete
+	<-functions.RegistrationCompleted
+
+	// Start the HTTP server
 	fmt.Printf("Listening on port %d...\n", *port)
 	http.HandleFunc("/graphql-worker", handleRequest)
 	http.HandleFunc("/admin", handleAdminRequest)

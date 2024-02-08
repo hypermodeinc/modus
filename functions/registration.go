@@ -18,6 +18,9 @@ import (
 // map that holds the function info for each resolver
 var FunctionsMap = make(map[string]schema.FunctionInfo)
 
+// channel used to signal when registration is completed
+var RegistrationCompleted chan bool = make(chan bool)
+
 func MonitorRegistration(ctx context.Context) {
 	go func() {
 		for {
@@ -83,9 +86,10 @@ func registerFunctions(gqlSchema string) error {
 		}
 	}
 
-	// If the HTTP server is waiting, signal that we're ready.
-	if config.ServerWaiting {
-		config.ServerReady <- true
+	// Signal that registration is complete (non-blocking send to avoid deadlock if no one is waiting)
+	select {
+	case RegistrationCompleted <- true:
+	default:
 	}
 
 	return nil
