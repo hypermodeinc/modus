@@ -20,7 +20,7 @@ func main() {
 	ctx := context.Background()
 
 	// Parse command-line flags
-	var port = flag.Int("port", 8686, "The HTTP port to listen on.")
+	flag.IntVar(&config.Port, "port", 8686, "The HTTP port to listen on.")
 
 	flag.StringVar(&config.DgraphUrl, "dgraph", "http://localhost:8080", "The Dgraph url to connect to.")
 
@@ -65,7 +65,7 @@ func main() {
 		log.Fatalln(err)
 	}
 
-	err = startServer(port)
+	err = startServer()
 	log.Fatalln(err)
 
 	// TODO: Shutdown gracefully

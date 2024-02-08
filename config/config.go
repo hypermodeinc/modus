@@ -5,6 +5,7 @@
 package config
 
 // command line flag variables
+var Port int
 var DgraphUrl string
 var PluginsPath string
 var NoReload bool
