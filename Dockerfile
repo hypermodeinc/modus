@@ -10,4 +10,13 @@ FROM ubuntu:20.04
 LABEL maintainer="Hypermode <hello@hypermode.com>"
 COPY --from=builder /src/hmruntime /usr/bin/hmruntime
 
+# add common tools
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates \
+    curl \
+    iputils-ping \
+    jq \
+    less \
+    && rm -rf /var/lib/apt/lists/*
+
 ENTRYPOINT ["hmruntime", "--noreload"]
