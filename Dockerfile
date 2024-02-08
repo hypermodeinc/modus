@@ -6,7 +6,7 @@ ARG TARGETOS TARGETARCH
 RUN GOOS=$TARGETOS GOARCH=$TARGETARCH go build .
 
 # build runtime image
-FROM ubuntu:20.04
+FROM ubuntu:22.04
 LABEL maintainer="Hypermode <hello@hypermode.com>"
 COPY --from=builder /src/hmruntime /usr/bin/hmruntime
 
