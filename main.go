@@ -11,6 +11,7 @@ import (
 	"hmruntime/config"
 	"hmruntime/dgraph"
 	"hmruntime/functions"
+	"hmruntime/host"
 	"hmruntime/plugins"
 	"log"
 	"os"
@@ -40,11 +41,11 @@ func main() {
 
 	// Initialize the WebAssembly runtime
 	var err error
-	config.WasmRuntime, err = plugins.InitWasmRuntime(ctx)
+	host.WasmRuntime, err = plugins.InitWasmRuntime(ctx)
 	if err != nil {
 		log.Fatalln(err)
 	}
-	defer config.WasmRuntime.Close(ctx)
+	defer host.WasmRuntime.Close(ctx)
 
 	// Load plugins
 	err = plugins.LoadPlugins(ctx)

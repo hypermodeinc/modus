@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"hmruntime/config"
+	"hmruntime/host"
 	"hmruntime/schema"
 	"log"
 	"reflect"
@@ -44,7 +45,7 @@ func registerFunctions(gqlSchema string) error {
 
 	// Build a map of resolvers to function info, including the plugin name.
 	// If there are function name conflicts between plugins, the last plugin loaded wins.
-	for pluginName, cm := range config.CompiledModules {
+	for pluginName, cm := range host.CompiledModules {
 		for _, scma := range funcSchemas {
 			for _, fn := range cm.ExportedFunctions() {
 				fnName := fn.ExportNames()[0]
@@ -75,7 +76,7 @@ func registerFunctions(gqlSchema string) error {
 				break
 			}
 		}
-		_, foundModule := config.CompiledModules[info.PluginName]
+		_, foundModule := host.CompiledModules[info.PluginName]
 		if !foundSchema || !foundModule {
 			delete(FunctionsMap, resolver)
 			fmt.Printf("Unregistered old function '%s' for resolver '%s'\n", info.FunctionName(), resolver)
