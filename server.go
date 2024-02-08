@@ -52,7 +52,7 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get the function info for the resolver
-	info, ok := config.FunctionsMap[req.Resolver]
+	info, ok := functions.FunctionsMap[req.Resolver]
 	if !ok {
 		w.WriteHeader(http.StatusBadRequest)
 		log.Printf("No function registered for resolver '%s'", req.Resolver)

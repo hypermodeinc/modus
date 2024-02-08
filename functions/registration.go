@@ -14,6 +14,9 @@ import (
 	"strings"
 )
 
+// map that holds the function info for each resolver
+var FunctionsMap = make(map[string]schema.FunctionInfo)
+
 func MonitorRegistration(ctx context.Context) {
 	go func() {
 		for {
@@ -48,11 +51,11 @@ func registerFunctions(gqlSchema string) error {
 				if strings.EqualFold(fnName, scma.FunctionName()) {
 					info := schema.FunctionInfo{PluginName: pluginName, Schema: scma}
 					resolver := scma.Resolver()
-					oldInfo, existed := config.FunctionsMap[resolver]
+					oldInfo, existed := FunctionsMap[resolver]
 					if existed && reflect.DeepEqual(oldInfo, info) {
 						continue
 					}
-					config.FunctionsMap[resolver] = info
+					FunctionsMap[resolver] = info
 					if existed {
 						fmt.Printf("Re-registered %s to use %s in %s\n", resolver, fnName, pluginName)
 					} else {
@@ -64,7 +67,7 @@ func registerFunctions(gqlSchema string) error {
 	}
 
 	// Cleanup any previously registered functions that are no longer in the schema or loaded modules.
-	for resolver, info := range config.FunctionsMap {
+	for resolver, info := range FunctionsMap {
 		foundSchema := false
 		for _, schema := range funcSchemas {
 			if strings.EqualFold(info.FunctionName(), schema.FunctionName()) {
@@ -74,7 +77,7 @@ func registerFunctions(gqlSchema string) error {
 		}
 		_, foundModule := config.CompiledModules[info.PluginName]
 		if !foundSchema || !foundModule {
-			delete(config.FunctionsMap, resolver)
+			delete(FunctionsMap, resolver)
 			fmt.Printf("Unregistered old function '%s' for resolver '%s'\n", info.FunctionName(), resolver)
 		}
 	}
