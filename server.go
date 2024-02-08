@@ -52,7 +52,7 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get the function info for the resolver
-	info, ok := config.FunctionsMap[req.Resolver]
+	info, ok := functions.FunctionsMap[req.Resolver]
 	if !ok {
 		w.WriteHeader(http.StatusBadRequest)
 		log.Printf("No function registered for resolver '%s'", req.Resolver)
@@ -241,12 +241,14 @@ func handleAdminRequest(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func startServer(port *int) error {
-	// Start the HTTP server when we're ready
-	<-config.ServerReady
-	config.ServerWaiting = false
-	fmt.Printf("Listening on port %d...\n", *port)
+func startServer() error {
+
+	// Block until the initial registration process is complete
+	<-functions.RegistrationCompleted
+
+	// Start the HTTP server
+	fmt.Printf("Listening on port %d...\n", config.Port)
 	http.HandleFunc("/graphql-worker", handleRequest)
 	http.HandleFunc("/admin", handleAdminRequest)
-	return http.ListenAndServe(fmt.Sprintf(":%d", *port), nil)
+	return http.ListenAndServe(fmt.Sprintf(":%d", config.Port), nil)
 }

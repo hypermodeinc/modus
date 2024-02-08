@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"hmruntime/config"
+	"hmruntime/host"
 	"log"
 	"os"
 	"path"
@@ -35,7 +36,7 @@ func ReloadPlugins(ctx context.Context) error {
 	}
 
 	// Unload any plugins that are no longer present
-	for name := range config.CompiledModules {
+	for name := range host.CompiledModules {
 		if !loaded[name] {
 			err := unloadPluginModule(ctx, name)
 			if err != nil {
@@ -134,7 +135,7 @@ func WatchPluginDirectory(ctx context.Context) error {
 				}
 
 				// Signal that we need to register functions
-				config.Register <- true
+				host.RegistrationRequest <- true
 
 			case err := <-w.Error:
 				log.Printf("failure while watching plugin directory: %v\n", err)
