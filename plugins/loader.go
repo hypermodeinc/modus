@@ -22,6 +22,34 @@ import (
 const pluginRefreshInterval time.Duration = time.Second * 5
 
 func LoadPlugins(ctx context.Context) error {
+	_, err := loadPlugins(ctx)
+	return err
+}
+
+func ReloadPlugins(ctx context.Context) error {
+
+	// Reload existing plugins
+	loaded, err := loadPlugins(ctx)
+	if err != nil {
+		return err
+	}
+
+	// Unload any plugins that are no longer present
+	for name := range config.CompiledModules {
+		if !loaded[name] {
+			err := unloadPluginModule(ctx, name)
+			if err != nil {
+				return fmt.Errorf("failed to unload plugin '%s': %w", name, err)
+			}
+		}
+	}
+
+	return nil
+}
+
+func loadPlugins(ctx context.Context) (map[string]bool, error) {
+
+	var loaded = make(map[string]bool)
 
 	// If the plugins path is a single plugin's base directory, load the single plugin.
 	if _, err := os.Stat(config.PluginsPath + "/build/debug.wasm"); err == nil {
@@ -29,13 +57,15 @@ func LoadPlugins(ctx context.Context) error {
 		err := loadPluginModule(ctx, pluginName)
 		if err != nil {
 			log.Printf("Failed to load plugin '%s': %v\n", pluginName, err)
+		} else {
+			loaded[pluginName] = true
 		}
 	}
 
 	// Otherwise, load all plugins in the plugins directory.
 	entries, err := os.ReadDir(config.PluginsPath)
 	if err != nil {
-		return fmt.Errorf("failed to read plugins directory: %w", err)
+		return nil, fmt.Errorf("failed to read plugins directory: %w", err)
 	}
 
 	for _, entry := range entries {
@@ -59,10 +89,12 @@ func LoadPlugins(ctx context.Context) error {
 		err := loadPluginModule(ctx, pluginName)
 		if err != nil {
 			log.Printf("Failed to load plugin '%s': %v\n", pluginName, err)
+		} else {
+			loaded[pluginName] = true
 		}
 	}
 
-	return nil
+	return loaded, nil
 }
 
 func WatchPluginDirectory(ctx context.Context) error {
