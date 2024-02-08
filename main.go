@@ -6,7 +6,6 @@ package main
 
 import (
 	"context"
-	"flag"
 	"fmt"
 	"hmruntime/config"
 	"hmruntime/functions"
@@ -18,18 +17,7 @@ import (
 
 func main() {
 	ctx := context.Background()
-
-	// Parse command-line flags
-	flag.IntVar(&config.Port, "port", 8686, "The HTTP port to listen on.")
-
-	flag.StringVar(&config.DgraphUrl, "dgraph", "http://localhost:8080", "The Dgraph url to connect to.")
-
-	flag.StringVar(&config.PluginsPath, "plugins", "./plugins", "The path to the plugins directory.")
-	flag.StringVar(&config.PluginsPath, "plugin", "./plugins", "alias for -plugins")
-
-	flag.BoolVar(&config.NoReload, "noreload", false, "Disable automatic plugin reloading.")
-
-	flag.Parse()
+	config.ParseCommandLineFlags()
 
 	// Ensure the plugins directory exists.
 	if _, err := os.Stat(config.PluginsPath); os.IsNotExist(err) {
