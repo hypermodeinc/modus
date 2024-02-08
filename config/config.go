@@ -11,8 +11,9 @@ import (
 )
 
 // command line flag variables
-var DgraphUrl *string
-var PluginsPath *string
+var DgraphUrl string
+var PluginsPath string
+var NoReload bool
 
 // map that holds the compiled modules for each plugin
 var CompiledModules = make(map[string]wazero.CompiledModule)
