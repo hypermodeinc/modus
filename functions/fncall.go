@@ -8,13 +8,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"hmruntime/dgraph"
+	"hmruntime/schema"
 
 	"github.com/dgraph-io/gqlparser/ast"
 	wasm "github.com/tetratelabs/wazero/api"
 )
 
-func CallFunction(ctx context.Context, mod wasm.Module, info dgraph.FunctionInfo, inputs map[string]any) (any, error) {
+func CallFunction(ctx context.Context, mod wasm.Module, info schema.FunctionInfo, inputs map[string]any) (any, error) {
 	fnName := info.FunctionName()
 	fn := mod.ExportedFunction(fnName)
 	def := fn.Definition()

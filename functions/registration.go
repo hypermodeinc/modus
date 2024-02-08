@@ -8,7 +8,7 @@ import (
 	"context"
 	"fmt"
 	"hmruntime/config"
-	"hmruntime/dgraph"
+	"hmruntime/schema"
 	"log"
 	"reflect"
 	"strings"
@@ -34,7 +34,7 @@ func MonitorRegistration(ctx context.Context) {
 func registerFunctions(gqlSchema string) error {
 
 	// Get the function schema from the GraphQL schema.
-	funcSchemas, err := dgraph.GetFunctionSchema(gqlSchema)
+	funcSchemas, err := schema.GetFunctionSchema(gqlSchema)
 	if err != nil {
 		return err
 	}
@@ -42,12 +42,12 @@ func registerFunctions(gqlSchema string) error {
 	// Build a map of resolvers to function info, including the plugin name.
 	// If there are function name conflicts between plugins, the last plugin loaded wins.
 	for pluginName, cm := range config.CompiledModules {
-		for _, schema := range funcSchemas {
+		for _, scma := range funcSchemas {
 			for _, fn := range cm.ExportedFunctions() {
 				fnName := fn.ExportNames()[0]
-				if strings.EqualFold(fnName, schema.FunctionName()) {
-					info := dgraph.FunctionInfo{PluginName: pluginName, Schema: schema}
-					resolver := schema.Resolver()
+				if strings.EqualFold(fnName, scma.FunctionName()) {
+					info := schema.FunctionInfo{PluginName: pluginName, Schema: scma}
+					resolver := scma.Resolver()
 					oldInfo, existed := config.FunctionsMap[resolver]
 					if existed && reflect.DeepEqual(oldInfo, info) {
 						continue

@@ -5,7 +5,7 @@
 package config
 
 import (
-	"hmruntime/dgraph"
+	"hmruntime/schema"
 
 	"github.com/tetratelabs/wazero"
 )
@@ -19,7 +19,7 @@ var NoReload bool
 var CompiledModules = make(map[string]wazero.CompiledModule)
 
 // map that holds the function info for each resolver
-var FunctionsMap = make(map[string]dgraph.FunctionInfo)
+var FunctionsMap = make(map[string]schema.FunctionInfo)
 
 // Channel used to signal that registration is needed
 var Register chan bool = make(chan bool)
