@@ -23,7 +23,7 @@ func main() {
 	var port = flag.Int("port", 8686, "The HTTP port to listen on.")
 	dgraph.DgraphUrl = flag.String("dgraph", "http://localhost:8080", "The Dgraph url to connect to.")
 
-	config.PluginsPath = *flag.String("plugins", "./plugins", "The path to the plugins directory.")
+	flag.StringVar(&config.PluginsPath, "plugins", "./plugins", "The path to the plugins directory.")
 	flag.StringVar(&config.PluginsPath, "plugin", "./plugins", "alias for -plugins")
 
 	flag.BoolVar(&config.NoReload, "noreload", false, "Disable automatic plugin reloading.")
