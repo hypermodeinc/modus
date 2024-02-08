@@ -7,8 +7,8 @@ package functions
 import (
 	"context"
 	"errors"
-	"hmruntime/config"
 	"hmruntime/dgraph"
+	"hmruntime/host"
 	"log"
 	"net/url"
 	"time"
@@ -42,7 +42,7 @@ func MonitorGqlSchema(ctx context.Context) {
 				}
 
 				// Signal that we need to register functions
-				config.Register <- true
+				host.RegistrationRequest <- true
 
 				gqlSchema = schema
 			}

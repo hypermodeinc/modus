@@ -6,11 +6,10 @@ package main
 
 import (
 	"context"
-	"flag"
 	"fmt"
 	"hmruntime/config"
-	"hmruntime/dgraph"
 	"hmruntime/functions"
+	"hmruntime/host"
 	"hmruntime/plugins"
 	"log"
 	"os"
@@ -18,17 +17,7 @@ import (
 
 func main() {
 	ctx := context.Background()
-
-	// Parse command-line flags
-	var port = flag.Int("port", 8686, "The HTTP port to listen on.")
-	dgraph.DgraphUrl = flag.String("dgraph", "http://localhost:8080", "The Dgraph url to connect to.")
-
-	flag.StringVar(&config.PluginsPath, "plugins", "./plugins", "The path to the plugins directory.")
-	flag.StringVar(&config.PluginsPath, "plugin", "./plugins", "alias for -plugins")
-
-	flag.BoolVar(&config.NoReload, "noreload", false, "Disable automatic plugin reloading.")
-
-	flag.Parse()
+	config.ParseCommandLineFlags()
 
 	// Ensure the plugins directory exists.
 	if _, err := os.Stat(config.PluginsPath); os.IsNotExist(err) {
@@ -40,11 +29,11 @@ func main() {
 
 	// Initialize the WebAssembly runtime
 	var err error
-	config.WasmRuntime, err = plugins.InitWasmRuntime(ctx)
+	host.WasmRuntime, err = plugins.InitWasmRuntime(ctx)
 	if err != nil {
 		log.Fatalln(err)
 	}
-	defer config.WasmRuntime.Close(ctx)
+	defer host.WasmRuntime.Close(ctx)
 
 	// Load plugins
 	err = plugins.LoadPlugins(ctx)
@@ -64,7 +53,7 @@ func main() {
 		log.Fatalln(err)
 	}
 
-	err = startServer(port)
+	err = startServer()
 	log.Fatalln(err)
 
 	// TODO: Shutdown gracefully
