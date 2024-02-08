@@ -10,4 +10,4 @@ FROM ubuntu:20.04
 LABEL maintainer="Hypermode <hello@hypermode.com>"
 COPY --from=builder /src/hmruntime /usr/bin/hmruntime
 
-ENTRYPOINT ["hmruntime"]
+ENTRYPOINT ["hmruntime", "--noreload"]
