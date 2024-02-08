@@ -5,20 +5,21 @@
 package aws
 
 import (
+	"context"
 	"fmt"
 
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/secretsmanager"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
 )
 
-func GetSecretString(secretId string) (string, error) {
-	sess, err := session.NewSession()
+func GetSecretString(ctx context.Context, secretId string) (string, error) {
+	cfg, err := config.LoadDefaultConfig(ctx)
 	if err != nil {
-		return "", fmt.Errorf("error getting Secrets Manager session: %w", err)
+		return "", fmt.Errorf("error loading AWS config: %w", err)
 	}
 
-	svc := secretsmanager.New(sess)
-	secretValue, err := svc.GetSecretValue(&secretsmanager.GetSecretValueInput{
+	svc := secretsmanager.NewFromConfig(cfg)
+	secretValue, err := svc.GetSecretValue(ctx, &secretsmanager.GetSecretValueInput{
 		SecretId: &secretId,
 	})
 	if err != nil {

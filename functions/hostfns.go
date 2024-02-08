@@ -135,9 +135,9 @@ func textModelSetup(mod wasm.Module, pModelId uint32, pSentenceMap uint32) (dgra
 	return modelSpec, sentenceMap, nil
 }
 
-func postToModelEndpoint[TResult any](sentenceMap map[string]string, modelSpec dgraph.ModelSpec) (TResult, error) {
+func postToModelEndpoint[TResult any](ctx context.Context, sentenceMap map[string]string, modelSpec dgraph.ModelSpec) (TResult, error) {
 
-	key, err := aws.GetSecretString(modelSpec.ID)
+	key, err := aws.GetSecretString(ctx, modelSpec.ID)
 	if err != nil {
 		var result TResult
 		return result, fmt.Errorf("error getting model key: %w", err)
@@ -162,7 +162,7 @@ func hostInvokeClassifier(ctx context.Context, mod wasm.Module, pModelId uint32,
 		return 0
 	}
 
-	result, err := postToModelEndpoint[map[string]ClassifierResult](sentenceMap, modelSpec)
+	result, err := postToModelEndpoint[map[string]ClassifierResult](ctx, sentenceMap, modelSpec)
 	if err != nil {
 		log.Println("error posting to model endpoint:", err)
 		return 0
@@ -194,7 +194,7 @@ func hostComputeEmbedding(ctx context.Context, mod wasm.Module, pModelId uint32,
 		return 0
 	}
 
-	result, err := postToModelEndpoint[map[string]string](sentenceMap, modelSpec)
+	result, err := postToModelEndpoint[map[string]string](ctx, sentenceMap, modelSpec)
 	if err != nil {
 		log.Println("error posting to model endpoint:", err)
 		return 0
