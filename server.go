@@ -34,6 +34,10 @@ type HMError struct {
 	Message string `json:"message"`
 }
 
+type AdminRequest struct {
+	Action string `json:"action"`
+}
+
 func handleRequest(w http.ResponseWriter, r *http.Request) {
 
 	// Decode the request body
@@ -210,11 +214,39 @@ func writeDataAsJson(w http.ResponseWriter, data any, isJson bool) error {
 	return nil
 }
 
+func handleAdminRequest(w http.ResponseWriter, r *http.Request) {
+
+	// Decode the request body
+	var req AdminRequest
+	dec := json.NewDecoder(r.Body)
+	err := dec.Decode(&req)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		log.Println("Failed to decode request body: ", err)
+		return
+	}
+
+	// Perform the requested action
+	switch req.Action {
+	case "reload":
+		err = plugins.ReloadPlugins(r.Context())
+	}
+
+	// Write the response
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		log.Println(err)
+	} else {
+		w.WriteHeader(http.StatusOK)
+	}
+}
+
 func startServer(port *int) error {
 	// Start the HTTP server when we're ready
 	<-config.ServerReady
 	config.ServerWaiting = false
 	fmt.Printf("Listening on port %d...\n", *port)
 	http.HandleFunc("/graphql-worker", handleRequest)
+	http.HandleFunc("/admin", handleAdminRequest)
 	return http.ListenAndServe(fmt.Sprintf(":%d", *port), nil)
 }
