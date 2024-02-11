@@ -8,17 +8,16 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
 )
 
 func GetSecretString(ctx context.Context, secretId string) (string, error) {
-	cfg, err := config.LoadDefaultConfig(ctx)
-	if err != nil {
-		return "", fmt.Errorf("error loading AWS config: %w", err)
+
+	if !awsEnabled {
+		return "", fmt.Errorf("unable to retrieve secret because AWS functionality is disabled")
 	}
 
-	svc := secretsmanager.NewFromConfig(cfg)
+	svc := secretsmanager.NewFromConfig(awsConfig)
 	secretValue, err := svc.GetSecretValue(ctx, &secretsmanager.GetSecretValueInput{
 		SecretId: &secretId,
 	})

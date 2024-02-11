@@ -7,6 +7,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"hmruntime/aws"
 	"hmruntime/config"
 	"hmruntime/functions"
 	"hmruntime/host"
@@ -27,8 +28,14 @@ func main() {
 		}
 	}
 
+	// Initialize the AWS configuration
+	err := aws.Initialize(ctx)
+	if err != nil {
+		log.Println(err)
+		log.Println("AWS functionality will be disabled")
+	}
+
 	// Initialize the WebAssembly runtime
-	var err error
 	host.WasmRuntime, err = plugins.InitWasmRuntime(ctx)
 	if err != nil {
 		log.Fatalln(err)
