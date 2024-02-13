@@ -7,6 +7,7 @@ package plugins
 import (
 	"context"
 	"fmt"
+	"hmruntime/aws"
 	"hmruntime/functions"
 	"hmruntime/host"
 	"io"
@@ -65,14 +66,10 @@ func loadPluginModule(ctx context.Context, name string) error {
 		fmt.Printf("Loading plugin '%s'\n", name)
 	}
 
-	path, err := getPathForPlugin(name)
+	// Load the binary content of the plugin.
+	plugin, err := getPluginBytes(ctx, name)
 	if err != nil {
-		return fmt.Errorf("failed to get path for plugin: %w", err)
-	}
-
-	plugin, err := os.ReadFile(path)
-	if err != nil {
-		return fmt.Errorf("failed to load the plugin: %w", err)
+		return err
 	}
 
 	// Compile the plugin into a module.
@@ -91,6 +88,27 @@ func loadPluginModule(ctx context.Context, name string) error {
 	// }
 
 	return nil
+}
+
+func getPluginBytes(ctx context.Context, name string) ([]byte, error) {
+
+	if aws.UseAwsForPluginStorage() {
+		return aws.GetPluginBytes(ctx, name)
+	}
+
+	path, err := getPathForPlugin(name)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get path for plugin: %w", err)
+	}
+
+	bytes, err := os.ReadFile(path)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load the plugin: %w", err)
+	}
+
+	fmt.Printf("Loaded from file %s\n", path)
+
+	return bytes, nil
 }
 
 func unloadPluginModule(ctx context.Context, name string) error {

@@ -7,6 +7,7 @@ package plugins
 import (
 	"context"
 	"fmt"
+	"hmruntime/aws"
 	"hmruntime/config"
 	"hmruntime/host"
 	"log"
@@ -51,6 +52,25 @@ func ReloadPlugins(ctx context.Context) error {
 func loadPlugins(ctx context.Context) (map[string]bool, error) {
 
 	var loaded = make(map[string]bool)
+
+	// See if there are plugins to load from S3
+	plugins, err := aws.ListPlugins(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list plugins from S3: %w", err)
+	}
+
+	if plugins != nil {
+		for _, plugin := range plugins {
+			err := loadPluginModule(ctx, plugin)
+			if err != nil {
+				log.Printf("Failed to load plugin '%s': %v\n", plugin, err)
+			} else {
+				loaded[plugin] = true
+			}
+		}
+
+		return loaded, nil
+	}
 
 	// If the plugins path is a single plugin's base directory, load the single plugin.
 	if _, err := os.Stat(config.PluginsPath + "/build/debug.wasm"); err == nil {
@@ -175,37 +195,37 @@ func WatchPluginDirectory(ctx context.Context) error {
 func getPathForPlugin(name string) (string, error) {
 
 	// Normally the plugin will be directly in the plugins directory, by filename.
-	path := config.PluginsPath + "/" + name + ".wasm"
-	if _, err := os.Stat(path); err == nil {
-		return path, nil
+	p := path.Join(config.PluginsPath, name+".wasm")
+	if _, err := os.Stat(p); err == nil {
+		return p, nil
 	}
 
 	// For local development, the plugin will be in a subdirectory and we'll use the debug.wasm file.
-	path = config.PluginsPath + "/" + name + "/build/debug.wasm"
-	if _, err := os.Stat(path); err == nil {
-		return path, nil
+	p = path.Join(config.PluginsPath, name, "build", "debug.wasm")
+	if _, err := os.Stat(p); err == nil {
+		return p, nil
 	}
 
 	// Or, the plugins path might pointing to a single plugin's base directory.
-	path = config.PluginsPath + "/build/debug.wasm"
-	if _, err := os.Stat(path); err == nil {
-		return path, nil
+	p = path.Join(config.PluginsPath, "build", "debug.wasm")
+	if _, err := os.Stat(p); err == nil {
+		return p, nil
 	}
 
 	return "", fmt.Errorf("compiled wasm file not found for plugin '%s'", name)
 }
 
-func getPluginNameFromPath(path string) (string, error) {
-	if !strings.HasSuffix(path, ".wasm") {
-		return "", fmt.Errorf("path does not point to a wasm file: %s", path)
+func getPluginNameFromPath(p string) (string, error) {
+	if !strings.HasSuffix(p, ".wasm") {
+		return "", fmt.Errorf("path does not point to a wasm file: %s", p)
 	}
 
-	parts := strings.Split(path, "/")
+	parts := strings.Split(p, "/")
 
 	// For local development
-	if strings.HasSuffix(path, "/build/debug.wasm") {
+	if strings.HasSuffix(p, "/build/debug.wasm") {
 		return parts[len(parts)-3], nil
-	} else if strings.HasSuffix(path, "/build/release.wasm") {
+	} else if strings.HasSuffix(p, "/build/release.wasm") {
 		return "", nil
 	}
 
