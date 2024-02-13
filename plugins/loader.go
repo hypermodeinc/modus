@@ -15,9 +15,13 @@ import (
 	"path"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/radovskyb/watcher"
 )
+
+// Map of plugin names and etags as last retrieved from S3.
+var awsPlugins map[string]string
 
 func LoadPlugins(ctx context.Context) error {
 	_, err := loadPlugins(ctx)
@@ -46,17 +50,15 @@ func ReloadPlugins(ctx context.Context) error {
 }
 
 func loadPlugins(ctx context.Context) (map[string]bool, error) {
-
 	var loaded = make(map[string]bool)
 
-	// See if there are plugins to load from S3
-	plugins, err := aws.ListPlugins(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to list plugins from S3: %w", err)
-	}
+	if aws.UseAwsForPluginStorage() {
+		plugins, err := aws.ListPlugins(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("failed to list plugins from S3: %w", err)
+		}
 
-	if plugins != nil {
-		for _, plugin := range plugins {
+		for plugin := range plugins {
 			err := loadPluginModule(ctx, plugin)
 			if err != nil {
 				log.Printf("Failed to load plugin '%s': %v\n", plugin, err)
@@ -64,6 +66,9 @@ func loadPlugins(ctx context.Context) (map[string]bool, error) {
 				loaded[plugin] = true
 			}
 		}
+
+		// Store the list of plugins and their etags for later comparison.
+		awsPlugins = plugins
 
 		return loaded, nil
 	}
@@ -114,12 +119,21 @@ func loadPlugins(ctx context.Context) (map[string]bool, error) {
 	return loaded, nil
 }
 
-func WatchPluginDirectory(ctx context.Context) error {
+func WatchForPluginChanges(ctx context.Context) error {
 
 	if config.NoReload {
 		fmt.Println("NOTE: Automatic plugin reloading is disabled.  Restart the server to load new or modified plugins.")
 		return nil
 	}
+
+	if aws.UseAwsForPluginStorage() {
+		return watchStorageForPluginChanges(ctx)
+	} else {
+		return watchDirectoryForPluginChanges(ctx)
+	}
+}
+
+func watchDirectoryForPluginChanges(ctx context.Context) error {
 
 	w := watcher.New()
 	w.AddFilterHook(watcher.RegexFilterHook(regexp.MustCompile(`^.+\.wasm$`), false))
@@ -226,4 +240,60 @@ func getPluginNameFromPath(p string) (string, error) {
 	}
 
 	return strings.TrimSuffix(parts[len(parts)-1], ".wasm"), nil
+}
+
+func watchStorageForPluginChanges(ctx context.Context) error {
+	go func() {
+		ticker := time.NewTicker(config.RefreshInterval)
+		defer ticker.Stop()
+
+		for {
+			plugins, err := aws.ListPlugins(ctx)
+			if err != nil {
+				// Don't stop watching. We'll just try again on the next cycle.
+				log.Println(err)
+				continue
+			}
+
+			var changed = false
+
+			// Load/reload any new or modified plugins
+			for name, etag := range plugins {
+				if awsPlugins[name] != etag {
+					err := loadPluginModule(ctx, name)
+					if err != nil {
+						log.Println(err)
+					}
+					awsPlugins[name] = etag
+					changed = true
+				}
+			}
+
+			// Unload any plugins that are no longer present
+			for name := range awsPlugins {
+				if _, found := plugins[name]; !found {
+					err := unloadPluginModule(ctx, name)
+					if err != nil {
+						log.Println(err)
+					}
+					delete(awsPlugins, name)
+					changed = true
+				}
+			}
+
+			// If anything changed, signal that we need to register functions
+			if changed {
+				host.RegistrationRequest <- true
+			}
+
+			select {
+			case <-ticker.C:
+				continue
+			case <-ctx.Done():
+				return
+			}
+		}
+	}()
+
+	return nil
 }
