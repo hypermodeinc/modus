@@ -149,10 +149,16 @@ Then run `aws sso login --profile hm-runtime` to login to the profile.
 After SSO login you can start the runtime 
 
 ```
-export AWS_PROFILE=hm-runtime; ./hmruntime --plugins <your plugin folder>
+export AWS_SDK_LOAD_CONFIG=true; export AWS_PROFILE=hm-runtime; ./hmruntime --plugins <your plugin folder>
 
 ```
 You can omit the export if the environment variable is already set.
+### Troubleshooting
+ **error posting to model endpoint: error getting model key: error getting secret: NoCredentialProviders: no valid providers in chain. Deprecated.**
+
+Your are missing 
+export AWS_SDK_LOAD_CONFIG=true
+
 
 ### Unit Testing
 
