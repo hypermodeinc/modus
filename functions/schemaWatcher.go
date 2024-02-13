@@ -7,6 +7,7 @@ package functions
 import (
 	"context"
 	"errors"
+	"hmruntime/config"
 	"hmruntime/dgraph"
 	"hmruntime/host"
 	"log"
@@ -14,15 +15,12 @@ import (
 	"time"
 )
 
-// Polling interval to check Dgraph for GraphQL schema changes
-const schemaRefreshInterval time.Duration = time.Second * 5
-
 // Holds the current GraphQL schema
 var gqlSchema string
 
 func MonitorGqlSchema(ctx context.Context) {
 	go func() {
-		ticker := time.NewTicker(schemaRefreshInterval)
+		ticker := time.NewTicker(config.RefreshInterval)
 		defer ticker.Stop()
 
 		for {

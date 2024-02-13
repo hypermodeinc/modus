@@ -15,13 +15,9 @@ import (
 	"path"
 	"regexp"
 	"strings"
-	"time"
 
 	"github.com/radovskyb/watcher"
 )
-
-// Polling interval to check for new plugins
-const pluginRefreshInterval time.Duration = time.Second * 5
 
 func LoadPlugins(ctx context.Context) error {
 	_, err := loadPlugins(ctx)
@@ -183,7 +179,7 @@ func WatchPluginDirectory(ctx context.Context) error {
 	}
 
 	go func() {
-		err = w.Start(pluginRefreshInterval)
+		err = w.Start(config.RefreshInterval)
 		if err != nil {
 			log.Fatalf("failed to start file watcher: %v\n", err)
 		}
