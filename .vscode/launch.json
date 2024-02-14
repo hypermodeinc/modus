@@ -1,19 +1,56 @@
 {
-    "version": "0.2.0",
-    "configurations": [
-        {
-            "name": "runtime",
-            "type": "go",
-            "request": "launch",
-            "mode": "auto",
-            "program": "${workspaceFolder}",
-            "env": {
-                "ENV": "dev",
-                "AWS_REGION":"us-west-2",
-                "AWS_PROFILE":"sandbox",
-                "AWS_SDK_LOAD_CONFIG": "true"
-              },
-              "args": ["--dgraph", "http://localhost:8080", "--plugins", "~/plugins"]
-        }
-    ]
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "runtime (local plugin storage)",
+      "type": "go",
+      "request": "launch",
+      "mode": "auto",
+      "program": "${workspaceFolder}",
+      "env": {
+        "ENV": "dev",
+        "AWS_REGION": "us-west-2",
+        "AWS_PROFILE": "sandbox",
+        "AWS_SDK_LOAD_CONFIG": "true"
+      },
+      "args": [
+        "--dgraph=http://localhost:8080",
+        "--plugins=${userHome}/plugins",
+        "--refresh=1s",
+      ]
+    },
+    {
+      "name": "runtime (AWS S3 plugin storage)",
+      "type": "go",
+      "request": "launch",
+      "mode": "auto",
+      "program": "${workspaceFolder}",
+      "env": {
+        "ENV": "dev",
+        "AWS_REGION": "us-west-2",
+        "AWS_PROFILE": "sandbox",
+        "AWS_SDK_LOAD_CONFIG": "true"
+      },
+      "args": [
+        "--dgraph=http://localhost:8080",
+        "--s3bucket=${input:s3bucket}",
+        "--plugins=${input:s3folder}",
+        "--refresh=1s",
+      ]
+    },
+  ],
+  "inputs": [
+    {
+      "id": "s3bucket",
+      "type": "promptString",
+      "description": "Enter the S3 bucket name",
+      "default": "sandbox-runtime-plugins"
+    },
+    {
+      "id": "s3folder",
+      "type": "promptString",
+      "description": "Enter the S3 plugins folder name",
+      "default": "shared-plugins"
+    },
+  ]
 }
