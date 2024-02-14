@@ -11,7 +11,16 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
 )
 
+// TODO: Prefetch secrets on startup and refresh them periodically
+
+var secretsCache = make(map[string]string)
+
 func GetSecretString(ctx context.Context, secretId string) (string, error) {
+
+	// Return the secret from the cache if it exists
+	if secret, ok := secretsCache[secretId]; ok {
+		return secret, nil
+	}
 
 	if !awsEnabled {
 		return "", fmt.Errorf("unable to retrieve secret because AWS functionality is disabled")
@@ -21,12 +30,16 @@ func GetSecretString(ctx context.Context, secretId string) (string, error) {
 	secretValue, err := svc.GetSecretValue(ctx, &secretsmanager.GetSecretValueInput{
 		SecretId: &secretId,
 	})
+
 	if err != nil {
 		return "", fmt.Errorf("error getting secret: %w", err)
 	}
 	if secretValue.SecretString == nil {
 		return "", fmt.Errorf("secret string was empty")
 	}
+
+	// Cache the secret for future use
+	secretsCache[secretId] = *secretValue.SecretString
 
 	return *secretValue.SecretString, nil
 }
