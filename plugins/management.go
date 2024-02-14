@@ -141,6 +141,7 @@ func GetModuleInstance(ctx context.Context, pluginName string) (wasm.Module, buf
 	// Configure the module instance.
 	cfg := wazero.NewModuleConfig().
 		WithName(pluginName + "_" + uuid.NewString()).
+		WithSysWalltime().
 		WithStdout(wOut).WithStderr(wErr)
 
 	// Instantiate the plugin as a module.
