@@ -1,0 +1,6 @@
+{
+    "recommendations": [
+        "amazonwebservices.aws-toolkit-vscode",
+        "golang.go"
+    ]
+}

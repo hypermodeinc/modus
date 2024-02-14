@@ -7,6 +7,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"hmruntime/aws"
 	"hmruntime/config"
 	"hmruntime/functions"
 	"hmruntime/host"
@@ -19,16 +20,31 @@ func main() {
 	ctx := context.Background()
 	config.ParseCommandLineFlags()
 
-	// Ensure the plugins directory exists.
-	if _, err := os.Stat(config.PluginsPath); os.IsNotExist(err) {
-		err := os.MkdirAll(config.PluginsPath, 0755)
-		if err != nil {
-			log.Fatalln(fmt.Errorf("failed to create plugins directory: %w", err))
+	// Validate configuration
+	if config.PluginsPath == "" && config.S3Bucket == "" {
+		log.Fatalln("A plugins path and/or S3 bucket are required.  Exiting.")
+	}
+
+	if config.PluginsPath != "" {
+		if _, err := os.Stat(config.PluginsPath); os.IsNotExist(err) {
+			log.Printf("Creating plugins directory: %s\n", config.PluginsPath)
+			err := os.MkdirAll(config.PluginsPath, 0755)
+			if err != nil {
+				log.Fatalln(fmt.Errorf("failed to create plugins directory: %w", err))
+			}
+		} else {
+			log.Printf("Using plugins directory: %s\n", config.PluginsPath)
 		}
 	}
 
+	// Initialize the AWS configuration
+	err := aws.Initialize(ctx)
+	if err != nil {
+		log.Println(err)
+		log.Println("AWS functionality will be disabled")
+	}
+
 	// Initialize the WebAssembly runtime
-	var err error
 	host.WasmRuntime, err = plugins.InitWasmRuntime(ctx)
 	if err != nil {
 		log.Fatalln(err)
@@ -48,7 +64,7 @@ func main() {
 	functions.MonitorGqlSchema(ctx)
 
 	// Watch for plugin changes
-	err = plugins.WatchPluginDirectory(ctx)
+	err = plugins.WatchForPluginChanges(ctx)
 	if err != nil {
 		log.Fatalln(err)
 	}

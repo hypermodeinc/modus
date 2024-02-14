@@ -7,6 +7,7 @@ package plugins
 import (
 	"context"
 	"fmt"
+	"hmruntime/aws"
 	"hmruntime/config"
 	"hmruntime/host"
 	"log"
@@ -19,8 +20,8 @@ import (
 	"github.com/radovskyb/watcher"
 )
 
-// Polling interval to check for new plugins
-const pluginRefreshInterval time.Duration = time.Second * 5
+// Map of plugin names and etags as last retrieved from S3.
+var awsPlugins map[string]string
 
 func LoadPlugins(ctx context.Context) error {
 	_, err := loadPlugins(ctx)
@@ -49,8 +50,28 @@ func ReloadPlugins(ctx context.Context) error {
 }
 
 func loadPlugins(ctx context.Context) (map[string]bool, error) {
-
 	var loaded = make(map[string]bool)
+
+	if aws.UseAwsForPluginStorage() {
+		plugins, err := aws.ListPlugins(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("failed to list plugins from S3: %w", err)
+		}
+
+		for plugin := range plugins {
+			err := loadPluginModule(ctx, plugin)
+			if err != nil {
+				log.Printf("Failed to load plugin '%s': %v\n", plugin, err)
+			} else {
+				loaded[plugin] = true
+			}
+		}
+
+		// Store the list of plugins and their etags for later comparison.
+		awsPlugins = plugins
+
+		return loaded, nil
+	}
 
 	// If the plugins path is a single plugin's base directory, load the single plugin.
 	if _, err := os.Stat(config.PluginsPath + "/build/debug.wasm"); err == nil {
@@ -98,12 +119,21 @@ func loadPlugins(ctx context.Context) (map[string]bool, error) {
 	return loaded, nil
 }
 
-func WatchPluginDirectory(ctx context.Context) error {
+func WatchForPluginChanges(ctx context.Context) error {
 
 	if config.NoReload {
 		fmt.Println("NOTE: Automatic plugin reloading is disabled.  Restart the server to load new or modified plugins.")
 		return nil
 	}
+
+	if aws.UseAwsForPluginStorage() {
+		return watchStorageForPluginChanges(ctx)
+	} else {
+		return watchDirectoryForPluginChanges(ctx)
+	}
+}
+
+func watchDirectoryForPluginChanges(ctx context.Context) error {
 
 	w := watcher.New()
 	w.AddFilterHook(watcher.RegexFilterHook(regexp.MustCompile(`^.+\.wasm$`), false))
@@ -163,7 +193,7 @@ func WatchPluginDirectory(ctx context.Context) error {
 	}
 
 	go func() {
-		err = w.Start(pluginRefreshInterval)
+		err = w.Start(config.RefreshInterval)
 		if err != nil {
 			log.Fatalf("failed to start file watcher: %v\n", err)
 		}
@@ -175,39 +205,95 @@ func WatchPluginDirectory(ctx context.Context) error {
 func getPathForPlugin(name string) (string, error) {
 
 	// Normally the plugin will be directly in the plugins directory, by filename.
-	path := config.PluginsPath + "/" + name + ".wasm"
-	if _, err := os.Stat(path); err == nil {
-		return path, nil
+	p := path.Join(config.PluginsPath, name+".wasm")
+	if _, err := os.Stat(p); err == nil {
+		return p, nil
 	}
 
 	// For local development, the plugin will be in a subdirectory and we'll use the debug.wasm file.
-	path = config.PluginsPath + "/" + name + "/build/debug.wasm"
-	if _, err := os.Stat(path); err == nil {
-		return path, nil
+	p = path.Join(config.PluginsPath, name, "build", "debug.wasm")
+	if _, err := os.Stat(p); err == nil {
+		return p, nil
 	}
 
 	// Or, the plugins path might pointing to a single plugin's base directory.
-	path = config.PluginsPath + "/build/debug.wasm"
-	if _, err := os.Stat(path); err == nil {
-		return path, nil
+	p = path.Join(config.PluginsPath, "build", "debug.wasm")
+	if _, err := os.Stat(p); err == nil {
+		return p, nil
 	}
 
 	return "", fmt.Errorf("compiled wasm file not found for plugin '%s'", name)
 }
 
-func getPluginNameFromPath(path string) (string, error) {
-	if !strings.HasSuffix(path, ".wasm") {
-		return "", fmt.Errorf("path does not point to a wasm file: %s", path)
+func getPluginNameFromPath(p string) (string, error) {
+	if !strings.HasSuffix(p, ".wasm") {
+		return "", fmt.Errorf("path does not point to a wasm file: %s", p)
 	}
 
-	parts := strings.Split(path, "/")
+	parts := strings.Split(p, "/")
 
 	// For local development
-	if strings.HasSuffix(path, "/build/debug.wasm") {
+	if strings.HasSuffix(p, "/build/debug.wasm") {
 		return parts[len(parts)-3], nil
-	} else if strings.HasSuffix(path, "/build/release.wasm") {
+	} else if strings.HasSuffix(p, "/build/release.wasm") {
 		return "", nil
 	}
 
 	return strings.TrimSuffix(parts[len(parts)-1], ".wasm"), nil
+}
+
+func watchStorageForPluginChanges(ctx context.Context) error {
+	go func() {
+		ticker := time.NewTicker(config.RefreshInterval)
+		defer ticker.Stop()
+
+		for {
+			plugins, err := aws.ListPlugins(ctx)
+			if err != nil {
+				// Don't stop watching. We'll just try again on the next cycle.
+				log.Println(err)
+				continue
+			}
+
+			var changed = false
+
+			// Load/reload any new or modified plugins
+			for name, etag := range plugins {
+				if awsPlugins[name] != etag {
+					err := loadPluginModule(ctx, name)
+					if err != nil {
+						log.Println(err)
+					}
+					awsPlugins[name] = etag
+					changed = true
+				}
+			}
+
+			// Unload any plugins that are no longer present
+			for name := range awsPlugins {
+				if _, found := plugins[name]; !found {
+					err := unloadPluginModule(ctx, name)
+					if err != nil {
+						log.Println(err)
+					}
+					delete(awsPlugins, name)
+					changed = true
+				}
+			}
+
+			// If anything changed, signal that we need to register functions
+			if changed {
+				host.RegistrationRequest <- true
+			}
+
+			select {
+			case <-ticker.C:
+				continue
+			case <-ctx.Done():
+				return
+			}
+		}
+	}()
+
+	return nil
 }

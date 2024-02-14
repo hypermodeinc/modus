@@ -11,13 +11,13 @@ To get started with Hypermode Functions written in AssemblyScript, visit the
 
 To build a Docker image for the Hypermode Runtime:
 
-```
+```sh
 docker build -t hypermode/runtime .
 ```
 
 Then you can run that image.  Port `8686` should be exposed.
 
-```
+```sh
 docker run -p 8686:8686 -v <PLUGINS_PATH>:/plugins hypermode/runtime --dgraph=<DGRAPH_ALPHA_URL>
 ```
 
@@ -31,7 +31,7 @@ Optionally, you may also wish to give the container a specific name using the `-
 For example, to start a new Docker container named `hmruntime`, looking for plugins in a local `./plugins` folder,
 and connecting to a local Dgraph docker image:
 
-```
+```sh
 docker run --name hmruntime -p 8686:8686 -v ./plugins:/plugins hypermode/runtime --dgraph=http://host.docker.internal:8080
 ```
 
@@ -48,13 +48,13 @@ You can run the code directly using VSCode's debugger.
 
 Alternatively you can either run the Runtime code directly from source:
 
-```
+```sh
 go run .
 ```
 
 Or, you can build the `hmruntime` executable and then run that:
 
-```
+```sh
 go build
 ./hmruntime
 ```
@@ -67,6 +67,8 @@ When starting the runtime, you may sometimes need to use the following command l
 - `--dgraph` - The URL to the Dgraph Alpha endpoint.  Defaults to `http://localhost:8080`.
 - `--plugins` (or `--plugin`) - The folder that the runtime will look for plugins in.  Defaults to `./plugins`.
 - `--noreload` - Disables automatic reloading of plugins.
+- `--s3bucket` - The S3 bucket to use, if using AWS for plugin storage.
+- `--refresh` - The refresh interval to check for plugins and schema changes.  Defaults to `5s`.
 
 _Note: You can use either `-` or `--` prefixes, and you can add parameters with either a space or `=`._
 
@@ -84,13 +86,13 @@ For example, you may have the `runtime` and `hypermode-as` repos in the same par
 and are working on a plugin in the `examples` folder, such as `hmplugin1`.  You can start the
 runtime like so:
 
-```
+```sh
 go run . --plugin ../hypermode-as/examples/hmplugin1
 ```
 
 Or, if you are working on more than one plugin simultaneously you can use their parent directory:
 
-```
+```sh
 go run . --plugins ../hypermode-as/examples
 ```
 
@@ -105,7 +107,7 @@ Currently, the Hypermode Runtime service emulates parts of the
 Like Lambda, it listens for HTTP on port `8686` on the `/graphql-worker` endpoint.
 Thus, you can tell Dgraph to use it when starting Dgraph Alpha:
 
-```
+```sh
 dgraph zero
 dgraph alpha --graphql lambda-url=http://localhost:8686/graphql-worker
 ```
@@ -115,7 +117,7 @@ Just add the Lambda URL as an environment variable, using `host.docker.internal`
 
 For example:
 
-```
+```sh
 docker run --name <CONTAINER_NAME> \
   -d -p 8080:8080 -p 9080:9080 \
   -v <DGRAPH_DATA_PATH>:/dgraph \
@@ -124,41 +126,70 @@ docker run --name <CONTAINER_NAME> \
 ```
 
 ## AWS Setup
-Runtime may access AWS Secret manager, so we need to use an AWS Profile.
+Runtime may access AWS resources, so we need to use an AWS profile.
 
+```sh
+export AWS_PROFILE=sandbox
 ```
-export AWS_PROFILE=hm-runtime
-```
-Have the `hm-runtime` profile and sso session configured in `~/.aws/config` file.
 
-To work in Sandbox declare the following profile:
-```
-[profile hm-runtime]
-sso_session = hm-runtime
-sso_account_id = 436061841671
-sso_role_name = Hypermode-EKS-Cluster-Admin
-[sso-session hm-runtime]
+Declare the `sandbox` profile in `~/.aws/config` as follows:
+
+```ini
+[profile sandbox]
 sso_start_url = https://d-92674fec42.awsapps.com/start#
 sso_region = us-west-2
-sso_registration_scopes = sso:account:access
+sso_account_id = 436061841671
+sso_role_name = AWSPowerUserAccess
+region = us-west-2
 ```
 
-If you are using VSCode launcher, check `launch.json` and verify the profile `hm-runtime`.
+Then run `aws sso login --profile sandbox` to login to the profile.
 
-Then run `aws sso login --profile hm-runtime` to login to the profile.
-After SSO login you can start the runtime 
+After SSO login you can start the runtime, either from the VS Code "Run and Debug" panel,
+or from the command line as follows:
 
+```sh
+export AWS_SDK_LOAD_CONFIG=true
+export AWS_PROFILE=sandbox
+./hmruntime --plugins <your plugin folder>
 ```
-export AWS_SDK_LOAD_CONFIG=true; export AWS_PROFILE=hm-runtime; ./hmruntime --plugins <your plugin folder>
 
+_You can omit the exports if the environment variables are already set._
+
+#### Troubleshooting
+
+**error posting to model endpoint: error getting model key: error getting secret: NoCredentialProviders: no valid providers in chain. Deprecated.**
+
+Your are missing `export AWS_SDK_LOAD_CONFIG=true`
+
+### Using S3 for plugin storage
+
+You can optionally use S3 for plugin storage.  This configuration is usually for staging or production,
+but you can use it locally as well.
+
+First, configure the AWS setup as described above.  Then start the runtime with the following command line arguments:
+
+- `--s3bucket <bucket>` - An standard S3 bucket within the pre-configured AWS account. 
+- `--plugins <folder>` - A folder within that bucket where `.wasm` files are contained.
+
+Note that the `--plugins` argument is re-purposed.  It now refers to a folder inside the S3 bucket, 
+rather than a local directory on disk.
+
+For example:
+
+```sh
+export AWS_PROFILE=sandbox; ./hmruntime --s3bucket sandbox-runtime-plugins --plugins shared-plugins
 ```
 You can omit the export if the environment variable is already set.
-### Troubleshooting
- **error posting to model endpoint: error getting model key: error getting secret: NoCredentialProviders: no valid providers in chain. Deprecated.**
 
-Your are missing 
-export AWS_SDK_LOAD_CONFIG=true
+_In staging and production, a single S3 bucket is shared, but each backend has its own plugins folder._
 
+#### Using S3 from VS Code Debugging Session
+
+From the VS Code "Run and Debug" pane, you can choose the launch profile called `runtime (AWS S3 plugin storage)`.
+
+When running using this profile, you will be prompted for the S3 bucket and folder name.
+You can use the default values provided, or override them to load plugins from another location.
 
 ### Unit Testing
 
