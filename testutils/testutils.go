@@ -35,7 +35,7 @@ func NewWasmTestFixture() WasmTestFixture {
 
 	// TODO: refactor to share config with the real code so we're testing the same thing
 	cfg := wazero.NewModuleConfig().
-		WithSysWalltime()
+		WithSysWalltime().WithSysNanotime()
 
 	mod, err := r.InstantiateWithConfig(ctx, testWasm, cfg)
 	if err != nil {
