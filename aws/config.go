@@ -6,14 +6,13 @@ package aws
 
 import (
 	"context"
-	"fmt"
-	"log"
 
 	hmConfig "hmruntime/config"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/sts"
+	"github.com/rs/zerolog/log"
 )
 
 var awsConfig aws.Config
@@ -29,33 +28,39 @@ func Initialize(ctx context.Context) error {
 	useS3PluginStorage = hmConfig.S3Bucket != ""
 	defer func() {
 		if !useS3PluginStorage {
-			fmt.Println("S3 bucket name is not set.  Using local storage for plugins.")
+			log.Info().Msg("S3 bucket name is not set.  Using local storage for plugins.")
 		} else if !awsEnabled {
-			log.Fatalln("S3 bucket name is set, but AWS configuration failed to load.  Exiting.")
+			log.Fatal().Msg("S3 bucket name is set, but AWS configuration failed to load.  Exiting.")
 		} else {
-			fmt.Printf("Using S3 bucket %s for plugin storage.\n", hmConfig.S3Bucket)
+			log.Info().
+				Str("bucket", hmConfig.S3Bucket).
+				Msg("Using S3 for plugin storage.")
 		}
 	}()
 
 	cfg, err := config.LoadDefaultConfig(ctx)
 	if err != nil {
-		return fmt.Errorf("error loading AWS configuration: %w", err)
+		log.Warn().Err(err).
+			Msg("Error loading AWS configuration.")
+		return nil
 	}
 
 	client := sts.NewFromConfig(cfg)
 	identity, err := client.GetCallerIdentity(ctx, &sts.GetCallerIdentityInput{})
 	if err != nil {
-		return fmt.Errorf("error getting AWS caller identity: %w", err)
+		log.Warn().Err(err).
+			Msg("Error getting AWS caller identity.")
+		return nil
 	}
 
 	awsConfig = cfg
 	awsEnabled = true
 
-	fmt.Printf("AWS configuration loaded:\n")
-	fmt.Printf("  Region:  %s\n", awsConfig.Region)
-	fmt.Printf("  Account: %s\n", *identity.Account)
-	fmt.Printf("  User ID: %s\n", *identity.UserId)
-	fmt.Printf("  ARN: %s\n", *identity.Arn)
+	log.Info().
+		Str("region", awsConfig.Region).
+		Str("account", *identity.Account).
+		Str("userid", *identity.UserId).
+		Msg("AWS configuration loaded.")
 
 	return nil
 }

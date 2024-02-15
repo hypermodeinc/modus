@@ -16,6 +16,7 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
+	"github.com/rs/zerolog/log"
 	"github.com/tetratelabs/wazero"
 	wasm "github.com/tetratelabs/wazero/api"
 	"github.com/tetratelabs/wazero/experimental/opt"
@@ -60,11 +61,10 @@ func InitWasmRuntime(ctx context.Context) (wazero.Runtime, error) {
 
 func loadPluginModule(ctx context.Context, name string) error {
 	_, reloading := host.CompiledModules[name]
-	if reloading {
-		fmt.Printf("Reloading plugin '%s'\n", name)
-	} else {
-		fmt.Printf("Loading plugin '%s'\n", name)
-	}
+	log.Info().
+		Str("plugin", name).
+		Bool("reloading", reloading).
+		Msg("Loading plugin.")
 
 	// Load the binary content of the plugin.
 	plugin, err := getPluginBytes(ctx, name)
@@ -106,7 +106,10 @@ func getPluginBytes(ctx context.Context, name string) ([]byte, error) {
 		return nil, fmt.Errorf("failed to load the plugin: %w", err)
 	}
 
-	fmt.Printf("Loaded from file %s\n", path)
+	log.Info().
+		Str("plugin", name).
+		Str("path", path).
+		Msg("Retrieved plugin from local storage.")
 
 	return bytes, nil
 }
@@ -117,7 +120,10 @@ func unloadPluginModule(ctx context.Context, name string) error {
 		return fmt.Errorf("plugin not found '%s'", name)
 	}
 
-	fmt.Printf("Unloading plugin '%s'\n", name)
+	log.Info().
+		Str("plugin", name).
+		Msg("Unloading plugin.")
+
 	delete(host.CompiledModules, name)
 	cmOld.Close(ctx)
 

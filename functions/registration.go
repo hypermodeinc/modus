@@ -6,12 +6,12 @@ package functions
 
 import (
 	"context"
-	"fmt"
 	"hmruntime/host"
 	"hmruntime/schema"
-	"log"
 	"reflect"
 	"strings"
+
+	"github.com/rs/zerolog/log"
 )
 
 // map that holds the function info for each resolver
@@ -25,10 +25,10 @@ func MonitorRegistration(ctx context.Context) {
 		for {
 			select {
 			case <-host.RegistrationRequest:
-				log.Printf("Registering functions")
+				log.Info().Msg("Registering functions.")
 				err := registerFunctions(gqlSchema)
 				if err != nil {
-					log.Printf("Failed to register functions: %v", err)
+					log.Err(err).Msg("Failed to register functions.")
 				}
 			case <-ctx.Done():
 				return
@@ -59,11 +59,12 @@ func registerFunctions(gqlSchema string) error {
 						continue
 					}
 					FunctionsMap[resolver] = info
-					if existed {
-						fmt.Printf("Re-registered %s to use %s in %s\n", resolver, fnName, pluginName)
-					} else {
-						fmt.Printf("Registered %s to use %s in %s\n", resolver, fnName, pluginName)
-					}
+
+					log.Info().
+						Str("resolver", resolver).
+						Str("function", fnName).
+						Str("plugin", pluginName).
+						Msg("Registered function.")
 				}
 			}
 		}
@@ -81,7 +82,11 @@ func registerFunctions(gqlSchema string) error {
 		_, foundModule := host.CompiledModules[info.PluginName]
 		if !foundSchema || !foundModule {
 			delete(FunctionsMap, resolver)
-			fmt.Printf("Unregistered old function '%s' for resolver '%s'\n", info.FunctionName(), resolver)
+			log.Info().
+				Str("resolver", resolver).
+				Str("function", info.FunctionName()).
+				Str("plugin", info.PluginName).
+				Msg("Unregistered function.")
 		}
 	}
 

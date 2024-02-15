@@ -10,8 +10,8 @@ import (
 	"hmruntime/aws"
 	"hmruntime/dgraph"
 	"hmruntime/utils"
-	"log"
 
+	"github.com/rs/zerolog/log"
 	"github.com/tetratelabs/wazero"
 	wasm "github.com/tetratelabs/wazero/api"
 )
@@ -43,25 +43,25 @@ func hostExecuteDQL(ctx context.Context, mod wasm.Module, pStmt uint32, pVars ui
 	mem := mod.Memory()
 	stmt, err := readString(mem, pStmt)
 	if err != nil {
-		log.Println("error reading DQL statement from wasm memory:", err)
+		log.Err(err).Msg("Error reading DQL statement from wasm memory.")
 		return 0
 	}
 
 	sVars, err := readString(mem, pVars)
 	if err != nil {
-		log.Println("error reading DQL variables string from wasm memory:", err)
+		log.Err(err).Msg("Error reading DQL variables string from wasm memory.")
 		return 0
 	}
 
 	vars := make(map[string]string)
 	if err := json.Unmarshal([]byte(sVars), &vars); err != nil {
-		log.Println("error unmarshalling GraphQL variables:", err)
+		log.Err(err).Msg("Error unmarshalling GraphQL variables.")
 		return 0
 	}
 
 	result, err := dgraph.ExecuteDQL[string](ctx, stmt, vars, isMutation != 0)
 	if err != nil {
-		log.Println("error executing DQL statement:", err)
+		log.Err(err).Msg("Error executing DQL statement.")
 		return 0
 	}
 
@@ -72,25 +72,25 @@ func hostExecuteGQL(ctx context.Context, mod wasm.Module, pStmt uint32, pVars ui
 	mem := mod.Memory()
 	stmt, err := readString(mem, pStmt)
 	if err != nil {
-		log.Println("error reading GraphQL query string from wasm memory:", err)
+		log.Err(err).Msg("Error reading GraphQL query string from wasm memory.")
 		return 0
 	}
 
 	sVars, err := readString(mem, pVars)
 	if err != nil {
-		log.Println("error reading GraphQL variables string from wasm memory:", err)
+		log.Err(err).Msg("Error reading GraphQL variables string from wasm memory.")
 		return 0
 	}
 
 	vars := make(map[string]string)
 	if err := json.Unmarshal([]byte(sVars), &vars); err != nil {
-		log.Println("error unmarshalling GraphQL variables:", err)
+		log.Err(err).Msg("Error unmarshalling GraphQL variables.")
 		return 0
 	}
 
 	result, err := dgraph.ExecuteGQL[string](ctx, stmt, vars)
 	if err != nil {
-		log.Println("error executing GraphQL operation:", err)
+		log.Err(err).Msg("Error executing GraphQL operation.")
 		return 0
 	}
 
@@ -153,29 +153,29 @@ func postToModelEndpoint[TResult any](ctx context.Context, sentenceMap map[strin
 func hostInvokeClassifier(ctx context.Context, mod wasm.Module, pModelId uint32, pSentenceMap uint32) uint32 {
 	modelSpec, sentenceMap, err := textModelSetup(mod, pModelId, pSentenceMap)
 	if err != nil {
-		log.Println("error setting up text model:", err)
+		log.Err(err).Msg("Error setting up text model.")
 		return 0
 	}
 
 	if modelSpec.Type != classifierModel {
-		log.Println("error: model type is not classifier")
+		log.Error().Msg("Model type is not 'classifier'.")
 		return 0
 	}
 
 	result, err := postToModelEndpoint[map[string]ClassifierResult](ctx, sentenceMap, modelSpec)
 	if err != nil {
-		log.Println("error posting to model endpoint:", err)
+		log.Err(err).Msg("Error posting to model endpoint.")
 		return 0
 	}
 
 	if len(result) == 0 {
-		log.Println("empty result returned from model")
+		log.Err(err).Msg("Empty result returned from model.")
 		return 0
 	}
 
 	res, err := json.Marshal(result)
 	if err != nil {
-		log.Println("error marshalling classifier result:", err)
+		log.Err(err).Msg("Error marshalling classifier result.")
 		return 0
 	}
 
@@ -185,29 +185,29 @@ func hostInvokeClassifier(ctx context.Context, mod wasm.Module, pModelId uint32,
 func hostComputeEmbedding(ctx context.Context, mod wasm.Module, pModelId uint32, pSentenceMap uint32) uint32 {
 	modelSpec, sentenceMap, err := textModelSetup(mod, pModelId, pSentenceMap)
 	if err != nil {
-		log.Println("error setting up text model:", err)
+		log.Err(err).Msg("Error setting up text model.")
 		return 0
 	}
 
 	if modelSpec.Type != embeddingModel {
-		log.Println("error: model type is not embedding")
+		log.Error().Msg("Model type is not 'embedding'.")
 		return 0
 	}
 
 	result, err := postToModelEndpoint[map[string]string](ctx, sentenceMap, modelSpec)
 	if err != nil {
-		log.Println("error posting to model endpoint:", err)
+		log.Err(err).Msg("Error posting to model endpoint.")
 		return 0
 	}
 
 	if len(result) == 0 {
-		log.Println("empty result returned from model")
+		log.Error().Msg("Empty result returned from model.")
 		return 0
 	}
 
 	res, err := json.Marshal(result)
 	if err != nil {
-		log.Println("error marshalling embedding result:", err)
+		log.Err(err).Msg("Error marshalling embedding result.")
 		return 0
 	}
 
