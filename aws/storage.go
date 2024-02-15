@@ -8,12 +8,12 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"log"
 	"strings"
 
 	"hmruntime/config"
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/rs/zerolog/log"
 )
 
 func ListPlugins(ctx context.Context) (map[string]string, error) {
@@ -33,7 +33,7 @@ func ListPlugins(ctx context.Context) (map[string]string, error) {
 	svc := s3.NewFromConfig(awsConfig)
 	result, err := svc.ListObjectsV2(ctx, input)
 	if err != nil {
-		log.Fatalln(fmt.Errorf("error listing plugins from S3: %w", err))
+		return nil, fmt.Errorf("error listing objects from S3 bucket: %w", err)
 	}
 
 	var plugins = make(map[string]string, *result.KeyCount)
@@ -73,7 +73,9 @@ func GetPluginBytes(ctx context.Context, name string) ([]byte, error) {
 		return nil, fmt.Errorf("error reading content stream of plugin '%s' from S3: %w", name, err)
 	}
 
-	fmt.Printf("Loaded from S3 object with key %s\n", key)
+	log.Info().
+		Str("key", key).
+		Msg("Retrieved plugin from S3.")
 
 	return bytes, nil
 }

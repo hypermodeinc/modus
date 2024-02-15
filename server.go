@@ -10,9 +10,10 @@ import (
 	"hmruntime/config"
 	"hmruntime/functions"
 	"hmruntime/plugins"
-	"log"
 	"net/http"
 	"strings"
+
+	"github.com/rs/zerolog/log"
 )
 
 type HMRequest struct {
@@ -47,7 +48,7 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 	err := dec.Decode(&req)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		log.Println("Failed to decode request body: ", err)
+		log.Err(err).Msg("Failed to decode request body.")
 		return
 	}
 
@@ -55,7 +56,9 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 	info, ok := functions.FunctionsMap[req.Resolver]
 	if !ok {
 		w.WriteHeader(http.StatusBadRequest)
-		log.Printf("No function registered for resolver '%s'", req.Resolver)
+		log.Error().
+			Str("resolver", req.Resolver).
+			Msg("No function registered for resolver.")
 		return
 	}
 
@@ -66,7 +69,9 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	mod, buf, err := plugins.GetModuleInstance(ctx, info.PluginName)
 	if err != nil {
-		log.Println(err)
+		log.Err(err).
+			Str("plugin", info.PluginName).
+			Msg("Failed to get module instance.")
 		writeErrorResponse(w, err)
 		return
 	}
@@ -78,8 +83,10 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 		// Call the function, passing in the args from the request
 		result, err := functions.CallFunction(ctx, mod, info, req.Args)
 		if err != nil {
+			log.Err(err).
+				Str("function", fnName).
+				Msg("Error calling function.")
 			err := fmt.Errorf("error calling function '%s': %w", fnName, err)
-			log.Println(err)
 			writeErrorResponse(w, err, buf.Stdout.String(), buf.Stderr.String())
 			return
 		}
@@ -100,7 +107,7 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 		// Write the result
 		err = writeDataAsJson(w, result, isJson)
 		if err != nil {
-			log.Println(err)
+			log.Err(err).Msg("Failed to write result data to response stream.")
 		}
 
 	} else if req.Parents != nil {
@@ -111,8 +118,10 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 		for i, parent := range req.Parents {
 			results[i], err = functions.CallFunction(ctx, mod, info, parent)
 			if err != nil {
+				log.Err(err).
+					Str("function", fnName).
+					Msg("Error calling function.")
 				err := fmt.Errorf("error calling function '%s': %w", fnName, err)
-				log.Println(err)
 				writeErrorResponse(w, err, buf.Stdout.String(), buf.Stderr.String())
 				return
 			}
@@ -122,12 +131,12 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 		isJson := info.Schema.FieldDef.Type.NamedType == ""
 		err = writeDataAsJson(w, results, isJson)
 		if err != nil {
-			log.Println(err)
+			log.Err(err).Msg("Failed to write result data to response stream.")
 		}
 
 	} else {
 		w.WriteHeader(http.StatusBadRequest)
-		log.Println("Request must have either args or parents.")
+		log.Error().Msg("Request must have either args or parents.")
 	}
 }
 
@@ -152,14 +161,12 @@ func writeErrorResponse(w http.ResponseWriter, err error, msgs ...string) {
 
 	encErr := json.NewEncoder(w).Encode(resp)
 	if encErr != nil {
-		log.Printf("Failed to encode error response: %v\n", encErr)
+		log.Err(encErr).Msg("Failed to encode error response.")
 	}
 }
 
 func writeDataAsJson(w http.ResponseWriter, data any, isJson bool) error {
-
 	if isJson {
-
 		switch data := data.(type) {
 		case string:
 			w.Header().Set("Content-Type", "application/json")
@@ -190,9 +197,7 @@ func writeDataAsJson(w http.ResponseWriter, data any, isJson bool) error {
 				return fmt.Errorf("failed to write result data: %w", err)
 			}
 		default:
-			err := fmt.Errorf("unexpected result type: %T", data)
-			log.Println(err)
-			writeErrorResponse(w, err)
+			return fmt.Errorf("unexpected result type: %T", data)
 		}
 
 		return nil
@@ -200,9 +205,7 @@ func writeDataAsJson(w http.ResponseWriter, data any, isJson bool) error {
 
 	output, err := json.Marshal(data)
 	if err != nil {
-		err := fmt.Errorf("failed to serialize result data: %s", err)
-		log.Println(err)
-		writeErrorResponse(w, err)
+		return fmt.Errorf("failed to serialize result data: %s", err)
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -222,7 +225,7 @@ func handleAdminRequest(w http.ResponseWriter, r *http.Request) {
 	err := dec.Decode(&req)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		log.Println("Failed to decode request body: ", err)
+		log.Err(err).Msg("Failed to decode request body.")
 		return
 	}
 
@@ -230,12 +233,14 @@ func handleAdminRequest(w http.ResponseWriter, r *http.Request) {
 	switch req.Action {
 	case "reload":
 		err = plugins.ReloadPlugins(r.Context())
+	default:
+		err = fmt.Errorf("unknown action: %s", req.Action)
 	}
 
 	// Write the response
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		log.Println(err)
+		log.Err(err).Msg("Failed to perform admin action.")
 	} else {
 		w.WriteHeader(http.StatusOK)
 	}
@@ -247,7 +252,9 @@ func startServer() error {
 	<-functions.RegistrationCompleted
 
 	// Start the HTTP server
-	fmt.Printf("Listening on port %d...\n", config.Port)
+	log.Info().
+		Int("port", config.Port).
+		Msg("Listening for incoming requests.")
 	http.HandleFunc("/graphql-worker", handleRequest)
 	http.HandleFunc("/admin", handleAdminRequest)
 	return http.ListenAndServe(fmt.Sprintf(":%d", config.Port), nil)

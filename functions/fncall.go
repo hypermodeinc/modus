@@ -11,6 +11,7 @@ import (
 	"hmruntime/schema"
 
 	"github.com/dgraph-io/gqlparser/ast"
+	"github.com/rs/zerolog/log"
 	wasm "github.com/tetratelabs/wazero/api"
 )
 
@@ -42,7 +43,10 @@ func CallFunction(ctx context.Context, mod wasm.Module, info schema.FunctionInfo
 	}
 
 	// Call the wasm function
-	fmt.Printf("Calling function '%s' for resolver '%s'\n", fnName, schema.Resolver())
+	log.Info().
+		Str("function", fnName).
+		Str("resolver", schema.Resolver()).
+		Msg("Calling function.")
 	res, err := fn.Call(ctx, params...)
 	if err != nil {
 		return nil, err

@@ -11,6 +11,7 @@ require (
 	github.com/dgraph-io/gqlparser v1.2.1
 	github.com/google/uuid v1.6.0
 	github.com/radovskyb/watcher v1.0.7
+	github.com/rs/zerolog v1.32.0
 	github.com/tetratelabs/wazero v1.6.0
 )
 
@@ -30,7 +31,10 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/sso v1.19.0 // indirect
 	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.22.0 // indirect
 	github.com/aws/smithy-go v1.20.0 // indirect
+	github.com/mattn/go-colorable v0.1.13 // indirect
+	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/sergi/go-diff v1.3.1 // indirect
 	github.com/stretchr/testify v1.8.4 // indirect
+	golang.org/x/sys v0.17.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
