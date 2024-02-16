@@ -109,7 +109,10 @@ func Test_PostHttp(t *testing.T) {
 	payload := Payload{
 		Message: "Hello, World!",
 	}
-	result, err := PostHttp[Response](url, payload, nil)
+	headers := map[string]string{
+		"Content-Type": "application/json",
+	}
+	result, err := PostHttp[Response](url, payload, headers)
 	if err != nil {
 		t.Fatalf("Failed to make HTTP request: %v", err)
 	}
