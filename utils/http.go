@@ -10,8 +10,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"net/url"
-	"strings"
 	"time"
 )
 
@@ -31,33 +29,6 @@ func sendHttp(req *http.Request) ([]byte, error) {
 	}
 
 	return io.ReadAll(response.Body)
-}
-
-func PostURLEncodedHttp[TResult any](url string, data url.Values, headers map[string]string) (TResult, error) {
-	var result TResult
-
-	req, err := http.NewRequest(http.MethodPost, url, strings.NewReader(data.Encode()))
-	if err != nil {
-		return result, fmt.Errorf("error creating request: %w", err)
-	}
-
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-
-	for k, v := range headers {
-		req.Header.Set(k, v)
-	}
-
-	content, err := sendHttp(req)
-	if err != nil {
-		return result, fmt.Errorf("error sending HTTP request: %w", err)
-	}
-
-	err = json.Unmarshal(content, &result)
-	if err != nil {
-		return result, fmt.Errorf("error unmarshalling response: %w", err)
-	}
-
-	return result, nil
 }
 
 func PostHttp[TResult any](url string, payload any, headers map[string]string) (TResult, error) {
