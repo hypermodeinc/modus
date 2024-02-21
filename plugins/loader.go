@@ -125,6 +125,14 @@ func loadPlugins(ctx context.Context) (map[string]bool, error) {
 	return loaded, nil
 }
 
+func WatchForHypermodeJsonChanges(ctx context.Context) error {
+	if aws.UseAwsForPluginStorage() {
+		return watchStorageForHypermodeJsonChanges(ctx)
+	} else {
+		return watchDirectoryForHypermodeJsonChanges(ctx)
+	}
+}
+
 func WatchForPluginChanges(ctx context.Context) error {
 
 	if config.NoReload {
@@ -137,6 +145,40 @@ func WatchForPluginChanges(ctx context.Context) error {
 	} else {
 		return watchDirectoryForPluginChanges(ctx)
 	}
+}
+
+func watchDirectoryForHypermodeJsonChanges(ctx context.Context) error {
+	w := watcher.New()
+	w.AddFilterHook(watcher.RegexFilterHook(regexp.MustCompile(`hypermode.json`), false))
+
+	go func() {
+		for {
+			select {
+			case evt := <-w.Event:
+
+				switch evt.Op {
+				case watcher.Create, watcher.Write:
+					err := loadHypermodeJson(ctx)
+					if err != nil {
+						log.Err(err).
+							Msg("Failed to load hypermode.json.")
+					}
+				case watcher.Remove:
+					host.HypermodeJson = host.HypermodeJsonStruct{}
+					log.Info().Msg("hypermode.json removed.")
+				}
+			case err := <-w.Error:
+				log.Err(err).Msg("Failure while watching directory for hypermode.json")
+			case <-w.Closed:
+				return
+			case <-ctx.Done():
+				w.Close()
+				return
+			}
+		}
+	}()
+
+	return nil
 }
 
 func watchDirectoryForPluginChanges(ctx context.Context) error {
@@ -212,6 +254,10 @@ func watchDirectoryForPluginChanges(ctx context.Context) error {
 	return nil
 }
 
+func getPathForHypermodeJson() string {
+	return path.Join(config.PluginsPath, "hypermode.json")
+}
+
 func getPathForPlugin(name string) (string, error) {
 
 	// Normally the plugin will be directly in the plugins directory, by filename.
@@ -250,6 +296,29 @@ func getPluginNameFromPath(p string) (string, error) {
 	}
 
 	return strings.TrimSuffix(parts[len(parts)-1], ".wasm"), nil
+}
+
+func watchStorageForHypermodeJsonChanges(ctx context.Context) error {
+	go func() {
+		ticker := time.NewTicker(config.RefreshInterval)
+		defer ticker.Stop()
+
+		for {
+			select {
+			case <-ticker.C:
+				err := loadHypermodeJson(ctx)
+				if err != nil {
+					log.Err(err).
+						Msg("Failed to load hypermode.json.")
+				}
+			case <-ctx.Done():
+				return
+			}
+		}
+	}()
+
+	return nil
+
 }
 
 func watchStorageForPluginChanges(ctx context.Context) error {

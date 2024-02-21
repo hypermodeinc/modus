@@ -91,6 +91,12 @@ func main() {
 		log.Fatal().Err(err).Msg("Failed to watch for plugin changes.  Exiting.")
 	}
 
+	// Watch for hypermode.json changes
+	err = plugins.WatchForHypermodeJsonChanges(ctx)
+	if err != nil {
+		log.Fatal().Err(err).Msg("Failed to watch for hypermode.json changes.  Exiting.")
+	}
+
 	// Start the web server
 	err = startServer()
 	if err != nil {

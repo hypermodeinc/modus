@@ -6,6 +6,7 @@ package plugins
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"hmruntime/aws"
 	"hmruntime/functions"
@@ -57,6 +58,39 @@ func InitWasmRuntime(ctx context.Context) (wazero.Runtime, error) {
 	}
 
 	return runtime, nil
+}
+
+func loadHypermodeJson(ctx context.Context) error {
+	log.Info().Msg("Loading hypermode.json.")
+
+	// Get the JSON bytes
+	bytes, err := getHypermodeJsonBytes(ctx)
+	if err != nil {
+		return err
+	}
+
+	// Unmarshal the JSON bytes into the HypermodeJsonStruct
+	json.Unmarshal(bytes, &host.HypermodeJson)
+
+	return nil
+}
+
+func getHypermodeJsonBytes(ctx context.Context) ([]byte, error) {
+	if aws.UseAwsForPluginStorage() {
+		return aws.GetHypermodeJsonBytes(ctx)
+	}
+
+	path := getPathForHypermodeJson()
+	bytes, err := os.ReadFile(path)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load hypermode.json: %w", err)
+	}
+
+	log.Info().
+		Str("path", path).
+		Msg("Retrieved hypermode.json from local storage.")
+
+	return bytes, nil
 }
 
 func loadPluginModule(ctx context.Context, name string) error {

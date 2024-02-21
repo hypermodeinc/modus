@@ -49,6 +49,36 @@ func ListPlugins(ctx context.Context) (map[string]string, error) {
 	return plugins, nil
 }
 
+func GetHypermodeJsonBytes(ctx context.Context) ([]byte, error) {
+	if !useS3PluginStorage {
+		return nil, fmt.Errorf("unable to retrieve Hypermode JSON because S3 plugin storage is disabled")
+	}
+
+	key := getPathPrefix() + "hypermode.json"
+	input := &s3.GetObjectInput{
+		Bucket: &config.S3Bucket,
+		Key:    &key,
+	}
+
+	svc := s3.NewFromConfig(awsConfig)
+	obj, err := svc.GetObject(ctx, input)
+	if err != nil {
+		return nil, fmt.Errorf("error getting object for Hypermode JSON from S3: %w", err)
+	}
+
+	defer obj.Body.Close()
+	bytes, err := io.ReadAll(obj.Body)
+	if err != nil {
+		return nil, fmt.Errorf("error reading content stream of Hypermode JSON from S3: %w", err)
+	}
+
+	log.Info().
+		Str("key", key).
+		Msg("Retrieved Hypermode JSON from S3.")
+
+	return bytes, nil
+}
+
 func GetPluginBytes(ctx context.Context, name string) ([]byte, error) {
 
 	if !useS3PluginStorage {
