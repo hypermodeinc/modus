@@ -164,7 +164,7 @@ func watchDirectoryForHypermodeJsonChanges(ctx context.Context) error {
 							Msg("Failed to load hypermode.json.")
 					}
 				case watcher.Remove:
-					host.HypermodeJson = host.HypermodeJsonStruct{}
+					config.HypermodeData = config.HypermodeAppData{}
 					log.Info().Msg("hypermode.json removed.")
 				}
 			case err := <-w.Error:

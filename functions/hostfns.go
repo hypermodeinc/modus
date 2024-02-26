@@ -8,8 +8,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"hmruntime/aws"
+	"hmruntime/config"
 	"hmruntime/dgraph"
-	"hmruntime/host"
 	"hmruntime/utils"
 
 	"github.com/rs/zerolog/log"
@@ -107,35 +107,35 @@ type ClassifierLabel struct {
 	Probability float64 `json:"probability"`
 }
 
-func textModelSetup(mod wasm.Module, pModelName uint32, pSentenceMap uint32) (host.ModelSpec, map[string]string, error) {
+func textModelSetup(mod wasm.Module, pModelName uint32, pSentenceMap uint32) (config.ModelSpec, map[string]string, error) {
 	mem := mod.Memory()
 	modelName, err := readString(mem, pModelName)
 	if err != nil {
 		err = fmt.Errorf("error reading model id from wasm memory: %w", err)
-		return host.ModelSpec{}, nil, err
+		return config.ModelSpec{}, nil, err
 	}
 
 	sentenceMapStr, err := readString(mem, pSentenceMap)
 	if err != nil {
 		err = fmt.Errorf("error reading sentence map string from wasm memory: %w", err)
-		return host.ModelSpec{}, nil, err
+		return config.ModelSpec{}, nil, err
 	}
 
 	sentenceMap := make(map[string]string)
 	if err := json.Unmarshal([]byte(sentenceMapStr), &sentenceMap); err != nil {
 		err = fmt.Errorf("error unmarshalling sentence map: %w", err)
-		return host.ModelSpec{}, nil, err
+		return config.ModelSpec{}, nil, err
 	}
 
-	for _, msp := range host.HypermodeJson.ModelSpecs {
+	for _, msp := range config.HypermodeData.ModelSpecs {
 		if msp.Name == modelName {
 			return msp, sentenceMap, nil
 		}
 	}
-	return host.ModelSpec{}, nil, fmt.Errorf("model not found in hypermode.json")
+	return config.ModelSpec{}, nil, fmt.Errorf("model not found in hypermode.json")
 }
 
-func postToModelEndpoint[TResult any](ctx context.Context, sentenceMap map[string]string, modelSpec host.ModelSpec) (TResult, error) {
+func postToModelEndpoint[TResult any](ctx context.Context, sentenceMap map[string]string, modelSpec config.ModelSpec) (TResult, error) {
 	var key string
 	var err error
 	if aws.UseAwsForPluginStorage() {

@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"hmruntime/aws"
+	"hmruntime/config"
 	"hmruntime/functions"
 	"hmruntime/host"
 	"io"
@@ -70,7 +71,7 @@ func loadHypermodeJson(ctx context.Context) error {
 	}
 
 	// Unmarshal the JSON bytes into the HypermodeJsonStruct
-	json.Unmarshal(bytes, &host.HypermodeJson)
+	json.Unmarshal(bytes, &config.HypermodeData)
 
 	return nil
 }
