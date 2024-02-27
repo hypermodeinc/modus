@@ -4,12 +4,15 @@
 package functions
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"hmruntime/aws"
 	"hmruntime/dgraph"
 	"hmruntime/utils"
+	"io/ioutil"
+	"net/http"
 
 	"github.com/rs/zerolog/log"
 	"github.com/tetratelabs/wazero"
@@ -30,6 +33,7 @@ func InstantiateHostFunctions(ctx context.Context, runtime wazero.Runtime) error
 	b.NewFunctionBuilder().WithFunc(hostExecuteGQL).Export("executeGQL")
 	b.NewFunctionBuilder().WithFunc(hostInvokeClassifier).Export("invokeClassifier")
 	b.NewFunctionBuilder().WithFunc(hostComputeEmbedding).Export("computeEmbedding")
+	b.NewFunctionBuilder().WithFunc(hostInvokeOpenaiChat).Export("invokeOpenaiChat")
 
 	_, err := b.Instantiate(ctx)
 	if err != nil {
@@ -212,4 +216,87 @@ func hostComputeEmbedding(ctx context.Context, mod wasm.Module, pModelId uint32,
 	}
 
 	return writeString(ctx, mod, string(res))
+}
+
+func hostInvokeOpenaiChat(ctx context.Context, mod wasm.Module, pmodel uint32, pinstruction uint32, psentence uint32) uint32 {
+	// invoke https://api.openai.com/v1/chat/completions
+
+	mem := mod.Memory()
+	model, err := readString(mem, pmodel)
+
+	if err != nil {
+		log.Print("error reading model name from wasm memory:", err)
+		return 0
+	}
+	// model values "gpt-3.5-turbo" etc ...
+	log.Print("reading model name from wasm memory:", model)
+	sentence, err := readString(mem, psentence)
+	if err != nil {
+		log.Print("error reading sentence string from wasm memory:", err)
+		return 0
+	}
+	instruction, err := readString(mem, pinstruction)
+	if err != nil {
+		log.Print("error reading instruction string from wasm memory:", err)
+		return 0
+	}
+	// fetch the model
+	//modelQuery := ""
+	//r, err := queryGQL(ctx, modelQuery)
+	//if err != nil {
+	//	return "", fmt.Errorf("error getting GraphQL schema from Dgraph: %v", err)
+	//}
+
+	//var sr ModelResponse
+	//err = json.Unmarshal(r, &sr)
+
+	// POST to embedding service
+	jinstruction, _ := json.Marshal(instruction)
+	jsentence, _ := json.Marshal(sentence)
+	// modelid to get secret is hardcoded to "openai"
+	key, err := aws.GetSecretString(ctx, "openai")
+	if err != nil {
+		log.Print("error getting model key: %w", err)
+		return 0
+	}
+
+	reqBody := `{ 
+		"model": "` + model + `",
+		"messages": [
+		   { "role": "system", "content": ` + string(jinstruction) + `},
+		   { "role": "user", "content": ` + string(jsentence) + `}
+		 ]
+	 }`
+	log.Print("body: %v", reqBody)
+	var buffer bytes.Buffer
+	buffer.WriteString(reqBody)
+	//Leverage Go's HTTP Post function to make request
+
+	req, err := http.NewRequest(
+		http.MethodPost,
+		"https://api.openai.com/v1/chat/completions",
+		&buffer,
+	)
+	if err != nil {
+		log.Print("error buidling request:", err)
+		return 0
+	}
+	req.Header.Set("Authorization", "Bearer "+key)
+	req.Header.Set("Content-Type", "application/json")
+	resp, err := http.DefaultClient.Do(req)
+	//Handle Error
+	if err != nil {
+		log.Printf("An Error Occured %v", err)
+		return 0
+	}
+	defer resp.Body.Close()
+	//Read the response body
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Printf("An Error Occured %v", err)
+		return 0
+	}
+	// log.Printf("Openai response %s", string(body))
+	// return a string
+	return writeString(ctx, mod, string(body))
 }
