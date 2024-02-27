@@ -109,10 +109,7 @@ func Test_PostHttp(t *testing.T) {
 	payload := Payload{
 		Message: "Hello, World!",
 	}
-	headers := map[string]string{
-		"Content-Type": "application/json",
-	}
-	result, err := PostHttp[Response](url, payload, headers)
+	result, err := PostHttp[Response](url, payload, nil)
 	if err != nil {
 		t.Fatalf("Failed to make HTTP request: %v", err)
 	}
@@ -122,6 +119,29 @@ func Test_PostHttp(t *testing.T) {
 	}
 	if !reflect.DeepEqual(result, expectedResult) {
 		t.Errorf("Unexpected response. Got: %+v, want: %+v", result, expectedResult)
+	}
+}
+
+func Test_PostHttp_CustomContentType(t *testing.T) {
+	const customContentType = "x-foo/bar"
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Header.Get("Content-Type") == customContentType {
+			w.WriteHeader(http.StatusOK)
+		} else {
+			http.Error(w, "Invalid Content-Type", http.StatusBadRequest)
+		}
+	})
+	server := httptest.NewServer(handler)
+	defer server.Close()
+
+	headers := map[string]string{
+		"Content-Type": customContentType,
+	}
+
+	url := server.URL
+	_, err := PostHttp[string](url, nil, headers)
+	if err != nil {
+		t.Fatalf("Failed to make HTTP request: %v", err)
 	}
 }
 
