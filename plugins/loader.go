@@ -23,6 +23,14 @@ import (
 // Map of plugin names and etags as last retrieved from S3.
 var awsPlugins map[string]string
 
+// Map of json files and etags as last retrieved from S3.
+var awsJsons map[string]string
+
+func LoadJsons(ctx context.Context) error {
+	_, err := loadJsons(ctx)
+	return err
+}
+
 func LoadPlugins(ctx context.Context) error {
 	_, err := loadPlugins(ctx)
 	return err
@@ -47,6 +55,63 @@ func ReloadPlugins(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+func loadJsons(ctx context.Context) (map[string]bool, error) {
+	var loaded = make(map[string]bool)
+
+	if aws.UseAwsForPluginStorage() {
+		jsons, err := aws.ListJsons(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("failed to list jsons from S3: %w", err)
+		}
+
+		for json := range jsons {
+			err := loadJson(ctx, json)
+			if err != nil {
+				log.Err(err).
+					Str("json", json).
+					Msg("Failed to load json.")
+			} else {
+				loaded[json] = true
+			}
+		}
+
+		// Store the list of jsons and their etags for later comparison.
+		awsJsons = jsons
+
+		return loaded, nil
+	}
+
+	// Otherwise, load all jsons in the plugins directory.
+	entries, err := os.ReadDir(config.PluginsPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read plugins directory: %w", err)
+	}
+
+	for _, entry := range entries {
+
+		// Determine if the entry represents a json.
+		var jsonName string
+		entryName := entry.Name()
+		if strings.HasSuffix(entryName, ".json") {
+			jsonName = strings.TrimSuffix(entryName, ".json")
+		} else {
+			continue
+		}
+
+		// Load the json
+		err := loadJson(ctx, jsonName)
+		if err != nil {
+			log.Err(err).
+				Str("json", jsonName).
+				Msg("Failed to load json.")
+		} else {
+			loaded[jsonName] = true
+		}
+	}
+
+	return loaded, nil
 }
 
 func loadPlugins(ctx context.Context) (map[string]bool, error) {
@@ -125,9 +190,9 @@ func loadPlugins(ctx context.Context) (map[string]bool, error) {
 	return loaded, nil
 }
 
-func WatchForHypermodeJsonChanges(ctx context.Context) error {
+func WatchForJsonChanges(ctx context.Context) error {
 	if aws.UseAwsForPluginStorage() {
-		return watchStorageForHypermodeJsonChanges(ctx)
+		return watchStorageForJsonChanges(ctx)
 	} else {
 		return watchDirectoryForHypermodeJsonChanges(ctx)
 	}
@@ -149,19 +214,28 @@ func WatchForPluginChanges(ctx context.Context) error {
 
 func watchDirectoryForHypermodeJsonChanges(ctx context.Context) error {
 	w := watcher.New()
-	w.AddFilterHook(watcher.RegexFilterHook(regexp.MustCompile(`hypermode.json`), false))
+	w.AddFilterHook(watcher.RegexFilterHook(regexp.MustCompile(`^.+\.json$`), false))
 
 	go func() {
 		for {
 			select {
 			case evt := <-w.Event:
 
+				jsonName, err := getJsonNameFromPath(evt.Path)
+				if err != nil {
+					log.Err(err).Msg("Failed to get json name.")
+				}
+				if jsonName == "" {
+					continue
+				}
+
 				switch evt.Op {
 				case watcher.Create, watcher.Write:
-					err := loadHypermodeJson(ctx)
+					err := loadJson(ctx, jsonName)
 					if err != nil {
 						log.Err(err).
-							Msg("Failed to load hypermode.json.")
+							Str("json", jsonName).
+							Msg("Failed to load json.")
 					}
 				case watcher.Remove:
 					config.HypermodeData = config.HypermodeAppData{}
@@ -254,8 +328,13 @@ func watchDirectoryForPluginChanges(ctx context.Context) error {
 	return nil
 }
 
-func getPathForHypermodeJson() string {
-	return path.Join(config.PluginsPath, "hypermode.json")
+func getPathForJson(name string) (string, error) {
+	p := path.Join(config.PluginsPath, name+".json")
+	if _, err := os.Stat(p); err == nil {
+		return p, nil
+	}
+
+	return "", fmt.Errorf("json file not found for plugin '%s'", name)
 }
 
 func getPathForPlugin(name string) (string, error) {
@@ -281,6 +360,14 @@ func getPathForPlugin(name string) (string, error) {
 	return "", fmt.Errorf("compiled wasm file not found for plugin '%s'", name)
 }
 
+func getJsonNameFromPath(p string) (string, error) {
+	if !strings.HasSuffix(p, ".json") {
+		return "", fmt.Errorf("path does not point to a json file: %s", p)
+	}
+
+	return strings.TrimSuffix(path.Base(p), ".json"), nil
+}
+
 func getPluginNameFromPath(p string) (string, error) {
 	if !strings.HasSuffix(p, ".wasm") {
 		return "", fmt.Errorf("path does not point to a wasm file: %s", p)
@@ -298,19 +385,33 @@ func getPluginNameFromPath(p string) (string, error) {
 	return strings.TrimSuffix(parts[len(parts)-1], ".wasm"), nil
 }
 
-func watchStorageForHypermodeJsonChanges(ctx context.Context) error {
+func watchStorageForJsonChanges(ctx context.Context) error {
 	go func() {
 		ticker := time.NewTicker(config.RefreshInterval)
 		defer ticker.Stop()
 
 		for {
+			jsons, err := aws.ListJsons(ctx)
+			if err != nil {
+				// Don't stop watching. We'll just try again on the next cycle.
+				log.Err(err).Msg("Failed to list jsons from S3.")
+				continue
+			}
+			// Load/reload any new or modified jsons
+			for name, etag := range jsons {
+				if awsJsons[name] != etag {
+					err := loadJson(ctx, name)
+					if err != nil {
+						log.Err(err).
+							Str("json", name).
+							Msg("Failed to load hypermode.json.")
+					}
+					awsJsons[name] = etag
+				}
+			}
 			select {
 			case <-ticker.C:
-				err := loadHypermodeJson(ctx)
-				if err != nil {
-					log.Err(err).
-						Msg("Failed to load hypermode.json.")
-				}
+				continue
 			case <-ctx.Done():
 				return
 			}

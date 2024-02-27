@@ -73,6 +73,12 @@ func main() {
 		}
 	}
 
+	// Load json
+	err = plugins.LoadJsons(ctx)
+	if err != nil {
+		log.Fatal().Err(err).Msg("Failed to load hypermode.json.  Exiting.")
+	}
+
 	// Load plugins
 	err = plugins.LoadPlugins(ctx)
 	if err != nil {
@@ -92,7 +98,7 @@ func main() {
 	}
 
 	// Watch for hypermode.json changes
-	err = plugins.WatchForHypermodeJsonChanges(ctx)
+	err = plugins.WatchForJsonChanges(ctx)
 	if err != nil {
 		log.Fatal().Err(err).Msg("Failed to watch for hypermode.json changes.  Exiting.")
 	}

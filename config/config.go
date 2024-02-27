@@ -6,6 +6,7 @@ package config
 
 import (
 	"flag"
+	"sync"
 	"time"
 )
 
@@ -15,15 +16,32 @@ var PluginsPath string
 var NoReload bool
 var S3Bucket string
 var RefreshInterval time.Duration
+var Mu = &sync.Mutex{}
+
+var SupportedJsons = map[string]AppData{
+	"hypermode.json": &HypermodeData,
+	"models.json":    &ModelData,
+}
 
 // HypermodeJson holds the hypermode.json data
 var HypermodeData HypermodeAppData = HypermodeAppData{}
+
+// ModelJson holds the models.json data
+var ModelData ModelsAppData = ModelsAppData{}
+
+// AppData interface
+type AppData interface{}
 
 // struct that holds the hypermode.json data
 type HypermodeAppData struct {
 	ModelSpecs           []ModelSpec           `json:"modelSpecs"`
 	EmbeddingSpecs       []EmbeddingSpec       `json:"embeddingSpecs"`
 	TrainingInstructions []TrainingInstruction `json:"trainingInstructions"`
+	AppData
+}
+
+type ModelsAppData struct {
+	AppData
 }
 
 type ModelSpec struct {
