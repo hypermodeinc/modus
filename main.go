@@ -14,7 +14,6 @@ import (
 	"os"
 	"time"
 
-	"github.com/joho/godotenv"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
@@ -63,15 +62,6 @@ func main() {
 		log.Fatal().Err(err).Msg("Failed to initialize the WebAssembly runtime.  Exiting.")
 	}
 	defer host.WasmRuntime.Close(ctx)
-
-	// Initialize .env if in dev mode
-	if os.Getenv("ENV") == "dev" {
-		// Try to load the .env file
-		err := godotenv.Load()
-		if err != nil {
-			log.Fatal().Err(err).Msg("Error loading .env file")
-		}
-	}
 
 	// Load json
 	err = plugins.LoadJsons(ctx)
