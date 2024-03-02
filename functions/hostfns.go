@@ -162,7 +162,7 @@ func hostInvokeClassifier(ctx context.Context, mod wasm.Module, pModelId uint32,
 		return 0
 	}
 
-	if modelSpec.Type != classifierModel {
+	if modelSpec.ModelType != classifierModel {
 		log.Error().Msg("Model type is not 'classifier'.")
 		return 0
 	}
@@ -194,7 +194,7 @@ func hostComputeEmbedding(ctx context.Context, mod wasm.Module, pModelId uint32,
 		return 0
 	}
 
-	if modelSpec.Type != embeddingModel {
+	if modelSpec.ModelType != embeddingModel {
 		log.Error().Msg("Model type is not 'embedding'.")
 		return 0
 	}

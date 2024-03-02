@@ -46,7 +46,10 @@ type ModelsAppData struct {
 
 type ModelSpec struct {
 	Name       string `json:"name"`
-	Type       string `json:"type"`
+	ModelType  string `json:"modelType"`
+	BaseModel  string `json:"baseModel"`
+	Provider   string `json:"provider"`
+	Host       string `json:"host"`
 	Endpoint   string `json:"endpoint"`
 	AuthHeader string `json:"authHeader"`
 	ApiKey     string `json:"apiKey"`
