@@ -33,7 +33,7 @@ func InstantiateHostFunctions(ctx context.Context, runtime wazero.Runtime) error
 	b.NewFunctionBuilder().WithFunc(hostExecuteGQL).Export("executeGQL")
 	b.NewFunctionBuilder().WithFunc(hostInvokeClassifier).Export("invokeClassifier")
 	b.NewFunctionBuilder().WithFunc(hostComputeEmbedding).Export("computeEmbedding")
-	b.NewFunctionBuilder().WithFunc(hostInvokeOpenaiChat).Export("invokeOpenaiChat")
+	b.NewFunctionBuilder().WithFunc(hostInvokeChat).Export("invokeChat")
 
 	_, err := b.Instantiate(ctx)
 	if err != nil {
@@ -112,9 +112,8 @@ type ClassifierLabel struct {
 
 func textModelSetup(mod wasm.Module, pModelId uint32, pSentenceMap uint32) (dgraph.ModelSpec, map[string]string, error) {
 	mem := mod.Memory()
-	modelId, err := readString(mem, pModelId)
+	modelSpec, err := textModelSpecSetup(mod, pModelId)
 	if err != nil {
-		err = fmt.Errorf("error reading model id from wasm memory: %w", err)
 		return dgraph.ModelSpec{}, nil, err
 	}
 
@@ -130,13 +129,23 @@ func textModelSetup(mod wasm.Module, pModelId uint32, pSentenceMap uint32) (dgra
 		return dgraph.ModelSpec{}, nil, err
 	}
 
+	return modelSpec, sentenceMap, nil
+}
+func textModelSpecSetup(mod wasm.Module, pModelId uint32) (dgraph.ModelSpec, error) {
+	mem := mod.Memory()
+	modelId, err := readString(mem, pModelId)
+	if err != nil {
+		err = fmt.Errorf("error reading model id from wasm memory: %w", err)
+		return dgraph.ModelSpec{}, err
+	}
+
 	modelSpec, err := dgraph.GetModelSpec(modelId)
 	if err != nil {
 		err = fmt.Errorf("error getting model endpoint: %w", err)
-		return dgraph.ModelSpec{}, nil, err
+		return dgraph.ModelSpec{}, err
 	}
 
-	return modelSpec, sentenceMap, nil
+	return modelSpec, nil
 }
 
 func postToModelEndpoint[TResult any](ctx context.Context, sentenceMap map[string]string, modelSpec dgraph.ModelSpec) (TResult, error) {
@@ -218,48 +227,39 @@ func hostComputeEmbedding(ctx context.Context, mod wasm.Module, pModelId uint32,
 	return writeString(ctx, mod, string(res))
 }
 
-func hostInvokeOpenaiChat(ctx context.Context, mod wasm.Module, pmodel uint32, pinstruction uint32, psentence uint32) uint32 {
-	// invoke https://api.openai.com/v1/chat/completions
-
+func hostInvokeChat(ctx context.Context, mod wasm.Module, pModelId uint32, pInstruction uint32, pSentence uint32) uint32 {
+	// invoke modelspec endpoint or
+	// https://api.openai.com/v1/chat/completions if endpoint is "openai"
 	mem := mod.Memory()
-	model, err := readString(mem, pmodel)
+	modelSpec, err := textModelSpecSetup(mod, pModelId)
 
 	if err != nil {
-		log.Print("error reading model name from wasm memory:", err)
+		log.Err(err)
 		return 0
 	}
-	// model values "gpt-3.5-turbo" etc ...
-	log.Print("reading model name from wasm memory:", model)
-	sentence, err := readString(mem, psentence)
+	// we are assuming gpt-3.5-turbo
+	// to do : define how to pass the model name in the modelSpec
+	const model = "gpt-3.5-turbo"
+	sentence, err := readString(mem, pSentence)
 	if err != nil {
 		log.Print("error reading sentence string from wasm memory:", err)
 		return 0
 	}
-	instruction, err := readString(mem, pinstruction)
+	instruction, err := readString(mem, pInstruction)
 	if err != nil {
 		log.Print("error reading instruction string from wasm memory:", err)
 		return 0
 	}
-	// fetch the model
-	//modelQuery := ""
-	//r, err := queryGQL(ctx, modelQuery)
-	//if err != nil {
-	//	return "", fmt.Errorf("error getting GraphQL schema from Dgraph: %v", err)
-	//}
 
-	//var sr ModelResponse
-	//err = json.Unmarshal(r, &sr)
-
-	// POST to embedding service
 	jinstruction, _ := json.Marshal(instruction)
 	jsentence, _ := json.Marshal(sentence)
-	// modelid to get secret is hardcoded to "openai"
-	key, err := aws.GetSecretString(ctx, "openai")
+
+	key, err := aws.GetSecretString(ctx, modelSpec.ID)
 	if err != nil {
 		log.Print("error getting openai model key: %s. Err= %w", "openai", err)
 		return 0
 	}
-
+	// build the request body following openai API
 	reqBody := `{ 
 		"model": "` + model + `",
 		"messages": [
@@ -267,14 +267,16 @@ func hostInvokeOpenaiChat(ctx context.Context, mod wasm.Module, pmodel uint32, p
 		   { "role": "user", "content": ` + string(jsentence) + `}
 		 ]
 	 }`
-	log.Print("body: %v", reqBody)
+	// log.Print("body: %v", reqBody)
 	var buffer bytes.Buffer
 	buffer.WriteString(reqBody)
-	//Leverage Go's HTTP Post function to make request
+	// We ignore modelSpec.endpoint and use the openai endpoint
+	// TO DO: use a design to call either openai or a user defined model endpoint
 
+	const endpoint = "https://api.openai.com/v1/chat/completions"
 	req, err := http.NewRequest(
 		http.MethodPost,
-		"https://api.openai.com/v1/chat/completions",
+		endpoint,
 		&buffer,
 	)
 	if err != nil {
