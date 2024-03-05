@@ -114,8 +114,11 @@ func GetModelSpec(modelId string) (ModelSpec, error) {
 	}
 
 	spec := response.Data.Model
+	if spec.ID == "" {
+		return ModelSpec{}, fmt.Errorf("error: no model spec found for ID=" + modelId)
+	}
 	if spec.ID != modelId {
-		return ModelSpec{}, fmt.Errorf("error: ID does not match")
+		return ModelSpec{}, fmt.Errorf("error: retrieved model spec ID '" + spec.ID + "' does not match  " + modelId)
 	}
 
 	return spec, nil

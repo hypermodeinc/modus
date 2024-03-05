@@ -144,7 +144,7 @@ func postToModelEndpoint[TResult any](ctx context.Context, sentenceMap map[strin
 	key, err := aws.GetSecretString(ctx, modelSpec.ID)
 	if err != nil {
 		var result TResult
-		return result, fmt.Errorf("error getting model key: %w", err)
+		return result, fmt.Errorf("error getting model key '%s': %w", modelSpec.ID, err)
 	}
 
 	headers := map[string]string{
@@ -256,7 +256,7 @@ func hostInvokeOpenaiChat(ctx context.Context, mod wasm.Module, pmodel uint32, p
 	// modelid to get secret is hardcoded to "openai"
 	key, err := aws.GetSecretString(ctx, "openai")
 	if err != nil {
-		log.Print("error getting model key: %w", err)
+		log.Print("error getting openai model key: %s. Err= %w", "openai", err)
 		return 0
 	}
 
