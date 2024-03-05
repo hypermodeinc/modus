@@ -83,6 +83,7 @@ type ModelSpec struct {
 	ID       string `json:"id"`
 	Type     string `json:"type"`
 	Endpoint string `json:"endpoint"`
+	Provider string `json:"provider"`
 }
 type ModelSpecInfo struct {
 	Model ModelSpec `json:"model"`
