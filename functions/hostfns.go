@@ -4,15 +4,12 @@
 package functions
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"hmruntime/aws"
 	"hmruntime/dgraph"
 	"hmruntime/utils"
-	"io/ioutil"
-	"net/http"
 
 	"github.com/rs/zerolog/log"
 	"github.com/tetratelabs/wazero"
@@ -23,6 +20,7 @@ const (
 	HostModuleName  string = "hypermode"
 	classifierModel string = "classifier"
 	embeddingModel  string = "embedding"
+	generatorModel  string = "generator"
 )
 
 func InstantiateHostFunctions(ctx context.Context, runtime wazero.Runtime) error {
@@ -33,7 +31,7 @@ func InstantiateHostFunctions(ctx context.Context, runtime wazero.Runtime) error
 	b.NewFunctionBuilder().WithFunc(hostExecuteGQL).Export("executeGQL")
 	b.NewFunctionBuilder().WithFunc(hostInvokeClassifier).Export("invokeClassifier")
 	b.NewFunctionBuilder().WithFunc(hostComputeEmbedding).Export("computeEmbedding")
-	b.NewFunctionBuilder().WithFunc(hostInvokeChat).Export("invokeChat")
+	b.NewFunctionBuilder().WithFunc(hostInvokeTextGenerator).Export("invokeTextGenerator")
 
 	_, err := b.Instantiate(ctx)
 	if err != nil {
@@ -227,7 +225,31 @@ func hostComputeEmbedding(ctx context.Context, mod wasm.Module, pModelId uint32,
 	return writeString(ctx, mod, string(res))
 }
 
-func hostInvokeChat(ctx context.Context, mod wasm.Module, pModelId uint32, pInstruction uint32, pSentence uint32) uint32 {
+type ChatContext struct {
+	Model    string        `json:"model"`
+	Messages []ChatMessage `json:"messages"`
+}
+
+type ChatMessage struct {
+	Role    string `json:"role"`
+	Content string `json:"content"`
+}
+type MessageChoice struct {
+	Message ChatMessage `json:"message"`
+}
+
+type InvokeError struct {
+	Message string `json:"message"`
+	Type    string `json:"type"`
+	Param   string `json:"param"`
+	Code    string `json:"code"`
+}
+type ChatResponse struct {
+	Choices []MessageChoice `json:"choices"`
+	Error   InvokeError     `json:"error"`
+}
+
+func hostInvokeTextGenerator(ctx context.Context, mod wasm.Module, pModelId uint32, pInstruction uint32, pSentence uint32) uint32 {
 	// invoke modelspec endpoint or
 	// https://api.openai.com/v1/chat/completions if endpoint is "openai"
 	mem := mod.Memory()
@@ -237,9 +259,14 @@ func hostInvokeChat(ctx context.Context, mod wasm.Module, pModelId uint32, pInst
 		log.Err(err)
 		return 0
 	}
+	if modelSpec.Type != generatorModel {
+		log.Error().Msg(fmt.Sprintf("Model type is not '%s'.", generatorModel))
+		return 0
+	}
+
 	// we are assuming gpt-3.5-turbo
 	// to do : define how to pass the model name in the modelSpec
-	const model = "gpt-3.5-turbo"
+
 	sentence, err := readString(mem, pSentence)
 	if err != nil {
 		log.Print("error reading sentence string from wasm memory:", err)
@@ -259,46 +286,53 @@ func hostInvokeChat(ctx context.Context, mod wasm.Module, pModelId uint32, pInst
 		log.Print("error getting openai model key: %s. Err= %w", "openai", err)
 		return 0
 	}
-	// build the request body following openai API
-	reqBody := `{ 
-		"model": "` + model + `",
-		"messages": [
-		   { "role": "system", "content": ` + string(jinstruction) + `},
-		   { "role": "user", "content": ` + string(jsentence) + `}
-		 ]
-	 }`
-	// log.Print("body: %v", reqBody)
-	var buffer bytes.Buffer
-	buffer.WriteString(reqBody)
-	// We ignore modelSpec.endpoint and use the openai endpoint
-	// TO DO: use a design to call either openai or a user defined model endpoint
+	// Call appropriate impelmentation depending on the modelSpec.Provider
+	// TO DO: use Provider when it will be available in the modelSpec
 
+	result, err := openaiTextGenerator(ctx, modelSpec, string(jinstruction), string(jsentence), key)
+
+	if err != nil {
+		log.Err(err).Msg("Error posting to openai.")
+		return 0
+	}
+	if result.Error.Message != "" {
+		log.Err(err).Msg("Error returned by openai.")
+		return 0
+	}
+
+	res, err := json.Marshal(result)
+	if err != nil {
+		log.Err(err).Msg("Error marshalling result.")
+		return 0
+	}
+	return writeString(ctx, mod, string(res))
+}
+
+func openaiTextGenerator(ctx context.Context, modelSpec dgraph.ModelSpec, instruction string, sentence string, key string) (ChatResponse, error) {
+	// invoke modelspec endpoint or
+	// https://api.openai.com/v1/chat/completions if endpoint is "openai"
+
+	// we are assuming gpt-3.5-turbo
+	// should be modelSpec.baseModel when it will be available in the modelSpec
+	const model = "gpt-3.5-turbo"
+
+	// build the request body following openai API
+
+	reqBody := ChatContext{
+		Model: model,
+		Messages: []ChatMessage{
+			{Role: "system", Content: instruction},
+			{Role: "user", Content: sentence},
+		},
+	}
+
+	// We ignore modelSpec.endpoint and use the openai endpoint
 	const endpoint = "https://api.openai.com/v1/chat/completions"
-	req, err := http.NewRequest(
-		http.MethodPost,
-		endpoint,
-		&buffer,
-	)
-	if err != nil {
-		log.Print("error buidling request:", err)
-		return 0
+	headers := map[string]string{
+		"Authorization": "Bearer " + key,
+		"Content-Type":  "application/json",
 	}
-	req.Header.Set("Authorization", "Bearer "+key)
-	req.Header.Set("Content-Type", "application/json")
-	resp, err := http.DefaultClient.Do(req)
-	//Handle Error
-	if err != nil {
-		log.Printf("An Error Occured %v", err)
-		return 0
-	}
-	defer resp.Body.Close()
-	//Read the response body
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		log.Printf("An Error Occured %v", err)
-		return 0
-	}
-	// log.Printf("Openai response %s", string(body))
-	// return a string
-	return writeString(ctx, mod, string(body))
+
+	return utils.PostHttp[ChatResponse](endpoint, reqBody, headers)
+
 }
