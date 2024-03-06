@@ -48,6 +48,7 @@ func CallFunction(ctx context.Context, mod wasm.Module, info schema.FunctionInfo
 		Str("plugin", info.PluginName).
 		Str("function", fnName).
 		Str("resolver", schema.Resolver()).
+		Bool("user_visible", true).
 		Msg("Calling function.")
 	start := time.Now()
 	res, err := fn.Call(ctx, params...)
@@ -57,6 +58,7 @@ func CallFunction(ctx context.Context, mod wasm.Module, info schema.FunctionInfo
 			Str("plugin", info.PluginName).
 			Str("function", fnName).
 			Dur("duration_ms", duration).
+			Bool("user_visible", true).
 			Msg("Error while executing function.")
 
 		return nil, err
@@ -71,6 +73,7 @@ func CallFunction(ctx context.Context, mod wasm.Module, info schema.FunctionInfo
 			Str("function", fnName).
 			Dur("duration_ms", duration).
 			Str("schema_type", schema.FieldDef.Type.NamedType).
+			Bool("user_visible", true).
 			Msg("Failed to convert the result of the function to the schema field type.")
 
 		return nil, fmt.Errorf("failed to convert result: %w", err)
@@ -80,6 +83,7 @@ func CallFunction(ctx context.Context, mod wasm.Module, info schema.FunctionInfo
 		Str("plugin", info.PluginName).
 		Str("function", fnName).
 		Dur("duration_ms", duration).
+		Bool("user_visible", true).
 		Msg("Function completed successfully.")
 
 	return result, nil

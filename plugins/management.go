@@ -134,9 +134,9 @@ func unloadPluginModule(ctx context.Context, name string) error {
 func GetModuleInstance(ctx context.Context, pluginName string) (wasm.Module, buffers, error) {
 
 	// Get the logger and writers for the plugin's stdout and stderr.
-	log := logger.Get(ctx)
-	wInfoLog := logger.NewLogWriter(log, zerolog.InfoLevel)
-	wErrorLog := logger.NewLogWriter(log, zerolog.ErrorLevel)
+	log := logger.Get(ctx).With().Bool("user_visible", true).Logger()
+	wInfoLog := logger.NewLogWriter(&log, zerolog.InfoLevel)
+	wErrorLog := logger.NewLogWriter(&log, zerolog.ErrorLevel)
 
 	// Create string buffers to capture stdout and stderr.
 	// Still write to the log, but also capture the output in the buffers.
