@@ -43,8 +43,8 @@ type AdminRequest struct {
 
 func handleRequest(w http.ResponseWriter, r *http.Request) {
 
-	// Assign a correlation ID to the request context
-	ctx, r := assignCorrelationId(w, r)
+	// Assign an Execution ID to the request context
+	ctx, r := assignExecutionId(w, r)
 
 	// Decode the request body
 	var req HMRequest
@@ -229,8 +229,8 @@ func writeDataAsJson(w http.ResponseWriter, data any, isJson bool) error {
 
 func handleAdminRequest(w http.ResponseWriter, r *http.Request) {
 
-	// Assign a correlation ID to the request context
-	ctx, r := assignCorrelationId(w, r)
+	// Assign an Execution ID to the request context
+	ctx, r := assignExecutionId(w, r)
 
 	// Decode the request body
 	var req AdminRequest
@@ -273,10 +273,10 @@ func startServer(ctx context.Context) error {
 	return http.ListenAndServe(fmt.Sprintf(":%d", config.Port), nil)
 }
 
-func assignCorrelationId(w http.ResponseWriter, r *http.Request) (context.Context, *http.Request) {
-	correlationId := xid.New().String()
-	w.Header().Add("X-Correlation-ID", correlationId)
+func assignExecutionId(w http.ResponseWriter, r *http.Request) (context.Context, *http.Request) {
+	executionId := xid.New().String()
+	w.Header().Add("X-Hypermode-ExecutionID", executionId)
 
-	ctx := context.WithValue(r.Context(), logger.CorrelationIdContextKey, correlationId)
+	ctx := context.WithValue(r.Context(), logger.ExecutionIdContextKey, executionId)
 	return ctx, r.WithContext(ctx)
 }

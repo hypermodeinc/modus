@@ -16,8 +16,8 @@ import (
 
 type contextKey string
 
-const correlationIdKey = "correlation_id"
-const CorrelationIdContextKey contextKey = correlationIdKey
+const executionIdKey = "execution_id"
+const ExecutionIdContextKey contextKey = executionIdKey
 
 func Initialize() *zerolog.Logger {
 	if !config.UseJsonLogging {
@@ -31,9 +31,9 @@ func Initialize() *zerolog.Logger {
 }
 
 func Get(ctx context.Context) *zerolog.Logger {
-	correlationId, ok := ctx.Value(CorrelationIdContextKey).(string)
-	if ok && correlationId != "" {
-		l := log.Logger.With().Str(correlationIdKey, correlationId).Logger()
+	executionId, ok := ctx.Value(ExecutionIdContextKey).(string)
+	if ok && executionId != "" {
+		l := log.Logger.With().Str(executionIdKey, executionId).Logger()
 		return &l
 	}
 
