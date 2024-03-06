@@ -17,6 +17,7 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
+	"github.com/rs/zerolog"
 	"github.com/tetratelabs/wazero"
 	wasm "github.com/tetratelabs/wazero/api"
 	"github.com/tetratelabs/wazero/experimental/opt"
@@ -132,11 +133,16 @@ func unloadPluginModule(ctx context.Context, name string) error {
 
 func GetModuleInstance(ctx context.Context, pluginName string) (wasm.Module, buffers, error) {
 
+	// Get the logger and writers for the plugin's stdout and stderr.
+	log := logger.Get(ctx)
+	wInfoLog := logger.NewLogWriter(log, zerolog.InfoLevel)
+	wErrorLog := logger.NewLogWriter(log, zerolog.ErrorLevel)
+
 	// Create string buffers to capture stdout and stderr.
-	// Still write to the console, but also capture the output in the buffers.
+	// Still write to the log, but also capture the output in the buffers.
 	buf := buffers{&strings.Builder{}, &strings.Builder{}}
-	wOut := io.MultiWriter(os.Stdout, buf.Stdout)
-	wErr := io.MultiWriter(os.Stderr, buf.Stderr)
+	wOut := io.MultiWriter(buf.Stdout, wInfoLog)
+	wErr := io.MultiWriter(buf.Stderr, wErrorLog)
 
 	// Get the compiled module.
 	compiled, ok := host.CompiledModules[pluginName]
