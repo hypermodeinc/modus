@@ -90,9 +90,6 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 		// Call the function, passing in the args from the request
 		result, err := functions.CallFunction(ctx, mod, info, req.Args)
 		if err != nil {
-			logger.Err(ctx, err).
-				Str("function", fnName).
-				Msg("Error calling function.")
 			err := fmt.Errorf("error calling function '%s': %w", fnName, err)
 			err = writeErrorResponse(w, err, buf.Stdout.String(), buf.Stderr.String())
 			if err != nil {
@@ -128,9 +125,6 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 		for i, parent := range req.Parents {
 			results[i], err = functions.CallFunction(ctx, mod, info, parent)
 			if err != nil {
-				logger.Err(ctx, err).
-					Str("function", fnName).
-					Msg("Error calling function.")
 				err := fmt.Errorf("error calling function '%s': %w", fnName, err)
 				err = writeErrorResponse(w, err, buf.Stdout.String(), buf.Stderr.String())
 				if err != nil {

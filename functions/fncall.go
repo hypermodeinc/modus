@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"hmruntime/logger"
 	"hmruntime/schema"
+	"time"
 
 	"github.com/dgraph-io/gqlparser/ast"
 	wasm "github.com/tetratelabs/wazero/api"
@@ -44,11 +45,20 @@ func CallFunction(ctx context.Context, mod wasm.Module, info schema.FunctionInfo
 
 	// Call the wasm function
 	logger.Info(ctx).
+		Str("plugin", info.PluginName).
 		Str("function", fnName).
 		Str("resolver", schema.Resolver()).
 		Msg("Calling function.")
+	start := time.Now()
 	res, err := fn.Call(ctx, params...)
+	duration := time.Since(start)
 	if err != nil {
+		logger.Err(ctx, err).
+			Str("plugin", info.PluginName).
+			Str("function", fnName).
+			Dur("duration_ms", duration).
+			Msg("Error while executing function.")
+
 		return nil, err
 	}
 
@@ -56,8 +66,21 @@ func CallFunction(ctx context.Context, mod wasm.Module, info schema.FunctionInfo
 	mem := mod.Memory()
 	result, err := convertResult(mem, *schema.FieldDef.Type, def.ResultTypes()[0], res[0])
 	if err != nil {
+		logger.Err(ctx, err).
+			Str("plugin", info.PluginName).
+			Str("function", fnName).
+			Dur("duration_ms", duration).
+			Str("schema_type", schema.FieldDef.Type.NamedType).
+			Msg("Failed to convert the result of the function to the schema field type.")
+
 		return nil, fmt.Errorf("failed to convert result: %w", err)
 	}
+
+	logger.Info(ctx).
+		Str("plugin", info.PluginName).
+		Str("function", fnName).
+		Dur("duration_ms", duration).
+		Msg("Function completed successfully.")
 
 	return result, nil
 }
