@@ -54,7 +54,7 @@ func (schema FunctionSchema) FunctionArgs(ctx context.Context) ast.ArgumentDefin
 
 	// If @hm_function(args: ["arg1", "arg2"]) is specified, use that.
 	// The arguments must correspond to field names on the same parent object.
-	// The types will be assertained from the corresponding fields.
+	// The types will be ascertained from the corresponding fields.
 	// This is the case for fields on types other than Query and Mutation.
 	d := f.Directives.ForName("hm_function")
 	if d != nil {
