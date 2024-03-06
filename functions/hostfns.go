@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"hmruntime/aws"
+	"hmruntime/config"
 	"hmruntime/dgraph"
 	"hmruntime/logger"
 	"hmruntime/utils"
@@ -106,45 +107,49 @@ type ClassifierLabel struct {
 	Probability float64 `json:"probability"`
 }
 
-func textModelSetup(mod wasm.Module, pModelId uint32, pSentenceMap uint32) (dgraph.ModelSpec, map[string]string, error) {
+func textModelSetup(mod wasm.Module, pModelName uint32, pSentenceMap uint32) (config.ModelSpec, map[string]string, error) {
 	mem := mod.Memory()
-	modelId, err := readString(mem, pModelId)
+	modelName, err := readString(mem, pModelName)
 	if err != nil {
 		err = fmt.Errorf("error reading model id from wasm memory: %w", err)
-		return dgraph.ModelSpec{}, nil, err
+		return config.ModelSpec{}, nil, err
 	}
 
 	sentenceMapStr, err := readString(mem, pSentenceMap)
 	if err != nil {
 		err = fmt.Errorf("error reading sentence map string from wasm memory: %w", err)
-		return dgraph.ModelSpec{}, nil, err
+		return config.ModelSpec{}, nil, err
 	}
 
 	sentenceMap := make(map[string]string)
 	if err := json.Unmarshal([]byte(sentenceMapStr), &sentenceMap); err != nil {
 		err = fmt.Errorf("error unmarshalling sentence map: %w", err)
-		return dgraph.ModelSpec{}, nil, err
+		return config.ModelSpec{}, nil, err
 	}
 
-	modelSpec, err := dgraph.GetModelSpec(modelId)
-	if err != nil {
-		err = fmt.Errorf("error getting model endpoint: %w", err)
-		return dgraph.ModelSpec{}, nil, err
+	for _, msp := range config.HypermodeData.ModelSpecs {
+		if msp.Name == modelName {
+			return msp, sentenceMap, nil
+		}
 	}
-
-	return modelSpec, sentenceMap, nil
+	return config.ModelSpec{}, nil, fmt.Errorf("model not found in hypermode.json")
 }
 
-func postToModelEndpoint[TResult any](ctx context.Context, sentenceMap map[string]string, modelSpec dgraph.ModelSpec) (TResult, error) {
-
-	key, err := aws.GetSecretString(ctx, modelSpec.ID)
-	if err != nil {
-		var result TResult
-		return result, fmt.Errorf("error getting model key: %w", err)
+func postToModelEndpoint[TResult any](ctx context.Context, sentenceMap map[string]string, modelSpec config.ModelSpec) (TResult, error) {
+	var key string
+	var err error
+	if aws.UseAwsForPluginStorage() {
+		key, err = aws.GetSecretString(ctx, modelSpec.Name)
+		if err != nil {
+			var result TResult
+			return result, fmt.Errorf("error getting model key from aws: %w", err)
+		}
+	} else {
+		key = modelSpec.ApiKey
 	}
 
 	headers := map[string]string{
-		"x-api-key": key,
+		modelSpec.AuthHeader: key,
 	}
 
 	return utils.PostHttp[TResult](modelSpec.Endpoint, sentenceMap, headers)
@@ -157,7 +162,7 @@ func hostInvokeClassifier(ctx context.Context, mod wasm.Module, pModelId uint32,
 		return 0
 	}
 
-	if modelSpec.Type != classifierModel {
+	if modelSpec.ModelType != classifierModel {
 		logger.Error(ctx).Msg("Model type is not 'classifier'.")
 		return 0
 	}
@@ -189,7 +194,7 @@ func hostComputeEmbedding(ctx context.Context, mod wasm.Module, pModelId uint32,
 		return 0
 	}
 
-	if modelSpec.Type != embeddingModel {
+	if modelSpec.ModelType != embeddingModel {
 		logger.Error(ctx).Msg("Model type is not 'embedding'.")
 		return 0
 	}

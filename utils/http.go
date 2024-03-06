@@ -57,7 +57,10 @@ func PostHttp[TResult any](url string, payload any, headers map[string]string) (
 		return result, fmt.Errorf("error creating request: %w", err)
 	}
 
-	req.Header.Set("Content-Type", ct)
+	if _, ok := headers["Content-Type"]; !ok {
+		req.Header.Set("Content-Type", ct)
+	}
+
 	for k, v := range headers {
 		req.Header.Set(k, v)
 	}
