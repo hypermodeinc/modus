@@ -283,7 +283,7 @@ func hostInvokeTextGenerator(ctx context.Context, mod wasm.Module, pModelId uint
 
 	key, err := aws.GetSecretString(ctx, modelSpec.ID)
 	if err != nil {
-		log.Print("error getting openai model key: %s. Err= %w", "openai", err)
+		log.Print("error getting model key:", err)
 		return 0
 	}
 	// Call appropriate impelmentation depending on the modelSpec.Provider
@@ -296,7 +296,8 @@ func hostInvokeTextGenerator(ctx context.Context, mod wasm.Module, pModelId uint
 		return 0
 	}
 	if result.Error.Message != "" {
-		log.Err(err).Msg("Error returned by openai.")
+		err := fmt.Errorf(result.Error.Message)
+		log.Err(err).Msg("Error returned from openai.")
 		return 0
 	}
 
