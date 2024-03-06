@@ -66,7 +66,7 @@ func InitWasmRuntime(ctx context.Context) (wazero.Runtime, error) {
 func loadJson(ctx context.Context, name string) error {
 	config.Mu.Lock()         // Lock the mutex
 	defer config.Mu.Unlock() // Unlock the mutex when the function returns
-	log.Info().Str("Loading %s.json.", name)
+	logger.Info(ctx).Str("Loading %s.json.", name)
 
 	// Get the JSON bytes
 	bytes, err := getJsonBytes(ctx, name)
@@ -87,13 +87,13 @@ func loadJson(ctx context.Context, name string) error {
 	return nil
 }
 
-func unloadJson(name string) {
+func unloadJson(ctx context.Context, name string) {
 	config.Mu.Lock()         // Lock the mutex
 	defer config.Mu.Unlock() // Unlock the mutex when the function returns
 
 	value, exists := config.SupportedJsons[name+".json"]
 	if !exists {
-		log.Error().Msg(fmt.Sprintf("JSON %s does not exist.", name))
+		logger.Error(ctx).Msg(fmt.Sprintf("JSON %s does not exist.", name))
 		return
 	}
 
@@ -101,7 +101,7 @@ func unloadJson(name string) {
 	v := reflect.New(t).Interface()
 	config.SupportedJsons[name+".json"] = v
 
-	log.Info().Msg(fmt.Sprintf("Unloaded %s.json.", name))
+	logger.Info(ctx).Msg(fmt.Sprintf("Unloaded %s.json.", name))
 }
 
 func getJsonBytes(ctx context.Context, name string) ([]byte, error) {
@@ -118,7 +118,7 @@ func getJsonBytes(ctx context.Context, name string) ([]byte, error) {
 		return nil, fmt.Errorf("failed to load %s.json: %w", name, err)
 	}
 
-	log.Info().
+	logger.Info(ctx).
 		Str("path", path).
 		Msg(fmt.Sprintf("Retrieved %s.json from local storage.", name))
 

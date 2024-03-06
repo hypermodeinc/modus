@@ -69,7 +69,7 @@ func loadJsons(ctx context.Context) (map[string]bool, error) {
 		for json := range jsons {
 			err := loadJson(ctx, json)
 			if err != nil {
-				log.Err(err).
+				logger.Err(ctx, err).
 					Str("json", json).
 					Msg("Failed to load json.")
 			} else {
@@ -103,7 +103,7 @@ func loadJsons(ctx context.Context) (map[string]bool, error) {
 		// Load the json
 		err := loadJson(ctx, jsonName)
 		if err != nil {
-			log.Err(err).
+			logger.Err(ctx, err).
 				Str("json", jsonName).
 				Msg("Failed to load json.")
 		} else {
@@ -223,7 +223,7 @@ func watchDirectoryForHypermodeJsonChanges(ctx context.Context) error {
 
 				jsonName, err := getJsonNameFromPath(evt.Path)
 				if err != nil {
-					log.Err(err).Msg("Failed to get json name.")
+					logger.Err(ctx, err).Msg("Failed to get json name.")
 				}
 				if jsonName == "" {
 					continue
@@ -233,16 +233,16 @@ func watchDirectoryForHypermodeJsonChanges(ctx context.Context) error {
 				case watcher.Create, watcher.Write:
 					err := loadJson(ctx, jsonName)
 					if err != nil {
-						log.Err(err).
+						logger.Err(ctx, err).
 							Str("json", jsonName).
 							Msg("Failed to load json.")
 					}
 				case watcher.Remove:
 					config.HypermodeData = config.HypermodeAppData{}
-					log.Info().Msg("hypermode.json removed.")
+					logger.Info(ctx).Msg("hypermode.json removed.")
 				}
 			case err := <-w.Error:
-				log.Err(err).Msg("Failure while watching directory for hypermode.json")
+				logger.Err(ctx, err).Msg("Failure while watching directory for hypermode.json")
 			case <-w.Closed:
 				return
 			case <-ctx.Done():
@@ -394,7 +394,7 @@ func watchStorageForJsonChanges(ctx context.Context) error {
 			jsons, err := aws.ListJsons(ctx)
 			if err != nil {
 				// Don't stop watching. We'll just try again on the next cycle.
-				log.Err(err).Msg("Failed to list jsons from S3.")
+				logger.Err(ctx, err).Msg("Failed to list jsons from S3.")
 				continue
 			}
 			// Load/reload any new or modified jsons
@@ -402,7 +402,7 @@ func watchStorageForJsonChanges(ctx context.Context) error {
 				if awsJsons[name] != etag {
 					err := loadJson(ctx, name)
 					if err != nil {
-						log.Err(err).
+						logger.Err(ctx, err).
 							Str("json", name).
 							Msg("Failed to load hypermode.json.")
 					}

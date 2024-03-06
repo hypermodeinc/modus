@@ -97,7 +97,7 @@ func GetJsonBytes(ctx context.Context, name string) ([]byte, error) {
 		return nil, fmt.Errorf("error reading content stream of JSON '%s' from S3: %w", name, err)
 	}
 
-	log.Info().
+	logger.Info(ctx).
 		Str("key", key).
 		Msg(fmt.Sprintf("Retrieved JSON '%s' from S3.", name))
 
