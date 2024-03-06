@@ -10,13 +10,13 @@ import (
 	"hmruntime/aws"
 	"hmruntime/functions"
 	"hmruntime/host"
+	"hmruntime/logger"
 	"io"
 	"os"
 	"runtime"
 	"strings"
 
 	"github.com/google/uuid"
-	"github.com/rs/zerolog/log"
 	"github.com/tetratelabs/wazero"
 	wasm "github.com/tetratelabs/wazero/api"
 	"github.com/tetratelabs/wazero/experimental/opt"
@@ -61,7 +61,7 @@ func InitWasmRuntime(ctx context.Context) (wazero.Runtime, error) {
 
 func loadPluginModule(ctx context.Context, name string) error {
 	_, reloading := host.CompiledModules[name]
-	log.Info().
+	logger.Info(ctx).
 		Str("plugin", name).
 		Bool("reloading", reloading).
 		Msg("Loading plugin.")
@@ -106,7 +106,7 @@ func getPluginBytes(ctx context.Context, name string) ([]byte, error) {
 		return nil, fmt.Errorf("failed to load the plugin: %w", err)
 	}
 
-	log.Info().
+	logger.Info(ctx).
 		Str("plugin", name).
 		Str("path", path).
 		Msg("Retrieved plugin from local storage.")
@@ -120,7 +120,7 @@ func unloadPluginModule(ctx context.Context, name string) error {
 		return fmt.Errorf("plugin not found '%s'", name)
 	}
 
-	log.Info().
+	logger.Info(ctx).
 		Str("plugin", name).
 		Msg("Unloading plugin.")
 

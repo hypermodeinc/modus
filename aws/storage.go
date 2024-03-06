@@ -11,9 +11,9 @@ import (
 	"strings"
 
 	"hmruntime/config"
+	"hmruntime/logger"
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/rs/zerolog/log"
 )
 
 func ListPlugins(ctx context.Context) (map[string]string, error) {
@@ -73,7 +73,7 @@ func GetPluginBytes(ctx context.Context, name string) ([]byte, error) {
 		return nil, fmt.Errorf("error reading content stream of plugin '%s' from S3: %w", name, err)
 	}
 
-	log.Info().
+	logger.Info(ctx).
 		Str("key", key).
 		Msg("Retrieved plugin from S3.")
 

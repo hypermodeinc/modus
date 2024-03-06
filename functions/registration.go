@@ -7,11 +7,10 @@ package functions
 import (
 	"context"
 	"hmruntime/host"
+	"hmruntime/logger"
 	"hmruntime/schema"
 	"reflect"
 	"strings"
-
-	"github.com/rs/zerolog/log"
 )
 
 // map that holds the function info for each resolver
@@ -25,10 +24,10 @@ func MonitorRegistration(ctx context.Context) {
 		for {
 			select {
 			case <-host.RegistrationRequest:
-				log.Info().Msg("Registering functions.")
-				err := registerFunctions(gqlSchema)
+				logger.Info(ctx).Msg("Registering functions.")
+				err := registerFunctions(ctx, gqlSchema)
 				if err != nil {
-					log.Err(err).Msg("Failed to register functions.")
+					logger.Err(ctx, err).Msg("Failed to register functions.")
 				}
 			case <-ctx.Done():
 				return
@@ -37,7 +36,7 @@ func MonitorRegistration(ctx context.Context) {
 	}()
 }
 
-func registerFunctions(gqlSchema string) error {
+func registerFunctions(ctx context.Context, gqlSchema string) error {
 
 	// Get the function schema from the GraphQL schema.
 	funcSchemas, err := schema.GetFunctionSchema(gqlSchema)
@@ -60,7 +59,7 @@ func registerFunctions(gqlSchema string) error {
 					}
 					FunctionsMap[resolver] = info
 
-					log.Info().
+					logger.Info(ctx).
 						Str("resolver", resolver).
 						Str("function", fnName).
 						Str("plugin", pluginName).
@@ -82,7 +81,7 @@ func registerFunctions(gqlSchema string) error {
 		_, foundModule := host.CompiledModules[info.PluginName]
 		if !foundSchema || !foundModule {
 			delete(FunctionsMap, resolver)
-			log.Info().
+			logger.Info(ctx).
 				Str("resolver", resolver).
 				Str("function", info.FunctionName()).
 				Str("plugin", info.PluginName).

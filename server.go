@@ -5,15 +5,17 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"hmruntime/config"
 	"hmruntime/functions"
+	"hmruntime/logger"
 	"hmruntime/plugins"
 	"net/http"
 	"strings"
 
-	"github.com/rs/zerolog/log"
+	"github.com/rs/xid"
 )
 
 type HMRequest struct {
@@ -41,6 +43,9 @@ type AdminRequest struct {
 
 func handleRequest(w http.ResponseWriter, r *http.Request) {
 
+	// Assign a correlation ID to the request context
+	ctx, r := assignCorrelationId(w, r)
+
 	// Decode the request body
 	var req HMRequest
 	dec := json.NewDecoder(r.Body)
@@ -48,7 +53,7 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 	err := dec.Decode(&req)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		log.Err(err).Msg("Failed to decode request body.")
+		logger.Err(ctx, err).Msg("Failed to decode request body.")
 		return
 	}
 
@@ -56,7 +61,7 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 	info, ok := functions.FunctionsMap[req.Resolver]
 	if !ok {
 		w.WriteHeader(http.StatusBadRequest)
-		log.Error().
+		logger.Error(ctx).
 			Str("resolver", req.Resolver).
 			Msg("No function registered for resolver.")
 		return
@@ -66,13 +71,15 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 	// Each request will get its own instance of the plugin module,
 	// so that we can run multiple requests in parallel without risk
 	// of corrupting the module's memory.
-	ctx := r.Context()
 	mod, buf, err := plugins.GetModuleInstance(ctx, info.PluginName)
 	if err != nil {
-		log.Err(err).
+		logger.Err(ctx, err).
 			Str("plugin", info.PluginName).
 			Msg("Failed to get module instance.")
-		writeErrorResponse(w, err)
+		err := writeErrorResponse(w, err)
+		if err != nil {
+			logger.Err(ctx, err).Msg("Failed to write error response.")
+		}
 		return
 	}
 	defer mod.Close(ctx)
@@ -83,11 +90,14 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 		// Call the function, passing in the args from the request
 		result, err := functions.CallFunction(ctx, mod, info, req.Args)
 		if err != nil {
-			log.Err(err).
+			logger.Err(ctx, err).
 				Str("function", fnName).
 				Msg("Error calling function.")
 			err := fmt.Errorf("error calling function '%s': %w", fnName, err)
-			writeErrorResponse(w, err, buf.Stdout.String(), buf.Stderr.String())
+			err = writeErrorResponse(w, err, buf.Stdout.String(), buf.Stderr.String())
+			if err != nil {
+				logger.Err(ctx, err).Msg("Failed to write error response.")
+			}
 			return
 		}
 
@@ -107,7 +117,7 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 		// Write the result
 		err = writeDataAsJson(w, result, isJson)
 		if err != nil {
-			log.Err(err).Msg("Failed to write result data to response stream.")
+			logger.Err(ctx, err).Msg("Failed to write result data to response stream.")
 		}
 
 	} else if req.Parents != nil {
@@ -118,11 +128,14 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 		for i, parent := range req.Parents {
 			results[i], err = functions.CallFunction(ctx, mod, info, parent)
 			if err != nil {
-				log.Err(err).
+				logger.Err(ctx, err).
 					Str("function", fnName).
 					Msg("Error calling function.")
 				err := fmt.Errorf("error calling function '%s': %w", fnName, err)
-				writeErrorResponse(w, err, buf.Stdout.String(), buf.Stderr.String())
+				err = writeErrorResponse(w, err, buf.Stdout.String(), buf.Stderr.String())
+				if err != nil {
+					logger.Err(ctx, err).Msg("Failed to write error response.")
+				}
 				return
 			}
 		}
@@ -131,16 +144,16 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 		isJson := info.Schema.FieldDef.Type.NamedType == ""
 		err = writeDataAsJson(w, results, isJson)
 		if err != nil {
-			log.Err(err).Msg("Failed to write result data to response stream.")
+			logger.Err(ctx, err).Msg("Failed to write result data to response stream.")
 		}
 
 	} else {
 		w.WriteHeader(http.StatusBadRequest)
-		log.Error().Msg("Request must have either args or parents.")
+		logger.Error(ctx).Msg("Request must have either args or parents.")
 	}
 }
 
-func writeErrorResponse(w http.ResponseWriter, err error, msgs ...string) {
+func writeErrorResponse(w http.ResponseWriter, err error, msgs ...string) error {
 	w.WriteHeader(http.StatusInternalServerError)
 
 	// Dgraph lambda expects a JSON response similar to a GraphQL error response
@@ -159,10 +172,7 @@ func writeErrorResponse(w http.ResponseWriter, err error, msgs ...string) {
 	// Emit the error last
 	resp.Errors = append(resp.Errors, HMError{Message: err.Error()})
 
-	encErr := json.NewEncoder(w).Encode(resp)
-	if encErr != nil {
-		log.Err(encErr).Msg("Failed to encode error response.")
-	}
+	return json.NewEncoder(w).Encode(resp)
 }
 
 func writeDataAsJson(w http.ResponseWriter, data any, isJson bool) error {
@@ -219,13 +229,16 @@ func writeDataAsJson(w http.ResponseWriter, data any, isJson bool) error {
 
 func handleAdminRequest(w http.ResponseWriter, r *http.Request) {
 
+	// Assign a correlation ID to the request context
+	ctx, r := assignCorrelationId(w, r)
+
 	// Decode the request body
 	var req AdminRequest
 	dec := json.NewDecoder(r.Body)
 	err := dec.Decode(&req)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		log.Err(err).Msg("Failed to decode request body.")
+		logger.Err(ctx, err).Msg("Failed to decode request body.")
 		return
 	}
 
@@ -240,22 +253,30 @@ func handleAdminRequest(w http.ResponseWriter, r *http.Request) {
 	// Write the response
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		log.Err(err).Msg("Failed to perform admin action.")
+		logger.Err(ctx, err).Msg("Failed to perform admin action.")
 	} else {
 		w.WriteHeader(http.StatusOK)
 	}
 }
 
-func startServer() error {
+func startServer(ctx context.Context) error {
 
 	// Block until the initial registration process is complete
 	<-functions.RegistrationCompleted
 
 	// Start the HTTP server
-	log.Info().
+	logger.Info(ctx).
 		Int("port", config.Port).
 		Msg("Listening for incoming requests.")
 	http.HandleFunc("/graphql-worker", handleRequest)
 	http.HandleFunc("/admin", handleAdminRequest)
 	return http.ListenAndServe(fmt.Sprintf(":%d", config.Port), nil)
+}
+
+func assignCorrelationId(w http.ResponseWriter, r *http.Request) (context.Context, *http.Request) {
+	correlationId := xid.New().String()
+	w.Header().Add("X-Correlation-ID", correlationId)
+
+	ctx := context.WithValue(r.Context(), logger.CorrelationIdContextKey, correlationId)
+	return ctx, r.WithContext(ctx)
 }

@@ -8,10 +8,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"hmruntime/logger"
 	"hmruntime/schema"
 
 	"github.com/dgraph-io/gqlparser/ast"
-	"github.com/rs/zerolog/log"
 	wasm "github.com/tetratelabs/wazero/api"
 )
 
@@ -28,7 +28,7 @@ func CallFunction(ctx context.Context, mod wasm.Module, info schema.FunctionInfo
 	// Instead, we can use the argument names from the schema.
 	// Also note, that the order of the arguments from schema should match order of params in wasm.
 	params := make([]uint64, len(paramTypes))
-	for i, arg := range schema.FunctionArgs() {
+	for i, arg := range schema.FunctionArgs(ctx) {
 		val := inputs[arg.Name]
 		if val == nil {
 			return nil, fmt.Errorf("parameter %s is missing", arg.Name)
@@ -43,7 +43,7 @@ func CallFunction(ctx context.Context, mod wasm.Module, info schema.FunctionInfo
 	}
 
 	// Call the wasm function
-	log.Info().
+	logger.Info(ctx).
 		Str("function", fnName).
 		Str("resolver", schema.Resolver()).
 		Msg("Calling function.")
