@@ -63,6 +63,12 @@ func main() {
 	}
 	defer host.WasmRuntime.Close(ctx)
 
+	// Load json
+	err = plugins.LoadJsons(ctx)
+	if err != nil {
+		log.Fatal().Err(err).Msg("Failed to load hypermode.json.  Exiting.")
+	}
+
 	// Load plugins
 	err = plugins.LoadPlugins(ctx)
 	if err != nil {
@@ -79,6 +85,12 @@ func main() {
 	err = plugins.WatchForPluginChanges(ctx)
 	if err != nil {
 		log.Fatal().Err(err).Msg("Failed to watch for plugin changes.  Exiting.")
+	}
+
+	// Watch for hypermode.json changes
+	err = plugins.WatchForJsonChanges(ctx)
+	if err != nil {
+		log.Fatal().Err(err).Msg("Failed to watch for hypermode.json changes.  Exiting.")
 	}
 
 	// Start the web server
