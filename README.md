@@ -163,7 +163,7 @@ _You can omit the exports if the environment variables are already set._
 
 Your are missing `export AWS_SDK_LOAD_CONFIG=true`
 
-or your AWS region is wrong, or you do not have an AWS secret set for the ModelSpec name in Dgraph. Add via:
+or your AWS region is wrong, or you do not have an AWS secret set for the ModelSpec name. Add via:
 
 `aws secretsmanager create-secret --name '<ModelSpec.id>' --secret-string '<apikey>'
 `
