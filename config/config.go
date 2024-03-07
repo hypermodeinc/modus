@@ -46,15 +46,23 @@ type ModelsAppData struct {
 	AppData
 }
 
+type ModelType string
+
+const (
+	ClassificationModelType ModelType = "classification"
+	EmbeddingModelType      ModelType = "embedding"
+	GeneratorModelType      ModelType = "generator"
+)
+
 type ModelSpec struct {
-	Name       string `json:"name"`
-	ModelType  string `json:"modelType"`
-	BaseModel  string `json:"baseModel"`
-	Provider   string `json:"provider"`
-	Host       string `json:"host"`
-	Endpoint   string `json:"endpoint"`
-	AuthHeader string `json:"authHeader"`
-	ApiKey     string `json:"apiKey"`
+	Name       string    `json:"name"`
+	ModelType  ModelType `json:"modelType"`
+	BaseModel  string    `json:"baseModel"`
+	Provider   string    `json:"provider"`
+	Host       string    `json:"host"`
+	Endpoint   string    `json:"endpoint"`
+	AuthHeader string    `json:"authHeader"`
+	ApiKey     string    `json:"apiKey"`
 }
 
 type EmbeddingSpec struct {
