@@ -17,11 +17,7 @@ import (
 	wasm "github.com/tetratelabs/wazero/api"
 )
 
-const (
-	HostModuleName  string = "hypermode"
-	classifierModel string = "classification"
-	embeddingModel  string = "embedding"
-)
+const HostModuleName string = "hypermode"
 
 func InstantiateHostFunctions(ctx context.Context, runtime wazero.Runtime) error {
 	b := runtime.NewHostModuleBuilder(HostModuleName)
@@ -31,6 +27,7 @@ func InstantiateHostFunctions(ctx context.Context, runtime wazero.Runtime) error
 	b.NewFunctionBuilder().WithFunc(hostExecuteGQL).Export("executeGQL")
 	b.NewFunctionBuilder().WithFunc(hostInvokeClassifier).Export("invokeClassifier")
 	b.NewFunctionBuilder().WithFunc(hostComputeEmbedding).Export("computeEmbedding")
+	b.NewFunctionBuilder().WithFunc(hostInvokeTextGenerator).Export("invokeTextGenerator")
 
 	_, err := b.Instantiate(ctx)
 	if err != nil {
@@ -107,32 +104,36 @@ type ClassifierLabel struct {
 	Probability float64 `json:"probability"`
 }
 
-func textModelSetup(mod wasm.Module, pModelName uint32, pSentenceMap uint32) (config.ModelSpec, map[string]string, error) {
-	mem := mod.Memory()
+func getModelSpec(mem wasm.Memory, pModelName uint32, modelType config.ModelType) (config.ModelSpec, error) {
 	modelName, err := readString(mem, pModelName)
 	if err != nil {
-		err = fmt.Errorf("error reading model id from wasm memory: %w", err)
-		return config.ModelSpec{}, nil, err
+		err = fmt.Errorf("error reading model name from wasm memory: %w", err)
+		return config.ModelSpec{}, err
 	}
 
+	for _, modelSpec := range config.HypermodeData.ModelSpecs {
+		if modelSpec.Name == modelName && modelSpec.ModelType == modelType {
+			return modelSpec, nil
+		}
+	}
+
+	return config.ModelSpec{}, fmt.Errorf("a model '%s' of type '%s' was not found", modelName, modelType)
+}
+
+func getSentenceMap(mem wasm.Memory, pSentenceMap uint32) (map[string]string, error) {
 	sentenceMapStr, err := readString(mem, pSentenceMap)
 	if err != nil {
 		err = fmt.Errorf("error reading sentence map string from wasm memory: %w", err)
-		return config.ModelSpec{}, nil, err
+		return nil, err
 	}
 
 	sentenceMap := make(map[string]string)
 	if err := json.Unmarshal([]byte(sentenceMapStr), &sentenceMap); err != nil {
 		err = fmt.Errorf("error unmarshalling sentence map: %w", err)
-		return config.ModelSpec{}, nil, err
+		return nil, err
 	}
 
-	for _, msp := range config.HypermodeData.ModelSpecs {
-		if msp.Name == modelName {
-			return msp, sentenceMap, nil
-		}
-	}
-	return config.ModelSpec{}, nil, fmt.Errorf("model not found in hypermode.json")
+	return sentenceMap, nil
 }
 
 func postToModelEndpoint[TResult any](ctx context.Context, sentenceMap map[string]string, modelSpec config.ModelSpec) (TResult, error) {
@@ -155,15 +156,18 @@ func postToModelEndpoint[TResult any](ctx context.Context, sentenceMap map[strin
 	return utils.PostHttp[TResult](modelSpec.Endpoint, sentenceMap, headers)
 }
 
-func hostInvokeClassifier(ctx context.Context, mod wasm.Module, pModelId uint32, pSentenceMap uint32) uint32 {
-	modelSpec, sentenceMap, err := textModelSetup(mod, pModelId, pSentenceMap)
+func hostInvokeClassifier(ctx context.Context, mod wasm.Module, pModelName uint32, pSentenceMap uint32) uint32 {
+	mem := mod.Memory()
+
+	modelSpec, err := getModelSpec(mem, pModelName, config.ClassificationModelType)
 	if err != nil {
-		logger.Err(ctx, err).Msg("Error setting up text model.")
+		logger.Err(ctx, err).Msg("Error getting model spec.")
 		return 0
 	}
 
-	if modelSpec.ModelType != classifierModel {
-		logger.Error(ctx).Msg("Model type is not 'classification'.")
+	sentenceMap, err := getSentenceMap(mem, pSentenceMap)
+	if err != nil {
+		logger.Err(ctx, err).Msg("Error getting sentence map.")
 		return 0
 	}
 
@@ -187,15 +191,18 @@ func hostInvokeClassifier(ctx context.Context, mod wasm.Module, pModelId uint32,
 	return writeString(ctx, mod, string(res))
 }
 
-func hostComputeEmbedding(ctx context.Context, mod wasm.Module, pModelId uint32, pSentenceMap uint32) uint32 {
-	modelSpec, sentenceMap, err := textModelSetup(mod, pModelId, pSentenceMap)
+func hostComputeEmbedding(ctx context.Context, mod wasm.Module, pModelName uint32, pSentenceMap uint32) uint32 {
+	mem := mod.Memory()
+
+	modelSpec, err := getModelSpec(mem, pModelName, config.EmbeddingModelType)
 	if err != nil {
-		logger.Err(ctx, err).Msg("Error setting up text model.")
+		logger.Err(ctx, err).Msg("Error getting model spec.")
 		return 0
 	}
 
-	if modelSpec.ModelType != embeddingModel {
-		logger.Error(ctx).Msg("Model type is not 'embedding'.")
+	sentenceMap, err := getSentenceMap(mem, pSentenceMap)
+	if err != nil {
+		logger.Err(ctx, err).Msg("Error getting sentence map.")
 		return 0
 	}
 
@@ -217,4 +224,116 @@ func hostComputeEmbedding(ctx context.Context, mod wasm.Module, pModelId uint32,
 	}
 
 	return writeString(ctx, mod, string(res))
+}
+
+type ChatContext struct {
+	Model    string        `json:"model"`
+	Messages []ChatMessage `json:"messages"`
+}
+
+type ChatMessage struct {
+	Role    string `json:"role"`
+	Content string `json:"content"`
+}
+type MessageChoice struct {
+	Message ChatMessage `json:"message"`
+}
+
+type InvokeError struct {
+	Message string `json:"message"`
+	Type    string `json:"type"`
+	Param   string `json:"param"`
+	Code    string `json:"code"`
+}
+type ChatResponse struct {
+	Choices []MessageChoice `json:"choices"`
+	Error   InvokeError     `json:"error"`
+}
+
+func hostInvokeTextGenerator(ctx context.Context, mod wasm.Module, pModelName uint32, pInstruction uint32, pSentence uint32) uint32 {
+	// invoke modelspec endpoint or
+	// https://api.openai.com/v1/chat/completions if endpoint is "openai"
+
+	mem := mod.Memory()
+
+	modelSpec, err := getModelSpec(mem, pModelName, config.GeneratorModelType)
+	if err != nil {
+		logger.Err(ctx, err).Msg("Error getting model spec.")
+		return 0
+	}
+
+	// we are assuming gpt-3.5-turbo
+	// to do : define how to pass the model name in the modelSpec
+
+	sentence, err := readString(mem, pSentence)
+	if err != nil {
+		logger.Err(ctx, err).Msg("Error reading sentence string from wasm memory.")
+		return 0
+	}
+
+	instruction, err := readString(mem, pInstruction)
+	if err != nil {
+		logger.Err(ctx, err).Msg("Error reading instruction string from wasm memory.")
+		return 0
+	}
+
+	jInstruction, _ := json.Marshal(instruction)
+	jSentence, _ := json.Marshal(sentence)
+
+	key, err := aws.GetSecretString(ctx, modelSpec.Name)
+	if err != nil {
+		logger.Err(ctx, err).Msg("Error getting model key secret.")
+		return 0
+	}
+
+	// Call appropriate implementation depending on the modelSpec.Provider
+	// TO DO: use Provider when it will be available in the modelSpec
+
+	result, err := openaiTextGenerator(ctx, modelSpec, string(jInstruction), string(jSentence), key)
+
+	if err != nil {
+		logger.Err(ctx, err).Msg("Error posting to OpenAI.")
+		return 0
+	}
+	if result.Error.Message != "" {
+		err := fmt.Errorf(result.Error.Message)
+		logger.Err(ctx, err).Msg("Error returned from OpenAI.")
+		return 0
+	}
+
+	res, err := json.Marshal(result)
+	if err != nil {
+		logger.Err(ctx, err).Msg("Error marshalling result.")
+		return 0
+	}
+	return writeString(ctx, mod, string(res))
+}
+
+func openaiTextGenerator(ctx context.Context, modelSpec config.ModelSpec, instruction string, sentence string, key string) (ChatResponse, error) {
+	// invoke modelspec endpoint or
+	// https://api.openai.com/v1/chat/completions if endpoint is "openai"
+
+	// we are assuming gpt-3.5-turbo
+	// should be modelSpec.baseModel when it will be available in the modelSpec
+	const model = "gpt-3.5-turbo"
+
+	// build the request body following OpenAI API
+
+	reqBody := ChatContext{
+		Model: model,
+		Messages: []ChatMessage{
+			{Role: "system", Content: instruction},
+			{Role: "user", Content: sentence},
+		},
+	}
+
+	// We ignore modelSpec.endpoint and use the OpenAI endpoint
+	const endpoint = "https://api.openai.com/v1/chat/completions"
+	headers := map[string]string{
+		"Authorization": "Bearer " + key,
+		"Content-Type":  "application/json",
+	}
+
+	return utils.PostHttp[ChatResponse](endpoint, reqBody, headers)
+
 }
