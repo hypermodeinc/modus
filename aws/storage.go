@@ -11,9 +11,9 @@ import (
 	"strings"
 
 	"hmruntime/config"
+	"hmruntime/logger"
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/rs/zerolog/log"
 )
 
 func S3RetrievalHelper(ctx context.Context) (*s3.ListObjectsV2Output, error) {
@@ -97,7 +97,7 @@ func GetJsonBytes(ctx context.Context, name string) ([]byte, error) {
 		return nil, fmt.Errorf("error reading content stream of JSON '%s' from S3: %w", name, err)
 	}
 
-	log.Info().
+	logger.Info(ctx).
 		Str("key", key).
 		Msg(fmt.Sprintf("Retrieved JSON '%s' from S3.", name))
 
@@ -128,7 +128,7 @@ func GetPluginBytes(ctx context.Context, name string) ([]byte, error) {
 		return nil, fmt.Errorf("error reading content stream of plugin '%s' from S3: %w", name, err)
 	}
 
-	log.Info().
+	logger.Info(ctx).
 		Str("key", key).
 		Msg("Retrieved plugin from S3.")
 

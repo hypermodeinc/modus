@@ -19,4 +19,4 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     less \
     && rm -rf /var/lib/apt/lists/*
 
-ENTRYPOINT ["hmruntime"]
+ENTRYPOINT ["hmruntime", "--jsonlogs"]
