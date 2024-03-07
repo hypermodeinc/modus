@@ -165,7 +165,7 @@ Your are missing `export AWS_SDK_LOAD_CONFIG=true`
 
 or your AWS region is wrong, or you do not have an AWS secret set for the ModelSpec name. Add via:
 
-`aws secretsmanager create-secret --name '<ModelSpec.id>' --secret-string '<apikey>'
+`aws secretsmanager create-secret --name '<ModelSpec.name>' --secret-string '<apikey>'
 `
 ### Using S3 for plugin storage
 
