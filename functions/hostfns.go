@@ -8,7 +8,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"hmruntime/aws"
+	"hmruntime/config"
 	"hmruntime/dgraph"
+	"hmruntime/logger"
 	"hmruntime/utils"
 
 	"github.com/rs/zerolog/log"
@@ -18,7 +20,7 @@ import (
 
 const (
 	HostModuleName  string = "hypermode"
-	classifierModel string = "classifier"
+	classifierModel string = "classification"
 	embeddingModel  string = "embedding"
 	generatorModel  string = "generator"
 )
@@ -45,25 +47,25 @@ func hostExecuteDQL(ctx context.Context, mod wasm.Module, pStmt uint32, pVars ui
 	mem := mod.Memory()
 	stmt, err := readString(mem, pStmt)
 	if err != nil {
-		log.Err(err).Msg("Error reading DQL statement from wasm memory.")
+		logger.Err(ctx, err).Msg("Error reading DQL statement from wasm memory.")
 		return 0
 	}
 
 	sVars, err := readString(mem, pVars)
 	if err != nil {
-		log.Err(err).Msg("Error reading DQL variables string from wasm memory.")
+		logger.Err(ctx, err).Msg("Error reading DQL variables string from wasm memory.")
 		return 0
 	}
 
 	vars := make(map[string]string)
 	if err := json.Unmarshal([]byte(sVars), &vars); err != nil {
-		log.Err(err).Msg("Error unmarshalling GraphQL variables.")
+		logger.Err(ctx, err).Msg("Error unmarshalling GraphQL variables.")
 		return 0
 	}
 
 	result, err := dgraph.ExecuteDQL[string](ctx, stmt, vars, isMutation != 0)
 	if err != nil {
-		log.Err(err).Msg("Error executing DQL statement.")
+		logger.Err(ctx, err).Msg("Error executing DQL statement.")
 		return 0
 	}
 
@@ -74,25 +76,25 @@ func hostExecuteGQL(ctx context.Context, mod wasm.Module, pStmt uint32, pVars ui
 	mem := mod.Memory()
 	stmt, err := readString(mem, pStmt)
 	if err != nil {
-		log.Err(err).Msg("Error reading GraphQL query string from wasm memory.")
+		logger.Err(ctx, err).Msg("Error reading GraphQL query string from wasm memory.")
 		return 0
 	}
 
 	sVars, err := readString(mem, pVars)
 	if err != nil {
-		log.Err(err).Msg("Error reading GraphQL variables string from wasm memory.")
+		logger.Err(ctx, err).Msg("Error reading GraphQL variables string from wasm memory.")
 		return 0
 	}
 
 	vars := make(map[string]string)
 	if err := json.Unmarshal([]byte(sVars), &vars); err != nil {
-		log.Err(err).Msg("Error unmarshalling GraphQL variables.")
+		logger.Err(ctx, err).Msg("Error unmarshalling GraphQL variables.")
 		return 0
 	}
 
 	result, err := dgraph.ExecuteGQL[string](ctx, stmt, vars)
 	if err != nil {
-		log.Err(err).Msg("Error executing GraphQL operation.")
+		logger.Err(ctx, err).Msg("Error executing GraphQL operation.")
 		return 0
 	}
 
@@ -108,54 +110,49 @@ type ClassifierLabel struct {
 	Probability float64 `json:"probability"`
 }
 
-func textModelSetup(mod wasm.Module, pModelId uint32, pSentenceMap uint32) (dgraph.ModelSpec, map[string]string, error) {
+func textModelSetup(mod wasm.Module, pModelName uint32, pSentenceMap uint32) (config.ModelSpec, map[string]string, error) {
 	mem := mod.Memory()
-	modelSpec, err := textModelSpecSetup(mod, pModelId)
+	modelName, err := readString(mem, pModelName)
 	if err != nil {
-		return dgraph.ModelSpec{}, nil, err
+		err = fmt.Errorf("error reading model id from wasm memory: %w", err)
+		return config.ModelSpec{}, nil, err
 	}
 
 	sentenceMapStr, err := readString(mem, pSentenceMap)
 	if err != nil {
 		err = fmt.Errorf("error reading sentence map string from wasm memory: %w", err)
-		return dgraph.ModelSpec{}, nil, err
+		return config.ModelSpec{}, nil, err
 	}
 
 	sentenceMap := make(map[string]string)
 	if err := json.Unmarshal([]byte(sentenceMapStr), &sentenceMap); err != nil {
 		err = fmt.Errorf("error unmarshalling sentence map: %w", err)
-		return dgraph.ModelSpec{}, nil, err
+		return config.ModelSpec{}, nil, err
 	}
 
-	return modelSpec, sentenceMap, nil
-}
-func textModelSpecSetup(mod wasm.Module, pModelId uint32) (dgraph.ModelSpec, error) {
-	mem := mod.Memory()
-	modelId, err := readString(mem, pModelId)
-	if err != nil {
-		err = fmt.Errorf("error reading model id from wasm memory: %w", err)
-		return dgraph.ModelSpec{}, err
+	for _, msp := range config.HypermodeData.ModelSpecs {
+		if msp.Name == modelName {
+			return msp, sentenceMap, nil
+		}
 	}
-
-	modelSpec, err := dgraph.GetModelSpec(modelId)
-	if err != nil {
-		err = fmt.Errorf("error getting model endpoint: %w", err)
-		return dgraph.ModelSpec{}, err
-	}
-
-	return modelSpec, nil
+	return config.ModelSpec{}, nil, fmt.Errorf("model not found in hypermode.json")
 }
 
-func postToModelEndpoint[TResult any](ctx context.Context, sentenceMap map[string]string, modelSpec dgraph.ModelSpec) (TResult, error) {
-
-	key, err := aws.GetSecretString(ctx, modelSpec.ID)
-	if err != nil {
-		var result TResult
-		return result, fmt.Errorf("error getting model key '%s': %w", modelSpec.ID, err)
+func postToModelEndpoint[TResult any](ctx context.Context, sentenceMap map[string]string, modelSpec config.ModelSpec) (TResult, error) {
+	var key string
+	var err error
+	if aws.UseAwsForPluginStorage() {
+		key, err = aws.GetSecretString(ctx, modelSpec.Name)
+		if err != nil {
+			var result TResult
+			return result, fmt.Errorf("error getting model key from aws: %w", err)
+		}
+	} else {
+		key = modelSpec.ApiKey
 	}
 
 	headers := map[string]string{
-		"x-api-key": key,
+		modelSpec.AuthHeader: key,
 	}
 
 	return utils.PostHttp[TResult](modelSpec.Endpoint, sentenceMap, headers)
@@ -164,29 +161,29 @@ func postToModelEndpoint[TResult any](ctx context.Context, sentenceMap map[strin
 func hostInvokeClassifier(ctx context.Context, mod wasm.Module, pModelId uint32, pSentenceMap uint32) uint32 {
 	modelSpec, sentenceMap, err := textModelSetup(mod, pModelId, pSentenceMap)
 	if err != nil {
-		log.Err(err).Msg("Error setting up text model.")
+		logger.Err(ctx, err).Msg("Error setting up text model.")
 		return 0
 	}
 
-	if modelSpec.Type != classifierModel {
-		log.Error().Msg("Model type is not 'classifier'.")
+	if modelSpec.ModelType != classifierModel {
+		logger.Error(ctx).Msg("Model type is not 'classification'.")
 		return 0
 	}
 
 	result, err := postToModelEndpoint[map[string]ClassifierResult](ctx, sentenceMap, modelSpec)
 	if err != nil {
-		log.Err(err).Msg("Error posting to model endpoint.")
+		logger.Err(ctx, err).Msg("Error posting to model endpoint.")
 		return 0
 	}
 
 	if len(result) == 0 {
-		log.Err(err).Msg("Empty result returned from model.")
+		logger.Err(ctx, err).Msg("Empty result returned from model.")
 		return 0
 	}
 
 	res, err := json.Marshal(result)
 	if err != nil {
-		log.Err(err).Msg("Error marshalling classifier result.")
+		logger.Err(ctx, err).Msg("Error marshalling classification result.")
 		return 0
 	}
 
@@ -196,29 +193,29 @@ func hostInvokeClassifier(ctx context.Context, mod wasm.Module, pModelId uint32,
 func hostComputeEmbedding(ctx context.Context, mod wasm.Module, pModelId uint32, pSentenceMap uint32) uint32 {
 	modelSpec, sentenceMap, err := textModelSetup(mod, pModelId, pSentenceMap)
 	if err != nil {
-		log.Err(err).Msg("Error setting up text model.")
+		logger.Err(ctx, err).Msg("Error setting up text model.")
 		return 0
 	}
 
-	if modelSpec.Type != embeddingModel {
-		log.Error().Msg("Model type is not 'embedding'.")
+	if modelSpec.ModelType != embeddingModel {
+		logger.Error(ctx).Msg("Model type is not 'embedding'.")
 		return 0
 	}
 
 	result, err := postToModelEndpoint[map[string]string](ctx, sentenceMap, modelSpec)
 	if err != nil {
-		log.Err(err).Msg("Error posting to model endpoint.")
+		logger.Err(ctx, err).Msg("Error posting to model endpoint.")
 		return 0
 	}
 
 	if len(result) == 0 {
-		log.Error().Msg("Empty result returned from model.")
+		logger.Error(ctx).Msg("Empty result returned from model.")
 		return 0
 	}
 
 	res, err := json.Marshal(result)
 	if err != nil {
-		log.Err(err).Msg("Error marshalling embedding result.")
+		logger.Err(ctx, err).Msg("Error marshalling embedding result.")
 		return 0
 	}
 

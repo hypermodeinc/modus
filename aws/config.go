@@ -8,11 +8,11 @@ import (
 	"context"
 
 	hmConfig "hmruntime/config"
+	"hmruntime/logger"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/sts"
-	"github.com/rs/zerolog/log"
 )
 
 var awsConfig aws.Config
@@ -24,15 +24,14 @@ func UseAwsForPluginStorage() bool {
 }
 
 func Initialize(ctx context.Context) error {
-
 	useS3PluginStorage = hmConfig.S3Bucket != ""
 	defer func() {
 		if !useS3PluginStorage {
-			log.Info().Msg("S3 bucket name is not set.  Using local storage for plugins.")
+			logger.Info(ctx).Msg("S3 bucket name is not set.  Using local storage for plugins.")
 		} else if !awsEnabled {
-			log.Fatal().Msg("S3 bucket name is set, but AWS configuration failed to load.  Exiting.")
+			logger.Fatal(ctx).Msg("S3 bucket name is set, but AWS configuration failed to load.  Exiting.")
 		} else {
-			log.Info().
+			logger.Info(ctx).
 				Str("bucket", hmConfig.S3Bucket).
 				Msg("Using S3 for plugin storage.")
 		}
@@ -40,7 +39,7 @@ func Initialize(ctx context.Context) error {
 
 	cfg, err := config.LoadDefaultConfig(ctx)
 	if err != nil {
-		log.Warn().Err(err).
+		logger.Warn(ctx).Err(err).
 			Msg("Error loading AWS configuration.")
 		return nil
 	}
@@ -48,7 +47,7 @@ func Initialize(ctx context.Context) error {
 	client := sts.NewFromConfig(cfg)
 	identity, err := client.GetCallerIdentity(ctx, &sts.GetCallerIdentityInput{})
 	if err != nil {
-		log.Warn().Err(err).
+		logger.Warn(ctx).Err(err).
 			Msg("Error getting AWS caller identity.")
 		return nil
 	}
@@ -56,7 +55,7 @@ func Initialize(ctx context.Context) error {
 	awsConfig = cfg
 	awsEnabled = true
 
-	log.Info().
+	logger.Info(ctx).
 		Str("region", awsConfig.Region).
 		Str("account", *identity.Account).
 		Str("userid", *identity.UserId).

@@ -10,10 +10,9 @@ import (
 	"hmruntime/config"
 	"hmruntime/dgraph"
 	"hmruntime/host"
+	"hmruntime/logger"
 	"net/url"
 	"time"
-
-	"github.com/rs/zerolog/log"
 )
 
 // Holds the current GraphQL schema
@@ -29,15 +28,15 @@ func MonitorGqlSchema(ctx context.Context) {
 			if err != nil {
 				var urlErr *url.Error
 				if errors.As(err, &urlErr) {
-					log.Err(urlErr).Msg("Failed to connect to Dgraph.")
+					logger.Err(ctx, urlErr).Msg("Failed to connect to Dgraph.")
 				} else {
-					log.Err(err).Msg("Failed to retrieve GraphQL schema.")
+					logger.Err(ctx, err).Msg("Failed to retrieve GraphQL schema.")
 				}
 			} else if schema != gqlSchema {
 				if gqlSchema == "" {
-					log.Info().Msg("Schema loaded.")
+					logger.Info(ctx).Msg("Schema loaded.")
 				} else {
-					log.Info().Msg("Schema changed.")
+					logger.Info(ctx).Msg("Schema changed.")
 				}
 
 				// Signal that we need to register functions

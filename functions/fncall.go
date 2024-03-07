@@ -8,10 +8,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"hmruntime/logger"
 	"hmruntime/schema"
+	"time"
 
 	"github.com/dgraph-io/gqlparser/ast"
-	"github.com/rs/zerolog/log"
 	wasm "github.com/tetratelabs/wazero/api"
 )
 
@@ -28,7 +29,7 @@ func CallFunction(ctx context.Context, mod wasm.Module, info schema.FunctionInfo
 	// Instead, we can use the argument names from the schema.
 	// Also note, that the order of the arguments from schema should match order of params in wasm.
 	params := make([]uint64, len(paramTypes))
-	for i, arg := range schema.FunctionArgs() {
+	for i, arg := range schema.FunctionArgs(ctx) {
 		val := inputs[arg.Name]
 		if val == nil {
 			return nil, fmt.Errorf("parameter %s is missing", arg.Name)
@@ -43,12 +44,23 @@ func CallFunction(ctx context.Context, mod wasm.Module, info schema.FunctionInfo
 	}
 
 	// Call the wasm function
-	log.Info().
+	logger.Info(ctx).
+		Str("plugin", info.PluginName).
 		Str("function", fnName).
 		Str("resolver", schema.Resolver()).
+		Bool("user_visible", true).
 		Msg("Calling function.")
+	start := time.Now()
 	res, err := fn.Call(ctx, params...)
+	duration := time.Since(start)
 	if err != nil {
+		logger.Err(ctx, err).
+			Str("plugin", info.PluginName).
+			Str("function", fnName).
+			Dur("duration_ms", duration).
+			Bool("user_visible", true).
+			Msg("Error while executing function.")
+
 		return nil, err
 	}
 
@@ -56,8 +68,23 @@ func CallFunction(ctx context.Context, mod wasm.Module, info schema.FunctionInfo
 	mem := mod.Memory()
 	result, err := convertResult(mem, *schema.FieldDef.Type, def.ResultTypes()[0], res[0])
 	if err != nil {
+		logger.Err(ctx, err).
+			Str("plugin", info.PluginName).
+			Str("function", fnName).
+			Dur("duration_ms", duration).
+			Str("schema_type", schema.FieldDef.Type.NamedType).
+			Bool("user_visible", true).
+			Msg("Failed to convert the result of the function to the schema field type.")
+
 		return nil, fmt.Errorf("failed to convert result: %w", err)
 	}
+
+	logger.Info(ctx).
+		Str("plugin", info.PluginName).
+		Str("function", fnName).
+		Dur("duration_ms", duration).
+		Bool("user_visible", true).
+		Msg("Function completed successfully.")
 
 	return result, nil
 }

@@ -32,7 +32,7 @@ For example, to start a new Docker container named `hmruntime`, looking for plug
 and connecting to a local Dgraph docker image:
 
 ```sh
-docker run --name hmruntime -p 8686:8686 -v ./plugins:/plugins hypermode/runtime --dgraph=http://host.docker.internal:8080
+docker run --name hmruntime -p 8686:8686 -v ./plugins:/plugins hypermode/runtime --plugins=/plugins --dgraph=http://host.docker.internal:8080
 ```
 
 _Note, if you have previously created a container with the same name, then delete it first with `docker rm hmruntime`._
@@ -49,26 +49,27 @@ You can run the code directly using VSCode's debugger.
 Alternatively you can either run the Runtime code directly from source:
 
 ```sh
-go run .
+go run . --plugin ../hypermode-as/examples/hmplugin1
 ```
 
 Or, you can build the `hmruntime` executable and then run that:
 
 ```sh
 go build
-./hmruntime
+./hmruntime --plugin ../hypermode-as/examples/hmplugin1
 ```
 
 ### Command Line Arguments
 
-When starting the runtime, you may sometimes need to use the following command line arguments:
+When starting the runtime, you may need to use the following command line arguments:
 
+- `--plugins` (or `--plugin`) - The folder that the runtime will look for plugins in.  ***Required.***
 - `--port` - The port that the runtime will listen for HTTP requests on.  Defaults to `8686`.
 - `--dgraph` - The URL to the Dgraph Alpha endpoint.  Defaults to `http://localhost:8080`.
-- `--plugins` (or `--plugin`) - The folder that the runtime will look for plugins in.  Defaults to `./plugins`.
 - `--noreload` - Disables automatic reloading of plugins.
 - `--s3bucket` - The S3 bucket to use, if using AWS for plugin storage.
 - `--refresh` - The refresh interval to check for plugins and schema changes.  Defaults to `5s`.
+- `--jsonlogs` - Switches log output to JSON format.
 
 _Note: You can use either `-` or `--` prefixes, and you can add parameters with either a space or `=`._
 

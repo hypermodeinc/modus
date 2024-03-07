@@ -7,28 +7,27 @@ package functions
 import (
 	"context"
 	"hmruntime/host"
+	"hmruntime/logger"
 	"hmruntime/schema"
 	"reflect"
 	"strings"
-
-	"github.com/rs/zerolog/log"
 )
 
 // map that holds the function info for each resolver
 var FunctionsMap = make(map[string]schema.FunctionInfo)
 
 // channel used to signal when registration is completed
-var RegistrationCompleted chan bool = make(chan bool)
+var RegistrationCompleted chan bool = make(chan bool, 1)
 
 func MonitorRegistration(ctx context.Context) {
 	go func() {
 		for {
 			select {
 			case <-host.RegistrationRequest:
-				log.Info().Msg("Registering functions.")
-				err := registerFunctions(gqlSchema)
+				logger.Info(ctx).Msg("Registering functions.")
+				err := registerFunctions(ctx, gqlSchema)
 				if err != nil {
-					log.Err(err).Msg("Failed to register functions.")
+					logger.Err(ctx, err).Msg("Failed to register functions.")
 				}
 			case <-ctx.Done():
 				return
@@ -37,7 +36,7 @@ func MonitorRegistration(ctx context.Context) {
 	}()
 }
 
-func registerFunctions(gqlSchema string) error {
+func registerFunctions(ctx context.Context, gqlSchema string) error {
 
 	// Get the function schema from the GraphQL schema.
 	funcSchemas, err := schema.GetFunctionSchema(gqlSchema)
@@ -60,7 +59,7 @@ func registerFunctions(gqlSchema string) error {
 					}
 					FunctionsMap[resolver] = info
 
-					log.Info().
+					logger.Info(ctx).
 						Str("resolver", resolver).
 						Str("function", fnName).
 						Str("plugin", pluginName).
@@ -82,7 +81,7 @@ func registerFunctions(gqlSchema string) error {
 		_, foundModule := host.CompiledModules[info.PluginName]
 		if !foundSchema || !foundModule {
 			delete(FunctionsMap, resolver)
-			log.Info().
+			logger.Info(ctx).
 				Str("resolver", resolver).
 				Str("function", info.FunctionName()).
 				Str("plugin", info.PluginName).
@@ -90,7 +89,9 @@ func registerFunctions(gqlSchema string) error {
 		}
 	}
 
-	// Signal that registration is complete (non-blocking send to avoid deadlock if no one is waiting)
+	// Signal that registration is complete.  This is a non-blocking send to
+	// avoid a deadlock if no one is waiting, but the channel has a buffer size
+	// of 1, so it will not lose the message if the receiver is slow to start.
 	select {
 	case RegistrationCompleted <- true:
 	default:
