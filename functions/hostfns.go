@@ -19,7 +19,7 @@ import (
 
 const (
 	HostModuleName  string = "hypermode"
-	classifierModel string = "classifier"
+	classifierModel string = "classification"
 	embeddingModel  string = "embedding"
 )
 
@@ -163,7 +163,7 @@ func hostInvokeClassifier(ctx context.Context, mod wasm.Module, pModelId uint32,
 	}
 
 	if modelSpec.ModelType != classifierModel {
-		logger.Error(ctx).Msg("Model type is not 'classifier'.")
+		logger.Error(ctx).Msg("Model type is not 'classification'.")
 		return 0
 	}
 
@@ -180,7 +180,7 @@ func hostInvokeClassifier(ctx context.Context, mod wasm.Module, pModelId uint32,
 
 	res, err := json.Marshal(result)
 	if err != nil {
-		logger.Err(ctx, err).Msg("Error marshalling classifier result.")
+		logger.Err(ctx, err).Msg("Error marshalling classification result.")
 		return 0
 	}
 
