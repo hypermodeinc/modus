@@ -10,6 +10,7 @@ import (
 	"hmruntime/aws"
 	"hmruntime/config"
 	"hmruntime/host"
+	"hmruntime/logger"
 	"os"
 	"path"
 	"regexp"
@@ -17,7 +18,6 @@ import (
 	"time"
 
 	"github.com/radovskyb/watcher"
-	"github.com/rs/zerolog/log"
 )
 
 // Map of plugin names and etags as last retrieved from S3.
@@ -69,7 +69,7 @@ func loadJsons(ctx context.Context) (map[string]bool, error) {
 		for json := range jsons {
 			err := loadJson(ctx, json)
 			if err != nil {
-				log.Err(err).
+				logger.Err(ctx, err).
 					Str("json", json).
 					Msg("Failed to load json.")
 			} else {
@@ -103,7 +103,7 @@ func loadJsons(ctx context.Context) (map[string]bool, error) {
 		// Load the json
 		err := loadJson(ctx, jsonName)
 		if err != nil {
-			log.Err(err).
+			logger.Err(ctx, err).
 				Str("json", jsonName).
 				Msg("Failed to load json.")
 		} else {
@@ -126,7 +126,7 @@ func loadPlugins(ctx context.Context) (map[string]bool, error) {
 		for plugin := range plugins {
 			err := loadPluginModule(ctx, plugin)
 			if err != nil {
-				log.Err(err).
+				logger.Err(ctx, err).
 					Str("plugin", plugin).
 					Msg("Failed to load plugin.")
 			} else {
@@ -145,7 +145,7 @@ func loadPlugins(ctx context.Context) (map[string]bool, error) {
 		pluginName := path.Base(config.PluginsPath)
 		err := loadPluginModule(ctx, pluginName)
 		if err != nil {
-			log.Err(err).
+			logger.Err(ctx, err).
 				Str("plugin", pluginName).
 				Msg("Failed to load plugin.")
 		} else {
@@ -179,7 +179,7 @@ func loadPlugins(ctx context.Context) (map[string]bool, error) {
 		// Load the plugin
 		err := loadPluginModule(ctx, pluginName)
 		if err != nil {
-			log.Err(err).
+			logger.Err(ctx, err).
 				Str("plugin", pluginName).
 				Msg("Failed to load plugin.")
 		} else {
@@ -201,7 +201,7 @@ func WatchForJsonChanges(ctx context.Context) error {
 func WatchForPluginChanges(ctx context.Context) error {
 
 	if config.NoReload {
-		log.Warn().Msg("Automatic plugin reloading is disabled. Restart the server to load new or modified plugins.")
+		logger.Warn(ctx).Msg("Automatic plugin reloading is disabled. Restart the server to load new or modified plugins.")
 		return nil
 	}
 
@@ -223,7 +223,7 @@ func watchDirectoryForHypermodeJsonChanges(ctx context.Context) error {
 
 				jsonName, err := getJsonNameFromPath(evt.Path)
 				if err != nil {
-					log.Err(err).Msg("Failed to get json name.")
+					logger.Err(ctx, err).Msg("Failed to get json name.")
 				}
 				if jsonName == "" {
 					continue
@@ -233,16 +233,16 @@ func watchDirectoryForHypermodeJsonChanges(ctx context.Context) error {
 				case watcher.Create, watcher.Write:
 					err := loadJson(ctx, jsonName)
 					if err != nil {
-						log.Err(err).
+						logger.Err(ctx, err).
 							Str("json", jsonName).
 							Msg("Failed to load json.")
 					}
 				case watcher.Remove:
 					config.HypermodeData = config.HypermodeAppData{}
-					log.Info().Msg("hypermode.json removed.")
+					logger.Info(ctx).Msg("hypermode.json removed.")
 				}
 			case err := <-w.Error:
-				log.Err(err).Msg("Failure while watching directory for hypermode.json")
+				logger.Err(ctx, err).Msg("Failure while watching directory for hypermode.json")
 			case <-w.Closed:
 				return
 			case <-ctx.Done():
@@ -267,7 +267,7 @@ func watchDirectoryForPluginChanges(ctx context.Context) error {
 
 				pluginName, err := getPluginNameFromPath(evt.Path)
 				if err != nil {
-					log.Err(err).Msg("Failed to get plugin name.")
+					logger.Err(ctx, err).Msg("Failed to get plugin name.")
 				}
 				if pluginName == "" {
 					continue
@@ -277,14 +277,14 @@ func watchDirectoryForPluginChanges(ctx context.Context) error {
 				case watcher.Create, watcher.Write:
 					err = loadPluginModule(ctx, pluginName)
 					if err != nil {
-						log.Err(err).
+						logger.Err(ctx, err).
 							Str("plugin", pluginName).
 							Msg("Failed to load plugin.")
 					}
 				case watcher.Remove:
 					err = unloadPluginModule(ctx, pluginName)
 					if err != nil {
-						log.Err(err).
+						logger.Err(ctx, err).
 							Str("plugin", pluginName).
 							Msg("Failed to unload plugin.")
 					}
@@ -294,7 +294,7 @@ func watchDirectoryForPluginChanges(ctx context.Context) error {
 				host.RegistrationRequest <- true
 
 			case err := <-w.Error:
-				log.Err(err).Msg("Failure while watching plugin directory.")
+				logger.Err(ctx, err).Msg("Failure while watching plugin directory.")
 			case <-w.Closed:
 				return
 			case <-ctx.Done():
@@ -321,7 +321,7 @@ func watchDirectoryForPluginChanges(ctx context.Context) error {
 	go func() {
 		err = w.Start(config.RefreshInterval)
 		if err != nil {
-			log.Fatal().Err(err).Msg("Failed to start the file watcher.  Exiting.")
+			logger.Fatal(ctx).Err(err).Msg("Failed to start the file watcher.  Exiting.")
 		}
 	}()
 
@@ -394,7 +394,7 @@ func watchStorageForJsonChanges(ctx context.Context) error {
 			jsons, err := aws.ListJsons(ctx)
 			if err != nil {
 				// Don't stop watching. We'll just try again on the next cycle.
-				log.Err(err).Msg("Failed to list jsons from S3.")
+				logger.Err(ctx, err).Msg("Failed to list jsons from S3.")
 				continue
 			}
 			// Load/reload any new or modified jsons
@@ -402,7 +402,7 @@ func watchStorageForJsonChanges(ctx context.Context) error {
 				if awsJsons[name] != etag {
 					err := loadJson(ctx, name)
 					if err != nil {
-						log.Err(err).
+						logger.Err(ctx, err).
 							Str("json", name).
 							Msg("Failed to load hypermode.json.")
 					}
@@ -431,7 +431,7 @@ func watchStorageForPluginChanges(ctx context.Context) error {
 			plugins, err := aws.ListPlugins(ctx)
 			if err != nil {
 				// Don't stop watching. We'll just try again on the next cycle.
-				log.Err(err).Msg("Failed to list plugins from S3.")
+				logger.Err(ctx, err).Msg("Failed to list plugins from S3.")
 				continue
 			}
 
@@ -442,7 +442,7 @@ func watchStorageForPluginChanges(ctx context.Context) error {
 				if awsPlugins[name] != etag {
 					err := loadPluginModule(ctx, name)
 					if err != nil {
-						log.Err(err).
+						logger.Err(ctx, err).
 							Str("plugin", name).
 							Msg("Failed to load plugin.")
 					}
@@ -456,7 +456,7 @@ func watchStorageForPluginChanges(ctx context.Context) error {
 				if _, found := plugins[name]; !found {
 					err := unloadPluginModule(ctx, name)
 					if err != nil {
-						log.Err(err).
+						logger.Err(ctx, err).
 							Str("plugin", name).
 							Msg("Failed to unload plugin.")
 					}

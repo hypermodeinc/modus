@@ -5,12 +5,14 @@
 package schema
 
 import (
+	"context"
 	"fmt"
+
+	"hmruntime/logger"
 
 	"github.com/dgraph-io/gqlparser/ast"
 	"github.com/dgraph-io/gqlparser/parser"
 	"github.com/dgraph-io/gqlparser/validator"
-	"github.com/rs/zerolog/log"
 )
 
 type FunctionInfo struct {
@@ -47,12 +49,12 @@ func (schema FunctionSchema) FunctionName() string {
 	return f.Name
 }
 
-func (schema FunctionSchema) FunctionArgs() ast.ArgumentDefinitionList {
+func (schema FunctionSchema) FunctionArgs(ctx context.Context) ast.ArgumentDefinitionList {
 	f := schema.FieldDef
 
 	// If @hm_function(args: ["arg1", "arg2"]) is specified, use that.
 	// The arguments must correspond to field names on the same parent object.
-	// The types will be assertained from the corresponding fields.
+	// The types will be ascertained from the corresponding fields.
 	// This is the case for fields on types other than Query and Mutation.
 	d := f.Directives.ForName("hm_function")
 	if d != nil {
@@ -66,7 +68,7 @@ func (schema FunctionSchema) FunctionArgs() ast.ArgumentDefinitionList {
 					argName = val.(string)
 					fld := schema.ObjectDef.Fields.ForName(argName)
 					if fld == nil {
-						log.Warn().
+						logger.Warn(ctx).
 							Str("field", argName).
 							Str("object", schema.ObjectDef.Name).
 							Msg("Field does not exist.")
