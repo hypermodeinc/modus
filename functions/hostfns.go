@@ -13,7 +13,6 @@ import (
 	"hmruntime/logger"
 	"hmruntime/utils"
 
-	"github.com/rs/zerolog/log"
 	"github.com/tetratelabs/wazero"
 	wasm "github.com/tetratelabs/wazero/api"
 )
@@ -268,12 +267,13 @@ func hostInvokeTextGenerator(ctx context.Context, mod wasm.Module, pModelName ui
 
 	sentence, err := readString(mem, pSentence)
 	if err != nil {
-		log.Print("error reading sentence string from wasm memory:", err)
+		logger.Err(ctx, err).Msg("Error reading sentence string from wasm memory.")
 		return 0
 	}
+
 	instruction, err := readString(mem, pInstruction)
 	if err != nil {
-		log.Print("error reading instruction string from wasm memory:", err)
+		logger.Err(ctx, err).Msg("Error reading instruction string from wasm memory.")
 		return 0
 	}
 
@@ -282,27 +282,28 @@ func hostInvokeTextGenerator(ctx context.Context, mod wasm.Module, pModelName ui
 
 	key, err := aws.GetSecretString(ctx, modelSpec.Name)
 	if err != nil {
-		log.Print("error getting model key:", err)
+		logger.Err(ctx, err).Msg("Error getting model key secret.")
 		return 0
 	}
+
 	// Call appropriate implementation depending on the modelSpec.Provider
 	// TO DO: use Provider when it will be available in the modelSpec
 
 	result, err := openaiTextGenerator(ctx, modelSpec, string(jInstruction), string(jSentence), key)
 
 	if err != nil {
-		log.Err(err).Msg("Error posting to OpenAI.")
+		logger.Err(ctx, err).Msg("Error posting to OpenAI.")
 		return 0
 	}
 	if result.Error.Message != "" {
 		err := fmt.Errorf(result.Error.Message)
-		log.Err(err).Msg("Error returned from OpenAI.")
+		logger.Err(ctx, err).Msg("Error returned from OpenAI.")
 		return 0
 	}
 
 	res, err := json.Marshal(result)
 	if err != nil {
-		log.Err(err).Msg("Error marshalling result.")
+		logger.Err(ctx, err).Msg("Error marshalling result.")
 		return 0
 	}
 	return writeString(ctx, mod, string(res))
