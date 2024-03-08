@@ -59,7 +59,7 @@ go build
 ./hmruntime --plugin ../hypermode-as/examples/hmplugin1
 ```
 
-### Command Line Arguments
+## Command Line Arguments
 
 When starting the runtime, you may need to use the following command line arguments:
 
@@ -72,6 +72,30 @@ When starting the runtime, you may need to use the following command line argume
 - `--jsonlogs` - Switches log output to JSON format.
 
 _Note: You can use either `-` or `--` prefixes, and you can add parameters with either a space or `=`._
+
+## Environment Variables
+
+Some model hosts have pre-established well-known environment variable names.
+The Hypermode Runtime will use them if they are available:
+
+- `OPENAI_API_KEY` - If set, will be used by an model who's host is `"openai"`.
+
+Alternatively, any model can have its key passed as an environment variable,
+using the following convention:
+
+- `HYP_MODEL_KEY_<MODEL_NAME>` - Can be used to specify keys for any model.
+  - _Substitute `<MODEL_NAME>` for the upper-cased name of the model._
+
+### Using a `.env` file
+
+While environment variables can be set through traditional mechanisms, they can also (optionally)
+be set in a file called `.env`, placed in the plugins path.  The file should be a simple list of
+key/value pairs.  For example:
+
+```
+HYP_MODEL_KEY_FOO=abc123
+HYP_MODEL_KEY_BAR=xyz456
+```
 
 ## Working locally with plugins
 
