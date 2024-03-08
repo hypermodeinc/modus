@@ -109,7 +109,7 @@ type ClassifierLabel struct {
 func hostInvokeClassifier(ctx context.Context, mod wasm.Module, pModelName uint32, pSentenceMap uint32) uint32 {
 	mem := mod.Memory()
 
-	modelSpec, err := getModelSpec(mem, pModelName, config.ClassificationModelType)
+	model, err := getModel(mem, pModelName, config.ClassificationTask)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error getting model spec.")
 		return 0
@@ -121,7 +121,7 @@ func hostInvokeClassifier(ctx context.Context, mod wasm.Module, pModelName uint3
 		return 0
 	}
 
-	result, err := models.PostToModelEndpoint[map[string]ClassifierResult](ctx, sentenceMap, modelSpec)
+	result, err := models.PostToModelEndpoint[map[string]ClassifierResult](ctx, sentenceMap, model)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error posting to model endpoint.")
 		return 0
@@ -144,7 +144,7 @@ func hostInvokeClassifier(ctx context.Context, mod wasm.Module, pModelName uint3
 func hostComputeEmbedding(ctx context.Context, mod wasm.Module, pModelName uint32, pSentenceMap uint32) uint32 {
 	mem := mod.Memory()
 
-	modelSpec, err := getModelSpec(mem, pModelName, config.EmbeddingModelType)
+	model, err := getModel(mem, pModelName, config.EmbeddingTask)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error getting model spec.")
 		return 0
@@ -156,7 +156,7 @@ func hostComputeEmbedding(ctx context.Context, mod wasm.Module, pModelName uint3
 		return 0
 	}
 
-	result, err := models.PostToModelEndpoint[map[string]string](ctx, sentenceMap, modelSpec)
+	result, err := models.PostToModelEndpoint[map[string]string](ctx, sentenceMap, model)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error posting to model endpoint.")
 		return 0
@@ -177,12 +177,12 @@ func hostComputeEmbedding(ctx context.Context, mod wasm.Module, pModelName uint3
 }
 
 func hostInvokeTextGenerator(ctx context.Context, mod wasm.Module, pModelName uint32, pInstruction uint32, pSentence uint32) uint32 {
-	// invoke modelspec endpoint or
+	// invoke model endpoint or
 	// https://api.openai.com/v1/chat/completions if endpoint is "openai"
 
 	mem := mod.Memory()
 
-	modelSpec, err := getModelSpec(mem, pModelName, config.GeneratorModelType)
+	model, err := getModel(mem, pModelName, config.GeneratorTask)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error getting model spec.")
 		return 0
@@ -206,7 +206,7 @@ func hostInvokeTextGenerator(ctx context.Context, mod wasm.Module, pModelName ui
 	// Call appropriate implementation depending on the modelSpec.Provider
 	// TO DO: use Provider when it will be available in the modelSpec
 
-	result, err := openai.GenerateText(ctx, modelSpec, instruction, sentence)
+	result, err := openai.GenerateText(ctx, model, instruction, sentence)
 
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error posting to OpenAI.")
@@ -226,14 +226,14 @@ func hostInvokeTextGenerator(ctx context.Context, mod wasm.Module, pModelName ui
 	return writeString(ctx, mod, string(res))
 }
 
-func getModelSpec(mem wasm.Memory, pModelName uint32, modelType config.ModelType) (config.ModelSpec, error) {
+func getModel(mem wasm.Memory, pModelName uint32, task config.ModelTask) (config.Model, error) {
 	modelName, err := readString(mem, pModelName)
 	if err != nil {
 		err = fmt.Errorf("error reading model name from wasm memory: %w", err)
-		return config.ModelSpec{}, err
+		return config.Model{}, err
 	}
 
-	return models.GetModelSpec(modelName, modelType)
+	return models.GetModel(modelName, task)
 }
 
 func getSentenceMap(mem wasm.Memory, pSentenceMap uint32) (map[string]string, error) {

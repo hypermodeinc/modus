@@ -36,7 +36,7 @@ type AppData interface{}
 
 // struct that holds the hypermode.json data
 type HypermodeAppData struct {
-	ModelSpecs           []ModelSpec           `json:"modelSpecs"`
+	Models               []Model               `json:"models"`
 	EmbeddingSpecs       []EmbeddingSpec       `json:"embeddingSpecs"`
 	TrainingInstructions []TrainingInstruction `json:"trainingInstructions"`
 	AppData
@@ -46,29 +46,29 @@ type ModelsAppData struct {
 	AppData
 }
 
-type ModelType string
+type ModelTask string
 
 const (
-	ClassificationModelType ModelType = "classification"
-	EmbeddingModelType      ModelType = "embedding"
-	GeneratorModelType      ModelType = "generator"
+	ClassificationTask ModelTask = "classification"
+	EmbeddingTask      ModelTask = "embedding"
+	GeneratorTask      ModelTask = "generator"
 )
 
-type ModelSpec struct {
-	Name       string    `json:"name"`
-	ModelType  ModelType `json:"modelType"`
-	BaseModel  string    `json:"baseModel"`
-	Provider   string    `json:"provider"`
-	Host       string    `json:"host"`
-	Endpoint   string    `json:"endpoint"`
-	AuthHeader string    `json:"authHeader"`
-	ApiKey     string    `json:"apiKey"`
+type Model struct {
+	Name        string    `json:"name"`
+	Task        ModelTask `json:"task"`
+	SourceModel string    `json:"sourceModel"`
+	Provider    string    `json:"provider"`
+	Host        string    `json:"host"`
+	Endpoint    string    `json:"endpoint"`
+	AuthHeader  string    `json:"authHeader"`
+	ApiKey      string    `json:"apiKey"`
 }
 
 type EmbeddingSpec struct {
-	EntityType string `json:"entity-type"`
+	EntityType string `json:"entityType"`
 	Attribute  string `json:"attribute"`
-	ModelID    string `json:"modelName"`
+	ModelName  string `json:"modelName"`
 	Config     struct {
 		Query    string `json:"query"`
 		Template string `json:"template"`
