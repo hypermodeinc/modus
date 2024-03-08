@@ -62,7 +62,6 @@ type Model struct {
 	Host        string    `json:"host"`
 	Endpoint    string    `json:"endpoint"`
 	AuthHeader  string    `json:"authHeader"`
-	ApiKey      string    `json:"apiKey"`
 }
 
 type EmbeddingSpec struct {
