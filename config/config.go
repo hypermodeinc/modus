@@ -46,23 +46,23 @@ type ModelsAppData struct {
 	AppData
 }
 
-type Task string
+type ModelTask string
 
 const (
-	ClassificationTask Task = "classification"
-	EmbeddingTask      Task = "embedding"
-	GeneratorTask      Task = "generator"
+	ClassificationTask ModelTask = "classification"
+	EmbeddingTask      ModelTask = "embedding"
+	GeneratorTask      ModelTask = "generator"
 )
 
 type Model struct {
-	Name        string `json:"name"`
-	Task        Task   `json:"task"`
-	SourceModel string `json:"sourceModel"`
-	Provider    string `json:"provider"`
-	Host        string `json:"host"`
-	Endpoint    string `json:"endpoint"`
-	AuthHeader  string `json:"authHeader"`
-	ApiKey      string `json:"apiKey"`
+	Name        string    `json:"name"`
+	Task        ModelTask `json:"task"`
+	SourceModel string    `json:"sourceModel"`
+	Provider    string    `json:"provider"`
+	Host        string    `json:"host"`
+	Endpoint    string    `json:"endpoint"`
+	AuthHeader  string    `json:"authHeader"`
+	ApiKey      string    `json:"apiKey"`
 }
 
 type EmbeddingSpec struct {

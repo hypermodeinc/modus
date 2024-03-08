@@ -104,7 +104,7 @@ type ClassifierLabel struct {
 	Probability float64 `json:"probability"`
 }
 
-func getModel(mem wasm.Memory, pModelName uint32, task config.Task) (config.Model, error) {
+func getModel(mem wasm.Memory, pModelName uint32, task config.ModelTask) (config.Model, error) {
 	modelName, err := readString(mem, pModelName)
 	if err != nil {
 		err = fmt.Errorf("error reading model name from wasm memory: %w", err)
