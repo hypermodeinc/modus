@@ -6,7 +6,6 @@ package openai
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 
 	"hmruntime/config"
@@ -48,16 +47,12 @@ func GenerateText(ctx context.Context, model config.Model, instruction string, s
 		return ChatResponse{}, err
 	}
 
-	// Encode the instruction and sentence as JSON strings
-	jInstruction, _ := json.Marshal(instruction)
-	jSentence, _ := json.Marshal(sentence)
-
 	// build the request body following OpenAI API
 	reqBody := ChatContext{
 		Model: model.SourceModel,
 		Messages: []ChatMessage{
-			{Role: "system", Content: string(jInstruction)},
-			{Role: "user", Content: string(jSentence)},
+			{Role: "system", Content: instruction},
+			{Role: "user", Content: sentence},
 		},
 	}
 
