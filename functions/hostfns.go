@@ -111,7 +111,7 @@ func hostInvokeClassifier(ctx context.Context, mod wasm.Module, pModelName uint3
 
 	model, err := getModel(mem, pModelName, config.ClassificationTask)
 	if err != nil {
-		logger.Err(ctx, err).Msg("Error getting model spec.")
+		logger.Err(ctx, err).Msg("Error getting model.")
 		return 0
 	}
 
@@ -146,7 +146,7 @@ func hostComputeEmbedding(ctx context.Context, mod wasm.Module, pModelName uint3
 
 	model, err := getModel(mem, pModelName, config.EmbeddingTask)
 	if err != nil {
-		logger.Err(ctx, err).Msg("Error getting model spec.")
+		logger.Err(ctx, err).Msg("Error getting model.")
 		return 0
 	}
 
@@ -184,12 +184,9 @@ func hostInvokeTextGenerator(ctx context.Context, mod wasm.Module, pModelName ui
 
 	model, err := getModel(mem, pModelName, config.GeneratorTask)
 	if err != nil {
-		logger.Err(ctx, err).Msg("Error getting model spec.")
+		logger.Err(ctx, err).Msg("Error getting model.")
 		return 0
 	}
-
-	// we are assuming gpt-3.5-turbo
-	// to do : define how to pass the model name in the modelSpec
 
 	sentence, err := readString(mem, pSentence)
 	if err != nil {
@@ -202,9 +199,6 @@ func hostInvokeTextGenerator(ctx context.Context, mod wasm.Module, pModelName ui
 		logger.Err(ctx, err).Msg("Error reading instruction string from wasm memory.")
 		return 0
 	}
-
-	// Call appropriate implementation depending on the modelSpec.Provider
-	// TO DO: use Provider when it will be available in the modelSpec
 
 	result, err := openai.GenerateText(ctx, model, instruction, sentence)
 

@@ -13,34 +13,34 @@ import (
 	"hmruntime/utils"
 )
 
-func GetModelSpec(modelName string, modelType config.ModelType) (config.ModelSpec, error) {
-	for _, modelSpec := range config.HypermodeData.ModelSpecs {
-		if modelSpec.Name == modelName && modelSpec.ModelType == modelType {
-			return modelSpec, nil
+func GetModel(modelName string, task config.ModelTask) (config.Model, error) {
+	for _, model := range config.HypermodeData.Models {
+		if model.Name == modelName && model.Task == task {
+			return model, nil
 		}
 	}
 
-	return config.ModelSpec{}, fmt.Errorf("a model '%s' of type '%s' was not found", modelName, modelType)
+	return config.Model{}, fmt.Errorf("a model '%s' for task '%s' was not found", modelName, task)
 }
 
-func GetModelKey(ctx context.Context, modelSpec config.ModelSpec) (string, error) {
+func GetModelKey(ctx context.Context, model config.Model) (string, error) {
 	if aws.Enabled() {
-		return aws.GetSecretString(ctx, modelSpec.Name)
+		return aws.GetSecretString(ctx, model.Name)
 	} else {
-		return modelSpec.ApiKey, nil
+		return model.ApiKey, nil
 	}
 }
 
-func PostToModelEndpoint[TResult any](ctx context.Context, sentenceMap map[string]string, modelSpec config.ModelSpec) (TResult, error) {
-	key, err := GetModelKey(ctx, modelSpec)
+func PostToModelEndpoint[TResult any](ctx context.Context, sentenceMap map[string]string, model config.Model) (TResult, error) {
+	key, err := GetModelKey(ctx, model)
 	if err != nil {
 		var result TResult
 		return result, fmt.Errorf("error getting model key secret: %w", err)
 	}
 
 	headers := map[string]string{
-		modelSpec.AuthHeader: key,
+		model.AuthHeader: key,
 	}
 
-	return utils.PostHttp[TResult](modelSpec.Endpoint, sentenceMap, headers)
+	return utils.PostHttp[TResult](model.Endpoint, sentenceMap, headers)
 }

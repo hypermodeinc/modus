@@ -40,12 +40,12 @@ type InvokeError struct {
 	Code    string `json:"code"`
 }
 
-func GenerateText(ctx context.Context, modelSpec config.ModelSpec, instruction string, sentence string) (ChatResponse, error) {
+func GenerateText(ctx context.Context, model config.Model, instruction string, sentence string) (ChatResponse, error) {
 
 	// Get the OpenAI API key to use for this model
-	key, err := models.GetModelKey(ctx, modelSpec)
+	key, err := models.GetModelKey(ctx, model)
 	if err != nil {
-		return ChatResponse{}, fmt.Errorf("error getting model key secret: %w", err)
+		return ChatResponse{}, err
 	}
 
 	// Encode the instruction and sentence as JSON strings
@@ -54,14 +54,14 @@ func GenerateText(ctx context.Context, modelSpec config.ModelSpec, instruction s
 
 	// build the request body following OpenAI API
 	reqBody := ChatContext{
-		Model: modelSpec.BaseModel,
+		Model: model.SourceModel,
 		Messages: []ChatMessage{
 			{Role: "system", Content: string(jInstruction)},
 			{Role: "user", Content: string(jSentence)},
 		},
 	}
 
-	// We ignore modelSpec.endpoint and use the OpenAI endpoint
+	// We ignore the model endpoint and use the OpenAI endpoint
 	const endpoint = "https://api.openai.com/v1/chat/completions"
 	headers := map[string]string{
 		"Authorization": "Bearer " + key,
