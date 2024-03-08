@@ -10,6 +10,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/sts v1.27.0
 	github.com/dgraph-io/gqlparser v1.2.1
 	github.com/google/uuid v1.6.0
+	github.com/joho/godotenv v1.5.1
 	github.com/radovskyb/watcher v1.0.7
 	github.com/rs/xid v1.5.0
 	github.com/rs/zerolog v1.32.0

@@ -7,6 +7,7 @@ package models
 import (
 	"context"
 	"fmt"
+	"os"
 
 	"hmruntime/aws"
 	"hmruntime/config"
@@ -27,7 +28,12 @@ func GetModelKey(ctx context.Context, model config.Model) (string, error) {
 	if aws.Enabled() {
 		return aws.GetSecretString(ctx, model.Name)
 	} else {
-		return model.ApiKey, nil
+		// get key from env
+		key := os.Getenv(model.Name)
+		if key == "" {
+			return "", fmt.Errorf("model key '%s' not found in environment", model.Name)
+		}
+		return key, nil
 	}
 }
 

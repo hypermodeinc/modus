@@ -13,6 +13,8 @@ import (
 	"hmruntime/logger"
 	"hmruntime/plugins"
 	"os"
+
+	"github.com/joho/godotenv"
 )
 
 func main() {
@@ -54,6 +56,14 @@ func main() {
 		log.Fatal().Err(err).Msg("Failed to initialize the WebAssembly runtime.  Exiting.")
 	}
 	defer host.WasmRuntime.Close(ctx)
+
+	if !aws.Enabled() {
+		// Load environment variables from plugins path
+		err = godotenv.Load(config.PluginsPath + "/.env")
+		if err != nil {
+			log.Info().Err(err).Msg("No .env file found.")
+		}
+	}
 
 	// Load json
 	err = plugins.LoadJsons(ctx)
