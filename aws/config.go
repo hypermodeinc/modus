@@ -23,6 +23,10 @@ func UseAwsForPluginStorage() bool {
 	return useS3PluginStorage
 }
 
+func Enabled() bool {
+	return awsEnabled
+}
+
 func Initialize(ctx context.Context) error {
 	useS3PluginStorage = hmConfig.S3Bucket != ""
 	defer func() {
