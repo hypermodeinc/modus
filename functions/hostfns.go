@@ -177,9 +177,6 @@ func hostComputeEmbedding(ctx context.Context, mod wasm.Module, pModelName uint3
 }
 
 func hostInvokeTextGenerator(ctx context.Context, mod wasm.Module, pModelName uint32, pInstruction uint32, pSentence uint32) uint32 {
-	// invoke model endpoint or
-	// https://api.openai.com/v1/chat/completions if endpoint is "openai"
-
 	mem := mod.Memory()
 
 	model, err := getModel(mem, pModelName, config.GeneratorTask)
