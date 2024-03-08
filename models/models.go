@@ -24,7 +24,7 @@ func GetModelSpec(modelName string, modelType config.ModelType) (config.ModelSpe
 }
 
 func GetModelKey(ctx context.Context, modelSpec config.ModelSpec) (string, error) {
-	if aws.UseAwsForPluginStorage() {
+	if aws.Enabled() {
 		return aws.GetSecretString(ctx, modelSpec.Name)
 	} else {
 		return modelSpec.ApiKey, nil
