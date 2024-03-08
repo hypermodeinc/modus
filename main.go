@@ -6,13 +6,15 @@ package main
 
 import (
 	"context"
+	"os"
+	"path"
+
 	"hmruntime/aws"
 	"hmruntime/config"
 	"hmruntime/functions"
 	"hmruntime/host"
 	"hmruntime/logger"
 	"hmruntime/plugins"
-	"os"
 
 	"github.com/joho/godotenv"
 )
@@ -59,9 +61,10 @@ func main() {
 
 	if !aws.Enabled() {
 		// Load environment variables from plugins path
-		err = godotenv.Load(config.PluginsPath + "/.env")
-		if err != nil {
-			log.Info().Err(err).Msg("No .env file found.")
+		// note: .env file is optional, so don't log if it's not found
+		err = godotenv.Load(path.Join(config.PluginsPath, ".env"))
+		if err != nil && !os.IsNotExist(err) {
+			log.Warn().Err(err).Msg("Error reading .env file.  Ignoring.")
 		}
 	}
 
