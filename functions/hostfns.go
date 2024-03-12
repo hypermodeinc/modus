@@ -98,6 +98,8 @@ func hostExecuteGQL(ctx context.Context, mod wasm.Module, pStmt uint32, pVars ui
 }
 
 type ClassifierResult struct {
+	Label         string            `json:"label"`
+	Confidence    float64           `json:"confidence"`
 	Probabilities []ClassifierLabel `json:"probabilities"`
 }
 
@@ -120,23 +122,30 @@ func hostInvokeClassifier(ctx context.Context, mod wasm.Module, pModelName uint3
 		logger.Err(ctx, err).Msg("Error getting sentence map.")
 		return 0
 	}
-
-	result, err := models.PostToModelEndpoint[map[string]ClassifierResult](ctx, sentenceMap, model)
+	var result interface{}
+	if model.Host == models.HypermodeHost {
+		result, err = models.PostToModelEndpoint[[]ClassifierResult](ctx, sentenceMap, model)
+	} else {
+		result, err = models.PostToModelEndpoint[map[string]ClassifierResult](ctx, sentenceMap, model)
+	}
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error posting to model endpoint.")
 		return 0
 	}
 
-	if len(result) == 0 {
-		logger.Err(ctx, err).Msg("Empty result returned from model.")
-		return 0
-	}
-
-	res, err := json.Marshal(result)
+	// Convert result to []byte
+	resultBytes, err := json.Marshal(result)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error marshalling classification result.")
 		return 0
 	}
+
+	if len(resultBytes) == 0 {
+		logger.Err(ctx, err).Msg("Empty result returned from model.")
+		return 0
+	}
+
+	res := string(resultBytes)
 
 	return writeString(ctx, mod, string(res))
 }
@@ -156,22 +165,33 @@ func hostComputeEmbedding(ctx context.Context, mod wasm.Module, pModelName uint3
 		return 0
 	}
 
-	result, err := models.PostToModelEndpoint[map[string]string](ctx, sentenceMap, model)
+	var result interface{}
+	var embedding []float64
+	if model.Host == models.HypermodeHost {
+		embedding, err = models.PostToModelEndpoint[[]float64](ctx, sentenceMap, model)
+		result = fmt.Sprint(embedding)
+	} else {
+		result, err = models.PostToModelEndpoint[map[string]string](ctx, sentenceMap, model)
+	}
+
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error posting to model endpoint.")
 		return 0
 	}
 
-	if len(result) == 0 {
-		logger.Error(ctx).Msg("Empty result returned from model.")
+	// Convert result to []byte
+	resultBytes, err := json.Marshal(result)
+	if err != nil {
+		logger.Err(ctx, err).Msg("Error marshalling classification result.")
 		return 0
 	}
 
-	res, err := json.Marshal(result)
-	if err != nil {
-		logger.Err(ctx, err).Msg("Error marshalling embedding result.")
+	if len(resultBytes) == 0 {
+		logger.Err(ctx, err).Msg("Empty result returned from model.")
 		return 0
 	}
+
+	res := string(resultBytes)
 
 	return writeString(ctx, mod, string(res))
 }

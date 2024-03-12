@@ -16,6 +16,7 @@ import (
 )
 
 const modelKeyPrefix = "HYP_MODEL_KEY_"
+const HypermodeHost string = "hypermode"
 
 func GetModel(modelName string, task config.ModelTask) (config.Model, error) {
 	for _, model := range config.HypermodeData.Models {
@@ -70,6 +71,14 @@ func PostToModelEndpoint[TResult any](ctx context.Context, sentenceMap map[strin
 
 	headers := map[string]string{
 		model.AuthHeader: key,
+	}
+	// self hosted models takes in array, can optimize for parallelizing later
+	if model.Host == HypermodeHost {
+		var sentences []string
+		for _, v := range sentenceMap {
+			sentences = append(sentences, v)
+		}
+		return utils.PostHttp[TResult](model.Endpoint, sentences, headers)
 	}
 
 	return utils.PostHttp[TResult](model.Endpoint, sentenceMap, headers)
