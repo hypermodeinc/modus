@@ -66,10 +66,11 @@ func PostToModelEndpoint[TResult any](ctx context.Context, sentenceMap map[strin
 	// self hosted models takes in array, can optimize for parallelizing later
 	if model.Host == HypermodeHost {
 		ns := os.Getenv("NAMESPACE")
-		endpoint := fmt.Sprintf("%s.%s.svc.cluster.local/v1/models/%s:predict", model.Name, ns, model.Task)
-		var sentences []string
+		endpoint := fmt.Sprintf("http://%s.%s.svc.cluster.local/v1/models/%s:predict", model.Name, ns, model.Task)
+		sentences := make(map[string][]string)
+		sentences["instances"] = make([]string, 0, len(sentenceMap))
 		for _, v := range sentenceMap {
-			sentences = append(sentences, v)
+			sentences["instances"] = append(sentences["instances"], v)
 		}
 		return utils.PostHttp[TResult](endpoint, sentences, nil)
 	}
