@@ -16,6 +16,8 @@ import (
 )
 
 const modelKeyPrefix = "HYP_MODEL_KEY_"
+const HypermodeHost string = "hypermode"
+const OpenAIHost string = "openai"
 
 func GetModel(modelName string, task config.ModelTask) (config.Model, error) {
 	for _, model := range config.HypermodeData.Models {
@@ -63,22 +65,58 @@ func getWellKnownEnvironmentVariable(model config.Model) string {
 	// We can expand this list as we add more model hosts.
 
 	switch model.Host {
-	case "openai":
+	case OpenAIHost:
 		return os.Getenv("OPENAI_API_KEY")
 	}
 	return ""
 }
 
-func PostToModelEndpoint[TResult any](ctx context.Context, sentenceMap map[string]string, model config.Model) (TResult, error) {
-	key, err := GetModelKey(ctx, model)
+type PredictionResult[T any] struct {
+	Predictions []T `json:"predictions"`
+}
+
+func PostToModelEndpoint[TResult any](ctx context.Context, sentenceMap map[string]string, model config.Model) (map[string]TResult, error) {
+	// self hosted models takes in array, can optimize for parallelizing later
+	keys, sentences := []string{}, []string{}
+
+	for k, v := range sentenceMap {
+		// create a map of sentences to send to the model
+		sentences = append(sentences, v)
+		// create a list of keys to map the results back to the original sentences
+		keys = append(keys, k)
+	}
+	// create a map of sentences to send to the model
+	req := map[string][]string{"instances": sentences}
+
+	var endpoint string
+	headers := map[string]string{}
+
+	switch model.Host {
+	case HypermodeHost:
+		endpoint = fmt.Sprintf("http://%s.%s/%s:predict", model.Name, config.ModelHost, model.Task)
+	default:
+		// If the model is not hosted by Hypermode, we need to get the model key and add it to the request headers
+		endpoint = model.Endpoint
+		key, err := GetModelKey(ctx, model)
+		if err != nil {
+			return map[string]TResult{}, fmt.Errorf("error getting model key secret: %w", err)
+		}
+
+		headers[model.AuthHeader] = key
+	}
+
+	res, err := utils.PostHttp[PredictionResult[TResult]](endpoint, req, headers)
 	if err != nil {
-		var result TResult
-		return result, fmt.Errorf("error getting model key secret: %w", err)
+		return map[string]TResult{}, err
+	}
+	if len(res.Predictions) != len(keys) {
+		return map[string]TResult{}, fmt.Errorf("number of predictions does not match number of sentences")
 	}
 
-	headers := map[string]string{
-		model.AuthHeader: key,
+	// map the results back to the original sentences
+	result := make(map[string]TResult)
+	for i, v := range res.Predictions {
+		result[keys[i]] = v
 	}
-
-	return utils.PostHttp[TResult](model.Endpoint, sentenceMap, headers)
+	return result, nil
 }

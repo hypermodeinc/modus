@@ -66,6 +66,7 @@ When starting the runtime, you may need to use the following command line argume
 - `--plugins` (or `--plugin`) - The folder that the runtime will look for plugins in.  ***Required.***
 - `--port` - The port that the runtime will listen for HTTP requests on.  Defaults to `8686`.
 - `--dgraph` - The URL to the Dgraph Alpha endpoint.  Defaults to `http://localhost:8080`.
+- `--modelHost` - The host portion of the url to the model endpoint. This is used for cloud deployments for kserve hosted models .
 - `--noreload` - Disables automatic reloading of plugins.
 - `--s3bucket` - The S3 bucket to use, if using AWS for plugin storage.
 - `--useAwsSecrets` - Directs the Runtime to use AWS Secret Manager for secrets such as model keys.

@@ -98,6 +98,8 @@ func hostExecuteGQL(ctx context.Context, mod wasm.Module, pStmt uint32, pVars ui
 }
 
 type ClassifierResult struct {
+	Label         string            `json:"label"`
+	Confidence    float64           `json:"confidence"`
 	Probabilities []ClassifierLabel `json:"probabilities"`
 }
 
@@ -121,7 +123,7 @@ func hostInvokeClassifier(ctx context.Context, mod wasm.Module, pModelName uint3
 		return 0
 	}
 
-	result, err := models.PostToModelEndpoint[map[string]ClassifierResult](ctx, sentenceMap, model)
+	result, err := models.PostToModelEndpoint[ClassifierResult](ctx, sentenceMap, model)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error posting to model endpoint.")
 		return 0
@@ -156,7 +158,7 @@ func hostComputeEmbedding(ctx context.Context, mod wasm.Module, pModelName uint3
 		return 0
 	}
 
-	result, err := models.PostToModelEndpoint[map[string]string](ctx, sentenceMap, model)
+	result, err := models.PostToModelEndpoint[[]float64](ctx, sentenceMap, model)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error posting to model endpoint.")
 		return 0
