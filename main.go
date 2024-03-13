@@ -59,13 +59,11 @@ func main() {
 	}
 	defer host.WasmRuntime.Close(ctx)
 
-	if !aws.Enabled() {
-		// Load environment variables from plugins path
-		// note: .env file is optional, so don't log if it's not found
-		err = godotenv.Load(path.Join(config.PluginsPath, ".env"))
-		if err != nil && !os.IsNotExist(err) {
-			log.Warn().Err(err).Msg("Error reading .env file.  Ignoring.")
-		}
+	// Load environment variables from plugins path
+	// note: .env file is optional, so don't log if it's not found
+	err = godotenv.Load(path.Join(config.PluginsPath, ".env"))
+	if err != nil && !os.IsNotExist(err) {
+		log.Warn().Err(err).Msg("Error reading .env file.  Ignoring.")
 	}
 
 	// Load json

@@ -28,24 +28,32 @@ func GetModel(modelName string, task config.ModelTask) (config.Model, error) {
 }
 
 func GetModelKey(ctx context.Context, model config.Model) (string, error) {
+	var key string
+	var err error
 
-	// First see if the model key is in an environment variable.
-	// Try well-known environment variables first, then fall back to the model-specific environment variable
-	key := getWellKnownEnvironmentVariable(model)
-	if key == "" {
-		key = os.Getenv(modelKeyPrefix + strings.ToUpper(model.Name))
+	if config.UseAwsSecrets {
+		// Get the model key from AWS Secrets Manager, using the model name as the secret.
+		key, err = aws.GetSecretString(ctx, model.Name)
+		if key != "" {
+			return key, nil
+		}
+	} else {
+		// Try well-known environment variables first, then model-specific environment variables.
+		key := getWellKnownEnvironmentVariable(model)
+		if key != "" {
+			return key, nil
+		}
+
+		keyEnvVar := modelKeyPrefix + strings.ToUpper(model.Name)
+		key = os.Getenv(keyEnvVar)
+		if key != "" {
+			return key, nil
+		} else {
+			err = fmt.Errorf("environment variable '%s' not found", keyEnvVar)
+		}
 	}
 
-	// If the model key is not in an environment variable, try to get it from AWS Secrets Manager.
-	// Use the model key as the secret name.
-	if aws.Enabled() {
-		return aws.GetSecretString(ctx, model.Name)
-	}
-
-	if key == "" {
-		return "", fmt.Errorf("environment variable not found for key of model '%s'", model.Name)
-	}
-	return key, nil
+	return "", fmt.Errorf("error getting key for model '%s': %w", model.Name, err)
 }
 
 func getWellKnownEnvironmentVariable(model config.Model) string {
