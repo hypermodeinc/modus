@@ -109,91 +109,11 @@ type ClassifierLabel struct {
 }
 
 func hostInvokeClassifier(ctx context.Context, mod wasm.Module, pModelName uint32, pSentenceMap uint32) uint32 {
-	mem := mod.Memory()
-
-	model, err := getModel(mem, pModelName, config.ClassificationTask)
-	if err != nil {
-		logger.Err(ctx, err).Msg("Error getting model.")
-		return 0
-	}
-
-	sentenceMap, err := getSentenceMap(mem, pSentenceMap)
-	if err != nil {
-		logger.Err(ctx, err).Msg("Error getting sentence map.")
-		return 0
-	}
-	var result interface{}
-	if model.Host == models.HypermodeHost {
-		result, err = models.PostToModelEndpoint[[]ClassifierResult](ctx, sentenceMap, model)
-	} else {
-		result, err = models.PostToModelEndpoint[map[string]ClassifierResult](ctx, sentenceMap, model)
-	}
-	if err != nil {
-		logger.Err(ctx, err).Msg("Error posting to model endpoint.")
-		return 0
-	}
-
-	// Convert result to []byte
-	resultBytes, err := json.Marshal(result)
-	if err != nil {
-		logger.Err(ctx, err).Msg("Error marshalling classification result.")
-		return 0
-	}
-
-	if len(resultBytes) == 0 {
-		logger.Err(ctx, err).Msg("Empty result returned from model.")
-		return 0
-	}
-
-	res := string(resultBytes)
-
-	return writeString(ctx, mod, string(res))
+	return invokeModel(ctx, mod, pModelName, pSentenceMap, config.ClassificationTask)
 }
 
 func hostComputeEmbedding(ctx context.Context, mod wasm.Module, pModelName uint32, pSentenceMap uint32) uint32 {
-	mem := mod.Memory()
-
-	model, err := getModel(mem, pModelName, config.EmbeddingTask)
-	if err != nil {
-		logger.Err(ctx, err).Msg("Error getting model.")
-		return 0
-	}
-
-	sentenceMap, err := getSentenceMap(mem, pSentenceMap)
-	if err != nil {
-		logger.Err(ctx, err).Msg("Error getting sentence map.")
-		return 0
-	}
-
-	var result interface{}
-	var embedding []float64
-	if model.Host == models.HypermodeHost {
-		embedding, err = models.PostToModelEndpoint[[]float64](ctx, sentenceMap, model)
-		result = fmt.Sprint(embedding)
-	} else {
-		result, err = models.PostToModelEndpoint[map[string]string](ctx, sentenceMap, model)
-	}
-
-	if err != nil {
-		logger.Err(ctx, err).Msg("Error posting to model endpoint.")
-		return 0
-	}
-
-	// Convert result to []byte
-	resultBytes, err := json.Marshal(result)
-	if err != nil {
-		logger.Err(ctx, err).Msg("Error marshalling classification result.")
-		return 0
-	}
-
-	if len(resultBytes) == 0 {
-		logger.Err(ctx, err).Msg("Empty result returned from model.")
-		return 0
-	}
-
-	res := string(resultBytes)
-
-	return writeString(ctx, mod, string(res))
+	return invokeModel(ctx, mod, pModelName, pSentenceMap, config.EmbeddingTask)
 }
 
 func hostInvokeTextGenerator(ctx context.Context, mod wasm.Module, pModelName uint32, pInstruction uint32, pSentence uint32) uint32 {
@@ -235,6 +155,29 @@ func hostInvokeTextGenerator(ctx context.Context, mod wasm.Module, pModelName ui
 		return 0
 	}
 	return writeString(ctx, mod, string(res))
+}
+
+func invokeModel(ctx context.Context, mod wasm.Module, pModelName uint32, pSentenceMap uint32, task config.ModelTask) uint32 {
+	mem := mod.Memory()
+
+	model, err := getModel(mem, pModelName, task)
+	if err != nil {
+		logger.Err(ctx, err).Msg("Error getting model.")
+		return 0
+	}
+
+	sentenceMap, err := getSentenceMap(mem, pSentenceMap)
+	if err != nil {
+		logger.Err(ctx, err).Msg("Error getting sentence map.")
+		return 0
+	}
+	result, err := models.PostToModelEndpoint[string](ctx, sentenceMap, model)
+	if err != nil {
+		logger.Err(ctx, err).Msg("Error posting to model endpoint.")
+		return 0
+	}
+
+	return writeString(ctx, mod, result)
 }
 
 func getModel(mem wasm.Memory, pModelName uint32, task config.ModelTask) (config.Model, error) {

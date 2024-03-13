@@ -65,8 +65,7 @@ func getWellKnownEnvironmentVariable(model config.Model) string {
 func PostToModelEndpoint[TResult any](ctx context.Context, sentenceMap map[string]string, model config.Model) (TResult, error) {
 	// self hosted models takes in array, can optimize for parallelizing later
 	if model.Host == HypermodeHost {
-		ns := os.Getenv("NAMESPACE")
-		endpoint := fmt.Sprintf("http://%s.%s.svc.cluster.local/v1/models/%s:predict", model.Name, ns, model.Task)
+		endpoint := fmt.Sprintf("http://%s.%s/%s:predict", model.Task, config.ModelUrl, model.Name)
 		sentences := make(map[string][]string)
 		sentences["instances"] = make([]string, 0, len(sentenceMap))
 		for _, v := range sentenceMap {
