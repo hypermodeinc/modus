@@ -84,7 +84,7 @@ type TrainingInstruction struct {
 func ParseCommandLineFlags() {
 	flag.IntVar(&Port, "port", 8686, "The HTTP port to listen on.")
 	flag.StringVar(&DgraphUrl, "dgraph", "http://localhost:8080", "The Dgraph url to connect to.")
-	flag.StringVar(&ModelHost, "modelHost", "", "The URL to the model server.")
+	flag.StringVar(&ModelHost, "modelHost", "", "The base DNS of the host endpoint to the model server.")
 	flag.StringVar(&PluginsPath, "plugins", "", "The path to the plugins directory.")
 	flag.StringVar(&PluginsPath, "plugin", "", "alias for -plugins")
 	flag.BoolVar(&NoReload, "noreload", false, "Disable automatic plugin reloading.")
