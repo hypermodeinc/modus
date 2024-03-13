@@ -16,7 +16,6 @@ import (
 )
 
 const modelKeyPrefix = "HYP_MODEL_KEY_"
-const HypermodeHost string = "hypermode"
 
 func GetModel(modelName string, task config.ModelTask) (config.Model, error) {
 	for _, model := range config.HypermodeData.Models {

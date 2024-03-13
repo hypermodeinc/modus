@@ -21,6 +21,7 @@ import (
 )
 
 const HostModuleName string = "hypermode"
+const HypermodeHost string = "hypermode" // separate strings in case one needs to change
 
 func InstantiateHostFunctions(ctx context.Context, runtime wazero.Runtime) error {
 	b := runtime.NewHostModuleBuilder(HostModuleName)
@@ -150,7 +151,7 @@ type KServeClassifierResult struct {
 
 func PostToClassifierModelEndpoint(ctx context.Context, sentenceMap map[string]string, model config.Model) (map[string]ClassifierResult, error) {
 	// self hosted models takes in array, can optimize for parallelizing later
-	if model.Host == models.HypermodeHost {
+	if model.Host == HypermodeHost {
 		endpoint := fmt.Sprintf("http://%s.%s/%s:predict", model.Task, config.ModelUrl, model.Name)
 		sentences := make(map[string][]string)
 		keys := []string{}
@@ -230,7 +231,7 @@ type KServeEmbeddingResult struct {
 
 func PostToEmbeddingModelEndpoint(ctx context.Context, sentenceMap map[string]string, model config.Model) (map[string]string, error) {
 	// self hosted models takes in array, can optimize for parallelizing later
-	if model.Host == models.HypermodeHost {
+	if model.Host == HypermodeHost {
 		endpoint := fmt.Sprintf("http://%s.%s/%s:predict", model.Task, config.ModelUrl, model.Name)
 		sentences := make(map[string][]string)
 		keys := []string{}
