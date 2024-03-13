@@ -63,25 +63,13 @@ func getWellKnownEnvironmentVariable(model config.Model) string {
 }
 
 func PostToModelEndpoint[TResult any](ctx context.Context, sentenceMap map[string]string, model config.Model) (TResult, error) {
-	// self hosted models takes in array, can optimize for parallelizing later
-	if model.Host == HypermodeHost {
-		endpoint := fmt.Sprintf("http://%s.%s/%s:predict", model.Task, config.ModelUrl, model.Name)
-		sentences := make(map[string][]string)
-		sentences["instances"] = make([]string, 0, len(sentenceMap))
-		for _, v := range sentenceMap {
-			sentences["instances"] = append(sentences["instances"], v)
-		}
-		return utils.PostHttp[TResult](endpoint, sentences, nil)
-	}
 	key, err := GetModelKey(ctx, model)
 	if err != nil {
 		var result TResult
 		return result, fmt.Errorf("error getting model key secret: %w", err)
 	}
-
 	headers := map[string]string{
 		model.AuthHeader: key,
 	}
-
 	return utils.PostHttp[TResult](model.Endpoint, sentenceMap, headers)
 }

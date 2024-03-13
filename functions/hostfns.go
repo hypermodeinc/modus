@@ -14,6 +14,7 @@ import (
 	"hmruntime/logger"
 	"hmruntime/models"
 	"hmruntime/models/openai"
+	"hmruntime/utils"
 
 	"github.com/tetratelabs/wazero"
 	wasm "github.com/tetratelabs/wazero/api"
@@ -109,11 +110,153 @@ type ClassifierLabel struct {
 }
 
 func hostInvokeClassifier(ctx context.Context, mod wasm.Module, pModelName uint32, pSentenceMap uint32) uint32 {
-	return invokeModel(ctx, mod, pModelName, pSentenceMap, config.ClassificationTask)
+	mem := mod.Memory()
+
+	model, err := getModel(mem, pModelName, config.ClassificationTask)
+	if err != nil {
+		logger.Err(ctx, err).Msg("Error getting model.")
+		return 0
+	}
+
+	sentenceMap, err := getSentenceMap(mem, pSentenceMap)
+	if err != nil {
+		logger.Err(ctx, err).Msg("Error getting sentence map.")
+		return 0
+	}
+
+	result, err := PostToClassifierModelEndpoint(ctx, sentenceMap, model)
+	if err != nil {
+		logger.Err(ctx, err).Msg("Error posting to model endpoint.")
+		return 0
+	}
+
+	if len(result) == 0 {
+		logger.Err(ctx, err).Msg("Empty result returned from model.")
+		return 0
+	}
+
+	res, err := json.Marshal(result)
+	if err != nil {
+		logger.Err(ctx, err).Msg("Error marshalling classification result.")
+		return 0
+	}
+
+	return writeString(ctx, mod, string(res))
+}
+
+type KServeClassifierResult struct {
+	Predictions []ClassifierResult `json:"predictions"`
+}
+
+func PostToClassifierModelEndpoint(ctx context.Context, sentenceMap map[string]string, model config.Model) (map[string]ClassifierResult, error) {
+	// self hosted models takes in array, can optimize for parallelizing later
+	if model.Host == models.HypermodeHost {
+		endpoint := fmt.Sprintf("http://%s.%s/%s:predict", model.Task, config.ModelUrl, model.Name)
+		sentences := make(map[string][]string)
+		keys := []string{}
+		sentences["instances"] = make([]string, 0, len(sentenceMap))
+
+		for k, v := range sentenceMap {
+			// create a map of sentences to send to the model
+			sentences["instances"] = append(sentences["instances"], v)
+			// create a list of keys to map the results back to the original sentences
+			keys = append(keys, k)
+		}
+		ksRes, err := utils.PostHttp[KServeClassifierResult](endpoint, sentences, nil)
+		if err != nil {
+			return map[string]ClassifierResult{}, err
+		}
+		if len(ksRes.Predictions) != len(keys) {
+			return map[string]ClassifierResult{}, fmt.Errorf("number of predictions does not match number of sentences")
+		}
+		// map the results back to the original sentences
+		result := make(map[string]ClassifierResult)
+		for i, v := range ksRes.Predictions {
+			result[keys[i]] = v
+		}
+		return result, nil
+	}
+	key, err := models.GetModelKey(ctx, model)
+	if err != nil {
+		var result map[string]ClassifierResult
+		return result, fmt.Errorf("error getting model key secret: %w", err)
+	}
+
+	headers := map[string]string{
+		model.AuthHeader: key,
+	}
+
+	return utils.PostHttp[map[string]ClassifierResult](model.Endpoint, sentenceMap, headers)
 }
 
 func hostComputeEmbedding(ctx context.Context, mod wasm.Module, pModelName uint32, pSentenceMap uint32) uint32 {
-	return invokeModel(ctx, mod, pModelName, pSentenceMap, config.EmbeddingTask)
+	mem := mod.Memory()
+
+	model, err := getModel(mem, pModelName, config.EmbeddingTask)
+	if err != nil {
+		logger.Err(ctx, err).Msg("Error getting model.")
+		return 0
+	}
+
+	sentenceMap, err := getSentenceMap(mem, pSentenceMap)
+	if err != nil {
+		logger.Err(ctx, err).Msg("Error getting sentence map.")
+		return 0
+	}
+
+	result, err := PostToEmbeddingModelEndpoint(ctx, sentenceMap, model)
+	if err != nil {
+		logger.Err(ctx, err).Msg("Error posting to model endpoint.")
+		return 0
+	}
+
+	if len(result) == 0 {
+		logger.Error(ctx).Msg("Empty result returned from model.")
+		return 0
+	}
+
+	res, err := json.Marshal(result)
+	if err != nil {
+		logger.Err(ctx, err).Msg("Error marshalling embedding result.")
+		return 0
+	}
+
+	return writeString(ctx, mod, string(res))
+}
+
+type KServeEmbeddingResult struct {
+	Predictions [][]float64 `json:"predictions"`
+}
+
+func PostToEmbeddingModelEndpoint(ctx context.Context, sentenceMap map[string]string, model config.Model) (map[string]string, error) {
+	// self hosted models takes in array, can optimize for parallelizing later
+	if model.Host == models.HypermodeHost {
+		endpoint := fmt.Sprintf("http://%s.%s/%s:predict", model.Task, config.ModelUrl, model.Name)
+		sentences := make(map[string][]string)
+		keys := []string{}
+		sentences["instances"] = make([]string, 0, len(sentenceMap))
+
+		for k, v := range sentenceMap {
+			// create a map of sentences to send to the model
+			sentences["instances"] = append(sentences["instances"], v)
+			// create a list of keys to map the results back to the original sentences
+			keys = append(keys, k)
+		}
+		ksRes, err := utils.PostHttp[KServeEmbeddingResult](endpoint, sentences, nil)
+		if err != nil {
+			return map[string]string{}, err
+		}
+		if len(ksRes.Predictions) != len(keys) {
+			return map[string]string{}, fmt.Errorf("number of predictions does not match number of sentences")
+		}
+		// map the results back to the original sentences
+		result := make(map[string]string)
+		for i, v := range ksRes.Predictions {
+			result[keys[i]] = fmt.Sprintf("%v", v)
+		}
+		return result, nil
+	}
+	return models.PostToModelEndpoint[map[string]string](ctx, sentenceMap, model)
 }
 
 func hostInvokeTextGenerator(ctx context.Context, mod wasm.Module, pModelName uint32, pInstruction uint32, pSentence uint32) uint32 {
