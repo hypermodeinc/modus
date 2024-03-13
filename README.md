@@ -68,6 +68,7 @@ When starting the runtime, you may need to use the following command line argume
 - `--dgraph` - The URL to the Dgraph Alpha endpoint.  Defaults to `http://localhost:8080`.
 - `--noreload` - Disables automatic reloading of plugins.
 - `--s3bucket` - The S3 bucket to use, if using AWS for plugin storage.
+- `--useAwsSecrets` - Directs the Runtime to use AWS Secret Manager for secrets such as model keys.
 - `--refresh` - The refresh interval to check for plugins and schema changes.  Defaults to `5s`.
 - `--jsonlogs` - Switches log output to JSON format.
 
