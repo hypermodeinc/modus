@@ -177,17 +177,7 @@ func PostToClassifierModelEndpoint(ctx context.Context, sentenceMap map[string]s
 		}
 		return result, nil
 	}
-	key, err := models.GetModelKey(ctx, model)
-	if err != nil {
-		var result map[string]ClassifierResult
-		return result, fmt.Errorf("error getting model key secret: %w", err)
-	}
-
-	headers := map[string]string{
-		model.AuthHeader: key,
-	}
-
-	return utils.PostHttp[map[string]ClassifierResult](model.Endpoint, sentenceMap, headers)
+	return models.PostToModelEndpoint[map[string]ClassifierResult](ctx, sentenceMap, model)
 }
 
 func hostComputeEmbedding(ctx context.Context, mod wasm.Module, pModelName uint32, pSentenceMap uint32) uint32 {
@@ -299,29 +289,6 @@ func hostInvokeTextGenerator(ctx context.Context, mod wasm.Module, pModelName ui
 		return 0
 	}
 	return writeString(ctx, mod, string(res))
-}
-
-func invokeModel(ctx context.Context, mod wasm.Module, pModelName uint32, pSentenceMap uint32, task config.ModelTask) uint32 {
-	mem := mod.Memory()
-
-	model, err := getModel(mem, pModelName, task)
-	if err != nil {
-		logger.Err(ctx, err).Msg("Error getting model.")
-		return 0
-	}
-
-	sentenceMap, err := getSentenceMap(mem, pSentenceMap)
-	if err != nil {
-		logger.Err(ctx, err).Msg("Error getting sentence map.")
-		return 0
-	}
-	result, err := models.PostToModelEndpoint[string](ctx, sentenceMap, model)
-	if err != nil {
-		logger.Err(ctx, err).Msg("Error posting to model endpoint.")
-		return 0
-	}
-
-	return writeString(ctx, mod, result)
 }
 
 func getModel(mem wasm.Memory, pModelName uint32, task config.ModelTask) (config.Model, error) {
