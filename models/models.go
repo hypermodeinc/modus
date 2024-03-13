@@ -67,8 +67,10 @@ func PostToModelEndpoint[TResult any](ctx context.Context, sentenceMap map[strin
 		var result TResult
 		return result, fmt.Errorf("error getting model key secret: %w", err)
 	}
+
 	headers := map[string]string{
 		model.AuthHeader: key,
 	}
+
 	return utils.PostHttp[TResult](model.Endpoint, sentenceMap, headers)
 }
