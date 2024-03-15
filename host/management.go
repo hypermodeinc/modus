@@ -121,9 +121,13 @@ func getJsonBytes(ctx context.Context, name string) ([]byte, error) {
 func loadPlugin(ctx context.Context, name string) error {
 	_, reloading := Plugins[name]
 	logger.Info(ctx).
-		Str("plugin", name).
+		Str("filename", name+".wasm").
 		Bool("reloading", reloading).
 		Msg("Loading plugin.")
+
+	// TODO: Separate plugin name from file name throughout the codebase.
+	// The plugin name should always come from the metadata, not the file name.
+	// This requires significant changes, so it's not done yet.
 
 	// Load the binary content of the plugin.
 	bytes, err := getPluginBytes(ctx, name)
@@ -137,11 +141,43 @@ func loadPlugin(ctx context.Context, name string) error {
 		return fmt.Errorf("failed to compile the plugin: %w", err)
 	}
 
-	// Get the metadata, and store the plugin.
+	// Get the metadata for the plugin.
 	metadata := getPluginMetadata(&cm)
+	if metadata == (PluginMetadata{}) {
+		logger.Warn(ctx).
+			Str("filename", name+".wasm").
+			Msg("No metadata found in plugin.  Please recompile your plugin using the latest version of the Hypermode Functions library.")
+	}
+
+	// Finally, store the plugin to complete the loading process.
 	Plugins[name] = Plugin{&cm, metadata}
+	logPluginLoaded(ctx, metadata)
 
 	return nil
+}
+
+func logPluginLoaded(ctx context.Context, metadata PluginMetadata) {
+	evt := logger.Info(ctx)
+
+	if metadata != (PluginMetadata{}) {
+		evt.Str("plugin", metadata.Name)
+		evt.Str("version", metadata.Version)
+		evt.Str("language", metadata.Language.String())
+		evt.Str("build_id", metadata.BuildId)
+		evt.Time("build_time", metadata.BuildTime)
+		evt.Str("hypermode_library", metadata.LibraryName)
+		evt.Str("hypermode_library_version", metadata.LibraryVersion)
+
+		if metadata.GitRepo != "" {
+			evt.Str("git_repo", metadata.GitRepo)
+		}
+
+		if metadata.GitCommit != "" {
+			evt.Str("git_commit", metadata.GitCommit)
+		}
+	}
+
+	evt.Msg("Loaded plugin.")
 }
 
 func getPluginBytes(ctx context.Context, name string) ([]byte, error) {

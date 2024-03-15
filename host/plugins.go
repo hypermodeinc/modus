@@ -36,6 +36,17 @@ const (
 	GoLang
 )
 
+func (lang PluginLanguage) String() string {
+	switch lang {
+	case AssemblyScript:
+		return "AssemblyScript"
+	case GoLang:
+		return "Go"
+	default:
+		return "Unknown"
+	}
+}
+
 func getPluginLanguage(libraryName string) PluginLanguage {
 	switch libraryName {
 	case "@hypermode/functions-as":
