@@ -7,12 +7,13 @@ package functions
 import (
 	"context"
 	"errors"
+	"net/url"
+	"time"
+
 	"hmruntime/config"
 	"hmruntime/dgraph"
 	"hmruntime/host"
 	"hmruntime/logger"
-	"net/url"
-	"time"
 )
 
 // Holds the current GraphQL schema

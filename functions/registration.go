@@ -6,11 +6,12 @@ package functions
 
 import (
 	"context"
+	"reflect"
+	"strings"
+
 	"hmruntime/host"
 	"hmruntime/logger"
 	"hmruntime/schema"
-	"reflect"
-	"strings"
 )
 
 // map that holds the function info for each resolver

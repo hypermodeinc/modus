@@ -8,9 +8,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
+
 	"hmruntime/logger"
 	"hmruntime/schema"
-	"time"
 
 	"github.com/dgraph-io/gqlparser/ast"
 	wasm "github.com/tetratelabs/wazero/api"

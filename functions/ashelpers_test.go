@@ -6,8 +6,9 @@ package functions
 
 import (
 	"bytes"
-	"hmruntime/testutils"
 	"testing"
+
+	"hmruntime/testutils"
 )
 
 // "Hello World" in Japanese

@@ -5,9 +5,10 @@
 package functions
 
 import (
-	"hmruntime/testutils"
 	"testing"
 	"time"
+
+	"hmruntime/testutils"
 )
 
 func Test_DateNow(t *testing.T) {
