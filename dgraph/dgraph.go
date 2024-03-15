@@ -9,6 +9,7 @@ import (
 	"fmt"
 
 	"hmruntime/config"
+	"hmruntime/logger"
 	"hmruntime/utils"
 )
 
@@ -74,7 +75,8 @@ func GetGQLSchema(ctx context.Context) (string, error) {
 
 	data := response.Data
 	if len(data.Node) == 0 {
-		return "", fmt.Errorf("no GraphQL schema found in Dgraph")
+		logger.Warn(ctx).Msg("No GraphQL schema found in Dgraph")
+		return "", nil
 	}
 
 	return data.Node[0].Schema, nil

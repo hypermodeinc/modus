@@ -33,10 +33,12 @@ func MonitorGqlSchema(ctx context.Context) {
 					logger.Err(ctx, urlErr).Msg("Failed to connect to Dgraph.")
 					urlErrorLogged = true
 				} else if !schemaErrorLogged {
-					logger.Warn(ctx).Msg("Failed to retrieve GraphQL schema.")
+					logger.Err(ctx, err).Msg("Failed to retrieve GraphQL schema.")
 					schemaErrorLogged = true
 				}
 			} else if schema != gqlSchema {
+				urlErrorLogged = false
+				schemaErrorLogged = false
 				if gqlSchema == "" {
 					logger.Info(ctx).Msg("Schema loaded.")
 				} else {
