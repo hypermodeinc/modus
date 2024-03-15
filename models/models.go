@@ -120,3 +120,25 @@ func PostToModelEndpoint[TResult any](ctx context.Context, sentenceMap map[strin
 	}
 	return result, nil
 }
+
+// Define  structures used by text generation functions
+type ChatMessage struct {
+	Role    string `json:"role"`
+	Content string `json:"content"`
+}
+
+type ChatResponse struct {
+	Choices []MessageChoice `json:"choices"`
+	Error   InvokeError     `json:"error"`
+}
+
+type MessageChoice struct {
+	Message ChatMessage `json:"message"`
+}
+
+type InvokeError struct {
+	Message string `json:"message"`
+	Type    string `json:"type"`
+	Param   string `json:"param"`
+	Code    string `json:"code"`
+}
