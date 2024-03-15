@@ -10,8 +10,8 @@ import (
 	"fmt"
 	"hmruntime/config"
 	"hmruntime/functions"
+	"hmruntime/host"
 	"hmruntime/logger"
-	"hmruntime/plugins"
 	"net/http"
 	"strings"
 
@@ -71,7 +71,7 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 	// Each request will get its own instance of the plugin module,
 	// so that we can run multiple requests in parallel without risk
 	// of corrupting the module's memory.
-	mod, buf, err := plugins.GetModuleInstance(ctx, info.PluginName)
+	mod, buf, err := host.GetModuleInstance(ctx, info.PluginName)
 	if err != nil {
 		logger.Err(ctx, err).
 			Str("plugin", info.PluginName).
@@ -239,7 +239,7 @@ func handleAdminRequest(w http.ResponseWriter, r *http.Request) {
 	// Perform the requested action
 	switch req.Action {
 	case "reload":
-		err = plugins.ReloadPlugins(r.Context())
+		err = host.ReloadPlugins(r.Context())
 	default:
 		err = fmt.Errorf("unknown action: %s", req.Action)
 	}

@@ -2,20 +2,20 @@
  * Copyright 2023 Hypermode, Inc.
  */
 
-package plugins
+package host
 
 import (
 	"context"
 	"fmt"
-	"hmruntime/aws"
-	"hmruntime/config"
-	"hmruntime/host"
-	"hmruntime/logger"
 	"os"
 	"path"
 	"regexp"
 	"strings"
 	"time"
+
+	"hmruntime/aws"
+	"hmruntime/config"
+	"hmruntime/logger"
 
 	"github.com/radovskyb/watcher"
 )
@@ -45,7 +45,7 @@ func ReloadPlugins(ctx context.Context) error {
 	}
 
 	// Unload any plugins that are no longer present
-	for name := range host.CompiledModules {
+	for name := range CompiledModules {
 		if !loaded[name] {
 			err := unloadPluginModule(ctx, name)
 			if err != nil {
@@ -201,7 +201,7 @@ func WatchForJsonChanges(ctx context.Context) error {
 func WatchForPluginChanges(ctx context.Context) error {
 
 	if config.NoReload {
-		logger.Warn(ctx).Msg("Automatic plugin reloading is disabled. Restart the server to load new or modified plugins.")
+		logger.Warn(ctx).Msg("Automatic plugin reloading is disabled. Restart the server to load new or modified host.")
 		return nil
 	}
 
@@ -291,7 +291,7 @@ func watchDirectoryForPluginChanges(ctx context.Context) error {
 				}
 
 				// Signal that we need to register functions
-				host.RegistrationRequest <- true
+				RegistrationRequest <- true
 
 			case err := <-w.Error:
 				logger.Err(ctx, err).Msg("Failure while watching plugin directory.")
@@ -467,7 +467,7 @@ func watchStorageForPluginChanges(ctx context.Context) error {
 
 			// If anything changed, signal that we need to register functions
 			if changed {
-				host.RegistrationRequest <- true
+				RegistrationRequest <- true
 			}
 
 			select {

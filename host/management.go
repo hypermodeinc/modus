@@ -2,22 +2,21 @@
  * Copyright 2023 Hypermode, Inc.
  */
 
-package plugins
+package host
 
 import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"hmruntime/aws"
-	"hmruntime/config"
-	"hmruntime/functions"
-	"hmruntime/host"
-	"hmruntime/logger"
 	"io"
 	"os"
 	"reflect"
 	"runtime"
 	"strings"
+
+	"hmruntime/aws"
+	"hmruntime/config"
+	"hmruntime/logger"
 
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
@@ -50,12 +49,6 @@ func InitWasmRuntime(ctx context.Context) (wazero.Runtime, error) {
 
 	// Connect WASI host functions
 	err := instantiateWasiFunctions(ctx, runtime)
-	if err != nil {
-		return nil, err
-	}
-
-	// Connect Hypermode host functions
-	err = functions.InstantiateHostFunctions(ctx, runtime)
 	if err != nil {
 		return nil, err
 	}
@@ -126,7 +119,7 @@ func getJsonBytes(ctx context.Context, name string) ([]byte, error) {
 }
 
 func loadPluginModule(ctx context.Context, name string) error {
-	_, reloading := host.CompiledModules[name]
+	_, reloading := CompiledModules[name]
 	logger.Info(ctx).
 		Str("plugin", name).
 		Bool("reloading", reloading).
@@ -139,13 +132,13 @@ func loadPluginModule(ctx context.Context, name string) error {
 	}
 
 	// Compile the plugin into a module.
-	cm, err := host.WasmRuntime.CompileModule(ctx, plugin)
+	cm, err := WasmRuntime.CompileModule(ctx, plugin)
 	if err != nil {
 		return fmt.Errorf("failed to compile the plugin: %w", err)
 	}
 
 	// Store the compiled module for later retrieval.
-	host.CompiledModules[name] = cm
+	CompiledModules[name] = cm
 
 	// TODO: We should close the old module, but that leaves the _new_ module in an invalid state,
 	// giving an error when querying: "source module must be compiled before instantiation"
@@ -181,7 +174,7 @@ func getPluginBytes(ctx context.Context, name string) ([]byte, error) {
 }
 
 func unloadPluginModule(ctx context.Context, name string) error {
-	cmOld, found := host.CompiledModules[name]
+	cmOld, found := CompiledModules[name]
 	if !found {
 		return fmt.Errorf("plugin not found '%s'", name)
 	}
@@ -190,7 +183,7 @@ func unloadPluginModule(ctx context.Context, name string) error {
 		Str("plugin", name).
 		Msg("Unloading plugin.")
 
-	delete(host.CompiledModules, name)
+	delete(CompiledModules, name)
 	cmOld.Close(ctx)
 
 	return nil
@@ -210,7 +203,7 @@ func GetModuleInstance(ctx context.Context, pluginName string) (wasm.Module, buf
 	wErr := io.MultiWriter(buf.Stderr, wErrorLog)
 
 	// Get the compiled module.
-	compiled, ok := host.CompiledModules[pluginName]
+	compiled, ok := CompiledModules[pluginName]
 	if !ok {
 		return nil, buf, fmt.Errorf("no compiled module found for plugin '%s'", pluginName)
 	}
@@ -224,7 +217,7 @@ func GetModuleInstance(ctx context.Context, pluginName string) (wasm.Module, buf
 	// Instantiate the plugin as a module.
 	// NOTE: This will also invoke the plugin's `_start` function,
 	// which will call any top-level code in the plugin.
-	mod, err := host.WasmRuntime.InstantiateModule(ctx, compiled, cfg)
+	mod, err := WasmRuntime.InstantiateModule(ctx, compiled, cfg)
 	if err != nil {
 		return nil, buf, fmt.Errorf("failed to instantiate the plugin module: %w", err)
 	}
