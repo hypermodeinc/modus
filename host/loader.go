@@ -45,9 +45,9 @@ func ReloadPlugins(ctx context.Context) error {
 	}
 
 	// Unload any plugins that are no longer present
-	for name := range CompiledModules {
+	for name := range Plugins {
 		if !loaded[name] {
-			err := unloadPluginModule(ctx, name)
+			err := unloadPlugin(ctx, name)
 			if err != nil {
 				return fmt.Errorf("failed to unload plugin '%s': %w", name, err)
 			}
@@ -124,7 +124,7 @@ func loadPlugins(ctx context.Context) (map[string]bool, error) {
 		}
 
 		for plugin := range plugins {
-			err := loadPluginModule(ctx, plugin)
+			err := loadPlugin(ctx, plugin)
 			if err != nil {
 				logger.Err(ctx, err).
 					Str("plugin", plugin).
@@ -143,7 +143,7 @@ func loadPlugins(ctx context.Context) (map[string]bool, error) {
 	// If the plugins path is a single plugin's base directory, load the single plugin.
 	if _, err := os.Stat(config.PluginsPath + "/build/debug.wasm"); err == nil {
 		pluginName := path.Base(config.PluginsPath)
-		err := loadPluginModule(ctx, pluginName)
+		err := loadPlugin(ctx, pluginName)
 		if err != nil {
 			logger.Err(ctx, err).
 				Str("plugin", pluginName).
@@ -177,7 +177,7 @@ func loadPlugins(ctx context.Context) (map[string]bool, error) {
 		}
 
 		// Load the plugin
-		err := loadPluginModule(ctx, pluginName)
+		err := loadPlugin(ctx, pluginName)
 		if err != nil {
 			logger.Err(ctx, err).
 				Str("plugin", pluginName).
@@ -275,14 +275,14 @@ func watchDirectoryForPluginChanges(ctx context.Context) error {
 
 				switch evt.Op {
 				case watcher.Create, watcher.Write:
-					err = loadPluginModule(ctx, pluginName)
+					err = loadPlugin(ctx, pluginName)
 					if err != nil {
 						logger.Err(ctx, err).
 							Str("plugin", pluginName).
 							Msg("Failed to load plugin.")
 					}
 				case watcher.Remove:
-					err = unloadPluginModule(ctx, pluginName)
+					err = unloadPlugin(ctx, pluginName)
 					if err != nil {
 						logger.Err(ctx, err).
 							Str("plugin", pluginName).
@@ -440,7 +440,7 @@ func watchStorageForPluginChanges(ctx context.Context) error {
 			// Load/reload any new or modified plugins
 			for name, etag := range plugins {
 				if awsPlugins[name] != etag {
-					err := loadPluginModule(ctx, name)
+					err := loadPlugin(ctx, name)
 					if err != nil {
 						logger.Err(ctx, err).
 							Str("plugin", name).
@@ -454,7 +454,7 @@ func watchStorageForPluginChanges(ctx context.Context) error {
 			// Unload any plugins that are no longer present
 			for name := range awsPlugins {
 				if _, found := plugins[name]; !found {
-					err := unloadPluginModule(ctx, name)
+					err := unloadPlugin(ctx, name)
 					if err != nil {
 						logger.Err(ctx, err).
 							Str("plugin", name).

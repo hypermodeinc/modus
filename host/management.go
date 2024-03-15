@@ -118,33 +118,27 @@ func getJsonBytes(ctx context.Context, name string) ([]byte, error) {
 	return bytes, nil
 }
 
-func loadPluginModule(ctx context.Context, name string) error {
-	_, reloading := CompiledModules[name]
+func loadPlugin(ctx context.Context, name string) error {
+	_, reloading := Plugins[name]
 	logger.Info(ctx).
 		Str("plugin", name).
 		Bool("reloading", reloading).
 		Msg("Loading plugin.")
 
 	// Load the binary content of the plugin.
-	plugin, err := getPluginBytes(ctx, name)
+	bytes, err := getPluginBytes(ctx, name)
 	if err != nil {
 		return err
 	}
 
 	// Compile the plugin into a module.
-	cm, err := WasmRuntime.CompileModule(ctx, plugin)
+	cm, err := WasmRuntime.CompileModule(ctx, bytes)
 	if err != nil {
 		return fmt.Errorf("failed to compile the plugin: %w", err)
 	}
 
-	// Store the compiled module for later retrieval.
-	CompiledModules[name] = cm
-
-	// TODO: We should close the old module, but that leaves the _new_ module in an invalid state,
-	// giving an error when querying: "source module must be compiled before instantiation"
-	// if reloading {
-	// 	cmOld.Close(ctx)
-	// }
+	// Store the plugin.
+	Plugins[name] = Plugin{&cm}
 
 	return nil
 }
@@ -173,8 +167,8 @@ func getPluginBytes(ctx context.Context, name string) ([]byte, error) {
 	return bytes, nil
 }
 
-func unloadPluginModule(ctx context.Context, name string) error {
-	cmOld, found := CompiledModules[name]
+func unloadPlugin(ctx context.Context, name string) error {
+	plugin, found := Plugins[name]
 	if !found {
 		return fmt.Errorf("plugin not found '%s'", name)
 	}
@@ -183,8 +177,9 @@ func unloadPluginModule(ctx context.Context, name string) error {
 		Str("plugin", name).
 		Msg("Unloading plugin.")
 
-	delete(CompiledModules, name)
-	cmOld.Close(ctx)
+	mod := *plugin.Module
+	delete(Plugins, name)
+	mod.Close(ctx)
 
 	return nil
 }
@@ -202,10 +197,10 @@ func GetModuleInstance(ctx context.Context, pluginName string) (wasm.Module, buf
 	wOut := io.MultiWriter(buf.Stdout, wInfoLog)
 	wErr := io.MultiWriter(buf.Stderr, wErrorLog)
 
-	// Get the compiled module.
-	compiled, ok := CompiledModules[pluginName]
+	// Get the plugin.
+	plugin, ok := Plugins[pluginName]
 	if !ok {
-		return nil, buf, fmt.Errorf("no compiled module found for plugin '%s'", pluginName)
+		return nil, buf, fmt.Errorf("plugin not found with name '%s'", pluginName)
 	}
 
 	// Configure the module instance.
@@ -217,7 +212,7 @@ func GetModuleInstance(ctx context.Context, pluginName string) (wasm.Module, buf
 	// Instantiate the plugin as a module.
 	// NOTE: This will also invoke the plugin's `_start` function,
 	// which will call any top-level code in the plugin.
-	mod, err := WasmRuntime.InstantiateModule(ctx, compiled, cfg)
+	mod, err := WasmRuntime.InstantiateModule(ctx, *plugin.Module, cfg)
 	if err != nil {
 		return nil, buf, fmt.Errorf("failed to instantiate the plugin module: %w", err)
 	}
