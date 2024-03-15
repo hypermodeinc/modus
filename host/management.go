@@ -137,8 +137,9 @@ func loadPlugin(ctx context.Context, name string) error {
 		return fmt.Errorf("failed to compile the plugin: %w", err)
 	}
 
-	// Store the plugin.
-	Plugins[name] = Plugin{&cm}
+	// Get the metadata, and store the plugin.
+	metadata := getPluginMetadata(&cm)
+	Plugins[name] = Plugin{&cm, metadata}
 
 	return nil
 }
