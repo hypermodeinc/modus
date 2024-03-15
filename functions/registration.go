@@ -80,8 +80,8 @@ func registerFunctions(ctx context.Context, gqlSchema string) error {
 				break
 			}
 		}
-		_, foundModule := host.Plugins[info.PluginName]
-		if !foundSchema || !foundModule {
+		_, foundPlugin := host.Plugins[info.PluginName]
+		if !foundSchema || !foundPlugin {
 			delete(FunctionsMap, resolver)
 			logger.Info(ctx).
 				Str("resolver", resolver).
