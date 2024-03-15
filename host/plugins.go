@@ -14,12 +14,12 @@ import (
 type Plugin struct {
 	Module   *wazero.CompiledModule
 	Metadata PluginMetadata
+	FilePath string
 }
 
 type PluginMetadata struct {
 	Name           string
 	Version        string
-	Language       PluginLanguage
 	LibraryName    string
 	LibraryVersion string
 	BuildId        string
@@ -47,8 +47,12 @@ func (lang PluginLanguage) String() string {
 	}
 }
 
-func getPluginLanguage(libraryName string) PluginLanguage {
-	switch libraryName {
+func (p *Plugin) Name() string {
+	return p.Metadata.Name
+}
+
+func (p *Plugin) Language() PluginLanguage {
+	switch p.Metadata.LibraryName {
 	case "@hypermode/functions-as":
 		return AssemblyScript
 	case "gohypermode/functions-go":
@@ -80,7 +84,6 @@ func getPluginMetadata(cm *wazero.CompiledModule) PluginMetadata {
 			metadata.BuildTime, _ = time.Parse(time.RFC3339, string(data))
 		case "hypermode_library":
 			metadata.LibraryName, metadata.LibraryVersion = parseNameAndVersion(string(data))
-			metadata.Language = getPluginLanguage(metadata.LibraryName)
 		case "hypermode_plugin":
 			metadata.Name, metadata.Version = parseNameAndVersion(string(data))
 		case "git_repo":

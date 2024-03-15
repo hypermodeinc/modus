@@ -12,6 +12,7 @@ import (
 	"os"
 	"reflect"
 	"strings"
+	"time"
 
 	"hmruntime/aws"
 	"hmruntime/config"
@@ -107,77 +108,89 @@ func getJsonBytes(ctx context.Context, name string) ([]byte, error) {
 	return bytes, nil
 }
 
-func loadPlugin(ctx context.Context, name string) error {
-	_, reloading := Plugins[name]
-	logger.Info(ctx).
-		Str("filename", name+".wasm").
-		Bool("reloading", reloading).
-		Msg("Loading plugin.")
+func loadPlugin(ctx context.Context, path string) (Plugin, error) {
 
-	// TODO: Separate plugin name from file name throughout the codebase.
-	// The plugin name should always come from the metadata, not the file name.
-	// This requires significant changes, so it's not done yet.
+	logger.Info(ctx).Str("path", path).Msg("Loading plugin.")
 
 	// Load the binary content of the plugin.
-	bytes, err := getPluginBytes(ctx, name)
+	bytes, err := getPluginBytes(ctx, path)
 	if err != nil {
-		return err
+		return Plugin{}, err
 	}
 
 	// Compile the plugin into a module.
 	cm, err := WasmRuntime.CompileModule(ctx, bytes)
 	if err != nil {
-		return fmt.Errorf("failed to compile the plugin: %w", err)
+		return Plugin{}, fmt.Errorf("failed to compile the plugin: %w", err)
 	}
 
 	// Get the metadata for the plugin.
 	metadata := getPluginMetadata(&cm)
 	if metadata == (PluginMetadata{}) {
 		logger.Warn(ctx).
-			Str("filename", name+".wasm").
+			Str("path", path).
 			Msg("No metadata found in plugin.  Please recompile your plugin using the latest version of the Hypermode Functions library.")
+
+		// Use the filename as the plugin name if no metadata is found.
+		metadata.Name, _ = getPluginNameFromPath(path)
 	}
 
-	// Finally, store the plugin to complete the loading process.
-	Plugins[name] = Plugin{&cm, metadata}
-	logPluginLoaded(ctx, metadata)
+	// Finally, create and store the plugin to complete the loading process.
+	plugin := Plugin{&cm, metadata, path}
+	Plugins[path] = plugin
+	logPluginLoaded(ctx, plugin)
 
-	return nil
+	return plugin, nil
 }
 
-func logPluginLoaded(ctx context.Context, metadata PluginMetadata) {
+func logPluginLoaded(ctx context.Context, plugin Plugin) {
 	evt := logger.Info(ctx)
+	metadata := plugin.Metadata
 
-	if metadata != (PluginMetadata{}) {
+	if metadata.Name != "" {
 		evt.Str("plugin", metadata.Name)
+	}
+
+	if metadata.Version != "" {
 		evt.Str("version", metadata.Version)
-		evt.Str("language", metadata.Language.String())
+	}
+
+	lang := plugin.Language()
+	if lang != UnknownLanguage {
+		evt.Str("language", lang.String())
+	}
+
+	if metadata.BuildId != "" {
 		evt.Str("build_id", metadata.BuildId)
-		evt.Time("build_time", metadata.BuildTime)
+	}
+
+	if metadata.BuildTime != (time.Time{}) {
+		evt.Time("build_id", metadata.BuildTime)
+	}
+
+	if metadata.LibraryName != "" {
 		evt.Str("hypermode_library", metadata.LibraryName)
+	}
+
+	if metadata.LibraryVersion != "" {
 		evt.Str("hypermode_library_version", metadata.LibraryVersion)
+	}
 
-		if metadata.GitRepo != "" {
-			evt.Str("git_repo", metadata.GitRepo)
-		}
+	if metadata.GitRepo != "" {
+		evt.Str("git_repo", metadata.GitRepo)
+	}
 
-		if metadata.GitCommit != "" {
-			evt.Str("git_commit", metadata.GitCommit)
-		}
+	if metadata.GitCommit != "" {
+		evt.Str("git_commit", metadata.GitCommit)
 	}
 
 	evt.Msg("Loaded plugin.")
 }
 
-func getPluginBytes(ctx context.Context, name string) ([]byte, error) {
+func getPluginBytes(ctx context.Context, path string) ([]byte, error) {
 
 	if aws.UseAwsForPluginStorage() {
-		return aws.GetPluginBytes(ctx, name)
-	}
-
-	path, err := getPathForPlugin(name)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get path for plugin: %w", err)
+		return aws.GetPluginBytes(ctx, path)
 	}
 
 	bytes, err := os.ReadFile(path)
@@ -186,9 +199,8 @@ func getPluginBytes(ctx context.Context, name string) ([]byte, error) {
 	}
 
 	logger.Info(ctx).
-		Str("plugin", name).
 		Str("path", path).
-		Msg("Retrieved plugin from local storage.")
+		Msg("Retrieved plugin file from local storage.")
 
 	return bytes, nil
 }
@@ -208,6 +220,15 @@ func unloadPlugin(ctx context.Context, name string) error {
 	mod.Close(ctx)
 
 	return nil
+}
+
+func findPluginByPath(path string) (Plugin, bool) {
+	for _, plugin := range Plugins {
+		if plugin.FilePath == path {
+			return plugin, true
+		}
+	}
+	return Plugin{}, false
 }
 
 func GetModuleInstance(ctx context.Context, pluginName string) (wasm.Module, buffers, error) {

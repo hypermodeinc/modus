@@ -54,24 +54,24 @@ func ListJsons(ctx context.Context) (map[string]string, error) {
 	return jsons, nil
 }
 
-func ListPlugins(ctx context.Context) (map[string]string, error) {
+func ListPluginsFiles(ctx context.Context) (map[string]string, error) {
 
 	result, err := S3RetrievalHelper(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("error listing objects from S3 bucket: %w", err)
 	}
 
-	var plugins = make(map[string]string, *result.KeyCount)
+	var files = make(map[string]string, *result.KeyCount)
 	for _, obj := range result.Contents {
 		if !strings.HasSuffix(*obj.Key, ".wasm") {
 			continue
 		}
 
-		name := strings.TrimSuffix(strings.TrimPrefix(*obj.Key, getPathPrefix()), ".wasm")
-		plugins[name] = *obj.ETag
+		name := strings.TrimPrefix(*obj.Key, getPathPrefix())
+		files[name] = *obj.ETag
 	}
 
-	return plugins, nil
+	return files, nil
 }
 
 func GetJsonBytes(ctx context.Context, name string) ([]byte, error) {
@@ -104,13 +104,13 @@ func GetJsonBytes(ctx context.Context, name string) ([]byte, error) {
 	return bytes, nil
 }
 
-func GetPluginBytes(ctx context.Context, name string) ([]byte, error) {
+func GetPluginBytes(ctx context.Context, path string) ([]byte, error) {
 
 	if !useS3PluginStorage {
 		return nil, fmt.Errorf("unable to retrieve plugin because S3 plugin storage is disabled")
 	}
 
-	key := getPathPrefix() + name + ".wasm"
+	key := getPathPrefix() + path
 	input := &s3.GetObjectInput{
 		Bucket: &config.S3Bucket,
 		Key:    &key,
@@ -119,13 +119,13 @@ func GetPluginBytes(ctx context.Context, name string) ([]byte, error) {
 	svc := s3.NewFromConfig(awsConfig)
 	obj, err := svc.GetObject(ctx, input)
 	if err != nil {
-		return nil, fmt.Errorf("error getting object for plugin '%s' from S3: %w", name, err)
+		return nil, fmt.Errorf("error getting object %s from S3: %w", path, err)
 	}
 
 	defer obj.Body.Close()
 	bytes, err := io.ReadAll(obj.Body)
 	if err != nil {
-		return nil, fmt.Errorf("error reading content stream of plugin '%s' from S3: %w", name, err)
+		return nil, fmt.Errorf("error reading content stream of %s from S3: %w", path, err)
 	}
 
 	logger.Info(ctx).

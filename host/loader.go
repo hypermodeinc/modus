@@ -21,7 +21,7 @@ import (
 )
 
 // Map of plugin names and etags as last retrieved from S3.
-var awsPlugins map[string]string
+var awsPluginFiles map[string]string
 
 // Map of json files and etags as last retrieved from S3.
 var awsJsons map[string]string
@@ -118,37 +118,37 @@ func loadPlugins(ctx context.Context) (map[string]bool, error) {
 	var loaded = make(map[string]bool)
 
 	if aws.UseAwsForPluginStorage() {
-		plugins, err := aws.ListPlugins(ctx)
+		files, err := aws.ListPluginsFiles(ctx)
 		if err != nil {
-			return nil, fmt.Errorf("failed to list plugins from S3: %w", err)
+			return nil, fmt.Errorf("failed to list plugin files from S3: %w", err)
 		}
 
-		for plugin := range plugins {
-			err := loadPlugin(ctx, plugin)
+		for filePath := range files {
+			plugin, err := loadPlugin(ctx, filePath)
 			if err != nil {
 				logger.Err(ctx, err).
-					Str("plugin", plugin).
+					Str("path", filePath).
 					Msg("Failed to load plugin.")
 			} else {
-				loaded[plugin] = true
+				pluginName := plugin.Name()
+				loaded[pluginName] = true
 			}
 		}
 
-		// Store the list of plugins and their etags for later comparison.
-		awsPlugins = plugins
+		// Store the list of plugin files and their etags for later comparison.
+		awsPluginFiles = files
 
 		return loaded, nil
 	}
 
-	// If the plugins path is a single plugin's base directory, load the single plugin.
-	if _, err := os.Stat(config.PluginsPath + "/build/debug.wasm"); err == nil {
-		pluginName := path.Base(config.PluginsPath)
-		err := loadPlugin(ctx, pluginName)
+	// If the plugins pluginPath is a single plugin's base directory, load from its build/debug.wasm file.
+	pluginPath := path.Join(config.PluginsPath, "build", "debug.wasm")
+	if _, err := os.Stat(pluginPath); err == nil {
+		plugin, err := loadPlugin(ctx, pluginPath)
 		if err != nil {
-			logger.Err(ctx, err).
-				Str("plugin", pluginName).
-				Msg("Failed to load plugin.")
+			logger.Err(ctx, err).Str("path", pluginPath).Msg("Failed to load plugin.")
 		} else {
+			pluginName := plugin.Name()
 			loaded[pluginName] = true
 		}
 	}
@@ -162,27 +162,26 @@ func loadPlugins(ctx context.Context) (map[string]bool, error) {
 	for _, entry := range entries {
 
 		// Determine if the entry represents a plugin.
-		var pluginName string
-		entryName := entry.Name()
+		var pluginPath string
 		if entry.IsDir() {
-			pluginName = entryName
-			path := fmt.Sprintf("%s/%s/build/debug.wasm", config.PluginsPath, pluginName)
-			if _, err := os.Stat(path); err != nil {
+			pluginPath = path.Join(config.PluginsPath, entry.Name(), "build", "debug.wasm")
+			if _, err := os.Stat(pluginPath); err != nil {
 				continue
 			}
-		} else if strings.HasSuffix(entryName, ".wasm") {
-			pluginName = strings.TrimSuffix(entryName, ".wasm")
+		} else if strings.HasSuffix(entry.Name(), ".wasm") {
+			pluginPath = path.Join(config.PluginsPath, entry.Name())
 		} else {
 			continue
 		}
 
 		// Load the plugin
-		err := loadPlugin(ctx, pluginName)
+		plugin, err := loadPlugin(ctx, pluginPath)
 		if err != nil {
 			logger.Err(ctx, err).
-				Str("plugin", pluginName).
+				Str("path", pluginPath).
 				Msg("Failed to load plugin.")
 		} else {
+			pluginName := plugin.Name()
 			loaded[pluginName] = true
 		}
 	}
@@ -264,29 +263,25 @@ func watchDirectoryForPluginChanges(ctx context.Context) error {
 		for {
 			select {
 			case evt := <-w.Event:
-
-				pluginName, err := getPluginNameFromPath(evt.Path)
-				if err != nil {
-					logger.Err(ctx, err).Msg("Failed to get plugin name.")
-				}
-				if pluginName == "" {
-					continue
-				}
-
 				switch evt.Op {
 				case watcher.Create, watcher.Write:
-					err = loadPlugin(ctx, pluginName)
+					_, err := loadPlugin(ctx, evt.Path)
 					if err != nil {
 						logger.Err(ctx, err).
-							Str("plugin", pluginName).
+							Str("path", evt.Path).
 							Msg("Failed to load plugin.")
 					}
 				case watcher.Remove:
-					err = unloadPlugin(ctx, pluginName)
-					if err != nil {
-						logger.Err(ctx, err).
-							Str("plugin", pluginName).
-							Msg("Failed to unload plugin.")
+					plugin, found := findPluginByPath(evt.Path)
+					if found {
+						pluginName := plugin.Name()
+						err := unloadPlugin(ctx, pluginName)
+						if err != nil {
+							logger.Err(ctx, err).
+								Str("path", evt.Path).
+								Str("plugin", pluginName).
+								Msg("Failed to unload plugin.")
+						}
 					}
 				}
 
@@ -428,7 +423,7 @@ func watchStorageForPluginChanges(ctx context.Context) error {
 		defer ticker.Stop()
 
 		for {
-			plugins, err := aws.ListPlugins(ctx)
+			pluginFiles, err := aws.ListPluginsFiles(ctx)
 			if err != nil {
 				// Don't stop watching. We'll just try again on the next cycle.
 				logger.Err(ctx, err).Msg("Failed to list plugins from S3.")
@@ -438,29 +433,33 @@ func watchStorageForPluginChanges(ctx context.Context) error {
 			var changed = false
 
 			// Load/reload any new or modified plugins
-			for name, etag := range plugins {
-				if awsPlugins[name] != etag {
-					err := loadPlugin(ctx, name)
+			for filename, etag := range pluginFiles {
+				if awsPluginFiles[filename] != etag {
+					_, err := loadPlugin(ctx, filename)
 					if err != nil {
 						logger.Err(ctx, err).
-							Str("plugin", name).
+							Str("path", filename).
 							Msg("Failed to load plugin.")
 					}
-					awsPlugins[name] = etag
+					awsPluginFiles[filename] = etag
 					changed = true
 				}
 			}
 
 			// Unload any plugins that are no longer present
-			for name := range awsPlugins {
-				if _, found := plugins[name]; !found {
-					err := unloadPlugin(ctx, name)
-					if err != nil {
-						logger.Err(ctx, err).
-							Str("plugin", name).
-							Msg("Failed to unload plugin.")
+			for filename := range awsPluginFiles {
+				if _, found := pluginFiles[filename]; !found {
+					plugin, found := findPluginByPath(filename)
+					if found {
+						err := unloadPlugin(ctx, filename)
+						if err != nil {
+							logger.Err(ctx, err).
+								Str("path", filename).
+								Str("plugin", plugin.Name()).
+								Msg("Failed to unload plugin.")
+						}
 					}
-					delete(awsPlugins, name)
+					delete(awsPluginFiles, filename)
 					changed = true
 				}
 			}
