@@ -14,7 +14,6 @@ import (
 	"hmruntime/functions"
 	"hmruntime/host"
 	"hmruntime/logger"
-	"hmruntime/plugins"
 
 	"github.com/joho/godotenv"
 )
@@ -53,11 +52,17 @@ func main() {
 	}
 
 	// Initialize the WebAssembly runtime
-	host.WasmRuntime, err = plugins.InitWasmRuntime(ctx)
+	host.WasmRuntime, err = host.InitWasmRuntime(ctx)
 	if err != nil {
 		log.Fatal().Err(err).Msg("Failed to initialize the WebAssembly runtime.  Exiting.")
 	}
 	defer host.WasmRuntime.Close(ctx)
+
+	// Connect Hypermode host functions
+	err = functions.InstantiateHostFunctions(ctx, host.WasmRuntime)
+	if err != nil {
+		log.Fatal().Err(err).Msg("Failed to instantiate host functions.  Exiting.")
+	}
 
 	// Load environment variables from plugins path
 	// note: .env file is optional, so don't log if it's not found
@@ -67,13 +72,13 @@ func main() {
 	}
 
 	// Load json
-	err = plugins.LoadJsons(ctx)
+	err = host.LoadJsons(ctx)
 	if err != nil {
 		log.Fatal().Err(err).Msg("Failed to load hypermode.json.  Exiting.")
 	}
 
 	// Load plugins
-	err = plugins.LoadPlugins(ctx)
+	err = host.LoadPlugins(ctx)
 	if err != nil {
 		log.Fatal().Err(err).Msg("Failed to load plugins.  Exiting.")
 	}
@@ -85,13 +90,13 @@ func main() {
 	functions.MonitorGqlSchema(ctx)
 
 	// Watch for plugin changes
-	err = plugins.WatchForPluginChanges(ctx)
+	err = host.WatchForPluginChanges(ctx)
 	if err != nil {
 		log.Fatal().Err(err).Msg("Failed to watch for plugin changes.  Exiting.")
 	}
 
 	// Watch for hypermode.json changes
-	err = plugins.WatchForJsonChanges(ctx)
+	err = host.WatchForJsonChanges(ctx)
 	if err != nil {
 		log.Fatal().Err(err).Msg("Failed to watch for hypermode.json changes.  Exiting.")
 	}

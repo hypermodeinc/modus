@@ -6,11 +6,12 @@ package functions
 
 import (
 	"context"
+	"reflect"
+	"strings"
+
 	"hmruntime/host"
 	"hmruntime/logger"
 	"hmruntime/schema"
-	"reflect"
-	"strings"
 )
 
 // map that holds the function info for each resolver
@@ -46,9 +47,10 @@ func registerFunctions(ctx context.Context, gqlSchema string) error {
 
 	// Build a map of resolvers to function info, including the plugin name.
 	// If there are function name conflicts between plugins, the last plugin loaded wins.
-	for pluginName, cm := range host.CompiledModules {
+	for pluginName, plugin := range host.Plugins {
 		for _, scma := range funcSchemas {
-			for _, fn := range cm.ExportedFunctions() {
+			module := *plugin.Module
+			for _, fn := range module.ExportedFunctions() {
 				fnName := fn.ExportNames()[0]
 				if strings.EqualFold(fnName, scma.FunctionName()) {
 					info := schema.FunctionInfo{PluginName: pluginName, Schema: scma}
@@ -78,8 +80,8 @@ func registerFunctions(ctx context.Context, gqlSchema string) error {
 				break
 			}
 		}
-		_, foundModule := host.CompiledModules[info.PluginName]
-		if !foundSchema || !foundModule {
+		_, foundPlugin := host.Plugins[info.PluginName]
+		if !foundSchema || !foundPlugin {
 			delete(FunctionsMap, resolver)
 			logger.Info(ctx).
 				Str("resolver", resolver).
