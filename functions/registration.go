@@ -25,7 +25,6 @@ func MonitorRegistration(ctx context.Context) {
 		for {
 			select {
 			case <-host.RegistrationRequest:
-				logger.Info(ctx).Msg("Registering functions.")
 				err := registerFunctions(ctx, gqlSchema)
 				if err != nil {
 					logger.Err(ctx, err).Msg("Failed to register functions.")

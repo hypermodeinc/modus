@@ -128,10 +128,6 @@ func GetPluginBytes(ctx context.Context, path string) ([]byte, error) {
 		return nil, fmt.Errorf("error reading content stream of %s from S3: %w", path, err)
 	}
 
-	logger.Info(ctx).
-		Str("key", key).
-		Msg("Retrieved plugin from S3.")
-
 	return bytes, nil
 }
 

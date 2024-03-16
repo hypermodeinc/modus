@@ -110,8 +110,6 @@ func getJsonBytes(ctx context.Context, name string) ([]byte, error) {
 
 func loadPlugin(ctx context.Context, path string) (Plugin, error) {
 
-	logger.Info(ctx).Str("path", path).Msg("Loading plugin.")
-
 	// Load the binary content of the plugin.
 	bytes, err := getPluginBytes(ctx, path)
 	if err != nil {
@@ -204,10 +202,6 @@ func getPluginBytes(ctx context.Context, path string) ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to load the plugin: %w", err)
 	}
-
-	logger.Info(ctx).
-		Str("path", path).
-		Msg("Retrieved plugin file from local storage.")
 
 	return bytes, nil
 }
