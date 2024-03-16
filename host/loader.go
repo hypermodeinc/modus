@@ -138,19 +138,7 @@ func loadPlugins(ctx context.Context) (map[string]bool, error) {
 		return loaded, nil
 	}
 
-	// If the plugins pluginPath is a single plugin's base directory, load from its build/debug.wasm file.
-	pluginPath := path.Join(config.PluginsPath, "build", "debug.wasm")
-	if _, err := os.Stat(pluginPath); err == nil {
-		plugin, err := loadPlugin(ctx, pluginPath)
-		if err != nil {
-			logger.Err(ctx, err).Str("path", pluginPath).Msg("Failed to load plugin.")
-		} else {
-			pluginName := plugin.Name()
-			loaded[pluginName] = true
-		}
-	}
-
-	// Otherwise, load all plugins in the plugins directory.
+	// Load all plugins in the plugins directory.
 	entries, err := os.ReadDir(config.PluginsPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read plugins directory: %w", err)
@@ -160,12 +148,7 @@ func loadPlugins(ctx context.Context) (map[string]bool, error) {
 
 		// Determine if the entry represents a plugin.
 		var pluginPath string
-		if entry.IsDir() {
-			pluginPath = path.Join(config.PluginsPath, entry.Name(), "build", "debug.wasm")
-			if _, err := os.Stat(pluginPath); err != nil {
-				continue
-			}
-		} else if strings.HasSuffix(entry.Name(), ".wasm") {
+		if !entry.IsDir() && strings.HasSuffix(entry.Name(), ".wasm") {
 			pluginPath = path.Join(config.PluginsPath, entry.Name())
 		} else {
 			continue
@@ -322,29 +305,6 @@ func getPathForJson(name string) (string, error) {
 	return "", fmt.Errorf("json file not found for plugin '%s'", name)
 }
 
-func getPathForPlugin(name string) (string, error) {
-
-	// Normally the plugin will be directly in the plugins directory, by filename.
-	p := path.Join(config.PluginsPath, name+".wasm")
-	if _, err := os.Stat(p); err == nil {
-		return p, nil
-	}
-
-	// For local development, the plugin will be in a subdirectory and we'll use the debug.wasm file.
-	p = path.Join(config.PluginsPath, name, "build", "debug.wasm")
-	if _, err := os.Stat(p); err == nil {
-		return p, nil
-	}
-
-	// Or, the plugins path might pointing to a single plugin's base directory.
-	p = path.Join(config.PluginsPath, "build", "debug.wasm")
-	if _, err := os.Stat(p); err == nil {
-		return p, nil
-	}
-
-	return "", fmt.Errorf("compiled wasm file not found for plugin '%s'", name)
-}
-
 func getJsonNameFromPath(p string) (string, error) {
 	if !strings.HasSuffix(p, ".json") {
 		return "", fmt.Errorf("path does not point to a json file: %s", p)
@@ -359,14 +319,6 @@ func getPluginNameFromPath(p string) (string, error) {
 	}
 
 	parts := strings.Split(p, "/")
-
-	// For local development
-	if strings.HasSuffix(p, "/build/debug.wasm") {
-		return parts[len(parts)-3], nil
-	} else if strings.HasSuffix(p, "/build/release.wasm") {
-		return "", nil
-	}
-
 	return strings.TrimSuffix(parts[len(parts)-1], ".wasm"), nil
 }
 
