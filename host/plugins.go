@@ -70,9 +70,7 @@ func parseNameAndVersion(s string) (name string, version string) {
 	return s[:i], s[i+1:]
 }
 
-func getPluginMetadata(cm *wazero.CompiledModule) PluginMetadata {
-	var metadata = PluginMetadata{}
-
+func getPluginMetadata(cm *wazero.CompiledModule) (metadata PluginMetadata, found bool) {
 	for _, sec := range (*cm).CustomSections() {
 		name := sec.Name()
 		data := sec.Data()
@@ -80,18 +78,24 @@ func getPluginMetadata(cm *wazero.CompiledModule) PluginMetadata {
 		switch name {
 		case "build_id":
 			metadata.BuildId = string(data)
+			found = true
 		case "build_ts":
 			metadata.BuildTime, _ = time.Parse(time.RFC3339, string(data))
+			found = true
 		case "hypermode_library":
 			metadata.LibraryName, metadata.LibraryVersion = parseNameAndVersion(string(data))
+			found = true
 		case "hypermode_plugin":
 			metadata.Name, metadata.Version = parseNameAndVersion(string(data))
+			found = true
 		case "git_repo":
 			metadata.GitRepo = string(data)
+			found = true
 		case "git_commit":
 			metadata.GitCommit = string(data)
+			found = true
 		}
 	}
 
-	return metadata
+	return metadata, found
 }

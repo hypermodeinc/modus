@@ -125,26 +125,33 @@ func loadPlugin(ctx context.Context, path string) (Plugin, error) {
 	}
 
 	// Get the metadata for the plugin.
-	metadata := getPluginMetadata(&cm)
-	if metadata == (PluginMetadata{}) {
-		logger.Warn(ctx).
-			Str("path", path).
-			Msg("No metadata found in plugin.  Please recompile your plugin using the latest version of the Hypermode Functions library.")
+	metadata, foundMetadata := getPluginMetadata(&cm)
 
-		// Use the filename as the plugin name if no metadata is found.
+	// Use the filename as the plugin name if no metadata is found.
+	if !foundMetadata {
 		metadata.Name, _ = getPluginNameFromPath(path)
 	}
 
-	// Finally, create and store the plugin to complete the loading process.
+	// Create and store the plugin.
 	plugin := Plugin{&cm, metadata, path}
-	Plugins[path] = plugin
+	Plugins.Add(plugin)
+
+	// Log the details of the loaded plugin.
 	logPluginLoaded(ctx, plugin)
+	if !foundMetadata {
+		logger.Warn(ctx).
+			Str("path", path).
+			Str("plugin", plugin.Name()).
+			Msg("No metadata found in plugin.  Please recompile your plugin using the latest version of the Hypermode Functions library.")
+	}
 
 	return plugin, nil
 }
 
 func logPluginLoaded(ctx context.Context, plugin Plugin) {
 	evt := logger.Info(ctx)
+	evt.Str("path", plugin.FilePath)
+
 	metadata := plugin.Metadata
 
 	if metadata.Name != "" {
@@ -205,30 +212,13 @@ func getPluginBytes(ctx context.Context, path string) ([]byte, error) {
 	return bytes, nil
 }
 
-func unloadPlugin(ctx context.Context, name string) error {
-	plugin, found := Plugins[name]
-	if !found {
-		return fmt.Errorf("plugin not found '%s'", name)
-	}
-
+func unloadPlugin(ctx context.Context, plugin Plugin) {
 	logger.Info(ctx).
-		Str("plugin", name).
+		Str("plugin", plugin.Name()).
 		Msg("Unloading plugin.")
 
-	mod := *plugin.Module
-	delete(Plugins, name)
-	mod.Close(ctx)
-
-	return nil
-}
-
-func findPluginByPath(path string) (Plugin, bool) {
-	for _, plugin := range Plugins {
-		if plugin.FilePath == path {
-			return plugin, true
-		}
-	}
-	return Plugin{}, false
+	Plugins.Remove(plugin)
+	(*plugin.Module).Close(ctx)
 }
 
 func GetModuleInstance(ctx context.Context, pluginName string) (wasm.Module, buffers, error) {
@@ -245,7 +235,7 @@ func GetModuleInstance(ctx context.Context, pluginName string) (wasm.Module, buf
 	wErr := io.MultiWriter(buf.Stderr, wErrorLog)
 
 	// Get the plugin.
-	plugin, ok := Plugins[pluginName]
+	plugin, ok := Plugins.GetByName(pluginName)
 	if !ok {
 		return nil, buf, fmt.Errorf("plugin not found with name '%s'", pluginName)
 	}

@@ -45,12 +45,9 @@ func ReloadPlugins(ctx context.Context) error {
 	}
 
 	// Unload any plugins that are no longer present
-	for name := range Plugins {
-		if !loaded[name] {
-			err := unloadPlugin(ctx, name)
-			if err != nil {
-				return fmt.Errorf("failed to unload plugin '%s': %w", name, err)
-			}
+	for _, plugin := range Plugins.GetAll() {
+		if !loaded[plugin.Name()] {
+			unloadPlugin(ctx, plugin)
 		}
 	}
 
@@ -272,16 +269,9 @@ func watchDirectoryForPluginChanges(ctx context.Context) error {
 							Msg("Failed to load plugin.")
 					}
 				case watcher.Remove:
-					plugin, found := findPluginByPath(evt.Path)
+					plugin, found := Plugins.GetByPath(evt.Path)
 					if found {
-						pluginName := plugin.Name()
-						err := unloadPlugin(ctx, pluginName)
-						if err != nil {
-							logger.Err(ctx, err).
-								Str("path", evt.Path).
-								Str("plugin", pluginName).
-								Msg("Failed to unload plugin.")
-						}
+						unloadPlugin(ctx, plugin)
 					}
 				}
 
@@ -449,15 +439,9 @@ func watchStorageForPluginChanges(ctx context.Context) error {
 			// Unload any plugins that are no longer present
 			for filename := range awsPluginFiles {
 				if _, found := pluginFiles[filename]; !found {
-					plugin, found := findPluginByPath(filename)
+					plugin, found := Plugins.GetByPath(filename)
 					if found {
-						err := unloadPlugin(ctx, filename)
-						if err != nil {
-							logger.Err(ctx, err).
-								Str("path", filename).
-								Str("plugin", plugin.Name()).
-								Msg("Failed to unload plugin.")
-						}
+						unloadPlugin(ctx, plugin)
 					}
 					delete(awsPluginFiles, filename)
 					changed = true
