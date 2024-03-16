@@ -63,7 +63,7 @@ func main() {
 	}
 
 	// Initialize the WebAssembly runtime
-	host.WasmRuntime, err = host.InitWasmRuntime(ctx)
+	err = host.InitWasmRuntime(ctx)
 	if err != nil {
 		log.Fatal().Err(err).Msg("Failed to initialize the WebAssembly runtime.  Exiting.")
 	}

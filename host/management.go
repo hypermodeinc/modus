@@ -29,20 +29,11 @@ type buffers struct {
 	Stderr *strings.Builder
 }
 
-func InitWasmRuntime(ctx context.Context) (wazero.Runtime, error) {
-
-	// Create the runtime
+func InitWasmRuntime(ctx context.Context) error {
 	cfg := wazero.NewRuntimeConfig()
 	cfg = cfg.WithCloseOnContextDone(true)
-	runtime := wazero.NewRuntimeWithConfig(ctx, cfg)
-
-	// Connect WASI host functions
-	err := instantiateWasiFunctions(ctx, runtime)
-	if err != nil {
-		return nil, err
-	}
-
-	return runtime, nil
+	WasmRuntime = wazero.NewRuntimeWithConfig(ctx, cfg)
+	return instantiateWasiFunctions(ctx)
 }
 
 func loadJson(ctx context.Context, name string) error {
@@ -233,8 +224,8 @@ func GetModuleInstance(ctx context.Context, pluginName string) (wasm.Module, buf
 	return mod, buf, nil
 }
 
-func instantiateWasiFunctions(ctx context.Context, runtime wazero.Runtime) error {
-	b := runtime.NewHostModuleBuilder(wasi.ModuleName)
+func instantiateWasiFunctions(ctx context.Context) error {
+	b := WasmRuntime.NewHostModuleBuilder(wasi.ModuleName)
 	wasi.NewFunctionExporter().ExportFunctions(b)
 
 	// If we ever need to override any of the WASI functions, we can do so here.
