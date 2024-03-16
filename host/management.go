@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"reflect"
 	"strings"
 	"time"
 
@@ -59,7 +58,7 @@ func loadJson(ctx context.Context, name string) error {
 
 	_, exists := config.SupportedJsons[name+".json"]
 	if !exists {
-		return fmt.Errorf("JSON %s does not exist.", name)
+		return fmt.Errorf("JSON %s does not exist", name)
 	}
 
 	err = json.Unmarshal(bytes, config.SupportedJsons[name+".json"])
@@ -68,23 +67,6 @@ func loadJson(ctx context.Context, name string) error {
 	}
 
 	return nil
-}
-
-func unloadJson(ctx context.Context, name string) {
-	config.Mu.Lock()         // Lock the mutex
-	defer config.Mu.Unlock() // Unlock the mutex when the function returns
-
-	value, exists := config.SupportedJsons[name+".json"]
-	if !exists {
-		logger.Error(ctx).Msg(fmt.Sprintf("JSON %s does not exist.", name))
-		return
-	}
-
-	t := reflect.TypeOf(value).Elem()
-	v := reflect.New(t).Interface()
-	config.SupportedJsons[name+".json"] = v
-
-	logger.Info(ctx).Msg(fmt.Sprintf("Unloaded %s.json.", name))
 }
 
 func getJsonBytes(ctx context.Context, name string) ([]byte, error) {
