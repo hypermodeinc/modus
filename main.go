@@ -23,6 +23,8 @@ func main() {
 	config.ParseCommandLineFlags()
 	log := logger.Initialize()
 
+	log.Info().Msg("Starting Hypermode Runtime.")
+
 	// Validate configuration
 	if config.PluginsPath == "" && config.S3Bucket == "" {
 		log.Fatal().Msg("A plugins path and/or S3 bucket are required.  Exiting.")
@@ -45,10 +47,19 @@ func main() {
 		}
 	}
 
-	// Initialize the AWS configuration
-	err := aws.Initialize(ctx)
-	if err != nil {
-		log.Info().Err(err).Msg("AWS functionality will be disabled.")
+	// Load environment variables from plugins path
+	// note: .env file is optional, so don't log if it's not found
+	err := godotenv.Load(path.Join(config.PluginsPath, ".env"))
+	if err != nil && !os.IsNotExist(err) {
+		log.Warn().Err(err).Msg("Error reading .env file.  Ignoring.")
+	}
+
+	// Initialize the AWS configuration if we're using any AWS functionality
+	if config.S3Bucket != "" || config.UseAwsSecrets {
+		err = aws.Initialize(ctx)
+		if err != nil {
+			log.Info().Err(err).Msg("AWS functionality will be disabled.")
+		}
 	}
 
 	// Initialize the WebAssembly runtime
@@ -62,13 +73,6 @@ func main() {
 	err = functions.InstantiateHostFunctions(ctx, host.WasmRuntime)
 	if err != nil {
 		log.Fatal().Err(err).Msg("Failed to instantiate host functions.  Exiting.")
-	}
-
-	// Load environment variables from plugins path
-	// note: .env file is optional, so don't log if it's not found
-	err = godotenv.Load(path.Join(config.PluginsPath, ".env"))
-	if err != nil && !os.IsNotExist(err) {
-		log.Warn().Err(err).Msg("Error reading .env file.  Ignoring.")
 	}
 
 	// Load json
