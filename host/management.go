@@ -11,7 +11,6 @@ import (
 	"io"
 	"os"
 	"reflect"
-	"runtime"
 	"strings"
 
 	"hmruntime/aws"
@@ -22,7 +21,6 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/tetratelabs/wazero"
 	wasm "github.com/tetratelabs/wazero/api"
-	"github.com/tetratelabs/wazero/experimental/opt"
 	wasi "github.com/tetratelabs/wazero/imports/wasi_snapshot_preview1"
 )
 
@@ -34,16 +32,7 @@ type buffers struct {
 func InitWasmRuntime(ctx context.Context) (wazero.Runtime, error) {
 
 	// Create the runtime
-	var cfg wazero.RuntimeConfig
-	if runtime.GOARCH == "arm64" {
-		// Use the experimental optimizing compiler for ARM64 to improve performance.
-		// This is not yet available for other architectures.
-		// See https://github.com/tetratelabs/wazero/releases/tag/v1.6.0
-		cfg = opt.NewRuntimeConfigOptimizingCompiler()
-	} else {
-		cfg = wazero.NewRuntimeConfig()
-	}
-
+	cfg := wazero.NewRuntimeConfig()
 	cfg = cfg.WithCloseOnContextDone(true)
 	runtime := wazero.NewRuntimeWithConfig(ctx, cfg)
 

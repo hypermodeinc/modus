@@ -14,7 +14,7 @@ require (
 	github.com/radovskyb/watcher v1.0.7
 	github.com/rs/xid v1.5.0
 	github.com/rs/zerolog v1.32.0
-	github.com/tetratelabs/wazero v1.6.0
+	github.com/tetratelabs/wazero v1.7.0
 )
 
 require (
