@@ -9,13 +9,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"os"
 	"strings"
 	"time"
 
-	"hmruntime/aws"
 	"hmruntime/config"
 	"hmruntime/logger"
+	"hmruntime/storage"
 
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
@@ -36,55 +35,27 @@ func InitWasmRuntime(ctx context.Context) error {
 	return instantiateWasiFunctions(ctx)
 }
 
-func loadJson(ctx context.Context, name string) error {
-	config.Mu.Lock()         // Lock the mutex
-	defer config.Mu.Unlock() // Unlock the mutex when the function returns
-	logger.Info(ctx).Str("Loading %s.json.", name)
-
-	// Get the JSON bytes
-	bytes, err := getJsonBytes(ctx, name)
+func loadJson(ctx context.Context, filename string) error {
+	bytes, err := storage.GetFileContents(ctx, filename)
 	if err != nil {
 		return err
 	}
 
-	_, exists := config.SupportedJsons[name+".json"]
-	if !exists {
-		return fmt.Errorf("JSON %s does not exist", name)
-	}
-
-	err = json.Unmarshal(bytes, config.SupportedJsons[name+".json"])
-	if err != nil {
-		return fmt.Errorf("failed to unmarshal %s.json: %w", name, err)
+	_, ok := config.SupportedJsons[filename]
+	if ok {
+		err = json.Unmarshal(bytes, config.SupportedJsons[filename])
+		if err != nil {
+			return fmt.Errorf("failed to load %s: %w", filename, err)
+		}
 	}
 
 	return nil
 }
 
-func getJsonBytes(ctx context.Context, name string) ([]byte, error) {
-	if aws.UseAwsForPluginStorage() {
-		return aws.GetJsonBytes(ctx, name)
-	}
-
-	path, err := getPathForJson(name)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get path for %s.json: %w", name, err)
-	}
-	bytes, err := os.ReadFile(path)
-	if err != nil {
-		return nil, fmt.Errorf("failed to load %s.json: %w", name, err)
-	}
-
-	logger.Info(ctx).
-		Str("path", path).
-		Msg(fmt.Sprintf("Retrieved %s.json from local storage.", name))
-
-	return bytes, nil
-}
-
-func loadPlugin(ctx context.Context, path string) (Plugin, error) {
+func loadPlugin(ctx context.Context, filename string) (Plugin, error) {
 
 	// Load the binary content of the plugin.
-	bytes, err := getPluginBytes(ctx, path)
+	bytes, err := storage.GetFileContents(ctx, filename)
 	if err != nil {
 		return Plugin{}, err
 	}
@@ -100,18 +71,18 @@ func loadPlugin(ctx context.Context, path string) (Plugin, error) {
 
 	// Use the filename as the plugin name if no metadata is found.
 	if !foundMetadata {
-		metadata.Name, _ = getPluginNameFromPath(path)
+		metadata.Name, _ = getPluginNameFromPath(filename)
 	}
 
 	// Create and store the plugin.
-	plugin := Plugin{&cm, metadata, path}
+	plugin := Plugin{&cm, metadata, filename}
 	Plugins.Add(plugin)
 
 	// Log the details of the loaded plugin.
 	logPluginLoaded(ctx, plugin)
 	if !foundMetadata {
 		logger.Warn(ctx).
-			Str("path", path).
+			Str("path", filename).
 			Str("plugin", plugin.Name()).
 			Msg("No metadata found in plugin.  Please recompile your plugin using the latest version of the Hypermode Functions library.")
 	}
@@ -163,20 +134,6 @@ func logPluginLoaded(ctx context.Context, plugin Plugin) {
 	}
 
 	evt.Msg("Loaded plugin.")
-}
-
-func getPluginBytes(ctx context.Context, path string) ([]byte, error) {
-
-	if aws.UseAwsForPluginStorage() {
-		return aws.GetPluginBytes(ctx, path)
-	}
-
-	bytes, err := os.ReadFile(path)
-	if err != nil {
-		return nil, fmt.Errorf("failed to load the plugin: %w", err)
-	}
-
-	return bytes, nil
 }
 
 func unloadPlugin(ctx context.Context, plugin Plugin) {
