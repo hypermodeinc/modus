@@ -34,8 +34,8 @@ func InitWasmRuntime(ctx context.Context) error {
 }
 
 func MonitorPlugins(ctx context.Context) {
-	sm := storage.NewStorageMonitor(".wasm")
-	sm.Added = func(fi storage.FileInfo) {
+
+	loadPluginFile := func(fi storage.FileInfo) {
 		err := loadPlugin(ctx, fi.Name)
 		if err != nil {
 			logger.Err(ctx, err).
@@ -43,14 +43,10 @@ func MonitorPlugins(ctx context.Context) {
 				Msg("Failed to load plugin.")
 		}
 	}
-	sm.Modified = func(fi storage.FileInfo) {
-		err := loadPlugin(ctx, fi.Name)
-		if err != nil {
-			logger.Err(ctx, err).
-				Str("filename", fi.Name).
-				Msg("Failed to reload plugin.")
-		}
-	}
+
+	sm := storage.NewStorageMonitor(".wasm")
+	sm.Added = loadPluginFile
+	sm.Modified = loadPluginFile
 	sm.Removed = func(fi storage.FileInfo) {
 		p, ok := Plugins.GetByFile(fi.Name)
 		if !ok {
