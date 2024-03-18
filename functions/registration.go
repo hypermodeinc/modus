@@ -17,9 +17,6 @@ import (
 // map that holds the function info for each resolver
 var FunctionsMap = make(map[string]schema.FunctionInfo)
 
-// channel used to signal when registration is completed
-var RegistrationCompleted chan bool = make(chan bool, 1)
-
 func MonitorRegistration(ctx context.Context) {
 	go func() {
 		for {
@@ -89,14 +86,6 @@ func registerFunctions(ctx context.Context, gqlSchema string) error {
 				Str("plugin", info.PluginName).
 				Msg("Unregistered function.")
 		}
-	}
-
-	// Signal that registration is complete.  This is a non-blocking send to
-	// avoid a deadlock if no one is waiting, but the channel has a buffer size
-	// of 1, so it will not lose the message if the receiver is slow to start.
-	select {
-	case RegistrationCompleted <- true:
-	default:
 	}
 
 	return nil
