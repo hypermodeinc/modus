@@ -10,6 +10,7 @@ import (
 	"os"
 	"strings"
 
+	"hmruntime/appdata"
 	"hmruntime/aws"
 	"hmruntime/config"
 	"hmruntime/utils"
@@ -19,17 +20,17 @@ const modelKeyPrefix = "HYP_MODEL_KEY_"
 const HypermodeHost string = "hypermode"
 const OpenAIHost string = "openai"
 
-func GetModel(modelName string, task config.ModelTask) (config.Model, error) {
-	for _, model := range config.HypermodeData.Models {
+func GetModel(modelName string, task appdata.ModelTask) (appdata.Model, error) {
+	for _, model := range appdata.HypermodeData.Models {
 		if model.Name == modelName && model.Task == task {
 			return model, nil
 		}
 	}
 
-	return config.Model{}, fmt.Errorf("a model '%s' for task '%s' was not found", modelName, task)
+	return appdata.Model{}, fmt.Errorf("a model '%s' for task '%s' was not found", modelName, task)
 }
 
-func GetModelKey(ctx context.Context, model config.Model) (string, error) {
+func GetModelKey(ctx context.Context, model appdata.Model) (string, error) {
 	var key string
 	var err error
 
@@ -58,7 +59,7 @@ func GetModelKey(ctx context.Context, model config.Model) (string, error) {
 	return "", fmt.Errorf("error getting key for model '%s': %w", model.Name, err)
 }
 
-func getWellKnownEnvironmentVariable(model config.Model) string {
+func getWellKnownEnvironmentVariable(model appdata.Model) string {
 
 	// Some model hosts have well-known environment variables that are used to store the model key.
 	// We should support these to make it easier for users to set up their environment.
@@ -75,7 +76,7 @@ type PredictionResult[T any] struct {
 	Predictions []T `json:"predictions"`
 }
 
-func PostToModelEndpoint[TResult any](ctx context.Context, sentenceMap map[string]string, model config.Model) (map[string]TResult, error) {
+func PostToModelEndpoint[TResult any](ctx context.Context, sentenceMap map[string]string, model appdata.Model) (map[string]TResult, error) {
 	// self hosted models takes in array, can optimize for parallelizing later
 	keys, sentences := []string{}, []string{}
 

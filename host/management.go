@@ -6,13 +6,11 @@ package host
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"strings"
 	"time"
 
-	"hmruntime/config"
 	"hmruntime/logger"
 	"hmruntime/storage"
 
@@ -54,23 +52,6 @@ func MonitorPlugins(ctx context.Context) {
 		RegistrationRequest <- true
 	}
 	sm.Start(ctx)
-}
-
-func loadJson(ctx context.Context, filename string) error {
-	bytes, err := storage.GetFileContents(ctx, filename)
-	if err != nil {
-		return err
-	}
-
-	_, ok := config.SupportedJsons[filename]
-	if ok {
-		err = json.Unmarshal(bytes, config.SupportedJsons[filename])
-		if err != nil {
-			return fmt.Errorf("failed to load %s: %w", filename, err)
-		}
-	}
-
-	return nil
 }
 
 func loadPlugin(ctx context.Context, filename string) (Plugin, error) {

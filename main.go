@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"hmruntime/appdata"
 	"hmruntime/aws"
 	"hmruntime/config"
 	"hmruntime/functions"
@@ -58,7 +59,7 @@ func main() {
 	storage.Initialize()
 
 	// Load json
-	err = host.LoadJsons(ctx)
+	err = appdata.LoadAppDataFiles(ctx)
 	if err != nil {
 		log.Fatal().Err(err).Msg("Failed to load hypermode.json.  Exiting.")
 	}
