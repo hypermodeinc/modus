@@ -7,7 +7,7 @@ package config
 import (
 	"flag"
 	"os"
-	"path"
+	"path/filepath"
 	"runtime"
 	"sync"
 	"time"
@@ -107,7 +107,7 @@ func getDefaultStoragePath() string {
 	// On Windows, the default is %APPDATA%\Hypermode
 	if runtime.GOOS == "windows" {
 		appData := os.Getenv("APPDATA")
-		return path.Join(appData, "Hypermode")
+		return filepath.Join(appData, "Hypermode")
 	}
 
 	// On Unix and macOS, the default is $HOME/.hypermode
@@ -115,5 +115,5 @@ func getDefaultStoragePath() string {
 	if err != nil {
 		return ""
 	}
-	return path.Join(homedir, ".hypermode")
+	return filepath.Join(homedir, ".hypermode")
 }

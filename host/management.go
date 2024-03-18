@@ -71,7 +71,7 @@ func loadPlugin(ctx context.Context, filename string) (Plugin, error) {
 
 	// Use the filename as the plugin name if no metadata is found.
 	if !foundMetadata {
-		metadata.Name, _ = getPluginNameFromPath(filename)
+		metadata.Name = strings.TrimSuffix(filename, ".wasm")
 	}
 
 	// Create and store the plugin.

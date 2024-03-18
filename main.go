@@ -7,7 +7,7 @@ package main
 import (
 	"context"
 	"os"
-	"path"
+	"path/filepath"
 
 	"hmruntime/aws"
 	"hmruntime/config"
@@ -28,7 +28,7 @@ func main() {
 
 	// Load environment variables from plugins path
 	// note: .env file is optional, so don't log if it's not found
-	err := godotenv.Load(path.Join(config.StoragePath, ".env"))
+	err := godotenv.Load(filepath.Join(config.StoragePath, ".env"))
 	if err != nil && !os.IsNotExist(err) {
 		log.Warn().Err(err).Msg("Error reading .env file.  Ignoring.")
 	}

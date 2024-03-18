@@ -10,6 +10,7 @@ import (
 	"hmruntime/aws"
 	"hmruntime/config"
 	"io"
+	"path"
 	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
@@ -29,10 +30,9 @@ func (s *awsStorage) listFiles(ctx context.Context, extension string) ([]FileInf
 	cfg := aws.GetAwsConfig()
 	svc := s3.NewFromConfig(cfg)
 
-	path := getAwsS3PathPrefix()
 	input := &s3.ListObjectsV2Input{
 		Bucket: &config.S3Bucket,
-		Prefix: &path,
+		Prefix: &config.S3Path,
 	}
 
 	result, err := svc.ListObjectsV2(ctx, input)
@@ -46,8 +46,9 @@ func (s *awsStorage) listFiles(ctx context.Context, extension string) ([]FileInf
 			continue
 		}
 
+		_, filename := path.Split(*obj.Key)
 		files = append(files, FileInfo{
-			Name:         strings.TrimPrefix(*obj.Key, path),
+			Name:         filename,
 			Hash:         *obj.ETag,
 			LastModified: *obj.LastModified,
 		})
@@ -60,7 +61,7 @@ func (s *awsStorage) getFileContents(ctx context.Context, name string) ([]byte, 
 	cfg := aws.GetAwsConfig()
 	svc := s3.NewFromConfig(cfg)
 
-	key := getAwsS3PathPrefix() + name
+	key := path.Join(config.S3Path, name)
 	input := &s3.GetObjectInput{
 		Bucket: &config.S3Bucket,
 		Key:    &key,
@@ -78,12 +79,4 @@ func (s *awsStorage) getFileContents(ctx context.Context, name string) ([]byte, 
 	}
 
 	return content, nil
-}
-
-func getAwsS3PathPrefix() string {
-	path := strings.TrimRight(config.S3Path, "/")
-	if path == "" {
-		return path
-	}
-	return path + "/"
 }

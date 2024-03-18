@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"hmruntime/config"
 	"os"
-	"path"
+	"path/filepath"
 	"strings"
 
 	"github.com/rs/zerolog/log"
@@ -65,7 +65,7 @@ func (s *localStorage) listFiles(ctx context.Context, extension string) ([]FileI
 }
 
 func (s *localStorage) getFileContents(ctx context.Context, name string) ([]byte, error) {
-	path := path.Join(config.StoragePath, name)
+	path := filepath.Join(config.StoragePath, name)
 	content, err := os.ReadFile(path)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read contents of file %s from local storage: %w", name, err)
