@@ -7,28 +7,33 @@ package appdata
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 
 	"hmruntime/logger"
 	"hmruntime/storage"
 )
 
-func LoadAppDataFiles(ctx context.Context) error {
-	files, err := storage.ListFiles(ctx, ".json")
-	if err != nil {
-		return fmt.Errorf("failed to list application data files: %w", err)
-	}
+func MonitorAppDataFiles(ctx context.Context) {
 
-	for _, file := range files {
+	loadFile := func(file storage.FileInfo) {
 		err := loadAppData(ctx, file.Name)
-		if err != nil {
+		if err == nil {
+			logger.Info(ctx).
+				Str("filename", file.Name).
+				Msg("Loaded application data file.")
+
+		} else {
 			logger.Err(ctx, err).
 				Str("filename", file.Name).
 				Msg("Failed to load application data file.")
 		}
 	}
 
-	return nil
+	// NOTEs: Removing a file entirely is not currently supported.
+
+	sm := storage.NewStorageMonitor(".json")
+	sm.Added = loadFile
+	sm.Modified = loadFile
+	sm.Start(ctx)
 }
 
 func loadAppData(ctx context.Context, filename string) error {
