@@ -78,7 +78,11 @@ func (pr *pluginRegistry) GetByName(name string) (Plugin, bool) {
 	defer pr.mutex.RUnlock()
 
 	plugin, ok := pr.nameIndex[name]
-	return *plugin, ok
+	if ok {
+		return *plugin, true
+	} else {
+		return Plugin{}, false
+	}
 }
 
 func (pr *pluginRegistry) GetByFile(filename string) (Plugin, bool) {
@@ -86,5 +90,9 @@ func (pr *pluginRegistry) GetByFile(filename string) (Plugin, bool) {
 	defer pr.mutex.RUnlock()
 
 	plugin, ok := pr.fileIndex[filename]
-	return *plugin, ok
+	if ok {
+		return *plugin, true
+	} else {
+		return Plugin{}, false
+	}
 }

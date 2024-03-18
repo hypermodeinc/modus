@@ -49,7 +49,7 @@ func MonitorPlugins(ctx context.Context) {
 	sm.Modified = loadPluginFile
 	sm.Removed = func(fi storage.FileInfo) {
 		p, ok := Plugins.GetByFile(fi.Name)
-		if !ok {
+		if ok {
 			err := unloadPlugin(ctx, p)
 			if err != nil {
 				logger.Err(ctx, err).
