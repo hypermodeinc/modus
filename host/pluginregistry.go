@@ -17,7 +17,7 @@ var Plugins = newPluginRegistry()
 type pluginRegistry struct {
 	plugins   []Plugin
 	nameIndex map[string]*Plugin
-	pathIndex map[string]*Plugin
+	fileIndex map[string]*Plugin
 	mutex     sync.RWMutex
 }
 
@@ -25,7 +25,7 @@ func newPluginRegistry() pluginRegistry {
 	return pluginRegistry{
 		// plugins:   make([]Plugin, 0),
 		nameIndex: make(map[string]*Plugin),
-		pathIndex: make(map[string]*Plugin),
+		fileIndex: make(map[string]*Plugin),
 	}
 }
 
@@ -37,13 +37,13 @@ func (pr *pluginRegistry) Add(plugin Plugin) error {
 		return fmt.Errorf("plugin already exists with name %s", plugin.Name())
 	}
 
-	if _, ok := pr.pathIndex[plugin.FilePath]; ok {
-		return fmt.Errorf("plugin already exists with path %s", plugin.FilePath)
+	if _, ok := pr.fileIndex[plugin.FileName]; ok {
+		return fmt.Errorf("plugin already exists with filename %s", plugin.FileName)
 	}
 
 	pr.plugins = append(pr.plugins, plugin)
 	pr.nameIndex[plugin.Name()] = &plugin
-	pr.pathIndex[plugin.FilePath] = &plugin
+	pr.fileIndex[plugin.FileName] = &plugin
 	return nil
 }
 
@@ -59,7 +59,7 @@ func (pr *pluginRegistry) Remove(plugin Plugin) {
 		}
 	}
 	delete(pr.nameIndex, plugin.Name())
-	delete(pr.pathIndex, plugin.FilePath)
+	delete(pr.fileIndex, plugin.FileName)
 }
 
 func (pr *pluginRegistry) GetAll() []Plugin {
@@ -81,10 +81,10 @@ func (pr *pluginRegistry) GetByName(name string) (Plugin, bool) {
 	return *plugin, ok
 }
 
-func (pr *pluginRegistry) GetByPath(path string) (Plugin, bool) {
+func (pr *pluginRegistry) GetByFile(filename string) (Plugin, bool) {
 	pr.mutex.RLock()
 	defer pr.mutex.RUnlock()
 
-	plugin, ok := pr.pathIndex[path]
+	plugin, ok := pr.fileIndex[filename]
 	return *plugin, ok
 }

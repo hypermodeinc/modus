@@ -14,7 +14,7 @@ import (
 type Plugin struct {
 	Module   *wazero.CompiledModule
 	Metadata PluginMetadata
-	FilePath string
+	FileName string
 }
 
 type PluginMetadata struct {
