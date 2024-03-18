@@ -36,15 +36,30 @@ func InitWasmRuntime(ctx context.Context) error {
 func MonitorPlugins(ctx context.Context) {
 	sm := storage.NewStorageMonitor(".wasm")
 	sm.Added = func(fi storage.FileInfo) {
-		loadPlugin(ctx, fi.Name)
+		err := loadPlugin(ctx, fi.Name)
+		if err != nil {
+			logger.Err(ctx, err).
+				Str("filename", fi.Name).
+				Msg("Failed to load plugin.")
+		}
 	}
 	sm.Modified = func(fi storage.FileInfo) {
-		loadPlugin(ctx, fi.Name)
+		err := loadPlugin(ctx, fi.Name)
+		if err != nil {
+			logger.Err(ctx, err).
+				Str("filename", fi.Name).
+				Msg("Failed to reload plugin.")
+		}
 	}
 	sm.Removed = func(fi storage.FileInfo) {
 		p, ok := Plugins.GetByFile(fi.Name)
-		if ok {
-			unloadPlugin(ctx, p)
+		if !ok {
+			err := unloadPlugin(ctx, p)
+			if err != nil {
+				logger.Err(ctx, err).
+					Str("filename", fi.Name).
+					Msg("Failed to unload plugin.")
+			}
 		}
 	}
 	sm.Changed = func() {
@@ -54,18 +69,18 @@ func MonitorPlugins(ctx context.Context) {
 	sm.Start(ctx)
 }
 
-func loadPlugin(ctx context.Context, filename string) (Plugin, error) {
+func loadPlugin(ctx context.Context, filename string) error {
 
 	// Load the binary content of the plugin.
 	bytes, err := storage.GetFileContents(ctx, filename)
 	if err != nil {
-		return Plugin{}, err
+		return err
 	}
 
 	// Compile the plugin into a module.
 	cm, err := WasmRuntime.CompileModule(ctx, bytes)
 	if err != nil {
-		return Plugin{}, fmt.Errorf("failed to compile the plugin: %w", err)
+		return fmt.Errorf("failed to compile the plugin: %w", err)
 	}
 
 	// Get the metadata for the plugin.
@@ -89,7 +104,7 @@ func loadPlugin(ctx context.Context, filename string) (Plugin, error) {
 			Msg("No metadata found in plugin.  Please recompile your plugin using the latest version of the Hypermode Functions library.")
 	}
 
-	return plugin, nil
+	return nil
 }
 
 func logPluginLoaded(ctx context.Context, plugin Plugin) {
@@ -138,13 +153,13 @@ func logPluginLoaded(ctx context.Context, plugin Plugin) {
 	evt.Msg("Loaded plugin.")
 }
 
-func unloadPlugin(ctx context.Context, plugin Plugin) {
+func unloadPlugin(ctx context.Context, plugin Plugin) error {
 	logger.Info(ctx).
 		Str("plugin", plugin.Name()).
 		Msg("Unloading plugin.")
 
 	Plugins.Remove(plugin)
-	(*plugin.Module).Close(ctx)
+	return (*plugin.Module).Close(ctx)
 }
 
 func GetModuleInstance(ctx context.Context, pluginName string) (wasm.Module, buffers, error) {
