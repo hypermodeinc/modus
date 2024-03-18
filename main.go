@@ -37,7 +37,7 @@ func main() {
 	if config.UseAwsStorage || config.UseAwsSecrets {
 		err = aws.Initialize(ctx)
 		if err != nil {
-			log.Info().Err(err).Msg("AWS functionality will be disabled.")
+			log.Fatal().Err(err).Msg("Failed to initialize AWS.  Exiting.")
 		}
 	}
 
