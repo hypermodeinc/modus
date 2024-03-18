@@ -35,6 +35,27 @@ func InitWasmRuntime(ctx context.Context) error {
 	return instantiateWasiFunctions(ctx)
 }
 
+func MonitorPlugins(ctx context.Context) {
+	sm := storage.NewStorageMonitor(".wasm")
+	sm.Added = func(fi storage.FileInfo) {
+		loadPlugin(ctx, fi.Name)
+	}
+	sm.Modified = func(fi storage.FileInfo) {
+		loadPlugin(ctx, fi.Name)
+	}
+	sm.Removed = func(fi storage.FileInfo) {
+		p, ok := Plugins.GetByFile(fi.Name)
+		if ok {
+			unloadPlugin(ctx, p)
+		}
+	}
+	sm.Changed = func() {
+		// Signal that we need to register functions
+		RegistrationRequest <- true
+	}
+	sm.Start(ctx)
+}
+
 func loadJson(ctx context.Context, filename string) error {
 	bytes, err := storage.GetFileContents(ctx, filename)
 	if err != nil {
