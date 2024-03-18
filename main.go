@@ -56,9 +56,6 @@ func main() {
 
 	// Initialize the storage system
 	storage.Initialize()
-	if config.NoReload {
-		logger.Warn(ctx).Msg("Automatic reloading is disabled.")
-	}
 
 	// Load json
 	err = host.LoadJsons(ctx)

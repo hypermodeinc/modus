@@ -92,11 +92,6 @@ func (sm *StorageMonitor) Start(ctx context.Context) {
 				sm.Changed()
 			}
 
-			// Handle auto-reload disabled
-			if config.NoReload {
-				return
-			}
-
 			// Wait for next cycle
 			select {
 			case <-ticker.C:

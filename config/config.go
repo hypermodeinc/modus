@@ -21,7 +21,6 @@ var UseAwsSecrets bool
 var UseAwsStorage bool
 var S3Bucket string
 var S3Path string
-var NoReload bool
 var RefreshInterval time.Duration
 var UseJsonLogging bool
 
@@ -95,8 +94,7 @@ func ParseCommandLineFlags() {
 	flag.BoolVar(&UseAwsStorage, "useAwsStorage", false, "Use AWS S3 for storage instead of the local filesystem.")
 	flag.StringVar(&S3Bucket, "s3bucket", "", "The S3 bucket to use, if using AWS storage.")
 	flag.StringVar(&S3Path, "s3path", "", "The path within the S3 bucket to use, if using AWS storage.")
-	flag.BoolVar(&NoReload, "noreload", false, "Disable automatic plugin reloading.")
-	flag.DurationVar(&RefreshInterval, "refresh", time.Second*5, "The refresh interval to check for plugins and schema changes.")
+	flag.DurationVar(&RefreshInterval, "refresh", time.Second*5, "The refresh interval to reload any changes.")
 	flag.BoolVar(&UseJsonLogging, "jsonlogs", false, "Use JSON format for logging.")
 
 	flag.Parse()
