@@ -6,6 +6,7 @@ package aws
 
 import (
 	"context"
+	"fmt"
 
 	"hmruntime/logger"
 
@@ -23,17 +24,13 @@ func GetAwsConfig() aws.Config {
 func Initialize(ctx context.Context) error {
 	cfg, err := config.LoadDefaultConfig(ctx)
 	if err != nil {
-		logger.Warn(ctx).Err(err).
-			Msg("Error loading AWS configuration.")
-		return nil
+		return fmt.Errorf("error loading AWS configuration: %w", err)
 	}
 
 	client := sts.NewFromConfig(cfg)
 	identity, err := client.GetCallerIdentity(ctx, &sts.GetCallerIdentityInput{})
 	if err != nil {
-		logger.Warn(ctx).Err(err).
-			Msg("Error getting AWS caller identity.")
-		return nil
+		return fmt.Errorf("error getting AWS caller identity: %w", err)
 	}
 
 	awsConfig = cfg
