@@ -22,13 +22,7 @@ type ResponseFormat struct {
 	Type string `json:"type"`
 }
 
-func GenerateText(ctx context.Context, model config.Model, instruction string, sentence string) (models.ChatResponse, error) {
-	return ChatCompletion(ctx, model, instruction, sentence, "text")
-}
-func GenerateJson(ctx context.Context, model config.Model, instruction string, sentence string) (models.ChatResponse, error) {
-	return ChatCompletion(ctx, model, instruction, sentence, "json_object")
-}
-func ChatCompletion(ctx context.Context, model config.Model, instruction string, sentence string, outputType string) (models.ChatResponse, error) {
+func ChatCompletion(ctx context.Context, model config.Model, instruction string, sentence string, outputFormat models.OutputFormat) (models.ChatResponse, error) {
 
 	// Get the OpenAI API key to use for this model
 	key, err := models.GetModelKey(ctx, model)
@@ -40,7 +34,7 @@ func ChatCompletion(ctx context.Context, model config.Model, instruction string,
 	reqBody := ChatContext{
 		Model: model.SourceModel,
 		ResponseFormat: ResponseFormat{
-			Type: outputType,
+			Type: string(outputFormat),
 		},
 		Messages: []models.ChatMessage{
 			{Role: "system", Content: instruction},
