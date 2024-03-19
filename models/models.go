@@ -19,6 +19,16 @@ const modelKeyPrefix = "HYP_MODEL_KEY_"
 const HypermodeHost string = "hypermode"
 const OpenAIHost string = "openai"
 
+// generic output format for models functions
+// can be extended to support more formats
+// for now, we support text and json_object used in generateText function
+type OutputFormat string
+
+const (
+	OutputFormatText OutputFormat = "text"
+	OutputFormatJson OutputFormat = "json_object"
+)
+
 func GetModel(modelName string, task config.ModelTask) (config.Model, error) {
 	for _, model := range config.HypermodeData.Models {
 		if model.Name == modelName && model.Task == task {
