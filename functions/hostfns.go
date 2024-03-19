@@ -30,7 +30,6 @@ func InstantiateHostFunctions(ctx context.Context, runtime wazero.Runtime) error
 	b.NewFunctionBuilder().WithFunc(hostInvokeClassifier).Export("invokeClassifier")
 	b.NewFunctionBuilder().WithFunc(hostComputeEmbedding).Export("computeEmbedding")
 	b.NewFunctionBuilder().WithFunc(hostInvokeTextGenerator).Export("invokeTextGenerator")
-	b.NewFunctionBuilder().WithFunc(hostInvokeJsonGenerator).Export("generateJson")
 
 	_, err := b.Instantiate(ctx)
 	if err != nil {
@@ -179,7 +178,7 @@ func hostComputeEmbedding(ctx context.Context, mod wasm.Module, pModelName uint3
 	return writeString(ctx, mod, string(res))
 }
 
-func hostInvokeGenerator(ctx context.Context, mod wasm.Module, pModelName uint32, pInstruction uint32, pSentence uint32, generateFunc func(context.Context, config.Model, string, string) (models.ChatResponse, error)) uint32 {
+func hostInvokeTextGenerator(ctx context.Context, mod wasm.Module, pModelName uint32, pInstruction uint32, pSentence uint32, pFormat uint32) uint32 {
 	mem := mod.Memory()
 
 	model, err := getModel(mem, pModelName, config.GeneratorTask)
@@ -199,12 +198,23 @@ func hostInvokeGenerator(ctx context.Context, mod wasm.Module, pModelName uint32
 		logger.Err(ctx, err).Msg("Error reading instruction string from wasm memory.")
 		return 0
 	}
+	format, err := readString(mem, pFormat)
+	if err != nil {
+		logger.Err(ctx, err).Msg("Error reading format string from wasm memory.")
+		return 0
+	}
+	outputFormat := models.OutputFormat(format)
+
+	if models.OutputFormatText != outputFormat && models.OutputFormatJson != outputFormat {
+		logger.Err(ctx, err).Msg("Unsupported output format.")
+		return 0
+	}
 	if model.Host != models.OpenAIHost {
 		err := fmt.Errorf("expected model host: %s", models.OpenAIHost)
 		logger.Err(ctx, err).Msg("Unsupported model host.")
 		return 0
 	}
-	result, err := generateFunc(ctx, model, instruction, sentence)
+	result, err := openai.ChatCompletion(ctx, model, instruction, sentence, outputFormat)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error posting to OpenAI.")
 		return 0
@@ -223,13 +233,6 @@ func hostInvokeGenerator(ctx context.Context, mod wasm.Module, pModelName uint32
 	return writeString(ctx, mod, string(res))
 }
 
-func hostInvokeTextGenerator(ctx context.Context, mod wasm.Module, pModelName uint32, pInstruction uint32, pSentence uint32) uint32 {
-	return hostInvokeGenerator(ctx, mod, pModelName, pInstruction, pSentence, openai.GenerateText)
-}
-
-func hostInvokeJsonGenerator(ctx context.Context, mod wasm.Module, pModelName uint32, pInstruction uint32, pSentence uint32) uint32 {
-	return hostInvokeGenerator(ctx, mod, pModelName, pInstruction, pSentence, openai.GenerateJson)
-}
 func getModel(mem wasm.Memory, pModelName uint32, task config.ModelTask) (config.Model, error) {
 	modelName, err := readString(mem, pModelName)
 	if err != nil {
