@@ -11,9 +11,18 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
 )
 
+var smClient *secretsmanager.Client
+
 // TODO: Prefetch secrets on startup and refresh them periodically
 
 var secretsCache = make(map[string]string)
+
+func initSecretsManager() {
+	// Initialize the Secrets Manager service client.
+	// This is safe to hold onto for the lifetime of the application.
+	// See https://github.com/aws/aws-sdk-go-v2/discussions/2566
+	smClient = secretsmanager.NewFromConfig(awsConfig)
+}
 
 func GetSecretString(ctx context.Context, secretId string) (string, error) {
 
@@ -22,8 +31,7 @@ func GetSecretString(ctx context.Context, secretId string) (string, error) {
 		return secret, nil
 	}
 
-	svc := secretsmanager.NewFromConfig(awsConfig)
-	secretValue, err := svc.GetSecretValue(ctx, &secretsmanager.GetSecretValueInput{
+	secretValue, err := smClient.GetSecretValue(ctx, &secretsmanager.GetSecretValueInput{
 		SecretId: &secretId,
 	})
 

@@ -22,9 +22,7 @@ type ResponseFormat struct {
 	Type string `json:"type"`
 }
 
-
-func ChatCompletion(ctx context.Context, model config.Model, instruction string, sentence string, outputFormat models.OutputFormat) (models.ChatResponse, error) {
-
+func ChatCompletion(ctx context.Context, model appdata.Model, instruction string, sentence string, outputFormat models.OutputFormat) (models.ChatResponse, error) {
 
 	// Get the OpenAI API key to use for this model
 	key, err := models.GetModelKey(ctx, model)
