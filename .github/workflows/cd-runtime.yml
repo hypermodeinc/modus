@@ -33,15 +33,11 @@ jobs:
           TOKEN: ${{ secrets.GO_PRIVATE_MODULES }}
         run: git config --global url."https://admin-hypermode:${TOKEN}@github.com".insteadOf "https://github.com"
       - uses: actions/checkout@v4
-      - name: Get Go Version
-        run: |
-          #!/bin/bash
-          GOVERSION=$({ [ -f .go-version ] && cat .go-version; })
-          echo "GOVERSION=$GOVERSION" >> $GITHUB_ENV
-      - name: Set up Go
+      - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: ${{ env.GOVERSION }}
+          go-version-file: 'go.mod'
+          check-latest: true
       - name: Runtime Git SHA
         run: |
           RUNTIME_GIT_SHA=$(git rev-parse --short HEAD)
