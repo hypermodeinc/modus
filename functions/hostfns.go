@@ -224,6 +224,17 @@ func hostInvokeTextGenerator(ctx context.Context, mod wasm.Module, pModelName ui
 		logger.Err(ctx, err).Msg("Error returned from OpenAI.")
 		return 0
 	}
+	if models.OutputFormatJson == outputFormat {
+		// safeguard: test is the output is a valid json
+		// test every Choices.Message.Content
+		for _, choice := range result.Choices {
+			_, err := json.Marshal(choice.Message.Content)
+			if err != nil {
+				logger.Err(ctx, err).Msg("One of the generated message is not a valid JSON.")
+				return 0
+			}
+		}
+	}
 
 	res, err := json.Marshal(result)
 	if err != nil {
