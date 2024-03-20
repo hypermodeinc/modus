@@ -127,7 +127,7 @@ func logPluginLoaded(ctx context.Context, plugin Plugin) {
 	}
 
 	if metadata.BuildTime != (time.Time{}) {
-		evt.Time("build_id", metadata.BuildTime)
+		evt.Time("build_ts", metadata.BuildTime)
 	}
 
 	if metadata.LibraryName != "" {
