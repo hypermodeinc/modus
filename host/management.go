@@ -96,7 +96,7 @@ func loadPlugin(ctx context.Context, filename string) error {
 	if !foundMetadata {
 		logger.Warn(ctx).
 			Str("filename", filename).
-			Str("plugin", plugin.Name()).
+			Str("plugin", plugin.Metadata.Name).
 			Msg("No metadata found in plugin.  Please recompile your plugin using the latest version of the Hypermode Functions library.")
 	}
 
@@ -151,7 +151,8 @@ func logPluginLoaded(ctx context.Context, plugin Plugin) {
 
 func unloadPlugin(ctx context.Context, plugin Plugin) error {
 	logger.Info(ctx).
-		Str("plugin", plugin.Name()).
+		Str("plugin", plugin.Metadata.Name).
+		Str("build_id", plugin.Metadata.BuildId).
 		Msg("Unloading plugin.")
 
 	Plugins.Remove(plugin)

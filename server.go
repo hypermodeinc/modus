@@ -78,9 +78,7 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 	// of corrupting the module's memory.
 	mod, buf, err := host.GetModuleInstance(ctx, info.Plugin)
 	if err != nil {
-		logger.Err(ctx, err).
-			Str("plugin", info.Plugin.Name()).
-			Msg("Failed to get module instance.")
+		logger.Err(ctx, err).Msg("Failed to get module instance.")
 		err := writeErrorResponse(w, err)
 		if err != nil {
 			logger.Err(ctx, err).Msg("Failed to write error response.")
