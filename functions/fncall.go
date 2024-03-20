@@ -46,7 +46,6 @@ func CallFunction(ctx context.Context, mod wasm.Module, info schema.FunctionInfo
 
 	// Call the wasm function
 	logger.Info(ctx).
-		Str("plugin", info.Plugin.Name()).
 		Str("function", fnName).
 		Str("resolver", schema.Resolver()).
 		Bool("user_visible", true).
@@ -56,7 +55,6 @@ func CallFunction(ctx context.Context, mod wasm.Module, info schema.FunctionInfo
 	duration := time.Since(start)
 	if err != nil {
 		logger.Err(ctx, err).
-			Str("plugin", info.Plugin.Name()).
 			Str("function", fnName).
 			Dur("duration_ms", duration).
 			Bool("user_visible", true).
@@ -70,7 +68,6 @@ func CallFunction(ctx context.Context, mod wasm.Module, info schema.FunctionInfo
 	result, err := convertResult(mem, *schema.FieldDef.Type, def.ResultTypes()[0], res[0])
 	if err != nil {
 		logger.Err(ctx, err).
-			Str("plugin", info.Plugin.Name()).
 			Str("function", fnName).
 			Dur("duration_ms", duration).
 			Str("schema_type", schema.FieldDef.Type.NamedType).
@@ -81,7 +78,6 @@ func CallFunction(ctx context.Context, mod wasm.Module, info schema.FunctionInfo
 	}
 
 	logger.Info(ctx).
-		Str("plugin", info.Plugin.Name()).
 		Str("function", fnName).
 		Dur("duration_ms", duration).
 		Bool("user_visible", true).
