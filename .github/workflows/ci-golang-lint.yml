@@ -18,7 +18,6 @@ jobs:
               with:
                 go-version-file: 'go.mod'
                 check-latest: true
-            - run: go version
             - name: golang-lint
               env:
                 GOGC: 10
