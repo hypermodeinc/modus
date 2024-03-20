@@ -68,15 +68,17 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Add plugin details to the context
+	ctx = context.WithValue(ctx, logger.PluginNameContextKey, info.Plugin.Metadata.Name)
+	ctx = context.WithValue(ctx, logger.BuildIdContextKey, info.Plugin.Metadata.BuildId)
+
 	// Get a module instance for this request.
 	// Each request will get its own instance of the plugin module,
 	// so that we can run multiple requests in parallel without risk
 	// of corrupting the module's memory.
-	mod, buf, err := host.GetModuleInstance(ctx, info.PluginName)
+	mod, buf, err := host.GetModuleInstance(ctx, info.Plugin)
 	if err != nil {
-		logger.Err(ctx, err).
-			Str("plugin", info.PluginName).
-			Msg("Failed to get module instance.")
+		logger.Err(ctx, err).Msg("Failed to get module instance.")
 		err := writeErrorResponse(w, err)
 		if err != nil {
 			logger.Err(ctx, err).Msg("Failed to write error response.")

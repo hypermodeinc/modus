@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 
+	"hmruntime/host"
 	"hmruntime/logger"
 
 	"github.com/dgraph-io/gqlparser/ast"
@@ -16,8 +17,8 @@ import (
 )
 
 type FunctionInfo struct {
-	PluginName string
-	Schema     FunctionSchema
+	Plugin *host.Plugin
+	Schema FunctionSchema
 }
 
 type FunctionSchema struct {

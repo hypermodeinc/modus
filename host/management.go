@@ -96,7 +96,7 @@ func loadPlugin(ctx context.Context, filename string) error {
 	if !foundMetadata {
 		logger.Warn(ctx).
 			Str("filename", filename).
-			Str("plugin", plugin.Name()).
+			Str("plugin", plugin.Metadata.Name).
 			Msg("No metadata found in plugin.  Please recompile your plugin using the latest version of the Hypermode Functions library.")
 	}
 
@@ -151,14 +151,15 @@ func logPluginLoaded(ctx context.Context, plugin Plugin) {
 
 func unloadPlugin(ctx context.Context, plugin Plugin) error {
 	logger.Info(ctx).
-		Str("plugin", plugin.Name()).
+		Str("plugin", plugin.Metadata.Name).
+		Str("build_id", plugin.Metadata.BuildId).
 		Msg("Unloading plugin.")
 
 	Plugins.Remove(plugin)
 	return (*plugin.Module).Close(ctx)
 }
 
-func GetModuleInstance(ctx context.Context, pluginName string) (wasm.Module, buffers, error) {
+func GetModuleInstance(ctx context.Context, plugin *Plugin) (wasm.Module, buffers, error) {
 
 	// Get the logger and writers for the plugin's stdout and stderr.
 	log := logger.Get(ctx).With().Bool("user_visible", true).Logger()
@@ -171,15 +172,9 @@ func GetModuleInstance(ctx context.Context, pluginName string) (wasm.Module, buf
 	wOut := io.MultiWriter(buf.Stdout, wInfoLog)
 	wErr := io.MultiWriter(buf.Stderr, wErrorLog)
 
-	// Get the plugin.
-	plugin, ok := Plugins.GetByName(pluginName)
-	if !ok {
-		return nil, buf, fmt.Errorf("plugin not found with name '%s'", pluginName)
-	}
-
 	// Configure the module instance.
 	cfg := wazero.NewModuleConfig().
-		WithName(pluginName + "_" + uuid.NewString()).
+		WithName(plugin.Name() + "_" + uuid.NewString()).
 		WithSysWalltime().WithSysNanotime().
 		WithStdout(wOut).WithStderr(wErr)
 

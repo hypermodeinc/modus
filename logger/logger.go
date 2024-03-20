@@ -18,13 +18,28 @@ import (
 type contextKey string
 
 const executionIdKey = "execution_id"
+const pluginNameKey = "plugin"
+const buildIdKey = "build_id"
+
 const ExecutionIdContextKey contextKey = executionIdKey
+const PluginNameContextKey contextKey = pluginNameKey
+const BuildIdContextKey contextKey = buildIdKey
 
 func Initialize() *zerolog.Logger {
-	if !config.UseJsonLogging {
+	if config.UseJsonLogging {
+		// In JSON mode, we'll log UTC with millisecond precision.
+		// Note that Go uses this specific value for its formatting exemplars.
+		zerolog.TimeFieldFormat = "2006-01-02T15:04:05.999Z"
+		zerolog.TimestampFunc = func() time.Time {
+			return time.Now().UTC()
+		}
+	} else {
+		// In console mode, we can use local time and be a bit prettier.
+		// We'll still log with millisecond precision.
+		zerolog.TimeFieldFormat = zerolog.TimeFormatUnixMs
 		log.Logger = log.Logger.Output(zerolog.ConsoleWriter{
 			Out:        os.Stderr,
-			TimeFormat: time.RFC3339,
+			TimeFormat: "2006-01-02 15:04:05.999 -07:00",
 		})
 	}
 
@@ -32,13 +47,33 @@ func Initialize() *zerolog.Logger {
 }
 
 func Get(ctx context.Context) *zerolog.Logger {
-	executionId, ok := ctx.Value(ExecutionIdContextKey).(string)
-	if ok && executionId != "" {
-		l := log.Logger.With().Str(executionIdKey, executionId).Logger()
-		return &l
+	executionId, found1 := ctx.Value(ExecutionIdContextKey).(string)
+	buildId, found2 := ctx.Value(BuildIdContextKey).(string)
+	pluginName, found3 := ctx.Value(PluginNameContextKey).(string)
+
+	// If no context values, just return the global logger.
+	if !found1 && !found2 && !found3 {
+		return &log.Logger
 	}
 
-	return &log.Logger
+	// Create a logger context with the context values.
+	lc := log.Logger.With()
+
+	if executionId != "" {
+		lc = lc.Str(executionIdKey, executionId)
+	}
+
+	if buildId != "" {
+		lc = lc.Str(buildIdKey, buildId)
+	}
+
+	if pluginName != "" {
+		lc = lc.Str(pluginNameKey, pluginName)
+	}
+
+	// Return a logger built from the context.
+	l := lc.Logger()
+	return &l
 }
 
 func Trace(ctx context.Context) *zerolog.Event {
