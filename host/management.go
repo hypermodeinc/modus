@@ -6,16 +6,13 @@ package host
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
-	"os"
-	"reflect"
 	"strings"
+	"time"
 
-	"hmruntime/aws"
-	"hmruntime/config"
 	"hmruntime/logger"
+	"hmruntime/storage"
 
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
@@ -29,97 +26,49 @@ type buffers struct {
 	Stderr *strings.Builder
 }
 
-func InitWasmRuntime(ctx context.Context) (wazero.Runtime, error) {
-
-	// Create the runtime
+func InitWasmRuntime(ctx context.Context) error {
 	cfg := wazero.NewRuntimeConfig()
 	cfg = cfg.WithCloseOnContextDone(true)
-	runtime := wazero.NewRuntimeWithConfig(ctx, cfg)
-
-	// Connect WASI host functions
-	err := instantiateWasiFunctions(ctx, runtime)
-	if err != nil {
-		return nil, err
-	}
-
-	return runtime, nil
+	WasmRuntime = wazero.NewRuntimeWithConfig(ctx, cfg)
+	return instantiateWasiFunctions(ctx)
 }
 
-func loadJson(ctx context.Context, name string) error {
-	config.Mu.Lock()         // Lock the mutex
-	defer config.Mu.Unlock() // Unlock the mutex when the function returns
-	logger.Info(ctx).Str("Loading %s.json.", name)
+func MonitorPlugins(ctx context.Context) {
 
-	// Get the JSON bytes
-	bytes, err := getJsonBytes(ctx, name)
-	if err != nil {
-		return err
+	loadPluginFile := func(fi storage.FileInfo) {
+		err := loadPlugin(ctx, fi.Name)
+		if err != nil {
+			logger.Err(ctx, err).
+				Str("filename", fi.Name).
+				Msg("Failed to load plugin.")
+		}
 	}
 
-	_, exists := config.SupportedJsons[name+".json"]
-	if !exists {
-		return fmt.Errorf("JSON %s does not exist.", name)
+	sm := storage.NewStorageMonitor(".wasm")
+	sm.Added = loadPluginFile
+	sm.Modified = loadPluginFile
+	sm.Removed = func(fi storage.FileInfo) {
+		p, ok := Plugins.GetByFile(fi.Name)
+		if ok {
+			err := unloadPlugin(ctx, p)
+			if err != nil {
+				logger.Err(ctx, err).
+					Str("filename", fi.Name).
+					Msg("Failed to unload plugin.")
+			}
+		}
 	}
-
-	err = json.Unmarshal(bytes, config.SupportedJsons[name+".json"])
-	if err != nil {
-		return fmt.Errorf("failed to unmarshal %s.json: %w", name, err)
+	sm.Changed = func() {
+		// Signal that we need to register functions
+		RegistrationRequest <- true
 	}
-
-	return nil
+	sm.Start(ctx)
 }
 
-func unloadJson(ctx context.Context, name string) {
-	config.Mu.Lock()         // Lock the mutex
-	defer config.Mu.Unlock() // Unlock the mutex when the function returns
-
-	value, exists := config.SupportedJsons[name+".json"]
-	if !exists {
-		logger.Error(ctx).Msg(fmt.Sprintf("JSON %s does not exist.", name))
-		return
-	}
-
-	t := reflect.TypeOf(value).Elem()
-	v := reflect.New(t).Interface()
-	config.SupportedJsons[name+".json"] = v
-
-	logger.Info(ctx).Msg(fmt.Sprintf("Unloaded %s.json.", name))
-}
-
-func getJsonBytes(ctx context.Context, name string) ([]byte, error) {
-	if aws.UseAwsForPluginStorage() {
-		return aws.GetJsonBytes(ctx, name)
-	}
-
-	path, err := getPathForJson(name)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get path for %s.json: %w", name, err)
-	}
-	bytes, err := os.ReadFile(path)
-	if err != nil {
-		return nil, fmt.Errorf("failed to load %s.json: %w", name, err)
-	}
-
-	logger.Info(ctx).
-		Str("path", path).
-		Msg(fmt.Sprintf("Retrieved %s.json from local storage.", name))
-
-	return bytes, nil
-}
-
-func loadPlugin(ctx context.Context, name string) error {
-	_, reloading := Plugins[name]
-	logger.Info(ctx).
-		Str("filename", name+".wasm").
-		Bool("reloading", reloading).
-		Msg("Loading plugin.")
-
-	// TODO: Separate plugin name from file name throughout the codebase.
-	// The plugin name should always come from the metadata, not the file name.
-	// This requires significant changes, so it's not done yet.
+func loadPlugin(ctx context.Context, filename string) error {
 
 	// Load the binary content of the plugin.
-	bytes, err := getPluginBytes(ctx, name)
+	bytes, err := storage.GetFileContents(ctx, filename)
 	if err != nil {
 		return err
 	}
@@ -131,83 +80,82 @@ func loadPlugin(ctx context.Context, name string) error {
 	}
 
 	// Get the metadata for the plugin.
-	metadata := getPluginMetadata(&cm)
-	if metadata == (PluginMetadata{}) {
-		logger.Warn(ctx).
-			Str("filename", name+".wasm").
-			Msg("No metadata found in plugin.  Please recompile your plugin using the latest version of the Hypermode Functions library.")
+	metadata, foundMetadata := getPluginMetadata(&cm)
+
+	// Use the filename as the plugin name if no metadata is found.
+	if !foundMetadata {
+		metadata.Name = strings.TrimSuffix(filename, ".wasm")
 	}
 
-	// Finally, store the plugin to complete the loading process.
-	Plugins[name] = Plugin{&cm, metadata}
-	logPluginLoaded(ctx, metadata)
+	// Create and store the plugin.
+	plugin := Plugin{&cm, metadata, filename}
+	Plugins.Add(plugin)
+
+	// Log the details of the loaded plugin.
+	logPluginLoaded(ctx, plugin)
+	if !foundMetadata {
+		logger.Warn(ctx).
+			Str("filename", filename).
+			Str("plugin", plugin.Name()).
+			Msg("No metadata found in plugin.  Please recompile your plugin using the latest version of the Hypermode Functions library.")
+	}
 
 	return nil
 }
 
-func logPluginLoaded(ctx context.Context, metadata PluginMetadata) {
+func logPluginLoaded(ctx context.Context, plugin Plugin) {
 	evt := logger.Info(ctx)
+	evt.Str("filename", plugin.FileName)
 
-	if metadata != (PluginMetadata{}) {
+	metadata := plugin.Metadata
+
+	if metadata.Name != "" {
 		evt.Str("plugin", metadata.Name)
+	}
+
+	if metadata.Version != "" {
 		evt.Str("version", metadata.Version)
-		evt.Str("language", metadata.Language.String())
+	}
+
+	lang := plugin.Language()
+	if lang != UnknownLanguage {
+		evt.Str("language", lang.String())
+	}
+
+	if metadata.BuildId != "" {
 		evt.Str("build_id", metadata.BuildId)
-		evt.Time("build_time", metadata.BuildTime)
+	}
+
+	if metadata.BuildTime != (time.Time{}) {
+		evt.Time("build_id", metadata.BuildTime)
+	}
+
+	if metadata.LibraryName != "" {
 		evt.Str("hypermode_library", metadata.LibraryName)
+	}
+
+	if metadata.LibraryVersion != "" {
 		evt.Str("hypermode_library_version", metadata.LibraryVersion)
+	}
 
-		if metadata.GitRepo != "" {
-			evt.Str("git_repo", metadata.GitRepo)
-		}
+	if metadata.GitRepo != "" {
+		evt.Str("git_repo", metadata.GitRepo)
+	}
 
-		if metadata.GitCommit != "" {
-			evt.Str("git_commit", metadata.GitCommit)
-		}
+	if metadata.GitCommit != "" {
+		evt.Str("git_commit", metadata.GitCommit)
 	}
 
 	evt.Msg("Loaded plugin.")
 }
 
-func getPluginBytes(ctx context.Context, name string) ([]byte, error) {
-
-	if aws.UseAwsForPluginStorage() {
-		return aws.GetPluginBytes(ctx, name)
-	}
-
-	path, err := getPathForPlugin(name)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get path for plugin: %w", err)
-	}
-
-	bytes, err := os.ReadFile(path)
-	if err != nil {
-		return nil, fmt.Errorf("failed to load the plugin: %w", err)
-	}
-
+func unloadPlugin(ctx context.Context, plugin Plugin) error {
 	logger.Info(ctx).
-		Str("plugin", name).
-		Str("path", path).
-		Msg("Retrieved plugin from local storage.")
-
-	return bytes, nil
-}
-
-func unloadPlugin(ctx context.Context, name string) error {
-	plugin, found := Plugins[name]
-	if !found {
-		return fmt.Errorf("plugin not found '%s'", name)
-	}
-
-	logger.Info(ctx).
-		Str("plugin", name).
+		Str("plugin", plugin.Name()).
 		Msg("Unloading plugin.")
 
-	mod := *plugin.Module
-	delete(Plugins, name)
-	mod.Close(ctx)
-
-	return nil
+	Plugins.Remove(plugin)
+	return (*plugin.Module).Close(ctx)
 }
 
 func GetModuleInstance(ctx context.Context, pluginName string) (wasm.Module, buffers, error) {
@@ -224,7 +172,7 @@ func GetModuleInstance(ctx context.Context, pluginName string) (wasm.Module, buf
 	wErr := io.MultiWriter(buf.Stderr, wErrorLog)
 
 	// Get the plugin.
-	plugin, ok := Plugins[pluginName]
+	plugin, ok := Plugins.GetByName(pluginName)
 	if !ok {
 		return nil, buf, fmt.Errorf("plugin not found with name '%s'", pluginName)
 	}
@@ -246,8 +194,8 @@ func GetModuleInstance(ctx context.Context, pluginName string) (wasm.Module, buf
 	return mod, buf, nil
 }
 
-func instantiateWasiFunctions(ctx context.Context, runtime wazero.Runtime) error {
-	b := runtime.NewHostModuleBuilder(wasi.ModuleName)
+func instantiateWasiFunctions(ctx context.Context) error {
+	b := WasmRuntime.NewHostModuleBuilder(wasi.ModuleName)
 	wasi.NewFunctionExporter().ExportFunctions(b)
 
 	// If we ever need to override any of the WASI functions, we can do so here.

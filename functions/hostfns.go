@@ -9,7 +9,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"hmruntime/config"
+	"hmruntime/appdata"
 	"hmruntime/dgraph"
 	"hmruntime/logger"
 	"hmruntime/models"
@@ -111,7 +111,7 @@ type ClassifierLabel struct {
 func hostInvokeClassifier(ctx context.Context, mod wasm.Module, pModelName uint32, pSentenceMap uint32) uint32 {
 	mem := mod.Memory()
 
-	model, err := getModel(mem, pModelName, config.ClassificationTask)
+	model, err := getModel(mem, pModelName, appdata.ClassificationTask)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error getting model.")
 		return 0
@@ -146,7 +146,7 @@ func hostInvokeClassifier(ctx context.Context, mod wasm.Module, pModelName uint3
 func hostComputeEmbedding(ctx context.Context, mod wasm.Module, pModelName uint32, pSentenceMap uint32) uint32 {
 	mem := mod.Memory()
 
-	model, err := getModel(mem, pModelName, config.EmbeddingTask)
+	model, err := getModel(mem, pModelName, appdata.EmbeddingTask)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error getting model.")
 		return 0
@@ -181,7 +181,7 @@ func hostComputeEmbedding(ctx context.Context, mod wasm.Module, pModelName uint3
 func hostInvokeTextGenerator(ctx context.Context, mod wasm.Module, pModelName uint32, pInstruction uint32, pSentence uint32, pFormat uint32) uint32 {
 	mem := mod.Memory()
 
-	model, err := getModel(mem, pModelName, config.GeneratorTask)
+	model, err := getModel(mem, pModelName, appdata.GeneratorTask)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error getting model.")
 		return 0
@@ -233,11 +233,11 @@ func hostInvokeTextGenerator(ctx context.Context, mod wasm.Module, pModelName ui
 	return writeString(ctx, mod, string(res))
 }
 
-func getModel(mem wasm.Memory, pModelName uint32, task config.ModelTask) (config.Model, error) {
+func getModel(mem wasm.Memory, pModelName uint32, task appdata.ModelTask) (appdata.Model, error) {
 	modelName, err := readString(mem, pModelName)
 	if err != nil {
 		err = fmt.Errorf("error reading model name from wasm memory: %w", err)
-		return config.Model{}, err
+		return appdata.Model{}, err
 	}
 
 	return models.GetModel(modelName, task)

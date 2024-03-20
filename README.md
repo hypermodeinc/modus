@@ -1,79 +1,29 @@
 # Hypermode Runtime
 
 This repository contains the source code for the _Hypermode Runtime_.
-
-The runtime loads and executes _plugins_ containing _Hypermode Functions_.
+The Runtime loads and executes _plugins_ containing _Hypermode Functions_.
 
 To get started with Hypermode Functions written in AssemblyScript, visit the
-[`hypermode-as`](https://github.com/gohypermode/hypermode-as) repository.
+[`functions-as`](https://github.com/gohypermode/functions-as) repository.
 
-## Docker Setup
+## Command Line Parameters
 
-To build a Docker image for the Hypermode Runtime:
+When starting the Runtime, you can use the following command line parameters:
 
-```sh
-docker build -t hypermode/runtime .
-```
+- `--port` - The HTTP port to listen on.  Defaults to `8686`.
+- `--dgraph` - The Dgraph url to connect to.  Defaults to `http://localhost:8080`.
+- `--modelHost` - The base DNS of the host endpoint to the model server.
+- `--storagePath` - The path to a directory used for local storage.
+  - Linux / OSX default: `$HOME/.hypermode`
+  - Windows default: `%APPDATA%\Hypermode`
+- `--useAwsSecrets` - Use AWS Secrets Manager for API keys and other secrets.
+- `--useAwsStorage` - Use AWS S3 for storage instead of the local filesystem.
+- `--s3bucket` - The S3 bucket to use, if using AWS storage.
+- `--s3path` - The path within the S3 bucket to use, if using AWS storage.
+- `--refresh` - The refresh interval to reload any changes.  Defaults to `5s`.
+- `--jsonlogs` - Use JSON format for logging.
 
-Then you can run that image.  Port `8686` should be exposed.
-
-```sh
-docker run -p 8686:8686 -v <PLUGINS_PATH>:/plugins hypermode/runtime --dgraph=<DGRAPH_ALPHA_URL>
-```
-
-Replace the following:
-- `<PLUGINS_PATH>` should be the local path to the folder where you will load plugins from.
-  - You can use paths such as `./plugins` or `~/plugins` etc. depending on where you want to keep your plugin files.
-- `<DGRAPH_ALPHA_URL>` should be the URL to the Dgraph Alpha endpoint you are connecting the runtime to.
-  - To connect to Dgraph running in another docker container, use `host.docker.internal`.
-
-Optionally, you may also wish to give the container a specific name using the `--name` flag.
-For example, to start a new Docker container named `hmruntime`, looking for plugins in a local `./plugins` folder,
-and connecting to a local Dgraph docker image:
-
-```sh
-docker run --name hmruntime -p 8686:8686 -v ./plugins:/plugins hypermode/runtime --plugins=/plugins --dgraph=http://host.docker.internal:8080
-```
-
-_Note, if you have previously created a container with the same name, then delete it first with `docker rm hmruntime`._
-
-## Building without Docker
-
-If needed, you can compile and run the Hypermode Runtime without using Docker.
-This is most common for local development.
-
-Be sure that you have Go installed in your dev environment, at the version specified in the [.go-version](./go-verson) file, or higher.
-
-You can run the code directly using VSCode's debugger.
-
-Alternatively you can either run the Runtime code directly from source:
-
-```sh
-go run . --plugin ../hypermode-as/examples/hmplugin1
-```
-
-Or, you can build the `hmruntime` executable and then run that:
-
-```sh
-go build
-./hmruntime --plugin ../hypermode-as/examples/hmplugin1
-```
-
-## Command Line Arguments
-
-When starting the runtime, you may need to use the following command line arguments:
-
-- `--plugins` (or `--plugin`) - The folder that the runtime will look for plugins in.  ***Required.***
-- `--port` - The port that the runtime will listen for HTTP requests on.  Defaults to `8686`.
-- `--dgraph` - The URL to the Dgraph Alpha endpoint.  Defaults to `http://localhost:8080`.
-- `--modelHost` - The host portion of the url to the model endpoint. This is used for cloud deployments for kserve hosted models .
-- `--noreload` - Disables automatic reloading of plugins.
-- `--s3bucket` - The S3 bucket to use, if using AWS for plugin storage.
-- `--useAwsSecrets` - Directs the Runtime to use AWS Secret Manager for secrets such as model keys.
-- `--refresh` - The refresh interval to check for plugins and schema changes.  Defaults to `5s`.
-- `--jsonlogs` - Switches log output to JSON format.
-
-_Note: You can use either `-` or `--` prefixes, and you can add parameters with either a space or `=`._
+_Note: You can use either `-` or `--` prefixes, and you use either a space or `=` to provide values._
 
 ## Environment Variables
 
@@ -99,33 +49,50 @@ HYP_MODEL_KEY_FOO=abc123
 HYP_MODEL_KEY_BAR=xyz456
 ```
 
-## Working locally with plugins
+## Building the Runtime
 
-Regardless of whether you use Docker or not, it is often useful to be developing both the runtime
-and a plugin at the same time.  This is especially true if you are developing a new host function
-for the runtime, and need to expose it via the `hypermode-as` library.
+Ensure that you have Go installed in your dev environment.
+The required minimum version is specified in the [.go-version](./go-verson) file.
 
-To facilitate this, you can point the runtime's plugins path to the root folder of any plugin's
-source code.  The runtime will use the `build/debug.wasm` file, and will pick up changes
-automatically when rebuilding the plugin.
+Then, you can do any of the following:
 
-For example, you may have the `runtime` and `hypermode-as` repos in the same parent directory,
-and are working on a plugin in the `examples` folder, such as `hmplugin1`.  You can start the
-runtime like so:
+- You can run directly from source code:
+  ```sh
+  go run .
+  ```
+
+- You can compile the source code and run the output:
+  ```sh
+  go build
+  ./hmruntime
+  ```
+
+- You can run and debug the source code in VS Code, using the VS Code debugger.
+ 
+## Docker Setup
+
+To build a Docker image for the Hypermode Runtime:
 
 ```sh
-go run . --plugin ../hypermode-as/examples/hmplugin1
+docker build -t hypermode/Runtime .
 ```
 
-Or, if you are working on more than one plugin simultaneously you can use their parent directory:
+When running the image via Docker Desktop, keep in mind:
+- You may wish to give the container a specific name using `--name`.
+- Port `8686` should be exposed.
+- If using local storage, you'll need to map the container's `/root/.hypermode` folder to your own `~/.hypermode` folder.
+- You may need to pass command line parameters and/or set environment variables.
+
+For example:
 
 ```sh
-go run . --plugins ../hypermode-as/examples
+docker run --name hmruntime \
+  -p 8686:8686 \
+  -v ~/.hypermode:/root/.hypermode hypermode/Runtime \
+  --dgraph=http://host.docker.internal:8080
 ```
 
-However, be aware that if there are conflicts between function names in the plugins,
-the last one loaded byt the runtime will take precedence.  Thus, it's usually better to work
-on one plugin at a time.
+_Note, if you have previously created a container with the same name, then delete it first with `docker rm hmruntime`._
 
 ## Dgraph Setup
 
@@ -153,7 +120,8 @@ docker run --name <CONTAINER_NAME> \
 ```
 
 ## AWS Setup
-Runtime may access AWS resources, so we need to use an AWS profile.
+If configured to do so, the Hypermode Runtime may access AWS resources.
+If you are debugging locally, set up an AWS profile.
 
 ```sh
 export AWS_PROFILE=sandbox
@@ -172,16 +140,23 @@ region = us-west-2
 
 Then run `aws sso login --profile sandbox` to login to the profile.
 
-After SSO login you can start the runtime, either from the VS Code "Run and Debug" panel,
-or from the command line as follows:
+After SSO login you can start the Runtime, either from the VS Code debugger
+using the `Hypermode Runtime (AWS)` launch profile, or from the command line as follows:
 
 ```sh
 export AWS_SDK_LOAD_CONFIG=true
 export AWS_PROFILE=sandbox
-./hmruntime --plugins <your plugin folder>
+./hmruntime \
+  --useAwsSecrets \
+  --useAwsStorage \
+  --s3bucket=sandbox-runtime-storage \
+  --s3path=shared
 ```
 
-_You can omit the exports if the environment variables are already set._
+You can omit the exports if the environment variables are already set.
+You can also use any S3 bucket or path you like.  If a path is not specified, the Runtime will look for files in the root of the bucket.
+
+_The shared sandbox is intended for temporary use.  In production, each customer's backend gets a separate path within a single bucket._
 
 #### Troubleshooting
 
@@ -193,35 +168,6 @@ or your AWS region is wrong, or you do not have an AWS secret set for the ModelS
 
 `aws secretsmanager create-secret --name '<ModelSpec.name>' --secret-string '<apikey>'
 `
-### Using S3 for plugin storage
-
-You can optionally use S3 for plugin storage.  This configuration is usually for staging or production,
-but you can use it locally as well.
-
-First, configure the AWS setup as described above.  Then start the runtime with the following command line arguments:
-
-- `--s3bucket <bucket>` - An standard S3 bucket within the pre-configured AWS account. 
-- `--plugins <folder>` - A folder within that bucket where `.wasm` files are contained.
-
-Note that the `--plugins` argument is re-purposed.  It now refers to a folder inside the S3 bucket, 
-rather than a local directory on disk.
-
-For example:
-
-```sh
-export AWS_PROFILE=sandbox; ./hmruntime --s3bucket sandbox-runtime-plugins --plugins shared-plugins
-```
-You can omit the export if the environment variable is already set.
-
-_In staging and production, a single S3 bucket is shared, but each backend has its own plugins folder._
-
-#### Using S3 from VS Code Debugging Session
-
-From the VS Code "Run and Debug" pane, you can choose the launch profile called `runtime (AWS S3 plugin storage)`.
-
-When running using this profile, you will be prompted for the S3 bucket and folder name.
-You can use the default values provided, or override them to load plugins from another location.
-
 ### Unit Testing
 
 Unit tests are created using Go's [built-in unit test support](https://go.dev/doc/tutorial/add-a-test).
