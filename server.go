@@ -68,6 +68,10 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Add plugin details to the context
+	ctx = context.WithValue(ctx, logger.PluginNameContextKey, info.Plugin.Metadata.Name)
+	ctx = context.WithValue(ctx, logger.BuildIdContextKey, info.Plugin.Metadata.BuildId)
+
 	// Get a module instance for this request.
 	// Each request will get its own instance of the plugin module,
 	// so that we can run multiple requests in parallel without risk
