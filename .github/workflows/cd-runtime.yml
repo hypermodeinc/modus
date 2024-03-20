@@ -82,15 +82,11 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: '${{ github.event.inputs.releasetag }}'
-      - name: Get Go Version
-        run: |
-          #!/bin/bash
-          GOVERSION=$({ [ -f .go-version ] && cat .go-version; })
-          echo "GOVERSION=$GOVERSION" >> $GITHUB_ENV
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: ${{ env.GOVERSION }}
+          go-version-file: 'go.mod'
+          check-latest: true
       - name: Set Runtime Release Version
         run: |
           #!/bin/bash

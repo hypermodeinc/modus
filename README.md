@@ -52,7 +52,8 @@ HYP_MODEL_KEY_BAR=xyz456
 ## Building the Runtime
 
 Ensure that you have Go installed in your dev environment.
-The required minimum version is specified in the [.go-version](./go-verson) file.
+The required minimum major version is specified in the [go.mod](./go.mod) file.
+It is recommended to use the latest patch version available, and keep current.
 
 Then, you can do any of the following:
 
