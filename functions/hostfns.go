@@ -30,6 +30,7 @@ func InstantiateHostFunctions(ctx context.Context, runtime wazero.Runtime) error
 	b.NewFunctionBuilder().WithFunc(hostInvokeClassifier).Export("invokeClassifier")
 	b.NewFunctionBuilder().WithFunc(hostComputeEmbedding).Export("computeEmbedding")
 	b.NewFunctionBuilder().WithFunc(hostInvokeTextGenerator).Export("invokeTextGenerator")
+	b.NewFunctionBuilder().WithFunc(hostInvokeTextGeneratorV2).Export("invokeTextGenerator_v2")
 
 	_, err := b.Instantiate(ctx)
 	if err != nil {
@@ -178,7 +179,11 @@ func hostComputeEmbedding(ctx context.Context, mod wasm.Module, pModelName uint3
 	return writeString(ctx, mod, string(res))
 }
 
-func hostInvokeTextGenerator(ctx context.Context, mod wasm.Module, pModelName uint32, pInstruction uint32, pSentence uint32, pFormat uint32) uint32 {
+func hostInvokeTextGenerator(ctx context.Context, mod wasm.Module, pModelName uint32, pInstruction uint32, pSentence uint32) uint32 {
+	return hostInvokeTextGeneratorV2(ctx, mod, pModelName, pInstruction, pSentence, 0)
+}
+
+func hostInvokeTextGeneratorV2(ctx context.Context, mod wasm.Module, pModelName uint32, pInstruction uint32, pSentence uint32, pFormat uint32) uint32 {
 	mem := mod.Memory()
 
 	model, err := getModel(mem, pModelName, appdata.GeneratorTask)
@@ -198,12 +203,20 @@ func hostInvokeTextGenerator(ctx context.Context, mod wasm.Module, pModelName ui
 		logger.Err(ctx, err).Msg("Error reading instruction string from wasm memory.")
 		return 0
 	}
-	format, err := readString(mem, pFormat)
-	if err != nil {
-		logger.Err(ctx, err).Msg("Error reading format string from wasm memory.")
-		return 0
+
+	// Default to text output format for backwards compatibility.
+	// V2 allows for a format to be specified.
+	var outputFormat models.OutputFormat
+	if pFormat == 0 {
+		outputFormat = models.OutputFormatText
+	} else {
+		format, err := readString(mem, pFormat)
+		if err != nil {
+			logger.Err(ctx, err).Msg("Error reading format string from wasm memory.")
+			return 0
+		}
+		outputFormat = models.OutputFormat(format)
 	}
-	outputFormat := models.OutputFormat(format)
 
 	if models.OutputFormatText != outputFormat && models.OutputFormatJson != outputFormat {
 		logger.Err(ctx, err).Msg("Unsupported output format.")
