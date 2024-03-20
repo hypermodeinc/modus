@@ -72,10 +72,10 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 	// Each request will get its own instance of the plugin module,
 	// so that we can run multiple requests in parallel without risk
 	// of corrupting the module's memory.
-	mod, buf, err := host.GetModuleInstance(ctx, info.PluginName)
+	mod, buf, err := host.GetModuleInstance(ctx, info.Plugin)
 	if err != nil {
 		logger.Err(ctx, err).
-			Str("plugin", info.PluginName).
+			Str("plugin", info.Plugin.Name()).
 			Msg("Failed to get module instance.")
 		err := writeErrorResponse(w, err)
 		if err != nil {

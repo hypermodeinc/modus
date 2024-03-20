@@ -50,7 +50,7 @@ func registerFunctions(ctx context.Context, gqlSchema string) error {
 			for _, fn := range module.ExportedFunctions() {
 				fnName := fn.ExportNames()[0]
 				if strings.EqualFold(fnName, scma.FunctionName()) {
-					info := schema.FunctionInfo{PluginName: plugin.Name(), Schema: scma}
+					info := schema.FunctionInfo{Plugin: &plugin, Schema: scma}
 					resolver := scma.Resolver()
 					oldInfo, existed := FunctionsMap[resolver]
 					if existed && reflect.DeepEqual(oldInfo, info) {
@@ -77,13 +77,13 @@ func registerFunctions(ctx context.Context, gqlSchema string) error {
 				break
 			}
 		}
-		_, foundPlugin := host.Plugins.GetByName(info.PluginName)
+		_, foundPlugin := host.Plugins.GetByName(info.Plugin.Name())
 		if !foundSchema || !foundPlugin {
 			delete(FunctionsMap, resolver)
 			logger.Info(ctx).
 				Str("resolver", resolver).
 				Str("function", info.FunctionName()).
-				Str("plugin", info.PluginName).
+				Str("plugin", info.Plugin.Name()).
 				Msg("Unregistered function.")
 		}
 	}
