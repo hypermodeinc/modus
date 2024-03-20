@@ -21,10 +21,20 @@ const executionIdKey = "execution_id"
 const ExecutionIdContextKey contextKey = executionIdKey
 
 func Initialize() *zerolog.Logger {
-	if !config.UseJsonLogging {
+	if config.UseJsonLogging {
+		// In JSON mode, we'll log UTC with millisecond precision.
+		// Note that Go uses this specific value for its formatting exemplars.
+		zerolog.TimeFieldFormat = "2006-01-02T15:04:05.999Z"
+		zerolog.TimestampFunc = func() time.Time {
+			return time.Now().UTC()
+		}
+	} else {
+		// In console mode, we can use local time and be a bit prettier.
+		// We'll still log with millisecond precision.
+		zerolog.TimeFieldFormat = zerolog.TimeFormatUnixMs
 		log.Logger = log.Logger.Output(zerolog.ConsoleWriter{
 			Out:        os.Stderr,
-			TimeFormat: time.RFC3339,
+			TimeFormat: "2006-01-02 15:04:05.999 -07:00",
 		})
 	}
 
