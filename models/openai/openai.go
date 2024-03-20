@@ -14,43 +14,29 @@ import (
 )
 
 type ChatContext struct {
-	Model    string        `json:"model"`
-	Messages []ChatMessage `json:"messages"`
+	Model          string               `json:"model"`
+	ResponseFormat ResponseFormat       `json:"response_format"`
+	Messages       []models.ChatMessage `json:"messages"`
+}
+type ResponseFormat struct {
+	Type string `json:"type"`
 }
 
-type ChatMessage struct {
-	Role    string `json:"role"`
-	Content string `json:"content"`
-}
-
-type ChatResponse struct {
-	Choices []MessageChoice `json:"choices"`
-	Error   InvokeError     `json:"error"`
-}
-
-type MessageChoice struct {
-	Message ChatMessage `json:"message"`
-}
-
-type InvokeError struct {
-	Message string `json:"message"`
-	Type    string `json:"type"`
-	Param   string `json:"param"`
-	Code    string `json:"code"`
-}
-
-func GenerateText(ctx context.Context, model appdata.Model, instruction string, sentence string) (ChatResponse, error) {
+func ChatCompletion(ctx context.Context, model appdata.Model, instruction string, sentence string, outputFormat models.OutputFormat) (models.ChatResponse, error) {
 
 	// Get the OpenAI API key to use for this model
 	key, err := models.GetModelKey(ctx, model)
 	if err != nil {
-		return ChatResponse{}, err
+		return models.ChatResponse{}, err
 	}
 
 	// build the request body following OpenAI API
 	reqBody := ChatContext{
 		Model: model.SourceModel,
-		Messages: []ChatMessage{
+		ResponseFormat: ResponseFormat{
+			Type: string(outputFormat),
+		},
+		Messages: []models.ChatMessage{
 			{Role: "system", Content: instruction},
 			{Role: "user", Content: sentence},
 		},
@@ -62,14 +48,14 @@ func GenerateText(ctx context.Context, model appdata.Model, instruction string, 
 		"Authorization": "Bearer " + key,
 	}
 
-	result, err := utils.PostHttp[ChatResponse](endpoint, reqBody, headers)
+	result, err := utils.PostHttp[models.ChatResponse](endpoint, reqBody, headers)
 
 	if err != nil {
-		return ChatResponse{}, fmt.Errorf("error posting to OpenAI: %w", err)
+		return models.ChatResponse{}, fmt.Errorf("error posting to OpenAI: %w", err)
 	}
 
 	if result.Error.Message != "" {
-		return ChatResponse{}, fmt.Errorf("error returned from OpenAI: %s", result.Error.Message)
+		return models.ChatResponse{}, fmt.Errorf("error returned from OpenAI: %s", result.Error.Message)
 	}
 
 	return result, nil

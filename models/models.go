@@ -20,6 +20,16 @@ const modelKeyPrefix = "HYP_MODEL_KEY_"
 const HypermodeHost string = "hypermode"
 const OpenAIHost string = "openai"
 
+// generic output format for models functions
+// can be extended to support more formats
+// for now, we support text and json_object used in generateText function
+type OutputFormat string
+
+const (
+	OutputFormatText OutputFormat = "text"
+	OutputFormatJson OutputFormat = "json_object"
+)
+
 func GetModel(modelName string, task appdata.ModelTask) (appdata.Model, error) {
 	for _, model := range appdata.HypermodeData.Models {
 		if model.Name == modelName && model.Task == task {
@@ -120,4 +130,26 @@ func PostToModelEndpoint[TResult any](ctx context.Context, sentenceMap map[strin
 		result[keys[i]] = v
 	}
 	return result, nil
+}
+
+// Define  structures used by text generation functions
+type ChatMessage struct {
+	Role    string `json:"role"`
+	Content string `json:"content"`
+}
+
+type ChatResponse struct {
+	Choices []MessageChoice `json:"choices"`
+	Error   InvokeError     `json:"error"`
+}
+
+type MessageChoice struct {
+	Message ChatMessage `json:"message"`
+}
+
+type InvokeError struct {
+	Message string `json:"message"`
+	Type    string `json:"type"`
+	Param   string `json:"param"`
+	Code    string `json:"code"`
 }

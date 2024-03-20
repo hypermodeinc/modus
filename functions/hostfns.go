@@ -30,6 +30,7 @@ func InstantiateHostFunctions(ctx context.Context, runtime wazero.Runtime) error
 	b.NewFunctionBuilder().WithFunc(hostInvokeClassifier).Export("invokeClassifier")
 	b.NewFunctionBuilder().WithFunc(hostComputeEmbedding).Export("computeEmbedding")
 	b.NewFunctionBuilder().WithFunc(hostInvokeTextGenerator).Export("invokeTextGenerator")
+	b.NewFunctionBuilder().WithFunc(hostInvokeTextGeneratorV2).Export("invokeTextGenerator_v2")
 
 	_, err := b.Instantiate(ctx)
 	if err != nil {
@@ -179,6 +180,10 @@ func hostComputeEmbedding(ctx context.Context, mod wasm.Module, pModelName uint3
 }
 
 func hostInvokeTextGenerator(ctx context.Context, mod wasm.Module, pModelName uint32, pInstruction uint32, pSentence uint32) uint32 {
+	return hostInvokeTextGeneratorV2(ctx, mod, pModelName, pInstruction, pSentence, 0)
+}
+
+func hostInvokeTextGeneratorV2(ctx context.Context, mod wasm.Module, pModelName uint32, pInstruction uint32, pSentence uint32, pFormat uint32) uint32 {
 	mem := mod.Memory()
 
 	model, err := getModel(mem, pModelName, appdata.GeneratorTask)
@@ -199,8 +204,30 @@ func hostInvokeTextGenerator(ctx context.Context, mod wasm.Module, pModelName ui
 		return 0
 	}
 
-	result, err := openai.GenerateText(ctx, model, instruction, sentence)
+	// Default to text output format for backwards compatibility.
+	// V2 allows for a format to be specified.
+	var outputFormat models.OutputFormat
+	if pFormat == 0 {
+		outputFormat = models.OutputFormatText
+	} else {
+		format, err := readString(mem, pFormat)
+		if err != nil {
+			logger.Err(ctx, err).Msg("Error reading format string from wasm memory.")
+			return 0
+		}
+		outputFormat = models.OutputFormat(format)
+	}
 
+	if models.OutputFormatText != outputFormat && models.OutputFormatJson != outputFormat {
+		logger.Err(ctx, err).Msg("Unsupported output format.")
+		return 0
+	}
+	if model.Host != models.OpenAIHost {
+		err := fmt.Errorf("expected model host: %s", models.OpenAIHost)
+		logger.Err(ctx, err).Msg("Unsupported model host.")
+		return 0
+	}
+	result, err := openai.ChatCompletion(ctx, model, instruction, sentence, outputFormat)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error posting to OpenAI.")
 		return 0
@@ -209,6 +236,17 @@ func hostInvokeTextGenerator(ctx context.Context, mod wasm.Module, pModelName ui
 		err := fmt.Errorf(result.Error.Message)
 		logger.Err(ctx, err).Msg("Error returned from OpenAI.")
 		return 0
+	}
+	if models.OutputFormatJson == outputFormat {
+		// safeguard: test is the output is a valid json
+		// test every Choices.Message.Content
+		for _, choice := range result.Choices {
+			_, err := json.Marshal(choice.Message.Content)
+			if err != nil {
+				logger.Err(ctx, err).Msg("One of the generated message is not a valid JSON.")
+				return 0
+			}
+		}
 	}
 
 	res, err := json.Marshal(result)
