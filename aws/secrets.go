@@ -22,10 +22,6 @@ func GetSecretString(ctx context.Context, secretId string) (string, error) {
 		return secret, nil
 	}
 
-	if !awsEnabled {
-		return "", fmt.Errorf("unable to retrieve secret because AWS functionality is disabled")
-	}
-
 	svc := secretsmanager.NewFromConfig(awsConfig)
 	secretValue, err := svc.GetSecretValue(ctx, &secretsmanager.GetSecretValueInput{
 		SecretId: &secretId,

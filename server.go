@@ -239,8 +239,7 @@ func handleAdminRequest(w http.ResponseWriter, r *http.Request) {
 
 	// Perform the requested action
 	switch req.Action {
-	case "reload":
-		err = host.ReloadPlugins(r.Context())
+	// TODO: Add admin actions here
 	default:
 		err = fmt.Errorf("unknown action: %s", req.Action)
 	}
@@ -255,11 +254,6 @@ func handleAdminRequest(w http.ResponseWriter, r *http.Request) {
 }
 
 func startServer(ctx context.Context) error {
-
-	// Block until the initial registration process is complete
-	<-functions.RegistrationCompleted
-
-	// Start the HTTP server
 	logger.Info(ctx).
 		Int("port", config.Port).
 		Msg("Listening for incoming requests.")

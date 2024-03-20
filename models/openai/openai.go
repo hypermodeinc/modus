@@ -8,7 +8,7 @@ import (
 	"context"
 	"fmt"
 
-	"hmruntime/config"
+	"hmruntime/appdata"
 	"hmruntime/models"
 	"hmruntime/utils"
 )
@@ -39,7 +39,7 @@ type InvokeError struct {
 	Code    string `json:"code"`
 }
 
-func GenerateText(ctx context.Context, model config.Model, instruction string, sentence string) (ChatResponse, error) {
+func GenerateText(ctx context.Context, model appdata.Model, instruction string, sentence string) (ChatResponse, error) {
 
 	// Get the OpenAI API key to use for this model
 	key, err := models.GetModelKey(ctx, model)

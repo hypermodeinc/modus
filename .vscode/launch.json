@@ -2,39 +2,33 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "runtime (local plugin storage)",
+      "name": "Hypermode Runtime (local)",
       "type": "go",
       "request": "launch",
       "mode": "auto",
       "program": "${workspaceFolder}",
-      "env": {
-        "ENV": "dev",
-        "AWS_REGION": "us-west-2",
-        "AWS_PROFILE": "sandbox",
-        "AWS_SDK_LOAD_CONFIG": "true"
-      },
       "args": [
         "--dgraph=http://localhost:8080",
-        "--plugins=${userHome}/plugins",
         "--refresh=1s",
       ]
     },
     {
-      "name": "runtime (AWS S3 plugin storage)",
+      "name": "Hypermode Runtime (AWS)",
       "type": "go",
       "request": "launch",
       "mode": "auto",
       "program": "${workspaceFolder}",
       "env": {
-        "ENV": "dev",
         "AWS_REGION": "us-west-2",
         "AWS_PROFILE": "sandbox",
         "AWS_SDK_LOAD_CONFIG": "true"
       },
       "args": [
         "--dgraph=http://localhost:8080",
+        "--useAwsSecrets",
+        "--useAwsStorage",
         "--s3bucket=${input:s3bucket}",
-        "--plugins=${input:s3folder}",
+        "--s3path=${input:s3folder}",
         "--refresh=1s",
       ]
     },
@@ -44,13 +38,13 @@
       "id": "s3bucket",
       "type": "promptString",
       "description": "Enter the S3 bucket name",
-      "default": "sandbox-runtime-plugins"
+      "default": "sandbox-runtime-storage"
     },
     {
       "id": "s3folder",
       "type": "promptString",
-      "description": "Enter the S3 plugins folder name",
-      "default": "shared-plugins"
+      "description": "Enter the S3 storage folder name",
+      "default": "shared"
     },
   ]
 }
