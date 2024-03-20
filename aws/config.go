@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 
+	hmConfig "hmruntime/config"
 	"hmruntime/logger"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -34,6 +35,10 @@ func Initialize(ctx context.Context) error {
 	}
 
 	awsConfig = cfg
+
+	if hmConfig.UseAwsSecrets {
+		initSecretsManager()
+	}
 
 	logger.Info(ctx).
 		Str("region", awsConfig.Region).
