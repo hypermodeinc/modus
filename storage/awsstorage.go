@@ -18,24 +18,29 @@ import (
 )
 
 type awsStorage struct {
+	s3Client *s3.Client
 }
 
-func (s *awsStorage) initialize() {
+func (stg *awsStorage) initialize() {
 	if config.S3Bucket == "" {
 		log.Fatal().Msg("An S3 bucket is required when using AWS storage.  Exiting.")
 	}
+
+	// Initialize the S3 service client.
+	// This is safe to hold onto for the lifetime of the application.
+	// See https://github.com/aws/aws-sdk-go-v2/discussions/2566
+	cfg := aws.GetAwsConfig()
+	stg.s3Client = s3.NewFromConfig(cfg)
 }
 
-func (s *awsStorage) listFiles(ctx context.Context, extension string) ([]FileInfo, error) {
-	cfg := aws.GetAwsConfig()
-	svc := s3.NewFromConfig(cfg)
+func (stg *awsStorage) listFiles(ctx context.Context, extension string) ([]FileInfo, error) {
 
 	input := &s3.ListObjectsV2Input{
 		Bucket: &config.S3Bucket,
 		Prefix: &config.S3Path,
 	}
 
-	result, err := svc.ListObjectsV2(ctx, input)
+	result, err := stg.s3Client.ListObjectsV2(ctx, input)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list files in S3 bucket: %w", err)
 	}
@@ -57,17 +62,14 @@ func (s *awsStorage) listFiles(ctx context.Context, extension string) ([]FileInf
 	return files, nil
 }
 
-func (s *awsStorage) getFileContents(ctx context.Context, name string) ([]byte, error) {
-	cfg := aws.GetAwsConfig()
-	svc := s3.NewFromConfig(cfg)
-
+func (stg *awsStorage) getFileContents(ctx context.Context, name string) ([]byte, error) {
 	key := path.Join(config.S3Path, name)
 	input := &s3.GetObjectInput{
 		Bucket: &config.S3Bucket,
 		Key:    &key,
 	}
 
-	obj, err := svc.GetObject(ctx, input)
+	obj, err := stg.s3Client.GetObject(ctx, input)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get file %s from S3: %w", name, err)
 	}
