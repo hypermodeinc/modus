@@ -158,7 +158,7 @@ func unloadPlugin(ctx context.Context, plugin Plugin) error {
 	return (*plugin.Module).Close(ctx)
 }
 
-func GetModuleInstance(ctx context.Context, pluginName string) (wasm.Module, buffers, error) {
+func GetModuleInstance(ctx context.Context, plugin *Plugin) (wasm.Module, buffers, error) {
 
 	// Get the logger and writers for the plugin's stdout and stderr.
 	log := logger.Get(ctx).With().Bool("user_visible", true).Logger()
@@ -171,15 +171,9 @@ func GetModuleInstance(ctx context.Context, pluginName string) (wasm.Module, buf
 	wOut := io.MultiWriter(buf.Stdout, wInfoLog)
 	wErr := io.MultiWriter(buf.Stderr, wErrorLog)
 
-	// Get the plugin.
-	plugin, ok := Plugins.GetByName(pluginName)
-	if !ok {
-		return nil, buf, fmt.Errorf("plugin not found with name '%s'", pluginName)
-	}
-
 	// Configure the module instance.
 	cfg := wazero.NewModuleConfig().
-		WithName(pluginName + "_" + uuid.NewString()).
+		WithName(plugin.Name() + "_" + uuid.NewString()).
 		WithSysWalltime().WithSysNanotime().
 		WithStdout(wOut).WithStderr(wErr)
 
