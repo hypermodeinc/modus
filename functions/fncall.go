@@ -7,6 +7,7 @@ package functions
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"time"
 
@@ -206,6 +207,13 @@ func convertResult(mem wasm.Memory, schemaType ast.Type, wasmType wasm.ValueType
 			return nil, fmt.Errorf("return type was not a pointer")
 		}
 
-		return readString(mem, uint32(res))
+		str, err := readString(mem, uint32(res))
+
+		// Give the user a more helpful error message if the function is not returning a string.
+		if err == errPointerIsNotToString && schemaType.NamedType != "String" {
+			return "", errors.New("structured data should be returned from the function as a JSON string")
+		}
+
+		return str, err
 	}
 }
