@@ -65,12 +65,13 @@ func CallFunction(ctx context.Context, mod wasm.Module, info schema.FunctionInfo
 
 	// Get the result
 	mem := mod.Memory()
-	result, err := convertResult(mem, *schema.FieldDef.Type, def.ResultTypes()[0], res[0])
+	resultType := schema.FieldDef.Type
+	result, err := convertResult(mem, *resultType, def.ResultTypes()[0], res[0])
 	if err != nil {
 		logger.Err(ctx, err).
 			Str("function", fnName).
 			Dur("duration_ms", duration).
-			Str("schema_type", schema.FieldDef.Type.NamedType).
+			Str("schema_type", resultType.String()).
 			Bool("user_visible", true).
 			Msg("Failed to convert the result of the function to the schema field type.")
 
