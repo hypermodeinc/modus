@@ -6,6 +6,7 @@ package functions
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"unicode/utf16"
 	"unsafe"
@@ -28,6 +29,8 @@ func writeObject(ctx context.Context, mod wasm.Module, b []byte, class asClass) 
 	return ptr
 }
 
+var errPointerIsNotToString = errors.New("pointer is not to a string")
+
 func readString(mem wasm.Memory, offset uint32) (string, error) {
 
 	// AssemblyScript managed objects have their classid stored 8 bytes before the offset.
@@ -41,7 +44,7 @@ func readString(mem wasm.Memory, offset uint32) (string, error) {
 
 	// Make sure the pointer is to a string.
 	if id != uint32(asString) {
-		return "", fmt.Errorf("pointer is not to a string")
+		return "", errPointerIsNotToString
 	}
 
 	// Read from the buffer and decode it as a string.

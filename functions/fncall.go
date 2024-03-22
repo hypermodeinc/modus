@@ -7,6 +7,7 @@ package functions
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"time"
 
@@ -65,12 +66,13 @@ func CallFunction(ctx context.Context, mod wasm.Module, info schema.FunctionInfo
 
 	// Get the result
 	mem := mod.Memory()
-	result, err := convertResult(mem, *schema.FieldDef.Type, def.ResultTypes()[0], res[0])
+	resultType := schema.FieldDef.Type
+	result, err := convertResult(mem, *resultType, def.ResultTypes()[0], res[0])
 	if err != nil {
 		logger.Err(ctx, err).
 			Str("function", fnName).
 			Dur("duration_ms", duration).
-			Str("schema_type", schema.FieldDef.Type.NamedType).
+			Str("schema_type", resultType.String()).
 			Bool("user_visible", true).
 			Msg("Failed to convert the result of the function to the schema field type.")
 
@@ -205,6 +207,13 @@ func convertResult(mem wasm.Memory, schemaType ast.Type, wasmType wasm.ValueType
 			return nil, fmt.Errorf("return type was not a pointer")
 		}
 
-		return readString(mem, uint32(res))
+		str, err := readString(mem, uint32(res))
+
+		// Give the user a more helpful error message if the function is not returning a string.
+		if err == errPointerIsNotToString && schemaType.NamedType != "String" {
+			return "", errors.New("structured data should be returned from the function as a JSON string")
+		}
+
+		return str, err
 	}
 }
