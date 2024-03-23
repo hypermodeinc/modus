@@ -10,7 +10,7 @@ jobs:
     golang-lint:
         if: github.event_name == 'pull_request'
         name: lint
-        runs-on: warp-ubuntu-latest-arm64-4x
+        runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v4
             - name: Setup Go
