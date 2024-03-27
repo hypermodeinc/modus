@@ -61,8 +61,8 @@ func registerFunctions(ctx context.Context, gqlSchema string) error {
 					logger.Info(ctx).
 						Str("resolver", resolver).
 						Str("function", fnName).
-						Str("plugin", plugin.Metadata.Name).
-						Str("build_id", plugin.Metadata.BuildId).
+						Str("plugin", plugin.Name()).
+						Str("build_id", plugin.BuildId()).
 						Msg("Registered function.")
 				}
 			}
@@ -84,8 +84,8 @@ func registerFunctions(ctx context.Context, gqlSchema string) error {
 			logger.Info(ctx).
 				Str("resolver", resolver).
 				Str("function", info.FunctionName()).
-				Str("plugin", info.Plugin.Metadata.Name).
-				Str("build_id", info.Plugin.Metadata.BuildId).
+				Str("plugin", info.Plugin.Name()).
+				Str("build_id", info.Plugin.BuildId()).
 				Msg("Unregistered function.")
 		}
 	}

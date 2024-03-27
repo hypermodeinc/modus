@@ -69,8 +69,8 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Add plugin details to the context
-	ctx = context.WithValue(ctx, logger.PluginNameContextKey, info.Plugin.Metadata.Name)
-	ctx = context.WithValue(ctx, logger.BuildIdContextKey, info.Plugin.Metadata.BuildId)
+	ctx = context.WithValue(ctx, logger.PluginNameContextKey, info.Plugin.Name())
+	ctx = context.WithValue(ctx, logger.BuildIdContextKey, info.Plugin.BuildId())
 
 	// Get a module instance for this request.
 	// Each request will get its own instance of the plugin module,
