@@ -54,7 +54,7 @@ func hostExecuteDQL(ctx context.Context, mod wasm.Module, pStmt uint32, pVars ui
 		return 0
 	}
 
-	vars := make(map[string]string)
+	vars := make(map[string]any)
 	if err := json.Unmarshal([]byte(sVars), &vars); err != nil {
 		logger.Err(ctx, err).Msg("Error unmarshalling GraphQL variables.")
 		return 0
@@ -83,7 +83,7 @@ func hostExecuteGQL(ctx context.Context, mod wasm.Module, pStmt uint32, pVars ui
 		return 0
 	}
 
-	vars := make(map[string]string)
+	vars := make(map[string]any)
 	if err := json.Unmarshal([]byte(sVars), &vars); err != nil {
 		logger.Err(ctx, err).Msg("Error unmarshalling GraphQL variables.")
 		return 0
