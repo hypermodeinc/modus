@@ -8,12 +8,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-
 	"hmruntime/appdata"
 	"hmruntime/dgraph"
 	"hmruntime/logger"
 	"hmruntime/models"
-	"hmruntime/models/openai"
 
 	"github.com/tetratelabs/wazero"
 	wasm "github.com/tetratelabs/wazero/api"
@@ -222,19 +220,20 @@ func hostInvokeTextGeneratorV2(ctx context.Context, mod wasm.Module, pModelName 
 		logger.Err(ctx, err).Msg("Unsupported output format.")
 		return 0
 	}
-	if model.Host != models.OpenAIHost {
-		err := fmt.Errorf("expected model host: %s", models.OpenAIHost)
-		logger.Err(ctx, err).Msg("Unsupported model host.")
+	llm, err := models.CreateLlmService(model.Host)
+	if err != nil {
+		logger.Err(ctx, err).Msg("Error instanciating LLM")
 		return 0
 	}
-	result, err := openai.ChatCompletion(ctx, model, instruction, sentence, outputFormat)
+
+	result, err := llm.ChatCompletion(ctx, model, instruction, sentence, outputFormat)
 	if err != nil {
-		logger.Err(ctx, err).Msg("Error posting to OpenAI.")
+		logger.Err(ctx, err)
 		return 0
 	}
 	if result.Error.Message != "" {
 		err := fmt.Errorf(result.Error.Message)
-		logger.Err(ctx, err).Msg("Error returned from OpenAI.")
+		logger.Err(ctx, err)
 		return 0
 	}
 	if models.OutputFormatJson == outputFormat {
@@ -255,6 +254,10 @@ func hostInvokeTextGeneratorV2(ctx context.Context, mod wasm.Module, pModelName 
 		return 0
 	}
 	return writeString(ctx, mod, string(res))
+}
+
+func getLLM(s string) {
+	panic("unimplemented")
 }
 
 func getModel(mem wasm.Memory, pModelName uint32, task appdata.ModelTask) (appdata.Model, error) {

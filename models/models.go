@@ -18,7 +18,6 @@ import (
 
 const modelKeyPrefix = "HYP_MODEL_KEY_"
 const HypermodeHost string = "hypermode"
-const OpenAIHost string = "openai"
 
 // generic output format for models functions
 // can be extended to support more formats
