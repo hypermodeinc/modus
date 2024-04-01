@@ -8,7 +8,6 @@
       "mode": "auto",
       "program": "${workspaceFolder}",
       "args": [
-        "--dgraph=http://localhost:8080",
         "--refresh=1s",
       ]
     },
@@ -24,7 +23,6 @@
         "AWS_SDK_LOAD_CONFIG": "true"
       },
       "args": [
-        "--dgraph=http://localhost:8080",
         "--useAwsSecrets",
         "--useAwsStorage",
         "--s3bucket=${input:s3bucket}",
