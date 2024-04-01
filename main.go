@@ -15,6 +15,7 @@ import (
 	"hmruntime/functions"
 	"hmruntime/host"
 	"hmruntime/logger"
+	"hmruntime/server"
 	"hmruntime/storage"
 
 	"github.com/joho/godotenv"
@@ -71,7 +72,7 @@ func main() {
 	functions.MonitorGqlSchema(ctx)
 
 	// Start the web server
-	err = startServer(ctx)
+	err = server.Start(ctx)
 	if err != nil {
 		log.Fatal().Err(err).Msg("Failed to start server.  Exiting.")
 	}
