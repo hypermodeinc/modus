@@ -52,7 +52,7 @@ func (pr *pluginRegistry) Remove(plugin Plugin) {
 	defer pr.mutex.Unlock()
 
 	for i, p := range pr.plugins {
-		if p == plugin {
+		if p.Name() == plugin.Name() {
 			pr.plugins[i] = pr.plugins[len(pr.plugins)-1]
 			pr.plugins = pr.plugins[:len(pr.plugins)-1]
 			break

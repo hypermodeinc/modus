@@ -80,11 +80,27 @@ func loadPlugin(ctx context.Context, filename string) error {
 	}
 
 	// Get the metadata for the plugin.
-	metadata, foundMetadata := getPluginMetadata(&cm)
+	metadata, err := getPluginMetadata(&cm)
 
-	// Use the filename as the plugin name if no metadata is found.
-	if !foundMetadata {
-		metadata.Name = strings.TrimSuffix(filename, ".wasm")
+	// Apply fallback rules for missing metadata.
+	if err == errPluginMetadataNotFound {
+		var found bool
+		metadata, found = getPluginMetadata_old(&cm)
+		if found {
+			defer logger.Warn(ctx).
+				Str("filename", filename).
+				Str("plugin", metadata.Plugin).
+				Msg("Deprecated metadata format found in plugin.  Please recompile your plugin using the latest version of the Hypermode Functions library.")
+		} else {
+			// Use the filename as the plugin name if no metadata is found.
+			metadata.Plugin = strings.TrimSuffix(filename, ".wasm")
+			defer logger.Warn(ctx).
+				Str("filename", filename).
+				Str("plugin", metadata.Plugin).
+				Msg("No metadata found in plugin.  Please recompile your plugin using the latest version of the Hypermode Functions library.")
+		}
+	} else if err != nil {
+		return err
 	}
 
 	// Create and store the plugin.
@@ -93,12 +109,6 @@ func loadPlugin(ctx context.Context, filename string) error {
 
 	// Log the details of the loaded plugin.
 	logPluginLoaded(ctx, plugin)
-	if !foundMetadata {
-		logger.Warn(ctx).
-			Str("filename", filename).
-			Str("plugin", plugin.Metadata.Name).
-			Msg("No metadata found in plugin.  Please recompile your plugin using the latest version of the Hypermode Functions library.")
-	}
 
 	return nil
 }
@@ -109,12 +119,10 @@ func logPluginLoaded(ctx context.Context, plugin Plugin) {
 
 	metadata := plugin.Metadata
 
-	if metadata.Name != "" {
-		evt.Str("plugin", metadata.Name)
-	}
-
-	if metadata.Version != "" {
-		evt.Str("version", metadata.Version)
+	if metadata.Plugin != "" {
+		name, version := parseNameAndVersion(metadata.Plugin)
+		evt.Str("plugin", name)
+		evt.Str("version", version)
 	}
 
 	lang := plugin.Language()
@@ -130,12 +138,10 @@ func logPluginLoaded(ctx context.Context, plugin Plugin) {
 		evt.Time("build_ts", metadata.BuildTime)
 	}
 
-	if metadata.LibraryName != "" {
-		evt.Str("hypermode_library", metadata.LibraryName)
-	}
-
-	if metadata.LibraryVersion != "" {
-		evt.Str("hypermode_library_version", metadata.LibraryVersion)
+	if metadata.Library != "" {
+		name, version := parseNameAndVersion(metadata.Library)
+		evt.Str("hypermode_library", name)
+		evt.Str("hypermode_library_version", version)
 	}
 
 	if metadata.GitRepo != "" {
@@ -151,8 +157,8 @@ func logPluginLoaded(ctx context.Context, plugin Plugin) {
 
 func unloadPlugin(ctx context.Context, plugin Plugin) error {
 	logger.Info(ctx).
-		Str("plugin", plugin.Metadata.Name).
-		Str("build_id", plugin.Metadata.BuildId).
+		Str("plugin", plugin.Name()).
+		Str("build_id", plugin.BuildId()).
 		Msg("Unloading plugin.")
 
 	Plugins.Remove(plugin)
