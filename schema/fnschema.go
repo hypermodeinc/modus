@@ -11,9 +11,9 @@ import (
 	"hmruntime/host"
 	"hmruntime/logger"
 
-	"github.com/dgraph-io/gqlparser/ast"
-	"github.com/dgraph-io/gqlparser/parser"
-	"github.com/dgraph-io/gqlparser/validator"
+	"github.com/vektah/gqlparser/ast"
+	"github.com/vektah/gqlparser/parser"
+	"github.com/vektah/gqlparser/validator"
 )
 
 type FunctionInfo struct {
@@ -37,14 +37,14 @@ func (schema FunctionSchema) Resolver() string {
 func (schema FunctionSchema) FunctionName() string {
 	f := schema.FieldDef
 
-	// If @hm_function(name: "name") is specified, use that.
-	d := f.Directives.ForName("hm_function")
-	if d != nil {
-		a := d.Arguments.ForName("name")
-		if a != nil && a.Value != nil {
-			return a.Value.Raw
-		}
-	}
+	// // If @hm_function(name: "name") is specified, use that.
+	// d := f.Directives.ForName("hm_function")
+	// if d != nil {
+	// 	a := d.Arguments.ForName("name")
+	// 	if a != nil && a.Value != nil {
+	// 		return a.Value.Raw
+	// 	}
+	// }
 
 	// No @hm_function directive, or no name argument. Just use the field name.
 	return f.Name
@@ -105,12 +105,12 @@ func GetFunctionSchema(scma string) ([]FunctionSchema, error) {
 	// to the map, using the resolver as a key.
 	var results []FunctionSchema
 	for _, def := range doc.Definitions {
-		if def.Kind == ast.Object {
+		if def.Kind == ast.Object && (def.Name == "Query" || def.Name == "Mutation") {
 			for _, field := range def.Fields {
-				if field.Directives.ForName("hm_function") != nil {
-					schema := FunctionSchema{ObjectDef: def, FieldDef: field}
-					results = append(results, schema)
-				}
+				// if field.Directives.ForName("hm_function") != nil {
+				schema := FunctionSchema{ObjectDef: def, FieldDef: field}
+				results = append(results, schema)
+				// }
 			}
 		}
 	}

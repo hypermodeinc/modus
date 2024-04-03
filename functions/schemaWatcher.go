@@ -11,13 +11,23 @@ import (
 	"time"
 
 	"hmruntime/config"
-	"hmruntime/dgraph"
 	"hmruntime/host"
 	"hmruntime/logger"
+	"hmruntime/storage"
 )
 
 // Holds the current GraphQL schema
 var gqlSchema string
+
+func GqlSchema() string {
+	return gqlSchema
+}
+
+var schemaLoaded func(ctx context.Context, schema string) error
+
+func RegisterSchemaLoadedCallback(callback func(ctx context.Context, schema string) error) {
+	schemaLoaded = callback
+}
 
 func MonitorGqlSchema(ctx context.Context) {
 	go func() {
@@ -26,7 +36,8 @@ func MonitorGqlSchema(ctx context.Context) {
 
 		var urlErrorLogged, schemaErrorLogged bool
 		for {
-			schema, err := dgraph.GetGQLSchema(ctx)
+			// schema, err := dgraph.GetGQLSchema(ctx)
+			schema, err := getSchema(ctx)
 			if err != nil {
 				var urlErr *url.Error
 				if errors.As(err, &urlErr) && !urlErrorLogged {
@@ -48,6 +59,11 @@ func MonitorGqlSchema(ctx context.Context) {
 				// Signal that we need to register functions
 				host.RegistrationRequest <- true
 
+				err := schemaLoaded(ctx, schema)
+				if err != nil {
+					logger.Err(ctx, err).Msg("GraphQL schema callback failed.")
+				}
+
 				gqlSchema = schema
 			}
 
@@ -59,4 +75,12 @@ func MonitorGqlSchema(ctx context.Context) {
 			}
 		}
 	}()
+}
+
+func getSchema(ctx context.Context) (string, error) {
+	contents, err := storage.GetFileContents(ctx, "api.graphql")
+	if err != nil {
+		return "", err
+	}
+	return string(contents), nil
 }

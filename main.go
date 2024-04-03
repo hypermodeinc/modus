@@ -13,6 +13,7 @@ import (
 	"hmruntime/aws"
 	"hmruntime/config"
 	"hmruntime/functions"
+	"hmruntime/graphql"
 	"hmruntime/host"
 	"hmruntime/logger"
 	"hmruntime/server"
@@ -67,6 +68,9 @@ func main() {
 
 	// Load plugins and monitor for changes
 	host.MonitorPlugins(ctx)
+
+	// Initialize the GraphQL engine
+	graphql.Initialize()
 
 	// Load the GraphQL schema and monitor for changes
 	functions.MonitorGqlSchema(ctx)

@@ -14,8 +14,8 @@ import (
 	"hmruntime/logger"
 	"hmruntime/schema"
 
-	"github.com/dgraph-io/gqlparser/ast"
 	wasm "github.com/tetratelabs/wazero/api"
+	"github.com/vektah/gqlparser/ast"
 )
 
 func CallFunction(ctx context.Context, mod wasm.Module, info schema.FunctionInfo, inputs map[string]any) (any, error) {

@@ -16,7 +16,7 @@ import (
 	"hmruntime/logger"
 )
 
-type HMRequest struct {
+type LambdaRequest struct {
 	AccessToken string `json:"X-Dgraph-AccessToken"`
 	AuthHeader  struct {
 		Key   string `json:"key"`
@@ -27,11 +27,11 @@ type HMRequest struct {
 	Resolver string           `json:"resolver"`
 }
 
-type HMErrorResponse struct {
-	Errors []HMError `json:"errors"`
+type LambdaErrorResponse struct {
+	Errors []LambdaError `json:"errors"`
 }
 
-type HMError struct {
+type LambdaError struct {
 	Message string `json:"message"`
 }
 
@@ -41,7 +41,7 @@ func handleDgraphLambdaRequest(w http.ResponseWriter, r *http.Request) {
 	ctx, r := assignExecutionId(w, r)
 
 	// Decode the request body
-	var req HMRequest
+	var req LambdaRequest
 	dec := json.NewDecoder(r.Body)
 	dec.UseNumber()
 	err := dec.Decode(&req)
@@ -148,19 +148,19 @@ func writeErrorResponse(w http.ResponseWriter, err error, msgs ...string) error 
 
 	// Dgraph lambda expects a JSON response similar to a GraphQL error response
 	w.Header().Set("Content-Type", "application/json")
-	resp := HMErrorResponse{Errors: []HMError{}}
+	resp := LambdaErrorResponse{Errors: []LambdaError{}}
 
 	// Emit messages first
 	for _, msg := range msgs {
 		for _, line := range strings.Split(msg, "\n") {
 			if len(line) > 0 {
-				resp.Errors = append(resp.Errors, HMError{Message: line})
+				resp.Errors = append(resp.Errors, LambdaError{Message: line})
 			}
 		}
 	}
 
 	// Emit the error last
-	resp.Errors = append(resp.Errors, HMError{Message: err.Error()})
+	resp.Errors = append(resp.Errors, LambdaError{Message: err.Error()})
 
 	return json.NewEncoder(w).Encode(resp)
 }
