@@ -36,7 +36,8 @@ func (s Source) Load(ctx context.Context, input []byte, writer io.Writer) error 
 	}
 
 	// Get the function info
-	resolver := "Query." + ci.Function // TODO: fix
+	// TODO: Are all functions query resolvers? what about mutations?
+	resolver := "Query." + ci.Function
 	info, ok := functions.FunctionsMap[resolver]
 	if !ok {
 		return fmt.Errorf("no function registered for %s", resolver)
@@ -49,6 +50,9 @@ func (s Source) Load(ctx context.Context, input []byte, writer io.Writer) error 
 	// Add execution ID to the context
 	executionId := xid.New().String()
 	ctx = context.WithValue(ctx, logger.ExecutionIdContextKey, executionId)
+
+	// TODO: We should return the execution id(s) in the response with X-Hypermode-ExecutionID headers.
+	// There might be multiple execution ids if the request triggers multiple function calls.
 
 	// Get a module instance for this request.
 	// Each request will get its own instance of the plugin module,
