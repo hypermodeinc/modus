@@ -13,6 +13,8 @@ import (
 	"hmruntime/functions"
 	"hmruntime/host"
 	"hmruntime/logger"
+
+	"github.com/rs/xid"
 )
 
 const DataSourceName = "HypermodeFunctionsDataSource"
@@ -43,6 +45,10 @@ func (s Source) Load(ctx context.Context, input []byte, writer io.Writer) error 
 	// Add plugin details to the context
 	ctx = context.WithValue(ctx, logger.PluginNameContextKey, info.Plugin.Name())
 	ctx = context.WithValue(ctx, logger.BuildIdContextKey, info.Plugin.BuildId())
+
+	// Add execution ID to the context
+	executionId := xid.New().String()
+	ctx = context.WithValue(ctx, logger.ExecutionIdContextKey, executionId)
 
 	// Get a module instance for this request.
 	// Each request will get its own instance of the plugin module,

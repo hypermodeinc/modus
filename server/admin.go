@@ -17,9 +17,7 @@ type AdminRequest struct {
 }
 
 func handleAdminRequest(w http.ResponseWriter, r *http.Request) {
-
-	// Assign an Execution ID to the request context
-	ctx, r := assignExecutionId(w, r)
+	ctx := r.Context()
 
 	// Decode the request body
 	var req AdminRequest

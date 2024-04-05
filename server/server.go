@@ -13,8 +13,6 @@ import (
 	"hmruntime/graphql"
 	"hmruntime/lambda"
 	"hmruntime/logger"
-
-	"github.com/rs/xid"
 )
 
 func Start(ctx context.Context) error {
@@ -25,12 +23,4 @@ func Start(ctx context.Context) error {
 	http.HandleFunc("/graphql-worker", lambda.HandleDgraphLambdaRequest)
 	http.HandleFunc("/admin", handleAdminRequest)
 	return http.ListenAndServe(fmt.Sprintf(":%d", config.Port), nil)
-}
-
-func assignExecutionId(w http.ResponseWriter, r *http.Request) (context.Context, *http.Request) {
-	executionId := xid.New().String()
-	w.Header().Add("X-Hypermode-ExecutionID", executionId)
-
-	ctx := context.WithValue(r.Context(), logger.ExecutionIdContextKey, executionId)
-	return ctx, r.WithContext(ctx)
 }
