@@ -12,7 +12,9 @@ import (
 	"time"
 
 	"hmruntime/logger"
+	"hmruntime/plugins"
 	"hmruntime/storage"
+	"hmruntime/utils"
 
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
@@ -80,12 +82,12 @@ func loadPlugin(ctx context.Context, filename string) error {
 	}
 
 	// Get the metadata for the plugin.
-	metadata, err := getPluginMetadata(&cm)
+	metadata, err := plugins.GetPluginMetadata(&cm)
 
 	// Apply fallback rules for missing metadata.
-	if err == errPluginMetadataNotFound {
+	if err == plugins.ErrPluginMetadataNotFound {
 		var found bool
-		metadata, found = getPluginMetadata_old(&cm)
+		metadata, found = plugins.GetPluginMetadata_old(&cm)
 		if found {
 			defer logger.Warn(ctx).
 				Str("filename", filename).
@@ -104,7 +106,7 @@ func loadPlugin(ctx context.Context, filename string) error {
 	}
 
 	// Create and store the plugin.
-	plugin := Plugin{&cm, metadata, filename}
+	plugin := plugins.Plugin{&cm, metadata, filename}
 	Plugins.Add(plugin)
 
 	// Log the details of the loaded plugin.
@@ -113,20 +115,20 @@ func loadPlugin(ctx context.Context, filename string) error {
 	return nil
 }
 
-func logPluginLoaded(ctx context.Context, plugin Plugin) {
+func logPluginLoaded(ctx context.Context, plugin plugins.Plugin) {
 	evt := logger.Info(ctx)
 	evt.Str("filename", plugin.FileName)
 
 	metadata := plugin.Metadata
 
 	if metadata.Plugin != "" {
-		name, version := parseNameAndVersion(metadata.Plugin)
+		name, version := utils.ParseNameAndVersion(metadata.Plugin)
 		evt.Str("plugin", name)
 		evt.Str("version", version)
 	}
 
 	lang := plugin.Language()
-	if lang != UnknownLanguage {
+	if lang != plugins.UnknownLanguage {
 		evt.Str("language", lang.String())
 	}
 
@@ -139,7 +141,7 @@ func logPluginLoaded(ctx context.Context, plugin Plugin) {
 	}
 
 	if metadata.Library != "" {
-		name, version := parseNameAndVersion(metadata.Library)
+		name, version := utils.ParseNameAndVersion(metadata.Library)
 		evt.Str("hypermode_library", name)
 		evt.Str("hypermode_library_version", version)
 	}
@@ -155,7 +157,7 @@ func logPluginLoaded(ctx context.Context, plugin Plugin) {
 	evt.Msg("Loaded plugin.")
 }
 
-func unloadPlugin(ctx context.Context, plugin Plugin) error {
+func unloadPlugin(ctx context.Context, plugin plugins.Plugin) error {
 	logger.Info(ctx).
 		Str("plugin", plugin.Name()).
 		Str("build_id", plugin.BuildId()).
@@ -165,7 +167,7 @@ func unloadPlugin(ctx context.Context, plugin Plugin) error {
 	return (*plugin.Module).Close(ctx)
 }
 
-func GetModuleInstance(ctx context.Context, plugin *Plugin) (wasm.Module, buffers, error) {
+func GetModuleInstance(ctx context.Context, plugin *plugins.Plugin) (wasm.Module, buffers, error) {
 
 	// Get the logger and writers for the plugin's stdout and stderr.
 	log := logger.Get(ctx).With().Bool("user_visible", true).Logger()

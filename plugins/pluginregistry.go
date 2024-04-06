@@ -2,7 +2,7 @@
  * Copyright 2024 Hypermode, Inc.
  */
 
-package host
+package plugins
 
 import (
 	"cmp"
@@ -11,9 +11,6 @@ import (
 	"sync"
 )
 
-// Global, thread-safe registry of all plugins loaded by the host
-var Plugins = newPluginRegistry()
-
 type pluginRegistry struct {
 	plugins   []Plugin
 	nameIndex map[string]*Plugin
@@ -21,7 +18,7 @@ type pluginRegistry struct {
 	mutex     sync.RWMutex
 }
 
-func newPluginRegistry() pluginRegistry {
+func NewPluginRegistry() pluginRegistry {
 	return pluginRegistry{
 		// plugins:   make([]Plugin, 0),
 		nameIndex: make(map[string]*Plugin),

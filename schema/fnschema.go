@@ -8,8 +8,8 @@ import (
 	"context"
 	"fmt"
 
-	"hmruntime/host"
 	"hmruntime/logger"
+	"hmruntime/plugins"
 
 	"github.com/vektah/gqlparser/ast"
 	"github.com/vektah/gqlparser/parser"
@@ -17,7 +17,7 @@ import (
 )
 
 type FunctionInfo struct {
-	Plugin *host.Plugin
+	Plugin *plugins.Plugin
 	Schema FunctionSchema
 }
 

@@ -2,13 +2,14 @@
  * Copyright 2024 Hypermode, Inc.
  */
 
-package host
+package plugins
 
 import (
 	"encoding/json"
 	"fmt"
-	"strings"
 	"time"
+
+	"hmruntime/utils"
 
 	"github.com/tetratelabs/wazero"
 )
@@ -27,15 +28,21 @@ type PluginMetadata struct {
 	GitRepo   string              `json:"gitRepo"`
 	GitCommit string              `json:"gitCommit"`
 	Functions []FunctionSignature `json:"functions"`
+	Types     []TypeDefinition    `json:"types"`
 }
 
 type FunctionSignature struct {
-	Name       string              `json:"name"`
-	Parameters []FunctionParameter `json:"parameters"`
-	ReturnType string              `json:"returnType"`
+	Name       string         `json:"name"`
+	Parameters []NameTypePair `json:"parameters"`
+	ReturnType string         `json:"returnType"`
 }
 
-type FunctionParameter struct {
+type TypeDefinition struct {
+	Name   string         `json:"name"`
+	Fields []NameTypePair `json:"fields"`
+}
+
+type NameTypePair struct {
 	Name string `json:"name"`
 	Type string `json:"type"`
 }
@@ -60,7 +67,7 @@ func (lang PluginLanguage) String() string {
 }
 
 func (p *Plugin) Name() string {
-	name, _ := parseNameAndVersion(p.Metadata.Plugin)
+	name, _ := utils.ParseNameAndVersion(p.Metadata.Plugin)
 	return name
 }
 
@@ -69,7 +76,7 @@ func (p *Plugin) BuildId() string {
 }
 
 func (p *Plugin) Language() PluginLanguage {
-	libName, _ := parseNameAndVersion(p.Metadata.Library)
+	libName, _ := utils.ParseNameAndVersion(p.Metadata.Library)
 	switch libName {
 	case "@hypermode/functions-as":
 		return AssemblyScript
@@ -78,14 +85,6 @@ func (p *Plugin) Language() PluginLanguage {
 	default:
 		return UnknownLanguage
 	}
-}
-
-func parseNameAndVersion(s string) (name string, version string) {
-	i := strings.LastIndex(s, "@")
-	if i == -1 {
-		return s, ""
-	}
-	return s[:i], s[i+1:]
 }
 
 func getCustomSectionData(cm *wazero.CompiledModule, name string) (data []byte, found bool) {
@@ -99,12 +98,12 @@ func getCustomSectionData(cm *wazero.CompiledModule, name string) (data []byte, 
 	return data, found
 }
 
-var errPluginMetadataNotFound = fmt.Errorf("no metadata found in plugin")
+var ErrPluginMetadataNotFound = fmt.Errorf("no metadata found in plugin")
 
-func getPluginMetadata(cm *wazero.CompiledModule) (PluginMetadata, error) {
+func GetPluginMetadata(cm *wazero.CompiledModule) (PluginMetadata, error) {
 	metadataJson, found := getCustomSectionData(cm, "hypermode_meta")
 	if !found {
-		return PluginMetadata{}, errPluginMetadataNotFound
+		return PluginMetadata{}, ErrPluginMetadataNotFound
 	}
 
 	metadata := PluginMetadata{}
@@ -116,7 +115,7 @@ func getPluginMetadata(cm *wazero.CompiledModule) (PluginMetadata, error) {
 	return metadata, nil
 }
 
-func getPluginMetadata_old(cm *wazero.CompiledModule) (metadata PluginMetadata, found bool) {
+func GetPluginMetadata_old(cm *wazero.CompiledModule) (metadata PluginMetadata, found bool) {
 	for _, sec := range (*cm).CustomSections() {
 		name := sec.Name()
 		data := sec.Data()
