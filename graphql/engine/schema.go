@@ -10,8 +10,9 @@ import (
 	"hmruntime/graphql/datasource"
 
 	"github.com/jensneuse/abstractlogger"
+	"github.com/wundergraph/graphql-go-tools/execution/engine"
+	gql "github.com/wundergraph/graphql-go-tools/execution/graphql"
 	"github.com/wundergraph/graphql-go-tools/v2/pkg/engine/plan"
-	gql "github.com/wundergraph/graphql-go-tools/v2/pkg/graphql"
 )
 
 // ActivateSchema is a callback function that is called when a schema is loaded.
@@ -59,14 +60,14 @@ func ActivateSchema(ctx context.Context, schemaContent string) error {
 		return err
 	}
 
-	engineConf := gql.NewEngineV2Configuration(schema)
+	engineConf := engine.NewConfiguration(schema)
 	engineConf.SetDataSources([]plan.DataSource{
 		dsCfg,
 	})
 
 	logger := abstractlogger.NoopLogger // TODO: Use a real logger
 
-	e, err := gql.NewExecutionEngineV2(ctx, logger, engineConf)
+	e, err := engine.NewExecutionEngine(ctx, logger, engineConf)
 	if err == nil {
 		setEngine(e)
 	}

@@ -11,7 +11,7 @@ import (
 	"hmruntime/graphql/engine"
 	"hmruntime/logger"
 
-	gql "github.com/wundergraph/graphql-go-tools/v2/pkg/graphql"
+	gql "github.com/wundergraph/graphql-go-tools/execution/graphql"
 )
 
 func Initialize() {
