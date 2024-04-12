@@ -20,6 +20,7 @@ import (
 )
 
 const HostModuleName string = "hypermode"
+const HypermodeHostName string = "hypermode"
 
 func InstantiateHostFunctions(ctx context.Context, runtime wazero.Runtime) error {
 	b := runtime.NewHostModuleBuilder(HostModuleName)
@@ -118,13 +119,22 @@ func hostInvokeClassifier(ctx context.Context, mod wasm.Module, pModelName uint3
 		return 0
 	}
 
+	var host appdata.Host
+	if model.Host != HypermodeHostName {
+		host, err = models.GetHost(model.Host)
+		if err != nil {
+			logger.Err(ctx, err).Msg("Error getting model host.")
+			return 0
+		}
+	}
+
 	sentenceMap, err := getSentenceMap(mem, pSentenceMap)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error getting sentence map.")
 		return 0
 	}
 
-	result, err := models.PostToModelEndpoint[ClassifierResult](ctx, sentenceMap, model)
+	result, err := models.PostToModelEndpoint[ClassifierResult](ctx, sentenceMap, model, host)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error posting to model endpoint.")
 		return 0
@@ -153,13 +163,22 @@ func hostComputeEmbedding(ctx context.Context, mod wasm.Module, pModelName uint3
 		return 0
 	}
 
+	var host appdata.Host
+	if model.Host != HypermodeHostName {
+		host, err = models.GetHost(model.Host)
+		if err != nil {
+			logger.Err(ctx, err).Msg("Error getting model host.")
+			return 0
+		}
+	}
+
 	sentenceMap, err := getSentenceMap(mem, pSentenceMap)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error getting sentence map.")
 		return 0
 	}
 
-	result, err := models.PostToModelEndpoint[[]float64](ctx, sentenceMap, model)
+	result, err := models.PostToModelEndpoint[[]float64](ctx, sentenceMap, model, host)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error posting to model endpoint.")
 		return 0

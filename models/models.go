@@ -40,13 +40,30 @@ func GetModel(modelName string, task appdata.ModelTask) (appdata.Model, error) {
 	return appdata.Model{}, fmt.Errorf("a model '%s' for task '%s' was not found", modelName, task)
 }
 
+func GetHost(hostName string) (appdata.Host, error) {
+	for _, host := range appdata.HypermodeData.Hosts {
+		if host.Name == hostName {
+			return host, nil
+		}
+	}
+
+	return appdata.Host{}, fmt.Errorf("a host '%s' was not found", hostName)
+}
+
 func GetModelKey(ctx context.Context, model appdata.Model) (string, error) {
 	var key string
 	var err error
 
 	if config.UseAwsSecrets {
+		var modelKey string
+		ns := os.Getenv("NAMESPACE")
+		if ns == "" {
+			modelKey = model.Host
+		} else {
+			modelKey = ns + "/" + model.Host
+		}
 		// Get the model key from AWS Secrets Manager, using the model name as the secret.
-		key, err = aws.GetSecretString(ctx, model.Name)
+		key, err = aws.GetSecretString(ctx, modelKey)
 		if key != "" {
 			return key, nil
 		}
@@ -86,7 +103,9 @@ type PredictionResult[T any] struct {
 	Predictions []T `json:"predictions"`
 }
 
-func PostToModelEndpoint[TResult any](ctx context.Context, sentenceMap map[string]string, model appdata.Model) (map[string]TResult, error) {
+func PostToModelEndpoint[TResult any](ctx context.Context, sentenceMap map[string]string,
+	model appdata.Model, host appdata.Host) (map[string]TResult, error) {
+
 	// self hosted models takes in array, can optimize for parallelizing later
 	keys, sentences := []string{}, []string{}
 
@@ -107,13 +126,13 @@ func PostToModelEndpoint[TResult any](ctx context.Context, sentenceMap map[strin
 		endpoint = fmt.Sprintf("http://%s.%s/%s:predict", model.Name, config.ModelHost, model.Task)
 	default:
 		// If the model is not hosted by Hypermode, we need to get the model key and add it to the request headers
-		endpoint = model.Endpoint
+		endpoint = host.Endpoint
 		key, err := GetModelKey(ctx, model)
 		if err != nil {
 			return map[string]TResult{}, fmt.Errorf("error getting model key secret: %w", err)
 		}
 
-		headers[model.AuthHeader] = key
+		headers[host.AuthHeader] = key
 	}
 
 	res, err := utils.PostHttp[PredictionResult[TResult]](endpoint, req, headers)

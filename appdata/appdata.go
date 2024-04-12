@@ -16,6 +16,7 @@ type AppData any
 
 type HypermodeAppData struct {
 	Models               []Model               `json:"models"`
+	Hosts                []Host                `json:"hosts"`
 	EmbeddingSpecs       []EmbeddingSpec       `json:"embeddingSpecs"`
 	TrainingInstructions []TrainingInstruction `json:"trainingInstructions"`
 	AppData
@@ -39,8 +40,12 @@ type Model struct {
 	SourceModel string    `json:"sourceModel"`
 	Provider    string    `json:"provider"`
 	Host        string    `json:"host"`
-	Endpoint    string    `json:"endpoint"`
-	AuthHeader  string    `json:"authHeader"`
+}
+
+type Host struct {
+	Name       string `json:"name"`
+	Endpoint   string `json:"endpoint"`
+	AuthHeader string `json:"authHeader"`
 }
 
 type EmbeddingSpec struct {
