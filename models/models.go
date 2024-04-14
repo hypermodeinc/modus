@@ -31,8 +31,10 @@ const (
 
 func GetModel(modelName string, task appdata.ModelTask) (appdata.Model, error) {
 	for _, model := range appdata.HypermodeData.Models {
-		if model.Name == modelName && model.Task == task {
-			return model, nil
+		if model.Name == modelName {
+			if (model.Task == task) || (model.Host == OpenAIHost) || (model.Host == MistralHost) {
+				return model, nil
+			}
 		}
 	}
 

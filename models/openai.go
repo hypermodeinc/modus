@@ -13,6 +13,10 @@ import (
 
 type openai struct{}
 
+func (llm *openai) Embedding(ctx context.Context, sentenceMap map[string]string, model appdata.Model) (map[string][]float64, error) {
+	return nil, fmt.Errorf("Embedding not implemented for Openai")
+}
+
 func (llm *openai) ChatCompletion(ctx context.Context, model appdata.Model, instruction string, sentence string, outputFormat OutputFormat) (ChatResponse, error) {
 
 	// Get the OpenAI API key to use for this model

@@ -13,6 +13,48 @@ import (
 
 type mistral struct{}
 
+func (llm *mistral) Embedding(ctx context.Context, sentenceMap map[string]string, model appdata.Model) (map[string][]float64, error) {
+	// Get the API key to use for this model
+	key, err := GetModelKey(ctx, model)
+	if err != nil {
+		return nil, err
+	}
+	// Convert map to slice of values.
+	values := []string{}
+	keys := []string{}
+	for key, value := range sentenceMap {
+		values = append(values, value)
+		keys = append(keys, key)
+	}
+
+	// build the request body following OpenAI API
+	reqBody := EmbeddingRequest{
+		Model:          model.SourceModel,
+		Input:          values,
+		EncodingFormat: "float",
+	}
+
+	// We ignore the model endpoint and use the OpenAI endpoint
+	const endpoint = "https://api.mistral.ai/v1/embeddings"
+	headers := map[string]string{
+		"Authorization": "Bearer " + key,
+	}
+
+	result, err := utils.PostHttp[EmbeddingResponse](endpoint, reqBody, headers)
+
+	if err != nil {
+		return nil, fmt.Errorf("error posting to %s: %w", endpoint, err)
+	}
+
+	// Convert result to map .
+	resultMap := make(map[string][]float64)
+	for _, value := range result.Data {
+		resultMap[keys[value.Index]] = value.Embedding
+	}
+
+	return resultMap, nil
+}
+
 func (llm *mistral) ChatCompletion(ctx context.Context, model appdata.Model, instruction string, sentence string, outputFormat OutputFormat) (ChatResponse, error) {
 
 	// Get the API key to use for this model
