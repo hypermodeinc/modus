@@ -18,6 +18,14 @@ import (
 	wasm "github.com/tetratelabs/wazero/api"
 )
 
+// See https://www.assemblyscript.org/runtime.html#memory-layout
+type asClassId int64
+
+const (
+	asBytes  asClassId = 1
+	asString asClassId = 2
+)
+
 func writeString(ctx context.Context, mod wasm.Module, s string) uint32 {
 	bytes := encodeUTF16(s)
 	return writeObject(ctx, mod, bytes, asString)
@@ -39,17 +47,152 @@ func writeDate(ctx context.Context, mod wasm.Module, t time.Time) (uint32, error
 	binary.LittleEndian.PutUint32(bytes[8:], uint32(t.Day()))
 	binary.LittleEndian.PutUint64(bytes[16:], uint64(t.UnixMilli()))
 
-	return writeObject(ctx, mod, bytes, asClass(def.Id)), nil
+	return writeObject(ctx, mod, bytes, asClassId(def.Id)), nil
 }
 
 func writeBytes(ctx context.Context, mod wasm.Module, bytes []byte) uint32 {
 	return writeObject(ctx, mod, bytes, asBytes)
 }
 
-func writeObject(ctx context.Context, mod wasm.Module, bytes []byte, class asClass) uint32 {
+func writeObject(ctx context.Context, mod wasm.Module, bytes []byte, class asClassId) uint32 {
 	offset := allocateWasmMemory(ctx, mod, len(bytes), class)
 	mod.Memory().Write(offset, bytes)
 	return offset
+}
+
+func allocateWasmMemory(ctx context.Context, mod wasm.Module, len int, class asClassId) uint32 {
+	// Allocate memory within the AssemblyScript module.
+	// This uses the `__new` function exported by the AssemblyScript runtime, so it will be garbage collected.
+	// See https://www.assemblyscript.org/runtime.html#interface
+	newFn := mod.ExportedFunction("__new")
+	res, _ := newFn.Call(ctx, uint64(len), uint64(class))
+	return uint32(res[0])
+}
+
+func decodeUTF16(bytes []byte) string {
+
+	// Make sure the buffer is valid.
+	if len(bytes) == 0 || len(bytes)%2 != 0 {
+		return ""
+	}
+
+	// Reinterpret []byte as []uint16 to avoid excess copying.
+	// This works because we can presume the system is little-endian.
+	ptr := unsafe.Pointer(&bytes[0])
+	words := unsafe.Slice((*uint16)(ptr), len(bytes)/2)
+
+	// Decode UTF-16 words to a UTF-8 string.
+	str := string(utf16.Decode(words))
+	return str
+}
+
+func encodeUTF16(str string) []byte {
+	// Encode the UTF-8 string to UTF-16 words.
+	words := utf16.Encode([]rune(str))
+
+	// Reinterpret []uint16 as []byte to avoid excess copying.
+	// This works because we can presume the system is little-endian.
+	ptr := unsafe.Pointer(&words[0])
+	bytes := unsafe.Slice((*byte)(ptr), len(words)*2)
+	return bytes
+}
+
+func readObject(ctx context.Context, mem wasm.Memory, typ plugins.TypeInfo, offset uint32) (any, error) {
+	def, err := getTypeDefinition(ctx, typ.Path)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make(map[string]any)
+	for _, field := range def.Fields {
+		fieldOffset := offset + field.Offset
+		result[field.Name], err = readField(ctx, mem, field.Type, fieldOffset)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return result, nil
+}
+
+func readField(ctx context.Context, mem wasm.Memory, typ plugins.TypeInfo, offset uint32) (any, error) {
+	var result any
+	var ok bool
+	switch typ.Name {
+	case "bool":
+		var val byte
+		val, ok = mem.ReadByte(offset)
+		result = val != 0
+
+	case "u8":
+		result, ok = mem.ReadByte(offset)
+
+	case "u16":
+		result, ok = mem.ReadUint16Le(offset)
+
+	case "u32":
+		result, ok = mem.ReadUint32Le(offset)
+
+	case "u64":
+		result, ok = mem.ReadUint64Le(offset)
+
+	case "i8":
+		var val byte
+		val, ok = mem.ReadByte(offset)
+		result = int8(val)
+
+	case "i16":
+		var val uint16
+		val, ok = mem.ReadUint16Le(offset)
+		result = int16(val)
+
+	case "i32":
+		var val uint32
+		val, ok = mem.ReadUint32Le(offset)
+		result = int32(val)
+
+	case "i64":
+		var val uint64
+		val, ok = mem.ReadUint64Le(offset)
+		result = int64(val)
+
+	case "f32":
+		result, ok = mem.ReadFloat32Le(offset)
+
+	case "f64":
+		result, ok = mem.ReadFloat64Le(offset)
+
+	default:
+		// Managed types have pointers to the actual data.
+		p, err := readPointer(mem, offset)
+		if err != nil {
+			return nil, err
+		}
+
+		// Read the actual data.
+		switch typ.Name {
+		case "string":
+			return readString(mem, p)
+		case "Date":
+			return readDate(mem, p)
+		default:
+			return readObject(ctx, mem, typ, p)
+		}
+	}
+
+	if !ok {
+		return nil, fmt.Errorf("error reading %s from wasm memory", typ.Name)
+	}
+
+	return result, nil
+}
+
+func readPointer(mem wasm.Memory, offset uint32) (uint32, error) {
+	p, ok := mem.ReadUint32Le(offset)
+	if !ok {
+		return 0, fmt.Errorf("error reading pointer from wasm memory")
+	}
+
+	return p, nil
 }
 
 func readDate(mem wasm.Memory, offset uint32) (utils.JSONTime, error) {
@@ -109,161 +252,4 @@ func readBytes(mem wasm.Memory, offset uint32) ([]byte, error) {
 	}
 
 	return buf, nil
-}
-
-// See https://www.assemblyscript.org/runtime.html#memory-layout
-type asClass int64
-
-const (
-	asBytes  asClass = 1
-	asString asClass = 2
-)
-
-func allocateWasmMemory(ctx context.Context, mod wasm.Module, len int, class asClass) uint32 {
-	// Allocate a string to hold our buffer within the AssemblyScript module.
-	// This uses the `__new` function exported by the AssemblyScript runtime, so it will be garbage collected.
-	// See https://www.assemblyscript.org/runtime.html#interface
-	newFn := mod.ExportedFunction("__new")
-	res, _ := newFn.Call(ctx, uint64(len), uint64(class))
-	return uint32(res[0])
-}
-
-func decodeUTF16(bytes []byte) string {
-
-	// Make sure the buffer is valid.
-	if len(bytes) == 0 || len(bytes)%2 != 0 {
-		return ""
-	}
-
-	// Reinterpret []byte as []uint16 to avoid excess copying.
-	// This works because we can presume the system is little-endian.
-	ptr := unsafe.Pointer(&bytes[0])
-	words := unsafe.Slice((*uint16)(ptr), len(bytes)/2)
-
-	// Decode UTF-16 words to a UTF-8 string.
-	str := string(utf16.Decode(words))
-	return str
-}
-
-func encodeUTF16(str string) []byte {
-	// Encode the UTF-8 string to UTF-16 words.
-	words := utf16.Encode([]rune(str))
-
-	// Reinterpret []uint16 as []byte to avoid excess copying.
-	// This works because we can presume the system is little-endian.
-	ptr := unsafe.Pointer(&words[0])
-	bytes := unsafe.Slice((*byte)(ptr), len(words)*2)
-	return bytes
-}
-
-func readObject(ctx context.Context, mem wasm.Memory, asType plugins.TypeInfo, offset uint32) (any, error) {
-	def, err := getTypeDefinition(ctx, asType.Path)
-	if err != nil {
-		return nil, err
-	}
-
-	result := make(map[string]any)
-	for _, f := range def.Fields {
-		switch f.Type.Name {
-		case "bool":
-			val, ok := mem.ReadByte(offset + f.Offset)
-			if !ok {
-				return nil, fmt.Errorf("error reading bool from wasm memory")
-			}
-			result[f.Name] = val != 0
-
-		case "u8":
-			val, ok := mem.ReadByte(offset + f.Offset)
-			if !ok {
-				return nil, fmt.Errorf("error reading u8 from wasm memory")
-			}
-			result[f.Name] = val
-
-		case "u16":
-			val, ok := mem.ReadUint16Le(offset + f.Offset)
-			if !ok {
-				return nil, fmt.Errorf("error reading u16 from wasm memory")
-			}
-			result[f.Name] = val
-
-		case "u32":
-			val, ok := mem.ReadUint32Le(offset + f.Offset)
-			if !ok {
-				return nil, fmt.Errorf("error reading u32 from wasm memory")
-			}
-			result[f.Name] = val
-
-		case "u64":
-			val, ok := mem.ReadUint64Le(offset + f.Offset)
-			if !ok {
-				return nil, fmt.Errorf("error reading u64 from wasm memory")
-			}
-			result[f.Name] = val
-
-		case "i8":
-			val, ok := mem.ReadByte(offset + f.Offset)
-			if !ok {
-				return nil, fmt.Errorf("error reading i8 from wasm memory")
-			}
-			result[f.Name] = int8(val)
-
-		case "i16":
-			val, ok := mem.ReadUint16Le(offset + f.Offset)
-			if !ok {
-				return nil, fmt.Errorf("error reading i16 from wasm memory")
-			}
-			result[f.Name] = int16(val)
-
-		case "i32":
-			val, ok := mem.ReadUint32Le(offset + f.Offset)
-			if !ok {
-				return nil, fmt.Errorf("error reading i32 from wasm memory")
-			}
-			result[f.Name] = int32(val)
-
-		case "i64":
-			val, ok := mem.ReadUint64Le(offset + f.Offset)
-			if !ok {
-				return nil, fmt.Errorf("error reading i64 from wasm memory")
-			}
-			result[f.Name] = int64(val)
-
-		case "f32":
-			val, ok := mem.ReadFloat32Le(offset + f.Offset)
-			if !ok {
-				return nil, fmt.Errorf("error reading f32 from wasm memory")
-			}
-			result[f.Name] = val
-
-		case "f64":
-			val, ok := mem.ReadFloat64Le(offset + f.Offset)
-			if !ok {
-				return nil, fmt.Errorf("error reading f64 from wasm memory")
-			}
-			result[f.Name] = val
-
-		case "string":
-			p, ok := mem.ReadUint32Le(offset + f.Offset)
-			if !ok {
-				return nil, fmt.Errorf("error reading string pointer from wasm memory")
-			}
-			val, err := readString(mem, p)
-			if err != nil {
-				return nil, err
-			}
-			result[f.Name] = val
-
-		case "Date":
-			p, ok := mem.ReadUint32Le(offset + f.Offset)
-			if !ok {
-				return nil, fmt.Errorf("error reading date pointer from wasm memory")
-			}
-			val, err := readDate(mem, p)
-			if err != nil {
-				return nil, err
-			}
-			result[f.Name] = val
-		}
-	}
-	return result, nil
 }
