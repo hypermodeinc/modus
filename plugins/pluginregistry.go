@@ -6,7 +6,6 @@ package plugins
 
 import (
 	"cmp"
-	"fmt"
 	"slices"
 	"sync"
 )
@@ -25,22 +24,24 @@ func NewPluginRegistry() pluginRegistry {
 	}
 }
 
-func (pr *pluginRegistry) Add(plugin Plugin) error {
+func (pr *pluginRegistry) AddOrUpdate(plugin Plugin) {
 	pr.mutex.Lock()
 	defer pr.mutex.Unlock()
 
-	if _, ok := pr.nameIndex[plugin.Name()]; ok {
-		return fmt.Errorf("plugin already exists with name %s", plugin.Name())
+	_, found := pr.nameIndex[plugin.Name()]
+	if found {
+		for i, p := range pr.plugins {
+			if p.Name() == plugin.Name() {
+				pr.plugins[i] = plugin
+				break
+			}
+		}
+	} else {
+		pr.plugins = append(pr.plugins, plugin)
 	}
 
-	if _, ok := pr.fileIndex[plugin.FileName]; ok {
-		return fmt.Errorf("plugin already exists with filename %s", plugin.FileName)
-	}
-
-	pr.plugins = append(pr.plugins, plugin)
 	pr.nameIndex[plugin.Name()] = &plugin
 	pr.fileIndex[plugin.FileName] = &plugin
-	return nil
 }
 
 func (pr *pluginRegistry) Remove(plugin Plugin) {

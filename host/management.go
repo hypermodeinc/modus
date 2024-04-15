@@ -56,14 +56,11 @@ func MonitorPlugins(ctx context.Context) {
 	sm.Added = loadPluginFile
 	sm.Modified = loadPluginFile
 	sm.Removed = func(fi storage.FileInfo) {
-		p, ok := Plugins.GetByFile(fi.Name)
-		if ok {
-			err := unloadPlugin(ctx, p)
-			if err != nil {
-				logger.Err(ctx, err).
-					Str("filename", fi.Name).
-					Msg("Failed to unload plugin.")
-			}
+		err := unloadPlugin(ctx, fi.Name)
+		if err != nil {
+			logger.Err(ctx, err).
+				Str("filename", fi.Name).
+				Msg("Failed to unload plugin.")
 		}
 	}
 	sm.Changed = func() {
@@ -119,7 +116,7 @@ func loadPlugin(ctx context.Context, filename string) error {
 
 	// Create and store the plugin.
 	plugin := plugins.Plugin{Module: &cm, Metadata: metadata, FileName: filename, Types: types}
-	Plugins.Add(plugin)
+	Plugins.AddOrUpdate(plugin)
 
 	// Log the details of the loaded plugin.
 	logPluginLoaded(ctx, plugin)
@@ -127,7 +124,7 @@ func loadPlugin(ctx context.Context, filename string) error {
 	// Notify the callback that a plugin has been loaded.
 	err = pluginLoaded(ctx, metadata)
 	if err != nil {
-		return fmt.Errorf("plugin loaded callback failed: %w", err)
+		return err
 	}
 
 	return nil
@@ -175,14 +172,18 @@ func logPluginLoaded(ctx context.Context, plugin plugins.Plugin) {
 	evt.Msg("Loaded plugin.")
 }
 
-func unloadPlugin(ctx context.Context, plugin plugins.Plugin) error {
+func unloadPlugin(ctx context.Context, filename string) error {
+	p, ok := Plugins.GetByFile(filename)
+	if !ok {
+		return fmt.Errorf("plugin not found: %s", filename)
+	}
 	logger.Info(ctx).
-		Str("plugin", plugin.Name()).
-		Str("build_id", plugin.BuildId()).
+		Str("plugin", p.Name()).
+		Str("build_id", p.BuildId()).
 		Msg("Unloading plugin.")
 
-	Plugins.Remove(plugin)
-	return (*plugin.Module).Close(ctx)
+	Plugins.Remove(p)
+	return (*p.Module).Close(ctx)
 }
 
 func GetModuleInstance(ctx context.Context, plugin *plugins.Plugin) (wasm.Module, buffers, error) {
