@@ -6,26 +6,33 @@ package functions
 
 import (
 	"context"
-	"reflect"
-	"strings"
 
 	"hmruntime/host"
 	"hmruntime/logger"
-	"hmruntime/schema"
+	"hmruntime/plugins"
 )
 
-// map that holds the function info for each resolver
-var FunctionsMap = make(map[string]schema.FunctionInfo)
+var Functions = make(map[string]FunctionInfo)
+var TypeDefinitions = make(map[string]TypeInfo)
+
+type FunctionInfo struct {
+	Function plugins.FunctionSignature
+	Plugin   *plugins.Plugin
+}
+
+type TypeInfo struct {
+	Type   plugins.TypeDefinition
+	Plugin *plugins.Plugin
+}
 
 func MonitorRegistration(ctx context.Context) {
 	go func() {
 		for {
 			select {
 			case <-host.RegistrationRequest:
-				err := registerFunctions(ctx, gqlSchema)
-				if err != nil {
-					logger.Err(ctx, err).Msg("Failed to register functions.")
-				}
+				r := newRegistration()
+				r.registerAll(ctx)
+				r.cleanup(ctx)
 			case <-ctx.Done():
 				return
 			}
@@ -33,62 +40,81 @@ func MonitorRegistration(ctx context.Context) {
 	}()
 }
 
-func registerFunctions(ctx context.Context, gqlSchema string) error {
+type registration struct {
+	functions map[string]bool
+	types     map[string]bool
+}
 
-	// Get the function schema from the GraphQL schema.
-	funcSchemas, err := schema.GetFunctionSchema(gqlSchema)
-	if err != nil {
-		return err
+func newRegistration() *registration {
+	return &registration{
+		functions: make(map[string]bool),
+		types:     make(map[string]bool),
 	}
+}
 
-	// Build a map of resolvers to function info, including the plugin name.
-	// If there are function name conflicts between plugins, the last plugin loaded wins.
+func (r *registration) registerAll(ctx context.Context) {
 	var plugins = host.Plugins.GetAll()
 	for _, plugin := range plugins {
-		for _, scma := range funcSchemas {
-			module := *plugin.Module
-			for _, fn := range module.ExportedFunctions() {
-				fnName := fn.ExportNames()[0]
-				if strings.EqualFold(fnName, scma.FunctionName()) {
-					info := schema.FunctionInfo{Plugin: &plugin, Schema: scma}
-					resolver := scma.Resolver()
-					oldInfo, existed := FunctionsMap[resolver]
-					if existed && reflect.DeepEqual(oldInfo, info) {
-						continue
-					}
-					FunctionsMap[resolver] = info
+		r.registerPlugin(ctx, &plugin)
+	}
+}
 
-					logger.Info(ctx).
-						Str("resolver", resolver).
-						Str("function", fnName).
-						Str("plugin", plugin.Name()).
-						Str("build_id", plugin.BuildId()).
-						Msg("Registered function.")
-				}
-			}
+func (r *registration) registerPlugin(ctx context.Context, plugin *plugins.Plugin) {
+
+	// Save functions from the metadata to the functions map
+	for _, fn := range plugin.Metadata.Functions {
+		Functions[fn.Name] = FunctionInfo{
+			Function: fn,
+			Plugin:   plugin,
 		}
+		r.functions[fn.Name] = true
+
+		logger.Info(ctx).
+			Str("function", fn.Name).
+			Str("plugin", plugin.Name()).
+			Str("build_id", plugin.BuildId()).
+			Msg("Registered function.")
 	}
 
-	// Cleanup any previously registered functions that are no longer in the schema or loaded modules.
-	for resolver, info := range FunctionsMap {
-		foundSchema := false
-		for _, schema := range funcSchemas {
-			if strings.EqualFold(info.FunctionName(), schema.FunctionName()) {
-				foundSchema = true
-				break
-			}
+	// Save types from the metadata to the type definitions map
+	for _, td := range plugin.Metadata.Types {
+		TypeDefinitions[td.Name] = TypeInfo{
+			Type:   td,
+			Plugin: plugin,
 		}
-		_, foundPlugin := host.Plugins.GetByName(info.Plugin.Name())
-		if !foundSchema || !foundPlugin {
-			delete(FunctionsMap, resolver)
+		r.types[td.Name] = true
+
+		logger.Info(ctx).
+			Str("type", td.Name).
+			Str("plugin", plugin.Name()).
+			Str("build_id", plugin.BuildId()).
+			Msg("Registered custom data type.")
+	}
+}
+
+func (r *registration) cleanup(ctx context.Context) {
+
+	// Cleanup any previously registered functions
+	for name, fn := range Functions {
+		if !r.functions[name] {
+			delete(Functions, name)
 			logger.Info(ctx).
-				Str("resolver", resolver).
-				Str("function", info.FunctionName()).
-				Str("plugin", info.Plugin.Name()).
-				Str("build_id", info.Plugin.BuildId()).
+				Str("function", name).
+				Str("plugin", fn.Plugin.Name()).
+				Str("build_id", fn.Plugin.BuildId()).
 				Msg("Unregistered function.")
 		}
 	}
 
-	return nil
+	// Cleanup any previously registered types
+	for name, fn := range TypeDefinitions {
+		if !r.types[name] {
+			delete(TypeDefinitions, name)
+			logger.Info(ctx).
+				Str("type", name).
+				Str("plugin", fn.Plugin.Name()).
+				Str("build_id", fn.Plugin.BuildId()).
+				Msg("Unregistered custom data type.")
+		}
+	}
 }

@@ -8,9 +8,9 @@ import (
 	"testing"
 
 	"hmruntime/plugins"
+	"hmruntime/utils"
 
 	"github.com/stretchr/testify/require"
-	"golang.org/x/exp/maps"
 )
 
 func Test_GetGraphQLSchema(t *testing.T) {
@@ -18,23 +18,30 @@ func Test_GetGraphQLSchema(t *testing.T) {
 	metadata := plugins.PluginMetadata{
 		Functions: []plugins.FunctionSignature{
 			{
-				Name:       "add",
-				Parameters: []plugins.NameTypePair{{"a", "i32"}, {"b", "i32"}},
-				ReturnType: "i32",
+				Name: "add",
+				Parameters: []plugins.Parameter{
+					{Name: "a", Type: plugins.TypeInfo{Name: "i32"}},
+					{Name: "b", Type: plugins.TypeInfo{Name: "i32"}},
+				},
+				ReturnType: plugins.TypeInfo{Name: "i32"},
 			},
 			{
-				Name:       "sayHello",
-				Parameters: []plugins.NameTypePair{{"name", "string"}},
-				ReturnType: "string",
+				Name: "sayHello",
+				Parameters: []plugins.Parameter{
+					{Name: "name", Type: plugins.TypeInfo{Name: "string"}},
+				},
+				ReturnType: plugins.TypeInfo{Name: "string"},
 			},
 			{
 				Name:       "currentTime",
-				ReturnType: "Date",
+				ReturnType: plugins.TypeInfo{Name: "Date"},
 			},
 			{
-				Name:       "transform",
-				Parameters: []plugins.NameTypePair{{"items", "Map<string, string>"}},
-				ReturnType: "Map<string, string>",
+				Name: "transform",
+				Parameters: []plugins.Parameter{
+					{Name: "items", Type: plugins.TypeInfo{Name: "Map<string,string>"}},
+				},
+				ReturnType: plugins.TypeInfo{Name: "Map<string, string>"},
 			},
 		},
 	}
@@ -64,7 +71,7 @@ func Test_ConvertType(t *testing.T) {
 		inputType          string
 		expectedOutputType string
 		inputTypeDefs      []plugins.TypeDefinition
-		expectedTypeDefs   []plugins.TypeDefinition
+		expectedTypeDefs   []TypeDefinition
 	}{
 		// Plain non-nullable types
 		{"string", "String!", nil, nil},
@@ -83,24 +90,24 @@ func Test_ConvertType(t *testing.T) {
 		{"(string | null)[]", "[String]!", nil, nil},
 
 		// Custom scalar types
-		{"Date", "DateTime!", nil, []plugins.TypeDefinition{{Name: "DateTime"}}},
-		{"i64", "Int64!", nil, []plugins.TypeDefinition{{Name: "Int64"}}},
-		{"u32", "UInt!", nil, []plugins.TypeDefinition{{Name: "UInt"}}},
-		{"u64", "UInt64!", nil, []plugins.TypeDefinition{{Name: "UInt64"}}},
+		{"Date", "DateTime!", nil, []TypeDefinition{{Name: "DateTime"}}},
+		{"i64", "Int64!", nil, []TypeDefinition{{Name: "Int64"}}},
+		{"u32", "UInt!", nil, []TypeDefinition{{Name: "UInt"}}},
+		{"u64", "UInt64!", nil, []TypeDefinition{{Name: "UInt64"}}},
 
 		// Custom types
 		{"User", "User!",
 			[]plugins.TypeDefinition{{
 				Name: "User",
-				Fields: []plugins.NameTypePair{
-					{"firstName", "string"},
-					{"lastName", "string"},
-					{"age", "u8"},
+				Fields: []plugins.Field{
+					{Name: "firstName", Type: plugins.TypeInfo{Name: "string"}},
+					{Name: "lastName", Type: plugins.TypeInfo{Name: "string"}},
+					{Name: "age", Type: plugins.TypeInfo{Name: "u8"}},
 				},
 			}},
-			[]plugins.TypeDefinition{{
+			[]TypeDefinition{{
 				Name: "User",
-				Fields: []plugins.NameTypePair{
+				Fields: []NameTypePair{
 					{"firstName", "String!"},
 					{"lastName", "String!"},
 					{"age", "Int!"},
@@ -112,26 +119,26 @@ func Test_ConvertType(t *testing.T) {
 		{"string | null", "String", nil, nil},
 		{"Foo | null", "Foo",
 			[]plugins.TypeDefinition{{Name: "Foo"}},
-			[]plugins.TypeDefinition{{Name: "Foo"}}},
+			[]TypeDefinition{{Name: "Foo"}}},
 
 		// Map types
-		{"Map<string, string>", "[StringStringPair!]!", nil, []plugins.TypeDefinition{{
+		{"Map<string, string>", "[StringStringPair!]!", nil, []TypeDefinition{{
 			Name: "StringStringPair",
-			Fields: []plugins.NameTypePair{
+			Fields: []NameTypePair{
 				{"key", "String!"},
 				{"value", "String!"},
 			},
 		}}},
-		{"Map<string, string | null>", "[StringNullableStringPair!]!", nil, []plugins.TypeDefinition{{
+		{"Map<string, string | null>", "[StringNullableStringPair!]!", nil, []TypeDefinition{{
 			Name: "StringNullableStringPair",
-			Fields: []plugins.NameTypePair{
+			Fields: []NameTypePair{
 				{"key", "String!"},
 				{"value", "String"},
 			},
 		}}},
-		{"Map<i32, string>", "[IntStringPair!]!", nil, []plugins.TypeDefinition{{
+		{"Map<i32, string>", "[IntStringPair!]!", nil, []TypeDefinition{{
 			Name: "IntStringPair",
-			Fields: []plugins.NameTypePair{
+			Fields: []NameTypePair{
 				{"key", "Int!"},
 				{"value", "String!"},
 			},
@@ -141,7 +148,7 @@ func Test_ConvertType(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.inputType, func(t *testing.T) {
 
-			typeDefs := make(map[string]plugins.TypeDefinition, len(tc.inputTypeDefs))
+			typeDefs := make(map[string]TypeDefinition, len(tc.inputTypeDefs))
 			errors := transformTypes(tc.inputTypeDefs, &typeDefs)
 			require.Empty(t, errors)
 
@@ -153,7 +160,7 @@ func Test_ConvertType(t *testing.T) {
 			if tc.expectedTypeDefs == nil {
 				require.Empty(t, typeDefs)
 			} else {
-				require.Equal(t, tc.expectedTypeDefs, maps.Values(typeDefs))
+				require.Equal(t, tc.expectedTypeDefs, utils.MapValues(typeDefs))
 			}
 		})
 	}

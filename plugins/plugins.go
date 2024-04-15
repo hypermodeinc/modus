@@ -18,6 +18,7 @@ type Plugin struct {
 	Module   *wazero.CompiledModule
 	Metadata PluginMetadata
 	FileName string
+	Types    map[string]TypeDefinition
 }
 
 type PluginMetadata struct {
@@ -32,19 +33,33 @@ type PluginMetadata struct {
 }
 
 type FunctionSignature struct {
-	Name       string         `json:"name"`
-	Parameters []NameTypePair `json:"parameters"`
-	ReturnType string         `json:"returnType"`
+	Name       string      `json:"name"`
+	Parameters []Parameter `json:"parameters"`
+	ReturnType TypeInfo    `json:"returnType"`
 }
 
 type TypeDefinition struct {
-	Name   string         `json:"name"`
-	Fields []NameTypePair `json:"fields"`
+	Id     uint32  `json:"id"`
+	Size   uint32  `json:"size"`
+	Path   string  `json:"path"`
+	Name   string  `json:"name"`
+	Fields []Field `json:"fields"`
 }
 
-type NameTypePair struct {
+type Parameter struct {
+	Name string   `json:"name"`
+	Type TypeInfo `json:"type"`
+}
+
+type Field struct {
+	Name   string   `json:"name"`
+	Type   TypeInfo `json:"type"`
+	Offset uint32   `json:"offset"`
+}
+
+type TypeInfo struct {
 	Name string `json:"name"`
-	Type string `json:"type"`
+	Path string `json:"path"`
 }
 
 type PluginLanguage int

@@ -7,100 +7,93 @@ package functions
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"time"
 
+	"hmruntime/host"
 	"hmruntime/logger"
-	"hmruntime/schema"
+	"hmruntime/plugins"
+	"hmruntime/utils"
 
 	wasm "github.com/tetratelabs/wazero/api"
-	"github.com/vektah/gqlparser/ast"
 )
 
-func CallFunction(ctx context.Context, mod wasm.Module, info schema.FunctionInfo, inputs map[string]any) (any, error) {
-	fnName := info.FunctionName()
-	fn := mod.ExportedFunction(fnName)
-	def := fn.Definition()
-	paramTypes := def.ParamTypes()
-	schema := info.Schema
-
-	// Get parameters to pass as input to the plugin function
-	// Note that we can't use def.ParamNames() because they are only available when the plugin
-	// is compiled in debug mode. They're striped by optimization in release mode.
-	// Instead, we can use the argument names from the schema.
-	// Also note, that the order of the arguments from schema should match order of params in wasm.
-	params := make([]uint64, len(paramTypes))
-	for i, arg := range schema.FunctionArgs(ctx) {
-		val := inputs[arg.Name]
-		if val == nil {
-			return nil, fmt.Errorf("parameter %s is missing", arg.Name)
-		}
-
-		param, err := convertParam(ctx, mod, *arg.Type, paramTypes[i], val)
-		if err != nil {
-			return nil, fmt.Errorf("parameter %s is invalid: %w", arg.Name, err)
-		}
-
-		params[i] = param
-	}
-
-	// Call the wasm function
+func CallFunction(ctx context.Context, mod wasm.Module, info FunctionInfo, inputs map[string]any) (any, error) {
+	fnName := info.Function.Name
 	logger.Info(ctx).
 		Str("function", fnName).
-		Str("resolver", schema.Resolver()).
 		Bool("user_visible", true).
 		Msg("Calling function.")
+
 	start := time.Now()
-	res, err := fn.Call(ctx, params...)
+	result, err := callFunction(ctx, mod, info, inputs)
 	duration := time.Since(start)
+
 	if err != nil {
 		logger.Err(ctx, err).
 			Str("function", fnName).
 			Dur("duration_ms", duration).
 			Bool("user_visible", true).
 			Msg("Error while executing function.")
+	} else {
+		logger.Info(ctx).
+			Str("function", fnName).
+			Dur("duration_ms", duration).
+			Bool("user_visible", true).
+			Msg("Function completed successfully.")
+	}
 
+	return result, err
+}
+
+func callFunction(ctx context.Context, mod wasm.Module, info FunctionInfo, inputs map[string]any) (any, error) {
+	fnName := info.Function.Name
+
+	// Get the function
+	fn := mod.ExportedFunction(fnName)
+	if fn == nil {
+		return nil, fmt.Errorf("function %s not found in plugin %s", fnName, info.Plugin.Name())
+	}
+
+	// Get parameters to pass as input to the plugin function
+	params := make([]uint64, len(info.Function.Parameters))
+	for i, arg := range info.Function.Parameters {
+		val := inputs[arg.Name]
+		if val == nil {
+			return nil, fmt.Errorf("parameter '%s' is missing", arg.Name)
+		}
+
+		param, err := convertParam(ctx, mod, arg.Type, val)
+		if err != nil {
+			return nil, fmt.Errorf("function parameter '%s' is invalid: %w", arg.Name, err)
+		}
+
+		params[i] = param
+	}
+
+	// Call the wasm function
+	res, err := fn.Call(ctx, params...)
+	if err != nil {
 		return nil, err
 	}
 
 	// Get the result
-	mem := mod.Memory()
-	resultType := schema.FieldDef.Type
-	result, err := convertResult(mem, *resultType, def.ResultTypes()[0], res[0])
+	result, err := convertResult(ctx, mod, info.Function.ReturnType, res[0])
 	if err != nil {
-		logger.Err(ctx, err).
-			Str("function", fnName).
-			Dur("duration_ms", duration).
-			Str("schema_type", resultType.String()).
-			Bool("user_visible", true).
-			Msg("Failed to convert the result of the function to the schema field type.")
-
-		return nil, fmt.Errorf("failed to convert result: %w", err)
+		return nil, fmt.Errorf("function result is invalid: %w", err)
 	}
-
-	logger.Info(ctx).
-		Str("function", fnName).
-		Dur("duration_ms", duration).
-		Bool("user_visible", true).
-		Msg("Function completed successfully.")
 
 	return result, nil
 }
 
-func convertParam(ctx context.Context, mod wasm.Module, schemaType ast.Type, wasmType wasm.ValueType, val any) (uint64, error) {
+func convertParam(ctx context.Context, mod wasm.Module, asType plugins.TypeInfo, val any) (uint64, error) {
 
-	switch schemaType.NamedType {
+	switch asType.Name {
 
-	case "Boolean":
+	case "bool":
 		b, ok := val.(bool)
 		if !ok {
 			return 0, fmt.Errorf("input value is not a bool")
-		}
-
-		// Note, booleans are passed as i32 in wasm
-		if wasmType != wasm.ValueTypeI32 {
-			return 0, fmt.Errorf("parameter is not defined as a bool on the function")
 		}
 
 		if b {
@@ -109,111 +102,128 @@ func convertParam(ctx context.Context, mod wasm.Module, schemaType ast.Type, was
 			return 0, nil
 		}
 
-	case "Int":
+	case "i8", "i16", "i32", "u8", "u16", "u32":
 		n, err := val.(json.Number).Int64()
 		if err != nil {
 			return 0, fmt.Errorf("input value is not an int")
 		}
 
-		switch wasmType {
-		case wasm.ValueTypeI32:
-			return wasm.EncodeI32(int32(n)), nil
-		case wasm.ValueTypeI64:
-			return wasm.EncodeI64(n), nil
-		default:
-			return 0, fmt.Errorf("parameter is not defined as an int on the function")
+		return wasm.EncodeI32(int32(n)), nil
+
+	case "i64", "u64":
+		n, err := val.(json.Number).Int64()
+		if err != nil {
+			return 0, fmt.Errorf("input value is not an int")
 		}
 
-	case "Float":
+		return wasm.EncodeI64(n), nil
+
+	case "f32":
 		n, err := val.(json.Number).Float64()
 		if err != nil {
 			return 0, fmt.Errorf("input value is not a float")
 		}
 
-		switch wasmType {
-		case wasm.ValueTypeF32:
-			return wasm.EncodeF32(float32(n)), nil
-		case wasm.ValueTypeF64:
-			return wasm.EncodeF64(n), nil
-		default:
-			return 0, fmt.Errorf("parameter is not defined as a float on the function")
+		return wasm.EncodeF32(float32(n)), nil
+
+	case "f64":
+		n, err := val.(json.Number).Float64()
+		if err != nil {
+			return 0, fmt.Errorf("input value is not a float")
 		}
 
-	case "String", "ID", "":
+		return wasm.EncodeF64(n), nil
+
+	case "string":
 		s, ok := val.(string)
 		if !ok {
 			return 0, fmt.Errorf("input value is not a string")
 		}
 
 		// Note, strings are passed as a pointer to a string in wasm memory
-		if wasmType != wasm.ValueTypeI32 {
-			return 0, fmt.Errorf("parameter is not defined as a string on the function")
-		}
-
 		ptr := writeString(ctx, mod, s)
 		return uint64(ptr), nil
 
+	case "Date":
+		var t time.Time
+		switch v := val.(type) {
+		case json.Number:
+			n, err := v.Int64()
+			if err != nil {
+				return 0, err
+			}
+			t = time.UnixMilli(n)
+		case string:
+			var err error
+			t, err = utils.ParseTime(v)
+			if err != nil {
+				return 0, err
+			}
+		}
+
+		ptr, err := writeDate(ctx, mod, t)
+		if err != nil {
+			return 0, err
+		}
+
+		return uint64(ptr), nil
+
+	// TODO: custom types
+
 	default:
-		return 0, fmt.Errorf("unknown parameter type: %s", schemaType.NamedType)
+		return 0, fmt.Errorf("unknown parameter type: %s", asType)
 	}
 }
 
-func convertResult(mem wasm.Memory, schemaType ast.Type, wasmType wasm.ValueType, res uint64) (any, error) {
+func convertResult(ctx context.Context, mod wasm.Module, asType plugins.TypeInfo, res uint64) (any, error) {
 
-	switch schemaType.NamedType {
+	// Primitive types
+	switch asType.Name {
+	case "void":
+		return 0, nil
 
-	case "Boolean":
-		if wasmType != wasm.ValueTypeI32 {
-			return nil, fmt.Errorf("return type is not defined as an bool on the function")
-		}
-
+	case "bool":
 		return res != 0, nil
 
-	case "Int":
+	case "i8", "i16", "i32", "u8", "u16", "u32":
+		return wasm.DecodeI32(res), nil
 
-		// TODO: Do we need to handle unsigned ints differently?
+	case "i64", "u64":
+		return int64(res), nil
 
-		switch wasmType {
-		case wasm.ValueTypeI32:
-			return wasm.DecodeI32(res), nil
+	case "f32":
+		return wasm.DecodeF32(res), nil
 
-		case wasm.ValueTypeI64:
-			return int64(res), nil
-
-		default:
-			return nil, fmt.Errorf("return type is not defined as an int on the function")
-		}
-
-	case "Float":
-
-		switch wasmType {
-		case wasm.ValueTypeF32:
-			return wasm.DecodeF32(res), nil
-
-		case wasm.ValueTypeF64:
-			return wasm.DecodeF64(res), nil
-
-		default:
-			return nil, fmt.Errorf("return type is not defined as a float on the function")
-		}
-
-	case "ID":
-		return nil, fmt.Errorf("the ID scalar is not allowed for function return types (use String instead)")
-
-	default:
-		// The return type is either a string, or an object that should be serialized as JSON.
-		// Strings are passed as a pointer to a string in wasm memory
-		if wasmType != wasm.ValueTypeI32 {
-			return nil, fmt.Errorf("return type was not a pointer")
-		}
-
-		str, err := readString(mem, uint32(res))
-
-		// Give the user a more helpful error message if the function is not returning a string.
-		if err == errPointerIsNotToString && schemaType.NamedType != "String" {
-			return "", errors.New("structured data should be returned from the function as a JSON string")
-		}
-
-		return str, err
+	case "f64":
+		return wasm.DecodeF64(res), nil
 	}
+
+	// Handled managed types
+	mem := mod.Memory()
+	switch asType.Name {
+	case "string":
+		return readString(mem, uint32(res))
+
+	case "Date":
+		return readDate(mem, uint32(res))
+	}
+
+	// Custom managed types
+	return readObject(ctx, mem, asType, uint32(res))
+}
+
+func getTypeDefinition(ctx context.Context, typePath string) (plugins.TypeDefinition, error) {
+	pluginName := ctx.Value(utils.PluginNameContextKey).(string)
+	plugin, ok := host.Plugins.GetByName(pluginName)
+	if !ok {
+		return plugins.TypeDefinition{}, fmt.Errorf("plugin %s not found", pluginName)
+	}
+
+	types := plugin.Types
+	info, ok := types[typePath]
+	if !ok {
+		return plugins.TypeDefinition{}, fmt.Errorf("info for type %s not found in plugin %s", typePath, pluginName)
+	}
+
+	return info, nil
 }

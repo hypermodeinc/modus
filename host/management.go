@@ -28,6 +28,12 @@ type buffers struct {
 	Stderr *strings.Builder
 }
 
+var pluginLoaded func(ctx context.Context, metadata plugins.PluginMetadata) error
+
+func RegisterPluginLoadedCallback(callback func(ctx context.Context, metadata plugins.PluginMetadata) error) {
+	pluginLoaded = callback
+}
+
 func InitWasmRuntime(ctx context.Context) error {
 	cfg := wazero.NewRuntimeConfig()
 	cfg = cfg.WithCloseOnContextDone(true)
@@ -105,12 +111,24 @@ func loadPlugin(ctx context.Context, filename string) error {
 		return err
 	}
 
+	// Store the types in a map for easy access.
+	types := make(map[string]plugins.TypeDefinition, len(metadata.Types))
+	for _, t := range metadata.Types {
+		types[t.Path] = t
+	}
+
 	// Create and store the plugin.
-	plugin := plugins.Plugin{&cm, metadata, filename}
+	plugin := plugins.Plugin{Module: &cm, Metadata: metadata, FileName: filename, Types: types}
 	Plugins.Add(plugin)
 
 	// Log the details of the loaded plugin.
 	logPluginLoaded(ctx, plugin)
+
+	// Notify the callback that a plugin has been loaded.
+	err = pluginLoaded(ctx, metadata)
+	if err != nil {
+		return fmt.Errorf("plugin loaded callback failed: %w", err)
+	}
 
 	return nil
 }

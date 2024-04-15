@@ -20,7 +20,6 @@ type pluginRegistry struct {
 
 func NewPluginRegistry() pluginRegistry {
 	return pluginRegistry{
-		// plugins:   make([]Plugin, 0),
 		nameIndex: make(map[string]*Plugin),
 		fileIndex: make(map[string]*Plugin),
 	}

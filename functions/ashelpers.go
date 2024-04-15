@@ -6,30 +6,60 @@ package functions
 
 import (
 	"context"
-	"errors"
+	"encoding/binary"
 	"fmt"
+	"time"
 	"unicode/utf16"
 	"unsafe"
+
+	"hmruntime/plugins"
+	"hmruntime/utils"
 
 	wasm "github.com/tetratelabs/wazero/api"
 )
 
 func writeString(ctx context.Context, mod wasm.Module, s string) uint32 {
-	buf := encodeUTF16(s)
-	return writeObject(ctx, mod, buf, asString)
+	bytes := encodeUTF16(s)
+	return writeObject(ctx, mod, bytes, asString)
 }
 
-func writeBytes(ctx context.Context, mod wasm.Module, b []byte) uint32 {
-	return writeObject(ctx, mod, b, asBytes)
+func writeDate(ctx context.Context, mod wasm.Module, t time.Time) (uint32, error) {
+	def, err := getTypeDefinition(ctx, "~lib/wasi_date/wasi_Date")
+	if err != nil {
+		def, err = getTypeDefinition(ctx, "~lib/date/Date")
+		if err != nil {
+			return 0, err
+		}
+	}
+
+	t = t.UTC()
+	bytes := make([]byte, def.Size)
+	binary.LittleEndian.PutUint32(bytes, uint32(t.Year()))
+	binary.LittleEndian.PutUint32(bytes[4:], uint32(t.Month()))
+	binary.LittleEndian.PutUint32(bytes[8:], uint32(t.Day()))
+	binary.LittleEndian.PutUint64(bytes[16:], uint64(t.UnixMilli()))
+
+	return writeObject(ctx, mod, bytes, asClass(def.Id)), nil
 }
 
-func writeObject(ctx context.Context, mod wasm.Module, b []byte, class asClass) uint32 {
-	ptr := allocateWasmMemory(ctx, mod, len(b), class)
-	mod.Memory().Write(ptr, b)
-	return ptr
+func writeBytes(ctx context.Context, mod wasm.Module, bytes []byte) uint32 {
+	return writeObject(ctx, mod, bytes, asBytes)
 }
 
-var errPointerIsNotToString = errors.New("pointer is not to a string")
+func writeObject(ctx context.Context, mod wasm.Module, bytes []byte, class asClass) uint32 {
+	offset := allocateWasmMemory(ctx, mod, len(bytes), class)
+	mod.Memory().Write(offset, bytes)
+	return offset
+}
+
+func readDate(mem wasm.Memory, offset uint32) (utils.JSONTime, error) {
+	val, ok := mem.ReadUint64Le(offset + 16)
+	if !ok {
+		return utils.JSONTime{}, fmt.Errorf("error reading timestamp from wasm memory")
+	}
+	ts := int64(val)
+	return utils.JSONTime(time.UnixMilli(ts).UTC()), nil
+}
 
 func readString(mem wasm.Memory, offset uint32) (string, error) {
 
@@ -44,7 +74,7 @@ func readString(mem wasm.Memory, offset uint32) (string, error) {
 
 	// Make sure the pointer is to a string.
 	if id != uint32(asString) {
-		return "", errPointerIsNotToString
+		return "", fmt.Errorf("pointer is not to a string")
 	}
 
 	// Read from the buffer and decode it as a string.
@@ -124,4 +154,116 @@ func encodeUTF16(str string) []byte {
 	ptr := unsafe.Pointer(&words[0])
 	bytes := unsafe.Slice((*byte)(ptr), len(words)*2)
 	return bytes
+}
+
+func readObject(ctx context.Context, mem wasm.Memory, asType plugins.TypeInfo, offset uint32) (any, error) {
+	def, err := getTypeDefinition(ctx, asType.Path)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make(map[string]any)
+	for _, f := range def.Fields {
+		switch f.Type.Name {
+		case "bool":
+			val, ok := mem.ReadByte(offset + f.Offset)
+			if !ok {
+				return nil, fmt.Errorf("error reading bool from wasm memory")
+			}
+			result[f.Name] = val != 0
+
+		case "u8":
+			val, ok := mem.ReadByte(offset + f.Offset)
+			if !ok {
+				return nil, fmt.Errorf("error reading u8 from wasm memory")
+			}
+			result[f.Name] = val
+
+		case "u16":
+			val, ok := mem.ReadUint16Le(offset + f.Offset)
+			if !ok {
+				return nil, fmt.Errorf("error reading u16 from wasm memory")
+			}
+			result[f.Name] = val
+
+		case "u32":
+			val, ok := mem.ReadUint32Le(offset + f.Offset)
+			if !ok {
+				return nil, fmt.Errorf("error reading u32 from wasm memory")
+			}
+			result[f.Name] = val
+
+		case "u64":
+			val, ok := mem.ReadUint64Le(offset + f.Offset)
+			if !ok {
+				return nil, fmt.Errorf("error reading u64 from wasm memory")
+			}
+			result[f.Name] = val
+
+		case "i8":
+			val, ok := mem.ReadByte(offset + f.Offset)
+			if !ok {
+				return nil, fmt.Errorf("error reading i8 from wasm memory")
+			}
+			result[f.Name] = int8(val)
+
+		case "i16":
+			val, ok := mem.ReadUint16Le(offset + f.Offset)
+			if !ok {
+				return nil, fmt.Errorf("error reading i16 from wasm memory")
+			}
+			result[f.Name] = int16(val)
+
+		case "i32":
+			val, ok := mem.ReadUint32Le(offset + f.Offset)
+			if !ok {
+				return nil, fmt.Errorf("error reading i32 from wasm memory")
+			}
+			result[f.Name] = int32(val)
+
+		case "i64":
+			val, ok := mem.ReadUint64Le(offset + f.Offset)
+			if !ok {
+				return nil, fmt.Errorf("error reading i64 from wasm memory")
+			}
+			result[f.Name] = int64(val)
+
+		case "f32":
+			val, ok := mem.ReadFloat32Le(offset + f.Offset)
+			if !ok {
+				return nil, fmt.Errorf("error reading f32 from wasm memory")
+			}
+			result[f.Name] = val
+
+		case "f64":
+			val, ok := mem.ReadFloat64Le(offset + f.Offset)
+			if !ok {
+				return nil, fmt.Errorf("error reading f64 from wasm memory")
+			}
+			result[f.Name] = val
+
+		case "string":
+			p, ok := mem.ReadUint32Le(offset + f.Offset)
+			if !ok {
+				return nil, fmt.Errorf("error reading string pointer from wasm memory")
+			}
+			val, err := readString(mem, p)
+			if err != nil {
+				return nil, err
+			}
+			result[f.Name] = val
+
+		case "Date":
+			p, ok := mem.ReadUint32Le(offset + f.Offset)
+			if !ok {
+				return nil, fmt.Errorf("error reading date pointer from wasm memory")
+			}
+			val, err := readDate(mem, p)
+			if err != nil {
+				return nil, err
+			}
+			result[f.Name] = val
+		}
+	}
+	return result, nil
 }

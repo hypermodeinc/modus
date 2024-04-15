@@ -14,14 +14,12 @@ import (
 
 	"hmruntime/plugins"
 	"hmruntime/utils"
-
-	"golang.org/x/exp/maps"
 )
 
 var firstPassComplete = false
 
 func GetGraphQLSchema(metadata plugins.PluginMetadata, includeHeader bool) (string, error) {
-	typeDefs := make(map[string]plugins.TypeDefinition, len(metadata.Types))
+	typeDefs := make(map[string]TypeDefinition, len(metadata.Types))
 	errors := transformTypes(metadata.Types, &typeDefs)
 
 	firstPassComplete = true
@@ -37,7 +35,7 @@ func GetGraphQLSchema(metadata plugins.PluginMetadata, includeHeader bool) (stri
 	if includeHeader {
 		writeSchemaHeader(&buf, metadata)
 	}
-	writeSchema(&buf, functions, maps.Values(typeDefs))
+	writeSchema(&buf, functions, utils.MapValues(typeDefs))
 	return buf.String(), nil
 }
 
@@ -46,7 +44,7 @@ type TransformError struct {
 	Error  error
 }
 
-func transformTypes(types []plugins.TypeDefinition, typeDefs *map[string]plugins.TypeDefinition) []TransformError {
+func transformTypes(types []plugins.TypeDefinition, typeDefs *map[string]TypeDefinition) []TransformError {
 	errors := make([]TransformError, 0)
 	for _, t := range types {
 		if _, ok := (*typeDefs)[t.Name]; ok {
@@ -54,13 +52,13 @@ func transformTypes(types []plugins.TypeDefinition, typeDefs *map[string]plugins
 			continue
 		}
 
-		fields, err := convertNameTypePairs(t.Fields, typeDefs)
+		fields, err := convertFields(t.Fields, typeDefs)
 		if err != nil {
 			errors = append(errors, TransformError{t, err})
 			continue
 		}
 
-		(*typeDefs)[t.Name] = plugins.TypeDefinition{
+		(*typeDefs)[t.Name] = TypeDefinition{
 			Name:   t.Name,
 			Fields: fields,
 		}
@@ -68,23 +66,39 @@ func transformTypes(types []plugins.TypeDefinition, typeDefs *map[string]plugins
 	return errors
 }
 
-func transformFunctions(functions []plugins.FunctionSignature, typeDefs *map[string]plugins.TypeDefinition) ([]plugins.FunctionSignature, []TransformError) {
-	results := make([]plugins.FunctionSignature, len(functions))
+type FunctionSignature struct {
+	Name       string
+	Parameters []NameTypePair
+	ReturnType string
+}
+
+type TypeDefinition struct {
+	Name   string
+	Fields []NameTypePair
+}
+
+type NameTypePair struct {
+	Name string
+	Type string
+}
+
+func transformFunctions(functions []plugins.FunctionSignature, typeDefs *map[string]TypeDefinition) ([]FunctionSignature, []TransformError) {
+	results := make([]FunctionSignature, len(functions))
 	errors := make([]TransformError, 0)
 	for i, f := range functions {
-		params, err := convertNameTypePairs(f.Parameters, typeDefs)
+		params, err := convertParameters(f.Parameters, typeDefs)
 		if err != nil {
 			errors = append(errors, TransformError{f, err})
 			continue
 		}
 
-		returnType, err := convertType(f.ReturnType, typeDefs)
+		returnType, err := convertType(f.ReturnType.Name, typeDefs)
 		if err != nil {
 			errors = append(errors, TransformError{f, err})
 			continue
 		}
 
-		results[i] = plugins.FunctionSignature{
+		results[i] = FunctionSignature{
 			Name:       f.Name,
 			Parameters: params,
 			ReturnType: returnType,
@@ -93,8 +107,6 @@ func transformFunctions(functions []plugins.FunctionSignature, typeDefs *map[str
 
 	return results, errors
 }
-
-const timeFormat = "2006-01-02T15:04:05.999Z"
 
 func writeSchemaHeader(buf *bytes.Buffer, metadata plugins.PluginMetadata) {
 	buf.WriteString("# Hypermode Functions GraphQL Schema (auto-generated)\n")
@@ -109,7 +121,7 @@ func writeSchemaHeader(buf *bytes.Buffer, metadata plugins.PluginMetadata) {
 	buf.WriteString(metadata.BuildId)
 	buf.WriteByte('\n')
 	buf.WriteString("# Build Time: ")
-	buf.WriteString(metadata.BuildTime.Format(timeFormat))
+	buf.WriteString(metadata.BuildTime.Format(utils.TimeFormat))
 	buf.WriteByte('\n')
 	if metadata.GitRepo != "" {
 		buf.WriteString("# Git Repo: ")
@@ -124,13 +136,13 @@ func writeSchemaHeader(buf *bytes.Buffer, metadata plugins.PluginMetadata) {
 	buf.WriteByte('\n')
 }
 
-func writeSchema(buf *bytes.Buffer, functions []plugins.FunctionSignature, typeDefs []plugins.TypeDefinition) {
+func writeSchema(buf *bytes.Buffer, functions []FunctionSignature, typeDefs []TypeDefinition) {
 
 	// sort functions and type definitions
-	slices.SortFunc(functions, func(a, b plugins.FunctionSignature) int {
+	slices.SortFunc(functions, func(a, b FunctionSignature) int {
 		return cmp.Compare(a.Name, b.Name)
 	})
-	slices.SortFunc(typeDefs, func(a, b plugins.TypeDefinition) int {
+	slices.SortFunc(typeDefs, func(a, b TypeDefinition) int {
 		return cmp.Compare(a.Name, b.Name)
 	})
 
@@ -196,19 +208,38 @@ func writeSchema(buf *bytes.Buffer, functions []plugins.FunctionSignature, typeD
 	buf.WriteByte('\n')
 }
 
-func convertNameTypePairs(items []plugins.NameTypePair, typeDefs *map[string]plugins.TypeDefinition) ([]plugins.NameTypePair, error) {
-	if len(items) == 0 {
+func convertParameters(parameters []plugins.Parameter, typeDefs *map[string]TypeDefinition) ([]NameTypePair, error) {
+	if len(parameters) == 0 {
 		return nil, nil
 	}
 
-	results := make([]plugins.NameTypePair, len(items))
-	for i, p := range items {
-		t, err := convertType(p.Type, typeDefs)
+	results := make([]NameTypePair, len(parameters))
+	for i, p := range parameters {
+		t, err := convertType(p.Type.Name, typeDefs)
 		if err != nil {
 			return nil, err
 		}
-		results[i] = plugins.NameTypePair{
+		results[i] = NameTypePair{
 			Name: p.Name,
+			Type: t,
+		}
+	}
+	return results, nil
+}
+
+func convertFields(fields []plugins.Field, typeDefs *map[string]TypeDefinition) ([]NameTypePair, error) {
+	if len(fields) == 0 {
+		return nil, nil
+	}
+
+	results := make([]NameTypePair, len(fields))
+	for i, f := range fields {
+		t, err := convertType(f.Type.Name, typeDefs)
+		if err != nil {
+			return nil, err
+		}
+		results[i] = NameTypePair{
+			Name: f.Name,
 			Type: t,
 		}
 	}
@@ -217,7 +248,7 @@ func convertNameTypePairs(items []plugins.NameTypePair, typeDefs *map[string]plu
 
 var mapRegex = regexp.MustCompile(`^Map<(\w+<.+>|.+),\s*(\w+<.+>|.+)>$`)
 
-func convertType(asType string, typeDefs *map[string]plugins.TypeDefinition) (string, error) {
+func convertType(asType string, typeDefs *map[string]TypeDefinition) (string, error) {
 
 	// Unwrap parentheses if present
 	if strings.HasPrefix(asType, "(") && strings.HasSuffix(asType, ")") {
@@ -262,7 +293,7 @@ func convertType(asType string, typeDefs *map[string]plugins.TypeDefinition) (st
 		vtn := utils.If(strings.HasSuffix(vt, "!"), vt[:len(vt)-1], "Nullable"+vt)
 		typeName := ktn + vtn + "Pair"
 
-		newType(typeName, []plugins.NameTypePair{{"key", kt}, {"value", vt}}, typeDefs)
+		newType(typeName, []NameTypePair{{"key", kt}, {"value", vt}}, typeDefs)
 
 		// The map is represented as a list of the pair type.
 		// The list might be nullable, but the pair type within the list is always non-nullable.
@@ -289,6 +320,8 @@ func convertType(asType string, typeDefs *map[string]plugins.TypeDefinition) (st
 		return newScalar("UInt64", typeDefs) + n, nil
 	case "Date":
 		return newScalar("DateTime", typeDefs) + n, nil
+	case "void":
+		return newScalar("Void", typeDefs) + n, nil
 	}
 
 	// in the first pass, we convert input custom type definitions
@@ -304,13 +337,13 @@ func convertType(asType string, typeDefs *map[string]plugins.TypeDefinition) (st
 	return "", fmt.Errorf("unsupported type or missing type definition: %s", asType)
 }
 
-func newScalar(name string, typeDefs *map[string]plugins.TypeDefinition) string {
+func newScalar(name string, typeDefs *map[string]TypeDefinition) string {
 	return newType(name, nil, typeDefs)
 }
 
-func newType(name string, fields []plugins.NameTypePair, typeDefs *map[string]plugins.TypeDefinition) string {
+func newType(name string, fields []NameTypePair, typeDefs *map[string]TypeDefinition) string {
 	if _, ok := (*typeDefs)[name]; !ok {
-		(*typeDefs)[name] = plugins.TypeDefinition{
+		(*typeDefs)[name] = TypeDefinition{
 			Name:   name,
 			Fields: fields,
 		}

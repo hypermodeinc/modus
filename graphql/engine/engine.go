@@ -7,7 +7,17 @@ package engine
 import (
 	"sync"
 
+	"context"
+	"strings"
+
+	"hmruntime/graphql/datasource"
+	"hmruntime/graphql/schemagen"
+	"hmruntime/plugins"
+
 	"github.com/wundergraph/graphql-go-tools/execution/engine"
+	gql "github.com/wundergraph/graphql-go-tools/execution/graphql"
+	"github.com/wundergraph/graphql-go-tools/v2/pkg/engine/plan"
+	"github.com/wundergraph/graphql-go-tools/v2/pkg/engine/resolve"
 )
 
 var instance *engine.ExecutionEngine
@@ -24,4 +34,92 @@ func setEngine(engine *engine.ExecutionEngine) {
 	mutex.Lock()
 	defer mutex.Unlock()
 	instance = engine
+}
+
+func Activate(ctx context.Context, metadata plugins.PluginMetadata) error {
+
+	schemaContent, err := schemagen.GetGraphQLSchema(metadata, true)
+	if err != nil {
+		return err
+	}
+
+	schema, err := gql.NewSchemaFromString(schemaContent)
+	if err != nil {
+		return err
+	}
+
+	queryTypeName := schema.QueryTypeName()
+	queryFieldNames := getAllQueryFields(schema)
+	rootNodes := []plan.TypeField{
+		{
+			TypeName:   queryTypeName,
+			FieldNames: queryFieldNames,
+		},
+	}
+
+	var childNodes []plan.TypeField
+	for _, f := range queryFieldNames {
+		fields := schema.GetAllNestedFieldChildrenFromTypeField(queryTypeName, f, gql.NewSkipReservedNamesFunc())
+		for _, field := range fields {
+			childNodes = append(childNodes, plan.TypeField{
+				TypeName:   field.TypeName,
+				FieldNames: field.FieldNames,
+			})
+		}
+	}
+
+	dsCfg, err := plan.NewDataSourceConfiguration(
+		datasource.DataSourceName,
+		&datasource.Factory[datasource.Configuration]{Ctx: ctx},
+		&plan.DataSourceMetadata{RootNodes: rootNodes, ChildNodes: childNodes},
+		datasource.Configuration{},
+	)
+	if err != nil {
+		return err
+	}
+
+	engineConf := engine.NewConfiguration(schema)
+	engineConf.SetDataSources([]plan.DataSource{
+		dsCfg,
+	})
+
+	customResolveMap := make(map[string]resolve.CustomResolve)
+	customResolveMap["DateTime"] = &dateTimeResolver{}
+	engineConf.SetCustomResolveMap(customResolveMap)
+
+	logger := NewLoggerAdapter(ctx)
+	e, err := engine.NewExecutionEngine(ctx, logger, engineConf)
+	if err == nil {
+		setEngine(e)
+	}
+
+	return err
+}
+
+func getAllQueryFields(s *gql.Schema) []string {
+	doc := s.Document()
+	queryTypeName := s.QueryTypeName()
+
+	fields := make([]string, 0)
+	for _, objectType := range doc.ObjectTypeDefinitions {
+		typeName := doc.Input.ByteSliceString(objectType.Name)
+		if typeName == queryTypeName {
+			for _, fieldRef := range objectType.FieldsDefinition.Refs {
+				field := doc.FieldDefinitions[fieldRef]
+				fieldName := doc.Input.ByteSliceString(field.Name)
+				if !strings.HasPrefix(fieldName, "__") {
+					fields = append(fields, fieldName)
+				}
+			}
+			break
+		}
+	}
+
+	return fields
+}
+
+type dateTimeResolver struct{}
+
+func (dateTimeResolver) Resolve(value []byte) ([]byte, error) {
+	return value, nil
 }

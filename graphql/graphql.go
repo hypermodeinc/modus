@@ -7,15 +7,15 @@ package graphql
 import (
 	"net/http"
 
-	"hmruntime/functions"
 	"hmruntime/graphql/engine"
+	"hmruntime/host"
 	"hmruntime/logger"
 
 	gql "github.com/wundergraph/graphql-go-tools/execution/graphql"
 )
 
 func Initialize() {
-	functions.RegisterSchemaLoadedCallback(engine.ActivateSchema)
+	host.RegisterPluginLoadedCallback(engine.Activate)
 }
 
 func HandleGraphQLRequest(w http.ResponseWriter, r *http.Request) {

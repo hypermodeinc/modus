@@ -72,9 +72,6 @@ func main() {
 	// Initialize the GraphQL engine
 	graphql.Initialize()
 
-	// Load the GraphQL schema and monitor for changes
-	functions.MonitorGqlSchema(ctx)
-
 	// Start the web server
 	err = server.Start(ctx)
 	if err != nil {
