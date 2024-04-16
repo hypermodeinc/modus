@@ -179,7 +179,7 @@ func Test_ConvertType(t *testing.T) {
 			errors := transformTypes(tc.inputTypeDefs, &typeDefs)
 			require.Empty(t, errors)
 
-			result, err := convertType(tc.inputType, &typeDefs)
+			result, err := convertType(tc.inputType, &typeDefs, false)
 
 			require.Nil(t, err)
 			require.Equal(t, tc.expectedOutputType, result)
