@@ -29,6 +29,10 @@ func readArray(ctx context.Context, mem wasm.Memory, def plugins.TypeDefinition,
 		return nil, fmt.Errorf("failed to read array length")
 	}
 
+	// Handle empty array to avoid division by zero
+	if arrLen == 0 {
+		return []any{}, nil
+	}
 	itemSize := byteLength / arrLen
 
 	// ~lib/array/Array<u32> => u32
