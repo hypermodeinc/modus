@@ -7,6 +7,7 @@ package assemblyscript
 import (
 	"context"
 	"fmt"
+
 	"hmruntime/plugins"
 
 	wasm "github.com/tetratelabs/wazero/api"

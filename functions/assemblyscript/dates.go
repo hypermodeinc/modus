@@ -8,8 +8,9 @@ import (
 	"context"
 	"encoding/binary"
 	"fmt"
-	"hmruntime/utils"
 	"time"
+
+	"hmruntime/utils"
 
 	wasm "github.com/tetratelabs/wazero/api"
 )
