@@ -16,14 +16,9 @@ import (
 	"hmruntime/utils"
 )
 
-var firstPassComplete = false
-
 func GetGraphQLSchema(metadata plugins.PluginMetadata, includeHeader bool) (string, error) {
 	typeDefs := make(map[string]TypeDefinition, len(metadata.Types))
 	errors := transformTypes(metadata.Types, &typeDefs)
-
-	firstPassComplete = true
-
 	functions, errs := transformFunctions(metadata.Functions, &typeDefs)
 	errors = append(errors, errs...)
 
@@ -52,7 +47,7 @@ func transformTypes(types []plugins.TypeDefinition, typeDefs *map[string]TypeDef
 			continue
 		}
 
-		fields, err := convertFields(t.Fields, typeDefs)
+		fields, err := convertFields(t.Fields, typeDefs, true)
 		if err != nil {
 			errors = append(errors, TransformError{t, err})
 			continue
@@ -86,13 +81,13 @@ func transformFunctions(functions []plugins.FunctionSignature, typeDefs *map[str
 	results := make([]FunctionSignature, len(functions))
 	errors := make([]TransformError, 0)
 	for i, f := range functions {
-		params, err := convertParameters(f.Parameters, typeDefs)
+		params, err := convertParameters(f.Parameters, typeDefs, false)
 		if err != nil {
 			errors = append(errors, TransformError{f, err})
 			continue
 		}
 
-		returnType, err := convertType(f.ReturnType.Name, typeDefs)
+		returnType, err := convertType(f.ReturnType.Name, typeDefs, false)
 		if err != nil {
 			errors = append(errors, TransformError{f, err})
 			continue
@@ -208,14 +203,14 @@ func writeSchema(buf *bytes.Buffer, functions []FunctionSignature, typeDefs []Ty
 	buf.WriteByte('\n')
 }
 
-func convertParameters(parameters []plugins.Parameter, typeDefs *map[string]TypeDefinition) ([]NameTypePair, error) {
+func convertParameters(parameters []plugins.Parameter, typeDefs *map[string]TypeDefinition, firstPass bool) ([]NameTypePair, error) {
 	if len(parameters) == 0 {
 		return nil, nil
 	}
 
 	results := make([]NameTypePair, len(parameters))
 	for i, p := range parameters {
-		t, err := convertType(p.Type.Name, typeDefs)
+		t, err := convertType(p.Type.Name, typeDefs, firstPass)
 		if err != nil {
 			return nil, err
 		}
@@ -227,14 +222,14 @@ func convertParameters(parameters []plugins.Parameter, typeDefs *map[string]Type
 	return results, nil
 }
 
-func convertFields(fields []plugins.Field, typeDefs *map[string]TypeDefinition) ([]NameTypePair, error) {
+func convertFields(fields []plugins.Field, typeDefs *map[string]TypeDefinition, firstPass bool) ([]NameTypePair, error) {
 	if len(fields) == 0 {
 		return nil, nil
 	}
 
 	results := make([]NameTypePair, len(fields))
 	for i, f := range fields {
-		t, err := convertType(f.Type.Name, typeDefs)
+		t, err := convertType(f.Type.Name, typeDefs, firstPass)
 		if err != nil {
 			return nil, err
 		}
@@ -248,11 +243,11 @@ func convertFields(fields []plugins.Field, typeDefs *map[string]TypeDefinition) 
 
 var mapRegex = regexp.MustCompile(`^Map<(\w+<.+>|.+),\s*(\w+<.+>|.+)>$`)
 
-func convertType(asType string, typeDefs *map[string]TypeDefinition) (string, error) {
+func convertType(asType string, typeDefs *map[string]TypeDefinition, firstPass bool) (string, error) {
 
 	// Unwrap parentheses if present
 	if strings.HasPrefix(asType, "(") && strings.HasSuffix(asType, ")") {
-		return convertType(asType[1:len(asType)-1], typeDefs)
+		return convertType(asType[1:len(asType)-1], typeDefs, firstPass)
 	}
 
 	// Set the nullable flag.
@@ -268,7 +263,7 @@ func convertType(asType string, typeDefs *map[string]TypeDefinition) (string, er
 
 	// check for array types
 	if strings.HasSuffix(asType, "[]") {
-		t, err := convertType(asType[:len(asType)-2], typeDefs)
+		t, err := convertType(asType[:len(asType)-2], typeDefs, firstPass)
 		if err != nil {
 			return "", err
 		}
@@ -278,11 +273,11 @@ func convertType(asType string, typeDefs *map[string]TypeDefinition) (string, er
 	// check for map types
 	matches := mapRegex.FindStringSubmatch(asType)
 	if len(matches) == 3 {
-		kt, err := convertType(matches[1], typeDefs)
+		kt, err := convertType(matches[1], typeDefs, firstPass)
 		if err != nil {
 			return "", err
 		}
-		vt, err := convertType(matches[2], typeDefs)
+		vt, err := convertType(matches[2], typeDefs, firstPass)
 		if err != nil {
 			return "", err
 		}
@@ -325,7 +320,7 @@ func convertType(asType string, typeDefs *map[string]TypeDefinition) (string, er
 	}
 
 	// in the first pass, we convert input custom type definitions
-	if !firstPassComplete {
+	if firstPass {
 		return asType + n, nil
 	}
 
