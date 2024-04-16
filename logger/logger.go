@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"hmruntime/config"
+	"hmruntime/plugins"
 	"hmruntime/utils"
 
 	"github.com/rs/zerolog"
@@ -43,12 +44,11 @@ func Initialize() *zerolog.Logger {
 }
 
 func Get(ctx context.Context) *zerolog.Logger {
-	executionId, found1 := ctx.Value(utils.ExecutionIdContextKey).(string)
-	buildId, found2 := ctx.Value(utils.BuildIdContextKey).(string)
-	pluginName, found3 := ctx.Value(utils.PluginNameContextKey).(string)
+	executionId, eidFound := ctx.Value(utils.ExecutionIdContextKey).(string)
+	plugin, pluginFound := ctx.Value(utils.PluginContextKey).(*plugins.Plugin)
 
 	// If no context values, just return the global logger.
-	if !found1 && !found2 && !found3 {
+	if !eidFound && !pluginFound {
 		return &log.Logger
 	}
 
@@ -57,6 +57,13 @@ func Get(ctx context.Context) *zerolog.Logger {
 
 	if executionId != "" {
 		lc = lc.Str(executionIdKey, executionId)
+	}
+
+	var buildId string
+	var pluginName string
+	if pluginFound {
+		buildId = plugin.BuildId()
+		pluginName = plugin.Name()
 	}
 
 	if buildId != "" {

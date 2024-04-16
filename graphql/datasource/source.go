@@ -58,9 +58,8 @@ func (s Source) load(ctx context.Context, input []byte, writer io.Writer) error 
 		return fmt.Errorf("no function registered named %s", ci.Function)
 	}
 
-	// Add plugin details to the context
-	ctx = context.WithValue(ctx, utils.PluginNameContextKey, info.Plugin.Name())
-	ctx = context.WithValue(ctx, utils.BuildIdContextKey, info.Plugin.BuildId())
+	// Add plugin to the context
+	ctx = context.WithValue(ctx, utils.PluginContextKey, info.Plugin)
 
 	// Add execution ID to the context
 	executionId := xid.New().String()
