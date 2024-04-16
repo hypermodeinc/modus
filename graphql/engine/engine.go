@@ -5,13 +5,18 @@
 package engine
 
 import (
+	"fmt"
+	"os"
+	"strconv"
 	"sync"
 
 	"context"
 	"strings"
 
+	"hmruntime/config"
 	"hmruntime/graphql/datasource"
 	"hmruntime/graphql/schemagen"
+	"hmruntime/logger"
 	"hmruntime/plugins"
 
 	"github.com/wundergraph/graphql-go-tools/execution/engine"
@@ -41,6 +46,14 @@ func Activate(ctx context.Context, metadata plugins.PluginMetadata) error {
 	schemaContent, err := schemagen.GetGraphQLSchema(metadata, true)
 	if err != nil {
 		return err
+	}
+
+	if b, err := strconv.ParseBool(os.Getenv("HYPERMODE_DEBUG")); err == nil && b {
+		if config.UseJsonLogging {
+			logger.Debug(ctx).Str("schema", schemaContent).Msg("Generated schema")
+		} else {
+			fmt.Printf("\n%s\n", schemaContent)
+		}
 	}
 
 	schema, err := gql.NewSchemaFromString(schemaContent)
@@ -87,8 +100,8 @@ func Activate(ctx context.Context, metadata plugins.PluginMetadata) error {
 	customResolveMap["DateTime"] = &dateTimeResolver{}
 	engineConf.SetCustomResolveMap(customResolveMap)
 
-	logger := NewLoggerAdapter(ctx)
-	e, err := engine.NewExecutionEngine(ctx, logger, engineConf)
+	adapter := NewLoggerAdapter(ctx)
+	e, err := engine.NewExecutionEngine(ctx, adapter, engineConf)
 	if err == nil {
 		setEngine(e)
 	}
