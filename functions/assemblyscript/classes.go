@@ -7,6 +7,7 @@ package assemblyscript
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"hmruntime/plugins"
 
@@ -29,7 +30,7 @@ func readClass(ctx context.Context, mem wasm.Memory, def plugins.TypeDefinition,
 func readField(ctx context.Context, mem wasm.Memory, typ plugins.TypeInfo, offset uint32) (any, error) {
 	var result any
 	var ok bool
-	switch typ.Name {
+	switch typ.Path {
 	case "bool":
 		var val byte
 		val, ok = mem.ReadByte(offset)
@@ -78,6 +79,19 @@ func readField(ctx context.Context, mem wasm.Memory, typ plugins.TypeInfo, offse
 		p, ok := mem.ReadUint32Le(offset)
 		if !ok {
 			return nil, fmt.Errorf("error reading %s pointer from wasm memory", typ.Name)
+		}
+
+		// Handle null values if the type is nullable
+		if strings.HasSuffix(typ.Path, "|null") {
+			if p == 0 {
+				return nil, nil
+			}
+			typ = plugins.TypeInfo{
+				Name: typ.Name[:len(typ.Name)-7], // remove " | null"
+				Path: typ.Path[:len(typ.Path)-5], // remove "|null"
+			}
+		} else if p == 0 {
+			return nil, fmt.Errorf("null pointer encountered for non-nullable type %s", typ.Name)
 		}
 
 		// Read the actual data.

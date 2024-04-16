@@ -8,6 +8,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"regexp"
 	"strings"
 	"time"
 
@@ -108,8 +109,19 @@ func EncodeValue(ctx context.Context, mod wasm.Module, typ plugins.TypeInfo, val
 
 func DecodeValue(ctx context.Context, mod wasm.Module, typ plugins.TypeInfo, val uint64) (any, error) {
 
+	// Handle null values if the type is nullable
+	if strings.HasSuffix(typ.Path, "|null") {
+		if val == 0 {
+			return nil, nil
+		}
+		typ = plugins.TypeInfo{
+			Name: typ.Name[:len(typ.Name)-7], // remove " | null"
+			Path: typ.Path[:len(typ.Path)-5], // remove "|null"
+		}
+	}
+
 	// Primitive types
-	switch typ.Name {
+	switch typ.Path {
 	case "void":
 		return 0, nil
 
@@ -151,6 +163,8 @@ var typeMap = map[string]string{
 	"~lib/wasi_date/wasi_Date": "Date",
 }
 
+var mapRegex = regexp.MustCompile(`^~lib/map/Map<(\w+<.+>|.+),\s*(\w+<.+>|.+)>$`)
+
 func getTypeInfo(path string) plugins.TypeInfo {
 
 	var name string
@@ -158,8 +172,20 @@ func getTypeInfo(path string) plugins.TypeInfo {
 		name = path
 	} else if t, ok := typeMap[path]; ok {
 		name = t
+	} else if strings.HasSuffix(path, "|null") {
+		name = getTypeInfo(path[:len(path)-5]).Name + " | null"
 	} else if strings.HasPrefix(path, "~lib/array/Array<") {
-		name = getTypeInfo(path[17:len(path)-1]).Name + "[]"
+		t := getTypeInfo(path[17 : len(path)-1])
+		if strings.HasSuffix(t.Path, "|null") {
+			name = "(" + t.Name + ")[]"
+		} else {
+			name += t.Name + "[]"
+		}
+	} else if strings.HasPrefix(path, "~lib/map/Map<") {
+		matches := mapRegex.FindStringSubmatch(path)
+		kt := getTypeInfo(matches[1])
+		vt := getTypeInfo(matches[2])
+		name = "Map<" + kt.Name + ", " + vt.Name + ">"
 	} else {
 		name = path[strings.LastIndex(path, "/")+1:]
 	}
