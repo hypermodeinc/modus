@@ -14,10 +14,10 @@ import (
 type StorageMonitor struct {
 	extension string
 	files     map[string]*monitoredFile
-	Added     func(FileInfo)
-	Modified  func(FileInfo)
-	Removed   func(FileInfo)
-	Changed   func()
+	Added     func(FileInfo) error
+	Modified  func(FileInfo) error
+	Removed   func(FileInfo) error
+	Changed   func([]error)
 }
 
 type monitoredFile struct {
@@ -29,10 +29,10 @@ func NewStorageMonitor(extension string) *StorageMonitor {
 	return &StorageMonitor{
 		extension: extension,
 		files:     make(map[string]*monitoredFile),
-		Added:     func(FileInfo) {},
-		Modified:  func(FileInfo) {},
-		Removed:   func(FileInfo) {},
-		Changed:   func() {},
+		Added:     func(FileInfo) error { return nil },
+		Modified:  func(FileInfo) error { return nil },
+		Removed:   func(FileInfo) error { return nil },
+		Changed:   func([]error) {},
 	}
 }
 
@@ -58,6 +58,7 @@ func (sm *StorageMonitor) Start(ctx context.Context) {
 
 			// Compare list of files retrieved to existing files
 			var changed = false
+			var errors []error
 			var thisTime = time.Now()
 			for _, file := range files {
 				existing, found := sm.files[file.Name]
@@ -65,13 +66,19 @@ func (sm *StorageMonitor) Start(ctx context.Context) {
 					// New file
 					changed = true
 					sm.files[file.Name] = &monitoredFile{file, thisTime}
-					sm.Added(file)
+					err := sm.Added(file)
+					if err != nil {
+						errors = append(errors, err)
+					}
 				} else if file.Hash != existing.file.Hash ||
 					(file.Hash == "" && file.LastModified.After(existing.file.LastModified)) {
 					// Modified file
 					changed = true
 					sm.files[file.Name] = &monitoredFile{file, thisTime}
-					sm.Modified(file)
+					err := sm.Modified(file)
+					if err != nil {
+						errors = append(errors, err)
+					}
 				} else {
 					// No change
 					existing.lastSeen = thisTime
@@ -83,13 +90,16 @@ func (sm *StorageMonitor) Start(ctx context.Context) {
 				if file.lastSeen.Before(thisTime) {
 					changed = true
 					delete(sm.files, name)
-					sm.Removed(file.file)
+					err := sm.Removed(file.file)
+					if err != nil {
+						errors = append(errors, err)
+					}
 				}
 			}
 
 			// Notify if anything changed
 			if changed {
-				sm.Changed()
+				sm.Changed(errors)
 			}
 
 			// Wait for next cycle

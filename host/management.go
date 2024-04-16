@@ -43,29 +43,33 @@ func InitWasmRuntime(ctx context.Context) error {
 
 func MonitorPlugins(ctx context.Context) {
 
-	loadPluginFile := func(fi storage.FileInfo) {
+	loadPluginFile := func(fi storage.FileInfo) error {
 		err := loadPlugin(ctx, fi.Name)
 		if err != nil {
 			logger.Err(ctx, err).
 				Str("filename", fi.Name).
 				Msg("Failed to load plugin.")
 		}
+		return err
 	}
 
 	sm := storage.NewStorageMonitor(".wasm")
 	sm.Added = loadPluginFile
 	sm.Modified = loadPluginFile
-	sm.Removed = func(fi storage.FileInfo) {
+	sm.Removed = func(fi storage.FileInfo) error {
 		err := unloadPlugin(ctx, fi.Name)
 		if err != nil {
 			logger.Err(ctx, err).
 				Str("filename", fi.Name).
 				Msg("Failed to unload plugin.")
 		}
+		return err
 	}
-	sm.Changed = func() {
-		// Signal that we need to register functions
-		RegistrationRequest <- true
+	sm.Changed = func(errors []error) {
+		if len(errors) == 0 {
+			// Signal that we need to register functions
+			RegistrationRequest <- true
+		}
 	}
 	sm.Start(ctx)
 }

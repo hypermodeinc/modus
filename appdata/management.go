@@ -14,21 +14,22 @@ import (
 
 func MonitorAppDataFiles(ctx context.Context) {
 
-	loadFile := func(file storage.FileInfo) {
+	loadFile := func(file storage.FileInfo) error {
 		err := loadAppData(ctx, file.Name)
 		if err == nil {
 			logger.Info(ctx).
 				Str("filename", file.Name).
 				Msg("Loaded application data file.")
-
 		} else {
 			logger.Err(ctx, err).
 				Str("filename", file.Name).
 				Msg("Failed to load application data file.")
 		}
+
+		return err
 	}
 
-	// NOTEs: Removing a file entirely is not currently supported.
+	// NOTE: Removing a file entirely is not currently supported.
 
 	sm := storage.NewStorageMonitor(".json")
 	sm.Added = loadFile
