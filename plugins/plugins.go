@@ -52,9 +52,9 @@ type Parameter struct {
 }
 
 type Field struct {
+	Offset uint32   `json:"offset"`
 	Name   string   `json:"name"`
 	Type   TypeInfo `json:"type"`
-	Offset uint32   `json:"offset"`
 }
 
 type TypeInfo struct {
