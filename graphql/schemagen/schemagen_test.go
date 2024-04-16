@@ -43,6 +43,26 @@ func Test_GetGraphQLSchema(t *testing.T) {
 				},
 				ReturnType: plugins.TypeInfo{Name: "Map<string, string>"},
 			},
+			{
+				Name:       "getPerson",
+				ReturnType: plugins.TypeInfo{Name: "Person"},
+			},
+			{
+				Name:       "getPeople",
+				ReturnType: plugins.TypeInfo{Name: "Person[]"},
+			},
+		},
+		Types: []plugins.TypeDefinition{
+			{
+				Name: "Person",
+				Fields: []plugins.Field{
+					{Name: "name", Type: plugins.TypeInfo{Name: "string"}},
+					{Name: "age", Type: plugins.TypeInfo{Name: "i32"}},
+				},
+			},
+			{
+				Name: "Person[]",
+			},
 		},
 	}
 
@@ -51,11 +71,18 @@ func Test_GetGraphQLSchema(t *testing.T) {
 	expectedSchema := `type Query {
   add(a: Int!, b: Int!): Int!
   currentTime: DateTime!
+  getPeople: [Person!]!
+  getPerson: Person!
   sayHello(name: String!): String!
   transform(items: [StringStringPair!]!): [StringStringPair!]!
 }
 
 scalar DateTime
+
+type Person {
+  name: String!
+  age: Int!
+}
 
 type StringStringPair {
   key: String!
