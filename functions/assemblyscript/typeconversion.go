@@ -8,6 +8,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"hmruntime/plugins"
@@ -133,7 +134,50 @@ func DecodeValue(ctx context.Context, mod wasm.Module, typ plugins.TypeInfo, val
 	return readObject(ctx, mem, typ, uint32(val))
 }
 
+func isPrimitive(t string) bool {
+	switch t {
+	case "bool", "i8", "i16", "i32", "u8", "u16", "u32", "i64", "u64", "f32", "f64":
+		return true
+	default:
+		return false
+	}
+}
+
+var typeMap = map[string]string{
+	"~lib/string/String":       "string",
+	"~lib/array/Array":         "Array",
+	"~lib/map/Map":             "Map",
+	"~lib/date/Date":           "Date",
+	"~lib/wasi_date/wasi_Date": "Date",
+}
+
+func getTypeInfo(path string) plugins.TypeInfo {
+
+	var name string
+	if isPrimitive(path) {
+		name = path
+	} else if t, ok := typeMap[path]; ok {
+		name = t
+	} else if strings.HasPrefix(path, "~lib/array/Array<") {
+		name = getTypeInfo(path[17:len(path)-1]).Name + "[]"
+	} else {
+		name = path[strings.LastIndex(path, "/")+1:]
+	}
+
+	return plugins.TypeInfo{
+		Name: name,
+		Path: path,
+	}
+}
+
 func getTypeDefinition(ctx context.Context, typePath string) (plugins.TypeDefinition, error) {
+	if isPrimitive(typePath) {
+		return plugins.TypeDefinition{
+			Name: typePath,
+			Path: typePath,
+		}, nil
+	}
+
 	plugin := ctx.Value(utils.PluginContextKey).(*plugins.Plugin)
 
 	types := plugin.Types

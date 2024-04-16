@@ -75,9 +75,9 @@ func readField(ctx context.Context, mem wasm.Memory, typ plugins.TypeInfo, offse
 
 	default:
 		// Managed types have pointers to the actual data.
-		p, err := readPointer(mem, offset)
-		if err != nil {
-			return nil, err
+		p, ok := mem.ReadUint32Le(offset)
+		if !ok {
+			return nil, fmt.Errorf("error reading %s pointer from wasm memory", typ.Name)
 		}
 
 		// Read the actual data.

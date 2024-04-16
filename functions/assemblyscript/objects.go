@@ -7,6 +7,7 @@ package assemblyscript
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"hmruntime/plugins"
 
@@ -32,10 +33,9 @@ func readObject(ctx context.Context, mem wasm.Memory, typ plugins.TypeInfo, offs
 		return nil, fmt.Errorf("pointer is not to a %s", typ.Name)
 	}
 
-	// TODO: handle arrays
-	// if strings.HasPrefix(typ.Path, "~lib/array/Array<") {
-	// 	return readArray(ctx, mem, def, offset)
-	// }
+	if strings.HasPrefix(typ.Path, "~lib/array/Array<") {
+		return readArray(ctx, mem, def, offset)
+	}
 
 	return readClass(ctx, mem, def, offset)
 }
@@ -53,13 +53,4 @@ func allocateWasmMemory(ctx context.Context, mod wasm.Module, len int, classId u
 	newFn := mod.ExportedFunction("__new")
 	res, _ := newFn.Call(ctx, uint64(len), uint64(classId))
 	return uint32(res[0])
-}
-
-func readPointer(mem wasm.Memory, offset uint32) (uint32, error) {
-	p, ok := mem.ReadUint32Le(offset)
-	if !ok {
-		return 0, fmt.Errorf("error reading pointer from wasm memory")
-	}
-
-	return p, nil
 }
