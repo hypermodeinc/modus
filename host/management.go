@@ -90,24 +90,10 @@ func loadPlugin(ctx context.Context, filename string) error {
 
 	// Get the metadata for the plugin.
 	metadata, err := plugins.GetPluginMetadata(&cm)
-
-	// Apply fallback rules for missing metadata.
 	if err == plugins.ErrPluginMetadataNotFound {
-		var found bool
-		metadata, found = plugins.GetPluginMetadata_old(&cm)
-		if found {
-			defer logger.Warn(ctx).
-				Str("filename", filename).
-				Str("plugin", metadata.Plugin).
-				Msg("Deprecated metadata format found in plugin.  Please recompile your plugin using the latest version of the Hypermode Functions library.")
-		} else {
-			// Use the filename as the plugin name if no metadata is found.
-			metadata.Plugin = strings.TrimSuffix(filename, ".wasm")
-			defer logger.Warn(ctx).
-				Str("filename", filename).
-				Str("plugin", metadata.Plugin).
-				Msg("No metadata found in plugin.  Please recompile your plugin using the latest version of the Hypermode Functions library.")
-		}
+		logger.Error(ctx).
+			Msg("Metadata not found.  Please recompile your plugin using the latest version of the Hypermode Functions library.")
+		return err
 	} else if err != nil {
 		return err
 	}

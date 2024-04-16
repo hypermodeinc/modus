@@ -129,33 +129,3 @@ func GetPluginMetadata(cm *wazero.CompiledModule) (PluginMetadata, error) {
 
 	return metadata, nil
 }
-
-func GetPluginMetadata_old(cm *wazero.CompiledModule) (metadata PluginMetadata, found bool) {
-	for _, sec := range (*cm).CustomSections() {
-		name := sec.Name()
-		data := sec.Data()
-
-		switch name {
-		case "build_id":
-			metadata.BuildId = string(data)
-			found = true
-		case "build_ts":
-			metadata.BuildTime, _ = time.Parse(time.RFC3339, string(data))
-			found = true
-		case "hypermode_library":
-			metadata.Library = string(data)
-			found = true
-		case "hypermode_plugin":
-			metadata.Plugin = string(data)
-			found = true
-		case "git_repo":
-			metadata.GitRepo = string(data)
-			found = true
-		case "git_commit":
-			metadata.GitCommit = string(data)
-			found = true
-		}
-	}
-
-	return metadata, found
-}
