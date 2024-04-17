@@ -13,48 +13,48 @@ import (
 	"github.com/rs/zerolog"
 )
 
-func NewLoggerAdapter(ctx context.Context) *LoggerAdapter {
-	return &LoggerAdapter{
+func newLoggerAdapter(ctx context.Context) *loggerAdapter {
+	return &loggerAdapter{
 		l: logger.Get(ctx),
 	}
 }
 
-type LoggerAdapter struct {
+type loggerAdapter struct {
 	l *zerolog.Logger
 }
 
-func (l *LoggerAdapter) Debug(msg string, fields ...abstractlogger.Field) {
+func (l *loggerAdapter) Debug(msg string, fields ...abstractlogger.Field) {
 	l.l.Debug().Fields(l.fields(fields)).Msg(msg)
 }
 
-func (l *LoggerAdapter) Warn(msg string, fields ...abstractlogger.Field) {
+func (l *loggerAdapter) Warn(msg string, fields ...abstractlogger.Field) {
 	l.l.Warn().Fields(l.fields(fields)).Msg(msg)
 }
 
-func (l *LoggerAdapter) Info(msg string, fields ...abstractlogger.Field) {
+func (l *loggerAdapter) Info(msg string, fields ...abstractlogger.Field) {
 	l.l.Info().Fields(l.fields(fields)).Msg(msg)
 }
 
-func (l *LoggerAdapter) Error(msg string, fields ...abstractlogger.Field) {
+func (l *loggerAdapter) Error(msg string, fields ...abstractlogger.Field) {
 	l.l.Error().Fields(l.fields(fields)).Msg(msg)
 }
 
-func (l *LoggerAdapter) Fatal(msg string, fields ...abstractlogger.Field) {
+func (l *loggerAdapter) Fatal(msg string, fields ...abstractlogger.Field) {
 	l.l.Fatal().Fields(l.fields(fields)).Msg(msg)
 }
 
-func (l *LoggerAdapter) Panic(msg string, fields ...abstractlogger.Field) {
+func (l *loggerAdapter) Panic(msg string, fields ...abstractlogger.Field) {
 	l.l.Panic().Fields(l.fields(fields)).Msg(msg)
 }
 
-func (l *LoggerAdapter) LevelLogger(level abstractlogger.Level) abstractlogger.LevelLogger {
+func (l *loggerAdapter) LevelLogger(level abstractlogger.Level) abstractlogger.LevelLogger {
 	return &LevelLoggerAdapter{
 		l:     l.l,
 		level: level,
 	}
 }
 
-func (l *LoggerAdapter) fields(fields []abstractlogger.Field) map[string]interface{} {
+func (l *loggerAdapter) fields(fields []abstractlogger.Field) map[string]interface{} {
 	out := make(map[string]interface{}, len(fields))
 	for _, f := range fields {
 

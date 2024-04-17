@@ -81,7 +81,7 @@ func Activate(ctx context.Context, metadata plugins.PluginMetadata) error {
 		}
 	}
 
-	dsCfg, err := plan.NewDataSourceConfiguration(
+	datasourceConfig, err := plan.NewDataSourceConfiguration(
 		datasource.DataSourceName,
 		&datasource.Factory[datasource.Configuration]{Ctx: ctx},
 		&plan.DataSourceMetadata{RootNodes: rootNodes, ChildNodes: childNodes},
@@ -91,23 +91,23 @@ func Activate(ctx context.Context, metadata plugins.PluginMetadata) error {
 		return err
 	}
 
-	engineConf := engine.NewConfiguration(schema)
-	engineConf.SetDataSources([]plan.DataSource{
-		dsCfg,
-	})
+	engineConfig := engine.NewConfiguration(schema)
+	engineConfig.SetDataSources([]plan.DataSource{datasourceConfig})
 
 	resolverOptions := resolve.ResolverOptions{
 		MaxConcurrency:          1024,
 		PropagateSubgraphErrors: true,
 	}
 
-	adapter := NewLoggerAdapter(ctx)
-	e, err := newExecutionEngine(ctx, adapter, engineConf, resolverOptions)
-	if err == nil {
-		setEngine(e)
+	adapter := newLoggerAdapter(ctx)
+	e, err := newExecutionEngine(ctx, adapter, engineConfig, resolverOptions)
+	if err != nil {
+		return err
 	}
 
-	return err
+	setEngine(e)
+
+	return nil
 }
 
 func getAllQueryFields(s *gql.Schema) []string {
