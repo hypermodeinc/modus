@@ -55,5 +55,5 @@ func HandleGraphQLRequest(w http.ResponseWriter, r *http.Request) {
 
 	// Return the response
 	w.Header().Set("Content-Type", "application/json")
-	w.Write(result.Bytes())
+	w.Write(adjustResponse(result.Bytes()))
 }
