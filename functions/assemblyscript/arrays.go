@@ -33,12 +33,9 @@ func readArray(ctx context.Context, mem wasm.Memory, def plugins.TypeDefinition,
 	if arrLen == 0 {
 		return []any{}, nil
 	}
-	itemSize := byteLength / arrLen
 
-	// ~lib/array/Array<u32> => u32
-	// ~lib/array/Array<assembly/index/Person> => assembly/index/Person
-	itemPath := def.Path[17 : len(def.Path)-1]
-	itemType := getTypeInfo(itemPath)
+	itemSize := byteLength / arrLen
+	itemType := getArraySubtypeInfo(def.Path)
 
 	result := make([]any, arrLen)
 	for i := uint32(0); i < arrLen; i++ {

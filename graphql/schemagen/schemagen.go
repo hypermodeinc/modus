@@ -167,7 +167,7 @@ func writeSchema(buf *bytes.Buffer, functions []FunctionSignature, typeDefs []Ty
 	// write scalars
 	wroteScalar := false
 	for _, t := range typeDefs {
-		if (len(t.Fields)) > 0 || strings.HasSuffix(t.Name, "[]") {
+		if len(t.Fields) > 0 || strings.HasSuffix(t.Name, "[]") || strings.HasPrefix(t.Name, "Map<") {
 			continue
 		}
 		if !wroteScalar {

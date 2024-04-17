@@ -165,6 +165,23 @@ var typeMap = map[string]string{
 
 var mapRegex = regexp.MustCompile(`^~lib/map/Map<(\w+<.+>|.+),\s*(\w+<.+>|.+)>$`)
 
+func isArrayType(path string) bool {
+	return strings.HasPrefix(path, "~lib/array/Array<")
+}
+
+func isMapType(path string) bool {
+	return strings.HasPrefix(path, "~lib/map/Map<")
+}
+
+func getArraySubtypeInfo(path string) plugins.TypeInfo {
+	return getTypeInfo(path[17 : len(path)-1])
+}
+
+func getMapSubtypeInfo(path string) (plugins.TypeInfo, plugins.TypeInfo) {
+	matches := mapRegex.FindStringSubmatch(path)
+	return getTypeInfo(matches[1]), getTypeInfo(matches[2])
+}
+
 func getTypeInfo(path string) plugins.TypeInfo {
 
 	var name string
@@ -174,17 +191,15 @@ func getTypeInfo(path string) plugins.TypeInfo {
 		name = t
 	} else if strings.HasSuffix(path, "|null") {
 		name = getTypeInfo(path[:len(path)-5]).Name + " | null"
-	} else if strings.HasPrefix(path, "~lib/array/Array<") {
-		t := getTypeInfo(path[17 : len(path)-1])
+	} else if isArrayType(path) {
+		t := getArraySubtypeInfo(path)
 		if strings.HasSuffix(t.Path, "|null") {
 			name = "(" + t.Name + ")[]"
 		} else {
 			name += t.Name + "[]"
 		}
-	} else if strings.HasPrefix(path, "~lib/map/Map<") {
-		matches := mapRegex.FindStringSubmatch(path)
-		kt := getTypeInfo(matches[1])
-		vt := getTypeInfo(matches[2])
+	} else if isMapType(path) {
+		kt, vt := getMapSubtypeInfo(path)
 		name = "Map<" + kt.Name + ", " + vt.Name + ">"
 	} else {
 		name = path[strings.LastIndex(path, "/")+1:]

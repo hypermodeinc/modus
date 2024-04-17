@@ -7,7 +7,6 @@ package assemblyscript
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"hmruntime/plugins"
 
@@ -33,8 +32,10 @@ func readObject(ctx context.Context, mem wasm.Memory, typ plugins.TypeInfo, offs
 		return nil, fmt.Errorf("pointer is not to a %s", typ.Name)
 	}
 
-	if strings.HasPrefix(typ.Path, "~lib/array/Array<") {
+	if isArrayType(typ.Path) {
 		return readArray(ctx, mem, def, offset)
+	} else if isMapType(typ.Path) {
+		return readMap(ctx, mem, def, offset)
 	}
 
 	return readClass(ctx, mem, def, offset)
