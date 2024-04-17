@@ -22,6 +22,7 @@ import (
 	"github.com/wundergraph/graphql-go-tools/execution/engine"
 	gql "github.com/wundergraph/graphql-go-tools/execution/graphql"
 	"github.com/wundergraph/graphql-go-tools/v2/pkg/engine/plan"
+	"github.com/wundergraph/graphql-go-tools/v2/pkg/engine/resolve"
 )
 
 var instance *engine.ExecutionEngine
@@ -95,8 +96,13 @@ func Activate(ctx context.Context, metadata plugins.PluginMetadata) error {
 		dsCfg,
 	})
 
+	resolverOptions := resolve.ResolverOptions{
+		MaxConcurrency:          1024,
+		PropagateSubgraphErrors: true,
+	}
+
 	adapter := NewLoggerAdapter(ctx)
-	e, err := engine.NewExecutionEngine(ctx, adapter, engineConf)
+	e, err := newExecutionEngine(ctx, adapter, engineConf, resolverOptions)
 	if err == nil {
 		setEngine(e)
 	}
