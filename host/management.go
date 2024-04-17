@@ -23,7 +23,7 @@ import (
 	wasi "github.com/tetratelabs/wazero/imports/wasi_snapshot_preview1"
 )
 
-type buffers struct {
+type OutputBuffers struct {
 	Stdout *strings.Builder
 	Stderr *strings.Builder
 }
@@ -176,7 +176,7 @@ func unloadPlugin(ctx context.Context, filename string) error {
 	return (*p.Module).Close(ctx)
 }
 
-func GetModuleInstance(ctx context.Context, plugin *plugins.Plugin) (wasm.Module, buffers, error) {
+func GetModuleInstance(ctx context.Context, plugin *plugins.Plugin) (wasm.Module, OutputBuffers, error) {
 
 	// Get the logger and writers for the plugin's stdout and stderr.
 	log := logger.Get(ctx).With().Bool("user_visible", true).Logger()
@@ -185,7 +185,7 @@ func GetModuleInstance(ctx context.Context, plugin *plugins.Plugin) (wasm.Module
 
 	// Create string buffers to capture stdout and stderr.
 	// Still write to the log, but also capture the output in the buffers.
-	buf := buffers{&strings.Builder{}, &strings.Builder{}}
+	buf := OutputBuffers{&strings.Builder{}, &strings.Builder{}}
 	wOut := io.MultiWriter(buf.Stdout, wInfoLog)
 	wErr := io.MultiWriter(buf.Stderr, wErrorLog)
 

@@ -143,6 +143,10 @@ func (p *Planner[T]) ConfigureFetch() resolve.FetchConfiguration {
 		Input:      string(inputTemplate),
 		Variables:  p.variables,
 		DataSource: Source{},
+		PostProcessing: resolve.PostProcessingConfiguration{
+			SelectResponseDataPath:   []string{"data"},
+			SelectResponseErrorsPath: []string{"errors"},
+		},
 	}
 }
 
