@@ -80,15 +80,23 @@ func (s Source) load(ctx context.Context, input []byte, writer io.Writer) error 
 	}
 	defer mod.Close(ctx)
 
-	// Call the function
-	result, err := functions.CallFunction(ctx, mod, info, ci.Parameters)
-	if err != nil {
+	// Call the function and get any errors that were written to the output buffers
+	result, fnErr := functions.CallFunction(ctx, mod, info, ci.Parameters)
 
-		// If any errors were captured in the output buffers, write those to the response.
-		errs := makeErrors(buf, ci)
+	var jsonErrors []byte
+	errs := makeErrors(buf, ci)
+	if len(errs) > 0 {
+		var err error
+		jsonErrors, err = json.Marshal(errs)
+		if err != nil {
+			return err
+		}
+	}
+
+	if fnErr != nil {
+		// If there are errors in the output buffers, return those by themselves
 		if len(errs) > 0 {
-			j, _ := json.Marshal(errs)
-			fmt.Fprintf(writer, `{"errors":%s}`, j)
+			fmt.Fprintf(writer, `{"errors":%s}`, jsonErrors)
 			return nil
 		}
 
@@ -96,15 +104,18 @@ func (s Source) load(ctx context.Context, input []byte, writer io.Writer) error 
 		return fmt.Errorf("%w '%s': %w", errCallingFunction, ci.Function, err)
 	}
 
-	// Write the result
-	jsonResult, err := json.Marshal(result)
+	// Get the data as json from the result
+	jsonData, err := json.Marshal(result)
 	if err != nil {
 		return err
 	}
 
-	_ = buf // todo, output buffers to the writer (where?)
-
-	fmt.Fprintf(writer, `{"data":{"%s":%s}}`, ci.Alias, jsonResult)
+	// Build and write the response
+	if len(errs) > 0 {
+		fmt.Fprintf(writer, `{"data":{"%s":%s},"errors":%s}`, ci.Alias, jsonData, jsonErrors)
+	} else {
+		fmt.Fprintf(writer, `{"data":{"%s":%s}}`, ci.Alias, jsonData)
+	}
 
 	return nil
 }
