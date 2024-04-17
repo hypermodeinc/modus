@@ -133,14 +133,13 @@ func (p *Planner[T]) ConfigureFetch() resolve.FetchConfiguration {
 	// Note: we have to build the JSON manually here, because the data field may
 	// contain placeholders for variables, such as $$0$$ which are not valid in JSON.
 	// They are replaced with the actual values by the time Load is called.
-	inputTemplate := fmt.Sprintf(
-		`{"fn":"%s","alias":"%s","data":%s}`,
+	inputTemplate := fmt.Sprintf(`{"fn":"%s","alias":"%s","data":%s}`,
 		p.template.function,
 		p.template.alias,
 		p.template.data)
 
 	return resolve.FetchConfiguration{
-		Input:      string(inputTemplate),
+		Input:      inputTemplate,
 		Variables:  p.variables,
 		DataSource: Source{},
 		PostProcessing: resolve.PostProcessingConfiguration{
