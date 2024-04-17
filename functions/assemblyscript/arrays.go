@@ -19,23 +19,36 @@ func readArray(ctx context.Context, mem wasm.Memory, def plugins.TypeDefinition,
 		return nil, fmt.Errorf("failed to read array data start pointer")
 	}
 
-	byteLength, ok := mem.ReadUint32Le(offset + 8)
-	if !ok {
-		return nil, fmt.Errorf("failed to read array bytes length")
-	}
+	// byteLength, ok := mem.ReadUint32Le(offset + 8)
+	// if !ok {
+	// 	return nil, fmt.Errorf("failed to read array bytes length")
+	// }
 
 	arrLen, ok := mem.ReadUint32Le(offset + 12)
 	if !ok {
 		return nil, fmt.Errorf("failed to read array length")
 	}
 
-	// Handle empty array to avoid division by zero
+	// Handle empty array
 	if arrLen == 0 {
 		return []any{}, nil
 	}
 
-	itemSize := byteLength / arrLen
 	itemType := getArraySubtypeInfo(def.Path)
+
+	var itemSize uint32
+	switch itemType.Path {
+	case "u64", "i64", "f64":
+		itemSize = 8
+	case "u32", "i32", "f32":
+		itemSize = 4
+	case "u16", "i16":
+		itemSize = 2
+	case "u8", "i8", "bool":
+		itemSize = 1
+	default:
+		itemSize = 4 // pointer
+	}
 
 	result := make([]any, arrLen)
 	for i := uint32(0); i < arrLen; i++ {
