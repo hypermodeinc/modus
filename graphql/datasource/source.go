@@ -18,6 +18,7 @@ import (
 	"hmruntime/logger"
 	"hmruntime/utils"
 
+	"github.com/buger/jsonparser"
 	"github.com/rs/xid"
 	"github.com/wundergraph/graphql-go-tools/v2/pkg/engine/resolve"
 )
@@ -27,8 +28,7 @@ const DataSourceName = "HypermodeFunctionsDataSource"
 var errCallingFunction = fmt.Errorf("error calling function")
 
 type callInfo struct {
-	Function   string         `json:"fn"`
-	Alias      string         `json:"alias"`
+	Function   templateField  `json:"fn"`
 	Parameters map[string]any `json:"data"`
 }
 
@@ -55,7 +55,7 @@ func (s Source) load(ctx context.Context, input []byte, writer io.Writer) error 
 	}
 
 	// Get the function info
-	info, ok := functions.Functions[ci.Function]
+	info, ok := functions.Functions[ci.Function.Name]
 	if !ok {
 		return fmt.Errorf("no function registered named %s", ci.Function)
 	}
@@ -84,10 +84,10 @@ func (s Source) load(ctx context.Context, input []byte, writer io.Writer) error 
 	result, fnErr := functions.CallFunction(ctx, mod, info, ci.Parameters)
 
 	var jsonErrors []byte
-	errs := makeErrors(buf, ci)
-	if len(errs) > 0 {
+	errors := transformErrors(buf, ci)
+	if len(errors) > 0 {
 		var err error
-		jsonErrors, err = json.Marshal(errs)
+		jsonErrors, err = json.Marshal(errors)
 		if err != nil {
 			return err
 		}
@@ -95,7 +95,7 @@ func (s Source) load(ctx context.Context, input []byte, writer io.Writer) error 
 
 	if fnErr != nil {
 		// If there are errors in the output buffers, return those by themselves
-		if len(errs) > 0 {
+		if len(errors) > 0 {
 			fmt.Fprintf(writer, `{"errors":%s}`, jsonErrors)
 			return nil
 		}
@@ -110,32 +110,96 @@ func (s Source) load(ctx context.Context, input []byte, writer io.Writer) error 
 		return err
 	}
 
+	// Transform the data
+	jsonData, err = transformData(jsonData, ci.Function)
+	if err != nil {
+		return err
+	}
+
 	// Build and write the response
-	if len(errs) > 0 {
-		fmt.Fprintf(writer, `{"data":{"%s":%s},"errors":%s}`, ci.Alias, jsonData, jsonErrors)
+	if len(errors) > 0 {
+		fmt.Fprintf(writer, `{"data":%s,"errors":%s}`, jsonData, jsonErrors)
 	} else {
-		fmt.Fprintf(writer, `{"data":{"%s":%s}}`, ci.Alias, jsonData)
+		fmt.Fprintf(writer, `{"data":%s}`, jsonData)
 	}
 
 	return nil
 }
 
-func makeErrors(buf host.OutputBuffers, ci callInfo) []resolve.GraphQLError {
+func transformData(data []byte, tf templateField) ([]byte, error) {
+	val, err := transformValue(data, tf)
+	if err != nil {
+		return nil, err
+	}
+
+	out := []byte(`{}`)
+	return jsonparser.Set(out, val, tf.AliasOrName())
+}
+
+func transformValue(data []byte, tf templateField) ([]byte, error) {
+	var out []byte
+	if len(tf.Fields) == 0 {
+		out = data
+	} else {
+		out = []byte(`{}`)
+		for _, f := range tf.Fields {
+			val, dataType, _, err := jsonparser.Get(data, f.Name)
+			if err != nil {
+				return nil, err
+			}
+
+			if dataType == jsonparser.String {
+				val = []byte(fmt.Sprintf(`"%s"`, val))
+			} else if len(f.Fields) > 0 {
+				if dataType == jsonparser.Array {
+					var buf bytes.Buffer
+					jsonparser.ArrayEach(val, func(value []byte, _ jsonparser.ValueType, _ int, _ error) {
+						if buf.Len() > 0 {
+							buf.WriteByte(',')
+						} else {
+							buf.WriteByte('[')
+						}
+						value, err = transformValue(value, f)
+						if err != nil {
+							return
+						}
+						buf.Write(value)
+					})
+					buf.WriteByte(']')
+					val = buf.Bytes()
+				} else {
+					val, err = transformValue(val, f)
+					if err != nil {
+						return nil, err
+					}
+				}
+			}
+			out, err = jsonparser.Set(out, val, f.AliasOrName())
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	return out, nil
+}
+
+func transformErrors(buf host.OutputBuffers, ci callInfo) []resolve.GraphQLError {
 	errors := make([]resolve.GraphQLError, 0)
 	for _, s := range strings.Split(buf.Stdout.String(), "\n") {
 		if s != "" {
-			errors = append(errors, makeError(s, ci))
+			errors = append(errors, transformError(s, ci))
 		}
 	}
 	for _, s := range strings.Split(buf.Stderr.String(), "\n") {
 		if s != "" {
-			errors = append(errors, makeError(s, ci))
+			errors = append(errors, transformError(s, ci))
 		}
 	}
 	return errors
 }
 
-func makeError(msg string, ci callInfo) resolve.GraphQLError {
+func transformError(msg string, ci callInfo) resolve.GraphQLError {
 	level := ""
 	a := strings.SplitAfterN(msg, ": ", 2)
 	if len(a) == 2 {
@@ -160,7 +224,7 @@ func makeError(msg string, ci callInfo) resolve.GraphQLError {
 
 	e := resolve.GraphQLError{
 		Message: msg,
-		Path:    []string{ci.Alias},
+		Path:    []string{ci.Function.AliasOrName()},
 	}
 
 	if level != "" {
