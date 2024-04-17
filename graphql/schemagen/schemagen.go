@@ -316,7 +316,8 @@ func convertType(asType string, typeDefs *map[string]TypeDefinition, firstPass b
 	case "Date":
 		return newScalar("DateTime", typeDefs) + n, nil
 	case "void":
-		return newScalar("Void", typeDefs) + n, nil
+		// note: void scalar is always nullable because we return null
+		return newScalar("Void", typeDefs), nil
 	}
 
 	// in the first pass, we convert input custom type definitions

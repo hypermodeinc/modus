@@ -74,6 +74,11 @@ func callFunction(ctx context.Context, mod wasm.Module, info FunctionInfo, input
 		return nil, err
 	}
 
+	// Handle void result
+	if len(res) == 0 {
+		return nil, nil
+	}
+
 	// Get the result
 	result, err := assemblyscript.DecodeValue(ctx, mod, info.Function.ReturnType, res[0])
 	if err != nil {

@@ -51,6 +51,10 @@ func Test_GetGraphQLSchema(t *testing.T) {
 				Name:       "getPeople",
 				ReturnType: plugins.TypeInfo{Name: "Person[]"},
 			},
+			{
+				Name:       "doNothing",
+				ReturnType: plugins.TypeInfo{Name: "void"},
+			},
 		},
 		Types: []plugins.TypeDefinition{
 			{
@@ -70,6 +74,7 @@ func Test_GetGraphQLSchema(t *testing.T) {
 
 	expectedSchema := `type Query {
   add(a: Int!, b: Int!): Int!
+  doNothing: Void
   currentTime: DateTime!
   getPeople: [Person!]!
   getPerson: Person!
