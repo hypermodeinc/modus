@@ -6,6 +6,7 @@ package host
 
 import (
 	"context"
+	"crypto/rand"
 	"fmt"
 	"io"
 	"strings"
@@ -193,6 +194,7 @@ func GetModuleInstance(ctx context.Context, plugin *plugins.Plugin) (wasm.Module
 	cfg := wazero.NewModuleConfig().
 		WithName(plugin.Name() + "_" + uuid.NewString()).
 		WithSysWalltime().WithSysNanotime().
+		WithRandSource(rand.Reader).
 		WithStdout(wOut).WithStderr(wErr)
 
 	// Instantiate the plugin as a module.
