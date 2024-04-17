@@ -22,7 +22,6 @@ import (
 	"github.com/wundergraph/graphql-go-tools/execution/engine"
 	gql "github.com/wundergraph/graphql-go-tools/execution/graphql"
 	"github.com/wundergraph/graphql-go-tools/v2/pkg/engine/plan"
-	"github.com/wundergraph/graphql-go-tools/v2/pkg/engine/resolve"
 )
 
 var instance *engine.ExecutionEngine
@@ -96,10 +95,6 @@ func Activate(ctx context.Context, metadata plugins.PluginMetadata) error {
 		dsCfg,
 	})
 
-	customResolveMap := make(map[string]resolve.CustomResolve)
-	customResolveMap["DateTime"] = &dateTimeResolver{}
-	engineConf.SetCustomResolveMap(customResolveMap)
-
 	adapter := NewLoggerAdapter(ctx)
 	e, err := engine.NewExecutionEngine(ctx, adapter, engineConf)
 	if err == nil {
@@ -129,10 +124,4 @@ func getAllQueryFields(s *gql.Schema) []string {
 	}
 
 	return fields
-}
-
-type dateTimeResolver struct{}
-
-func (dateTimeResolver) Resolve(value []byte) ([]byte, error) {
-	return value, nil
 }
