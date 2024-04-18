@@ -57,6 +57,9 @@ func (w logWriter) logMessage(s string) {
 		case "Error: ":
 			w.logger.Error().Msg(a[1])
 			return
+		case "abort: ":
+			w.logger.WithLevel(zerolog.FatalLevel).Msg(a[1])
+			return
 		}
 	}
 

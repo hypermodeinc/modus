@@ -11,6 +11,7 @@ import (
 
 	"hmruntime/appdata"
 	"hmruntime/dgraph"
+	"hmruntime/functions/assemblyscript"
 	"hmruntime/logger"
 	"hmruntime/models"
 	"hmruntime/models/openai"
@@ -42,13 +43,13 @@ func InstantiateHostFunctions(ctx context.Context, runtime wazero.Runtime) error
 
 func hostExecuteDQL(ctx context.Context, mod wasm.Module, pStmt uint32, pVars uint32, isMutation uint32) uint32 {
 	mem := mod.Memory()
-	stmt, err := readString(mem, pStmt)
+	stmt, err := assemblyscript.ReadString(mem, pStmt)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error reading DQL statement from wasm memory.")
 		return 0
 	}
 
-	sVars, err := readString(mem, pVars)
+	sVars, err := assemblyscript.ReadString(mem, pVars)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error reading DQL variables string from wasm memory.")
 		return 0
@@ -66,18 +67,18 @@ func hostExecuteDQL(ctx context.Context, mod wasm.Module, pStmt uint32, pVars ui
 		return 0
 	}
 
-	return writeString(ctx, mod, result)
+	return assemblyscript.WriteString(ctx, mod, result)
 }
 
 func hostExecuteGQL(ctx context.Context, mod wasm.Module, pStmt uint32, pVars uint32) uint32 {
 	mem := mod.Memory()
-	stmt, err := readString(mem, pStmt)
+	stmt, err := assemblyscript.ReadString(mem, pStmt)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error reading GraphQL query string from wasm memory.")
 		return 0
 	}
 
-	sVars, err := readString(mem, pVars)
+	sVars, err := assemblyscript.ReadString(mem, pVars)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error reading GraphQL variables string from wasm memory.")
 		return 0
@@ -95,7 +96,7 @@ func hostExecuteGQL(ctx context.Context, mod wasm.Module, pStmt uint32, pVars ui
 		return 0
 	}
 
-	return writeString(ctx, mod, result)
+	return assemblyscript.WriteString(ctx, mod, result)
 }
 
 type ClassifierResult struct {
@@ -141,7 +142,7 @@ func hostInvokeClassifier(ctx context.Context, mod wasm.Module, pModelName uint3
 		return 0
 	}
 
-	return writeString(ctx, mod, string(res))
+	return assemblyscript.WriteString(ctx, mod, string(res))
 }
 
 func hostComputeEmbedding(ctx context.Context, mod wasm.Module, pModelName uint32, pSentenceMap uint32) uint32 {
@@ -176,7 +177,7 @@ func hostComputeEmbedding(ctx context.Context, mod wasm.Module, pModelName uint3
 		return 0
 	}
 
-	return writeString(ctx, mod, string(res))
+	return assemblyscript.WriteString(ctx, mod, string(res))
 }
 
 func hostInvokeTextGenerator(ctx context.Context, mod wasm.Module, pModelName uint32, pInstruction uint32, pSentence uint32) uint32 {
@@ -192,13 +193,13 @@ func hostInvokeTextGeneratorV2(ctx context.Context, mod wasm.Module, pModelName 
 		return 0
 	}
 
-	sentence, err := readString(mem, pSentence)
+	sentence, err := assemblyscript.ReadString(mem, pSentence)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error reading sentence string from wasm memory.")
 		return 0
 	}
 
-	instruction, err := readString(mem, pInstruction)
+	instruction, err := assemblyscript.ReadString(mem, pInstruction)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error reading instruction string from wasm memory.")
 		return 0
@@ -210,7 +211,7 @@ func hostInvokeTextGeneratorV2(ctx context.Context, mod wasm.Module, pModelName 
 	if pFormat == 0 {
 		outputFormat = models.OutputFormatText
 	} else {
-		format, err := readString(mem, pFormat)
+		format, err := assemblyscript.ReadString(mem, pFormat)
 		if err != nil {
 			logger.Err(ctx, err).Msg("Error reading format string from wasm memory.")
 			return 0
@@ -254,11 +255,11 @@ func hostInvokeTextGeneratorV2(ctx context.Context, mod wasm.Module, pModelName 
 		logger.Err(ctx, err).Msg("Error marshalling result.")
 		return 0
 	}
-	return writeString(ctx, mod, string(res))
+	return assemblyscript.WriteString(ctx, mod, string(res))
 }
 
 func getModel(mem wasm.Memory, pModelName uint32, task appdata.ModelTask) (appdata.Model, error) {
-	modelName, err := readString(mem, pModelName)
+	modelName, err := assemblyscript.ReadString(mem, pModelName)
 	if err != nil {
 		err = fmt.Errorf("error reading model name from wasm memory: %w", err)
 		return appdata.Model{}, err
@@ -268,7 +269,7 @@ func getModel(mem wasm.Memory, pModelName uint32, task appdata.ModelTask) (appda
 }
 
 func getSentenceMap(mem wasm.Memory, pSentenceMap uint32) (map[string]string, error) {
-	sentenceMapStr, err := readString(mem, pSentenceMap)
+	sentenceMapStr, err := assemblyscript.ReadString(mem, pSentenceMap)
 	if err != nil {
 		err = fmt.Errorf("error reading sentence map string from wasm memory: %w", err)
 		return nil, err

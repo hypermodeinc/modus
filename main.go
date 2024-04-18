@@ -13,8 +13,10 @@ import (
 	"hmruntime/aws"
 	"hmruntime/config"
 	"hmruntime/functions"
+	"hmruntime/graphql"
 	"hmruntime/host"
 	"hmruntime/logger"
+	"hmruntime/server"
 	"hmruntime/storage"
 
 	"github.com/joho/godotenv"
@@ -67,11 +69,11 @@ func main() {
 	// Load plugins and monitor for changes
 	host.MonitorPlugins(ctx)
 
-	// Load the GraphQL schema and monitor for changes
-	functions.MonitorGqlSchema(ctx)
+	// Initialize the GraphQL engine
+	graphql.Initialize()
 
 	// Start the web server
-	err = startServer(ctx)
+	err = server.Start(ctx)
 	if err != nil {
 		log.Fatal().Err(err).Msg("Failed to start server.  Exiting.")
 	}
