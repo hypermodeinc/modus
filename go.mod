@@ -17,7 +17,7 @@ require (
 	github.com/stretchr/testify v1.9.0
 	github.com/tetratelabs/wazero v1.7.1
 	github.com/wundergraph/graphql-go-tools/execution v1.0.0
-	github.com/wundergraph/graphql-go-tools/v2 v2.0.0-rc.21
+	github.com/wundergraph/graphql-go-tools/v2 v2.0.0-rc.24
 )
 
 require (
@@ -41,7 +41,7 @@ require (
 	github.com/dlclark/regexp2 v1.11.0 // indirect
 	github.com/dop251/goja v0.0.0-20240220182346-e401ed450204 // indirect
 	github.com/go-sourcemap/sourcemap v2.1.4+incompatible // indirect
-	github.com/google/pprof v0.0.0-20240415144954-be81aee2d733 // indirect
+	github.com/google/pprof v0.0.0-20240416155748-26353dc0451f // indirect
 	github.com/hashicorp/golang-lru v1.0.2 // indirect
 	github.com/jensneuse/byte-template v0.0.0-20231025215717-69252eb3ed56 // indirect
 	github.com/kingledion/go-tools v0.6.0 // indirect
@@ -57,8 +57,8 @@ require (
 	github.com/tidwall/match v1.1.1 // indirect
 	github.com/tidwall/pretty v1.2.1 // indirect
 	github.com/tidwall/sjson v1.2.5 // indirect
-	github.com/wundergraph/cosmo/composition-go v0.0.0-20240415080458-8609adc5a416 // indirect
-	github.com/wundergraph/cosmo/router v0.0.0-20240415080458-8609adc5a416 // indirect
+	github.com/wundergraph/cosmo/composition-go v0.0.0-20240417151320-75b029ed71a0 // indirect
+	github.com/wundergraph/cosmo/router v0.0.0-20240417151320-75b029ed71a0 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.27.0 // indirect
