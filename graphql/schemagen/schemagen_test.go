@@ -74,8 +74,8 @@ func Test_GetGraphQLSchema(t *testing.T) {
 
 	expectedSchema := `type Query {
   add(a: Int!, b: Int!): Int!
-  doNothing: Void
   currentTime: DateTime!
+  doNothing: Void
   getPeople: [Person!]!
   getPerson: Person!
   sayHello(name: String!): String!
@@ -83,6 +83,7 @@ func Test_GetGraphQLSchema(t *testing.T) {
 }
 
 scalar DateTime
+scalar Void
 
 type Person {
   name: String!
