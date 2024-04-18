@@ -2,7 +2,7 @@
  * Copyright 2024 Hypermode, Inc.
  */
 
-package functions
+package assemblyscript
 
 import (
 	"bytes"
@@ -43,29 +43,13 @@ func Test_ReadWriteString(t *testing.T) {
 	f := testutils.NewWasmTestFixture()
 	defer f.Close()
 
-	ptr := writeString(f.Context, f.Module, testString)
-	str, err := readString(f.Memory, ptr)
+	ptr := WriteString(f.Context, f.Module, testString)
+	str, err := ReadString(f.Memory, ptr)
 	if err != nil {
 		t.Error(err)
 	}
 
 	if str != testString {
 		t.Errorf("expected %s, got %s", testString, str)
-	}
-}
-
-func Test_ReadWriteBuffer(t *testing.T) {
-	f := testutils.NewWasmTestFixture()
-	defer f.Close()
-
-	buf := []byte{0x01, 0x02, 0x03, 0x04}
-	ptr := writeBytes(f.Context, f.Module, buf)
-	b, err := readBytes(f.Memory, ptr)
-	if err != nil {
-		t.Error(err)
-	}
-
-	if !bytes.Equal(buf, b) {
-		t.Errorf("expected %x, got %x", buf, b)
 	}
 }

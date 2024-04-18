@@ -10,26 +10,23 @@ import (
 	"time"
 
 	"hmruntime/config"
+	"hmruntime/plugins"
+	"hmruntime/utils"
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
 
-type contextKey string
-
+// these are the field names that will be used in the logs
 const executionIdKey = "execution_id"
 const pluginNameKey = "plugin"
 const buildIdKey = "build_id"
-
-const ExecutionIdContextKey contextKey = executionIdKey
-const PluginNameContextKey contextKey = pluginNameKey
-const BuildIdContextKey contextKey = buildIdKey
 
 func Initialize() *zerolog.Logger {
 	if config.UseJsonLogging {
 		// In JSON mode, we'll log UTC with millisecond precision.
 		// Note that Go uses this specific value for its formatting exemplars.
-		zerolog.TimeFieldFormat = "2006-01-02T15:04:05.999Z"
+		zerolog.TimeFieldFormat = utils.TimeFormat
 		zerolog.TimestampFunc = func() time.Time {
 			return time.Now().UTC()
 		}
@@ -39,7 +36,7 @@ func Initialize() *zerolog.Logger {
 		zerolog.TimeFieldFormat = zerolog.TimeFormatUnixMs
 		log.Logger = log.Logger.Output(zerolog.ConsoleWriter{
 			Out:        os.Stderr,
-			TimeFormat: "2006-01-02 15:04:05.999 -07:00",
+			TimeFormat: "2006-01-02 15:04:05.000 -07:00",
 		})
 	}
 
@@ -47,12 +44,11 @@ func Initialize() *zerolog.Logger {
 }
 
 func Get(ctx context.Context) *zerolog.Logger {
-	executionId, found1 := ctx.Value(ExecutionIdContextKey).(string)
-	buildId, found2 := ctx.Value(BuildIdContextKey).(string)
-	pluginName, found3 := ctx.Value(PluginNameContextKey).(string)
+	executionId, eidFound := ctx.Value(utils.ExecutionIdContextKey).(string)
+	plugin, pluginFound := ctx.Value(utils.PluginContextKey).(*plugins.Plugin)
 
 	// If no context values, just return the global logger.
-	if !found1 && !found2 && !found3 {
+	if !eidFound && !pluginFound {
 		return &log.Logger
 	}
 
@@ -61,6 +57,13 @@ func Get(ctx context.Context) *zerolog.Logger {
 
 	if executionId != "" {
 		lc = lc.Str(executionIdKey, executionId)
+	}
+
+	var buildId string
+	var pluginName string
+	if pluginFound {
+		buildId = plugin.BuildId()
+		pluginName = plugin.Name()
 	}
 
 	if buildId != "" {

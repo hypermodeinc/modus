@@ -75,7 +75,7 @@ Then, you can do any of the following:
 To build a Docker image for the Hypermode Runtime:
 
 ```sh
-docker build -t hypermode/Runtime .
+docker build -t hypermode/runtime .
 ```
 
 When running the image via Docker Desktop, keep in mind:
@@ -89,36 +89,10 @@ For example:
 ```sh
 docker run --name hmruntime \
   -p 8686:8686 \
-  -v ~/.hypermode:/root/.hypermode hypermode/Runtime \
-  --dgraph=http://host.docker.internal:8080
+  -v ~/.hypermode:/root/.hypermode hypermode/runtime
 ```
 
 _Note, if you have previously created a container with the same name, then delete it first with `docker rm hmruntime`._
-
-## Dgraph Setup
-
-Currently, the Hypermode Runtime service emulates parts of the 
-[Dgraph Lambda](https://dgraph.io/docs/graphql/lambda/lambda-overview/) protocol.
-Like Lambda, it listens for HTTP on port `8686` on the `/graphql-worker` endpoint.
-Thus, you can tell Dgraph to use it when starting Dgraph Alpha:
-
-```sh
-dgraph zero
-dgraph alpha --graphql lambda-url=http://localhost:8686/graphql-worker
-```
-
-If you like, you can use the [Dgraph standalone Docker image](https://dgraph.io/docs/deploy/installation/single-host-setup/).
-Just add the Lambda URL as an environment variable, using `host.docker.internal` to escape the container.
-
-For example:
-
-```sh
-docker run --name <CONTAINER_NAME> \
-  -d -p 8080:8080 -p 9080:9080 \
-  -v <DGRAPH_DATA_PATH>:/dgraph \
-  --env=DGRAPH_ALPHA_GRAPHQL=lambda-url=http://host.docker.internal:8686/graphql-worker \
-  dgraph/standalone:latest
-```
 
 ## AWS Setup
 If configured to do so, the Hypermode Runtime may access AWS resources.

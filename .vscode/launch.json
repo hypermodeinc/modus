@@ -7,12 +7,33 @@
       "request": "launch",
       "mode": "auto",
       "program": "${workspaceFolder}",
+      "env": {
+        "HYPERMODE_DEBUG": "true"
+      },
       "args": [
-        "--dgraph=http://localhost:8080",
         "--refresh=1s",
       ]
     },
-   
+    {
+      "name": "Hypermode Runtime (AWS)",
+      "type": "go",
+      "request": "launch",
+      "mode": "auto",
+      "program": "${workspaceFolder}",
+      "env": {
+        "HYPERMODE_DEBUG": "true",
+        "AWS_REGION": "us-west-2",
+        "AWS_PROFILE": "sandbox",
+        "AWS_SDK_LOAD_CONFIG": "true"
+      },
+      "args": [
+        "--useAwsSecrets",
+        "--useAwsStorage",
+        "--s3bucket=${input:s3bucket}",
+        "--s3path=${input:s3folder}",
+        "--refresh=1s",
+      ]
+    },
   ],
   "inputs": [
     {

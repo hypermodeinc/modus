@@ -6,13 +6,16 @@ package host
 
 import (
 	"context"
+	"crypto/rand"
 	"fmt"
 	"io"
 	"strings"
 	"time"
 
 	"hmruntime/logger"
+	"hmruntime/plugins"
 	"hmruntime/storage"
+	"hmruntime/utils"
 
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
@@ -21,9 +24,15 @@ import (
 	wasi "github.com/tetratelabs/wazero/imports/wasi_snapshot_preview1"
 )
 
-type buffers struct {
+type OutputBuffers struct {
 	Stdout *strings.Builder
 	Stderr *strings.Builder
+}
+
+var pluginLoaded func(ctx context.Context, metadata plugins.PluginMetadata) error
+
+func RegisterPluginLoadedCallback(callback func(ctx context.Context, metadata plugins.PluginMetadata) error) {
+	pluginLoaded = callback
 }
 
 func InitWasmRuntime(ctx context.Context) error {
@@ -35,32 +44,33 @@ func InitWasmRuntime(ctx context.Context) error {
 
 func MonitorPlugins(ctx context.Context) {
 
-	loadPluginFile := func(fi storage.FileInfo) {
+	loadPluginFile := func(fi storage.FileInfo) error {
 		err := loadPlugin(ctx, fi.Name)
 		if err != nil {
 			logger.Err(ctx, err).
 				Str("filename", fi.Name).
 				Msg("Failed to load plugin.")
 		}
+		return err
 	}
 
 	sm := storage.NewStorageMonitor(".wasm")
 	sm.Added = loadPluginFile
 	sm.Modified = loadPluginFile
-	sm.Removed = func(fi storage.FileInfo) {
-		p, ok := Plugins.GetByFile(fi.Name)
-		if ok {
-			err := unloadPlugin(ctx, p)
-			if err != nil {
-				logger.Err(ctx, err).
-					Str("filename", fi.Name).
-					Msg("Failed to unload plugin.")
-			}
+	sm.Removed = func(fi storage.FileInfo) error {
+		err := unloadPlugin(ctx, fi.Name)
+		if err != nil {
+			logger.Err(ctx, err).
+				Str("filename", fi.Name).
+				Msg("Failed to unload plugin.")
 		}
+		return err
 	}
-	sm.Changed = func() {
-		// Signal that we need to register functions
-		RegistrationRequest <- true
+	sm.Changed = func(errors []error) {
+		if len(errors) == 0 {
+			// Signal that we need to register functions
+			RegistrationRequest <- true
+		}
 	}
 	sm.Start(ctx)
 }
@@ -80,45 +90,51 @@ func loadPlugin(ctx context.Context, filename string) error {
 	}
 
 	// Get the metadata for the plugin.
-	metadata, foundMetadata := getPluginMetadata(&cm)
+	metadata, err := plugins.GetPluginMetadata(&cm)
+	if err == plugins.ErrPluginMetadataNotFound {
+		logger.Error(ctx).
+			Msg("Metadata not found.  Please recompile your plugin using the latest version of the Hypermode Functions library.")
+		return err
+	} else if err != nil {
+		return err
+	}
 
-	// Use the filename as the plugin name if no metadata is found.
-	if !foundMetadata {
-		metadata.Name = strings.TrimSuffix(filename, ".wasm")
+	// Store the types in a map for easy access.
+	types := make(map[string]plugins.TypeDefinition, len(metadata.Types))
+	for _, t := range metadata.Types {
+		types[t.Path] = t
 	}
 
 	// Create and store the plugin.
-	plugin := Plugin{&cm, metadata, filename}
-	Plugins.Add(plugin)
+	plugin := plugins.Plugin{Module: &cm, Metadata: metadata, FileName: filename, Types: types}
+	Plugins.AddOrUpdate(plugin)
 
 	// Log the details of the loaded plugin.
 	logPluginLoaded(ctx, plugin)
-	if !foundMetadata {
-		logger.Warn(ctx).
-			Str("filename", filename).
-			Str("plugin", plugin.Metadata.Name).
-			Msg("No metadata found in plugin.  Please recompile your plugin using the latest version of the Hypermode Functions library.")
+
+	// Notify the callback that a plugin has been loaded.
+	err = pluginLoaded(ctx, metadata)
+	if err != nil {
+		return err
 	}
 
 	return nil
 }
 
-func logPluginLoaded(ctx context.Context, plugin Plugin) {
+func logPluginLoaded(ctx context.Context, plugin plugins.Plugin) {
 	evt := logger.Info(ctx)
 	evt.Str("filename", plugin.FileName)
 
 	metadata := plugin.Metadata
 
-	if metadata.Name != "" {
-		evt.Str("plugin", metadata.Name)
-	}
-
-	if metadata.Version != "" {
-		evt.Str("version", metadata.Version)
+	if metadata.Plugin != "" {
+		name, version := utils.ParseNameAndVersion(metadata.Plugin)
+		evt.Str("plugin", name)
+		evt.Str("version", version)
 	}
 
 	lang := plugin.Language()
-	if lang != UnknownLanguage {
+	if lang != plugins.UnknownLanguage {
 		evt.Str("language", lang.String())
 	}
 
@@ -130,12 +146,10 @@ func logPluginLoaded(ctx context.Context, plugin Plugin) {
 		evt.Time("build_ts", metadata.BuildTime)
 	}
 
-	if metadata.LibraryName != "" {
-		evt.Str("hypermode_library", metadata.LibraryName)
-	}
-
-	if metadata.LibraryVersion != "" {
-		evt.Str("hypermode_library_version", metadata.LibraryVersion)
+	if metadata.Library != "" {
+		name, version := utils.ParseNameAndVersion(metadata.Library)
+		evt.Str("hypermode_library", name)
+		evt.Str("hypermode_library_version", version)
 	}
 
 	if metadata.GitRepo != "" {
@@ -149,17 +163,21 @@ func logPluginLoaded(ctx context.Context, plugin Plugin) {
 	evt.Msg("Loaded plugin.")
 }
 
-func unloadPlugin(ctx context.Context, plugin Plugin) error {
+func unloadPlugin(ctx context.Context, filename string) error {
+	p, ok := Plugins.GetByFile(filename)
+	if !ok {
+		return fmt.Errorf("plugin not found: %s", filename)
+	}
 	logger.Info(ctx).
-		Str("plugin", plugin.Metadata.Name).
-		Str("build_id", plugin.Metadata.BuildId).
+		Str("plugin", p.Name()).
+		Str("build_id", p.BuildId()).
 		Msg("Unloading plugin.")
 
-	Plugins.Remove(plugin)
-	return (*plugin.Module).Close(ctx)
+	Plugins.Remove(p)
+	return (*p.Module).Close(ctx)
 }
 
-func GetModuleInstance(ctx context.Context, plugin *Plugin) (wasm.Module, buffers, error) {
+func GetModuleInstance(ctx context.Context, plugin *plugins.Plugin) (wasm.Module, OutputBuffers, error) {
 
 	// Get the logger and writers for the plugin's stdout and stderr.
 	log := logger.Get(ctx).With().Bool("user_visible", true).Logger()
@@ -168,7 +186,7 @@ func GetModuleInstance(ctx context.Context, plugin *Plugin) (wasm.Module, buffer
 
 	// Create string buffers to capture stdout and stderr.
 	// Still write to the log, but also capture the output in the buffers.
-	buf := buffers{&strings.Builder{}, &strings.Builder{}}
+	buf := OutputBuffers{&strings.Builder{}, &strings.Builder{}}
 	wOut := io.MultiWriter(buf.Stdout, wInfoLog)
 	wErr := io.MultiWriter(buf.Stderr, wErrorLog)
 
@@ -176,6 +194,7 @@ func GetModuleInstance(ctx context.Context, plugin *Plugin) (wasm.Module, buffer
 	cfg := wazero.NewModuleConfig().
 		WithName(plugin.Name() + "_" + uuid.NewString()).
 		WithSysWalltime().WithSysNanotime().
+		WithRandSource(rand.Reader).
 		WithStdout(wOut).WithStderr(wErr)
 
 	// Instantiate the plugin as a module.
