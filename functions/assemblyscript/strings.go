@@ -61,6 +61,9 @@ func decodeUTF16(bytes []byte) string {
 }
 
 func encodeUTF16(str string) []byte {
+	if len(str) == 0 {
+		return []byte{}
+	}
 	// Encode the UTF-8 string to UTF-16 words.
 	words := utf16.Encode([]rune(str))
 
