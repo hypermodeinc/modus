@@ -89,8 +89,7 @@ For example:
 ```sh
 docker run --name hmruntime \
   -p 8686:8686 \
-  -v ~/.hypermode:/root/.hypermode hypermode/Runtime \
-  --dgraph=http://host.docker.internal:8080
+  -v ~/.hypermode:/root/.hypermode hypermode/Runtime
 ```
 
 _Note, if you have previously created a container with the same name, then delete it first with `docker rm hmruntime`._
