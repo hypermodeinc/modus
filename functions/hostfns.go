@@ -145,13 +145,21 @@ func hostInvokeClassifier(ctx context.Context, mod wasm.Module, pModelName uint3
 		return 0
 	}
 
-	res, err := json.Marshal(result)
+	resultMap := make(map[string]map[string]float64)
+	for k, v := range result {
+		resultMap[k] = make(map[string]float64)
+		for _, label := range v.Probabilities {
+			resultMap[k][label.Label] = label.Probability
+		}
+	}
+
+	resBytes, err := json.Marshal(resultMap)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error marshalling classification result.")
 		return 0
 	}
 
-	return assemblyscript.WriteString(ctx, mod, string(res))
+	return assemblyscript.WriteString(ctx, mod, string(resBytes))
 }
 
 func hostComputeEmbedding(ctx context.Context, mod wasm.Module, pModelName uint32, pSentenceMap uint32) uint32 {
@@ -264,12 +272,19 @@ func hostInvokeTextGenerator(ctx context.Context, mod wasm.Module, pModelName ui
 		}
 	}
 
-	res, err := json.Marshal(result)
+	// return the first chat response
+	if len(result.Choices) == 0 {
+		logger.Err(ctx, err).Msg("Empty result returned from OpenAI.")
+		return 0
+	}
+	firstMsgContent := result.Choices[0].Message.Content
+
+	resBytes, err := json.Marshal(firstMsgContent)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error marshalling result.")
 		return 0
 	}
-	return assemblyscript.WriteString(ctx, mod, string(res))
+	return assemblyscript.WriteString(ctx, mod, string(resBytes))
 }
 
 func getModel(mem wasm.Memory, pModelName uint32, task appdata.ModelTask) (appdata.Model, error) {
