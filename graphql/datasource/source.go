@@ -137,51 +137,63 @@ func transformData(data []byte, tf templateField) ([]byte, error) {
 }
 
 func transformValue(data []byte, tf templateField) ([]byte, error) {
-	var out []byte
-	if len(tf.Fields) == 0 {
-		out = data
-	} else {
-		out = []byte(`{}`)
-		for _, f := range tf.Fields {
+	if len(tf.Fields) == 0 || len(data) == 0 {
+		return data, nil
+	}
+
+	buf := bytes.Buffer{}
+
+	switch data[0] {
+	case '{': // object
+		buf.WriteByte('{')
+		for i, f := range tf.Fields {
 			val, dataType, _, err := jsonparser.Get(data, f.Name)
 			if err != nil {
 				return nil, err
 			}
-
 			if dataType == jsonparser.String {
-				val = []byte(fmt.Sprintf(`"%s"`, val))
-			} else if len(f.Fields) > 0 {
-				if dataType == jsonparser.Array {
-					var buf bytes.Buffer
-					jsonparser.ArrayEach(val, func(value []byte, _ jsonparser.ValueType, _ int, _ error) {
-						if buf.Len() > 0 {
-							buf.WriteByte(',')
-						} else {
-							buf.WriteByte('[')
-						}
-						value, err = transformValue(value, f)
-						if err != nil {
-							return
-						}
-						buf.Write(value)
-					})
-					buf.WriteByte(']')
-					val = buf.Bytes()
-				} else {
-					val, err = transformValue(val, f)
-					if err != nil {
-						return nil, err
-					}
+				val, err = json.Marshal(string(val))
+				if err != nil {
+					return nil, err
 				}
 			}
-			out, err = jsonparser.Set(out, val, f.AliasOrName())
+			val, err = transformValue(val, f)
 			if err != nil {
 				return nil, err
 			}
+			if i > 0 {
+				buf.WriteByte(',')
+			}
+			buf.WriteByte('"')
+			buf.WriteString(f.AliasOrName())
+			buf.WriteString(`":`)
+			buf.Write(val)
 		}
+		buf.WriteByte('}')
+
+	case '[': // array
+		buf.WriteByte('[')
+		_, err := jsonparser.ArrayEach(data, func(val []byte, _ jsonparser.ValueType, _ int, _ error) {
+			if buf.Len() > 1 {
+				buf.WriteByte(',')
+			}
+			val, err := transformValue(val, tf)
+			if err != nil {
+				return
+			}
+			buf.Write(val)
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		buf.WriteByte(']')
+
+	default:
+		return nil, fmt.Errorf("expected object or array")
 	}
 
-	return out, nil
+	return buf.Bytes(), nil
 }
 
 func transformErrors(buf host.OutputBuffers, ci callInfo) []resolve.GraphQLError {
