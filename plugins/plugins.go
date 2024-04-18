@@ -2,13 +2,14 @@
  * Copyright 2024 Hypermode, Inc.
  */
 
-package host
+package plugins
 
 import (
 	"encoding/json"
 	"fmt"
-	"strings"
 	"time"
+
+	"hmruntime/utils"
 
 	"github.com/tetratelabs/wazero"
 )
@@ -17,6 +18,7 @@ type Plugin struct {
 	Module   *wazero.CompiledModule
 	Metadata PluginMetadata
 	FileName string
+	Types    map[string]TypeDefinition
 }
 
 type PluginMetadata struct {
@@ -27,17 +29,37 @@ type PluginMetadata struct {
 	GitRepo   string              `json:"gitRepo"`
 	GitCommit string              `json:"gitCommit"`
 	Functions []FunctionSignature `json:"functions"`
+	Types     []TypeDefinition    `json:"types"`
 }
 
 type FunctionSignature struct {
-	Name       string              `json:"name"`
-	Parameters []FunctionParameter `json:"parameters"`
-	ReturnType string              `json:"returnType"`
+	Name       string      `json:"name"`
+	Parameters []Parameter `json:"parameters"`
+	ReturnType TypeInfo    `json:"returnType"`
 }
 
-type FunctionParameter struct {
+type TypeDefinition struct {
+	Id     uint32  `json:"id"`
+	Size   uint32  `json:"size"`
+	Path   string  `json:"path"`
+	Name   string  `json:"name"`
+	Fields []Field `json:"fields"`
+}
+
+type Parameter struct {
+	Name string   `json:"name"`
+	Type TypeInfo `json:"type"`
+}
+
+type Field struct {
+	Offset uint32   `json:"offset"`
+	Name   string   `json:"name"`
+	Type   TypeInfo `json:"type"`
+}
+
+type TypeInfo struct {
 	Name string `json:"name"`
-	Type string `json:"type"`
+	Path string `json:"path"`
 }
 
 type PluginLanguage int
@@ -60,7 +82,7 @@ func (lang PluginLanguage) String() string {
 }
 
 func (p *Plugin) Name() string {
-	name, _ := parseNameAndVersion(p.Metadata.Plugin)
+	name, _ := utils.ParseNameAndVersion(p.Metadata.Plugin)
 	return name
 }
 
@@ -69,7 +91,7 @@ func (p *Plugin) BuildId() string {
 }
 
 func (p *Plugin) Language() PluginLanguage {
-	libName, _ := parseNameAndVersion(p.Metadata.Library)
+	libName, _ := utils.ParseNameAndVersion(p.Metadata.Library)
 	switch libName {
 	case "@hypermode/functions-as":
 		return AssemblyScript
@@ -78,14 +100,6 @@ func (p *Plugin) Language() PluginLanguage {
 	default:
 		return UnknownLanguage
 	}
-}
-
-func parseNameAndVersion(s string) (name string, version string) {
-	i := strings.LastIndex(s, "@")
-	if i == -1 {
-		return s, ""
-	}
-	return s[:i], s[i+1:]
 }
 
 func getCustomSectionData(cm *wazero.CompiledModule, name string) (data []byte, found bool) {
@@ -99,12 +113,12 @@ func getCustomSectionData(cm *wazero.CompiledModule, name string) (data []byte, 
 	return data, found
 }
 
-var errPluginMetadataNotFound = fmt.Errorf("no metadata found in plugin")
+var ErrPluginMetadataNotFound = fmt.Errorf("no metadata found in plugin")
 
-func getPluginMetadata(cm *wazero.CompiledModule) (PluginMetadata, error) {
+func GetPluginMetadata(cm *wazero.CompiledModule) (PluginMetadata, error) {
 	metadataJson, found := getCustomSectionData(cm, "hypermode_meta")
 	if !found {
-		return PluginMetadata{}, errPluginMetadataNotFound
+		return PluginMetadata{}, ErrPluginMetadataNotFound
 	}
 
 	metadata := PluginMetadata{}
@@ -114,34 +128,4 @@ func getPluginMetadata(cm *wazero.CompiledModule) (PluginMetadata, error) {
 	}
 
 	return metadata, nil
-}
-
-func getPluginMetadata_old(cm *wazero.CompiledModule) (metadata PluginMetadata, found bool) {
-	for _, sec := range (*cm).CustomSections() {
-		name := sec.Name()
-		data := sec.Data()
-
-		switch name {
-		case "build_id":
-			metadata.BuildId = string(data)
-			found = true
-		case "build_ts":
-			metadata.BuildTime, _ = time.Parse(time.RFC3339, string(data))
-			found = true
-		case "hypermode_library":
-			metadata.Library = string(data)
-			found = true
-		case "hypermode_plugin":
-			metadata.Plugin = string(data)
-			found = true
-		case "git_repo":
-			metadata.GitRepo = string(data)
-			found = true
-		case "git_commit":
-			metadata.GitCommit = string(data)
-			found = true
-		}
-	}
-
-	return metadata, found
 }

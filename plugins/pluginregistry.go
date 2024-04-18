@@ -2,17 +2,13 @@
  * Copyright 2024 Hypermode, Inc.
  */
 
-package host
+package plugins
 
 import (
 	"cmp"
-	"fmt"
 	"slices"
 	"sync"
 )
-
-// Global, thread-safe registry of all plugins loaded by the host
-var Plugins = newPluginRegistry()
 
 type pluginRegistry struct {
 	plugins   []Plugin
@@ -21,30 +17,31 @@ type pluginRegistry struct {
 	mutex     sync.RWMutex
 }
 
-func newPluginRegistry() pluginRegistry {
+func NewPluginRegistry() pluginRegistry {
 	return pluginRegistry{
-		// plugins:   make([]Plugin, 0),
 		nameIndex: make(map[string]*Plugin),
 		fileIndex: make(map[string]*Plugin),
 	}
 }
 
-func (pr *pluginRegistry) Add(plugin Plugin) error {
+func (pr *pluginRegistry) AddOrUpdate(plugin Plugin) {
 	pr.mutex.Lock()
 	defer pr.mutex.Unlock()
 
-	if _, ok := pr.nameIndex[plugin.Name()]; ok {
-		return fmt.Errorf("plugin already exists with name %s", plugin.Name())
+	_, found := pr.nameIndex[plugin.Name()]
+	if found {
+		for i, p := range pr.plugins {
+			if p.Name() == plugin.Name() {
+				pr.plugins[i] = plugin
+				break
+			}
+		}
+	} else {
+		pr.plugins = append(pr.plugins, plugin)
 	}
 
-	if _, ok := pr.fileIndex[plugin.FileName]; ok {
-		return fmt.Errorf("plugin already exists with filename %s", plugin.FileName)
-	}
-
-	pr.plugins = append(pr.plugins, plugin)
 	pr.nameIndex[plugin.Name()] = &plugin
 	pr.fileIndex[plugin.FileName] = &plugin
-	return nil
 }
 
 func (pr *pluginRegistry) Remove(plugin Plugin) {

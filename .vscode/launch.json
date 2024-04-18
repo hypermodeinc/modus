@@ -7,8 +7,10 @@
       "request": "launch",
       "mode": "auto",
       "program": "${workspaceFolder}",
+      "env": {
+        "HYPERMODE_DEBUG": "true"
+      },
       "args": [
-        "--dgraph=http://localhost:8080",
         "--refresh=1s",
       ]
     },
@@ -19,12 +21,12 @@
       "mode": "auto",
       "program": "${workspaceFolder}",
       "env": {
+        "HYPERMODE_DEBUG": "true",
         "AWS_REGION": "us-west-2",
         "AWS_PROFILE": "sandbox",
         "AWS_SDK_LOAD_CONFIG": "true"
       },
       "args": [
-        "--dgraph=http://localhost:8080",
         "--useAwsSecrets",
         "--useAwsStorage",
         "--s3bucket=${input:s3bucket}",
