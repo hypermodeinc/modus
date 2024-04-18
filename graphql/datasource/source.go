@@ -83,25 +83,34 @@ func (s Source) load(ctx context.Context, input []byte, writer io.Writer) error 
 	// Call the function and get any errors that were written to the output buffers
 	result, fnErr := functions.CallFunction(ctx, mod, info, ci.Parameters)
 
+	// Transform lines in the output buffers to GraphQL errors
 	var jsonErrors []byte
 	errors := transformErrors(buf, ci)
+
+	// Also include the function error if there is one
+	if fnErr != nil {
+		errors = append(errors, resolve.GraphQLError{
+			Message: fnErr.Error(),
+			Path:    []string{ci.Function.AliasOrName()},
+			Extensions: map[string]interface{}{
+				"level": "error",
+			},
+		})
+	}
+
+	// If there are errors, marshal them to json
 	if len(errors) > 0 {
 		var err error
 		jsonErrors, err = json.Marshal(errors)
 		if err != nil {
 			return err
 		}
-	}
 
-	if fnErr != nil {
-		// If there are errors in the output buffers, return those by themselves
-		if len(errors) > 0 {
+		// If there are no other results, return only the errors
+		if result == nil {
 			fmt.Fprintf(writer, `{"errors":%s}`, jsonErrors)
 			return nil
 		}
-
-		// If not, then just return the error from the function call
-		return fmt.Errorf("%w '%s': %w", errCallingFunction, ci.Function, err)
 	}
 
 	// Get the data as json from the result
@@ -116,7 +125,7 @@ func (s Source) load(ctx context.Context, input []byte, writer io.Writer) error 
 		return err
 	}
 
-	// Build and write the response
+	// Build and write the response, including errors if there are any
 	if len(errors) > 0 {
 		fmt.Fprintf(writer, `{"data":%s,"errors":%s}`, jsonData, jsonErrors)
 	} else {
