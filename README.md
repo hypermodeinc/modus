@@ -75,7 +75,7 @@ Then, you can do any of the following:
 To build a Docker image for the Hypermode Runtime:
 
 ```sh
-docker build -t hypermode/Runtime .
+docker build -t hypermode/runtime .
 ```
 
 When running the image via Docker Desktop, keep in mind:
@@ -89,7 +89,7 @@ For example:
 ```sh
 docker run --name hmruntime \
   -p 8686:8686 \
-  -v ~/.hypermode:/root/.hypermode hypermode/Runtime
+  -v ~/.hypermode:/root/.hypermode hypermode/runtime
 ```
 
 _Note, if you have previously created a container with the same name, then delete it first with `docker rm hmruntime`._
