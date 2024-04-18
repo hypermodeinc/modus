@@ -31,7 +31,7 @@ type ModelTask string
 const (
 	ClassificationTask ModelTask = "classification"
 	EmbeddingTask      ModelTask = "embedding"
-	GeneratorTask      ModelTask = "generator"
+	GenerationTask     ModelTask = "generation"
 )
 
 type Model struct {

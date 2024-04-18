@@ -32,7 +32,6 @@ func InstantiateHostFunctions(ctx context.Context, runtime wazero.Runtime) error
 	b.NewFunctionBuilder().WithFunc(hostInvokeClassifier).Export("invokeClassifier")
 	b.NewFunctionBuilder().WithFunc(hostComputeEmbedding).Export("computeEmbedding")
 	b.NewFunctionBuilder().WithFunc(hostInvokeTextGenerator).Export("invokeTextGenerator")
-	b.NewFunctionBuilder().WithFunc(hostInvokeTextGeneratorV2).Export("invokeTextGenerator_v2")
 
 	_, err := b.Instantiate(ctx)
 	if err != nil {
@@ -199,14 +198,10 @@ func hostComputeEmbedding(ctx context.Context, mod wasm.Module, pModelName uint3
 	return assemblyscript.WriteString(ctx, mod, string(res))
 }
 
-func hostInvokeTextGenerator(ctx context.Context, mod wasm.Module, pModelName uint32, pInstruction uint32, pSentence uint32) uint32 {
-	return hostInvokeTextGeneratorV2(ctx, mod, pModelName, pInstruction, pSentence, 0)
-}
-
-func hostInvokeTextGeneratorV2(ctx context.Context, mod wasm.Module, pModelName uint32, pInstruction uint32, pSentence uint32, pFormat uint32) uint32 {
+func hostInvokeTextGenerator(ctx context.Context, mod wasm.Module, pModelName uint32, pInstruction uint32, pSentence uint32, pFormat uint32) uint32 {
 	mem := mod.Memory()
 
-	model, err := getModel(mem, pModelName, appdata.GeneratorTask)
+	model, err := getModel(mem, pModelName, appdata.GenerationTask)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error getting model.")
 		return 0
