@@ -11,7 +11,6 @@ import (
 	"hmruntime/logger"
 	"hmruntime/plugins"
 	"io"
-	"strings"
 
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
@@ -28,24 +27,17 @@ var RegistrationRequest chan bool = make(chan bool)
 // Global, thread-safe registry of all plugins loaded by the host
 var Plugins = plugins.NewPluginRegistry()
 
-type OutputBuffers struct {
-	Stdout *strings.Builder
-	Stderr *strings.Builder
-}
-
 // Gets a module instance for the given plugin, used for a single invocation.
-func GetModuleInstance(ctx context.Context, plugin *plugins.Plugin) (api.Module, OutputBuffers, error) {
+func GetModuleInstance(ctx context.Context, plugin *plugins.Plugin, wStdOut io.Writer, wStdErr io.Writer) (api.Module, error) {
 
 	// Get the logger and writers for the plugin's stdout and stderr.
 	log := logger.Get(ctx).With().Bool("user_visible", true).Logger()
 	wInfoLog := logger.NewLogWriter(&log, zerolog.InfoLevel)
 	wErrorLog := logger.NewLogWriter(&log, zerolog.ErrorLevel)
 
-	// Create string buffers to capture stdout and stderr.
-	// Still write to the log, but also capture the output in the buffers.
-	buf := OutputBuffers{&strings.Builder{}, &strings.Builder{}}
-	wOut := io.MultiWriter(buf.Stdout, wInfoLog)
-	wErr := io.MultiWriter(buf.Stderr, wErrorLog)
+	// Capture stdout/stderr both to logs, and to provided writers.
+	wOut := io.MultiWriter(wStdOut, wInfoLog)
+	wErr := io.MultiWriter(wStdErr, wErrorLog)
 
 	// Configure the module instance.
 	cfg := wazero.NewModuleConfig().
@@ -59,8 +51,8 @@ func GetModuleInstance(ctx context.Context, plugin *plugins.Plugin) (api.Module,
 	// which will call any top-level code in the plugin.
 	mod, err := RuntimeInstance.InstantiateModule(ctx, *plugin.Module, cfg)
 	if err != nil {
-		return nil, buf, fmt.Errorf("failed to instantiate the plugin module: %w", err)
+		return nil, fmt.Errorf("failed to instantiate the plugin module: %w", err)
 	}
 
-	return mod, buf, nil
+	return mod, nil
 }
