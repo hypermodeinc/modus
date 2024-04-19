@@ -2,7 +2,7 @@
  * Copyright 2023 Hypermode, Inc.
  */
 
-package host
+package plugin_host
 
 import (
 	"hmruntime/plugins"

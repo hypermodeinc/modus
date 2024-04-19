@@ -14,8 +14,8 @@ import (
 	"hmruntime/config"
 	"hmruntime/functions"
 	"hmruntime/graphql"
-	"hmruntime/host"
 	"hmruntime/logger"
+	"hmruntime/plugin_host"
 	"hmruntime/server"
 	"hmruntime/storage"
 
@@ -45,14 +45,14 @@ func main() {
 	}
 
 	// Initialize the WebAssembly runtime
-	err = host.InitWasmRuntime(ctx)
+	err = plugin_host.InitWasmRuntime(ctx)
 	if err != nil {
 		log.Fatal().Err(err).Msg("Failed to initialize the WebAssembly runtime.  Exiting.")
 	}
-	defer host.WasmRuntime.Close(ctx)
+	defer plugin_host.WasmRuntime.Close(ctx)
 
 	// Connect Hypermode host functions
-	err = functions.InstantiateHostFunctions(ctx, host.WasmRuntime)
+	err = functions.InstantiateHostFunctions(ctx, plugin_host.WasmRuntime)
 	if err != nil {
 		log.Fatal().Err(err).Msg("Failed to instantiate host functions.  Exiting.")
 	}
@@ -67,7 +67,7 @@ func main() {
 	appdata.MonitorAppDataFiles(ctx)
 
 	// Load plugins and monitor for changes
-	host.MonitorPlugins(ctx)
+	plugin_host.MonitorPlugins(ctx)
 
 	// Initialize the GraphQL engine
 	graphql.Initialize()

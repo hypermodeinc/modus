@@ -9,15 +9,15 @@ import (
 	"net/http"
 
 	"hmruntime/graphql/engine"
-	"hmruntime/host"
 	"hmruntime/logger"
+	"hmruntime/plugin_host"
 
 	gql "github.com/wundergraph/graphql-go-tools/execution/graphql"
 	"github.com/wundergraph/graphql-go-tools/v2/pkg/graphqlerrors"
 )
 
 func Initialize() {
-	host.RegisterPluginLoadedCallback(engine.Activate)
+	plugin_host.RegisterPluginLoadedCallback(engine.Activate)
 }
 
 func HandleGraphQLRequest(w http.ResponseWriter, r *http.Request) {

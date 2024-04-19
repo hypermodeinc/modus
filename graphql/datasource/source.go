@@ -14,8 +14,8 @@ import (
 	"strings"
 
 	"hmruntime/functions"
-	"hmruntime/host"
 	"hmruntime/logger"
+	"hmruntime/plugin_host"
 	"hmruntime/utils"
 
 	"github.com/buger/jsonparser"
@@ -74,7 +74,7 @@ func (s Source) load(ctx context.Context, input []byte, writer io.Writer) error 
 	// Each request will get its own instance of the plugin module,
 	// so that we can run multiple requests in parallel without risk
 	// of corrupting the module's memory.
-	mod, buf, err := host.GetModuleInstance(ctx, info.Plugin)
+	mod, buf, err := plugin_host.GetModuleInstance(ctx, info.Plugin)
 	if err != nil {
 		return fmt.Errorf("error getting module instance: %w", err)
 	}
@@ -205,7 +205,7 @@ func transformValue(data []byte, tf templateField) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func transformErrors(buf host.OutputBuffers, ci callInfo) []resolve.GraphQLError {
+func transformErrors(buf plugin_host.OutputBuffers, ci callInfo) []resolve.GraphQLError {
 	errors := make([]resolve.GraphQLError, 0)
 	for _, s := range strings.Split(buf.Stdout.String(), "\n") {
 		if s != "" {

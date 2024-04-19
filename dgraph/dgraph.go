@@ -9,7 +9,6 @@ import (
 	"fmt"
 
 	"hmruntime/config"
-	"hmruntime/logger"
 	"hmruntime/utils"
 )
 
@@ -52,32 +51,4 @@ func ExecuteGQL[TResponse any](ctx context.Context, stmt string, vars map[string
 	}
 
 	return response, nil
-}
-
-func GetGQLSchema(ctx context.Context) (string, error) {
-
-	type DqlResponse[T any] struct {
-		Data T `json:"data"`
-	}
-
-	type SchemaResponse struct {
-		Node []struct {
-			Schema string `json:"dgraph.graphql.schema"`
-		} `json:"node"`
-	}
-
-	const query = "{node(func:has(dgraph.graphql.schema)){dgraph.graphql.schema}}"
-
-	response, err := ExecuteDQL[DqlResponse[SchemaResponse]](ctx, query, nil, false)
-	if err != nil {
-		return "", fmt.Errorf("error getting GraphQL schema from Dgraph: %w", err)
-	}
-
-	data := response.Data
-	if len(data.Node) == 0 {
-		logger.Warn(ctx).Msg("No GraphQL schema found in Dgraph")
-		return "", nil
-	}
-
-	return data.Node[0].Schema, nil
 }
