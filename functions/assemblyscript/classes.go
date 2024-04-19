@@ -7,7 +7,6 @@ package assemblyscript
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"hmruntime/plugins"
 
@@ -82,7 +81,7 @@ func readField(ctx context.Context, mem wasm.Memory, typ plugins.TypeInfo, offse
 		}
 
 		// Handle null values if the type is nullable
-		if strings.HasSuffix(typ.Path, "|null") {
+		if isNullable(typ.Path) {
 			if p == 0 {
 				return nil, nil
 			}

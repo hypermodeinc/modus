@@ -16,7 +16,7 @@ import (
 
 func Start(ctx context.Context) error {
 	logger.Info(ctx).
-		Int("port", config.Port).
+		Str("url", fmt.Sprintf("http://localhost:%d/graphql", config.Port)).
 		Msg("Listening for incoming requests.")
 	http.HandleFunc("/graphql", graphql.HandleGraphQLRequest)
 	http.HandleFunc("/admin", handleAdminRequest)

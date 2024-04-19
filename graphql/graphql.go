@@ -34,8 +34,21 @@ func HandleGraphQLRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Execute the GraphQL query
+	// Get the active GraphQL engine, if there is one.
 	engine := engine.GetEngine()
+	if engine == nil {
+		msg := "There is no active GraphQL schema.  Please load a Hypermode plugin."
+		logger.Warn(ctx).Msg(msg)
+		writeJsonContentHeader(w)
+		if ok, _ := gqlRequest.IsIntrospectionQuery(); ok {
+			w.Write([]byte(`{"data":{"__schema":{"types":[]}}}`))
+		} else {
+			w.Write([]byte(fmt.Sprintf(`{"errors":[{"message":"%s"}]}`, msg)))
+		}
+		return
+	}
+
+	// Execute the GraphQL query
 	result := gql.NewEngineResultWriter()
 	err = engine.Execute(ctx, &gqlRequest, &result)
 	if err != nil {
@@ -43,7 +56,7 @@ func HandleGraphQLRequest(w http.ResponseWriter, r *http.Request) {
 		if len(requestErrors) > 0 {
 			// NOTE: we intentionally don't log this, to avoid a bad actor spamming the logs
 			// TODO: we should capture metrics here though
-			w.Header().Set("Content-Type", "application/json")
+			writeJsonContentHeader(w)
 			requestErrors.WriteResponse(w)
 		} else {
 			msg := "Failed to execute GraphQL query."
@@ -54,6 +67,10 @@ func HandleGraphQLRequest(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Return the response
-	w.Header().Set("Content-Type", "application/json")
+	writeJsonContentHeader(w)
 	w.Write(adjustResponse(result.Bytes()))
+}
+
+func writeJsonContentHeader(w http.ResponseWriter) {
+	w.Header().Set("Content-Type", "application/json")
 }

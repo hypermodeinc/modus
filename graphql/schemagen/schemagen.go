@@ -314,7 +314,8 @@ func convertType(asType string, typeDefs *map[string]TypeDefinition, firstPass b
 	case "u64":
 		return newScalar("UInt64", typeDefs) + n, nil
 	case "Date":
-		return newScalar("DateTime", typeDefs) + n, nil
+		delete(*typeDefs, "Date") // remove the default Date type
+		return newScalar("Timestamp", typeDefs) + n, nil
 	case "void":
 		// note: void scalar is always nullable because we return null
 		return newScalar("Void", typeDefs), nil
