@@ -110,7 +110,7 @@ func EncodeValue(ctx context.Context, mod wasm.Module, typ plugins.TypeInfo, val
 func DecodeValue(ctx context.Context, mod wasm.Module, typ plugins.TypeInfo, val uint64) (any, error) {
 
 	// Handle null values if the type is nullable
-	if strings.HasSuffix(typ.Path, "|null") {
+	if isNullable(typ.Path) {
 		if val == 0 {
 			return nil, nil
 		}
@@ -153,6 +153,10 @@ func isPrimitive(t string) bool {
 	default:
 		return false
 	}
+}
+
+func isNullable(t string) bool {
+	return strings.HasSuffix(t, "|null") || strings.HasSuffix(t, " | null")
 }
 
 var typeMap = map[string]string{

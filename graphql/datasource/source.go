@@ -8,7 +8,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"strings"
@@ -25,8 +24,6 @@ import (
 
 const DataSourceName = "HypermodeFunctionsDataSource"
 
-var errCallingFunction = fmt.Errorf("error calling function")
-
 type callInfo struct {
 	Function   templateField  `json:"fn"`
 	Parameters map[string]any `json:"data"`
@@ -36,8 +33,7 @@ type Source struct{}
 
 func (s Source) Load(ctx context.Context, input []byte, writer io.Writer) error {
 	err := s.load(ctx, input, writer)
-	if err != nil && !errors.Is(err, errCallingFunction) {
-		// note: function call errors are already logged, so we don't log them again here
+	if err != nil {
 		logger.Err(ctx, err).Msg("Failed to load data.")
 	}
 	return err
@@ -88,7 +84,7 @@ func (s Source) load(ctx context.Context, input []byte, writer io.Writer) error 
 	errors := transformErrors(buf, ci)
 
 	// Also include the function error if there is one
-	if fnErr != nil {
+	if fnErr != nil && functions.ShouldReturnErrorToResponse(fnErr) {
 		errors = append(errors, resolve.GraphQLError{
 			Message: fnErr.Error(),
 			Path:    []string{ci.Function.AliasOrName()},

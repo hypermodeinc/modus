@@ -1,3 +1,4 @@
 /hmruntime
 /hmruntime.exe
 *.env
+__debug_bin*
