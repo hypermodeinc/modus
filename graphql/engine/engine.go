@@ -100,7 +100,7 @@ func Activate(ctx context.Context, metadata plugins.PluginMetadata) error {
 	}
 
 	adapter := newLoggerAdapter(ctx)
-	e, err := newExecutionEngine(ctx, adapter, engineConfig, resolverOptions)
+	e, err := engine.NewExecutionEngine(ctx, adapter, engineConfig, resolverOptions)
 	if err != nil {
 		return err
 	}
