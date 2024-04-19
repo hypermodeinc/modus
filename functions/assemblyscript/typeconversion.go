@@ -15,10 +15,10 @@ import (
 	"hmruntime/plugins"
 	"hmruntime/utils"
 
-	wasm "github.com/tetratelabs/wazero/api"
+	"github.com/tetratelabs/wazero/api"
 )
 
-func EncodeValue(ctx context.Context, mod wasm.Module, typ plugins.TypeInfo, val any) (uint64, error) {
+func EncodeValue(ctx context.Context, mod api.Module, typ plugins.TypeInfo, val any) (uint64, error) {
 
 	switch typ.Name {
 
@@ -40,7 +40,7 @@ func EncodeValue(ctx context.Context, mod wasm.Module, typ plugins.TypeInfo, val
 			return 0, fmt.Errorf("input value is not an int")
 		}
 
-		return wasm.EncodeI32(int32(n)), nil
+		return api.EncodeI32(int32(n)), nil
 
 	case "i64", "u64":
 		n, err := val.(json.Number).Int64()
@@ -48,7 +48,7 @@ func EncodeValue(ctx context.Context, mod wasm.Module, typ plugins.TypeInfo, val
 			return 0, fmt.Errorf("input value is not an int")
 		}
 
-		return wasm.EncodeI64(n), nil
+		return api.EncodeI64(n), nil
 
 	case "f32":
 		n, err := val.(json.Number).Float64()
@@ -56,7 +56,7 @@ func EncodeValue(ctx context.Context, mod wasm.Module, typ plugins.TypeInfo, val
 			return 0, fmt.Errorf("input value is not a float")
 		}
 
-		return wasm.EncodeF32(float32(n)), nil
+		return api.EncodeF32(float32(n)), nil
 
 	case "f64":
 		n, err := val.(json.Number).Float64()
@@ -64,7 +64,7 @@ func EncodeValue(ctx context.Context, mod wasm.Module, typ plugins.TypeInfo, val
 			return 0, fmt.Errorf("input value is not a float")
 		}
 
-		return wasm.EncodeF64(n), nil
+		return api.EncodeF64(n), nil
 
 	case "string":
 		s, ok := val.(string)
@@ -107,7 +107,7 @@ func EncodeValue(ctx context.Context, mod wasm.Module, typ plugins.TypeInfo, val
 	}
 }
 
-func DecodeValue(ctx context.Context, mod wasm.Module, typ plugins.TypeInfo, val uint64) (any, error) {
+func DecodeValue(ctx context.Context, mod api.Module, typ plugins.TypeInfo, val uint64) (any, error) {
 
 	// Handle null values if the type is nullable
 	if isNullable(typ.Path) {
@@ -129,16 +129,16 @@ func DecodeValue(ctx context.Context, mod wasm.Module, typ plugins.TypeInfo, val
 		return val != 0, nil
 
 	case "i8", "i16", "i32", "u8", "u16", "u32":
-		return wasm.DecodeI32(val), nil
+		return api.DecodeI32(val), nil
 
 	case "i64", "u64":
 		return int64(val), nil
 
 	case "f32":
-		return wasm.DecodeF32(val), nil
+		return api.DecodeF32(val), nil
 
 	case "f64":
-		return wasm.DecodeF64(val), nil
+		return api.DecodeF64(val), nil
 	}
 
 	// Managed types, held in wasm memory

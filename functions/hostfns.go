@@ -17,7 +17,7 @@ import (
 	"hmruntime/models/openai"
 
 	"github.com/tetratelabs/wazero"
-	wasm "github.com/tetratelabs/wazero/api"
+	"github.com/tetratelabs/wazero/api"
 )
 
 const HostModuleName string = "hypermode"
@@ -41,7 +41,7 @@ func InstantiateHostFunctions(ctx context.Context, runtime wazero.Runtime) error
 	return nil
 }
 
-func hostExecuteDQL(ctx context.Context, mod wasm.Module, pStmt uint32, pVars uint32, isMutation uint32) uint32 {
+func hostExecuteDQL(ctx context.Context, mod api.Module, pStmt uint32, pVars uint32, isMutation uint32) uint32 {
 	mem := mod.Memory()
 	stmt, err := assemblyscript.ReadString(mem, pStmt)
 	if err != nil {
@@ -70,7 +70,7 @@ func hostExecuteDQL(ctx context.Context, mod wasm.Module, pStmt uint32, pVars ui
 	return assemblyscript.WriteString(ctx, mod, result)
 }
 
-func hostExecuteGQL(ctx context.Context, mod wasm.Module, pStmt uint32, pVars uint32) uint32 {
+func hostExecuteGQL(ctx context.Context, mod api.Module, pStmt uint32, pVars uint32) uint32 {
 	mem := mod.Memory()
 	stmt, err := assemblyscript.ReadString(mem, pStmt)
 	if err != nil {
@@ -110,7 +110,7 @@ type ClassifierLabel struct {
 	Probability float64 `json:"probability"`
 }
 
-func hostInvokeClassifier(ctx context.Context, mod wasm.Module, pModelName uint32, pSentenceMap uint32) uint32 {
+func hostInvokeClassifier(ctx context.Context, mod api.Module, pModelName uint32, pSentenceMap uint32) uint32 {
 	mem := mod.Memory()
 
 	model, err := getModel(mem, pModelName, appdata.ClassificationTask)
@@ -145,7 +145,7 @@ func hostInvokeClassifier(ctx context.Context, mod wasm.Module, pModelName uint3
 	return assemblyscript.WriteString(ctx, mod, string(res))
 }
 
-func hostComputeEmbedding(ctx context.Context, mod wasm.Module, pModelName uint32, pSentenceMap uint32) uint32 {
+func hostComputeEmbedding(ctx context.Context, mod api.Module, pModelName uint32, pSentenceMap uint32) uint32 {
 	mem := mod.Memory()
 
 	model, err := getModel(mem, pModelName, appdata.EmbeddingTask)
@@ -180,11 +180,11 @@ func hostComputeEmbedding(ctx context.Context, mod wasm.Module, pModelName uint3
 	return assemblyscript.WriteString(ctx, mod, string(res))
 }
 
-func hostInvokeTextGenerator(ctx context.Context, mod wasm.Module, pModelName uint32, pInstruction uint32, pSentence uint32) uint32 {
+func hostInvokeTextGenerator(ctx context.Context, mod api.Module, pModelName uint32, pInstruction uint32, pSentence uint32) uint32 {
 	return hostInvokeTextGeneratorV2(ctx, mod, pModelName, pInstruction, pSentence, 0)
 }
 
-func hostInvokeTextGeneratorV2(ctx context.Context, mod wasm.Module, pModelName uint32, pInstruction uint32, pSentence uint32, pFormat uint32) uint32 {
+func hostInvokeTextGeneratorV2(ctx context.Context, mod api.Module, pModelName uint32, pInstruction uint32, pSentence uint32, pFormat uint32) uint32 {
 	mem := mod.Memory()
 
 	model, err := getModel(mem, pModelName, appdata.GeneratorTask)
@@ -258,7 +258,7 @@ func hostInvokeTextGeneratorV2(ctx context.Context, mod wasm.Module, pModelName 
 	return assemblyscript.WriteString(ctx, mod, string(res))
 }
 
-func getModel(mem wasm.Memory, pModelName uint32, task appdata.ModelTask) (appdata.Model, error) {
+func getModel(mem api.Memory, pModelName uint32, task appdata.ModelTask) (appdata.Model, error) {
 	modelName, err := assemblyscript.ReadString(mem, pModelName)
 	if err != nil {
 		err = fmt.Errorf("error reading model name from wasm memory: %w", err)
@@ -268,7 +268,7 @@ func getModel(mem wasm.Memory, pModelName uint32, task appdata.ModelTask) (appda
 	return models.GetModel(modelName, task)
 }
 
-func getSentenceMap(mem wasm.Memory, pSentenceMap uint32) (map[string]string, error) {
+func getSentenceMap(mem api.Memory, pSentenceMap uint32) (map[string]string, error) {
 	sentenceMapStr, err := assemblyscript.ReadString(mem, pSentenceMap)
 	if err != nil {
 		err = fmt.Errorf("error reading sentence map string from wasm memory: %w", err)

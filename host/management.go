@@ -20,8 +20,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 	"github.com/tetratelabs/wazero"
-	wasm "github.com/tetratelabs/wazero/api"
-	wasi "github.com/tetratelabs/wazero/imports/wasi_snapshot_preview1"
+	"github.com/tetratelabs/wazero/api"
+	"github.com/tetratelabs/wazero/imports/wasi_snapshot_preview1"
 )
 
 type OutputBuffers struct {
@@ -177,7 +177,7 @@ func unloadPlugin(ctx context.Context, filename string) error {
 	return (*p.Module).Close(ctx)
 }
 
-func GetModuleInstance(ctx context.Context, plugin *plugins.Plugin) (wasm.Module, OutputBuffers, error) {
+func GetModuleInstance(ctx context.Context, plugin *plugins.Plugin) (api.Module, OutputBuffers, error) {
 
 	// Get the logger and writers for the plugin's stdout and stderr.
 	log := logger.Get(ctx).With().Bool("user_visible", true).Logger()
@@ -209,14 +209,14 @@ func GetModuleInstance(ctx context.Context, plugin *plugins.Plugin) (wasm.Module
 }
 
 func instantiateWasiFunctions(ctx context.Context) error {
-	b := WasmRuntime.NewHostModuleBuilder(wasi.ModuleName)
-	wasi.NewFunctionExporter().ExportFunctions(b)
+	b := WasmRuntime.NewHostModuleBuilder(wasi_snapshot_preview1.ModuleName)
+	wasi_snapshot_preview1.NewFunctionExporter().ExportFunctions(b)
 
 	// If we ever need to override any of the WASI functions, we can do so here.
 
 	_, err := b.Instantiate(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to instantiate the %s module: %w", wasi.ModuleName, err)
+		return fmt.Errorf("failed to instantiate the %s module: %w", wasi_snapshot_preview1.ModuleName, err)
 	}
 
 	return nil

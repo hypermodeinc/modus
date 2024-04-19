@@ -9,9 +9,8 @@ import (
 	_ "embed"
 
 	"github.com/tetratelabs/wazero"
-
-	wasm "github.com/tetratelabs/wazero/api"
-	wasi "github.com/tetratelabs/wazero/imports/wasi_snapshot_preview1"
+	"github.com/tetratelabs/wazero/api"
+	"github.com/tetratelabs/wazero/imports/wasi_snapshot_preview1"
 )
 
 //go:embed data/test-as/test-as.wasm
@@ -20,8 +19,8 @@ var testWasm []byte
 type WasmTestFixture struct {
 	Context context.Context
 	Runtime wazero.Runtime
-	Module  wasm.Module
-	Memory  wasm.Memory
+	Module  api.Module
+	Memory  api.Memory
 }
 
 func (f *WasmTestFixture) Close() error {
@@ -31,7 +30,7 @@ func (f *WasmTestFixture) Close() error {
 func NewWasmTestFixture() WasmTestFixture {
 	ctx := context.Background()
 	r := wazero.NewRuntime(ctx)
-	wasi.MustInstantiate(ctx, r)
+	wasi_snapshot_preview1.MustInstantiate(ctx, r)
 
 	// TODO: refactor to share config with the real code so we're testing the same thing
 	cfg := wazero.NewModuleConfig().

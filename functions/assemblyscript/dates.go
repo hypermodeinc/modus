@@ -12,10 +12,10 @@ import (
 
 	"hmruntime/utils"
 
-	wasm "github.com/tetratelabs/wazero/api"
+	"github.com/tetratelabs/wazero/api"
 )
 
-func readDate(mem wasm.Memory, offset uint32) (utils.JSONTime, error) {
+func readDate(mem api.Memory, offset uint32) (utils.JSONTime, error) {
 	val, ok := mem.ReadUint64Le(offset + 16)
 	if !ok {
 		return utils.JSONTime{}, fmt.Errorf("error reading timestamp from wasm memory")
@@ -24,7 +24,7 @@ func readDate(mem wasm.Memory, offset uint32) (utils.JSONTime, error) {
 	return utils.JSONTime(time.UnixMilli(ts).UTC()), nil
 }
 
-func writeDate(ctx context.Context, mod wasm.Module, t time.Time) (uint32, error) {
+func writeDate(ctx context.Context, mod api.Module, t time.Time) (uint32, error) {
 	def, err := getTypeDefinition(ctx, "~lib/wasi_date/wasi_Date")
 	if err != nil {
 		def, err = getTypeDefinition(ctx, "~lib/date/Date")

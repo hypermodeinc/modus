@@ -10,7 +10,7 @@ import (
 
 	"hmruntime/plugins"
 
-	wasm "github.com/tetratelabs/wazero/api"
+	"github.com/tetratelabs/wazero/api"
 )
 
 // Reference: https://github.com/AssemblyScript/assemblyscript/blob/main/std/assembly/map.ts
@@ -20,7 +20,7 @@ type kvp struct {
 	Value any `json:"value"`
 }
 
-func readMap(ctx context.Context, mem wasm.Memory, def plugins.TypeDefinition, offset uint32) ([]kvp, error) {
+func readMap(ctx context.Context, mem api.Memory, def plugins.TypeDefinition, offset uint32) ([]kvp, error) {
 
 	// buckets, ok := mem.ReadUint32Le(offset)
 	// if !ok {
