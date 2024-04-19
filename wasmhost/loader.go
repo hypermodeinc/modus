@@ -7,11 +7,12 @@ package wasmhost
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"hmruntime/logger"
 	"hmruntime/plugins"
 	"hmruntime/storage"
 	"hmruntime/utils"
-	"time"
 )
 
 var pluginLoaded func(ctx context.Context, metadata plugins.PluginMetadata) error
