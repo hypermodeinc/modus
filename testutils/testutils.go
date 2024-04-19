@@ -9,7 +9,6 @@ import (
 	_ "embed"
 
 	"github.com/tetratelabs/wazero"
-
 	wasm "github.com/tetratelabs/wazero/api"
 	wasi "github.com/tetratelabs/wazero/imports/wasi_snapshot_preview1"
 )

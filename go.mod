@@ -16,8 +16,8 @@ require (
 	github.com/rs/zerolog v1.32.0
 	github.com/stretchr/testify v1.9.0
 	github.com/tetratelabs/wazero v1.7.1
-	github.com/wundergraph/graphql-go-tools/execution v1.0.0
-	github.com/wundergraph/graphql-go-tools/v2 v2.0.0-rc.24
+	github.com/wundergraph/graphql-go-tools/execution v1.0.1
+	github.com/wundergraph/graphql-go-tools/v2 v2.0.0-rc.26
 )
 
 require (
@@ -57,8 +57,8 @@ require (
 	github.com/tidwall/match v1.1.1 // indirect
 	github.com/tidwall/pretty v1.2.1 // indirect
 	github.com/tidwall/sjson v1.2.5 // indirect
-	github.com/wundergraph/cosmo/composition-go v0.0.0-20240417151320-75b029ed71a0 // indirect
-	github.com/wundergraph/cosmo/router v0.0.0-20240417151320-75b029ed71a0 // indirect
+	github.com/wundergraph/cosmo/composition-go v0.0.0-20240418201512-b1dc2282b3e4 // indirect
+	github.com/wundergraph/cosmo/router v0.0.0-20240418201512-b1dc2282b3e4 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.27.0 // indirect

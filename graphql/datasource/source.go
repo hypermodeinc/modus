@@ -14,8 +14,8 @@ import (
 
 	"hmruntime/functions"
 	"hmruntime/logger"
-	"hmruntime/plugin_host"
 	"hmruntime/utils"
+	"hmruntime/wasmhost"
 
 	"github.com/buger/jsonparser"
 	"github.com/rs/xid"
@@ -32,60 +32,84 @@ type callInfo struct {
 type Source struct{}
 
 func (s Source) Load(ctx context.Context, input []byte, writer io.Writer) error {
-	err := s.load(ctx, input, writer)
+
+	// Parse the input to get the function call info
+	callInfo, err := parseInput(input)
 	if err != nil {
-		logger.Err(ctx, err).Msg("Failed to load data.")
+		return fmt.Errorf("error parsing input: %w", err)
 	}
-	return err
+
+	// Load the data
+	result, gqlErrors, err := s.callFunction(ctx, callInfo)
+	if err != nil {
+		logger.Err(ctx, err).Msg("Failed to call function.")
+	}
+
+	// Write the response
+	return writeGraphQLResponse(writer, result, gqlErrors, err, callInfo)
 }
 
-func (s Source) load(ctx context.Context, input []byte, writer io.Writer) error {
-	// Get the call info
-	var ci callInfo
-	dec := json.NewDecoder(bytes.NewReader(input))
-	dec.UseNumber()
-	err := dec.Decode(&ci)
-
-	if err != nil {
-		return fmt.Errorf("error getting function input: %w", err)
-	}
+func (s Source) callFunction(ctx context.Context, callInfo callInfo) (any, []resolve.GraphQLError, error) {
 
 	// Get the function info
-	info, ok := functions.Functions[ci.Function.Name]
+	info, ok := functions.Functions[callInfo.Function.Name]
 	if !ok {
-		return fmt.Errorf("no function registered named %s", ci.Function)
+		return nil, nil, fmt.Errorf("no function registered named %s", callInfo.Function)
 	}
 
-	// Add plugin to the context
-	ctx = context.WithValue(ctx, utils.PluginContextKey, info.Plugin)
+	// Prepare the context that will be used throughout the function execution
+	ctx = prepareContext(ctx, info)
 
-	// Add execution ID to the context
-	executionId := xid.New().String()
-	ctx = context.WithValue(ctx, utils.ExecutionIdContextKey, executionId)
-
-	// TODO: We should return the execution id(s) in the response with X-Hypermode-ExecutionID headers.
-	// There might be multiple execution ids if the request triggers multiple function calls.
+	// Create output buffers for the function to write to
+	bStdOut := &bytes.Buffer{}
+	bStdErr := &bytes.Buffer{}
 
 	// Get a module instance for this request.
-	// Each request will get its own instance of the plugin module,
-	// so that we can run multiple requests in parallel without risk
-	// of corrupting the module's memory.
-	mod, buf, err := plugin_host.GetModuleInstance(ctx, info.Plugin)
+	// Each request will get its own instance of the plugin module, so that we can run
+	// multiple requests in parallel without risk of corrupting the module's memory.
+	// This also protects against security risk, as each request will have its own
+	// isolated memory space.  (One request cannot access another request's memory.)
+	mod, err := wasmhost.GetModuleInstance(ctx, info.Plugin, bStdOut, bStdErr)
 	if err != nil {
-		return fmt.Errorf("error getting module instance: %w", err)
+		return nil, nil, err
 	}
 	defer mod.Close(ctx)
 
-	// Call the function and get any errors that were written to the output buffers
-	result, fnErr := functions.CallFunction(ctx, mod, info, ci.Parameters)
+	// Call the function
+	result, err := functions.CallFunction(ctx, mod, info, callInfo.Parameters)
 
-	// Transform lines in the output buffers to GraphQL errors
-	var jsonErrors []byte
-	errors := transformErrors(buf, ci)
+	// Transform lines in the output buffers to GraphQL gqlErrors
+	gqlErrors := append(
+		transformErrors(bStdOut, callInfo),
+		transformErrors(bStdErr, callInfo)...,
+	)
 
-	// Also include the function error if there is one
+	return result, gqlErrors, err
+}
+
+func parseInput(input []byte) (callInfo, error) {
+	dec := json.NewDecoder(bytes.NewReader(input))
+	dec.UseNumber()
+
+	var ci callInfo
+	err := dec.Decode(&ci)
+	return ci, err
+}
+
+func prepareContext(ctx context.Context, info functions.FunctionInfo) context.Context {
+	// TODO: We should return the execution id(s) in the response somehow.
+	// There might be multiple execution ids if the request triggers multiple function calls.
+	executionId := xid.New().String()
+	ctx = context.WithValue(ctx, utils.ExecutionIdContextKey, executionId)
+	ctx = context.WithValue(ctx, utils.PluginContextKey, info.Plugin)
+	return ctx
+}
+
+func writeGraphQLResponse(writer io.Writer, result any, gqlErrors []resolve.GraphQLError, fnErr error, ci callInfo) error {
+
+	// Include the function error (except any we've filtered out)
 	if fnErr != nil && functions.ShouldReturnErrorToResponse(fnErr) {
-		errors = append(errors, resolve.GraphQLError{
+		gqlErrors = append(gqlErrors, resolve.GraphQLError{
 			Message: fnErr.Error(),
 			Path:    []string{ci.Function.AliasOrName()},
 			Extensions: map[string]interface{}{
@@ -94,10 +118,11 @@ func (s Source) load(ctx context.Context, input []byte, writer io.Writer) error 
 		})
 	}
 
-	// If there are errors, marshal them to json
-	if len(errors) > 0 {
+	// If there are GraphQL errors, marshal them to json
+	var jsonErrors []byte
+	if len(gqlErrors) > 0 {
 		var err error
-		jsonErrors, err = json.Marshal(errors)
+		jsonErrors, err = json.Marshal(gqlErrors)
 		if err != nil {
 			return err
 		}
@@ -122,7 +147,7 @@ func (s Source) load(ctx context.Context, input []byte, writer io.Writer) error 
 	}
 
 	// Build and write the response, including errors if there are any
-	if len(errors) > 0 {
+	if len(gqlErrors) > 0 {
 		fmt.Fprintf(writer, `{"data":%s,"errors":%s}`, jsonData, jsonErrors)
 	} else {
 		fmt.Fprintf(writer, `{"data":%s}`, jsonData)
@@ -201,14 +226,9 @@ func transformValue(data []byte, tf templateField) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func transformErrors(buf plugin_host.OutputBuffers, ci callInfo) []resolve.GraphQLError {
+func transformErrors(buf *bytes.Buffer, ci callInfo) []resolve.GraphQLError {
 	errors := make([]resolve.GraphQLError, 0)
-	for _, s := range strings.Split(buf.Stdout.String(), "\n") {
-		if s != "" {
-			errors = append(errors, transformError(s, ci))
-		}
-	}
-	for _, s := range strings.Split(buf.Stderr.String(), "\n") {
+	for _, s := range strings.Split(buf.String(), "\n") {
 		if s != "" {
 			errors = append(errors, transformError(s, ci))
 		}

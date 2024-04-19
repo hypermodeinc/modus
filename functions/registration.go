@@ -8,8 +8,8 @@ import (
 	"context"
 
 	"hmruntime/logger"
-	"hmruntime/plugin_host"
 	"hmruntime/plugins"
+	"hmruntime/wasmhost"
 )
 
 var Functions = make(map[string]FunctionInfo)
@@ -23,7 +23,7 @@ func MonitorRegistration(ctx context.Context) {
 	go func() {
 		for {
 			select {
-			case <-plugin_host.RegistrationRequest:
+			case <-wasmhost.RegistrationRequest:
 				r := newRegistration()
 				r.registerAll(ctx)
 				r.cleanup(ctx)
@@ -47,7 +47,7 @@ func newRegistration() *registration {
 }
 
 func (r *registration) registerAll(ctx context.Context) {
-	var plugins = plugin_host.Plugins.GetAll()
+	var plugins = wasmhost.Plugins.GetAll()
 	for _, plugin := range plugins {
 		r.registerPlugin(ctx, &plugin)
 	}

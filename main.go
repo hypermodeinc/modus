@@ -15,9 +15,9 @@ import (
 	"hmruntime/functions"
 	"hmruntime/graphql"
 	"hmruntime/logger"
-	"hmruntime/plugin_host"
 	"hmruntime/server"
 	"hmruntime/storage"
+	"hmruntime/wasmhost"
 
 	"github.com/joho/godotenv"
 )
@@ -45,14 +45,14 @@ func main() {
 	}
 
 	// Initialize the WebAssembly runtime
-	err = plugin_host.InitWasmRuntime(ctx)
+	err = wasmhost.InitWasmRuntime(ctx)
 	if err != nil {
 		log.Fatal().Err(err).Msg("Failed to initialize the WebAssembly runtime.  Exiting.")
 	}
-	defer plugin_host.WasmRuntime.Close(ctx)
+	defer wasmhost.RuntimeInstance.Close(ctx)
 
 	// Connect Hypermode host functions
-	err = functions.InstantiateHostFunctions(ctx, plugin_host.WasmRuntime)
+	err = functions.InstantiateHostFunctions(ctx, wasmhost.RuntimeInstance)
 	if err != nil {
 		log.Fatal().Err(err).Msg("Failed to instantiate host functions.  Exiting.")
 	}
@@ -67,7 +67,7 @@ func main() {
 	appdata.MonitorAppDataFiles(ctx)
 
 	// Load plugins and monitor for changes
-	plugin_host.MonitorPlugins(ctx)
+	wasmhost.MonitorPlugins(ctx)
 
 	// Initialize the GraphQL engine
 	graphql.Initialize()
