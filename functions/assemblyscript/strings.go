@@ -10,10 +10,10 @@ import (
 	"unicode/utf16"
 	"unsafe"
 
-	"github.com/tetratelabs/wazero/api"
+	wasm "github.com/tetratelabs/wazero/api"
 )
 
-func ReadString(mem api.Memory, offset uint32) (string, error) {
+func ReadString(mem wasm.Memory, offset uint32) (string, error) {
 
 	// AssemblyScript managed objects have their classid stored 8 bytes before the offset.
 	// See https://www.assemblyscript.org/runtime.html#memory-layout
@@ -38,7 +38,7 @@ func ReadString(mem api.Memory, offset uint32) (string, error) {
 	return decodeUTF16(buf), nil
 }
 
-func WriteString(ctx context.Context, mod api.Module, s string) uint32 {
+func WriteString(ctx context.Context, mod wasm.Module, s string) uint32 {
 	bytes := encodeUTF16(s)
 	return writeObject(ctx, mod, bytes, 2)
 }

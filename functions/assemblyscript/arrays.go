@@ -9,10 +9,10 @@ import (
 	"fmt"
 	"hmruntime/plugins"
 
-	"github.com/tetratelabs/wazero/api"
+	wasm "github.com/tetratelabs/wazero/api"
 )
 
-func readArray(ctx context.Context, mem api.Memory, def plugins.TypeDefinition, offset uint32) ([]any, error) {
+func readArray(ctx context.Context, mem wasm.Memory, def plugins.TypeDefinition, offset uint32) ([]any, error) {
 
 	dataStart, ok := mem.ReadUint32Le(offset + 4)
 	if !ok {

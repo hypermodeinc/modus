@@ -10,10 +10,10 @@ import (
 
 	"hmruntime/plugins"
 
-	"github.com/tetratelabs/wazero/api"
+	wasm "github.com/tetratelabs/wazero/api"
 )
 
-func readClass(ctx context.Context, mem api.Memory, def plugins.TypeDefinition, offset uint32) (any, error) {
+func readClass(ctx context.Context, mem wasm.Memory, def plugins.TypeDefinition, offset uint32) (any, error) {
 	result := make(map[string]any)
 	for _, field := range def.Fields {
 		fieldOffset := offset + field.Offset
@@ -26,7 +26,7 @@ func readClass(ctx context.Context, mem api.Memory, def plugins.TypeDefinition, 
 	return result, nil
 }
 
-func readField(ctx context.Context, mem api.Memory, typ plugins.TypeInfo, offset uint32) (any, error) {
+func readField(ctx context.Context, mem wasm.Memory, typ plugins.TypeInfo, offset uint32) (any, error) {
 	var result any
 	var ok bool
 	switch typ.Path {

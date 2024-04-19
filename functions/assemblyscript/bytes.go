@@ -8,10 +8,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/tetratelabs/wazero/api"
+	wasm "github.com/tetratelabs/wazero/api"
 )
 
-func readBytes(mem api.Memory, offset uint32) ([]byte, error) {
+func readBytes(mem wasm.Memory, offset uint32) ([]byte, error) {
 
 	// The length of AssemblyScript managed objects is stored 4 bytes before the offset.
 	// See https://www.assemblyscript.org/runtime.html#memory-layout
@@ -36,6 +36,6 @@ func readBytes(mem api.Memory, offset uint32) ([]byte, error) {
 	return buf, nil
 }
 
-func writeBytes(ctx context.Context, mod api.Module, bytes []byte) uint32 {
+func writeBytes(ctx context.Context, mod wasm.Module, bytes []byte) uint32 {
 	return writeObject(ctx, mod, bytes, 1)
 }

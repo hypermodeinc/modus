@@ -12,10 +12,10 @@ import (
 	"hmruntime/functions/assemblyscript"
 	"hmruntime/logger"
 
-	"github.com/tetratelabs/wazero/api"
+	wasm "github.com/tetratelabs/wazero/api"
 )
 
-func CallFunction(ctx context.Context, mod api.Module, info FunctionInfo, inputs map[string]any) (any, error) {
+func CallFunction(ctx context.Context, mod wasm.Module, info FunctionInfo, inputs map[string]any) (any, error) {
 	fnName := info.Function.Name
 	logger.Info(ctx).
 		Str("function", fnName).
@@ -44,7 +44,7 @@ func CallFunction(ctx context.Context, mod api.Module, info FunctionInfo, inputs
 	return result, err
 }
 
-func callFunction(ctx context.Context, mod api.Module, info FunctionInfo, inputs map[string]any) (any, error) {
+func callFunction(ctx context.Context, mod wasm.Module, info FunctionInfo, inputs map[string]any) (any, error) {
 	fnName := info.Function.Name
 
 	// Get the function
