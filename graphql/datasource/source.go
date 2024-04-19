@@ -13,9 +13,9 @@ import (
 	"strings"
 
 	"hmruntime/functions"
-	"hmruntime/host"
 	"hmruntime/logger"
 	"hmruntime/utils"
+	"hmruntime/wasmhost"
 
 	"github.com/buger/jsonparser"
 	"github.com/rs/xid"
@@ -65,7 +65,7 @@ func (s Source) callFunction(ctx context.Context, callInfo callInfo) (any, []res
 	// multiple requests in parallel without risk of corrupting the module's memory.
 	// This also protects against security risk, as each request will have its own
 	// isolated memory space.  (One request cannot access another request's memory.)
-	mod, buf, err := host.GetModuleInstance(ctx, info.Plugin)
+	mod, buf, err := wasmhost.GetModuleInstance(ctx, info.Plugin)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -219,7 +219,7 @@ func transformValue(data []byte, tf templateField) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func transformErrors(buf host.OutputBuffers, ci callInfo) []resolve.GraphQLError {
+func transformErrors(buf wasmhost.OutputBuffers, ci callInfo) []resolve.GraphQLError {
 	errors := make([]resolve.GraphQLError, 0)
 	for _, s := range strings.Split(buf.Stdout.String(), "\n") {
 		if s != "" {
