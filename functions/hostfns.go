@@ -30,7 +30,7 @@ func InstantiateHostFunctions(ctx context.Context, runtime wazero.Runtime) error
 
 	// Each host function should get a line here:
 	b.NewFunctionBuilder().WithFunc(hostExecuteDQL).Export("executeDQL")
-	b.NewFunctionBuilder().WithFunc(hostExecuteGQL).Export("hostExecuteGQL")
+	b.NewFunctionBuilder().WithFunc(hostExecuteGQL).Export("executeGQL")
 	b.NewFunctionBuilder().WithFunc(hostExecuteDgraphGQL).Export("executeDgraphGQL")
 	b.NewFunctionBuilder().WithFunc(hostInvokeClassifier).Export("invokeClassifier")
 	b.NewFunctionBuilder().WithFunc(hostComputeEmbedding).Export("computeEmbedding")
