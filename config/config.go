@@ -13,7 +13,6 @@ import (
 )
 
 var Port int
-var DgraphUrl string
 var ModelHost string
 var StoragePath string
 var UseAwsSecrets bool
@@ -25,7 +24,6 @@ var UseJsonLogging bool
 
 func ParseCommandLineFlags() {
 	flag.IntVar(&Port, "port", 8686, "The HTTP port to listen on.")
-	flag.StringVar(&DgraphUrl, "dgraph", "http://localhost:8080", "The Dgraph url to connect to.")
 	flag.StringVar(&ModelHost, "modelHost", "", "The base DNS of the host endpoint to the model server.")
 	flag.StringVar(&StoragePath, "storagePath", getDefaultStoragePath(), "The path to a directory used for local storage.")
 	flag.BoolVar(&UseAwsSecrets, "useAwsSecrets", false, "Use AWS Secrets Manager for API keys and other secrets.")
