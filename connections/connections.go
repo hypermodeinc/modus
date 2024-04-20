@@ -3,8 +3,8 @@ package connections
 import (
 	"context"
 	"fmt"
-	"hmruntime/appdata"
 	"hmruntime/hosts"
+	"hmruntime/manifest"
 	"hmruntime/utils"
 )
 
@@ -13,7 +13,7 @@ type request struct {
 	Variables map[string]any `json:"variables"`
 }
 
-func ExecuteGraphqlApi[TResponse any](ctx context.Context, host appdata.Host, stmt string, vars map[string]any) (TResponse, error) {
+func ExecuteGraphqlApi[TResponse any](ctx context.Context, host manifest.Host, stmt string, vars map[string]any) (TResponse, error) {
 	request := request{
 		Query:     stmt,
 		Variables: vars,
@@ -42,7 +42,7 @@ func ExecuteGraphqlApi[TResponse any](ctx context.Context, host appdata.Host, st
 	return response, nil
 }
 
-func ExecuteDQL[TResponse any](ctx context.Context, host appdata.Host, stmt string, vars map[string]any, isMutation bool) (TResponse, error) {
+func ExecuteDQL[TResponse any](ctx context.Context, host manifest.Host, stmt string, vars map[string]any, isMutation bool) (TResponse, error) {
 	request := request{
 		Query:     stmt,
 		Variables: vars,

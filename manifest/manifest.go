@@ -2,28 +2,28 @@
  * Copyright 2024 Hypermode, Inc.
  */
 
-package appdata
+package manifest
 
-var appDataFiles = map[string]AppData{
+var manifestFiles = map[string]Manifest{
 	"hypermode.json": &HypermodeData,
 	"models.json":    &ModelData,
 }
 
-var HypermodeData HypermodeAppData = HypermodeAppData{}
-var ModelData ModelsAppData = ModelsAppData{}
+var HypermodeData HypermodeManifest = HypermodeManifest{}
+var ModelData ModelsManifest = ModelsManifest{}
 
-type AppData any
+type Manifest any
 
-type HypermodeAppData struct {
+type HypermodeManifest struct {
 	Models               []Model               `json:"models"`
 	Hosts                []Host                `json:"hosts"`
 	EmbeddingSpecs       []EmbeddingSpec       `json:"embeddingSpecs"`
 	TrainingInstructions []TrainingInstruction `json:"trainingInstructions"`
-	AppData
+	Manifest
 }
 
-type ModelsAppData struct {
-	AppData
+type ModelsManifest struct {
+	Manifest
 }
 
 type ModelTask string

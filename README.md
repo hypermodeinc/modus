@@ -11,7 +11,6 @@ To get started with Hypermode Functions written in AssemblyScript, visit the
 When starting the Runtime, you can use the following command line parameters:
 
 - `--port` - The HTTP port to listen on.  Defaults to `8686`.
-- `--dgraph` - The Dgraph url to connect to.  Defaults to `http://localhost:8080`.
 - `--modelHost` - The base DNS of the host endpoint to the model server.
 - `--storagePath` - The path to a directory used for local storage.
   - Linux / OSX default: `$HOME/.hypermode`
