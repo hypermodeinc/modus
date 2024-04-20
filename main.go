@@ -9,12 +9,12 @@ import (
 	"os"
 	"path/filepath"
 
-	"hmruntime/appdata"
 	"hmruntime/aws"
 	"hmruntime/config"
 	"hmruntime/functions"
 	"hmruntime/graphql"
 	"hmruntime/logger"
+	"hmruntime/manifest"
 	"hmruntime/server"
 	"hmruntime/storage"
 	"hmruntime/wasmhost"
@@ -64,7 +64,7 @@ func main() {
 	functions.MonitorRegistration(ctx)
 
 	// Load app data and monitor for changes
-	appdata.MonitorAppDataFiles(ctx)
+	manifest.MonitorAppDataFiles(ctx)
 
 	// Load plugins and monitor for changes
 	wasmhost.MonitorPlugins(ctx)

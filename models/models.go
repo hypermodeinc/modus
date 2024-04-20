@@ -8,9 +8,9 @@ import (
 	"context"
 	"fmt"
 
-	"hmruntime/appdata"
 	"hmruntime/config"
 	"hmruntime/hosts"
+	"hmruntime/manifest"
 	"hmruntime/utils"
 )
 
@@ -26,18 +26,18 @@ const (
 	OutputFormatJson OutputFormat = "json_object"
 )
 
-func GetModel(modelName string, task appdata.ModelTask) (appdata.Model, error) {
-	for _, model := range appdata.HypermodeData.Models {
+func GetModel(modelName string, task manifest.ModelTask) (manifest.Model, error) {
+	for _, model := range manifest.HypermodeData.Models {
 		if model.Name == modelName && model.Task == task {
 			return model, nil
 		}
 	}
 
-	return appdata.Model{}, fmt.Errorf("a model '%s' for task '%s' was not found", modelName, task)
+	return manifest.Model{}, fmt.Errorf("a model '%s' for task '%s' was not found", modelName, task)
 }
 
 func PostToModelEndpoint[TResult any](ctx context.Context, sentenceMap map[string]string,
-	model appdata.Model, host appdata.Host) (map[string]TResult, error) {
+	model manifest.Model, host manifest.Host) (map[string]TResult, error) {
 
 	// self hosted models takes in array, can optimize for parallelizing later
 	keys, sentences := []string{}, []string{}

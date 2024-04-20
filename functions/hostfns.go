@@ -9,11 +9,11 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"hmruntime/appdata"
 	"hmruntime/connections"
 	"hmruntime/functions/assemblyscript"
 	"hmruntime/hosts"
 	"hmruntime/logger"
+	"hmruntime/manifest"
 	"hmruntime/models"
 	"hmruntime/models/openai"
 
@@ -127,13 +127,13 @@ type ClassifierLabel struct {
 func hostInvokeClassifier(ctx context.Context, mod wasm.Module, pModelName uint32, pSentenceMap uint32) uint32 {
 	mem := mod.Memory()
 
-	model, err := getModel(mem, pModelName, appdata.ClassificationTask)
+	model, err := getModel(mem, pModelName, manifest.ClassificationTask)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error getting model.")
 		return 0
 	}
 
-	var host appdata.Host
+	var host manifest.Host
 	if model.Host != HypermodeHostName {
 		host, err = hosts.GetHost(model.Host)
 		if err != nil {
@@ -162,8 +162,8 @@ func hostInvokeClassifier(ctx context.Context, mod wasm.Module, pModelName uint3
 	resultMap := make(map[string]map[string]float64)
 	for k, v := range result {
 		resultMap[k] = make(map[string]float64)
-		for _, label := range v.Probabilities {
-			resultMap[k][label.Label] = label.Probability
+		for _, p := range v.Probabilities {
+			resultMap[k][p.Label] = p.Probability
 		}
 	}
 
@@ -179,13 +179,13 @@ func hostInvokeClassifier(ctx context.Context, mod wasm.Module, pModelName uint3
 func hostComputeEmbedding(ctx context.Context, mod wasm.Module, pModelName uint32, pSentenceMap uint32) uint32 {
 	mem := mod.Memory()
 
-	model, err := getModel(mem, pModelName, appdata.EmbeddingTask)
+	model, err := getModel(mem, pModelName, manifest.EmbeddingTask)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error getting model.")
 		return 0
 	}
 
-	var host appdata.Host
+	var host manifest.Host
 	if model.Host != HypermodeHostName {
 		host, err = hosts.GetHost(model.Host)
 		if err != nil {
@@ -223,7 +223,7 @@ func hostComputeEmbedding(ctx context.Context, mod wasm.Module, pModelName uint3
 func hostInvokeTextGenerator(ctx context.Context, mod wasm.Module, pModelName uint32, pInstruction uint32, pSentence uint32, pFormat uint32) uint32 {
 	mem := mod.Memory()
 
-	model, err := getModel(mem, pModelName, appdata.GenerationTask)
+	model, err := getModel(mem, pModelName, manifest.GenerationTask)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error getting model.")
 		return 0
@@ -241,7 +241,7 @@ func hostInvokeTextGenerator(ctx context.Context, mod wasm.Module, pModelName ui
 		return 0
 	}
 
-	var host appdata.Host
+	var host manifest.Host
 	if model.Host != HypermodeHostName {
 		host, err = hosts.GetHost(model.Host)
 		if err != nil {
@@ -315,21 +315,21 @@ func hostInvokeTextGenerator(ctx context.Context, mod wasm.Module, pModelName ui
 	return assemblyscript.WriteString(ctx, mod, string(resBytes))
 }
 
-func getHost(mem wasm.Memory, pHostName uint32) (appdata.Host, error) {
+func getHost(mem wasm.Memory, pHostName uint32) (manifest.Host, error) {
 	hostName, err := assemblyscript.ReadString(mem, pHostName)
 	if err != nil {
 		err = fmt.Errorf("error reading host name from wasm memory: %w", err)
-		return appdata.Host{}, err
+		return manifest.Host{}, err
 	}
 
 	return hosts.GetHost(hostName)
 }
 
-func getModel(mem wasm.Memory, pModelName uint32, task appdata.ModelTask) (appdata.Model, error) {
+func getModel(mem wasm.Memory, pModelName uint32, task manifest.ModelTask) (manifest.Model, error) {
 	modelName, err := assemblyscript.ReadString(mem, pModelName)
 	if err != nil {
 		err = fmt.Errorf("error reading model name from wasm memory: %w", err)
-		return appdata.Model{}, err
+		return manifest.Model{}, err
 	}
 
 	return models.GetModel(modelName, task)

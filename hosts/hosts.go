@@ -3,9 +3,9 @@ package hosts
 import (
 	"context"
 	"fmt"
-	"hmruntime/appdata"
 	"hmruntime/aws"
 	"hmruntime/config"
+	"hmruntime/manifest"
 	"os"
 	"strings"
 )
@@ -13,17 +13,17 @@ import (
 const hostKeyPrefix = "HYP_HOST_KEY_"
 const OpenAIHost string = "openai"
 
-func GetHost(hostName string) (appdata.Host, error) {
-	for _, host := range appdata.HypermodeData.Hosts {
+func GetHost(hostName string) (manifest.Host, error) {
+	for _, host := range manifest.HypermodeData.Hosts {
 		if host.Name == hostName {
 			return host, nil
 		}
 	}
 
-	return appdata.Host{}, fmt.Errorf("a host '%s' was not found", hostName)
+	return manifest.Host{}, fmt.Errorf("a host '%s' was not found", hostName)
 }
 
-func GetHostKey(ctx context.Context, host appdata.Host) (string, error) {
+func GetHostKey(ctx context.Context, host manifest.Host) (string, error) {
 	var key string
 	var err error
 
@@ -59,7 +59,7 @@ func GetHostKey(ctx context.Context, host appdata.Host) (string, error) {
 	return "", fmt.Errorf("error getting key for model '%s': %w", host.Name, err)
 }
 
-func getWellKnownEnvironmentVariable(host appdata.Host) string {
+func getWellKnownEnvironmentVariable(host manifest.Host) string {
 
 	// Some model hosts have well-known environment variables that are used to store the model key.
 	// We should support these to make it easier for users to set up their environment.
