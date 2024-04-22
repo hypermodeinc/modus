@@ -94,6 +94,6 @@ func writeObject(ctx context.Context, mod wasm.Module, typ plugins.TypeInfo, val
 	} else if isMapType(typ.Path) {
 		return writeMap(ctx, mod, def, val.(map[any]any))
 	} else {
-		return writeClass(ctx, mod, def, val.(map[string]any))
+		return writeClass(ctx, mod, def, val)
 	}
 }

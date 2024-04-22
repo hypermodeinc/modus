@@ -5,7 +5,9 @@
 package assemblyscript
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 
 	"hmruntime/plugins"
@@ -104,21 +106,39 @@ func readField(ctx context.Context, mem wasm.Memory, typ plugins.TypeInfo, offse
 	return result, nil
 }
 
-func writeClass(ctx context.Context, mod wasm.Module, def plugins.TypeDefinition, classMap map[string]any) (uint32, error) {
-	offset, err := allocateWasmMemory(ctx, mod, int(def.Size), def.Id)
-	if err != nil {
-		return 0, err
-	}
-
-	for _, field := range def.Fields {
-		val := classMap[field.Name]
-		fieldOffset := offset + field.Offset
-		err := writeField(ctx, mod, field.Type, fieldOffset, val)
+func writeClass(ctx context.Context, mod wasm.Module, def plugins.TypeDefinition, data any) (uint32, error) {
+	switch data := data.(type) {
+	case map[string]any:
+		offset, err := allocateWasmMemory(ctx, mod, int(def.Size), def.Id)
 		if err != nil {
 			return 0, err
 		}
+		for _, field := range def.Fields {
+			val := data[field.Name]
+			fieldOffset := offset + field.Offset
+			err := writeField(ctx, mod, field.Type, fieldOffset, val)
+			if err != nil {
+				return 0, err
+			}
+		}
+		return offset, nil
+	default:
+		// Convert the data to a map and try again.
+		j, err := json.Marshal(data)
+		if err != nil {
+			return 0, err
+		}
+
+		dec := json.NewDecoder(bytes.NewReader(j))
+		dec.UseNumber()
+
+		var m map[string]any
+		err = dec.Decode(&m)
+		if err != nil {
+			return 0, err
+		}
+		return writeClass(ctx, mod, def, m)
 	}
-	return offset, nil
 }
 
 func writeField(ctx context.Context, mod wasm.Module, typ plugins.TypeInfo, offset uint32, val any) error {
