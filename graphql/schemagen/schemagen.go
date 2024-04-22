@@ -286,6 +286,9 @@ func convertType(asType string, typeDefs *map[string]TypeDefinition, firstPass b
 		// ex: StringStringPair, IntStringPair, StringNullableStringPair, etc.
 		ktn := utils.If(strings.HasSuffix(kt, "!"), kt[:len(kt)-1], "Nullable"+kt)
 		vtn := utils.If(strings.HasSuffix(vt, "!"), vt[:len(vt)-1], "Nullable"+vt)
+		if ktn[0] == '[' {
+			ktn = ktn[1:len(ktn)-2] + "List"
+		}
 		if vtn[0] == '[' {
 			vtn = vtn[1:len(vtn)-2] + "List"
 		}
