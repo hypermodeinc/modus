@@ -241,7 +241,7 @@ func convertFields(fields []plugins.Field, typeDefs *map[string]TypeDefinition, 
 	return results, nil
 }
 
-var mapRegex = regexp.MustCompile(`^Map<(\w+<.+>|.+),\s*(\w+<.+>|.+)>$`)
+var mapRegex = regexp.MustCompile(`^Map<(\w+<.+>|.+?),\s*(\w+<.+>|.+?)>$`)
 
 func convertType(asType string, typeDefs *map[string]TypeDefinition, firstPass bool) (string, error) {
 
@@ -286,6 +286,9 @@ func convertType(asType string, typeDefs *map[string]TypeDefinition, firstPass b
 		// ex: StringStringPair, IntStringPair, StringNullableStringPair, etc.
 		ktn := utils.If(strings.HasSuffix(kt, "!"), kt[:len(kt)-1], "Nullable"+kt)
 		vtn := utils.If(strings.HasSuffix(vt, "!"), vt[:len(vt)-1], "Nullable"+vt)
+		if vtn[0] == '[' {
+			vtn = vtn[1:len(vtn)-2] + "List"
+		}
 		typeName := ktn + vtn + "Pair"
 
 		newType(typeName, []NameTypePair{{"key", kt}, {"value", vt}}, typeDefs)
