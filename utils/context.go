@@ -8,4 +8,4 @@ type contextKey string
 
 const ExecutionIdContextKey contextKey = "execution_id"
 const PluginContextKey contextKey = "plugin"
-const FunctionOutputBuffersContextKey contextKey = "function_output_buffers"
+const FunctionOutputContextKey contextKey = "function_output"
