@@ -5,6 +5,7 @@
 package logger
 
 import (
+	"hmruntime/utils"
 	"strings"
 
 	"github.com/rs/zerolog"
@@ -26,9 +27,9 @@ func (w logWriter) Write(p []byte) (n int, err error) {
 	n = len(p)
 	for _, b := range p {
 		if b == '\n' {
-			s := w.buffer.String()
-			if len(s) > 0 {
-				w.logMessage(s)
+			line := w.buffer.String()
+			if len(line) > 0 {
+				w.logMessage(line)
 				w.buffer.Reset()
 			}
 		} else {
@@ -38,31 +39,29 @@ func (w logWriter) Write(p []byte) (n int, err error) {
 	return
 }
 
-func (w logWriter) logMessage(s string) {
-
-	// Check if the message is prefixed with a known level
-	// and log it with the corresponding level if it does.
-	a := strings.SplitAfterN(s, ": ", 2)
-	if len(a) == 2 {
-		switch a[0] {
-		case "Debug: ":
-			w.logger.Debug().Msg(a[1])
-			return
-		case "Info: ":
-			w.logger.Info().Msg(a[1])
-			return
-		case "Warning: ":
-			w.logger.Warn().Msg(a[1])
-			return
-		case "Error: ":
-			w.logger.Error().Msg(a[1])
-			return
-		case "abort: ":
-			w.logger.WithLevel(zerolog.FatalLevel).Msg(a[1])
-			return
-		}
+func (w logWriter) logMessage(line string) {
+	msg, lvl := utils.SplitConsoleOutputLine(line)
+	level := parseLevel(lvl)
+	if level == zerolog.NoLevel {
+		level = w.level
 	}
 
-	// Otherwise, log the message with the configured level.
-	w.logger.WithLevel(w.level).CallerSkipFrame(1).Msg(s)
+	w.logger.WithLevel(level).Msg(msg)
+}
+
+func parseLevel(level string) zerolog.Level {
+	switch level {
+	case "debug":
+		return zerolog.DebugLevel
+	case "info":
+		return zerolog.InfoLevel
+	case "warning":
+		return zerolog.WarnLevel
+	case "error":
+		return zerolog.ErrorLevel
+	case "fatal":
+		return zerolog.FatalLevel
+	default:
+		return zerolog.NoLevel
+	}
 }

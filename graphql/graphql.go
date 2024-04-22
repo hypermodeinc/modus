@@ -5,13 +5,17 @@
 package graphql
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 
 	"hmruntime/graphql/engine"
 	"hmruntime/logger"
+	"hmruntime/utils"
 	"hmruntime/wasmhost"
 
+	"github.com/buger/jsonparser"
 	gql "github.com/wundergraph/graphql-go-tools/execution/graphql"
 	"github.com/wundergraph/graphql-go-tools/v2/pkg/graphqlerrors"
 )
@@ -48,9 +52,13 @@ func HandleGraphQLRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Create the output buffers map
+	buffers := map[string]utils.OutputBuffers{}
+	ctx = context.WithValue(ctx, utils.FunctionOutputBuffersContextKey, buffers)
+
 	// Execute the GraphQL query
-	result := gql.NewEngineResultWriter()
-	err = engine.Execute(ctx, &gqlRequest, &result)
+	resultWriter := gql.NewEngineResultWriter()
+	err = engine.Execute(ctx, &gqlRequest, &resultWriter)
 	if err != nil {
 		requestErrors := graphqlerrors.RequestErrorsFromError(err)
 		if len(requestErrors) > 0 {
@@ -66,11 +74,67 @@ func HandleGraphQLRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	response := resultWriter.Bytes()
+	response, err = addLogsToResponse(response, buffers)
+	if err != nil {
+		msg := "Failed to add logs to response."
+		logger.Err(ctx, err).Msg(msg)
+		http.Error(w, fmt.Sprintf("%s\n%v", msg, err), http.StatusInternalServerError)
+	}
+
 	// Return the response
 	writeJsonContentHeader(w)
-	w.Write(adjustResponse(result.Bytes()))
+	w.Write(adjustResponse(response))
 }
 
 func writeJsonContentHeader(w http.ResponseWriter) {
 	w.Header().Set("Content-Type", "application/json")
+}
+
+func addLogsToResponse(response []byte, buffers map[string]utils.OutputBuffers) ([]byte, error) {
+
+	logs := make(map[string][]utils.LogMessage, len(buffers))
+	for key, buf := range buffers {
+		l := utils.TransformConsoleOutput(buf)
+		a := make([]utils.LogMessage, 0, len(l))
+		for _, m := range l {
+			// Only include non-error messages here.
+			// Error messages are already included in the response as GraphQL errors.
+			if !m.IsError() {
+				a = append(a, m)
+			}
+		}
+
+		if len(a) > 0 {
+			logs[key] = a
+		}
+	}
+
+	if len(logs) == 0 {
+		return response, nil
+	}
+
+	extensions, jsonType, _, err := jsonparser.Get(response, "extensions")
+	if jsonType == jsonparser.NotExist {
+		extensions = []byte("{}")
+	} else if err != nil {
+		return nil, err
+	}
+
+	logBytes, err := json.Marshal(logs)
+	if err != nil {
+		return nil, err
+	}
+
+	extensions, err = jsonparser.Set(extensions, logBytes, "logs")
+	if err != nil {
+		return nil, err
+	}
+
+	response, err = jsonparser.Set(response, extensions, "extensions")
+	if err != nil {
+		return nil, err
+	}
+
+	return response, nil
 }
