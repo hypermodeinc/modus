@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"hmruntime/graphql/datasource"
 	"hmruntime/graphql/engine"
 	"hmruntime/logger"
 	"hmruntime/utils"
@@ -52,9 +53,9 @@ func HandleGraphQLRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Create the output buffers map
-	buffers := map[string]utils.OutputBuffers{}
-	ctx = context.WithValue(ctx, utils.FunctionOutputBuffersContextKey, buffers)
+	// Create the output map
+	output := map[string]datasource.FunctionOutput{}
+	ctx = context.WithValue(ctx, utils.FunctionOutputContextKey, output)
 
 	// Execute the GraphQL query
 	resultWriter := gql.NewEngineResultWriter()
@@ -75,9 +76,9 @@ func HandleGraphQLRequest(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response := resultWriter.Bytes()
-	response, err = addLogsToResponse(response, buffers)
+	response, err = addOutputToResponse(response, output)
 	if err != nil {
-		msg := "Failed to add logs to response."
+		msg := "Failed to add function output to response."
 		logger.Err(ctx, err).Msg(msg)
 		http.Error(w, fmt.Sprintf("%s\n%v", msg, err), http.StatusInternalServerError)
 	}
@@ -91,11 +92,20 @@ func writeJsonContentHeader(w http.ResponseWriter) {
 	w.Header().Set("Content-Type", "application/json")
 }
 
-func addLogsToResponse(response []byte, buffers map[string]utils.OutputBuffers) ([]byte, error) {
+func addOutputToResponse(response []byte, output map[string]datasource.FunctionOutput) ([]byte, error) {
 
-	logs := make(map[string][]utils.LogMessage, len(buffers))
-	for key, buf := range buffers {
-		l := utils.TransformConsoleOutput(buf)
+	type invocationInfo struct {
+		ExecutionId string             `json:"executionId"`
+		Logs        []utils.LogMessage `json:"logs,omitempty"`
+	}
+
+	invocations := make(map[string]invocationInfo, len(output))
+	for key, item := range output {
+		invocation := invocationInfo{
+			ExecutionId: item.ExecutionId,
+		}
+
+		l := utils.TransformConsoleOutput(item.Buffers)
 		a := make([]utils.LogMessage, 0, len(l))
 		for _, m := range l {
 			// Only include non-error messages here.
@@ -104,13 +114,14 @@ func addLogsToResponse(response []byte, buffers map[string]utils.OutputBuffers) 
 				a = append(a, m)
 			}
 		}
-
 		if len(a) > 0 {
-			logs[key] = a
+			invocation.Logs = a
 		}
+
+		invocations[key] = invocation
 	}
 
-	if len(logs) == 0 {
+	if len(invocations) == 0 {
 		return response, nil
 	}
 
@@ -121,12 +132,12 @@ func addLogsToResponse(response []byte, buffers map[string]utils.OutputBuffers) 
 		return nil, err
 	}
 
-	logBytes, err := json.Marshal(logs)
+	invocationData, err := json.Marshal(invocations)
 	if err != nil {
 		return nil, err
 	}
 
-	extensions, err = jsonparser.Set(extensions, logBytes, "logs")
+	extensions, err = jsonparser.Set(extensions, invocationData, "invocations")
 	if err != nil {
 		return nil, err
 	}

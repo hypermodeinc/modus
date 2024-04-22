@@ -28,6 +28,11 @@ type callInfo struct {
 	Parameters map[string]any `json:"data"`
 }
 
+type FunctionOutput struct {
+	ExecutionId string
+	Buffers     utils.OutputBuffers
+}
+
 type Source struct{}
 
 func (s Source) Load(ctx context.Context, input []byte, writer io.Writer) error {
@@ -57,7 +62,9 @@ func (s Source) callFunction(ctx context.Context, callInfo callInfo) (any, []res
 	}
 
 	// Prepare the context that will be used throughout the function execution
-	ctx = prepareContext(ctx, info)
+	executionId := xid.New().String()
+	ctx = context.WithValue(ctx, utils.ExecutionIdContextKey, executionId)
+	ctx = context.WithValue(ctx, utils.PluginContextKey, info.Plugin)
 
 	// Create output buffers for the function to write logs to
 	buffers := utils.OutputBuffers{}
@@ -76,9 +83,12 @@ func (s Source) callFunction(ctx context.Context, callInfo callInfo) (any, []res
 	// Call the function
 	result, err := functions.CallFunction(ctx, mod, info, callInfo.Parameters)
 
-	// Store the output buffers in the context
-	allBuffers := ctx.Value(utils.FunctionOutputBuffersContextKey).(map[string]utils.OutputBuffers)
-	allBuffers[callInfo.Function.AliasOrName()] = buffers
+	// Store the Execution ID and output buffers in the context
+	outputMap := ctx.Value(utils.FunctionOutputContextKey).(map[string]FunctionOutput)
+	outputMap[callInfo.Function.AliasOrName()] = FunctionOutput{
+		ExecutionId: executionId,
+		Buffers:     buffers,
+	}
 
 	// Transform error lines in the output buffers to GraphQL errors
 	gqlErrors := transformErrors(buffers, callInfo)
@@ -93,15 +103,6 @@ func parseInput(input []byte) (callInfo, error) {
 	var ci callInfo
 	err := dec.Decode(&ci)
 	return ci, err
-}
-
-func prepareContext(ctx context.Context, info functions.FunctionInfo) context.Context {
-	// TODO: We should return the execution id(s) in the response somehow.
-	// There might be multiple execution ids if the request triggers multiple function calls.
-	executionId := xid.New().String()
-	ctx = context.WithValue(ctx, utils.ExecutionIdContextKey, executionId)
-	ctx = context.WithValue(ctx, utils.PluginContextKey, info.Plugin)
-	return ctx
 }
 
 func writeGraphQLResponse(writer io.Writer, result any, gqlErrors []resolve.GraphQLError, fnErr error, ci callInfo) error {
