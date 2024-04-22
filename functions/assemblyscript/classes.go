@@ -14,16 +14,16 @@ import (
 )
 
 func readClass(ctx context.Context, mem wasm.Memory, def plugins.TypeDefinition, offset uint32) (map[string]any, error) {
-	result := make(map[string]any)
+	classMap := make(map[string]any)
 	for _, field := range def.Fields {
 		fieldOffset := offset + field.Offset
 		val, err := readField(ctx, mem, field.Type, fieldOffset)
 		if err != nil {
 			return nil, err
 		}
-		result[field.Name] = val
+		classMap[field.Name] = val
 	}
-	return result, nil
+	return classMap, nil
 }
 
 func readField(ctx context.Context, mem wasm.Memory, typ plugins.TypeInfo, offset uint32) (any, error) {
@@ -102,4 +102,48 @@ func readField(ctx context.Context, mem wasm.Memory, typ plugins.TypeInfo, offse
 	}
 
 	return result, nil
+}
+
+func writeClass(ctx context.Context, mod wasm.Module, def plugins.TypeDefinition, classMap map[string]any) (uint32, error) {
+	offset, err := allocateWasmMemory(ctx, mod, int(def.Size), def.Id)
+	if err != nil {
+		return 0, err
+	}
+
+	for _, field := range def.Fields {
+		val := classMap[field.Name]
+		fieldOffset := offset + field.Offset
+		err := writeField(ctx, mod, field.Type, fieldOffset, val)
+		if err != nil {
+			return 0, err
+		}
+	}
+	return offset, nil
+}
+
+func writeField(ctx context.Context, mod wasm.Module, typ plugins.TypeInfo, offset uint32, val any) error {
+	enc, err := EncodeValue(ctx, mod, typ, val)
+	if err != nil {
+		return err
+	}
+
+	mem := mod.Memory()
+
+	var ok bool
+	switch typ.Path {
+	case "bool", "i8", "u8":
+		ok = mem.WriteByte(offset, byte(enc))
+	case "i16", "u16":
+		ok = mem.WriteUint16Le(offset, uint16(enc))
+	case "i64", "u64", "f64":
+		ok = mem.WriteUint64Le(offset, enc)
+	default:
+		ok = mem.WriteUint32Le(offset, uint32(enc))
+	}
+
+	if !ok {
+		return fmt.Errorf("error writing %s to wasm memory", typ.Name)
+	}
+
+	return nil
 }

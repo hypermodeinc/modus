@@ -146,12 +146,11 @@ func EncodeValue(ctx context.Context, mod wasm.Module, typ plugins.TypeInfo, val
 		}
 
 		return uint64(ptr), nil
-
-	// TODO: custom types
-
-	default:
-		return 0, fmt.Errorf("unknown parameter type: %s", typ)
 	}
+
+	// Managed types need to be written to wasm memory
+	offset, err := writeObject(ctx, mod, typ, val)
+	return uint64(offset), err
 }
 
 func DecodeValue(ctx context.Context, mod wasm.Module, typ plugins.TypeInfo, val uint64) (any, error) {
@@ -188,7 +187,7 @@ func DecodeValue(ctx context.Context, mod wasm.Module, typ plugins.TypeInfo, val
 		return wasm.DecodeF64(val), nil
 	}
 
-	// Managed types, held in wasm memory
+	// Managed types are read from wasm memory
 	mem := mod.Memory()
 	return readObject(ctx, mem, typ, uint32(val))
 }

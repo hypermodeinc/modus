@@ -40,3 +40,19 @@ func readObject(ctx context.Context, mem wasm.Memory, typ plugins.TypeInfo, offs
 
 	return readClass(ctx, mem, def, offset)
 }
+
+func writeObject(ctx context.Context, mod wasm.Module, typ plugins.TypeInfo, val any) (uint32, error) {
+	// TODO: handle arrays and maps
+
+	def, err := getTypeDefinition(ctx, typ.Path)
+	if err != nil {
+		return 0, err
+	}
+
+	switch v := val.(type) {
+	case map[string]any:
+		return writeClass(ctx, mod, def, v)
+	}
+
+	return 0, fmt.Errorf("unsupported object type")
+}
