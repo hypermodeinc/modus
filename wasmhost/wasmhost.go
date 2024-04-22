@@ -12,6 +12,7 @@ import (
 
 	"hmruntime/logger"
 	"hmruntime/plugins"
+	"hmruntime/utils"
 
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
@@ -29,7 +30,7 @@ var RegistrationRequest chan bool = make(chan bool)
 var Plugins = plugins.NewPluginRegistry()
 
 // Gets a module instance for the given plugin, used for a single invocation.
-func GetModuleInstance(ctx context.Context, plugin *plugins.Plugin, wStdOut io.Writer, wStdErr io.Writer) (api.Module, error) {
+func GetModuleInstance(ctx context.Context, plugin *plugins.Plugin, buffers *utils.OutputBuffers) (api.Module, error) {
 
 	// Get the logger and writers for the plugin's stdout and stderr.
 	log := logger.Get(ctx).With().Bool("user_visible", true).Logger()
@@ -37,8 +38,8 @@ func GetModuleInstance(ctx context.Context, plugin *plugins.Plugin, wStdOut io.W
 	wErrorLog := logger.NewLogWriter(&log, zerolog.ErrorLevel)
 
 	// Capture stdout/stderr both to logs, and to provided writers.
-	wOut := io.MultiWriter(wStdOut, wInfoLog)
-	wErr := io.MultiWriter(wStdErr, wErrorLog)
+	wOut := io.MultiWriter(&buffers.StdOut, wInfoLog)
+	wErr := io.MultiWriter(&buffers.StdErr, wErrorLog)
 
 	// Configure the module instance.
 	cfg := wazero.NewModuleConfig().
