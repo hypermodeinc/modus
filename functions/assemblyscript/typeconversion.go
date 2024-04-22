@@ -167,7 +167,7 @@ var typeMap = map[string]string{
 	"~lib/wasi_date/wasi_Date": "Date",
 }
 
-var mapRegex = regexp.MustCompile(`^~lib/map/Map<(\w+<.+>|.+),\s*(\w+<.+>|.+)>$`)
+var mapRegex = regexp.MustCompile(`^~lib/map/Map<(\w+<.+>|.+?),\s*(\w+<.+>|.+?)>$`)
 
 func isArrayType(path string) bool {
 	return strings.HasPrefix(path, "~lib/array/Array<")

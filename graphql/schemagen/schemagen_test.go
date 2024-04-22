@@ -176,6 +176,22 @@ func Test_ConvertType(t *testing.T) {
 				{"value", "String!"},
 			},
 		}}},
+		{"Map<string, Map<string, f32>>", "[StringStringFloatPairListPair!]!", nil, []TypeDefinition{
+			{
+				Name: "StringStringFloatPairListPair",
+				Fields: []NameTypePair{
+					{"key", "String!"},
+					{"value", "[StringFloatPair!]!"},
+				},
+			},
+			{
+				Name: "StringFloatPair",
+				Fields: []NameTypePair{
+					{"key", "String!"},
+					{"value", "Float!"},
+				},
+			},
+		}},
 	}
 
 	for _, tc := range testCases {
@@ -193,7 +209,7 @@ func Test_ConvertType(t *testing.T) {
 			if tc.expectedTypeDefs == nil {
 				require.Empty(t, typeDefs)
 			} else {
-				require.Equal(t, tc.expectedTypeDefs, utils.MapValues(typeDefs))
+				require.ElementsMatch(t, tc.expectedTypeDefs, utils.MapValues(typeDefs))
 			}
 		})
 	}
