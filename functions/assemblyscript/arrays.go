@@ -61,3 +61,7 @@ func readArray(ctx context.Context, mem wasm.Memory, def plugins.TypeDefinition,
 
 	return result, nil
 }
+
+func writeArray(ctx context.Context, mod wasm.Module, def plugins.TypeDefinition, val []any) (uint32, error) {
+	panic("not implemented")
+}
