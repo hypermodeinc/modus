@@ -86,13 +86,9 @@ func writeObject(ctx context.Context, mod wasm.Module, typ plugins.TypeInfo, val
 	}
 
 	if isArrayType(typ.Path) {
-		arr, err := utils.ConvertToArray(val)
-		if err != nil {
-			return 0, err
-		}
-		return writeArray(ctx, mod, def, arr)
+		return writeArray(ctx, mod, def, val)
 	} else if isMapType(typ.Path) {
-		return writeMap(ctx, mod, def, val.(map[any]any))
+		return writeMap(ctx, mod, def, val)
 	} else {
 		return writeClass(ctx, mod, def, val)
 	}

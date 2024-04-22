@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"hmruntime/plugins"
+	"hmruntime/utils"
 
 	wasm "github.com/tetratelabs/wazero/api"
 )
@@ -56,23 +57,27 @@ func readArray(ctx context.Context, mem wasm.Memory, def plugins.TypeDefinition,
 	return result, nil
 }
 
-func writeArray(ctx context.Context, mod wasm.Module, def plugins.TypeDefinition, val []any) (uint32, error) {
-	var err error
+func writeArray(ctx context.Context, mod wasm.Module, def plugins.TypeDefinition, data any) (uint32, error) {
+	arr, err := utils.ConvertToArray(data)
+	if err != nil {
+		return 0, err
+	}
+
 	var bufferOffset uint32
 	var bufferSize uint32
 
 	// write array buffer
 	// note: zero-length array has no array buffer
-	if len(val) > 0 {
+	if len(arr) > 0 {
 		itemType := getArraySubtypeInfo(def.Path)
 		itemSize := getItemSize(itemType)
-		bufferSize = itemSize * uint32(len(val))
+		bufferSize = itemSize * uint32(len(arr))
 		bufferOffset, err = allocateWasmMemory(ctx, mod, int(bufferSize), 1)
 		if err != nil {
 			return 0, fmt.Errorf("failed to allocate memory for array buffer: %w", err)
 		}
 
-		for i, v := range val {
+		for i, v := range arr {
 			itemOffset := bufferOffset + (itemSize * uint32(i))
 			err = writeField(ctx, mod, itemType, itemOffset, v)
 			if err != nil {
@@ -103,7 +108,7 @@ func writeArray(ctx context.Context, mod wasm.Module, def plugins.TypeDefinition
 		return 0, fmt.Errorf("failed to write array bytes length")
 	}
 
-	ok = mem.WriteUint32Le(offset+12, uint32(len(val)))
+	ok = mem.WriteUint32Le(offset+12, uint32(len(arr)))
 	if !ok {
 		return 0, fmt.Errorf("failed to write array length")
 	}

@@ -96,6 +96,6 @@ func readMap(ctx context.Context, mem wasm.Memory, def plugins.TypeDefinition, o
 	return result, nil
 }
 
-func writeMap(ctx context.Context, mod wasm.Module, def plugins.TypeDefinition, val map[any]any) (uint32, error) {
+func writeMap(ctx context.Context, mod wasm.Module, def plugins.TypeDefinition, data any) (uint32, error) {
 	panic("not implemented")
 }
