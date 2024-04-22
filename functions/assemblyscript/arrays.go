@@ -12,7 +12,14 @@ import (
 	wasm "github.com/tetratelabs/wazero/api"
 )
 
+// Reference: https://github.com/AssemblyScript/assemblyscript/blob/main/std/assembly/array.ts
+
 func readArray(ctx context.Context, mem wasm.Memory, def plugins.TypeDefinition, offset uint32) ([]any, error) {
+
+	// buffer, ok := mem.ReadUint32Le(offset)
+	// if !ok {
+	// 	return nil, fmt.Errorf("failed to read array buffer pointer")
+	// }
 
 	dataStart, ok := mem.ReadUint32Le(offset + 4)
 	if !ok {
@@ -35,20 +42,7 @@ func readArray(ctx context.Context, mem wasm.Memory, def plugins.TypeDefinition,
 	}
 
 	itemType := getArraySubtypeInfo(def.Path)
-
-	var itemSize uint32
-	switch itemType.Path {
-	case "u64", "i64", "f64":
-		itemSize = 8
-	case "u32", "i32", "f32":
-		itemSize = 4
-	case "u16", "i16":
-		itemSize = 2
-	case "u8", "i8", "bool":
-		itemSize = 1
-	default:
-		itemSize = 4 // pointer
-	}
+	itemSize := getItemSize(itemType)
 
 	result := make([]any, arrLen)
 	for i := uint32(0); i < arrLen; i++ {
@@ -63,5 +57,56 @@ func readArray(ctx context.Context, mem wasm.Memory, def plugins.TypeDefinition,
 }
 
 func writeArray(ctx context.Context, mod wasm.Module, def plugins.TypeDefinition, val []any) (uint32, error) {
-	panic("not implemented")
+	var err error
+	var bufferOffset uint32
+	var bufferSize uint32
+
+	// write array buffer
+	// note: zero-length array has no array buffer
+	if len(val) > 0 {
+		itemType := getArraySubtypeInfo(def.Path)
+		itemSize := getItemSize(itemType)
+		bufferSize = itemSize * uint32(len(val))
+		bufferOffset, err = allocateWasmMemory(ctx, mod, int(bufferSize), 1)
+		if err != nil {
+			return 0, fmt.Errorf("failed to allocate memory for array buffer: %w", err)
+		}
+
+		for i, v := range val {
+			itemOffset := bufferOffset + (itemSize * uint32(i))
+			err = writeField(ctx, mod, itemType, itemOffset, v)
+			if err != nil {
+				return 0, fmt.Errorf("failed to write array item: %w", err)
+			}
+		}
+	}
+
+	// write array object
+	offset, err := allocateWasmMemory(ctx, mod, int(def.Size), def.Id)
+	if err != nil {
+		return 0, err
+	}
+
+	mem := mod.Memory()
+	ok := mem.WriteUint32Le(offset, bufferOffset)
+	if !ok {
+		return 0, fmt.Errorf("failed to write array buffer pointer")
+	}
+
+	ok = mem.WriteUint32Le(offset+4, bufferOffset)
+	if !ok {
+		return 0, fmt.Errorf("failed to write array data start pointer")
+	}
+
+	ok = mem.WriteUint32Le(offset+8, bufferSize)
+	if !ok {
+		return 0, fmt.Errorf("failed to write array bytes length")
+	}
+
+	ok = mem.WriteUint32Le(offset+12, uint32(len(val)))
+	if !ok {
+		return 0, fmt.Errorf("failed to write array length")
+	}
+
+	return offset, nil
 }

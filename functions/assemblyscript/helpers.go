@@ -45,6 +45,21 @@ func isPrimitive(t string) bool {
 	}
 }
 
+func getItemSize(typ plugins.TypeInfo) uint32 {
+	switch typ.Path {
+	case "u64", "i64", "f64":
+		return 8
+	case "u32", "i32", "f32":
+		return 4
+	case "u16", "i16":
+		return 2
+	case "u8", "i8", "bool":
+		return 1
+	default:
+		return 4 // pointer
+	}
+}
+
 func isArrayType(path string) bool {
 	return strings.HasPrefix(path, "~lib/array/Array<")
 }

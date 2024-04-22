@@ -37,12 +37,16 @@ func EncodeValue(ctx context.Context, mod wasm.Module, typ plugins.TypeInfo, val
 				return 0, fmt.Errorf("input value is not an int")
 			}
 			x = int32(n)
+		case int:
+			x = int32(v)
 		case int8:
 			x = int32(v)
 		case int16:
 			x = int32(v)
 		case int32:
 			x = v
+		case uint:
+			x = int32(v)
 		case uint8:
 			x = int32(v)
 		case uint16:
