@@ -5,12 +5,11 @@
 package assemblyscript
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 
 	"hmruntime/plugins"
+	"hmruntime/utils"
 
 	wasm "github.com/tetratelabs/wazero/api"
 )
@@ -123,17 +122,7 @@ func writeClass(ctx context.Context, mod wasm.Module, def plugins.TypeDefinition
 		}
 		return offset, nil
 	default:
-		// Convert the data to a map and try again.
-		j, err := json.Marshal(data)
-		if err != nil {
-			return 0, err
-		}
-
-		dec := json.NewDecoder(bytes.NewReader(j))
-		dec.UseNumber()
-
-		var m map[string]any
-		err = dec.Decode(&m)
+		m, err := utils.ConvertToMap(data)
 		if err != nil {
 			return 0, err
 		}

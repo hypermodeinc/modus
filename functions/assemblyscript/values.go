@@ -10,6 +10,7 @@ import (
 	"fmt"
 
 	"hmruntime/plugins"
+	"hmruntime/utils"
 
 	wasm "github.com/tetratelabs/wazero/api"
 )
@@ -116,6 +117,27 @@ func EncodeValue(ctx context.Context, mod wasm.Module, typ plugins.TypeInfo, val
 	// Managed types need to be written to wasm memory
 	offset, err := writeObject(ctx, mod, typ, val)
 	return uint64(offset), err
+}
+
+func DecodeValueAs[T any](ctx context.Context, mod wasm.Module, typ plugins.TypeInfo, val uint64) (T, error) {
+	var result T
+	r, err := DecodeValue(ctx, mod, typ, val)
+	if err != nil {
+		return result, err
+	}
+
+	switch v := r.(type) {
+	case T:
+		return v, nil
+	case map[string]any:
+		out, err := utils.ConvertToStruct[T](v)
+		if err != nil {
+			return result, err
+		}
+		return out, nil
+	default:
+		return result, fmt.Errorf("unexpected type %T, expected %T", r, result)
+	}
 }
 
 func DecodeValue(ctx context.Context, mod wasm.Module, typ plugins.TypeInfo, val uint64) (any, error) {
