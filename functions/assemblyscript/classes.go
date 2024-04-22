@@ -13,7 +13,7 @@ import (
 	wasm "github.com/tetratelabs/wazero/api"
 )
 
-func readClass(ctx context.Context, mem wasm.Memory, def plugins.TypeDefinition, offset uint32) (any, error) {
+func readClass(ctx context.Context, mem wasm.Memory, def plugins.TypeDefinition, offset uint32) (map[string]any, error) {
 	result := make(map[string]any)
 	for _, field := range def.Fields {
 		fieldOffset := offset + field.Offset
