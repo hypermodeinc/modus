@@ -8,10 +8,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"time"
 
 	"hmruntime/plugins"
-	"hmruntime/utils"
 
 	wasm "github.com/tetratelabs/wazero/api"
 )
@@ -109,43 +107,6 @@ func EncodeValue(ctx context.Context, mod wasm.Module, typ plugins.TypeInfo, val
 		}
 
 		return wasm.EncodeF64(x), nil
-
-	case "~lib/string/String":
-		s, ok := val.(string)
-		if !ok {
-			return 0, fmt.Errorf("input value is not a string")
-		}
-
-		ptr, err := WriteString(ctx, mod, s)
-		return uint64(ptr), err
-
-	case "~lib/date/Date", "~lib/wasi_date/wasi_Date":
-		var t time.Time
-		switch v := val.(type) {
-		case json.Number:
-			n, err := v.Int64()
-			if err != nil {
-				return 0, err
-			}
-			t = time.UnixMilli(n)
-		case string:
-			var err error
-			t, err = utils.ParseTime(v)
-			if err != nil {
-				return 0, err
-			}
-		case utils.JSONTime:
-			t = time.Time(v)
-		case time.Time:
-			t = v
-		}
-
-		ptr, err := writeDate(ctx, mod, t)
-		if err != nil {
-			return 0, err
-		}
-
-		return uint64(ptr), nil
 	}
 
 	// Managed types need to be written to wasm memory
