@@ -74,7 +74,7 @@ func Test_GetGraphQLSchema(t *testing.T) {
 
 	expectedSchema := `type Query {
   add(a: Int!, b: Int!): Int!
-  currentTime: DateTime!
+  currentTime: Timestamp!
   doNothing: Void
   getPeople: [Person!]!
   getPerson: Person!
@@ -82,7 +82,7 @@ func Test_GetGraphQLSchema(t *testing.T) {
   transform(items: [StringStringPair!]!): [StringStringPair!]!
 }
 
-scalar DateTime
+scalar Timestamp
 scalar Void
 
 type Person {
@@ -123,7 +123,7 @@ func Test_ConvertType(t *testing.T) {
 		{"(string | null)[]", "[String]!", nil, nil},
 
 		// Custom scalar types
-		{"Date", "DateTime!", nil, []TypeDefinition{{Name: "DateTime"}}},
+		{"Date", "Timestamp!", nil, []TypeDefinition{{Name: "Timestamp"}}},
 		{"i64", "Int64!", nil, []TypeDefinition{{Name: "Int64"}}},
 		{"u32", "UInt!", nil, []TypeDefinition{{Name: "UInt"}}},
 		{"u64", "UInt64!", nil, []TypeDefinition{{Name: "UInt64"}}},
@@ -176,6 +176,22 @@ func Test_ConvertType(t *testing.T) {
 				{"value", "String!"},
 			},
 		}}},
+		{"Map<string, Map<string, f32>>", "[StringStringFloatPairListPair!]!", nil, []TypeDefinition{
+			{
+				Name: "StringStringFloatPairListPair",
+				Fields: []NameTypePair{
+					{"key", "String!"},
+					{"value", "[StringFloatPair!]!"},
+				},
+			},
+			{
+				Name: "StringFloatPair",
+				Fields: []NameTypePair{
+					{"key", "String!"},
+					{"value", "Float!"},
+				},
+			},
+		}},
 	}
 
 	for _, tc := range testCases {
@@ -193,7 +209,7 @@ func Test_ConvertType(t *testing.T) {
 			if tc.expectedTypeDefs == nil {
 				require.Empty(t, typeDefs)
 			} else {
-				require.Equal(t, tc.expectedTypeDefs, utils.MapValues(typeDefs))
+				require.ElementsMatch(t, tc.expectedTypeDefs, utils.MapValues(typeDefs))
 			}
 		})
 	}

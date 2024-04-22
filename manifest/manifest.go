@@ -2,27 +2,28 @@
  * Copyright 2024 Hypermode, Inc.
  */
 
-package appdata
+package manifest
 
-var appDataFiles = map[string]AppData{
+var manifestFiles = map[string]Manifest{
 	"hypermode.json": &HypermodeData,
 	"models.json":    &ModelData,
 }
 
-var HypermodeData HypermodeAppData = HypermodeAppData{}
-var ModelData ModelsAppData = ModelsAppData{}
+var HypermodeData HypermodeManifest = HypermodeManifest{}
+var ModelData ModelsManifest = ModelsManifest{}
 
-type AppData any
+type Manifest any
 
-type HypermodeAppData struct {
+type HypermodeManifest struct {
 	Models               []Model               `json:"models"`
+	Hosts                []Host                `json:"hosts"`
 	EmbeddingSpecs       []EmbeddingSpec       `json:"embeddingSpecs"`
 	TrainingInstructions []TrainingInstruction `json:"trainingInstructions"`
-	AppData
+	Manifest
 }
 
-type ModelsAppData struct {
-	AppData
+type ModelsManifest struct {
+	Manifest
 }
 
 type ModelTask string
@@ -30,7 +31,7 @@ type ModelTask string
 const (
 	ClassificationTask ModelTask = "classification"
 	EmbeddingTask      ModelTask = "embedding"
-	GeneratorTask      ModelTask = "generator"
+	GenerationTask     ModelTask = "generation"
 )
 
 type Model struct {
@@ -39,8 +40,12 @@ type Model struct {
 	SourceModel string    `json:"sourceModel"`
 	Provider    string    `json:"provider"`
 	Host        string    `json:"host"`
-	Endpoint    string    `json:"endpoint"`
-	AuthHeader  string    `json:"authHeader"`
+}
+
+type Host struct {
+	Name       string `json:"name"`
+	Endpoint   string `json:"endpoint"`
+	AuthHeader string `json:"authHeader"`
 }
 
 type EmbeddingSpec struct {

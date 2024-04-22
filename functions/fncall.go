@@ -27,6 +27,7 @@ func CallFunction(ctx context.Context, mod wasm.Module, info FunctionInfo, input
 	duration := time.Since(start)
 
 	if err != nil {
+		err = transformError(err)
 		logger.Err(ctx, err).
 			Str("function", fnName).
 			Dur("duration_ms", duration).

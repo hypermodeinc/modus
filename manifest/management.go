@@ -2,7 +2,7 @@
  * Copyright 2024 Hypermode, Inc.
  */
 
-package appdata
+package manifest
 
 import (
 	"context"
@@ -43,9 +43,9 @@ func loadAppData(ctx context.Context, filename string) error {
 		return err
 	}
 
-	_, ok := appDataFiles[filename]
+	_, ok := manifestFiles[filename]
 	if ok {
-		err = json.Unmarshal(bytes, appDataFiles[filename])
+		err = json.Unmarshal(bytes, manifestFiles[filename])
 		if err != nil {
 			return err
 		}

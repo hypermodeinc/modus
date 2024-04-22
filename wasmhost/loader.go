@@ -1,45 +1,25 @@
 /*
- * Copyright 2023 Hypermode, Inc.
+ * Copyright 2024 Hypermode, Inc.
  */
 
-package host
+package wasmhost
 
 import (
 	"context"
-	"crypto/rand"
 	"fmt"
-	"io"
-	"strings"
 	"time"
 
 	"hmruntime/logger"
 	"hmruntime/plugins"
 	"hmruntime/storage"
 	"hmruntime/utils"
-
-	"github.com/google/uuid"
-	"github.com/rs/zerolog"
-	"github.com/tetratelabs/wazero"
-	wasm "github.com/tetratelabs/wazero/api"
-	wasi "github.com/tetratelabs/wazero/imports/wasi_snapshot_preview1"
 )
-
-type OutputBuffers struct {
-	Stdout *strings.Builder
-	Stderr *strings.Builder
-}
 
 var pluginLoaded func(ctx context.Context, metadata plugins.PluginMetadata) error
 
+// Registers a callback function that is called when a plugin is loaded.
 func RegisterPluginLoadedCallback(callback func(ctx context.Context, metadata plugins.PluginMetadata) error) {
 	pluginLoaded = callback
-}
-
-func InitWasmRuntime(ctx context.Context) error {
-	cfg := wazero.NewRuntimeConfig()
-	cfg = cfg.WithCloseOnContextDone(true)
-	WasmRuntime = wazero.NewRuntimeWithConfig(ctx, cfg)
-	return instantiateWasiFunctions(ctx)
 }
 
 func MonitorPlugins(ctx context.Context) {
@@ -84,7 +64,7 @@ func loadPlugin(ctx context.Context, filename string) error {
 	}
 
 	// Compile the plugin into a module.
-	cm, err := WasmRuntime.CompileModule(ctx, bytes)
+	cm, err := RuntimeInstance.CompileModule(ctx, bytes)
 	if err != nil {
 		return fmt.Errorf("failed to compile the plugin: %w", err)
 	}
@@ -175,49 +155,4 @@ func unloadPlugin(ctx context.Context, filename string) error {
 
 	Plugins.Remove(p)
 	return (*p.Module).Close(ctx)
-}
-
-func GetModuleInstance(ctx context.Context, plugin *plugins.Plugin) (wasm.Module, OutputBuffers, error) {
-
-	// Get the logger and writers for the plugin's stdout and stderr.
-	log := logger.Get(ctx).With().Bool("user_visible", true).Logger()
-	wInfoLog := logger.NewLogWriter(&log, zerolog.InfoLevel)
-	wErrorLog := logger.NewLogWriter(&log, zerolog.ErrorLevel)
-
-	// Create string buffers to capture stdout and stderr.
-	// Still write to the log, but also capture the output in the buffers.
-	buf := OutputBuffers{&strings.Builder{}, &strings.Builder{}}
-	wOut := io.MultiWriter(buf.Stdout, wInfoLog)
-	wErr := io.MultiWriter(buf.Stderr, wErrorLog)
-
-	// Configure the module instance.
-	cfg := wazero.NewModuleConfig().
-		WithName(plugin.Name() + "_" + uuid.NewString()).
-		WithSysWalltime().WithSysNanotime().
-		WithRandSource(rand.Reader).
-		WithStdout(wOut).WithStderr(wErr)
-
-	// Instantiate the plugin as a module.
-	// NOTE: This will also invoke the plugin's `_start` function,
-	// which will call any top-level code in the plugin.
-	mod, err := WasmRuntime.InstantiateModule(ctx, *plugin.Module, cfg)
-	if err != nil {
-		return nil, buf, fmt.Errorf("failed to instantiate the plugin module: %w", err)
-	}
-
-	return mod, buf, nil
-}
-
-func instantiateWasiFunctions(ctx context.Context) error {
-	b := WasmRuntime.NewHostModuleBuilder(wasi.ModuleName)
-	wasi.NewFunctionExporter().ExportFunctions(b)
-
-	// If we ever need to override any of the WASI functions, we can do so here.
-
-	_, err := b.Instantiate(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to instantiate the %s module: %w", wasi.ModuleName, err)
-	}
-
-	return nil
 }

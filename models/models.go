@@ -7,16 +7,13 @@ package models
 import (
 	"context"
 	"fmt"
-	"os"
-	"strings"
 
-	"hmruntime/appdata"
-	"hmruntime/aws"
 	"hmruntime/config"
+	"hmruntime/hosts"
+	"hmruntime/manifest"
 	"hmruntime/utils"
 )
 
-const modelKeyPrefix = "HYP_MODEL_KEY_"
 const HypermodeHost string = "hypermode"
 
 // generic output format for models functions
@@ -38,56 +35,12 @@ func GetModel(modelName string, task appdata.ModelTask) (appdata.Model, error) {
 		}
 	}
 
-	return appdata.Model{}, fmt.Errorf("a model '%s' for task '%s' was not found", modelName, task)
+	return manifest.Model{}, fmt.Errorf("a model '%s' for task '%s' was not found", modelName, task)
 }
 
-func GetModelKey(ctx context.Context, model appdata.Model) (string, error) {
-	var key string
-	var err error
+func PostToModelEndpoint[TResult any](ctx context.Context, sentenceMap map[string]string,
+	model manifest.Model, host manifest.Host) (map[string]TResult, error) {
 
-	if config.UseAwsSecrets {
-		// Get the model key from AWS Secrets Manager, using the model name as the secret.
-		key, err = aws.GetSecretString(ctx, model.Name)
-		if key != "" {
-			return key, nil
-		}
-	} else {
-		// Try well-known environment variables first, then model-specific environment variables.
-		key := getWellKnownEnvironmentVariable(model)
-		if key != "" {
-			return key, nil
-		}
-
-		keyEnvVar := modelKeyPrefix + strings.ToUpper(model.Name)
-		key = os.Getenv(keyEnvVar)
-		if key != "" {
-			return key, nil
-		} else {
-			err = fmt.Errorf("environment variable '%s' not found", keyEnvVar)
-		}
-	}
-
-	return "", fmt.Errorf("error getting key for model '%s': %w", model.Name, err)
-}
-
-func getWellKnownEnvironmentVariable(model appdata.Model) string {
-
-	// Some model hosts have well-known environment variables that are used to store the model key.
-	// We should support these to make it easier for users to set up their environment.
-	// We can expand this list as we add more model hosts.
-
-	switch model.Host {
-	case OpenAIHost:
-		return os.Getenv("OPENAI_API_KEY")
-	}
-	return ""
-}
-
-type PredictionResult[T any] struct {
-	Predictions []T `json:"predictions"`
-}
-
-func PostToModelEndpoint[TResult any](ctx context.Context, sentenceMap map[string]string, model appdata.Model) (map[string]TResult, error) {
 	// self hosted models takes in array, can optimize for parallelizing later
 	keys, sentences := []string{}, []string{}
 
@@ -108,13 +61,16 @@ func PostToModelEndpoint[TResult any](ctx context.Context, sentenceMap map[strin
 		endpoint = fmt.Sprintf("http://%s.%s/%s:predict", model.Name, config.ModelHost, model.Task)
 	default:
 		// If the model is not hosted by Hypermode, we need to get the model key and add it to the request headers
-		endpoint = model.Endpoint
-		key, err := GetModelKey(ctx, model)
+		endpoint = host.Endpoint
+		if host.AuthHeader == "" {
+			break
+		}
+		key, err := hosts.GetHostKey(ctx, host)
 		if err != nil {
 			return map[string]TResult{}, fmt.Errorf("error getting model key secret: %w", err)
 		}
 
-		headers[model.AuthHeader] = key
+		headers[host.AuthHeader] = key
 	}
 
 	res, err := utils.PostHttp[PredictionResult[TResult]](endpoint, req, headers)
@@ -131,6 +87,10 @@ func PostToModelEndpoint[TResult any](ctx context.Context, sentenceMap map[strin
 		result[keys[i]] = v
 	}
 	return result, nil
+}
+
+type PredictionResult[T any] struct {
+	Predictions []T `json:"predictions"`
 }
 
 // Define  structures used by text generation functions

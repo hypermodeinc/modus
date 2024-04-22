@@ -110,7 +110,7 @@ func EncodeValue(ctx context.Context, mod wasm.Module, typ plugins.TypeInfo, val
 func DecodeValue(ctx context.Context, mod wasm.Module, typ plugins.TypeInfo, val uint64) (any, error) {
 
 	// Handle null values if the type is nullable
-	if strings.HasSuffix(typ.Path, "|null") {
+	if isNullable(typ.Path) {
 		if val == 0 {
 			return nil, nil
 		}
@@ -155,6 +155,10 @@ func isPrimitive(t string) bool {
 	}
 }
 
+func isNullable(t string) bool {
+	return strings.HasSuffix(t, "|null") || strings.HasSuffix(t, " | null")
+}
+
 var typeMap = map[string]string{
 	"~lib/string/String":       "string",
 	"~lib/array/Array":         "Array",
@@ -163,7 +167,7 @@ var typeMap = map[string]string{
 	"~lib/wasi_date/wasi_Date": "Date",
 }
 
-var mapRegex = regexp.MustCompile(`^~lib/map/Map<(\w+<.+>|.+),\s*(\w+<.+>|.+)>$`)
+var mapRegex = regexp.MustCompile(`^~lib/map/Map<(\w+<.+>|.+?),\s*(\w+<.+>|.+?)>$`)
 
 func isArrayType(path string) bool {
 	return strings.HasPrefix(path, "~lib/array/Array<")
