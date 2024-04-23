@@ -26,6 +26,17 @@ func (t JSONTime) MarshalJSON() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
+func (t *JSONTime) UnmarshalJSON(data []byte) error {
+	s := string(data)
+	s = s[1 : len(s)-1] // Remove quotes
+	tm, err := ParseTime(s)
+	if err != nil {
+		return err
+	}
+	*t = JSONTime(tm)
+	return nil
+}
+
 func (t JSONTime) String() string {
 	return time.Time(t).Format(TimeFormat)
 }
