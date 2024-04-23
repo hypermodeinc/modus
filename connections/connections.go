@@ -77,3 +77,29 @@ func ExecuteDQL[TResponse any](ctx context.Context, host manifest.Host, stmt str
 
 	return response, nil
 }
+
+func FetchGet[TResponse any](ctx context.Context, host manifest.Host, stmt string) (TResponse, error) {
+
+	var response TResponse
+	headers := map[string]string{}
+
+	if host.Endpoint == "" {
+		return response, fmt.Errorf("host endpoint is not defined")
+	}
+	if host.AuthHeader != "" {
+		key, err := hosts.GetHostKey(ctx, host)
+		if err != nil {
+			return response, fmt.Errorf("error getting model key secret: %w", err)
+		}
+		headers[host.AuthHeader] = key
+	}
+
+	var url string = host.Endpoint
+
+	response, err := utils.GetHttp[TResponse](url, stmt, nil)
+	if err != nil {
+		return response, fmt.Errorf("error posting DQL statement: %w", err)
+	}
+
+	return response, nil
+}
