@@ -15,7 +15,7 @@ import (
 
 // Reference: https://github.com/AssemblyScript/assemblyscript/blob/main/std/assembly/array.ts
 
-func readArray(ctx context.Context, mem wasm.Memory, def plugins.TypeDefinition, offset uint32) ([]any, error) {
+func readArray(ctx context.Context, mem wasm.Memory, def plugins.TypeDefinition, offset uint32) (data []any, err error) {
 
 	// buffer, ok := mem.ReadUint32Le(offset)
 	// if !ok {

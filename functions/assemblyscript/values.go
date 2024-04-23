@@ -15,10 +15,10 @@ import (
 	wasm "github.com/tetratelabs/wazero/api"
 )
 
-func EncodeValue(ctx context.Context, mod wasm.Module, typ plugins.TypeInfo, val any) (uint64, error) {
+func EncodeValue(ctx context.Context, mod wasm.Module, typ plugins.TypeInfo, data any) (val uint64, err error) {
 	switch typ.Path {
 	case "bool":
-		b, ok := val.(bool)
+		b, ok := data.(bool)
 		if !ok {
 			return 0, fmt.Errorf("input value is not a bool")
 		}
@@ -31,7 +31,7 @@ func EncodeValue(ctx context.Context, mod wasm.Module, typ plugins.TypeInfo, val
 
 	case "i8", "i16", "i32", "u8", "u16", "u32":
 		var x int32
-		switch v := val.(type) {
+		switch v := data.(type) {
 		case json.Number:
 			n, err := v.Int64()
 			if err != nil {
@@ -62,7 +62,7 @@ func EncodeValue(ctx context.Context, mod wasm.Module, typ plugins.TypeInfo, val
 
 	case "i64", "u64":
 		var x int64
-		switch v := val.(type) {
+		switch v := data.(type) {
 		case json.Number:
 			n, err := v.Int64()
 			if err != nil {
@@ -81,7 +81,7 @@ func EncodeValue(ctx context.Context, mod wasm.Module, typ plugins.TypeInfo, val
 
 	case "f32":
 		var x float32
-		switch v := val.(type) {
+		switch v := data.(type) {
 		case json.Number:
 			n, err := v.Float64()
 			if err != nil {
@@ -98,7 +98,7 @@ func EncodeValue(ctx context.Context, mod wasm.Module, typ plugins.TypeInfo, val
 
 	case "f64":
 		var x float64
-		switch v := val.(type) {
+		switch v := data.(type) {
 		case json.Number:
 			n, err := v.Float64()
 			if err != nil {
@@ -115,11 +115,11 @@ func EncodeValue(ctx context.Context, mod wasm.Module, typ plugins.TypeInfo, val
 	}
 
 	// Managed types need to be written to wasm memory
-	offset, err := writeObject(ctx, mod, typ, val)
+	offset, err := writeObject(ctx, mod, typ, data)
 	return uint64(offset), err
 }
 
-func DecodeValueAs[T any](ctx context.Context, mod wasm.Module, typ plugins.TypeInfo, val uint64) (T, error) {
+func DecodeValueAs[T any](ctx context.Context, mod wasm.Module, typ plugins.TypeInfo, val uint64) (data T, err error) {
 	var result T
 	r, err := DecodeValue(ctx, mod, typ, val)
 	if err != nil {
@@ -140,7 +140,7 @@ func DecodeValueAs[T any](ctx context.Context, mod wasm.Module, typ plugins.Type
 	}
 }
 
-func DecodeValue(ctx context.Context, mod wasm.Module, typ plugins.TypeInfo, val uint64) (any, error) {
+func DecodeValue(ctx context.Context, mod wasm.Module, typ plugins.TypeInfo, val uint64) (data any, err error) {
 
 	// Handle null values if the type is nullable
 	if isNullable(typ.Path) {

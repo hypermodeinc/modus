@@ -20,7 +20,7 @@ type kvp struct {
 	Value any `json:"value"`
 }
 
-func readMap(ctx context.Context, mem wasm.Memory, def plugins.TypeDefinition, offset uint32) ([]kvp, error) {
+func readMap(ctx context.Context, mem wasm.Memory, def plugins.TypeDefinition, offset uint32) (data []kvp, err error) {
 
 	// buckets, ok := mem.ReadUint32Le(offset)
 	// if !ok {

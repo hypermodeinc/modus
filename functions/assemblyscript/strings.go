@@ -13,7 +13,7 @@ import (
 	wasm "github.com/tetratelabs/wazero/api"
 )
 
-func ReadString(mem wasm.Memory, offset uint32) (string, error) {
+func ReadString(mem wasm.Memory, offset uint32) (data string, err error) {
 
 	// AssemblyScript managed objects have their classid stored 8 bytes before the offset.
 	// See https://www.assemblyscript.org/runtime.html#memory-layout
@@ -38,7 +38,7 @@ func ReadString(mem wasm.Memory, offset uint32) (string, error) {
 	return decodeUTF16(buf), nil
 }
 
-func WriteString(ctx context.Context, mod wasm.Module, s string) (uint32, error) {
+func WriteString(ctx context.Context, mod wasm.Module, s string) (offset uint32, err error) {
 	const classId = 2 // The fixed class id for a string in AssemblyScript.
 	bytes := encodeUTF16(s)
 	return writeRawBytes(ctx, mod, bytes, classId)

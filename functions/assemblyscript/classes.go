@@ -14,20 +14,20 @@ import (
 	wasm "github.com/tetratelabs/wazero/api"
 )
 
-func readClass(ctx context.Context, mem wasm.Memory, def plugins.TypeDefinition, offset uint32) (map[string]any, error) {
-	classMap := make(map[string]any)
+func readClass(ctx context.Context, mem wasm.Memory, def plugins.TypeDefinition, offset uint32) (data map[string]any, err error) {
+	data = make(map[string]any)
 	for _, field := range def.Fields {
 		fieldOffset := offset + field.Offset
 		val, err := readField(ctx, mem, field.Type, fieldOffset)
 		if err != nil {
 			return nil, err
 		}
-		classMap[field.Name] = val
+		data[field.Name] = val
 	}
-	return classMap, nil
+	return data, nil
 }
 
-func readField(ctx context.Context, mem wasm.Memory, typ plugins.TypeInfo, offset uint32) (any, error) {
+func readField(ctx context.Context, mem wasm.Memory, typ plugins.TypeInfo, offset uint32) (data any, err error) {
 	var result any
 	var ok bool
 	switch typ.Path {
