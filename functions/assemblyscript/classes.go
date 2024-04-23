@@ -121,7 +121,7 @@ func writeClass(ctx context.Context, mod wasm.Module, def plugins.TypeDefinition
 		}()
 
 		// Allocate memory for the object
-		offset, err = allocateWasmMemory(ctx, mod, int(def.Size), def.Id)
+		offset, err = allocateWasmMemory(ctx, mod, def.Size, def.Id)
 		if err != nil {
 			return 0, err
 		}

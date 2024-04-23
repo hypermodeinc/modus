@@ -66,7 +66,7 @@ func writeArray(ctx context.Context, mod wasm.Module, def plugins.TypeDefinition
 
 	var bufferOffset uint32
 	var bufferSize uint32
-	arrLen := len(arr)
+	arrLen := uint32(len(arr))
 
 	// unpin everything when done
 	var pins = make([]uint32, 0, arrLen+1)
@@ -84,8 +84,8 @@ func writeArray(ctx context.Context, mod wasm.Module, def plugins.TypeDefinition
 	if arrLen > 0 {
 		itemType := getArraySubtypeInfo(def.Path)
 		itemSize := getItemSize(itemType)
-		bufferSize = itemSize * uint32(arrLen)
-		bufferOffset, err = allocateWasmMemory(ctx, mod, int(bufferSize), 1)
+		bufferSize = itemSize * arrLen
+		bufferOffset, err = allocateWasmMemory(ctx, mod, bufferSize, 1)
 		if err != nil {
 			return 0, fmt.Errorf("failed to allocate memory for array buffer: %w", err)
 		}
@@ -117,7 +117,7 @@ func writeArray(ctx context.Context, mod wasm.Module, def plugins.TypeDefinition
 	}
 
 	// write array object
-	offset, err = allocateWasmMemory(ctx, mod, int(def.Size), def.Id)
+	offset, err = allocateWasmMemory(ctx, mod, def.Size, def.Id)
 	if err != nil {
 		return 0, err
 	}
@@ -138,7 +138,7 @@ func writeArray(ctx context.Context, mod wasm.Module, def plugins.TypeDefinition
 		return 0, fmt.Errorf("failed to write array bytes length")
 	}
 
-	ok = mem.WriteUint32Le(offset+12, uint32(arrLen))
+	ok = mem.WriteUint32Le(offset+12, arrLen)
 	if !ok {
 		return 0, fmt.Errorf("failed to write array length")
 	}

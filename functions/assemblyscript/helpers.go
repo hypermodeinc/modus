@@ -27,7 +27,7 @@ var typeMap = map[string]string{
 // Allocate memory within the AssemblyScript module.
 // This uses the `__new` function exported by the AssemblyScript runtime, so it will be garbage collected.
 // See https://www.assemblyscript.org/runtime.html#interface
-func allocateWasmMemory(ctx context.Context, mod wasm.Module, len int, classId uint32) (uint32, error) {
+func allocateWasmMemory(ctx context.Context, mod wasm.Module, len uint32, classId uint32) (uint32, error) {
 	fn := mod.ExportedFunction("__new")
 	res, err := fn.Call(ctx, uint64(len), uint64(classId))
 	if err != nil {

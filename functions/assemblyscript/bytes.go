@@ -43,7 +43,7 @@ func writeBytes(ctx context.Context, mod wasm.Module, bytes []byte) (offset uint
 }
 
 func writeRawBytes(ctx context.Context, mod wasm.Module, bytes []byte, classId uint32) (offset uint32, err error) {
-	size := len(bytes)
+	size := uint32(len(bytes))
 	offset, err = allocateWasmMemory(ctx, mod, size, classId)
 	if err != nil {
 		return 0, err
