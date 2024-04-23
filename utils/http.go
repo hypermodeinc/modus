@@ -30,8 +30,15 @@ func sendHttp(req *http.Request) ([]byte, error) {
 
 	return io.ReadAll(response.Body)
 }
-
 func PostHttp[TResult any](url string, payload any, headers map[string]string) (TResult, error) {
+	return RequestHttp[TResult](url, payload, headers, http.MethodPost)
+}
+func GetHttp[TResult any](url string, query string, headers map[string]string) (TResult, error) {
+	return RequestHttp[TResult](url+"/"+query, nil, headers, http.MethodGet)
+
+}
+
+func RequestHttp[TResult any](url string, payload any, headers map[string]string, method string) (TResult, error) {
 	var result TResult
 	var ct string
 	var buf *bytes.Buffer
@@ -52,7 +59,7 @@ func PostHttp[TResult any](url string, payload any, headers map[string]string) (
 		buf = bytes.NewBuffer(jsonPayload)
 	}
 
-	req, err := http.NewRequest(http.MethodPost, url, buf)
+	req, err := http.NewRequest(method, url, buf)
 	if err != nil {
 		return result, fmt.Errorf("error creating request: %w", err)
 	}
