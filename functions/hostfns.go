@@ -207,23 +207,22 @@ func hostComputeEmbedding(ctx context.Context, mod wasm.Module, pModelName uint3
 			return 0
 		}
 
-		result, err = llm.Embedding(ctx, sentenceMap, model)
+		result, err = llm.Embedding(ctx, sentenceMap, model, host)
 		if err != nil {
 			logger.Err(ctx, err).Msg("Error embeddings with LLM.")
 			return 0
 		}
 
 	} else {
-
-
-	result, err := models.PostToModelEndpoint[[]float64](ctx, sentenceMap, model, host)
-	if err != nil {
-		logger.Err(ctx, err).Msg("Error posting to model endpoint.")
-		return 0
-	}
-	if len(result) == 0 {
-		logger.Error(ctx).Msg("Empty result returned from model.")
-		return 0
+		result, err := models.PostToModelEndpoint[[]float64](ctx, sentenceMap, model, host)
+		if err != nil {
+			logger.Err(ctx, err).Msg("Error posting to model endpoint.")
+			return 0
+		}
+		if len(result) == 0 {
+			logger.Error(ctx).Msg("Empty result returned from model.")
+			return 0
+		}
 	}
 
 	res, err := json.Marshal(result)
@@ -289,7 +288,7 @@ func hostInvokeTextGenerator(ctx context.Context, mod wasm.Module, pModelName ui
 		return 0
 	}
 
-	result, err := llm.ChatCompletion(ctx, model, instruction, sentence, outputFormat)
+	result, err := llm.ChatCompletion(ctx, model, host, instruction, sentence, outputFormat)
 	if err != nil {
 		logger.Err(ctx, err)
 		return 0
@@ -330,7 +329,17 @@ func getLLM(s string) {
 	panic("unimplemented")
 }
 
-func getModel(mem wasm.Memory, pModelName uint32, task appdata.ModelTask) (appdata.Model, error) {
+func getHost(mem wasm.Memory, pHostName uint32) (manifest.Host, error) {
+	hostName, err := assemblyscript.ReadString(mem, pHostName)
+	if err != nil {
+		err = fmt.Errorf("error reading host name from wasm memory: %w", err)
+		return manifest.Host{}, err
+	}
+
+	return hosts.GetHost(hostName)
+}
+
+func getModel(mem wasm.Memory, pModelName uint32, task manifest.ModelTask) (manifest.Model, error) {
 	modelName, err := assemblyscript.ReadString(mem, pModelName)
 	if err != nil {
 		err = fmt.Errorf("error reading model name from wasm memory: %w", err)

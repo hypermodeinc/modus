@@ -32,6 +32,6 @@ type EmbeddingData struct {
 }
 
 type llmService interface {
-	ChatCompletion(ctx context.Context, model manifest.Model, instruction string, sentence string, outputFormat OutputFormat) (ChatResponse, error)
-	Embedding(ctx context.Context, sentenceMap map[string]string, model manifest.Model) (map[string][]float64, error)
+	ChatCompletion(ctx context.Context, model manifest.Model, host manifest.Host, instruction string, sentence string, outputFormat OutputFormat) (ChatResponse, error)
+	Embedding(ctx context.Context, sentenceMap map[string]string, model manifest.Model, host manifest.Host) (map[string][]float64, error)
 }
