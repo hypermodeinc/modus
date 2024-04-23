@@ -73,7 +73,7 @@ func writeArray(ctx context.Context, mod wasm.Module, def plugins.TypeDefinition
 		itemType := getArraySubtypeInfo(def.Path)
 		itemSize := getItemSize(itemType)
 		bufferSize = itemSize * uint32(arrLen)
-		bufferOffset, err := allocateWasmMemory(ctx, mod, int(bufferSize), 1)
+		bufferOffset, err = allocateWasmMemory(ctx, mod, int(bufferSize), 1)
 		if err != nil {
 			return 0, fmt.Errorf("failed to allocate memory for array buffer: %w", err)
 		}
