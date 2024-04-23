@@ -7,13 +7,13 @@ package models
 import (
 	"context"
 	"fmt"
-	"hmruntime/appdata"
+	"hmruntime/manifest"
 	"hmruntime/utils"
 )
 
 type mistral struct{}
 
-func (llm *mistral) Embedding(ctx context.Context, sentenceMap map[string]string, model appdata.Model) (map[string][]float64, error) {
+func (llm *mistral) Embedding(ctx context.Context, sentenceMap map[string]string, model manifest.Model) (map[string][]float64, error) {
 	// Get the API key to use for this model
 	key, err := GetModelKey(ctx, model)
 	if err != nil {
@@ -55,7 +55,7 @@ func (llm *mistral) Embedding(ctx context.Context, sentenceMap map[string]string
 	return resultMap, nil
 }
 
-func (llm *mistral) ChatCompletion(ctx context.Context, model appdata.Model, instruction string, sentence string, outputFormat OutputFormat) (ChatResponse, error) {
+func (llm *mistral) ChatCompletion(ctx context.Context, model manifest.Model, instruction string, sentence string, outputFormat OutputFormat) (ChatResponse, error) {
 
 	// Get the API key to use for this model
 	key, err := GetModelKey(ctx, model)

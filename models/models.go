@@ -26,8 +26,8 @@ const (
 	OutputFormatJson OutputFormat = "json_object"
 )
 
-func GetModel(modelName string, task appdata.ModelTask) (appdata.Model, error) {
-	for _, model := range appdata.HypermodeData.Models {
+func GetModel(modelName string, task manifest.ModelTask) (manifest.Model, error) {
+	for _, model := range manifest.HypermodeData.Models {
 		if model.Name == modelName {
 			if (model.Task == task) || (model.Host == OpenAIHost) || (model.Host == MistralHost) {
 				return model, nil

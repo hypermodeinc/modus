@@ -2,7 +2,7 @@ package models
 
 import (
 	"context"
-	"hmruntime/appdata"
+	"hmruntime/manifest"
 )
 
 type ChatContext struct {
@@ -32,6 +32,6 @@ type EmbeddingData struct {
 }
 
 type llmService interface {
-	ChatCompletion(ctx context.Context, model appdata.Model, instruction string, sentence string, outputFormat OutputFormat) (ChatResponse, error)
-	Embedding(ctx context.Context, sentenceMap map[string]string, model appdata.Model) (map[string][]float64, error)
+	ChatCompletion(ctx context.Context, model manifest.Model, instruction string, sentence string, outputFormat OutputFormat) (ChatResponse, error)
+	Embedding(ctx context.Context, sentenceMap map[string]string, model manifest.Model) (map[string][]float64, error)
 }
