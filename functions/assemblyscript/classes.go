@@ -178,6 +178,8 @@ func writeField(ctx context.Context, mod wasm.Module, typ plugins.TypeInfo, offs
 		ok = mem.WriteByte(offset, byte(enc))
 	case "i16", "u16":
 		ok = mem.WriteUint16Le(offset, uint16(enc))
+	case "i32", "u32", "f32":
+		ok = mem.WriteUint32Le(offset, uint32(enc))
 	case "i64", "u64", "f64":
 		ok = mem.WriteUint64Le(offset, enc)
 	default: // managed types
