@@ -69,6 +69,7 @@ func writeArray(ctx context.Context, mod wasm.Module, def plugins.TypeDefinition
 	// write array buffer
 	// note: empty array has no array buffer
 	arrLen := len(arr)
+	var pins = make([]uint32, 0, arrLen+1)
 	if arrLen > 0 {
 		itemType := getArraySubtypeInfo(def.Path)
 		itemSize := getItemSize(itemType)
@@ -78,11 +79,28 @@ func writeArray(ctx context.Context, mod wasm.Module, def plugins.TypeDefinition
 			return 0, fmt.Errorf("failed to allocate memory for array buffer: %w", err)
 		}
 
+		// pin the array buffer so it can't get garbage collected
+		// when we allocate the array object
+		err = pinWasmMemory(ctx, mod, bufferOffset)
+		if err != nil {
+			return 0, fmt.Errorf("failed to pin array buffer: %w", err)
+		}
+		pins = append(pins, bufferOffset)
+
 		for i, v := range arr {
 			itemOffset := bufferOffset + (itemSize * uint32(i))
-			err = writeField(ctx, mod, itemType, itemOffset, v)
+			ptr, err := writeField(ctx, mod, itemType, itemOffset, v)
 			if err != nil {
 				return 0, fmt.Errorf("failed to write array item: %w", err)
+			}
+
+			// If we allocated memory for the item, we need to pin it too.
+			if ptr != 0 {
+				err = pinWasmMemory(ctx, mod, ptr)
+				if err != nil {
+					return 0, err
+				}
+				pins = append(pins, ptr)
 			}
 		}
 	}
@@ -112,6 +130,14 @@ func writeArray(ctx context.Context, mod wasm.Module, def plugins.TypeDefinition
 	ok = mem.WriteUint32Le(offset+12, uint32(arrLen))
 	if !ok {
 		return 0, fmt.Errorf("failed to write array length")
+	}
+
+	// now we can unpin everything
+	for _, ptr := range pins {
+		err = unpinWasmMemory(ctx, mod, ptr)
+		if err != nil {
+			return 0, err
+		}
 	}
 
 	return offset, nil

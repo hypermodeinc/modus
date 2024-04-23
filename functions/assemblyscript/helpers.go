@@ -28,12 +28,36 @@ var typeMap = map[string]string{
 // This uses the `__new` function exported by the AssemblyScript runtime, so it will be garbage collected.
 // See https://www.assemblyscript.org/runtime.html#interface
 func allocateWasmMemory(ctx context.Context, mod wasm.Module, len int, classId uint32) (uint32, error) {
-	newFn := mod.ExportedFunction("__new")
-	res, err := newFn.Call(ctx, uint64(len), uint64(classId))
+	fn := mod.ExportedFunction("__new")
+	res, err := fn.Call(ctx, uint64(len), uint64(classId))
 	if err != nil {
 		return 0, fmt.Errorf("failed to allocate WASM memory: %w", err)
 	}
 	return uint32(res[0]), nil
+}
+
+// Pin a managed object in memory within the AssemblyScript module.
+// This prevents it from being garbage collected.
+// See https://www.assemblyscript.org/runtime.html#interface
+func pinWasmMemory(ctx context.Context, mod wasm.Module, ptr uint32) error {
+	fn := mod.ExportedFunction("__pin")
+	_, err := fn.Call(ctx, uint64(ptr))
+	if err != nil {
+		return fmt.Errorf("failed to pin object in WASM memory: %w", err)
+	}
+	return nil
+}
+
+// Unpin a previously-pinned managed object in memory within the AssemblyScript module.
+// This allows it to be garbage collected.
+// See https://www.assemblyscript.org/runtime.html#interface
+func unpinWasmMemory(ctx context.Context, mod wasm.Module, ptr uint32) error {
+	fn := mod.ExportedFunction("__unpin")
+	_, err := fn.Call(ctx, uint64(ptr))
+	if err != nil {
+		return fmt.Errorf("failed to unpin object in WASM memory: %w", err)
+	}
+	return nil
 }
 
 func isPrimitive(t string) bool {

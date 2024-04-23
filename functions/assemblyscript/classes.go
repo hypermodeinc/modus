@@ -112,14 +112,42 @@ func writeClass(ctx context.Context, mod wasm.Module, def plugins.TypeDefinition
 		if err != nil {
 			return 0, err
 		}
+
+		// we need to pin the object in memory so it doesn't get garbage collected
+		// if we allocate more memory when writing a field before returning the object
+		err = pinWasmMemory(ctx, mod, offset)
+		if err != nil {
+			return 0, err
+		}
+
+		pins := make([]uint32, 0, len(def.Fields)+1)
 		for _, field := range def.Fields {
 			val := data[field.Name]
 			fieldOffset := offset + field.Offset
-			err := writeField(ctx, mod, field.Type, fieldOffset, val)
+			ptr, err := writeField(ctx, mod, field.Type, fieldOffset, val)
+			if err != nil {
+				return 0, err
+			}
+
+			// If we allocated memory for the field, we need to pin it too.
+			if ptr != 0 {
+				err = pinWasmMemory(ctx, mod, ptr)
+				if err != nil {
+					return 0, err
+				}
+				pins = append(pins, ptr)
+			}
+		}
+
+		// now we can unpin everything (the class should go last)
+		pins = append(pins, offset)
+		for _, ptr := range pins {
+			err = unpinWasmMemory(ctx, mod, ptr)
 			if err != nil {
 				return 0, err
 			}
 		}
+
 		return offset, nil
 	default:
 		m, err := utils.ConvertToMap(data)
@@ -130,10 +158,10 @@ func writeClass(ctx context.Context, mod wasm.Module, def plugins.TypeDefinition
 	}
 }
 
-func writeField(ctx context.Context, mod wasm.Module, typ plugins.TypeInfo, offset uint32, val any) error {
+func writeField(ctx context.Context, mod wasm.Module, typ plugins.TypeInfo, offset uint32, val any) (ptr uint32, err error) {
 	enc, err := EncodeValue(ctx, mod, typ, val)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	mem := mod.Memory()
@@ -146,13 +174,14 @@ func writeField(ctx context.Context, mod wasm.Module, typ plugins.TypeInfo, offs
 		ok = mem.WriteUint16Le(offset, uint16(enc))
 	case "i64", "u64", "f64":
 		ok = mem.WriteUint64Le(offset, enc)
-	default:
+	default: // managed types
+		ptr = uint32(enc) // return pointer to the managed object
 		ok = mem.WriteUint32Le(offset, uint32(enc))
 	}
 
 	if !ok {
-		return fmt.Errorf("error writing %s to wasm memory", typ.Name)
+		return ptr, fmt.Errorf("error writing %s to wasm memory", typ.Name)
 	}
 
-	return nil
+	return ptr, nil
 }
