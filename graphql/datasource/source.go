@@ -10,7 +10,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"strings"
 
 	"hmruntime/functions"
 	"hmruntime/logger"
@@ -27,6 +26,11 @@ const DataSourceName = "HypermodeFunctionsDataSource"
 type callInfo struct {
 	Function   templateField  `json:"fn"`
 	Parameters map[string]any `json:"data"`
+}
+
+type FunctionOutput struct {
+	ExecutionId string
+	Buffers     utils.OutputBuffers
 }
 
 type Source struct{}
@@ -58,18 +62,19 @@ func (s Source) callFunction(ctx context.Context, callInfo callInfo) (any, []res
 	}
 
 	// Prepare the context that will be used throughout the function execution
-	ctx = prepareContext(ctx, info)
+	executionId := xid.New().String()
+	ctx = context.WithValue(ctx, utils.ExecutionIdContextKey, executionId)
+	ctx = context.WithValue(ctx, utils.PluginContextKey, info.Plugin)
 
-	// Create output buffers for the function to write to
-	bStdOut := &bytes.Buffer{}
-	bStdErr := &bytes.Buffer{}
+	// Create output buffers for the function to write logs to
+	buffers := utils.OutputBuffers{}
 
 	// Get a module instance for this request.
 	// Each request will get its own instance of the plugin module, so that we can run
 	// multiple requests in parallel without risk of corrupting the module's memory.
 	// This also protects against security risk, as each request will have its own
 	// isolated memory space.  (One request cannot access another request's memory.)
-	mod, err := wasmhost.GetModuleInstance(ctx, info.Plugin, bStdOut, bStdErr)
+	mod, err := wasmhost.GetModuleInstance(ctx, info.Plugin, &buffers)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -78,11 +83,15 @@ func (s Source) callFunction(ctx context.Context, callInfo callInfo) (any, []res
 	// Call the function
 	result, err := functions.CallFunction(ctx, mod, info, callInfo.Parameters)
 
-	// Transform lines in the output buffers to GraphQL gqlErrors
-	gqlErrors := append(
-		transformErrors(bStdOut, callInfo),
-		transformErrors(bStdErr, callInfo)...,
-	)
+	// Store the Execution ID and output buffers in the context
+	outputMap := ctx.Value(utils.FunctionOutputContextKey).(map[string]FunctionOutput)
+	outputMap[callInfo.Function.AliasOrName()] = FunctionOutput{
+		ExecutionId: executionId,
+		Buffers:     buffers,
+	}
+
+	// Transform error lines in the output buffers to GraphQL errors
+	gqlErrors := transformErrors(buffers, callInfo)
 
 	return result, gqlErrors, err
 }
@@ -94,15 +103,6 @@ func parseInput(input []byte) (callInfo, error) {
 	var ci callInfo
 	err := dec.Decode(&ci)
 	return ci, err
-}
-
-func prepareContext(ctx context.Context, info functions.FunctionInfo) context.Context {
-	// TODO: We should return the execution id(s) in the response somehow.
-	// There might be multiple execution ids if the request triggers multiple function calls.
-	executionId := xid.New().String()
-	ctx = context.WithValue(ctx, utils.ExecutionIdContextKey, executionId)
-	ctx = context.WithValue(ctx, utils.PluginContextKey, info.Plugin)
-	return ctx
 }
 
 func writeGraphQLResponse(writer io.Writer, result any, gqlErrors []resolve.GraphQLError, fnErr error, ci callInfo) error {
@@ -226,49 +226,21 @@ func transformValue(data []byte, tf templateField) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func transformErrors(buf *bytes.Buffer, ci callInfo) []resolve.GraphQLError {
-	errors := make([]resolve.GraphQLError, 0)
-	for _, s := range strings.Split(buf.String(), "\n") {
-		if s != "" {
-			errors = append(errors, transformError(s, ci))
+func transformErrors(buffers utils.OutputBuffers, ci callInfo) []resolve.GraphQLError {
+	messages := utils.TransformConsoleOutput(buffers)
+	errors := make([]resolve.GraphQLError, 0, len(messages))
+	for _, msg := range messages {
+		// Only include errors.  Other messages will be captured later and
+		// passed back as logs in the extensions section of the response.
+		if msg.IsError() {
+			errors = append(errors, resolve.GraphQLError{
+				Message: msg.Message,
+				Path:    []string{ci.Function.AliasOrName()},
+				Extensions: map[string]interface{}{
+					"level": msg.Level,
+				},
+			})
 		}
 	}
 	return errors
-}
-
-func transformError(msg string, ci callInfo) resolve.GraphQLError {
-	level := ""
-	a := strings.SplitAfterN(msg, ": ", 2)
-	if len(a) == 2 {
-		switch a[0] {
-		case "Debug: ":
-			level = "debug"
-			msg = a[1]
-		case "Info: ":
-			level = "info"
-			msg = a[1]
-		case "Warning: ":
-			level = "warning"
-			msg = a[1]
-		case "Error: ":
-			level = "error"
-			msg = a[1]
-		case "abort: ":
-			level = "fatal"
-			msg = a[1]
-		}
-	}
-
-	e := resolve.GraphQLError{
-		Message: msg,
-		Path:    []string{ci.Function.AliasOrName()},
-	}
-
-	if level != "" {
-		e.Extensions = map[string]interface{}{
-			"level": level,
-		}
-	}
-
-	return e
 }
