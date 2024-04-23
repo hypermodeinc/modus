@@ -105,10 +105,23 @@ func readField(ctx context.Context, mem wasm.Memory, typ plugins.TypeInfo, offse
 	return result, nil
 }
 
-func writeClass(ctx context.Context, mod wasm.Module, def plugins.TypeDefinition, data any) (uint32, error) {
+func writeClass(ctx context.Context, mod wasm.Module, def plugins.TypeDefinition, data any) (offset uint32, err error) {
 	switch data := data.(type) {
 	case map[string]any:
-		offset, err := allocateWasmMemory(ctx, mod, int(def.Size), def.Id)
+
+		// unpin everything when done
+		pins := make([]uint32, 0, len(def.Fields)+1)
+		defer func() {
+			for _, ptr := range pins {
+				err = unpinWasmMemory(ctx, mod, ptr)
+				if err != nil {
+					break
+				}
+			}
+		}()
+
+		// Allocate memory for the object
+		offset, err = allocateWasmMemory(ctx, mod, int(def.Size), def.Id)
 		if err != nil {
 			return 0, err
 		}
@@ -119,8 +132,9 @@ func writeClass(ctx context.Context, mod wasm.Module, def plugins.TypeDefinition
 		if err != nil {
 			return 0, err
 		}
+		pins = append(pins, offset)
 
-		pins := make([]uint32, 0, len(def.Fields)+1)
+		// write fields
 		for _, field := range def.Fields {
 			val := data[field.Name]
 			fieldOffset := offset + field.Offset
@@ -139,16 +153,8 @@ func writeClass(ctx context.Context, mod wasm.Module, def plugins.TypeDefinition
 			}
 		}
 
-		// now we can unpin everything (the class should go last)
-		pins = append(pins, offset)
-		for _, ptr := range pins {
-			err = unpinWasmMemory(ctx, mod, ptr)
-			if err != nil {
-				return 0, err
-			}
-		}
-
 		return offset, nil
+
 	default:
 		m, err := utils.ConvertToMap(data)
 		if err != nil {
