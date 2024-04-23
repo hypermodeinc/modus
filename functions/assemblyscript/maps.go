@@ -20,8 +20,6 @@ type kvp struct {
 	Value any `json:"value"`
 }
 
-// TODO: readMap's translation to []kvp should be done elsewhere.  Here it should be map[any]any.
-
 func readMap(ctx context.Context, mem wasm.Memory, def plugins.TypeDefinition, offset uint32) ([]kvp, error) {
 
 	// buckets, ok := mem.ReadUint32Le(offset)
