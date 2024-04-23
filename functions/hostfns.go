@@ -33,6 +33,7 @@ func InstantiateHostFunctions(ctx context.Context, runtime wazero.Runtime) error
 	b.NewFunctionBuilder().WithFunc(hostInvokeClassifier).Export("invokeClassifier")
 	b.NewFunctionBuilder().WithFunc(hostComputeEmbedding).Export("computeEmbedding")
 	b.NewFunctionBuilder().WithFunc(hostInvokeTextGenerator).Export("invokeTextGenerator")
+	b.NewFunctionBuilder().WithFunc(hostFetchGet).Export("fetchGet")
 
 	_, err := b.Instantiate(ctx)
 	if err != nil {
@@ -349,4 +350,36 @@ func getSentenceMap(mem wasm.Memory, pSentenceMap uint32) (map[string]string, er
 	}
 
 	return sentenceMap, nil
+}
+
+// the readStringFromMemory function encapsulates the common code for reading a string from wasm memory and handling errors
+func readStringFromMemory(ctx context.Context, mem wasm.Memory, ptr uint32, stringName string) (string, error) {
+	str, err := assemblyscript.ReadString(mem, ptr)
+	if err != nil {
+		logger.Err(ctx, err).Msg("Error reading string from wasm memory. " + stringName)
+		return "", err
+	}
+	return str, nil
+}
+
+func hostFetchGet(ctx context.Context, mod wasm.Module, pHostName uint32, pStmt uint32) uint32 {
+	mem := mod.Memory()
+	stmt, err := readStringFromMemory(ctx, mem, pStmt, "DQL statement")
+	if err != nil {
+		return 0
+	}
+
+	host, err := getHost(mem, pHostName)
+	if err != nil {
+		logger.Err(ctx, err).Msg("Error getting host.")
+		return 0
+	}
+
+	result, err := connections.FetchGet[string](ctx, host, stmt)
+	if err != nil {
+		logger.Err(ctx, err).Msg("Error executing FetchGet.")
+		return 0
+	}
+
+	return assemblyscript.WriteString(ctx, mod, result)
 }
