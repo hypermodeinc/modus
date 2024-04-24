@@ -95,8 +95,9 @@ func Activate(ctx context.Context, metadata plugins.PluginMetadata) error {
 	engineConfig.SetDataSources([]plan.DataSource{datasourceConfig})
 
 	resolverOptions := resolve.ResolverOptions{
-		MaxConcurrency:          1024,
-		PropagateSubgraphErrors: true,
+		MaxConcurrency:               1024,
+		PropagateSubgraphErrors:      true,
+		SubgraphErrorPropagationMode: resolve.SubgraphErrorPropagationModePassThrough,
 	}
 
 	adapter := newLoggerAdapter(ctx)
