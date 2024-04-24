@@ -98,7 +98,7 @@ func FetchGet[TResponse any](ctx context.Context, host manifest.Host, stmt strin
 
 	response, err := utils.GetHttp[TResponse](url, stmt, nil)
 	if err != nil {
-		return response, fmt.Errorf("error posting DQL statement: %w", err)
+		return response, err
 	}
 
 	return response, nil
