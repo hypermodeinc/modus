@@ -9,9 +9,9 @@ import (
 	"fmt"
 	"reflect"
 
+	"hmruntime/functions/assemblyscript/hash"
 	"hmruntime/plugins"
 
-	"github.com/OneOfOne/xxhash"
 	wasm "github.com/tetratelabs/wazero/api"
 )
 
@@ -174,7 +174,7 @@ func writeMap(ctx context.Context, mod wasm.Module, def plugins.TypeDefinition, 
 			// for both writing to memory and calculating the hash code, bypass the
 			// normal writeField/writeString functions and do it manually.
 			bytes := encodeUTF16(t)
-			hashCode = getHashCode(bytes)
+			hashCode = hash.GetHashCode(bytes)
 			ptr, err = writeRawBytes(ctx, mod, bytes, 2)
 			if err != nil {
 				return 0, fmt.Errorf("failed to write map entry key: %w", err)
@@ -185,7 +185,7 @@ func writeMap(ctx context.Context, mod wasm.Module, def plugins.TypeDefinition, 
 			}
 
 		default:
-			hashCode = getHashCode(key)
+			hashCode = hash.GetHashCode(key)
 			ptr, err = writeField(ctx, mod, keyType, entryOffset, key)
 			if err != nil {
 				return 0, fmt.Errorf("failed to write map entry key: %w", err)
@@ -283,17 +283,4 @@ func getSizeForOffset(t string) uint32 {
 		// everything else has 4-byte value offset
 		return 4
 	}
-}
-
-func getHashCode(data any) uint32 {
-
-	switch t := data.(type) {
-	case string:
-		s := encodeUTF16(t)
-		return xxhash.Checksum32(s)
-	case []byte:
-		return xxhash.Checksum32(t)
-	}
-
-	return 0
 }
