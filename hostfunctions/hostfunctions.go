@@ -2,7 +2,7 @@
  * Copyright 2023 Hypermode, Inc.
  */
 
-package functions
+package hostfunctions
 
 import (
 	"context"
@@ -24,7 +24,7 @@ import (
 const HostModuleName string = "hypermode"
 const HypermodeHostName string = "hypermode"
 
-func InstantiateHostFunctions(ctx context.Context, runtime wazero.Runtime) error {
+func Instantiate(ctx context.Context, runtime wazero.Runtime) error {
 	b := runtime.NewHostModuleBuilder(HostModuleName)
 
 	// Each host function should get a line here:
