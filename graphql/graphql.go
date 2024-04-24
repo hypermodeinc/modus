@@ -85,7 +85,7 @@ func HandleGraphQLRequest(w http.ResponseWriter, r *http.Request) {
 
 	// Return the response
 	writeJsonContentHeader(w)
-	w.Write(adjustResponse(response))
+	w.Write(response)
 }
 
 func writeJsonContentHeader(w http.ResponseWriter) {

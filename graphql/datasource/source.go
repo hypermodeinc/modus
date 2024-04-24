@@ -111,7 +111,7 @@ func writeGraphQLResponse(writer io.Writer, result any, gqlErrors []resolve.Grap
 	if fnErr != nil && functions.ShouldReturnErrorToResponse(fnErr) {
 		gqlErrors = append(gqlErrors, resolve.GraphQLError{
 			Message: fnErr.Error(),
-			Path:    []string{ci.Function.AliasOrName()},
+			Path:    []any{ci.Function.AliasOrName()},
 			Extensions: map[string]interface{}{
 				"level": "error",
 			},
@@ -235,7 +235,7 @@ func transformErrors(buffers utils.OutputBuffers, ci callInfo) []resolve.GraphQL
 		if msg.IsError() {
 			errors = append(errors, resolve.GraphQLError{
 				Message: msg.Message,
-				Path:    []string{ci.Function.AliasOrName()},
+				Path:    []any{ci.Function.AliasOrName()},
 				Extensions: map[string]interface{}{
 					"level": msg.Level,
 				},
