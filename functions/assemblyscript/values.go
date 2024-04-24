@@ -29,7 +29,30 @@ func EncodeValue(ctx context.Context, mod wasm.Module, typ plugins.TypeInfo, dat
 			return 0, nil
 		}
 
-	case "i8", "i16", "i32", "u8", "u16", "u32":
+	case "u8", "u16", "u32":
+		var x uint32
+		switch v := data.(type) {
+		case json.Number:
+			n, err := v.Int64()
+			if err != nil {
+				return 0, fmt.Errorf("input value is not an int")
+			}
+			x = uint32(n)
+		case uint:
+			x = uint32(v)
+		case uint8:
+			x = uint32(v)
+		case uint16:
+			x = uint32(v)
+		case uint32:
+			x = uint32(v)
+		default:
+			return 0, fmt.Errorf("input value is not an unsigned integer")
+		}
+
+		return wasm.EncodeU32(x), nil
+
+	case "i8", "i16", "i32":
 		var x int32
 		switch v := data.(type) {
 		case json.Number:
@@ -46,16 +69,8 @@ func EncodeValue(ctx context.Context, mod wasm.Module, typ plugins.TypeInfo, dat
 			x = int32(v)
 		case int32:
 			x = v
-		case uint:
-			x = int32(v)
-		case uint8:
-			x = int32(v)
-		case uint16:
-			x = int32(v)
-		case uint32:
-			x = int32(v)
 		default:
-			return 0, fmt.Errorf("input value is not an int")
+			return 0, fmt.Errorf("input value is not an signed integer")
 		}
 
 		return wasm.EncodeI32(x), nil
@@ -161,7 +176,10 @@ func DecodeValue(ctx context.Context, mod wasm.Module, typ plugins.TypeInfo, val
 	case "bool":
 		return val != 0, nil
 
-	case "i8", "i16", "i32", "u8", "u16", "u32":
+	case "u8", "u16", "u32":
+		return wasm.DecodeU32(val), nil
+
+	case "i8", "i16", "i32":
 		return wasm.DecodeI32(val), nil
 
 	case "i64", "u64":
