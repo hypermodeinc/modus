@@ -21,6 +21,7 @@ require (
 )
 
 require (
+	github.com/OneOfOne/xxhash v1.2.8 // indirect
 	github.com/alitto/pond v1.8.3 // indirect
 	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.6.2 // indirect
 	github.com/aws/aws-sdk-go-v2/credentials v1.17.11 // indirect
