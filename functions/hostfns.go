@@ -28,7 +28,6 @@ func InstantiateHostFunctions(ctx context.Context, runtime wazero.Runtime) error
 	b := runtime.NewHostModuleBuilder(HostModuleName)
 
 	// Each host function should get a line here:
-	b.NewFunctionBuilder().WithFunc(hostExecuteDQL).Export("executeDQL")
 	b.NewFunctionBuilder().WithFunc(hostExecuteGQL).Export("executeGQL")
 	b.NewFunctionBuilder().WithFunc(hostInvokeClassifier).Export("invokeClassifier")
 	b.NewFunctionBuilder().WithFunc(hostComputeEmbedding).Export("computeEmbedding")
@@ -40,47 +39,6 @@ func InstantiateHostFunctions(ctx context.Context, runtime wazero.Runtime) error
 	}
 
 	return nil
-}
-
-func hostExecuteDQL(ctx context.Context, mod wasm.Module, pHostName uint32, pStmt uint32, pVars uint32, isMutation uint32) uint32 {
-	mem := mod.Memory()
-	stmt, err := assemblyscript.ReadString(mem, pStmt)
-	if err != nil {
-		logger.Err(ctx, err).Msg("Error reading DQL statement from wasm memory.")
-		return 0
-	}
-
-	host, err := getHost(mem, pHostName)
-	if err != nil {
-		logger.Err(ctx, err).Msg("Error getting host.")
-		return 0
-	}
-
-	sVars, err := assemblyscript.ReadString(mem, pVars)
-	if err != nil {
-		logger.Err(ctx, err).Msg("Error reading DQL variables string from wasm memory.")
-		return 0
-	}
-
-	vars := make(map[string]any)
-	if err := json.Unmarshal([]byte(sVars), &vars); err != nil {
-		logger.Err(ctx, err).Msg("Error unmarshalling GraphQL variables.")
-		return 0
-	}
-
-	result, err := connections.ExecuteDQL[string](ctx, host, stmt, vars, isMutation != 0)
-	if err != nil {
-		logger.Err(ctx, err).Msg("Error executing DQL statement.")
-		return 0
-	}
-
-	offset, err := assemblyscript.WriteString(ctx, mod, result)
-	if err != nil {
-		logger.Err(ctx, err).Msg("Error writing result to wasm memory.")
-		return 0
-	}
-
-	return offset
 }
 
 func hostExecuteGQL(ctx context.Context, mod wasm.Module, pHostName uint32, pStmt uint32, pVars uint32) uint32 {
