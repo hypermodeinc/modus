@@ -74,7 +74,13 @@ func hostExecuteDQL(ctx context.Context, mod wasm.Module, pHostName uint32, pStm
 		return 0
 	}
 
-	return assemblyscript.WriteString(ctx, mod, result)
+	offset, err := assemblyscript.WriteString(ctx, mod, result)
+	if err != nil {
+		logger.Err(ctx, err).Msg("Error writing result to wasm memory.")
+		return 0
+	}
+
+	return offset
 }
 
 func hostExecuteGQL(ctx context.Context, mod wasm.Module, pHostName uint32, pStmt uint32, pVars uint32) uint32 {
@@ -110,7 +116,13 @@ func hostExecuteGQL(ctx context.Context, mod wasm.Module, pHostName uint32, pStm
 		return 0
 	}
 
-	return assemblyscript.WriteString(ctx, mod, result)
+	offset, err := assemblyscript.WriteString(ctx, mod, result)
+	if err != nil {
+		logger.Err(ctx, err).Msg("Error writing result to wasm memory.")
+		return 0
+	}
+
+	return offset
 }
 
 type ClassifierResult struct {
@@ -173,7 +185,13 @@ func hostInvokeClassifier(ctx context.Context, mod wasm.Module, pModelName uint3
 		return 0
 	}
 
-	return assemblyscript.WriteString(ctx, mod, string(resBytes))
+	offset, err := assemblyscript.WriteString(ctx, mod, string(resBytes))
+	if err != nil {
+		logger.Err(ctx, err).Msg("Error writing result to wasm memory.")
+		return 0
+	}
+
+	return offset
 }
 
 func hostComputeEmbedding(ctx context.Context, mod wasm.Module, pModelName uint32, pSentenceMap uint32) uint32 {
@@ -217,7 +235,13 @@ func hostComputeEmbedding(ctx context.Context, mod wasm.Module, pModelName uint3
 		return 0
 	}
 
-	return assemblyscript.WriteString(ctx, mod, string(res))
+	offset, err := assemblyscript.WriteString(ctx, mod, string(res))
+	if err != nil {
+		logger.Err(ctx, err).Msg("Error writing result to wasm memory.")
+		return 0
+	}
+
+	return offset
 }
 
 func hostInvokeTextGenerator(ctx context.Context, mod wasm.Module, pModelName uint32, pInstruction uint32, pSentence uint32, pFormat uint32) uint32 {
@@ -312,7 +336,14 @@ func hostInvokeTextGenerator(ctx context.Context, mod wasm.Module, pModelName ui
 		logger.Err(ctx, err).Msg("Error marshalling result.")
 		return 0
 	}
-	return assemblyscript.WriteString(ctx, mod, string(resBytes))
+
+	offset, err := assemblyscript.WriteString(ctx, mod, string(resBytes))
+	if err != nil {
+		logger.Err(ctx, err).Msg("Error writing result to wasm memory.")
+		return 0
+	}
+
+	return offset
 }
 
 func getHost(mem wasm.Memory, pHostName uint32) (manifest.Host, error) {
