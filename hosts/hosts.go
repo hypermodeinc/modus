@@ -56,7 +56,7 @@ func GetHostKey(ctx context.Context, host manifest.Host) (string, error) {
 		}
 	}
 
-	return "", fmt.Errorf("error getting key for model '%s': %w", host.Name, err)
+	return "", fmt.Errorf("error getting key for host '%s': %w", host.Name, err)
 }
 
 func getWellKnownEnvironmentVariable(host manifest.Host) string {

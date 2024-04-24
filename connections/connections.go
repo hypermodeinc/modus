@@ -28,7 +28,7 @@ func ExecuteGraphqlApi[TResponse any](ctx context.Context, host manifest.Host, s
 	if host.AuthHeader != "" {
 		key, err := hosts.GetHostKey(ctx, host)
 		if err != nil {
-			return response, fmt.Errorf("error getting model key secret: %w", err)
+			return response, err
 		}
 
 		headers[host.AuthHeader] = key
