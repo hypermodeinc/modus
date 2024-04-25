@@ -19,6 +19,7 @@ import (
 	"github.com/buger/jsonparser"
 	gql "github.com/wundergraph/graphql-go-tools/execution/graphql"
 	"github.com/wundergraph/graphql-go-tools/v2/pkg/graphqlerrors"
+	"github.com/wundergraph/graphql-go-tools/v2/pkg/operationreport"
 )
 
 func Initialize() {
@@ -61,6 +62,17 @@ func HandleGraphQLRequest(w http.ResponseWriter, r *http.Request) {
 	resultWriter := gql.NewEngineResultWriter()
 	err = engine.Execute(ctx, &gqlRequest, &resultWriter)
 	if err != nil {
+
+		if report, ok := err.(operationreport.Report); ok {
+			if len(report.InternalErrors) > 0 {
+				// Log internal errors, but don't return them to the client
+				msg := "Failed to execute GraphQL query."
+				logger.Err(ctx, err).Msg(msg)
+				http.Error(w, msg, http.StatusInternalServerError)
+				return
+			}
+		}
+
 		requestErrors := graphqlerrors.RequestErrorsFromError(err)
 		if len(requestErrors) > 0 {
 			// NOTE: we intentionally don't log this, to avoid a bad actor spamming the logs
