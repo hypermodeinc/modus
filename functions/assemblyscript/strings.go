@@ -10,8 +10,15 @@ import (
 	"unicode/utf16"
 	"unsafe"
 
+	"hmruntime/plugins"
+
 	wasm "github.com/tetratelabs/wazero/api"
 )
+
+var StringType = plugins.TypeInfo{
+	Name: "string",
+	Path: "~lib/string/String",
+}
 
 func ReadString(mem wasm.Memory, offset uint32) (data string, err error) {
 

@@ -46,7 +46,10 @@ func (w logWriter) logMessage(line string) {
 		level = w.level
 	}
 
-	w.logger.WithLevel(level).Msg(message)
+	w.logger.
+		WithLevel(level).
+		Str("text", message).
+		Msg("Message logged from function.")
 }
 
 func parseLevel(level string) zerolog.Level {

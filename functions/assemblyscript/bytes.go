@@ -8,9 +8,15 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"hmruntime/plugins"
 
 	wasm "github.com/tetratelabs/wazero/api"
 )
+
+var ArrayBufferType = plugins.TypeInfo{
+	Name: "ArrayBuffer",
+	Path: "~lib/arraybuffer/ArrayBuffer",
+}
 
 func readBytes(mem wasm.Memory, offset uint32) (data []byte, err error) {
 

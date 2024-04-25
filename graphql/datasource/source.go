@@ -12,7 +12,6 @@ import (
 	"io"
 
 	"hmruntime/functions"
-	"hmruntime/logger"
 	"hmruntime/utils"
 	"hmruntime/wasmhost"
 
@@ -45,9 +44,6 @@ func (s Source) Load(ctx context.Context, input []byte, writer io.Writer) error 
 
 	// Load the data
 	result, gqlErrors, err := s.callFunction(ctx, callInfo)
-	if err != nil {
-		logger.Err(ctx, err).Msg("Failed to call function.")
-	}
 
 	// Write the response
 	return writeGraphQLResponse(writer, result, gqlErrors, err, callInfo)

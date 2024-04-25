@@ -13,6 +13,7 @@ import (
 	"hmruntime/config"
 	"hmruntime/functions"
 	"hmruntime/graphql"
+	"hmruntime/hostfunctions"
 	"hmruntime/logger"
 	"hmruntime/manifest"
 	"hmruntime/server"
@@ -52,7 +53,7 @@ func main() {
 	defer wasmhost.RuntimeInstance.Close(ctx)
 
 	// Connect Hypermode host functions
-	err = functions.InstantiateHostFunctions(ctx, wasmhost.RuntimeInstance)
+	err = hostfunctions.Instantiate(ctx, wasmhost.RuntimeInstance)
 	if err != nil {
 		log.Fatal().Err(err).Msg("Failed to instantiate host functions.  Exiting.")
 	}
