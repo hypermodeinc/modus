@@ -28,7 +28,9 @@ type classifierLabel struct {
 
 func hostInvokeClassifier(ctx context.Context, mod wasm.Module, pModelName uint32, pSentenceMap uint32) uint32 {
 
-	modelName, sentenceMap, err := readParams2[string, map[string]string](ctx, mod, pModelName, pSentenceMap)
+	var modelName string
+	var sentenceMap map[string]string
+	err := readParams2(ctx, mod, pModelName, pSentenceMap, &modelName, &sentenceMap)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error reading input parameters.")
 		return 0

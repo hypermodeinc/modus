@@ -21,9 +21,8 @@ import (
 
 func hostInvokeTextGenerator(ctx context.Context, mod wasm.Module, pModelName uint32, pInstruction uint32, pSentence uint32, pFormat uint32) uint32 {
 
-	modelName, instruction, sentence, format, err := readParams4[
-		string, string, string, string](
-		ctx, mod, pModelName, pInstruction, pSentence, pFormat)
+	var modelName, instruction, sentence, format string
+	err := readParams4(ctx, mod, pModelName, pInstruction, pSentence, pFormat, &modelName, &instruction, &sentence, &format)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error reading input parameters.")
 		return 0

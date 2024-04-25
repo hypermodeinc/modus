@@ -19,7 +19,8 @@ import (
 
 func hostComputeEmbedding(ctx context.Context, mod wasm.Module, pModelName uint32, pSentenceMap uint32) uint32 {
 
-	modelName, sentenceMapStr, err := readParams2[string, string](ctx, mod, pModelName, pSentenceMap)
+	var modelName, sentenceMapStr string
+	err := readParams2(ctx, mod, pModelName, pSentenceMap, &modelName, &sentenceMapStr)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error reading input parameters.")
 		return 0
