@@ -22,9 +22,9 @@ import (
 func hostInvokeTextGenerator(ctx context.Context, mod wasm.Module, pModelName uint32, pInstruction uint32, pSentence uint32, pFormat uint32) uint32 {
 	mem := mod.Memory()
 
-	model, err := getModel(mem, pModelName, manifest.GenerationTask)
+	modelName, err := assemblyscript.ReadString(mem, pModelName)
 	if err != nil {
-		logger.Err(ctx, err).Msg("Error getting model.")
+		logger.Err(ctx, err).Msg("Error reading model name from wasm memory.")
 		return 0
 	}
 
@@ -40,6 +40,19 @@ func hostInvokeTextGenerator(ctx context.Context, mod wasm.Module, pModelName ui
 		return 0
 	}
 
+	format, err := assemblyscript.ReadString(mem, pFormat)
+	if err != nil {
+		logger.Err(ctx, err).Msg("Error reading format string from wasm memory.")
+		return 0
+	}
+	outputFormat := models.OutputFormat(format)
+
+	model, err := models.GetModel(modelName, manifest.GenerationTask)
+	if err != nil {
+		logger.Err(ctx, err).Msg("Error getting model.")
+		return 0
+	}
+
 	var host manifest.Host
 	if model.Host != hypermodeHostName {
 		host, err = hosts.GetHost(model.Host)
@@ -47,20 +60,6 @@ func hostInvokeTextGenerator(ctx context.Context, mod wasm.Module, pModelName ui
 			logger.Err(ctx, err).Msg("Error getting model host.")
 			return 0
 		}
-	}
-
-	// Default to text output format for backwards compatibility.
-	// V2 allows for a format to be specified.
-	var outputFormat models.OutputFormat
-	if pFormat == 0 {
-		outputFormat = models.OutputFormatText
-	} else {
-		format, err := assemblyscript.ReadString(mem, pFormat)
-		if err != nil {
-			logger.Err(ctx, err).Msg("Error reading format string from wasm memory.")
-			return 0
-		}
-		outputFormat = models.OutputFormat(format)
 	}
 
 	if models.OutputFormatText != outputFormat && models.OutputFormatJson != outputFormat {

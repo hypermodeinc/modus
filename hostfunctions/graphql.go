@@ -10,6 +10,7 @@ import (
 
 	"hmruntime/connections"
 	"hmruntime/functions/assemblyscript"
+	"hmruntime/hosts"
 	"hmruntime/logger"
 
 	wasm "github.com/tetratelabs/wazero/api"
@@ -18,15 +19,15 @@ import (
 func hostExecuteGQL(ctx context.Context, mod wasm.Module, pHostName uint32, pStmt uint32, pVars uint32) uint32 {
 	mem := mod.Memory()
 
-	host, err := getHost(mem, pHostName)
+	hostName, err := assemblyscript.ReadString(mem, pHostName)
 	if err != nil {
-		logger.Err(ctx, err).Msg("Error getting host.")
+		logger.Err(ctx, err).Msg("Error reading host name from wasm memory.")
 		return 0
 	}
 
 	stmt, err := assemblyscript.ReadString(mem, pStmt)
 	if err != nil {
-		logger.Err(ctx, err).Msg("Error reading GraphQL query string from wasm memory.")
+		logger.Err(ctx, err).Msg("Error reading GraphQL statement from wasm memory.")
 		return 0
 	}
 
@@ -39,6 +40,12 @@ func hostExecuteGQL(ctx context.Context, mod wasm.Module, pHostName uint32, pStm
 	vars := make(map[string]any)
 	if err := json.Unmarshal([]byte(sVars), &vars); err != nil {
 		logger.Err(ctx, err).Msg("Error unmarshalling GraphQL variables.")
+		return 0
+	}
+
+	host, err := hosts.GetHost(hostName)
+	if err != nil {
+		logger.Err(ctx, err).Msg("Error getting host.")
 		return 0
 	}
 

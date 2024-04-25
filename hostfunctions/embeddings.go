@@ -20,7 +20,19 @@ import (
 func hostComputeEmbedding(ctx context.Context, mod wasm.Module, pModelName uint32, pSentenceMap uint32) uint32 {
 	mem := mod.Memory()
 
-	model, err := getModel(mem, pModelName, manifest.EmbeddingTask)
+	modelName, err := assemblyscript.ReadString(mem, pModelName)
+	if err != nil {
+		logger.Err(ctx, err).Msg("Error reading model name from wasm memory.")
+		return 0
+	}
+
+	sentenceMapStr, err := assemblyscript.ReadString(mem, pSentenceMap)
+	if err != nil {
+		logger.Err(ctx, err).Msg("Error reading sentence map string from wasm memory.")
+		return 0
+	}
+
+	model, err := models.GetModel(modelName, manifest.GenerationTask)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error getting model.")
 		return 0
@@ -35,9 +47,9 @@ func hostComputeEmbedding(ctx context.Context, mod wasm.Module, pModelName uint3
 		}
 	}
 
-	sentenceMap, err := getSentenceMap(mem, pSentenceMap)
-	if err != nil {
-		logger.Err(ctx, err).Msg("Error getting sentence map.")
+	sentenceMap := make(map[string]string)
+	if err := json.Unmarshal([]byte(sentenceMapStr), &sentenceMap); err != nil {
+		logger.Err(ctx, err).Msg("Error unmarshalling sentence map.")
 		return 0
 	}
 
