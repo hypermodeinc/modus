@@ -7,7 +7,6 @@ package hostfunctions
 import (
 	"context"
 
-	"hmruntime/hosts"
 	"hmruntime/logger"
 	"hmruntime/manifest"
 	"hmruntime/models"
@@ -31,16 +30,7 @@ func hostComputeEmbedding(ctx context.Context, mod wasm.Module, pModelName uint3
 		return 0
 	}
 
-	var host manifest.Host
-	if model.Host != hypermodeHostName {
-		host, err = hosts.GetHost(model.Host)
-		if err != nil {
-			logger.Err(ctx, err).Msg("Error getting model host.")
-			return 0
-		}
-	}
-
-	result, err := models.PostToModelEndpoint[[]float64](ctx, sentenceMap, model, host)
+	result, err := models.PostToModelEndpoint[[]float64](ctx, sentenceMap, model)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error posting to model endpoint.")
 		return 0

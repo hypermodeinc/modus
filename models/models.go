@@ -36,8 +36,7 @@ func GetModel(modelName string, task manifest.ModelTask) (manifest.Model, error)
 	return manifest.Model{}, fmt.Errorf("a model '%s' for task '%s' was not found", modelName, task)
 }
 
-func PostToModelEndpoint[TResult any](ctx context.Context, sentenceMap map[string]string,
-	model manifest.Model, host manifest.Host) (map[string]TResult, error) {
+func PostToModelEndpoint[TResult any](ctx context.Context, sentenceMap map[string]string, model manifest.Model) (map[string]TResult, error) {
 
 	// self hosted models takes in array, can optimize for parallelizing later
 	keys, sentences := []string{}, []string{}
@@ -59,6 +58,11 @@ func PostToModelEndpoint[TResult any](ctx context.Context, sentenceMap map[strin
 		endpoint = fmt.Sprintf("http://%s.%s/%s:predict", model.Name, config.ModelHost, model.Task)
 	default:
 		// If the model is not hosted by Hypermode, we need to get the model key and add it to the request headers
+		host, err := hosts.GetHost(model.Host)
+		if err != nil {
+			return map[string]TResult{}, err
+		}
+
 		endpoint = host.Endpoint
 		if host.AuthHeader == "" {
 			break
