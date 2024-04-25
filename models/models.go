@@ -65,7 +65,7 @@ func PostToModelEndpoint[TResult any](ctx context.Context, sentenceMap map[strin
 		}
 		key, err := hosts.GetHostKey(ctx, host)
 		if err != nil {
-			return map[string]TResult{}, fmt.Errorf("error getting model key secret: %w", err)
+			return map[string]TResult{}, err
 		}
 
 		headers[host.AuthHeader] = key
