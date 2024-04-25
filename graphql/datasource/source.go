@@ -24,7 +24,7 @@ import (
 const DataSourceName = "HypermodeFunctionsDataSource"
 
 type callInfo struct {
-	Function   templateField  `json:"fn"`
+	Function   fieldInfo      `json:"fn"`
 	Parameters map[string]any `json:"data"`
 }
 
@@ -143,7 +143,7 @@ func writeGraphQLResponse(writer io.Writer, result any, gqlErrors []resolve.Grap
 	}
 
 	// Transform the data
-	jsonData, err = transformData(jsonData, ci.Function)
+	jsonData, err = transformData(jsonData, &ci.Function)
 	if err != nil {
 		return err
 	}
@@ -158,7 +158,7 @@ func writeGraphQLResponse(writer io.Writer, result any, gqlErrors []resolve.Grap
 	return nil
 }
 
-func transformData(data []byte, tf templateField) ([]byte, error) {
+func transformData(data []byte, tf *fieldInfo) ([]byte, error) {
 	val, err := transformValue(data, tf)
 	if err != nil {
 		return nil, err
@@ -170,7 +170,7 @@ func transformData(data []byte, tf templateField) ([]byte, error) {
 
 var nullWord = []byte("null")
 
-func transformValue(data []byte, tf templateField) (result []byte, err error) {
+func transformValue(data []byte, tf *fieldInfo) (result []byte, err error) {
 
 	// Recover from panics and return them as errors
 	defer func() {
@@ -192,19 +192,24 @@ func transformValue(data []byte, tf templateField) (result []byte, err error) {
 	case '{': // object
 		buf.WriteByte('{')
 		for i, f := range tf.Fields {
-			val, dataType, _, err := jsonparser.Get(data, f.Name)
-			if err != nil {
-				return nil, err
-			}
-			if dataType == jsonparser.String {
-				val, err = json.Marshal(string(val))
+			var val []byte
+			if f.Name == "__typename" {
+				val = []byte(`"` + tf.TypeName + `"`)
+			} else {
+				v, dataType, _, err := jsonparser.Get(data, f.Name)
 				if err != nil {
 					return nil, err
 				}
-			}
-			val, err = transformValue(val, f)
-			if err != nil {
-				return nil, err
+				if dataType == jsonparser.String {
+					v, err = json.Marshal(string(v))
+					if err != nil {
+						return nil, err
+					}
+				}
+				val, err = transformValue(v, f)
+				if err != nil {
+					return nil, err
+				}
 			}
 			if i > 0 {
 				buf.WriteByte(',')
