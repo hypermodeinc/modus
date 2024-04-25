@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"hmruntime/plugins"
 	"hmruntime/utils"
+	"reflect"
 	"regexp"
 	"strings"
 
@@ -153,4 +154,86 @@ func getTypeDefinition(ctx context.Context, typePath string) (plugins.TypeDefini
 	}
 
 	return info, nil
+}
+
+func GetTypeInfo[T any]() plugins.TypeInfo {
+	var v T
+	switch any(v).(type) {
+	case bool:
+		return getTypeInfo("bool")
+	case int8:
+		return getTypeInfo("i8")
+	case int16:
+		return getTypeInfo("i16")
+	case int32, int:
+		return getTypeInfo("i32")
+	case int64:
+		return getTypeInfo("i64")
+	case uint8:
+		return getTypeInfo("u8")
+	case uint16:
+		return getTypeInfo("u16")
+	case uint32, uint:
+		return getTypeInfo("u32")
+	case uint64:
+		return getTypeInfo("u64")
+	case float32:
+		return getTypeInfo("f32")
+	case float64:
+		return getTypeInfo("f64")
+	case []byte:
+		return ArrayBufferType
+	case string:
+		return StringType
+	}
+
+	t := reflect.TypeFor[T]()
+	return getTypeInfoForReflectedType(t)
+}
+
+func getTypeInfoForReflectedType(t reflect.Type) plugins.TypeInfo {
+	switch t.Kind() {
+	case reflect.Bool:
+		return getTypeInfo("bool")
+	case reflect.Int8:
+		return getTypeInfo("i8")
+	case reflect.Int16:
+		return getTypeInfo("i16")
+	case reflect.Int32, reflect.Int:
+		return getTypeInfo("i32")
+	case reflect.Int64:
+		return getTypeInfo("i64")
+	case reflect.Uint8:
+		return getTypeInfo("u8")
+	case reflect.Uint16:
+		return getTypeInfo("u16")
+	case reflect.Uint32, reflect.Uint:
+		return getTypeInfo("u32")
+	case reflect.Uint64:
+		return getTypeInfo("u64")
+	case reflect.Float32:
+		return getTypeInfo("f32")
+	case reflect.Float64:
+		return getTypeInfo("f64")
+	case reflect.String:
+		return StringType
+	case reflect.Slice:
+		if t.Elem().Kind() == reflect.Uint8 {
+			return ArrayBufferType
+		}
+		elemType := getTypeInfoForReflectedType(t.Elem())
+		return plugins.TypeInfo{
+			Name: elemType.Name + "[]",
+			Path: "~lib/array/Array<" + elemType.Path + ">",
+		}
+	case reflect.Map:
+		keyType := getTypeInfoForReflectedType(t.Key())
+		valueType := getTypeInfoForReflectedType(t.Elem())
+		return plugins.TypeInfo{
+			Name: "Map<" + keyType.Name + ", " + valueType.Name + ">",
+			Path: "~lib/map/Map<" + keyType.Path + "," + valueType.Path + ">",
+		}
+	}
+
+	return plugins.TypeInfo{}
 }

@@ -8,6 +8,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"reflect"
 
 	"hmruntime/plugins"
 	"hmruntime/utils"
@@ -150,9 +151,25 @@ func DecodeValueAs[T any](ctx context.Context, mod wasm.Module, typ plugins.Type
 			return result, err
 		}
 		return out, nil
-	default:
-		return result, fmt.Errorf("unexpected type %T, expected %T", r, result)
+	case []kvp:
+		switch any(result).(type) {
+		case []kvp:
+			return any(v).(T), nil
+		}
+
+		// convert to map type specified by T
+		mapType := reflect.TypeOf(result)
+		if mapType.Kind() != reflect.Map {
+			return result, fmt.Errorf("unexpected type %T, expected a map type", result)
+		}
+		m := reflect.MakeMapWithSize(mapType, len(v))
+		for _, kv := range v {
+			m.SetMapIndex(reflect.ValueOf(kv.Key), reflect.ValueOf(kv.Value))
+		}
+		return m.Interface().(T), nil
 	}
+
+	return result, fmt.Errorf("unexpected type %T, expected %T", r, result)
 }
 
 func DecodeValue(ctx context.Context, mod wasm.Module, typ plugins.TypeInfo, val uint64) (data any, err error) {

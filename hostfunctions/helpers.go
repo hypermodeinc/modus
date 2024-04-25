@@ -7,31 +7,36 @@ package hostfunctions
 import (
 	"context"
 	"errors"
-	"reflect"
 
 	"hmruntime/functions/assemblyscript"
 
 	wasm "github.com/tetratelabs/wazero/api"
 )
 
-func readParam[T any](ctx context.Context, mod wasm.Module, p uint32) (T, error) {
-	var result T
-	switch any(result).(type) {
+func writeParam[T any](ctx context.Context, mod wasm.Module, val T) (uint32, error) {
+	switch any(val).(type) {
 	case string:
+		// fast path for strings
+		return assemblyscript.WriteString(ctx, mod, any(val).(string))
+	default:
+		typ := assemblyscript.GetTypeInfo[T]()
+		p, err := assemblyscript.EncodeValue(ctx, mod, typ, val)
+		return uint32(p), err
+	}
+}
+
+func readParam[T any](ctx context.Context, mod wasm.Module, p uint32) (T, error) {
+	var v T
+	switch any(v).(type) {
+	case string:
+		// fast path for strings
 		mem := mod.Memory()
 		s, err := assemblyscript.ReadString(mem, p)
-		if err != nil {
-			return result, err
-		}
-		result = any(s).(T)
+		return any(s).(T), err
 	default:
-		if reflect.TypeOf(result).Kind() == reflect.String {
-			s, err := readParam[string](ctx, mod, p)
-			return any(s).(T), err
-		}
+		typ := assemblyscript.GetTypeInfo[T]()
+		return assemblyscript.DecodeValueAs[T](ctx, mod, typ, uint64(p))
 	}
-
-	return result, nil
 }
 
 func readParams2[T1 any, T2 any](ctx context.Context, mod wasm.Module, p1 uint32, p2 uint32) (T1, T2, error) {
