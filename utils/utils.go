@@ -7,6 +7,8 @@ package utils
 import (
 	"bytes"
 	"encoding/json"
+	"os"
+	"strconv"
 	"strings"
 )
 
@@ -65,4 +67,14 @@ func ConvertToStruct[T any](data map[string]any) (T, error) {
 	}
 
 	return result, nil
+}
+
+func EnvVarFlagEnabled(envVarName string) bool {
+	v := os.Getenv(envVarName)
+	b, err := strconv.ParseBool(v)
+	return err == nil && b
+}
+
+func HypermodeDebugEnabled() bool {
+	return EnvVarFlagEnabled("HYPERMODE_DEBUG")
 }

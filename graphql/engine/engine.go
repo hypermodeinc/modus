@@ -6,8 +6,6 @@ package engine
 
 import (
 	"fmt"
-	"os"
-	"strconv"
 	"sync"
 
 	"context"
@@ -18,6 +16,7 @@ import (
 	"hmruntime/graphql/schemagen"
 	"hmruntime/logger"
 	"hmruntime/plugins"
+	"hmruntime/utils"
 
 	"github.com/wundergraph/graphql-go-tools/execution/engine"
 	gql "github.com/wundergraph/graphql-go-tools/execution/graphql"
@@ -48,7 +47,7 @@ func Activate(ctx context.Context, metadata plugins.PluginMetadata) error {
 		return err
 	}
 
-	if b, err := strconv.ParseBool(os.Getenv("HYPERMODE_DEBUG")); err == nil && b {
+	if utils.HypermodeDebugEnabled() {
 		if config.UseJsonLogging {
 			logger.Debug(ctx).Str("schema", schemaContent).Msg("Generated schema")
 		} else {
