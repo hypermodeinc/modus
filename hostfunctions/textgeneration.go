@@ -20,6 +20,7 @@ import (
 )
 
 func hostInvokeTextGenerator(ctx context.Context, mod wasm.Module, pModelName uint32, pInstruction uint32, pSentence uint32, pFormat uint32) uint32 {
+
 	modelName, instruction, sentence, outputFormat, err := readParams4[
 		string, string, string, models.OutputFormat](
 		ctx, mod, pModelName, pInstruction, pSentence, pFormat)
