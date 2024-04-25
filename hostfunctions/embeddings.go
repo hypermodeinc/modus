@@ -18,17 +18,10 @@ import (
 )
 
 func hostComputeEmbedding(ctx context.Context, mod wasm.Module, pModelName uint32, pSentenceMap uint32) uint32 {
-	mem := mod.Memory()
 
-	modelName, err := assemblyscript.ReadString(mem, pModelName)
+	modelName, sentenceMapStr, err := readParams2[string, string](ctx, mod, pModelName, pSentenceMap)
 	if err != nil {
-		logger.Err(ctx, err).Msg("Error reading model name from wasm memory.")
-		return 0
-	}
-
-	sentenceMapStr, err := assemblyscript.ReadString(mem, pSentenceMap)
-	if err != nil {
-		logger.Err(ctx, err).Msg("Error reading sentence map string from wasm memory.")
+		logger.Err(ctx, err).Msg("Error reading input parameters.")
 		return 0
 	}
 

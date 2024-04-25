@@ -17,23 +17,10 @@ import (
 )
 
 func hostExecuteGQL(ctx context.Context, mod wasm.Module, pHostName uint32, pStmt uint32, pVars uint32) uint32 {
-	mem := mod.Memory()
 
-	hostName, err := assemblyscript.ReadString(mem, pHostName)
+	hostName, stmt, sVars, err := readParams3[string, string, string](ctx, mod, pHostName, pStmt, pVars)
 	if err != nil {
-		logger.Err(ctx, err).Msg("Error reading host name from wasm memory.")
-		return 0
-	}
-
-	stmt, err := assemblyscript.ReadString(mem, pStmt)
-	if err != nil {
-		logger.Err(ctx, err).Msg("Error reading GraphQL statement from wasm memory.")
-		return 0
-	}
-
-	sVars, err := assemblyscript.ReadString(mem, pVars)
-	if err != nil {
-		logger.Err(ctx, err).Msg("Error reading GraphQL variables string from wasm memory.")
+		logger.Err(ctx, err).Msg("Error reading input parameters.")
 		return 0
 	}
 

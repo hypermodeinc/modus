@@ -20,32 +20,13 @@ import (
 )
 
 func hostInvokeTextGenerator(ctx context.Context, mod wasm.Module, pModelName uint32, pInstruction uint32, pSentence uint32, pFormat uint32) uint32 {
-	mem := mod.Memory()
-
-	modelName, err := assemblyscript.ReadString(mem, pModelName)
+	modelName, instruction, sentence, outputFormat, err := readParams4[
+		string, string, string, models.OutputFormat](
+		ctx, mod, pModelName, pInstruction, pSentence, pFormat)
 	if err != nil {
-		logger.Err(ctx, err).Msg("Error reading model name from wasm memory.")
+		logger.Err(ctx, err).Msg("Error reading input parameters.")
 		return 0
 	}
-
-	sentence, err := assemblyscript.ReadString(mem, pSentence)
-	if err != nil {
-		logger.Err(ctx, err).Msg("Error reading sentence string from wasm memory.")
-		return 0
-	}
-
-	instruction, err := assemblyscript.ReadString(mem, pInstruction)
-	if err != nil {
-		logger.Err(ctx, err).Msg("Error reading instruction string from wasm memory.")
-		return 0
-	}
-
-	format, err := assemblyscript.ReadString(mem, pFormat)
-	if err != nil {
-		logger.Err(ctx, err).Msg("Error reading format string from wasm memory.")
-		return 0
-	}
-	outputFormat := models.OutputFormat(format)
 
 	model, err := models.GetModel(modelName, manifest.GenerationTask)
 	if err != nil {
