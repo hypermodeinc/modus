@@ -13,7 +13,7 @@ import (
 	wasm "github.com/tetratelabs/wazero/api"
 )
 
-func writeParam[T any](ctx context.Context, mod wasm.Module, val T) (uint32, error) {
+func writeResult[T any](ctx context.Context, mod wasm.Module, val T) (uint32, error) {
 	switch any(val).(type) {
 	case string:
 		// fast path for strings

@@ -70,7 +70,7 @@ func hostInvokeClassifier(ctx context.Context, mod wasm.Module, pModelName uint3
 		}
 	}
 
-	offset, err := writeParam(ctx, mod, resultMap)
+	offset, err := writeResult(ctx, mod, resultMap)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error writing classification result.")
 		return 0
