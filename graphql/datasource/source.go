@@ -12,6 +12,7 @@ import (
 	"io"
 
 	"hmruntime/functions"
+	"hmruntime/logger"
 	"hmruntime/utils"
 	"hmruntime/wasmhost"
 
@@ -46,7 +47,12 @@ func (s Source) Load(ctx context.Context, input []byte, writer io.Writer) error 
 	result, gqlErrors, err := s.callFunction(ctx, callInfo)
 
 	// Write the response
-	return writeGraphQLResponse(writer, result, gqlErrors, err, callInfo)
+	err = writeGraphQLResponse(writer, result, gqlErrors, err, callInfo)
+	if err != nil {
+		logger.Error(ctx).Err(err).Msg("Error creating GraphQL response.")
+	}
+
+	return err
 }
 
 func (s Source) callFunction(ctx context.Context, callInfo callInfo) (any, []resolve.GraphQLError, error) {
@@ -164,7 +170,18 @@ func transformData(data []byte, tf templateField) ([]byte, error) {
 
 var nullWord = []byte("null")
 
-func transformValue(data []byte, tf templateField) ([]byte, error) {
+func transformValue(data []byte, tf templateField) (result []byte, err error) {
+
+	// Recover from panics and return them as errors
+	defer func() {
+		if r := recover(); r != nil {
+			e, ok := r.(error)
+			if ok {
+				err = e
+			}
+		}
+	}()
+
 	if len(tf.Fields) == 0 || len(data) == 0 || bytes.Equal(data, nullWord) {
 		return data, nil
 	}
@@ -207,6 +224,8 @@ func transformValue(data []byte, tf templateField) ([]byte, error) {
 			}
 			val, err := transformValue(val, tf)
 			if err != nil {
+				// no error mechanism in jsonparser.ArrayEach, so we panic
+				// and recover before returning from transformValue
 				panic(err)
 			}
 			buf.Write(val)
