@@ -60,7 +60,7 @@ func (s Source) callFunction(ctx context.Context, callInfo callInfo) (any, []res
 	// Get the function info
 	info, ok := functions.Functions[callInfo.Function.Name]
 	if !ok {
-		return nil, nil, fmt.Errorf("no function registered named %s", callInfo.Function)
+		return nil, nil, fmt.Errorf("no function registered named %s", callInfo.Function.Name)
 	}
 
 	// Prepare the context that will be used throughout the function execution
