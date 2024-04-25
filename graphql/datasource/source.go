@@ -12,6 +12,7 @@ import (
 	"io"
 
 	"hmruntime/functions"
+	"hmruntime/logger"
 	"hmruntime/utils"
 	"hmruntime/wasmhost"
 
@@ -23,7 +24,7 @@ import (
 const DataSourceName = "HypermodeFunctionsDataSource"
 
 type callInfo struct {
-	Function   templateField  `json:"fn"`
+	Function   fieldInfo      `json:"fn"`
 	Parameters map[string]any `json:"data"`
 }
 
@@ -46,7 +47,12 @@ func (s Source) Load(ctx context.Context, input []byte, writer io.Writer) error 
 	result, gqlErrors, err := s.callFunction(ctx, callInfo)
 
 	// Write the response
-	return writeGraphQLResponse(writer, result, gqlErrors, err, callInfo)
+	err = writeGraphQLResponse(writer, result, gqlErrors, err, callInfo)
+	if err != nil {
+		logger.Error(ctx).Err(err).Msg("Error creating GraphQL response.")
+	}
+
+	return err
 }
 
 func (s Source) callFunction(ctx context.Context, callInfo callInfo) (any, []resolve.GraphQLError, error) {
@@ -54,7 +60,7 @@ func (s Source) callFunction(ctx context.Context, callInfo callInfo) (any, []res
 	// Get the function info
 	info, ok := functions.Functions[callInfo.Function.Name]
 	if !ok {
-		return nil, nil, fmt.Errorf("no function registered named %s", callInfo.Function)
+		return nil, nil, fmt.Errorf("no function registered named %s", callInfo.Function.Name)
 	}
 
 	// Prepare the context that will be used throughout the function execution
@@ -137,7 +143,7 @@ func writeGraphQLResponse(writer io.Writer, result any, gqlErrors []resolve.Grap
 	}
 
 	// Transform the data
-	jsonData, err = transformData(jsonData, ci.Function)
+	jsonData, err = transformData(jsonData, &ci.Function)
 	if err != nil {
 		return err
 	}
@@ -152,7 +158,7 @@ func writeGraphQLResponse(writer io.Writer, result any, gqlErrors []resolve.Grap
 	return nil
 }
 
-func transformData(data []byte, tf templateField) ([]byte, error) {
+func transformData(data []byte, tf *fieldInfo) ([]byte, error) {
 	val, err := transformValue(data, tf)
 	if err != nil {
 		return nil, err
@@ -164,7 +170,18 @@ func transformData(data []byte, tf templateField) ([]byte, error) {
 
 var nullWord = []byte("null")
 
-func transformValue(data []byte, tf templateField) ([]byte, error) {
+func transformValue(data []byte, tf *fieldInfo) (result []byte, err error) {
+
+	// Recover from panics and return them as errors
+	defer func() {
+		if r := recover(); r != nil {
+			e, ok := r.(error)
+			if ok {
+				err = e
+			}
+		}
+	}()
+
 	if len(tf.Fields) == 0 || len(data) == 0 || bytes.Equal(data, nullWord) {
 		return data, nil
 	}
@@ -175,19 +192,24 @@ func transformValue(data []byte, tf templateField) ([]byte, error) {
 	case '{': // object
 		buf.WriteByte('{')
 		for i, f := range tf.Fields {
-			val, dataType, _, err := jsonparser.Get(data, f.Name)
-			if err != nil {
-				return nil, err
-			}
-			if dataType == jsonparser.String {
-				val, err = json.Marshal(string(val))
+			var val []byte
+			if f.Name == "__typename" {
+				val = []byte(`"` + tf.TypeName + `"`)
+			} else {
+				v, dataType, _, err := jsonparser.Get(data, f.Name)
 				if err != nil {
 					return nil, err
 				}
-			}
-			val, err = transformValue(val, f)
-			if err != nil {
-				return nil, err
+				if dataType == jsonparser.String {
+					v, err = json.Marshal(string(v))
+					if err != nil {
+						return nil, err
+					}
+				}
+				val, err = transformValue(v, f)
+				if err != nil {
+					return nil, err
+				}
 			}
 			if i > 0 {
 				buf.WriteByte(',')
@@ -207,6 +229,8 @@ func transformValue(data []byte, tf templateField) ([]byte, error) {
 			}
 			val, err := transformValue(val, tf)
 			if err != nil {
+				// no error mechanism in jsonparser.ArrayEach, so we panic
+				// and recover before returning from transformValue
 				panic(err)
 			}
 			buf.Write(val)

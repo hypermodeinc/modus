@@ -17,8 +17,11 @@ import (
 	"hmruntime/wasmhost"
 
 	"github.com/buger/jsonparser"
+	eng "github.com/wundergraph/graphql-go-tools/execution/engine"
 	gql "github.com/wundergraph/graphql-go-tools/execution/graphql"
+	"github.com/wundergraph/graphql-go-tools/v2/pkg/engine/resolve"
 	"github.com/wundergraph/graphql-go-tools/v2/pkg/graphqlerrors"
+	"github.com/wundergraph/graphql-go-tools/v2/pkg/operationreport"
 )
 
 func Initialize() {
@@ -57,10 +60,30 @@ func HandleGraphQLRequest(w http.ResponseWriter, r *http.Request) {
 	output := map[string]datasource.FunctionOutput{}
 	ctx = context.WithValue(ctx, utils.FunctionOutputContextKey, output)
 
+	// Set tracing options
+	var options = []eng.ExecutionOptions{}
+	if utils.HypermodeTraceEnabled() {
+		var traceOpts resolve.TraceOptions
+		traceOpts.Enable = true
+		traceOpts.IncludeTraceOutputInResponseExtensions = true
+		options = append(options, eng.WithRequestTraceOptions(traceOpts))
+	}
+
 	// Execute the GraphQL query
 	resultWriter := gql.NewEngineResultWriter()
-	err = engine.Execute(ctx, &gqlRequest, &resultWriter)
+	err = engine.Execute(ctx, &gqlRequest, &resultWriter, options...)
 	if err != nil {
+
+		if report, ok := err.(operationreport.Report); ok {
+			if len(report.InternalErrors) > 0 {
+				// Log internal errors, but don't return them to the client
+				msg := "Failed to execute GraphQL query."
+				logger.Err(ctx, err).Msg(msg)
+				http.Error(w, msg, http.StatusInternalServerError)
+				return
+			}
+		}
+
 		requestErrors := graphqlerrors.RequestErrorsFromError(err)
 		if len(requestErrors) > 0 {
 			// NOTE: we intentionally don't log this, to avoid a bad actor spamming the logs
