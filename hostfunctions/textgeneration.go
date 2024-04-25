@@ -35,13 +35,10 @@ func hostInvokeTextGenerator(ctx context.Context, mod wasm.Module, pModelName ui
 		return 0
 	}
 
-	var host manifest.Host
-	if model.Host != hypermodeHostName {
-		host, err = hosts.GetHost(model.Host)
-		if err != nil {
-			logger.Err(ctx, err).Msg("Error getting model host.")
-			return 0
-		}
+	host, err := hosts.GetHost(model.Host)
+	if err != nil {
+		logger.Err(ctx, err).Msg("Error getting model host.")
+		return 0
 	}
 
 	if models.OutputFormatText != outputFormat && models.OutputFormatJson != outputFormat {

@@ -12,7 +12,6 @@ import (
 )
 
 const hostModuleName string = "hypermode"
-const hypermodeHostName string = "hypermode"
 
 func Instantiate(ctx context.Context, runtime wazero.Runtime) error {
 	b := runtime.NewHostModuleBuilder(hostModuleName)

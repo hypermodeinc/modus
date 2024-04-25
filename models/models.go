@@ -14,8 +14,6 @@ import (
 	"hmruntime/utils"
 )
 
-const HypermodeHost string = "hypermode"
-
 // generic output format for models functions
 // can be extended to support more formats
 // for now, we support text and json_object used in generateText function
@@ -54,7 +52,7 @@ func PostToModelEndpoint[TResult any](ctx context.Context, sentenceMap map[strin
 	headers := map[string]string{}
 
 	switch model.Host {
-	case HypermodeHost:
+	case hosts.HypermodeHost:
 		endpoint = fmt.Sprintf("http://%s.%s/%s:predict", model.Name, config.ModelHost, model.Task)
 	default:
 		// If the model is not hosted by Hypermode, we need to get the model key and add it to the request headers

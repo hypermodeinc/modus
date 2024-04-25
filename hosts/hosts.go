@@ -11,9 +11,16 @@ import (
 )
 
 const hostKeyPrefix = "HYP_HOST_KEY_"
+
+const HypermodeHost string = "hypermode"
 const OpenAIHost string = "openai"
 
 func GetHost(hostName string) (manifest.Host, error) {
+
+	if hostName == HypermodeHost {
+		return manifest.Host{Name: HypermodeHost}, nil
+	}
+
 	for _, host := range manifest.HypermodeData.Hosts {
 		if host.Name == hostName {
 			return host, nil
