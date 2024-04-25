@@ -21,13 +21,14 @@ import (
 
 func hostInvokeTextGenerator(ctx context.Context, mod wasm.Module, pModelName uint32, pInstruction uint32, pSentence uint32, pFormat uint32) uint32 {
 
-	modelName, instruction, sentence, outputFormat, err := readParams4[
-		string, string, string, models.OutputFormat](
+	modelName, instruction, sentence, format, err := readParams4[
+		string, string, string, string](
 		ctx, mod, pModelName, pInstruction, pSentence, pFormat)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error reading input parameters.")
 		return 0
 	}
+	outputFormat := models.OutputFormat(format)
 
 	model, err := models.GetModel(modelName, manifest.GenerationTask)
 	if err != nil {
