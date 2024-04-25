@@ -6,9 +6,7 @@ package hostfunctions
 
 import (
 	"context"
-	"encoding/json"
 
-	"hmruntime/functions/assemblyscript"
 	"hmruntime/hosts"
 	"hmruntime/logger"
 	"hmruntime/manifest"
@@ -19,8 +17,9 @@ import (
 
 func hostComputeEmbedding(ctx context.Context, mod wasm.Module, pModelName uint32, pSentenceMap uint32) uint32 {
 
-	var modelName, sentenceMapStr string
-	err := readParams2(ctx, mod, pModelName, pSentenceMap, &modelName, &sentenceMapStr)
+	var modelName string
+	var sentenceMap map[string]string
+	err := readParams2(ctx, mod, pModelName, pSentenceMap, &modelName, &sentenceMap)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error reading input parameters.")
 		return 0
@@ -41,12 +40,6 @@ func hostComputeEmbedding(ctx context.Context, mod wasm.Module, pModelName uint3
 		}
 	}
 
-	sentenceMap := make(map[string]string)
-	if err := json.Unmarshal([]byte(sentenceMapStr), &sentenceMap); err != nil {
-		logger.Err(ctx, err).Msg("Error unmarshalling sentence map.")
-		return 0
-	}
-
 	result, err := models.PostToModelEndpoint[[]float64](ctx, sentenceMap, model, host)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error posting to model endpoint.")
@@ -58,15 +51,9 @@ func hostComputeEmbedding(ctx context.Context, mod wasm.Module, pModelName uint3
 		return 0
 	}
 
-	res, err := json.Marshal(result)
+	offset, err := writeResult(ctx, mod, result)
 	if err != nil {
-		logger.Err(ctx, err).Msg("Error marshalling embedding result.")
-		return 0
-	}
-
-	offset, err := assemblyscript.WriteString(ctx, mod, string(res))
-	if err != nil {
-		logger.Err(ctx, err).Msg("Error writing result to wasm memory.")
+		logger.Err(ctx, err).Msg("Error writing classification result.")
 		return 0
 	}
 
