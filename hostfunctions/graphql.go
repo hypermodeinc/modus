@@ -37,7 +37,7 @@ func hostExecuteGQL(ctx context.Context, mod wasm.Module, pHostName uint32, pStm
 		return 0
 	}
 
-	result, err := connections.ExecuteGraphqlApi[string](ctx, host, stmt, vars)
+	result, err := connections.ExecuteGraphqlApi(ctx, host, stmt, vars)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error executing GraphQL operation.")
 		return 0
