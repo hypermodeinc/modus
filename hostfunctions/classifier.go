@@ -6,9 +6,7 @@ package hostfunctions
 
 import (
 	"context"
-	"encoding/json"
 
-	"hmruntime/functions/assemblyscript"
 	"hmruntime/hosts"
 	"hmruntime/logger"
 	"hmruntime/manifest"
@@ -30,7 +28,7 @@ type classifierLabel struct {
 
 func hostInvokeClassifier(ctx context.Context, mod wasm.Module, pModelName uint32, pSentenceMap uint32) uint32 {
 
-	modelName, sentenceMapStr, err := readParams2[string, string](ctx, mod, pModelName, pSentenceMap)
+	modelName, sentenceMap, err := readParams2[string, map[string]string](ctx, mod, pModelName, pSentenceMap)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error reading input parameters.")
 		return 0
@@ -49,12 +47,6 @@ func hostInvokeClassifier(ctx context.Context, mod wasm.Module, pModelName uint3
 			logger.Err(ctx, err).Msg("Error getting model host.")
 			return 0
 		}
-	}
-
-	sentenceMap := make(map[string]string)
-	if err := json.Unmarshal([]byte(sentenceMapStr), &sentenceMap); err != nil {
-		logger.Err(ctx, err).Msg("Error unmarshalling sentence map.")
-		return 0
 	}
 
 	result, err := models.PostToModelEndpoint[classifierResult](ctx, sentenceMap, model, host)
@@ -76,15 +68,9 @@ func hostInvokeClassifier(ctx context.Context, mod wasm.Module, pModelName uint3
 		}
 	}
 
-	resBytes, err := json.Marshal(resultMap)
+	offset, err := writeParam(ctx, mod, resultMap)
 	if err != nil {
-		logger.Err(ctx, err).Msg("Error marshalling classification result.")
-		return 0
-	}
-
-	offset, err := assemblyscript.WriteString(ctx, mod, string(resBytes))
-	if err != nil {
-		logger.Err(ctx, err).Msg("Error writing result to wasm memory.")
+		logger.Err(ctx, err).Msg("Error writing classification result.")
 		return 0
 	}
 
