@@ -78,3 +78,7 @@ func EnvVarFlagEnabled(envVarName string) bool {
 func HypermodeDebugEnabled() bool {
 	return EnvVarFlagEnabled("HYPERMODE_DEBUG")
 }
+
+func HypermodeTraceEnabled() bool {
+	return EnvVarFlagEnabled("HYPERMODE_TRACE")
+}

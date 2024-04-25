@@ -17,7 +17,9 @@ import (
 	"hmruntime/wasmhost"
 
 	"github.com/buger/jsonparser"
+	eng "github.com/wundergraph/graphql-go-tools/execution/engine"
 	gql "github.com/wundergraph/graphql-go-tools/execution/graphql"
+	"github.com/wundergraph/graphql-go-tools/v2/pkg/engine/resolve"
 	"github.com/wundergraph/graphql-go-tools/v2/pkg/graphqlerrors"
 	"github.com/wundergraph/graphql-go-tools/v2/pkg/operationreport"
 )
@@ -58,9 +60,18 @@ func HandleGraphQLRequest(w http.ResponseWriter, r *http.Request) {
 	output := map[string]datasource.FunctionOutput{}
 	ctx = context.WithValue(ctx, utils.FunctionOutputContextKey, output)
 
+	// Set tracing options
+	var options = []eng.ExecutionOptions{}
+	if utils.HypermodeTraceEnabled() {
+		var traceOpts resolve.TraceOptions
+		traceOpts.Enable = true
+		traceOpts.IncludeTraceOutputInResponseExtensions = true
+		options = append(options, eng.WithRequestTraceOptions(traceOpts))
+	}
+
 	// Execute the GraphQL query
 	resultWriter := gql.NewEngineResultWriter()
-	err = engine.Execute(ctx, &gqlRequest, &resultWriter)
+	err = engine.Execute(ctx, &gqlRequest, &resultWriter, options...)
 	if err != nil {
 
 		if report, ok := err.(operationreport.Report); ok {
