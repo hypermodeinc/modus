@@ -19,13 +19,13 @@ import (
 
 type classifierResult struct {
 	Label         string            `json:"label"`
-	Confidence    float64           `json:"confidence"`
+	Confidence    float32           `json:"confidence"`
 	Probabilities []classifierLabel `json:"probabilities"`
 }
 
 type classifierLabel struct {
 	Label       string  `json:"label"`
-	Probability float64 `json:"probability"`
+	Probability float32 `json:"probability"`
 }
 
 func hostInvokeClassifier(ctx context.Context, mod wasm.Module, pModelName uint32, pSentenceMap uint32) uint32 {
@@ -68,9 +68,9 @@ func hostInvokeClassifier(ctx context.Context, mod wasm.Module, pModelName uint3
 		return 0
 	}
 
-	resultMap := make(map[string]map[string]float64)
+	resultMap := make(map[string]map[string]float32)
 	for k, v := range result {
-		resultMap[k] = make(map[string]float64)
+		resultMap[k] = make(map[string]float32)
 		for _, p := range v.Probabilities {
 			resultMap[k][p.Label] = p.Probability
 		}
