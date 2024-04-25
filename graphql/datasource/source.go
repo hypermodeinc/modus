@@ -162,8 +162,10 @@ func transformData(data []byte, tf templateField) ([]byte, error) {
 	return jsonparser.Set(out, val, tf.AliasOrName())
 }
 
+var nullWord = []byte("null")
+
 func transformValue(data []byte, tf templateField) ([]byte, error) {
-	if len(tf.Fields) == 0 || len(data) == 0 {
+	if len(tf.Fields) == 0 || len(data) == 0 || bytes.Equal(data, nullWord) {
 		return data, nil
 	}
 
@@ -205,7 +207,7 @@ func transformValue(data []byte, tf templateField) ([]byte, error) {
 			}
 			val, err := transformValue(val, tf)
 			if err != nil {
-				return
+				panic(err)
 			}
 			buf.Write(val)
 		})
