@@ -21,7 +21,7 @@ import (
 )
 
 const (
-	configPort = 8080
+	configPort = 8686
 )
 
 var (
@@ -40,9 +40,7 @@ func setupRuntime(t *testing.T) {
 	config.StoragePath = path.Join(thisFilePath, "..", "testutil", "data", "test-as")
 
 	go func() {
-		if err := server.Start(context.Background()); err != nil {
-			t.Logf("error while shutting down the server: %v", err)
-		}
+		server.Start(context.Background())
 	}()
 
 	for i := 0; i < 10; i++ {
