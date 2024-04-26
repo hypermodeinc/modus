@@ -60,12 +60,12 @@ func Start(ctx context.Context) {
 	shutdownCtx, shutdownRelease := context.WithTimeout(ctx, shutdownTimeout)
 	defer shutdownRelease()
 	if err := server.Shutdown(shutdownCtx); err != nil {
-		logger.Fatal(shutdownCtx).Err(err).Msg("HTTP server shutdown error.")
+		logger.Fatal(ctx).Err(err).Msg("HTTP server shutdown error.")
 	}
 
 	// Wait for the server to shutdown completely.
 	<-shutdownChan
-	logger.Info(shutdownCtx).Msg("Shutdown complete.")
+	logger.Info(ctx).Msg("Shutdown complete.")
 }
 
 func GetHandlerMux() http.Handler {
