@@ -21,6 +21,8 @@ jobs:
         with:
           go-version-file: 'go.mod'
           check-latest: true
+      - name: Generate Code
+        run: go generate ./...
       - name: Run Unit Tests
         run: |
           go install github.com/jstemmer/go-junit-report/v2@latest
