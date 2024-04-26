@@ -2,6 +2,8 @@
  * Copyright 2023 Hypermode, Inc.
  */
 
+//go:generate go run ./.tools/generate_version
+
 package main
 
 import (

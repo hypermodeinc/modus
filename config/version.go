@@ -5,9 +5,9 @@
 package config
 
 func GetProductVersion() string {
-	return "Hypermode Runtime v" + GetVersionNumber()
+	return "Hypermode Runtime " + GetVersionNumber()
 }
 
 func GetVersionNumber() string {
-	return "0.x.x" // TODO
+	return version
 }
