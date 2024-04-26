@@ -26,8 +26,7 @@ const shutdownTimeout = 5 * time.Second
 func Start(ctx context.Context) {
 
 	// Create the configuration for the server.
-	mux := http.NewServeMux()
-	configureEndpoints(mux)
+	mux := GetHandlerMux()
 	server := &http.Server{
 		Addr:    fmt.Sprintf(":%d", config.Port),
 		Handler: mux,
@@ -69,7 +68,8 @@ func Start(ctx context.Context) {
 	logger.Info(shutdownCtx).Msg("Shutdown complete.")
 }
 
-func configureEndpoints(mux *http.ServeMux) {
+func GetHandlerMux() http.Handler {
+	mux := http.NewServeMux()
 
 	// Register our main endpoints with instrumentation.
 	mux.Handle("/graphql", metrics.InstrumentHandler(graphql.HandleGraphQLRequest, "graphql"))
@@ -82,6 +82,8 @@ func configureEndpoints(mux *http.ServeMux) {
 
 	// Also register the health endpoint, un-instrumented.
 	mux.HandleFunc("/health", healthHandler)
+
+	return mux
 }
 
 func healthHandler(w http.ResponseWriter, r *http.Request) {
