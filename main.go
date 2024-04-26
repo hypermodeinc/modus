@@ -10,6 +10,7 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"time"
 
 	"hmruntime/aws"
 	"hmruntime/config"
@@ -22,10 +23,17 @@ import (
 	"hmruntime/storage"
 	"hmruntime/wasmhost"
 
+	"github.com/getsentry/sentry-go"
 	"github.com/joho/godotenv"
 )
 
 func main() {
+
+	// Initialize Sentry
+	initSentry()
+	defer sentry.Flush(5 * time.Second)
+
+	// Setup application fundamentals
 	ctx := context.Background()
 	config.ParseCommandLineFlags()
 	log := logger.Initialize()
