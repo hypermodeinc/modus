@@ -11,7 +11,9 @@ import (
 
 	"hmruntime/functions/assemblyscript"
 	"hmruntime/logger"
+	"hmruntime/metrics"
 
+	"github.com/prometheus/client_golang/prometheus"
 	wasm "github.com/tetratelabs/wazero/api"
 )
 
@@ -40,6 +42,9 @@ func CallFunction(ctx context.Context, mod wasm.Module, info FunctionInfo, input
 			Bool("user_visible", true).
 			Msg("Function completed successfully.")
 	}
+
+	labels := prometheus.Labels{metrics.LabelPlugin: info.Plugin.Name(), metrics.LabelFunction: fnName}
+	metrics.FunctionExecutionsNum.With(labels).Inc()
 
 	return result, err
 }
