@@ -6,14 +6,15 @@ package metrics_test
 
 import (
 	"bytes"
-	"hmruntime/config"
-	"hmruntime/server"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"path"
 	"runtime"
 	"testing"
+
+	"hmruntime/config"
+	"hmruntime/server"
 
 	"github.com/prometheus/common/expfmt"
 )
