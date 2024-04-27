@@ -1,6 +1,6 @@
 # Change Log
 
-# UNRELEASED
+# 2024-04-26 - Version 0.6.1
 
 - Fix GraphQL error when resulting data contains a nested null field [#150](https://github.com/gohypermode/runtime/issues/150)
 - Fix GraphQL error when resolving `__typename` fields; also add `HYPERMODE_TRACE` debugging flag [#151](https://github.com/gohypermode/runtime/issues/151)
