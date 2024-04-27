@@ -2,6 +2,8 @@
  * Copyright 2023 Hypermode, Inc.
  */
 
+//go:generate go run ./.tools/generate_version
+
 package main
 
 import (
@@ -28,7 +30,9 @@ func main() {
 	config.ParseCommandLineFlags()
 	log := logger.Initialize()
 
-	log.Info().Msg("Starting Hypermode Runtime.")
+	log.Info().
+		Str("version", config.GetVersionNumber()).
+		Msg("Starting Hypermode Runtime.")
 
 	// Load environment variables from plugins path
 	// note: .env file is optional, so don't log if it's not found

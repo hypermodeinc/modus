@@ -6,6 +6,7 @@ package config
 
 import (
 	"flag"
+	"fmt"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -33,7 +34,17 @@ func ParseCommandLineFlags() {
 	flag.DurationVar(&RefreshInterval, "refresh", time.Second*5, "The refresh interval to reload any changes.")
 	flag.BoolVar(&UseJsonLogging, "jsonlogs", false, "Use JSON format for logging.")
 
+	var showVersion bool
+	const versionUsage = "Show the Runtime version number and exit."
+	flag.BoolVar(&showVersion, "version", false, versionUsage)
+	flag.BoolVar(&showVersion, "v", false, versionUsage+" (shorthand)")
+
 	flag.Parse()
+
+	if showVersion {
+		fmt.Println(GetProductVersion())
+		os.Exit(0)
+	}
 }
 
 func getDefaultStoragePath() string {
