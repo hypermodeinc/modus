@@ -21,6 +21,7 @@ import (
 	"hmruntime/manifest"
 	"hmruntime/server"
 	"hmruntime/storage"
+	"hmruntime/utils"
 	"hmruntime/wasmhost"
 
 	"github.com/getsentry/sentry-go"
@@ -28,16 +29,27 @@ import (
 )
 
 func main() {
-
 	// Initialize Sentry
 	initSentry()
 	defer sentry.Flush(5 * time.Second)
 
-	// Setup application fundamentals
+	// Initialize the runtime services
 	ctx := context.Background()
-	config.ParseCommandLineFlags()
-	log := logger.Initialize()
+	initRuntimeServices(ctx)
+	defer stopRuntimeServices(ctx)
 
+	// Start the HTTP server to listen for requests.
+	// Note, this function blocks, and handles shutdown gracefully.
+	server.Start(ctx)
+}
+
+func initRuntimeServices(ctx context.Context) {
+
+	// Parse the command line flags
+	config.ParseCommandLineFlags()
+
+	// Initialize the logger
+	log := logger.Initialize()
 	log.Info().
 		Str("version", config.GetVersionNumber()).
 		Msg("Starting Hypermode Runtime.")
@@ -48,6 +60,11 @@ func main() {
 	if err != nil && !os.IsNotExist(err) {
 		log.Warn().Err(err).Msg("Error reading .env file.  Ignoring.")
 	}
+
+	// Instrument the rest of the startup process
+	transaction := sentry.StartTransaction(ctx, utils.GetCurrentFuncName())
+	defer transaction.Finish()
+	ctx = transaction.Context()
 
 	// Initialize the AWS configuration if we're using any AWS functionality
 	if config.UseAwsStorage || config.UseAwsSecrets {
@@ -62,7 +79,6 @@ func main() {
 	if err != nil {
 		log.Fatal().Err(err).Msg("Failed to initialize the WebAssembly runtime.  Exiting.")
 	}
-	defer wasmhost.RuntimeInstance.Close(ctx)
 
 	// Connect Hypermode host functions
 	err = hostfunctions.Instantiate(ctx, wasmhost.RuntimeInstance)
@@ -71,7 +87,7 @@ func main() {
 	}
 
 	// Initialize the storage system
-	storage.Initialize()
+	storage.Initialize(ctx)
 
 	// Watch for function registration requests
 	functions.MonitorRegistration(ctx)
@@ -83,9 +99,9 @@ func main() {
 	wasmhost.MonitorPlugins(ctx)
 
 	// Initialize the GraphQL engine
-	graphql.Initialize()
+	graphql.Initialize(ctx)
+}
 
-	// Start the HTTP server to listen for requests.
-	// Note, this function blocks, and handles shutdown gracefully.
-	server.Start(ctx)
+func stopRuntimeServices(ctx context.Context) {
+	wasmhost.RuntimeInstance.Close(ctx)
 }

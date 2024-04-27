@@ -9,6 +9,7 @@ import (
 
 	"hmruntime/logger"
 	"hmruntime/plugins"
+	"hmruntime/utils"
 	"hmruntime/wasmhost"
 )
 
@@ -20,6 +21,9 @@ type FunctionInfo struct {
 }
 
 func MonitorRegistration(ctx context.Context) {
+	span := utils.NewSentrySpanForCurrentFunc(ctx)
+	defer span.Finish()
+
 	go func() {
 		for {
 			select {

@@ -10,6 +10,7 @@ import (
 
 	hmConfig "hmruntime/config"
 	"hmruntime/logger"
+	"hmruntime/utils"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -23,6 +24,9 @@ func GetAwsConfig() aws.Config {
 }
 
 func Initialize(ctx context.Context) error {
+	span := utils.NewSentrySpanForCurrentFunc(ctx)
+	defer span.Finish()
+
 	cfg, err := config.LoadDefaultConfig(ctx)
 	if err != nil {
 		return fmt.Errorf("error loading AWS configuration: %w", err)

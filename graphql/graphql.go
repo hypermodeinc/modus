@@ -24,7 +24,10 @@ import (
 	"github.com/wundergraph/graphql-go-tools/v2/pkg/operationreport"
 )
 
-func Initialize() {
+func Initialize(ctx context.Context) {
+	span := utils.NewSentrySpanForCurrentFunc(ctx)
+	defer span.Finish()
+
 	wasmhost.RegisterPluginLoadedCallback(engine.Activate)
 }
 

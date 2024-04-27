@@ -10,9 +10,12 @@ import (
 
 	"hmruntime/logger"
 	"hmruntime/storage"
+	"hmruntime/utils"
 )
 
 func MonitorAppDataFiles(ctx context.Context) {
+	span := utils.NewSentrySpanForCurrentFunc(ctx)
+	defer span.Finish()
 
 	loadFile := func(file storage.FileInfo) error {
 		err := loadAppData(ctx, file.Name)

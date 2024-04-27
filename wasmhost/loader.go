@@ -23,6 +23,8 @@ func RegisterPluginLoadedCallback(callback func(ctx context.Context, metadata pl
 }
 
 func MonitorPlugins(ctx context.Context) {
+	span := utils.NewSentrySpanForCurrentFunc(ctx)
+	defer span.Finish()
 
 	loadPluginFile := func(fi storage.FileInfo) error {
 		err := loadPlugin(ctx, fi.Name)

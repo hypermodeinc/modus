@@ -8,6 +8,8 @@ import (
 	"context"
 	"hmruntime/config"
 	"time"
+
+	"hmruntime/utils"
 )
 
 var impl storageImplementation
@@ -24,7 +26,10 @@ type FileInfo struct {
 	LastModified time.Time
 }
 
-func Initialize() {
+func Initialize(ctx context.Context) {
+	span := utils.NewSentrySpanForCurrentFunc(ctx)
+	defer span.Finish()
+
 	if config.UseAwsStorage {
 		impl = &awsStorage{}
 	} else {

@@ -8,11 +8,16 @@ import (
 	"context"
 	"fmt"
 
+	"hmruntime/utils"
+
 	"github.com/tetratelabs/wazero"
 	wasi "github.com/tetratelabs/wazero/imports/wasi_snapshot_preview1"
 )
 
 func InitWasmRuntime(ctx context.Context) error {
+	span := utils.NewSentrySpanForCurrentFunc(ctx)
+	defer span.Finish()
+
 	cfg := wazero.NewRuntimeConfig()
 	cfg = cfg.WithCloseOnContextDone(true)
 	RuntimeInstance = wazero.NewRuntimeWithConfig(ctx, cfg)
