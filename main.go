@@ -30,7 +30,7 @@ import (
 
 func main() {
 	// Initialize Sentry
-	initSentry()
+	utils.InitSentry()
 	defer sentry.Flush(5 * time.Second)
 
 	// Initialize the runtime services
