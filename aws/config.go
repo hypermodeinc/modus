@@ -23,7 +23,18 @@ func GetAwsConfig() aws.Config {
 	return awsConfig
 }
 
-func Initialize(ctx context.Context) error {
+func Initialize(ctx context.Context) {
+	if !(hmConfig.UseAwsStorage || hmConfig.UseAwsSecrets) {
+		return
+	}
+
+	err := initialize(ctx)
+	if err != nil {
+		logger.Fatal(ctx).Err(err).Msg("Failed to initialize AWS.  Exiting.")
+	}
+}
+
+func initialize(ctx context.Context) error {
 	span := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
 

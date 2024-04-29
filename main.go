@@ -26,21 +26,6 @@ import (
 )
 
 func main() {
-	// Initialize Sentry
-	utils.InitSentry()
-	defer utils.FlushSentryEvents()
-
-	// Initialize the runtime services
-	ctx := context.Background()
-	initRuntimeServices(ctx)
-	defer stopRuntimeServices(ctx)
-
-	// Start the HTTP server to listen for requests.
-	// Note, this function blocks, and handles shutdown gracefully.
-	server.Start(ctx)
-}
-
-func initRuntimeServices(ctx context.Context) {
 
 	// Parse the command line flags
 	config.ParseCommandLineFlags()
@@ -58,20 +43,29 @@ func initRuntimeServices(ctx context.Context) {
 		log.Warn().Err(err).Msg("Error reading .env file.  Ignoring.")
 	}
 
-	// Instrument the rest of the startup process
+	// Initialize Sentry
+	utils.InitSentry()
+	defer utils.FlushSentryEvents()
+
+	// Initialize the runtime services
+	ctx := context.Background()
+	initRuntimeServices(ctx)
+	defer stopRuntimeServices(ctx)
+
+	// Start the HTTP server to listen for requests.
+	// Note, this function blocks, and handles shutdown gracefully.
+	server.Start(ctx)
+}
+
+func initRuntimeServices(ctx context.Context) {
 	transaction, ctx := utils.NewSentryTransactionForCurrentFunc(ctx)
 	defer transaction.Finish()
 
-	// Initialize the AWS configuration if we're using any AWS functionality
-	if config.UseAwsStorage || config.UseAwsSecrets {
-		err = aws.Initialize(ctx)
-		if err != nil {
-			log.Fatal().Err(err).Msg("Failed to initialize AWS.  Exiting.")
-		}
-	}
-
 	// Initialize the WebAssembly runtime
 	wasmhost.InitWasmHost(ctx)
+
+	// Initialize AWS functionality
+	aws.Initialize(ctx)
 
 	// Initialize the storage system
 	storage.Initialize(ctx)
