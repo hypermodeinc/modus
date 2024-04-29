@@ -49,7 +49,7 @@ func hostInvokeTextGenerator(ctx context.Context, mod wasm.Module, pModelName ui
 	var result models.ChatResponse
 	switch model.Host {
 	case hosts.OpenAIHost:
-		result, err := openai.ChatCompletion(ctx, model, host, instruction, sentence, outputFormat)
+		result, err = openai.ChatCompletion(ctx, model, host, instruction, sentence, outputFormat)
 		if err != nil {
 			logger.Err(ctx, err).Msg("Error posting to OpenAI.")
 			return 0
