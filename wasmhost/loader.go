@@ -13,6 +13,8 @@ import (
 	"hmruntime/plugins"
 	"hmruntime/storage"
 	"hmruntime/utils"
+
+	"github.com/tetratelabs/wazero"
 )
 
 var pluginLoaded func(ctx context.Context, metadata plugins.PluginMetadata) error
@@ -57,6 +59,8 @@ func MonitorPlugins() {
 }
 
 func loadPlugin(ctx context.Context, filename string) error {
+	transaction, ctx := utils.NewSentryTransactionForCurrentFunc(ctx)
+	defer transaction.Finish()
 
 	// Load the binary content of the plugin.
 	bytes, err := storage.GetFileContents(ctx, filename)
@@ -65,30 +69,24 @@ func loadPlugin(ctx context.Context, filename string) error {
 	}
 
 	// Compile the plugin into a module.
-	cm, err := RuntimeInstance.CompileModule(ctx, bytes)
+	cm, err := compileModule(ctx, bytes)
 	if err != nil {
-		return fmt.Errorf("failed to compile the plugin: %w", err)
+		return err
 	}
 
 	// Get the metadata for the plugin.
-	metadata, err := plugins.GetPluginMetadata(&cm)
+	metadata, err := plugins.GetPluginMetadata(ctx, &cm)
 	if err == plugins.ErrPluginMetadataNotFound {
 		logger.Error(ctx).
+			Bool("user_visible", true).
 			Msg("Metadata not found.  Please recompile your plugin using the latest version of the Hypermode Functions library.")
 		return err
 	} else if err != nil {
 		return err
 	}
 
-	// Store the types in a map for easy access.
-	types := make(map[string]plugins.TypeDefinition, len(metadata.Types))
-	for _, t := range metadata.Types {
-		types[t.Path] = t
-	}
-
-	// Create and store the plugin.
-	plugin := plugins.Plugin{Module: &cm, Metadata: metadata, FileName: filename, Types: types}
-	Plugins.AddOrUpdate(plugin)
+	// Make the plugin object.
+	plugin := makePlugin(ctx, &cm, filename, metadata)
 
 	// Log the details of the loaded plugin.
 	logPluginLoaded(ctx, plugin)
@@ -102,7 +100,39 @@ func loadPlugin(ctx context.Context, filename string) error {
 	return nil
 }
 
+func compileModule(ctx context.Context, bytes []byte) (wazero.CompiledModule, error) {
+	span := utils.NewSentrySpanForCurrentFunc(ctx)
+	defer span.Finish()
+
+	cm, err := RuntimeInstance.CompileModule(ctx, bytes)
+	if err != nil {
+		return nil, fmt.Errorf("failed to compile the plugin: %w", err)
+	}
+
+	return cm, nil
+}
+
+func makePlugin(ctx context.Context, cm *wazero.CompiledModule, filename string, metadata plugins.PluginMetadata) plugins.Plugin {
+	span := utils.NewSentrySpanForCurrentFunc(ctx)
+	defer span.Finish()
+
+	// Store the types in a map for easy access.
+	types := make(map[string]plugins.TypeDefinition, len(metadata.Types))
+	for _, t := range metadata.Types {
+		types[t.Path] = t
+	}
+
+	// Create and store the plugin.
+	plugin := plugins.Plugin{Module: cm, Metadata: metadata, FileName: filename, Types: types}
+	Plugins.AddOrUpdate(plugin)
+
+	return plugin
+}
+
 func logPluginLoaded(ctx context.Context, plugin plugins.Plugin) {
+	span := utils.NewSentrySpanForCurrentFunc(ctx)
+	defer span.Finish()
+
 	evt := logger.Info(ctx)
 	evt.Str("filename", plugin.FileName)
 

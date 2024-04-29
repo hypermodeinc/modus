@@ -10,6 +10,7 @@ import (
 
 	"hmruntime/logger"
 	"hmruntime/storage"
+	"hmruntime/utils"
 )
 
 func MonitorAppDataFiles() {
@@ -38,6 +39,9 @@ func MonitorAppDataFiles() {
 }
 
 func loadAppData(ctx context.Context, filename string) error {
+	transaction, ctx := utils.NewSentryTransactionForCurrentFunc(ctx)
+	defer transaction.Finish()
+
 	bytes, err := storage.GetFileContents(ctx, filename)
 	if err != nil {
 		return err
