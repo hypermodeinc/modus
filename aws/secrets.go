@@ -8,6 +8,8 @@ import (
 	"context"
 	"fmt"
 
+	"hmruntime/utils"
+
 	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
 )
 
@@ -25,6 +27,8 @@ func initSecretsManager() {
 }
 
 func GetSecretString(ctx context.Context, secretId string) (string, error) {
+	transaction, ctx := utils.NewSentryTransactionForCurrentFunc(ctx)
+	defer transaction.Finish()
 
 	// Return the secret from the cache if it exists
 	if secret, ok := secretsCache[secretId]; ok {
