@@ -8,13 +8,18 @@ import (
 	"context"
 	"fmt"
 
+	"hmruntime/utils"
+
 	"github.com/tetratelabs/wazero"
 )
 
 const hostModuleName string = "hypermode"
 
-func Instantiate(ctx context.Context, runtime wazero.Runtime) error {
-	b := runtime.NewHostModuleBuilder(hostModuleName)
+func Instantiate(ctx context.Context, runtime *wazero.Runtime) error {
+	span := utils.NewSentrySpanForCurrentFunc(ctx)
+	defer span.Finish()
+
+	b := (*runtime).NewHostModuleBuilder(hostModuleName)
 
 	// Each host function should get a line here:
 	b.NewFunctionBuilder().WithFunc(hostExecuteGQL).Export("executeGQL")

@@ -6,6 +6,7 @@ package logger
 
 import (
 	"context"
+	"io"
 	"os"
 	"time"
 
@@ -13,6 +14,8 @@ import (
 	"hmruntime/plugins"
 	"hmruntime/utils"
 
+	zls "github.com/archdx/zerolog-sentry"
+	"github.com/getsentry/sentry-go"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
@@ -22,7 +25,10 @@ const executionIdKey = "execution_id"
 const pluginNameKey = "plugin"
 const buildIdKey = "build_id"
 
+var zlsCloser io.Closer
+
 func Initialize() *zerolog.Logger {
+	var writer io.Writer
 	if config.UseJsonLogging {
 		// In JSON mode, we'll log UTC with millisecond precision.
 		// Note that Go uses this specific value for its formatting exemplars.
@@ -30,17 +36,33 @@ func Initialize() *zerolog.Logger {
 		zerolog.TimestampFunc = func() time.Time {
 			return time.Now().UTC()
 		}
+		writer = os.Stderr
 	} else {
 		// In console mode, we can use local time and be a bit prettier.
 		// We'll still log with millisecond precision.
 		zerolog.TimeFieldFormat = zerolog.TimeFormatUnixMs
-		log.Logger = log.Logger.Output(zerolog.ConsoleWriter{
+		writer = zerolog.ConsoleWriter{
 			Out:        os.Stderr,
 			TimeFormat: "2006-01-02 15:04:05.000 -07:00",
-		})
+		}
 	}
 
+	// Use zerolog-sentry to route error, fatal, and panic logs to Sentry.
+	zlsWriter, err := zls.NewWithHub(sentry.CurrentHub(), zls.WithBreadcrumbs())
+	if err != nil {
+		logger := log.Logger.Output(writer)
+		logger.Fatal().Err(err).Msg("Failed to initialize Sentry logger.")
+	}
+	zlsCloser = zlsWriter // so we can close it later, which flushes Sentry events
+	log.Logger = log.Logger.Output(zerolog.MultiLevelWriter(writer, zlsWriter))
+
 	return &log.Logger
+}
+
+func Close() {
+	if zlsCloser != nil {
+		zlsCloser.Close()
+	}
 }
 
 func Get(ctx context.Context) *zerolog.Logger {

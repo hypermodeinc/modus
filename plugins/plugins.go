@@ -5,6 +5,7 @@
 package plugins
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"time"
@@ -115,7 +116,10 @@ func getCustomSectionData(cm *wazero.CompiledModule, name string) (data []byte, 
 
 var ErrPluginMetadataNotFound = fmt.Errorf("no metadata found in plugin")
 
-func GetPluginMetadata(cm *wazero.CompiledModule) (PluginMetadata, error) {
+func GetPluginMetadata(ctx context.Context, cm *wazero.CompiledModule) (PluginMetadata, error) {
+	span := utils.NewSentrySpanForCurrentFunc(ctx)
+	defer span.Finish()
+
 	metadataJson, found := getCustomSectionData(cm, "hypermode_meta")
 	if !found {
 		return PluginMetadata{}, ErrPluginMetadataNotFound

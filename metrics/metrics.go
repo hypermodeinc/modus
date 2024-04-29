@@ -36,13 +36,13 @@ var (
 	httpRequestsInFlightNum = prometheus.NewGauge(
 		prometheus.GaugeOpts{
 			Name: "runtime_http_requests_in_flight_num",
-			Help: "A gauge of requests currently being served exluding /health & /metrics endpoints",
+			Help: "A gauge of requests currently being served excluding /health & /metrics endpoints",
 		},
 	)
 	httpRequestsTotalNum = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: "runtime_http_requests_total_num",
-			Help: "A counter for HTTP requests exluding /health & /metrics endpoints",
+			Help: "A counter for HTTP requests excluding /health & /metrics endpoints",
 		},
 		[]string{"code"},
 	)

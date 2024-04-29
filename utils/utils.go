@@ -82,3 +82,11 @@ func HypermodeDebugEnabled() bool {
 func HypermodeTraceEnabled() bool {
 	return EnvVarFlagEnabled("HYPERMODE_TRACE")
 }
+
+func TrimStringBefore(s string, sep string) string {
+	parts := strings.SplitN(s, sep, 2)
+	if len(parts) == 2 {
+		return parts[1]
+	}
+	return s
+}
