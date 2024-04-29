@@ -22,11 +22,9 @@ func RegisterPluginLoadedCallback(callback func(ctx context.Context, metadata pl
 	pluginLoaded = callback
 }
 
-func MonitorPlugins(ctx context.Context) {
-	span := utils.NewSentrySpanForCurrentFunc(ctx)
-	defer span.Finish()
-
+func MonitorPlugins() {
 	loadPluginFile := func(fi storage.FileInfo) error {
+		ctx := context.Background()
 		err := loadPlugin(ctx, fi.Name)
 		if err != nil {
 			logger.Err(ctx, err).
@@ -40,6 +38,7 @@ func MonitorPlugins(ctx context.Context) {
 	sm.Added = loadPluginFile
 	sm.Modified = loadPluginFile
 	sm.Removed = func(fi storage.FileInfo) error {
+		ctx := context.Background()
 		err := unloadPlugin(ctx, fi.Name)
 		if err != nil {
 			logger.Err(ctx, err).
@@ -54,7 +53,7 @@ func MonitorPlugins(ctx context.Context) {
 			RegistrationRequest <- true
 		}
 	}
-	sm.Start(ctx)
+	sm.Start()
 }
 
 func loadPlugin(ctx context.Context, filename string) error {

@@ -9,7 +9,6 @@ import (
 
 	"hmruntime/logger"
 	"hmruntime/plugins"
-	"hmruntime/utils"
 	"hmruntime/wasmhost"
 )
 
@@ -20,11 +19,9 @@ type FunctionInfo struct {
 	Plugin   *plugins.Plugin
 }
 
-func MonitorRegistration(ctx context.Context) {
-	span := utils.NewSentrySpanForCurrentFunc(ctx)
-	defer span.Finish()
-
+func MonitorRegistration() {
 	go func() {
+		ctx := context.Background()
 		for {
 			select {
 			case <-wasmhost.RegistrationRequest:

@@ -71,16 +71,16 @@ func initRuntimeServices(ctx context.Context) {
 	storage.Initialize(ctx)
 
 	// Watch for function registration requests
-	functions.MonitorRegistration(ctx)
+	functions.MonitorRegistration()
 
 	// Load app data and monitor for changes
-	manifest.MonitorAppDataFiles(ctx)
+	manifest.MonitorAppDataFiles()
 
 	// Load plugins and monitor for changes
-	wasmhost.MonitorPlugins(ctx)
+	wasmhost.MonitorPlugins()
 
 	// Initialize the GraphQL engine
-	graphql.Initialize(ctx)
+	graphql.Initialize()
 }
 
 func stopRuntimeServices(ctx context.Context) {
