@@ -8,6 +8,7 @@ import (
 	"context"
 	"log"
 	"runtime"
+	"strings"
 	"time"
 
 	"hmruntime/config"
@@ -18,7 +19,10 @@ import (
 // The Sentry DSN for the Hypermode Runtime project (not a secret)
 const sentryDsn = "https://d0de28f77651b88c22af84598882d60a@o4507057700470784.ingest.us.sentry.io/4507153498636288"
 
-func InitSentry() {
+var rootSourcePath string
+
+func InitSentry(rootPath string) {
+	rootSourcePath = rootPath
 	err := sentry.Init(sentry.ClientOptions{
 		Dsn:         sentryDsn,
 		Environment: config.GetEnvironmentName(),
@@ -78,6 +82,17 @@ func sentryBeforeSend(event *sentry.Event, hint *sentry.EventHint) *sentry.Event
 	// caused by user code, and thus are not actionable by us.
 	if event.Extra["user_visible"] == "true" {
 		return nil
+	}
+
+	// Adjust the stack trace to show relative paths to the source code.
+	for _, e := range event.Exception {
+		st := *e.Stacktrace
+		for i, f := range st.Frames {
+			if f.Filename == "" && f.AbsPath != "" && strings.HasPrefix(f.AbsPath, rootSourcePath) {
+				f.Filename = f.AbsPath[len(rootSourcePath):]
+				st.Frames[i] = f
+			}
+		}
 	}
 
 	return event
