@@ -10,7 +10,6 @@ import (
 	"context"
 	"os"
 	"path/filepath"
-	"time"
 
 	"hmruntime/aws"
 	"hmruntime/config"
@@ -23,14 +22,13 @@ import (
 	"hmruntime/utils"
 	"hmruntime/wasmhost"
 
-	"github.com/getsentry/sentry-go"
 	"github.com/joho/godotenv"
 )
 
 func main() {
 	// Initialize Sentry
 	utils.InitSentry()
-	defer sentry.Flush(5 * time.Second)
+	defer utils.FlushSentryEvents()
 
 	// Initialize the runtime services
 	ctx := context.Background()
@@ -93,4 +91,5 @@ func initRuntimeServices(ctx context.Context) {
 
 func stopRuntimeServices(ctx context.Context) {
 	wasmhost.RuntimeInstance.Close(ctx)
+	logger.Close()
 }

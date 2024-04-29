@@ -8,6 +8,7 @@ import (
 	"context"
 	"log"
 	"runtime"
+	"time"
 
 	"github.com/getsentry/sentry-go"
 )
@@ -33,6 +34,10 @@ func InitSentry() {
 		// We don't have our logger yet, so just log to stderr.
 		log.Fatalf("sentry.Init: %s", err)
 	}
+}
+
+func FlushSentryEvents() {
+	sentry.Flush(5 * time.Second)
 }
 
 func NewSentryTransactionForCurrentFunc(ctx context.Context) (*sentry.Span, context.Context) {
