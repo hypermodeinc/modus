@@ -48,9 +48,7 @@ func Initialize() *zerolog.Logger {
 	}
 
 	// Use zerolog-sentry to route error, fatal, and panic logs to Sentry.
-	zlsWriter, err := zls.NewWithHub(sentry.CurrentHub(),
-		zls.WithEnvironment(config.GetEnvironmentName()),
-		zls.WithRelease(config.GetVersionNumber()))
+	zlsWriter, err := zls.NewWithHub(sentry.CurrentHub(), zls.WithBreadcrumbs())
 	if err != nil {
 		logger := log.Logger.Output(writer)
 		logger.Fatal().Err(err).Msg("Failed to initialize Sentry logger.")

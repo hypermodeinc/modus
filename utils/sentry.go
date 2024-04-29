@@ -10,6 +10,8 @@ import (
 	"runtime"
 	"time"
 
+	"hmruntime/config"
+
 	"github.com/getsentry/sentry-go"
 )
 
@@ -18,15 +20,19 @@ const sentryDsn = "https://d0de28f77651b88c22af84598882d60a@o4507057700470784.in
 
 func InitSentry() {
 	err := sentry.Init(sentry.ClientOptions{
-		Dsn: sentryDsn,
+		Dsn:         sentryDsn,
+		Environment: config.GetEnvironmentName(),
+		Release:     config.GetVersionNumber(),
+		BeforeSend:  sentryBeforeSend,
 
-		// Note - We use Prometheus for metrics (see hmruntime/metrics package).
-		// We can still use Sentry for tracing, but we should only trace code that we expect to
-		// run in a consistent amount of time. For example, we should not trace a user's function execution,
-		// or the outer GraphQL request handling, because these can take an arbitrary amount of time
-		// depending on what the user's code does. Instead, we should trace the runtime's startup, storage,
-		// secrets retrieval, schema generation, etc. That way we can trace performance issues in the
-		// runtime itself, and let Sentry correlate them with any errors that may have occurred.
+		// Note - We use Prometheus for _metrics_ (see hmruntime/metrics package).
+		// However, we can still use Sentry for _tracing_ to allow us to improve performance of the Runtime.
+		// We should only trace code that we expect to run in a roughly consistent amount of time.
+		// For example, we should not trace a user's function execution, or the outer GraphQL request handling,
+		// because these can take an arbitrary amount of time depending on what the user's code does.
+		// Instead, we should trace the runtime's startup, storage, secrets retrieval, schema generation, etc.
+		// That way we can trace performance issues in the runtime itself, and let Sentry correlate them with
+		// any errors that may have occurred.
 		EnableTracing:    true,
 		TracesSampleRate: 1.0,
 	})
@@ -64,4 +70,15 @@ func GetFuncName(skip int) string {
 
 	name := fn.Name()
 	return TrimStringBefore(name, "/")
+}
+
+func sentryBeforeSend(event *sentry.Event, hint *sentry.EventHint) *sentry.Event {
+
+	// Exclude user-visible errors from being reported to Sentry, because they are
+	// caused by user code, and thus are not actionable by us.
+	if event.Extra["user_visible"] == "true" {
+		return nil
+	}
+
+	return event
 }
