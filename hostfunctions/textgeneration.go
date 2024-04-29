@@ -42,14 +42,14 @@ func hostInvokeTextGenerator(ctx context.Context, mod wasm.Module, pModelName ui
 	}
 
 	if models.OutputFormatText != outputFormat && models.OutputFormatJson != outputFormat {
-		logger.Err(ctx, err).Msg("Unsupported output format.")
+		logger.Error(ctx).Msg("Unsupported output format.")
 		return 0
 	}
 
 	var result models.ChatResponse
 	switch model.Host {
 	case hosts.OpenAIHost:
-		result, err := openai.ChatCompletion(ctx, model, host, instruction, sentence, outputFormat)
+		result, err = openai.ChatCompletion(ctx, model, host, instruction, sentence, outputFormat)
 		if err != nil {
 			logger.Err(ctx, err).Msg("Error posting to OpenAI.")
 			return 0
@@ -79,18 +79,12 @@ func hostInvokeTextGenerator(ctx context.Context, mod wasm.Module, pModelName ui
 
 	// return the first chat response
 	if len(result.Choices) == 0 {
-		logger.Err(ctx, err).Msg("Empty result returned from OpenAI.")
+		logger.Error(ctx).Msg("Empty result returned from OpenAI.")
 		return 0
 	}
-	firstMsgContent := result.Choices[0].Message.Content
+	content := result.Choices[0].Message.Content
 
-	resBytes, err := json.Marshal(firstMsgContent)
-	if err != nil {
-		logger.Err(ctx, err).Msg("Error marshalling result.")
-		return 0
-	}
-
-	offset, err := assemblyscript.WriteString(ctx, mod, string(resBytes))
+	offset, err := assemblyscript.WriteString(ctx, mod, content)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error writing result to wasm memory.")
 		return 0

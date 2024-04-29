@@ -48,7 +48,7 @@ func hostInvokeClassifier(ctx context.Context, mod wasm.Module, pModelName uint3
 	}
 
 	if len(result) == 0 {
-		logger.Err(ctx, err).Msg("Empty result returned from model.")
+		logger.Error(ctx).Msg("Empty result returned from model.")
 		return 0
 	}
 
