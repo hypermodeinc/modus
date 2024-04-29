@@ -16,7 +16,6 @@ import (
 	"hmruntime/config"
 	"hmruntime/functions"
 	"hmruntime/graphql"
-	"hmruntime/hostfunctions"
 	"hmruntime/logger"
 	"hmruntime/manifest"
 	"hmruntime/server"
@@ -62,9 +61,8 @@ func initRuntimeServices(ctx context.Context) {
 	}
 
 	// Instrument the rest of the startup process
-	transaction := sentry.StartTransaction(ctx, utils.GetCurrentFuncName())
+	transaction, ctx := utils.NewSentryTransactionForCurrentFunc(ctx)
 	defer transaction.Finish()
-	ctx = transaction.Context()
 
 	// Initialize the AWS configuration if we're using any AWS functionality
 	if config.UseAwsStorage || config.UseAwsSecrets {
@@ -75,16 +73,7 @@ func initRuntimeServices(ctx context.Context) {
 	}
 
 	// Initialize the WebAssembly runtime
-	err = wasmhost.InitWasmRuntime(ctx)
-	if err != nil {
-		log.Fatal().Err(err).Msg("Failed to initialize the WebAssembly runtime.  Exiting.")
-	}
-
-	// Connect Hypermode host functions
-	err = hostfunctions.Instantiate(ctx, wasmhost.RuntimeInstance)
-	if err != nil {
-		log.Fatal().Err(err).Msg("Failed to instantiate host functions.  Exiting.")
-	}
+	wasmhost.InitWasmHost(ctx)
 
 	// Initialize the storage system
 	storage.Initialize(ctx)

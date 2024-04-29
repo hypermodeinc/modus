@@ -35,14 +35,15 @@ func InitSentry() {
 	}
 }
 
+func NewSentryTransactionForCurrentFunc(ctx context.Context) (*sentry.Span, context.Context) {
+	transaction := sentry.StartTransaction(ctx, GetFuncName(2), sentry.WithOpName("function"))
+	return transaction, transaction.Context()
+}
+
 func NewSentrySpanForCurrentFunc(ctx context.Context) *sentry.Span {
 	span := sentry.StartSpan(ctx, "function")
 	span.Description = GetFuncName(2)
 	return span
-}
-
-func GetCurrentFuncName() string {
-	return GetFuncName(1)
 }
 
 func GetFuncName(skip int) string {
@@ -56,5 +57,6 @@ func GetFuncName(skip int) string {
 		return "?"
 	}
 
-	return fn.Name()
+	name := fn.Name()
+	return TrimStringBefore(name, "/")
 }
