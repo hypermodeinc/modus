@@ -1,6 +1,6 @@
 # Change Log
 
-# UNRELEASED
+# 2024-04-29 - Version 0.6.2
 
 - Traces and non-user errors are now sent to Sentry [#158](https://github.com/gohypermode/runtime/issues/158)
 - Fix OpenAI text generation [#161](https://github.com/gohypermode/runtime/issues/161)
