@@ -175,6 +175,9 @@ func logPluginLoaded(ctx context.Context, plugin plugins.Plugin) {
 }
 
 func unloadPlugin(ctx context.Context, filename string) error {
+	transaction, ctx := utils.NewSentryTransactionForCurrentFunc(ctx)
+	defer transaction.Finish()
+
 	p, ok := Plugins.GetByFile(filename)
 	if !ok {
 		return fmt.Errorf("plugin not found: %s", filename)
