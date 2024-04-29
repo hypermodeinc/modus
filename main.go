@@ -9,7 +9,9 @@ package main
 import (
 	"context"
 	"os"
+	"path"
 	"path/filepath"
+	"runtime"
 
 	"hmruntime/aws"
 	"hmruntime/config"
@@ -44,7 +46,8 @@ func main() {
 	}
 
 	// Initialize Sentry
-	utils.InitSentry()
+	rootSourcePath := getRootSourcePath()
+	utils.InitSentry(rootSourcePath)
 	defer utils.FlushSentryEvents()
 
 	// Initialize the runtime services
@@ -86,4 +89,13 @@ func initRuntimeServices(ctx context.Context) {
 func stopRuntimeServices(ctx context.Context) {
 	wasmhost.RuntimeInstance.Close(ctx)
 	logger.Close()
+}
+
+func getRootSourcePath() string {
+	_, filename, _, ok := runtime.Caller(0)
+	if !ok {
+		return ""
+	}
+
+	return path.Dir(filename) + "/"
 }
