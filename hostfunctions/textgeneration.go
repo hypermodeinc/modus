@@ -82,15 +82,9 @@ func hostInvokeTextGenerator(ctx context.Context, mod wasm.Module, pModelName ui
 		logger.Err(ctx, err).Msg("Empty result returned from OpenAI.")
 		return 0
 	}
-	firstMsgContent := result.Choices[0].Message.Content
+	content := result.Choices[0].Message.Content
 
-	resBytes, err := json.Marshal(firstMsgContent)
-	if err != nil {
-		logger.Err(ctx, err).Msg("Error marshalling result.")
-		return 0
-	}
-
-	offset, err := assemblyscript.WriteString(ctx, mod, string(resBytes))
+	offset, err := assemblyscript.WriteString(ctx, mod, content)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error writing result to wasm memory.")
 		return 0
