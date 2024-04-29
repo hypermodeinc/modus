@@ -32,7 +32,5 @@ func Instantiate(ctx context.Context, runtime *wazero.Runtime) error {
 		return fmt.Errorf("failed to instantiate the %s module: %w", hostModuleName, err)
 	}
 
-	return fmt.Errorf("this is a test error")
-
 	return nil
 }
