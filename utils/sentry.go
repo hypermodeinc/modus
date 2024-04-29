@@ -28,7 +28,7 @@ func InitSentry() {
 		// secrets retrieval, schema generation, etc. That way we can trace performance issues in the
 		// runtime itself, and let Sentry correlate them with any errors that may have occurred.
 		EnableTracing:    true,
-		TracesSampleRate: 1.0, // TODO: Set this to a lower value in production.
+		TracesSampleRate: 1.0,
 	})
 	if err != nil {
 		// We don't have our logger yet, so just log to stderr.
