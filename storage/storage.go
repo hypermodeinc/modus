@@ -8,6 +8,8 @@ import (
 	"context"
 	"hmruntime/config"
 	"time"
+
+	"hmruntime/utils"
 )
 
 var impl storageImplementation
@@ -24,7 +26,10 @@ type FileInfo struct {
 	LastModified time.Time
 }
 
-func Initialize() {
+func Initialize(ctx context.Context) {
+	span := utils.NewSentrySpanForCurrentFunc(ctx)
+	defer span.Finish()
+
 	if config.UseAwsStorage {
 		impl = &awsStorage{}
 	} else {
@@ -35,9 +40,15 @@ func Initialize() {
 }
 
 func ListFiles(ctx context.Context, extension string) ([]FileInfo, error) {
+	span := utils.NewSentrySpanForCurrentFunc(ctx)
+	defer span.Finish()
+
 	return impl.listFiles(ctx, extension)
 }
 
 func GetFileContents(ctx context.Context, name string) ([]byte, error) {
+	span := utils.NewSentrySpanForCurrentFunc(ctx)
+	defer span.Finish()
+
 	return impl.getFileContents(ctx, name)
 }

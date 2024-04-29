@@ -10,6 +10,7 @@ import (
 
 	hmConfig "hmruntime/config"
 	"hmruntime/logger"
+	"hmruntime/utils"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -22,7 +23,21 @@ func GetAwsConfig() aws.Config {
 	return awsConfig
 }
 
-func Initialize(ctx context.Context) error {
+func Initialize(ctx context.Context) {
+	if !(hmConfig.UseAwsStorage || hmConfig.UseAwsSecrets) {
+		return
+	}
+
+	err := initialize(ctx)
+	if err != nil {
+		logger.Fatal(ctx).Err(err).Msg("Failed to initialize AWS.  Exiting.")
+	}
+}
+
+func initialize(ctx context.Context) error {
+	span := utils.NewSentrySpanForCurrentFunc(ctx)
+	defer span.Finish()
+
 	cfg, err := config.LoadDefaultConfig(ctx)
 	if err != nil {
 		return fmt.Errorf("error loading AWS configuration: %w", err)

@@ -1,5 +1,9 @@
 # Change Log
 
+# UNRELEASED
+
+- Trace errors and non-user errors are now sent to Sentry [#158](https://github.com/gohypermode/runtime/issues/158)
+
 # 2024-04-26 - Version 0.6.1
 
 - Fix GraphQL error when resulting data contains a nested null field [#150](https://github.com/gohypermode/runtime/issues/150)

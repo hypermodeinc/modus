@@ -41,10 +41,35 @@ func setEngine(engine *engine.ExecutionEngine) {
 }
 
 func Activate(ctx context.Context, metadata plugins.PluginMetadata) error {
+	span := utils.NewSentrySpanForCurrentFunc(ctx)
+	defer span.Finish()
 
-	schemaContent, err := schemagen.GetGraphQLSchema(metadata, true)
+	schema, err := generateSchema(ctx, metadata)
 	if err != nil {
 		return err
+	}
+
+	datasourceConfig, err := getDatasourceConfig(ctx, schema)
+	if err != nil {
+		return err
+	}
+
+	engine, err := makeEngine(ctx, schema, datasourceConfig)
+	if err != nil {
+		return err
+	}
+
+	setEngine(engine)
+	return nil
+}
+
+func generateSchema(ctx context.Context, metadata plugins.PluginMetadata) (*gql.Schema, error) {
+	span := utils.NewSentrySpanForCurrentFunc(ctx)
+	defer span.Finish()
+
+	schemaContent, err := schemagen.GetGraphQLSchema(ctx, metadata, true)
+	if err != nil {
+		return nil, err
 	}
 
 	if utils.HypermodeDebugEnabled() {
@@ -57,11 +82,18 @@ func Activate(ctx context.Context, metadata plugins.PluginMetadata) error {
 
 	schema, err := gql.NewSchemaFromString(schemaContent)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
+	return schema, nil
+}
+
+func getDatasourceConfig(ctx context.Context, schema *gql.Schema) (plan.DataSourceConfiguration[datasource.Configuration], error) {
+	span := utils.NewSentrySpanForCurrentFunc(ctx)
+	defer span.Finish()
+
 	queryTypeName := schema.QueryTypeName()
-	queryFieldNames := getAllQueryFields(schema)
+	queryFieldNames := getAllQueryFields(ctx, schema)
 	rootNodes := []plan.TypeField{
 		{
 			TypeName:   queryTypeName,
@@ -80,15 +112,17 @@ func Activate(ctx context.Context, metadata plugins.PluginMetadata) error {
 		}
 	}
 
-	datasourceConfig, err := plan.NewDataSourceConfiguration(
+	return plan.NewDataSourceConfiguration(
 		datasource.DataSourceName,
 		&datasource.Factory[datasource.Configuration]{Ctx: ctx},
 		&plan.DataSourceMetadata{RootNodes: rootNodes, ChildNodes: childNodes},
 		datasource.Configuration{},
 	)
-	if err != nil {
-		return err
-	}
+}
+
+func makeEngine(ctx context.Context, schema *gql.Schema, datasourceConfig plan.DataSourceConfiguration[datasource.Configuration]) (*engine.ExecutionEngine, error) {
+	span := utils.NewSentrySpanForCurrentFunc(ctx)
+	defer span.Finish()
 
 	engineConfig := engine.NewConfiguration(schema)
 	engineConfig.SetDataSources([]plan.DataSource{datasourceConfig})
@@ -100,17 +134,13 @@ func Activate(ctx context.Context, metadata plugins.PluginMetadata) error {
 	}
 
 	adapter := newLoggerAdapter(ctx)
-	e, err := engine.NewExecutionEngine(ctx, adapter, engineConfig, resolverOptions)
-	if err != nil {
-		return err
-	}
-
-	setEngine(e)
-
-	return nil
+	return engine.NewExecutionEngine(ctx, adapter, engineConfig, resolverOptions)
 }
 
-func getAllQueryFields(s *gql.Schema) []string {
+func getAllQueryFields(ctx context.Context, s *gql.Schema) []string {
+	span := utils.NewSentrySpanForCurrentFunc(ctx)
+	defer span.Finish()
+
 	doc := s.Document()
 	queryTypeName := s.QueryTypeName()
 
