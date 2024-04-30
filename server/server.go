@@ -18,6 +18,7 @@ import (
 	"hmruntime/graphql"
 	"hmruntime/logger"
 	"hmruntime/metrics"
+	"hmruntime/utils"
 )
 
 // shutdownTimeout is the time to wait for the server to shutdown gracefully.
@@ -87,5 +88,9 @@ func GetHandlerMux() http.Handler {
 }
 
 func healthHandler(w http.ResponseWriter, r *http.Request) {
+	env := config.GetEnvironmentName()
+	ver := config.GetVersionNumber()
 	w.WriteHeader(http.StatusOK)
+	utils.WriteJsonContentHeader(w)
+	w.Write([]byte(`{"status":"ok","environment":"` + env + `","version":"` + ver + `"}`))
 }
