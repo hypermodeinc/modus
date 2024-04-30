@@ -17,13 +17,6 @@ import (
 //  where unit is one of the following: num, seconds or bytes.
 //  and name is the name of the metric.
 
-const (
-	// LabelFunction is the label for function name in a wasm module.
-	LabelFunction = "function"
-	// labelPlugin is the label for plugin name in a wasm module.
-	LabelPlugin = "plugin"
-)
-
 var (
 	// runtimePromRegistry is the registry for all the runtime metrics.
 	runtimePromRegistry = prometheus.NewRegistry()
@@ -33,12 +26,14 @@ var (
 )
 
 var (
+	// # of series = 1
 	httpRequestsInFlightNum = prometheus.NewGauge(
 		prometheus.GaugeOpts{
 			Name: "runtime_http_requests_in_flight_num",
 			Help: "A gauge of requests currently being served excluding /health & /metrics endpoints",
 		},
 	)
+	// # of series = # of HTTP response codes
 	httpRequestsTotalNum = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: "runtime_http_requests_total_num",
@@ -46,6 +41,7 @@ var (
 		},
 		[]string{"code"},
 	)
+	// # of series = # of handlers x 5
 	httpRequestsDurationSeconds = prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
 			Name:    "runtime_http_requests_duration_seconds",
@@ -54,6 +50,7 @@ var (
 		},
 		[]string{"handler"},
 	)
+	// # of series = # of handlers x 4
 	httpResponseSizeBytes = prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
 			Name:    "runtime_http_response_size_bytes",
@@ -64,12 +61,12 @@ var (
 	)
 
 	// FunctionExecutionsNum is a counter for number of function executions done in this runtime instance.
-	FunctionExecutionsNum = prometheus.NewCounterVec(
+	// # of series = 1
+	FunctionExecutionsNum = prometheus.NewCounter(
 		prometheus.CounterOpts{
 			Name: "runtime_function_executions_num",
 			Help: "Number of function executions",
 		},
-		[]string{LabelPlugin, LabelFunction},
 	)
 )
 
