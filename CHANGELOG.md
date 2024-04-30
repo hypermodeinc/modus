@@ -2,6 +2,7 @@
 
 # UNRELEASED
 
+- capture function execution duration in metrics [#165](https://github.com/gohypermode/runtime/pull/165)
 - Update metrics collection to remove labels [#163](https://github.com/gohypermode/runtime/pull/163)
 - Add environment and version to health endpoint [#164](https://github.com/gohypermode/runtime/pull/164)
 

@@ -68,6 +68,15 @@ var (
 			Help: "Number of function executions",
 		},
 	)
+	// FunctionExecutionDurationMilliseconds is a histogram of latencies for wasm function executions of user plugins.
+	// # of series = 5
+	FunctionExecutionDurationMilliseconds = prometheus.NewHistogram(
+		prometheus.HistogramOpts{
+			Name:    "runtime_function_execution_duration_milliseconds",
+			Help:    "A histogram of latencies for wasm function executions of user plugins",
+			Buckets: []float64{1, 10, 100, 1000},
+		},
+	)
 )
 
 func init() {
@@ -77,6 +86,7 @@ func init() {
 		httpRequestsDurationSeconds,
 		httpResponseSizeBytes,
 		FunctionExecutionsNum,
+		FunctionExecutionDurationMilliseconds,
 	)
 }
 

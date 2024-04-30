@@ -44,6 +44,7 @@ func CallFunction(ctx context.Context, mod wasm.Module, info FunctionInfo, input
 
 	// Update metrics
 	metrics.FunctionExecutionsNum.Inc()
+	metrics.FunctionExecutionDurationMilliseconds.Observe(float64(duration.Milliseconds()))
 
 	return result, err
 }
