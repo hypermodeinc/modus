@@ -8,11 +8,19 @@ import (
 	"context"
 	"fmt"
 	"hmruntime/plugins"
+	"hmruntime/utils"
 
 	wasm "github.com/tetratelabs/wazero/api"
 )
 
-func readArray(ctx context.Context, mem wasm.Memory, def plugins.TypeDefinition, offset uint32) ([]any, error) {
+// Reference: https://github.com/AssemblyScript/assemblyscript/blob/main/std/assembly/array.ts
+
+func readArray(ctx context.Context, mem wasm.Memory, def plugins.TypeDefinition, offset uint32) (data []any, err error) {
+
+	// buffer, ok := mem.ReadUint32Le(offset)
+	// if !ok {
+	// 	return nil, fmt.Errorf("failed to read array buffer pointer")
+	// }
 
 	dataStart, ok := mem.ReadUint32Le(offset + 4)
 	if !ok {
@@ -35,20 +43,7 @@ func readArray(ctx context.Context, mem wasm.Memory, def plugins.TypeDefinition,
 	}
 
 	itemType := getArraySubtypeInfo(def.Path)
-
-	var itemSize uint32
-	switch itemType.Path {
-	case "u64", "i64", "f64":
-		itemSize = 8
-	case "u32", "i32", "f32":
-		itemSize = 4
-	case "u16", "i16":
-		itemSize = 2
-	case "u8", "i8", "bool":
-		itemSize = 1
-	default:
-		itemSize = 4 // pointer
-	}
+	itemSize := getItemSize(itemType)
 
 	result := make([]any, arrLen)
 	for i := uint32(0); i < arrLen; i++ {
@@ -60,4 +55,93 @@ func readArray(ctx context.Context, mem wasm.Memory, def plugins.TypeDefinition,
 	}
 
 	return result, nil
+}
+
+func writeArray(ctx context.Context, mod wasm.Module, def plugins.TypeDefinition, data any) (offset uint32, err error) {
+	var arr []any
+	arr, err = utils.ConvertToArray(data)
+	if err != nil {
+		return 0, err
+	}
+
+	var bufferOffset uint32
+	var bufferSize uint32
+	arrLen := uint32(len(arr))
+
+	// unpin everything when done
+	var pins = make([]uint32, 0, arrLen+1)
+	defer func() {
+		for _, ptr := range pins {
+			err = unpinWasmMemory(ctx, mod, ptr)
+			if err != nil {
+				break
+			}
+		}
+	}()
+
+	// write array buffer
+	// note: empty array has no array buffer
+	if arrLen > 0 {
+		itemType := getArraySubtypeInfo(def.Path)
+		itemSize := getItemSize(itemType)
+		bufferSize = itemSize * arrLen
+		bufferOffset, err = allocateWasmMemory(ctx, mod, bufferSize, 1)
+		if err != nil {
+			return 0, fmt.Errorf("failed to allocate memory for array buffer: %w", err)
+		}
+
+		// pin the array buffer so it can't get garbage collected
+		// when we allocate the array object
+		err = pinWasmMemory(ctx, mod, bufferOffset)
+		if err != nil {
+			return 0, fmt.Errorf("failed to pin array buffer: %w", err)
+		}
+		pins = append(pins, bufferOffset)
+
+		for i, v := range arr {
+			itemOffset := bufferOffset + (itemSize * uint32(i))
+			ptr, err := writeField(ctx, mod, itemType, itemOffset, v)
+			if err != nil {
+				return 0, fmt.Errorf("failed to write array item: %w", err)
+			}
+
+			// If we allocated memory for the item, we need to pin it too.
+			if ptr != 0 {
+				err = pinWasmMemory(ctx, mod, ptr)
+				if err != nil {
+					return 0, err
+				}
+				pins = append(pins, ptr)
+			}
+		}
+	}
+
+	// write array object
+	offset, err = allocateWasmMemory(ctx, mod, def.Size, def.Id)
+	if err != nil {
+		return 0, err
+	}
+
+	mem := mod.Memory()
+	ok := mem.WriteUint32Le(offset, bufferOffset)
+	if !ok {
+		return 0, fmt.Errorf("failed to write array buffer pointer")
+	}
+
+	ok = mem.WriteUint32Le(offset+4, bufferOffset)
+	if !ok {
+		return 0, fmt.Errorf("failed to write array data start pointer")
+	}
+
+	ok = mem.WriteUint32Le(offset+8, bufferSize)
+	if !ok {
+		return 0, fmt.Errorf("failed to write array bytes length")
+	}
+
+	ok = mem.WriteUint32Le(offset+12, arrLen)
+	if !ok {
+		return 0, fmt.Errorf("failed to write array length")
+	}
+
+	return offset, nil
 }

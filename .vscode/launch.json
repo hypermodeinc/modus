@@ -6,6 +6,7 @@
       "type": "go",
       "request": "launch",
       "mode": "auto",
+      "preLaunchTask": "go: generate code",
       "program": "${workspaceFolder}",
       "env": {
         "HYPERMODE_DEBUG": "true"
@@ -19,6 +20,7 @@
       "type": "go",
       "request": "launch",
       "mode": "auto",
+      "preLaunchTask": "go: generate code",
       "program": "${workspaceFolder}",
       "env": {
         "HYPERMODE_DEBUG": "true",

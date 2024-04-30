@@ -21,9 +21,24 @@ type JSONTime time.Time
 func (t JSONTime) MarshalJSON() ([]byte, error) {
 	buf := bytes.NewBuffer(make([]byte, 0, 26))
 	buf.WriteString("\"")
-	buf.WriteString(time.Time(t).Format(TimeFormat))
+	buf.WriteString(t.String())
 	buf.WriteString("\"")
 	return buf.Bytes(), nil
+}
+
+func (t *JSONTime) UnmarshalJSON(data []byte) error {
+	s := string(data)
+	s = s[1 : len(s)-1] // Remove quotes
+	tm, err := ParseTime(s)
+	if err != nil {
+		return err
+	}
+	*t = JSONTime(tm)
+	return nil
+}
+
+func (t JSONTime) String() string {
+	return time.Time(t).Format(TimeFormat)
 }
 
 // Allow date, time, date-time formats.

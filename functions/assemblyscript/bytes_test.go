@@ -16,7 +16,11 @@ func Test_ReadWriteBuffer(t *testing.T) {
 	defer f.Close()
 
 	buf := []byte{0x01, 0x02, 0x03, 0x04}
-	ptr := writeBytes(f.Context, f.Module, buf)
+	ptr, err := writeBytes(f.Context, f.Module, buf)
+	if err != nil {
+		t.Error(err)
+	}
+
 	b, err := readBytes(f.Memory, ptr)
 	if err != nil {
 		t.Error(err)

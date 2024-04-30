@@ -7,6 +7,7 @@ package schemagen
 import (
 	"bytes"
 	"cmp"
+	"context"
 	"fmt"
 	"regexp"
 	"slices"
@@ -16,7 +17,10 @@ import (
 	"hmruntime/utils"
 )
 
-func GetGraphQLSchema(metadata plugins.PluginMetadata, includeHeader bool) (string, error) {
+func GetGraphQLSchema(ctx context.Context, metadata plugins.PluginMetadata, includeHeader bool) (string, error) {
+	span := utils.NewSentrySpanForCurrentFunc(ctx)
+	defer span.Finish()
+
 	typeDefs := make(map[string]TypeDefinition, len(metadata.Types))
 	errors := transformTypes(metadata.Types, &typeDefs)
 	functions, errs := transformFunctions(metadata.Functions, &typeDefs)

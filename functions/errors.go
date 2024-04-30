@@ -6,8 +6,11 @@ package functions
 
 import (
 	"errors"
+
+	"github.com/tetratelabs/wazero/sys"
 )
 
+var errModuleClosed = sys.NewExitError(255)
 var errFunctionException = errors.New("function raised an exception")
 
 func ShouldReturnErrorToResponse(err error) bool {
@@ -15,7 +18,7 @@ func ShouldReturnErrorToResponse(err error) bool {
 }
 
 func transformError(err error) error {
-	if err.Error() == "module closed with exit_code(255)" {
+	if errors.Is(err, errModuleClosed) {
 		return errFunctionException
 	}
 

@@ -5,6 +5,7 @@
 package schemagen
 
 import (
+	"context"
 	"testing"
 
 	"hmruntime/plugins"
@@ -70,7 +71,7 @@ func Test_GetGraphQLSchema(t *testing.T) {
 		},
 	}
 
-	result, err := GetGraphQLSchema(metadata, false)
+	result, err := GetGraphQLSchema(context.Background(), metadata, false)
 
 	expectedSchema := `type Query {
   add(a: Int!, b: Int!): Int!

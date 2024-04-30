@@ -19,8 +19,9 @@ type FunctionInfo struct {
 	Plugin   *plugins.Plugin
 }
 
-func MonitorRegistration(ctx context.Context) {
+func MonitorRegistration() {
 	go func() {
+		ctx := context.Background()
 		for {
 			select {
 			case <-wasmhost.RegistrationRequest:

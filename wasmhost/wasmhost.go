@@ -17,7 +17,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 	"github.com/tetratelabs/wazero"
-	"github.com/tetratelabs/wazero/api"
+	wasm "github.com/tetratelabs/wazero/api"
 )
 
 // Global runtime instance for the WASM modules
@@ -30,7 +30,7 @@ var RegistrationRequest chan bool = make(chan bool)
 var Plugins = plugins.NewPluginRegistry()
 
 // Gets a module instance for the given plugin, used for a single invocation.
-func GetModuleInstance(ctx context.Context, plugin *plugins.Plugin, buffers *utils.OutputBuffers) (api.Module, error) {
+func GetModuleInstance(ctx context.Context, plugin *plugins.Plugin, buffers *utils.OutputBuffers) (wasm.Module, error) {
 
 	// Get the logger and writers for the plugin's stdout and stderr.
 	log := logger.Get(ctx).With().Bool("user_visible", true).Logger()
