@@ -28,6 +28,4 @@ jobs:
                 version: latest
                 working-directory: .
                 only-new-issues: true
-                skip-pkg-cache: true
-                skip-build-cache: true
                 args: --timeout=10m
