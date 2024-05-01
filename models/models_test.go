@@ -3,7 +3,6 @@ package models
 import (
 	"context"
 	"encoding/json"
-	"net"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -14,10 +13,9 @@ import (
 )
 
 const (
-	testModelName    = "test"
-	testModelTask    = "echo"
-	testHostName     = "mock"
-	testHostEndpoint = "127.0.0.1:8080"
+	testModelName = "test"
+	testModelTask = "echo"
+	testHostName  = "mock"
 )
 
 type requestBody struct {
@@ -42,7 +40,7 @@ func TestMain(m *testing.M) {
 		Hosts: []manifest.Host{
 			{
 				Name:       testHostName,
-				Endpoint:   "http://" + testHostEndpoint,
+				Endpoint:   "",
 				AuthHeader: "",
 			},
 		},
@@ -83,11 +81,7 @@ func TestGetModels(t *testing.T) {
 }
 
 func TestPostExternalModelEndpoint(t *testing.T) {
-	// Create a mock server to act as the external model endpoint
-	l, err := net.Listen("tcp", testHostEndpoint)
-	assert.NoError(t, err)
-	defer l.Close()
-	// Create a handler that simply echoes the input strings
+	// Create an http handler that simply echoes the input strings
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var b requestBody
 		err := json.NewDecoder(r.Body).Decode(&b)
@@ -99,12 +93,10 @@ func TestPostExternalModelEndpoint(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(resp)
 	})
-	tsrv := httptest.NewUnstartedServer(handler)
-	// NewUnstartedServer creates a listener. Close that listener and replace with l
-	tsrv.Listener.Close()
-	tsrv.Listener = l
-	tsrv.Start()
+	// Create a mock server with the handler to act as the external model endpoint
+	tsrv := httptest.NewServer(handler)
 	defer tsrv.Close()
+	manifest.HypermodeData.Hosts[0].Endpoint = tsrv.URL
 
 	sentenceMap := map[string]string{
 		"key1": "value1",
