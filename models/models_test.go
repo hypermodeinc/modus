@@ -85,8 +85,10 @@ func TestGetModels(t *testing.T) {
 }
 
 func TestPostExternalModelEndpoint(t *testing.T) {
+	// Create a mock server to act as the external model endpoint
 	l, err := net.Listen("tcp", testHostEndpoint)
 	assert.NoError(t, err)
+	defer l.Close()
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var b requestBody
 		err := json.NewDecoder(r.Body).Decode(&b)
@@ -100,8 +102,7 @@ func TestPostExternalModelEndpoint(t *testing.T) {
 		json.NewEncoder(w).Encode(resp)
 	})
 	tsrv := httptest.NewUnstartedServer(handler)
-	// NewUnstartedServer creates a listener. Close that listener and replace
-	// with the one we created.
+	// NewUnstartedServer creates a listener. Close that listener and replace with l
 	tsrv.Listener.Close()
 	tsrv.Listener = l
 	tsrv.Start()
