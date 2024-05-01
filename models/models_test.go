@@ -89,6 +89,7 @@ func TestPostExternalModelEndpoint(t *testing.T) {
 	l, err := net.Listen("tcp", testHostEndpoint)
 	assert.NoError(t, err)
 	defer l.Close()
+	// Create a handler that simply echoes the input strings
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var b requestBody
 		err := json.NewDecoder(r.Body).Decode(&b)
