@@ -52,7 +52,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestGetModels(t *testing.T) {
-	inputs := []struct {
+	tests := []struct {
 		desc      string
 		valid     bool
 		modelName string
@@ -69,7 +69,7 @@ func TestGetModels(t *testing.T) {
 		},
 	}
 
-	for _, tc := range inputs {
+	for _, tc := range tests {
 		t.Run(tc.desc, func(t *testing.T) {
 			model, err := GetModel(tc.modelName, testModelTask)
 			if tc.valid {
@@ -114,5 +114,7 @@ func TestPostExternalModelEndpoint(t *testing.T) {
 	resp, err := PostToModelEndpoint[string](context.Background(), sentenceMap, testModel)
 	assert.NoError(t, err)
 
+	// Expected response is the same as the input sentence map,
+	// as the mock server just echoes the inputs
 	assert.Equal(t, sentenceMap, resp)
 }
