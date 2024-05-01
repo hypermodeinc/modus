@@ -23,7 +23,7 @@ jobs:
             - name: golang-lint
               env:
                 GOGC: 10
-              uses: golangci/golangci-lint-action@v4
+              uses: golangci/golangci-lint-action@v5
               with:
                 version: latest
                 working-directory: .
