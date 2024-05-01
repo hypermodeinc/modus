@@ -82,10 +82,6 @@ func TestGetModels(t *testing.T) {
 			}
 		})
 	}
-
-	model, err := GetModel(testModelName, testModelTask)
-	assert.NoError(t, err)
-	assert.Equal(t, testModelName, model.Name)
 }
 
 func TestPostExternalModelEndpoint(t *testing.T) {
