@@ -3,7 +3,6 @@ package models
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -19,7 +18,6 @@ const (
 	testModelTask    = "echo"
 	testHostName     = "mock"
 	testHostEndpoint = "127.0.0.1:8080"
-	testAuthHeader   = ""
 )
 
 type requestBody struct {
@@ -45,7 +43,7 @@ func TestMain(m *testing.M) {
 			{
 				Name:       testHostName,
 				Endpoint:   "http://" + testHostEndpoint,
-				AuthHeader: testAuthHeader,
+				AuthHeader: "",
 			},
 		},
 	}
@@ -94,7 +92,6 @@ func TestPostExternalModelEndpoint(t *testing.T) {
 		var b requestBody
 		err := json.NewDecoder(r.Body).Decode(&b)
 		assert.NoError(t, err)
-		fmt.Println(b.Instances)
 
 		resp := mockModelResponse{
 			Predictions: b.Instances,
