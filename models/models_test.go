@@ -54,6 +54,35 @@ func TestMain(m *testing.M) {
 }
 
 func TestGetModels(t *testing.T) {
+	inputs := []struct {
+		desc      string
+		valid     bool
+		modelName string
+	}{
+		{
+			desc:      "valid model",
+			valid:     true,
+			modelName: testModelName,
+		},
+		{
+			desc:      "invalid model",
+			valid:     false,
+			modelName: "invalid",
+		},
+	}
+
+	for _, tc := range inputs {
+		t.Run(tc.desc, func(t *testing.T) {
+			model, err := GetModel(tc.modelName, testModelTask)
+			if tc.valid {
+				assert.NoError(t, err)
+				assert.Equal(t, testModelName, model.Name)
+			} else {
+				assert.Error(t, err)
+			}
+		})
+	}
+
 	model, err := GetModel(testModelName, testModelTask)
 	assert.NoError(t, err)
 	assert.Equal(t, testModelName, model.Name)
