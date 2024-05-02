@@ -1,10 +1,10 @@
 # Change Log
 
-# UNRELEASED
+# 2024-05-02 - Version 0.6.3
 
-- capture function execution duration in metrics [#165](https://github.com/gohypermode/runtime/pull/165)
 - Update metrics collection to remove labels [#163](https://github.com/gohypermode/runtime/pull/163)
 - Add environment and version to health endpoint [#164](https://github.com/gohypermode/runtime/pull/164)
+- Capture function execution duration in metrics [#165](https://github.com/gohypermode/runtime/pull/165)
 
 # 2024-04-29 - Version 0.6.2
 
