@@ -54,7 +54,7 @@ func GetHostKey(ctx context.Context, host manifest.Host) (string, error) {
 			return key, nil
 		}
 
-		keyEnvVar := hostKeyPrefix + strings.ToUpper(host.Name)
+		keyEnvVar := hostKeyPrefix + strings.ToUpper(strings.ReplaceAll(host.Name, "-", "_"))
 		key = os.Getenv(keyEnvVar)
 		if key != "" {
 			return key, nil
