@@ -4,6 +4,7 @@
 
 - Add CORS support to all endpoints [#171](https://github.com/gohypermode/runtime/pull/171)
 - Replace hyphens with underscores in environment variables [#172](https://github.com/gohypermode/runtime/pull/172)
+- Allow comments and trailing commas in `hypermode.json` [#173](https://github.com/gohypermode/runtime/pull/173)
 
 ## 2024-05-02 - Version 0.6.3
 
