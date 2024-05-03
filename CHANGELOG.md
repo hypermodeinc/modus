@@ -1,6 +1,6 @@
 # Change Log
 
-## UNRELEASED
+## 2024-05-03 - Version 0.6.4
 
 - Add CORS support to all endpoints [#171](https://github.com/gohypermode/runtime/pull/171)
 - Replace hyphens with underscores in environment variables [#172](https://github.com/gohypermode/runtime/pull/172)
