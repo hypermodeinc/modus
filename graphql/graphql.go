@@ -17,8 +17,11 @@ import (
 	"hmruntime/wasmhost"
 
 	"github.com/buger/jsonparser"
+	eng "github.com/wundergraph/graphql-go-tools/execution/engine"
 	gql "github.com/wundergraph/graphql-go-tools/execution/graphql"
+	"github.com/wundergraph/graphql-go-tools/v2/pkg/engine/resolve"
 	"github.com/wundergraph/graphql-go-tools/v2/pkg/graphqlerrors"
+	"github.com/wundergraph/graphql-go-tools/v2/pkg/operationreport"
 )
 
 func Initialize() {
@@ -44,7 +47,7 @@ func HandleGraphQLRequest(w http.ResponseWriter, r *http.Request) {
 	if engine == nil {
 		msg := "There is no active GraphQL schema.  Please load a Hypermode plugin."
 		logger.Warn(ctx).Msg(msg)
-		writeJsonContentHeader(w)
+		utils.WriteJsonContentHeader(w)
 		if ok, _ := gqlRequest.IsIntrospectionQuery(); ok {
 			w.Write([]byte(`{"data":{"__schema":{"types":[]}}}`))
 		} else {
@@ -57,15 +60,35 @@ func HandleGraphQLRequest(w http.ResponseWriter, r *http.Request) {
 	output := map[string]datasource.FunctionOutput{}
 	ctx = context.WithValue(ctx, utils.FunctionOutputContextKey, output)
 
+	// Set tracing options
+	var options = []eng.ExecutionOptions{}
+	if utils.HypermodeTraceEnabled() {
+		var traceOpts resolve.TraceOptions
+		traceOpts.Enable = true
+		traceOpts.IncludeTraceOutputInResponseExtensions = true
+		options = append(options, eng.WithRequestTraceOptions(traceOpts))
+	}
+
 	// Execute the GraphQL query
 	resultWriter := gql.NewEngineResultWriter()
-	err = engine.Execute(ctx, &gqlRequest, &resultWriter)
+	err = engine.Execute(ctx, &gqlRequest, &resultWriter, options...)
 	if err != nil {
+
+		if report, ok := err.(operationreport.Report); ok {
+			if len(report.InternalErrors) > 0 {
+				// Log internal errors, but don't return them to the client
+				msg := "Failed to execute GraphQL query."
+				logger.Err(ctx, err).Msg(msg)
+				http.Error(w, msg, http.StatusInternalServerError)
+				return
+			}
+		}
+
 		requestErrors := graphqlerrors.RequestErrorsFromError(err)
 		if len(requestErrors) > 0 {
 			// NOTE: we intentionally don't log this, to avoid a bad actor spamming the logs
 			// TODO: we should capture metrics here though
-			writeJsonContentHeader(w)
+			utils.WriteJsonContentHeader(w)
 			requestErrors.WriteResponse(w)
 		} else {
 			msg := "Failed to execute GraphQL query."
@@ -84,12 +107,8 @@ func HandleGraphQLRequest(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Return the response
-	writeJsonContentHeader(w)
-	w.Write(adjustResponse(response))
-}
-
-func writeJsonContentHeader(w http.ResponseWriter) {
-	w.Header().Set("Content-Type", "application/json")
+	utils.WriteJsonContentHeader(w)
+	w.Write(response)
 }
 
 func addOutputToResponse(response []byte, output map[string]datasource.FunctionOutput) ([]byte, error) {

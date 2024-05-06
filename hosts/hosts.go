@@ -11,9 +11,16 @@ import (
 )
 
 const hostKeyPrefix = "HYP_HOST_KEY_"
+
+const HypermodeHost string = "hypermode"
 const OpenAIHost string = "openai"
 
 func GetHost(hostName string) (manifest.Host, error) {
+
+	if hostName == HypermodeHost {
+		return manifest.Host{Name: HypermodeHost}, nil
+	}
+
 	for _, host := range manifest.HypermodeData.Hosts {
 		if host.Name == hostName {
 			return host, nil
@@ -47,7 +54,7 @@ func GetHostKey(ctx context.Context, host manifest.Host) (string, error) {
 			return key, nil
 		}
 
-		keyEnvVar := hostKeyPrefix + strings.ToUpper(host.Name)
+		keyEnvVar := hostKeyPrefix + strings.ToUpper(strings.ReplaceAll(host.Name, "-", "_"))
 		key = os.Getenv(keyEnvVar)
 		if key != "" {
 			return key, nil
@@ -56,7 +63,7 @@ func GetHostKey(ctx context.Context, host manifest.Host) (string, error) {
 		}
 	}
 
-	return "", fmt.Errorf("error getting key for model '%s': %w", host.Name, err)
+	return "", fmt.Errorf("error getting key for host '%s': %w", host.Name, err)
 }
 
 func getWellKnownEnvironmentVariable(host manifest.Host) string {

@@ -4,8 +4,11 @@ import (
 	"context"
 	"fmt"
 	"hmruntime/hosts"
+	"hmruntime/logger"
 	"hmruntime/manifest"
 	"hmruntime/utils"
+
+	"github.com/buger/jsonparser"
 )
 
 type request struct {
@@ -13,67 +16,41 @@ type request struct {
 	Variables map[string]any `json:"variables"`
 }
 
-func ExecuteGraphqlApi[TResponse any](ctx context.Context, host manifest.Host, stmt string, vars map[string]any) (TResponse, error) {
+func ExecuteGraphqlApi(ctx context.Context, host manifest.Host, stmt string, vars map[string]any) (string, error) {
 	request := request{
 		Query:     stmt,
 		Variables: vars,
 	}
 
-	var response TResponse
 	headers := map[string]string{}
 
 	if host.Endpoint == "" {
-		return response, fmt.Errorf("host endpoint is not defined")
+		return "", fmt.Errorf("host endpoint is not defined")
 	}
 	if host.AuthHeader != "" {
 		key, err := hosts.GetHostKey(ctx, host)
 		if err != nil {
-			return response, fmt.Errorf("error getting model key secret: %w", err)
+			return "", err
 		}
 
 		headers[host.AuthHeader] = key
 	}
 
-	response, err := utils.PostHttp[TResponse](host.Endpoint, request, nil)
+	response, err := utils.PostHttp[[]byte](host.Endpoint, request, nil)
 	if err != nil {
-		return response, fmt.Errorf("error posting GraphQL statement: %w", err)
+		return "", fmt.Errorf("error posting GraphQL statement: %w", err)
 	}
 
-	return response, nil
-}
-
-func ExecuteDQL[TResponse any](ctx context.Context, host manifest.Host, stmt string, vars map[string]any, isMutation bool) (TResponse, error) {
-	request := request{
-		Query:     stmt,
-		Variables: vars,
+	gqlErrors, dataType, _, err := jsonparser.Get(response, "errors")
+	if err != nil && err != jsonparser.KeyPathNotFoundError {
+		return "", fmt.Errorf("error parsing GraphQL response: %w", err)
+	}
+	if dataType == jsonparser.Array && len(gqlErrors) > 0 {
+		logger.Warn(ctx).
+			Bool("user_visible", true).
+			Str("errors", string(gqlErrors)).
+			Msg("GraphQL API call returned errors.")
 	}
 
-	var response TResponse
-	headers := map[string]string{}
-
-	if host.Endpoint == "" {
-		return response, fmt.Errorf("host endpoint is not defined")
-	}
-	if host.AuthHeader != "" {
-		key, err := hosts.GetHostKey(ctx, host)
-		if err != nil {
-			return response, fmt.Errorf("error getting model key secret: %w", err)
-		}
-
-		headers[host.AuthHeader] = key
-	}
-
-	var url string
-	if isMutation {
-		url = host.Endpoint + "/mutate?commitNow=true"
-	} else {
-		url = host.Endpoint + "/query"
-	}
-
-	response, err := utils.PostHttp[TResponse](url, request, nil)
-	if err != nil {
-		return response, fmt.Errorf("error posting DQL statement: %w", err)
-	}
-
-	return response, nil
+	return string(response), nil
 }

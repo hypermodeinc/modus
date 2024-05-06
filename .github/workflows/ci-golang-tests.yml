@@ -1,8 +1,5 @@
 name: ci-golang-tests
 on:
-  push:
-    branches:
-      - main
   pull_request:
     types:
       - opened
@@ -21,19 +18,12 @@ jobs:
         with:
           go-version-file: 'go.mod'
           check-latest: true
+      - name: Generate Code
+        run: go generate ./...
       - name: Run Unit Tests
         run: |
           go install github.com/jstemmer/go-junit-report/v2@latest
-          go test -v -race -coverprofile=coverage.out -covermode=atomic 2>&1 ./... | go-junit-report -set-exit-code > report.xml
-      - name: Upload coverage to CodeClimate
-        uses: paambaati/codeclimate-action@v5.0.0
-        env:
-          CC_TEST_REPORTER_ID: 02835d6da5b9f2afa90740278445d368e2d95633d21d2f84b47d7f54317210cf
-        with:
-          debug: true
-          prefix: hmruntime
-          coverageLocations: |
-            ${{github.workspace}}/coverage.out:gocov
+          go test -v -race 2>&1 ./... | go-junit-report -set-exit-code > report.xml
       - name: Generate Test Summary
         if: always()
         uses: test-summary/action@v2

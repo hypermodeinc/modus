@@ -36,8 +36,9 @@ func NewStorageMonitor(extension string) *StorageMonitor {
 	}
 }
 
-func (sm *StorageMonitor) Start(ctx context.Context) {
+func (sm *StorageMonitor) Start() {
 	go func() {
+		ctx := context.Background()
 		ticker := time.NewTicker(config.RefreshInterval)
 		defer ticker.Stop()
 

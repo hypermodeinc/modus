@@ -84,3 +84,7 @@ func PostHttp[TResult any](url string, payload any, headers map[string]string) (
 
 	return result, nil
 }
+
+func WriteJsonContentHeader(w http.ResponseWriter) {
+	w.Header().Set("Content-Type", "application/json")
+}

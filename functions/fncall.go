@@ -11,6 +11,7 @@ import (
 
 	"hmruntime/functions/assemblyscript"
 	"hmruntime/logger"
+	"hmruntime/metrics"
 
 	wasm "github.com/tetratelabs/wazero/api"
 )
@@ -40,6 +41,10 @@ func CallFunction(ctx context.Context, mod wasm.Module, info FunctionInfo, input
 			Bool("user_visible", true).
 			Msg("Function completed successfully.")
 	}
+
+	// Update metrics
+	metrics.FunctionExecutionsNum.Inc()
+	metrics.FunctionExecutionDurationMilliseconds.Observe(float64(duration.Milliseconds()))
 
 	return result, err
 }

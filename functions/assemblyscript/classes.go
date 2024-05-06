@@ -9,24 +9,25 @@ import (
 	"fmt"
 
 	"hmruntime/plugins"
+	"hmruntime/utils"
 
 	wasm "github.com/tetratelabs/wazero/api"
 )
 
-func readClass(ctx context.Context, mem wasm.Memory, def plugins.TypeDefinition, offset uint32) (any, error) {
-	result := make(map[string]any)
+func readClass(ctx context.Context, mem wasm.Memory, def plugins.TypeDefinition, offset uint32) (data map[string]any, err error) {
+	data = make(map[string]any)
 	for _, field := range def.Fields {
 		fieldOffset := offset + field.Offset
 		val, err := readField(ctx, mem, field.Type, fieldOffset)
 		if err != nil {
 			return nil, err
 		}
-		result[field.Name] = val
+		data[field.Name] = val
 	}
-	return result, nil
+	return data, nil
 }
 
-func readField(ctx context.Context, mem wasm.Memory, typ plugins.TypeInfo, offset uint32) (any, error) {
+func readField(ctx context.Context, mem wasm.Memory, typ plugins.TypeInfo, offset uint32) (data any, err error) {
 	var result any
 	var ok bool
 	switch typ.Path {
@@ -102,4 +103,93 @@ func readField(ctx context.Context, mem wasm.Memory, typ plugins.TypeInfo, offse
 	}
 
 	return result, nil
+}
+
+func writeClass(ctx context.Context, mod wasm.Module, def plugins.TypeDefinition, data any) (offset uint32, err error) {
+	switch data := data.(type) {
+	case map[string]any:
+
+		// unpin everything when done
+		pins := make([]uint32, 0, len(def.Fields)+1)
+		defer func() {
+			for _, ptr := range pins {
+				err = unpinWasmMemory(ctx, mod, ptr)
+				if err != nil {
+					break
+				}
+			}
+		}()
+
+		// Allocate memory for the object
+		offset, err = allocateWasmMemory(ctx, mod, def.Size, def.Id)
+		if err != nil {
+			return 0, err
+		}
+
+		// we need to pin the object in memory so it doesn't get garbage collected
+		// if we allocate more memory when writing a field before returning the object
+		err = pinWasmMemory(ctx, mod, offset)
+		if err != nil {
+			return 0, err
+		}
+		pins = append(pins, offset)
+
+		// write fields
+		for _, field := range def.Fields {
+			val := data[field.Name]
+			fieldOffset := offset + field.Offset
+			ptr, err := writeField(ctx, mod, field.Type, fieldOffset, val)
+			if err != nil {
+				return 0, err
+			}
+
+			// If we allocated memory for the field, we need to pin it too.
+			if ptr != 0 {
+				err = pinWasmMemory(ctx, mod, ptr)
+				if err != nil {
+					return 0, err
+				}
+				pins = append(pins, ptr)
+			}
+		}
+
+		return offset, nil
+
+	default:
+		m, err := utils.ConvertToMap(data)
+		if err != nil {
+			return 0, err
+		}
+		return writeClass(ctx, mod, def, m)
+	}
+}
+
+func writeField(ctx context.Context, mod wasm.Module, typ plugins.TypeInfo, offset uint32, val any) (ptr uint32, err error) {
+	enc, err := EncodeValue(ctx, mod, typ, val)
+	if err != nil {
+		return 0, err
+	}
+
+	mem := mod.Memory()
+
+	var ok bool
+	switch typ.Path {
+	case "bool", "i8", "u8":
+		ok = mem.WriteByte(offset, byte(enc))
+	case "i16", "u16":
+		ok = mem.WriteUint16Le(offset, uint16(enc))
+	case "i32", "u32", "f32":
+		ok = mem.WriteUint32Le(offset, uint32(enc))
+	case "i64", "u64", "f64":
+		ok = mem.WriteUint64Le(offset, enc)
+	default: // managed types
+		ptr = uint32(enc) // return pointer to the managed object
+		ok = mem.WriteUint32Le(offset, uint32(enc))
+	}
+
+	if !ok {
+		return ptr, fmt.Errorf("error writing %s to wasm memory", typ.Name)
+	}
+
+	return ptr, nil
 }

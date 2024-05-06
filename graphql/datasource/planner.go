@@ -22,19 +22,23 @@ type Planner[T Configuration] struct {
 	config    Configuration
 	visitor   *plan.Visitor
 	variables resolve.Variables
+	fields    map[int]*fieldInfo
 	template  struct {
-		function templateField
+		function *fieldInfo
 		data     []byte
 	}
 }
 
-type templateField struct {
-	Name   string          `json:"name"`
-	Alias  string          `json:"alias,omitempty"`
-	Fields []templateField `json:"fields,omitempty"`
+type fieldInfo struct {
+	ref       int          `json:"-"`
+	Name      string       `json:"name"`
+	Alias     string       `json:"alias,omitempty"`
+	TypeName  string       `json:"type,omitempty"`
+	Fields    []*fieldInfo `json:"fields,omitempty"`
+	fieldRefs []int        `json:"-"`
 }
 
-func (t templateField) AliasOrName() string {
+func (t fieldInfo) AliasOrName() string {
 	if t.Alias != "" {
 		return t.Alias
 	}
@@ -60,53 +64,98 @@ func (p *Planner[T]) DataSourcePlanningBehavior() plan.DataSourcePlanningBehavio
 		// In this case, the Load function will be called twice, once for "a" and once for "b",
 		// and the alias will be used in the return value to distinguish the results.
 		OverrideFieldPathFromAlias: true,
+
+		// This ensures that the __typename field is visited so we can include it in the response when requested.
+		IncludeTypeNameFields: true,
 	}
 }
 
 func (p *Planner[T]) Register(visitor *plan.Visitor, configuration plan.DataSourceConfiguration[T], dspc plan.DataSourcePlannerConfiguration) error {
 	p.visitor = visitor
+	visitor.Walker.RegisterEnterDocumentVisitor(p)
 	visitor.Walker.RegisterEnterFieldVisitor(p)
+	visitor.Walker.RegisterLeaveDocumentVisitor(p)
 	p.config = Configuration(configuration.CustomConfiguration())
 	return nil
 }
 
+func (p *Planner[T]) EnterDocument(operation, definition *ast.Document) {
+	p.fields = make(map[int]*fieldInfo, len(operation.Fields))
+}
+
 func (p *Planner[T]) EnterField(ref int) {
-	if !p.enclosingTypeIsRootNode() {
+
+	// Capture information about every field in the query.
+	f := p.captureField(ref)
+	p.fields[ref] = f
+
+	// If the field is enclosed by a root node, then it represents the function we want to call.
+	if p.enclosingTypeIsRootNode() {
+
+		// Save the field for the function.
+		p.template.function = f
+
+		// Also capture the input data for the function.
+		err := p.captureInputData(ref)
+		if err != nil {
+			logger.Err(p.ctx, err).Msg("Error capturing input data.")
+			return
+		}
+	}
+}
+
+func (p *Planner[T]) LeaveDocument(operation, definition *ast.Document) {
+	// Stitch the captured fields together to form a tree.
+	p.stitchFields(p.template.function)
+}
+
+func (p *Planner[T]) stitchFields(f *fieldInfo) {
+	if len(f.fieldRefs) == 0 {
 		return
 	}
 
-	p.captureTemplateField(ref, &p.template.function)
-	err := p.captureInputData(ref)
-	if err != nil {
-		logger.Err(p.ctx, err).Msg("Error capturing input data.")
-		return
+	f.Fields = make([]*fieldInfo, len(f.fieldRefs))
+	for i, ref := range f.fieldRefs {
+		field := p.fields[ref]
+		f.Fields[i] = field
+		p.stitchFields(field)
 	}
 }
 
 func (p *Planner[T]) enclosingTypeIsRootNode() bool {
-	enclosingType := p.visitor.Walker.EnclosingTypeDefinition
+	enclosingTypeDef := p.visitor.Walker.EnclosingTypeDefinition
 	for _, node := range p.visitor.Operation.RootNodes {
-		if node.Ref == enclosingType.Ref {
+		if node.Ref == enclosingTypeDef.Ref {
 			return true
 		}
 	}
 	return false
 }
 
-func (p *Planner[T]) captureTemplateField(ref int, tf *templateField) {
+func (p *Planner[T]) captureField(ref int) *fieldInfo {
 	operation := p.visitor.Operation
-	tf.Name = operation.FieldNameString(ref)
-	tf.Alias = operation.FieldAliasString(ref)
+	definition := p.visitor.Definition
+	walker := p.visitor.Walker
+
+	f := fieldInfo{
+		ref:   ref,
+		Name:  operation.FieldNameString(ref),
+		Alias: operation.FieldAliasString(ref),
+	}
+
+	def, ok := walker.FieldDefinition(ref)
+	if ok {
+		f.TypeName = definition.FieldDefinitionTypeNameString(def)
+	}
+
 	if operation.FieldHasSelections(ref) {
 		ssRef, ok := operation.FieldSelectionSet(ref)
 		if ok {
-			fieldRefs := operation.SelectionSetFieldSelections(ssRef)
-			tf.Fields = make([]templateField, len(fieldRefs))
-			for i, fieldRef := range fieldRefs {
-				p.captureTemplateField(fieldRef, &tf.Fields[i])
-			}
+			f.fieldRefs = operation.SelectionSetFieldSelections(ssRef)
 		}
 	}
+
+	return &f
 }
 
 func (p *Planner[T]) captureInputData(fieldRef int) error {
