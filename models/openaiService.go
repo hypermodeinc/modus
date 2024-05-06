@@ -22,7 +22,45 @@ func (llm *openai) InvokeClassifier(ctx context.Context, input []string) (map[st
 }
 
 func (llm *openai) ComputeEmbedding(ctx context.Context, sentenceMap map[string]string) (map[string][]float64, error) {
-	return nil, fmt.Errorf("Embedding not implemented for Openai")
+	// Get the API key to use for this model
+	key, err := hosts.GetHostKey(ctx, llm.host)
+	if err != nil {
+		return nil, err
+	}
+	// Convert map to slice of values.
+	values := []string{}
+	keys := []string{}
+	for key, value := range sentenceMap {
+		values = append(values, value)
+		keys = append(keys, key)
+	}
+
+	// build the request body following OpenAI API
+	reqBody := EmbeddingRequest{
+		Model:          llm.model.SourceModel,
+		Input:          values,
+		EncodingFormat: "float",
+	}
+
+	// We ignore the model endpoint and use the OpenAI endpoint
+	const endpoint = "https://api.openai.com/v1/embeddings"
+	headers := map[string]string{
+		"Authorization": "Bearer " + key,
+	}
+
+	result, err := utils.PostHttp[EmbeddingResponse](endpoint, reqBody, headers)
+
+	if err != nil {
+		return nil, fmt.Errorf("error posting to %s: %w", endpoint, err)
+	}
+
+	// Convert result to map .
+	resultMap := make(map[string][]float64)
+	for _, value := range result.Data {
+		resultMap[keys[value.Index]] = value.Embedding
+	}
+
+	return resultMap, nil
 }
 
 func (llm *openai) ChatCompletion(ctx context.Context, instruction string, sentence string, outputFormat OutputFormat) (ChatResponse, error) {
