@@ -14,7 +14,6 @@ import (
 	"hmruntime/logger"
 	"hmruntime/manifest"
 	"hmruntime/models"
-	"hmruntime/models/openai"
 
 	wasm "github.com/tetratelabs/wazero/api"
 )
@@ -46,22 +45,20 @@ func hostInvokeTextGenerator(ctx context.Context, mod wasm.Module, pModelName ui
 		return 0
 	}
 
-	var result models.ChatResponse
-	switch model.Host {
-	case hosts.OpenAIHost:
-		result, err = openai.ChatCompletion(ctx, model, host, instruction, sentence, outputFormat)
-		if err != nil {
-			logger.Err(ctx, err).Msg("Error posting to OpenAI.")
-			return 0
-		}
-		if result.Error.Message != "" {
-			err := fmt.Errorf(result.Error.Message)
-			logger.Err(ctx, err).Msg("Error returned from OpenAI.")
-			return 0
-		}
-	default:
-		err := fmt.Errorf("unsupported model host: %s", model.Host)
-		logger.Err(ctx, err).Msg("Unsupported model host.")
+	llm, err := models.CreateLlmService(model.Host)
+	if err != nil {
+		logger.Err(ctx, err).Msg("Error instanciating LLM")
+		return 0
+	}
+
+	result, err := llm.ChatCompletion(ctx, model, host, instruction, sentence, outputFormat)
+	if err != nil {
+		logger.Err(ctx, err)
+		return 0
+	}
+	if result.Error.Message != "" {
+		err := fmt.Errorf(result.Error.Message)
+		logger.Err(ctx, err)
 		return 0
 	}
 
