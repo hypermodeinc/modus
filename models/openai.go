@@ -12,23 +12,30 @@ import (
 	"hmruntime/utils"
 )
 
-type openai struct{}
+type openai struct {
+	model manifest.Model
+	host  manifest.Host
+}
 
-func (llm *openai) Embedding(ctx context.Context, sentenceMap map[string]string, model manifest.Model, host manifest.Host) (map[string][]float64, error) {
+func (llm *openai) InvokeClassifier(ctx context.Context, input []string) (map[string]float64, error) {
+	return nil, fmt.Errorf("invokeClassifier not implemented for openai model")
+}
+
+func (llm *openai) ComputeEmbedding(ctx context.Context, sentenceMap map[string]string) (map[string][]float64, error) {
 	return nil, fmt.Errorf("Embedding not implemented for Openai")
 }
 
-func (llm *openai) ChatCompletion(ctx context.Context, model manifest.Model, host manifest.Host, instruction string, sentence string, outputFormat OutputFormat) (ChatResponse, error) {
+func (llm *openai) ChatCompletion(ctx context.Context, instruction string, sentence string, outputFormat OutputFormat) (ChatResponse, error) {
 
 	// Get the OpenAI API key to use for this model
-	key, err := hosts.GetHostKey(ctx, host)
+	key, err := hosts.GetHostKey(ctx, llm.host)
 	if err != nil {
 		return ChatResponse{}, err
 	}
 
 	// build the request body following OpenAI API
 	reqBody := ChatContext{
-		Model: model.SourceModel,
+		Model: llm.model.SourceModel,
 		ResponseFormat: ResponseFormat{
 			Type: string(outputFormat),
 		},

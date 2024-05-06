@@ -12,11 +12,17 @@ import (
 	"hmruntime/utils"
 )
 
-type mistral struct{}
+type mistral struct {
+	model manifest.Model
+	host  manifest.Host
+}
 
-func (llm *mistral) Embedding(ctx context.Context, sentenceMap map[string]string, model manifest.Model, host manifest.Host) (map[string][]float64, error) {
+func (llm *mistral) InvokeClassifier(ctx context.Context, input []string) (map[string]float64, error) {
+	return nil, fmt.Errorf("invokeClassifier not implemented for mistral model")
+}
+func (llm *mistral) ComputeEmbedding(ctx context.Context, sentenceMap map[string]string) (map[string][]float64, error) {
 	// Get the API key to use for this model
-	key, err := hosts.GetHostKey(ctx, host)
+	key, err := hosts.GetHostKey(ctx, llm.host)
 	if err != nil {
 		return nil, err
 	}
@@ -30,7 +36,7 @@ func (llm *mistral) Embedding(ctx context.Context, sentenceMap map[string]string
 
 	// build the request body following OpenAI API
 	reqBody := EmbeddingRequest{
-		Model:          model.SourceModel,
+		Model:          llm.model.SourceModel,
 		Input:          values,
 		EncodingFormat: "float",
 	}
@@ -56,17 +62,17 @@ func (llm *mistral) Embedding(ctx context.Context, sentenceMap map[string]string
 	return resultMap, nil
 }
 
-func (llm *mistral) ChatCompletion(ctx context.Context, model manifest.Model, host manifest.Host, instruction string, sentence string, outputFormat OutputFormat) (ChatResponse, error) {
+func (llm *mistral) ChatCompletion(ctx context.Context, instruction string, sentence string, outputFormat OutputFormat) (ChatResponse, error) {
 
 	// Get the API key to use for this model
-	key, err := hosts.GetHostKey(ctx, host)
+	key, err := hosts.GetHostKey(ctx, llm.host)
 	if err != nil {
 		return ChatResponse{}, err
 	}
 
 	// build the request body following OpenAI API
 	reqBody := ChatContext{
-		Model: model.SourceModel,
+		Model: llm.model.SourceModel,
 		ResponseFormat: ResponseFormat{
 			Type: string(outputFormat),
 		},

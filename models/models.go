@@ -14,6 +14,9 @@ import (
 	"hmruntime/utils"
 )
 
+const OpenAIProvider string = "openai"
+const MistralProvider string = "mistral"
+
 // generic output format for models functions
 // can be extended to support more formats
 // for now, we support text and json_object used in generateText function
@@ -27,13 +30,13 @@ const (
 func GetModel(modelName string, task manifest.ModelTask) (manifest.Model, error) {
 	for _, model := range manifest.HypermodeData.Models {
 		if model.Name == modelName {
-			if (model.Task == task) || (model.Host == OpenAIHost) || (model.Host == MistralHost) {
-				return model, nil
-			}
+			return model, nil
+			// Check if model is the right type or an LLM. LLm models can do any task.
+
 		}
 	}
 
-	return manifest.Model{}, fmt.Errorf("a model '%s' for task '%s' was not found", modelName, task)
+	return manifest.Model{}, fmt.Errorf("a model '%s' was not found", modelName)
 }
 
 func PostToModelEndpoint[TResult any](ctx context.Context, sentenceMap map[string]string, model manifest.Model) (map[string]TResult, error) {

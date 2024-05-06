@@ -2,7 +2,6 @@ package models
 
 import (
 	"context"
-	"hmruntime/manifest"
 )
 
 type ChatContext struct {
@@ -31,7 +30,8 @@ type EmbeddingData struct {
 	Embedding []float64 `json:"embedding"`
 }
 
-type llmService interface {
-	ChatCompletion(ctx context.Context, model manifest.Model, host manifest.Host, instruction string, sentence string, outputFormat OutputFormat) (ChatResponse, error)
-	Embedding(ctx context.Context, sentenceMap map[string]string, model manifest.Model, host manifest.Host) (map[string][]float64, error)
+type inferenceService interface {
+	ChatCompletion(ctx context.Context, instruction string, sentence string, outputFormat OutputFormat) (ChatResponse, error)
+	ComputeEmbedding(ctx context.Context, sentenceMap map[string]string) (map[string][]float64, error)
+	InvokeClassifier(ctx context.Context, input []string) (map[string]float64, error)
 }

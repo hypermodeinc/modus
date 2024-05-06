@@ -10,9 +10,7 @@ import (
 	"fmt"
 
 	"hmruntime/functions/assemblyscript"
-	"hmruntime/hosts"
 	"hmruntime/logger"
-	"hmruntime/manifest"
 	"hmruntime/models"
 
 	wasm "github.com/tetratelabs/wazero/api"
@@ -27,31 +25,18 @@ func hostInvokeTextGenerator(ctx context.Context, mod wasm.Module, pModelName ui
 		return 0
 	}
 	outputFormat := models.OutputFormat(format)
-
-	model, err := models.GetModel(modelName, manifest.GenerationTask)
-	if err != nil {
-		logger.Err(ctx, err).Msg("Error getting model.")
-		return 0
-	}
-
-	host, err := hosts.GetHost(model.Host)
-	if err != nil {
-		logger.Err(ctx, err).Msg("Error getting model host.")
-		return 0
-	}
-
 	if models.OutputFormatText != outputFormat && models.OutputFormatJson != outputFormat {
 		logger.Error(ctx).Msg("Unsupported output format.")
 		return 0
 	}
 
-	llm, err := models.CreateLlmService(model.Host)
+	llm, err := models.CreateInferenceService(modelName)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error instanciating LLM")
 		return 0
 	}
 
-	result, err := llm.ChatCompletion(ctx, model, host, instruction, sentence, outputFormat)
+	result, err := llm.ChatCompletion(ctx, instruction, sentence, outputFormat)
 	if err != nil {
 		logger.Err(ctx, err)
 		return 0
