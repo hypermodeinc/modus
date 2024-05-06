@@ -1,7 +1,6 @@
 package models
 
 import (
-	"fmt"
 	"hmruntime/hosts"
 	"hmruntime/manifest"
 )
@@ -30,9 +29,9 @@ func CreateInferenceService(modelName string) (inferenceService, error) {
 			return &openai{model: model, host: host}, nil
 		case MistralProvider:
 			return &mistral{model: model, host: host}, nil
-
 		default:
-			return nil, fmt.Errorf("Provider '%s' not in supported list ['%s','%s'].", host, OpenAIProvider, MistralProvider)
+			return &hypermode{model: model}, nil
+
 		}
 	}
 
