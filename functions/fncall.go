@@ -13,7 +13,6 @@ import (
 	"hmruntime/logger"
 	"hmruntime/metrics"
 
-	"github.com/prometheus/client_golang/prometheus"
 	wasm "github.com/tetratelabs/wazero/api"
 )
 
@@ -43,8 +42,9 @@ func CallFunction(ctx context.Context, mod wasm.Module, info FunctionInfo, input
 			Msg("Function completed successfully.")
 	}
 
-	labels := prometheus.Labels{metrics.LabelPlugin: info.Plugin.Name(), metrics.LabelFunction: fnName}
-	metrics.FunctionExecutionsNum.With(labels).Inc()
+	// Update metrics
+	metrics.FunctionExecutionsNum.Inc()
+	metrics.FunctionExecutionDurationMilliseconds.Observe(float64(duration.Milliseconds()))
 
 	return result, err
 }

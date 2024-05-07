@@ -11,6 +11,8 @@ import (
 	"hmruntime/logger"
 	"hmruntime/storage"
 	"hmruntime/utils"
+
+	"github.com/tailscale/hujson"
 )
 
 func MonitorAppDataFiles() {
@@ -49,6 +51,15 @@ func loadAppData(ctx context.Context, filename string) error {
 
 	_, ok := manifestFiles[filename]
 	if ok {
+
+		// We allow comments and trailing commas in the JSON files.
+		// This removes them, resulting in standard JSON.
+		bytes, err := standardizeJSON(bytes)
+		if err != nil {
+			return err
+		}
+
+		// Now parse the JSON
 		err = json.Unmarshal(bytes, manifestFiles[filename])
 		if err != nil {
 			return err
@@ -56,4 +67,13 @@ func loadAppData(ctx context.Context, filename string) error {
 	}
 
 	return nil
+}
+
+func standardizeJSON(b []byte) ([]byte, error) {
+	ast, err := hujson.Parse(b)
+	if err != nil {
+		return b, err
+	}
+	ast.Standardize()
+	return ast.Pack(), nil
 }

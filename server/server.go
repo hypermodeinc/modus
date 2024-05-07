@@ -18,6 +18,9 @@ import (
 	"hmruntime/graphql"
 	"hmruntime/logger"
 	"hmruntime/metrics"
+	"hmruntime/utils"
+
+	"github.com/rs/cors"
 )
 
 // shutdownTimeout is the time to wait for the server to shutdown gracefully.
@@ -83,9 +86,14 @@ func GetHandlerMux() http.Handler {
 	// Also register the health endpoint, un-instrumented.
 	mux.HandleFunc("/health", healthHandler)
 
-	return mux
+	// Add CORS support to all endpoints.
+	return cors.Default().Handler(mux)
 }
 
 func healthHandler(w http.ResponseWriter, r *http.Request) {
+	env := config.GetEnvironmentName()
+	ver := config.GetVersionNumber()
 	w.WriteHeader(http.StatusOK)
+	utils.WriteJsonContentHeader(w)
+	w.Write([]byte(`{"status":"ok","environment":"` + env + `","version":"` + ver + `"}`))
 }

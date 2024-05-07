@@ -6,11 +6,9 @@ package manifest
 
 var manifestFiles = map[string]Manifest{
 	"hypermode.json": &HypermodeData,
-	"models.json":    &ModelData,
 }
 
 var HypermodeData HypermodeManifest = HypermodeManifest{}
-var ModelData ModelsManifest = ModelsManifest{}
 
 type Manifest any
 
@@ -19,10 +17,6 @@ type HypermodeManifest struct {
 	Hosts                []Host                `json:"hosts"`
 	EmbeddingSpecs       []EmbeddingSpec       `json:"embeddingSpecs"`
 	TrainingInstructions []TrainingInstruction `json:"trainingInstructions"`
-	Manifest
-}
-
-type ModelsManifest struct {
 	Manifest
 }
 

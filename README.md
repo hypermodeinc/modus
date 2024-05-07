@@ -36,6 +36,7 @@ using the following convention:
 
 - `HYP_MODEL_KEY_<MODEL_NAME>` - Can be used to specify keys for any model.
   - _Substitute `<MODEL_NAME>` for the upper-cased name of the model._
+  - _Replace any hyphen (`-`) characters with underscore (`_`) characters._
 
 ### Using a `.env` file
 
