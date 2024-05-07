@@ -1,6 +1,6 @@
 # Change Log
 
-## 2024-05-07 - UNRELEASED
+## 2024-05-07 - Version 0.6.5
 
 - Add `Access-Control-Allow-Credentials` in CORS preflight [#177](https://github.com/gohypermode/runtime/pull/177)
 
