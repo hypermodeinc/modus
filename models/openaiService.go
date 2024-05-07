@@ -17,7 +17,7 @@ type openai struct {
 	host  manifest.Host
 }
 
-func (llm *openai) InvokeClassifier(ctx context.Context, input []string) (map[string]float64, error) {
+func (llm *openai) InvokeClassifier(ctx context.Context, input map[string]string) (map[string]map[string]float32, error) {
 	return nil, fmt.Errorf("invokeClassifier not implemented for openai model")
 }
 

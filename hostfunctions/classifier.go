@@ -8,22 +8,10 @@ import (
 	"context"
 
 	"hmruntime/logger"
-	"hmruntime/manifest"
 	"hmruntime/models"
 
 	wasm "github.com/tetratelabs/wazero/api"
 )
-
-type classifierResult struct {
-	Label         string            `json:"label"`
-	Confidence    float32           `json:"confidence"`
-	Probabilities []classifierLabel `json:"probabilities"`
-}
-
-type classifierLabel struct {
-	Label       string  `json:"label"`
-	Probability float32 `json:"probability"`
-}
 
 func hostInvokeClassifier(ctx context.Context, mod wasm.Module, pModelName uint32, pSentenceMap uint32) uint32 {
 
@@ -34,30 +22,17 @@ func hostInvokeClassifier(ctx context.Context, mod wasm.Module, pModelName uint3
 		logger.Err(ctx, err).Msg("Error reading input parameters.")
 		return 0
 	}
-
-	model, err := models.GetModel(modelName, manifest.ClassificationTask)
+	// Get the inference service for the model and invoke the classifier function
+	inferenceService, err := models.CreateInferenceService(modelName)
 	if err != nil {
-		logger.Err(ctx, err).Msg("Error getting model.")
+		logger.Err(ctx, err).Msg("Error instanciating inference service.")
 		return 0
 	}
+	resultMap, err := inferenceService.InvokeClassifier(ctx, sentenceMap)
 
-	result, err := models.PostToModelEndpoint[classifierResult](ctx, sentenceMap, model)
 	if err != nil {
-		logger.Err(ctx, err).Msg("Error posting to model endpoint.")
+		logger.Err(ctx, err).Msg("Error invoking classifier.")
 		return 0
-	}
-
-	if len(result) == 0 {
-		logger.Error(ctx).Msg("Empty result returned from model.")
-		return 0
-	}
-
-	resultMap := make(map[string]map[string]float32)
-	for k, v := range result {
-		resultMap[k] = make(map[string]float32)
-		for _, p := range v.Probabilities {
-			resultMap[k][p.Label] = p.Probability
-		}
 	}
 
 	offset, err := writeResult(ctx, mod, resultMap)

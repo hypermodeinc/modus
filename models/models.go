@@ -119,3 +119,13 @@ type InvokeError struct {
 	Param   string `json:"param"`
 	Code    string `json:"code"`
 }
+type classifierResult struct {
+	Label         string            `json:"label"`
+	Confidence    float32           `json:"confidence"`
+	Probabilities []classifierLabel `json:"probabilities"`
+}
+
+type classifierLabel struct {
+	Label       string  `json:"label"`
+	Probability float32 `json:"probability"`
+}

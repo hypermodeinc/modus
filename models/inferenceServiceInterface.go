@@ -33,5 +33,5 @@ type EmbeddingData struct {
 type inferenceService interface {
 	ChatCompletion(ctx context.Context, instruction string, sentence string, outputFormat OutputFormat) (ChatResponse, error)
 	ComputeEmbedding(ctx context.Context, sentenceMap map[string]string) (map[string][]float64, error)
-	InvokeClassifier(ctx context.Context, input []string) (map[string]float64, error)
+	InvokeClassifier(ctx context.Context, input map[string]string) (map[string]map[string]float32, error)
 }
