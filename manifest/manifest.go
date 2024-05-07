@@ -37,9 +37,10 @@ type Model struct {
 }
 
 type Host struct {
-	Name       string `json:"name"`
-	Endpoint   string `json:"endpoint"`
-	AuthHeader string `json:"authHeader"`
+	Name           string `json:"name"`
+	Endpoint       string `json:"endpoint"`
+	AuthHeader     string `json:"authHeader"`
+	AuthQueryParam string `json:"authQueryParam"`
 }
 
 type EmbeddingSpec struct {

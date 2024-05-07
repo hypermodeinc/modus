@@ -31,28 +31,28 @@ func sendHttp(req *http.Request) ([]byte, error) {
 	return io.ReadAll(response.Body)
 }
 func PostHttp[TResult any](url string, payload any, headers map[string]string) (TResult, error) {
-	return RequestHttp[TResult](url, payload, headers, http.MethodPost)
+	return RequestHttp[TResult](http.MethodPost, url, payload, headers)
 }
 func GetHttp[TResult any](url string, query string, headers map[string]string) (TResult, error) {
-	return RequestHttp[TResult](url+"/"+query, nil, headers, http.MethodGet)
+	return RequestHttp[TResult](http.MethodGet, url+"/"+query, nil, headers)
 
 }
 
-func RequestHttp[TResult any](url string, payload any, headers map[string]string, method string) (TResult, error) {
+func RequestHttp[TResult any](method string, url string, body any, headers map[string]string) (TResult, error) {
 	var result TResult
 	var ct string
 	var buf *bytes.Buffer
 
-	switch payload := payload.(type) {
+	switch body := body.(type) {
 	case []byte:
 		ct = "application/octet-stream"
-		buf = bytes.NewBuffer(payload)
+		buf = bytes.NewBuffer(body)
 	case string:
 		ct = "text/plain"
-		buf = bytes.NewBuffer([]byte(payload))
+		buf = bytes.NewBuffer([]byte(body))
 	default:
 		ct = "application/json"
-		jsonPayload, err := json.Marshal(payload)
+		jsonPayload, err := json.Marshal(body)
 		if err != nil {
 			return result, fmt.Errorf("error marshaling payload: %w", err)
 		}

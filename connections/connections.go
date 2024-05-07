@@ -7,6 +7,7 @@ import (
 	"hmruntime/logger"
 	"hmruntime/manifest"
 	"hmruntime/utils"
+	"strings"
 
 	"github.com/buger/jsonparser"
 )
@@ -55,10 +56,10 @@ func ExecuteGraphqlApi(ctx context.Context, host manifest.Host, stmt string, var
 	return string(response), nil
 }
 
-func FetchGet[TResponse any](ctx context.Context, host manifest.Host, stmt string) (TResponse, error) {
+func Fetch[TResponse any](ctx context.Context, host manifest.Host, method string, path string, body string, headers map[string]string) (TResponse, error) {
 
 	var response TResponse
-	headers := map[string]string{}
+	//headers := map[string]string{}
 
 	if host.Endpoint == "" {
 		return response, fmt.Errorf("host endpoint is not defined")
@@ -70,10 +71,21 @@ func FetchGet[TResponse any](ctx context.Context, host manifest.Host, stmt strin
 		}
 		headers[host.AuthHeader] = key
 	}
+	if host.AuthQueryParam != "" { // auth is a query parameter
+		key, err := hosts.GetHostKey(ctx, host)
+		if err != nil {
+			return response, fmt.Errorf("error getting model key secret: %w", err)
+		}
+		if strings.Contains(path, "?") {
+			path = path + "&" + host.AuthQueryParam + "=" + key
+		} else {
+			path = path + "?" + host.AuthQueryParam + "=" + key
+		}
+	}
 
-	var url string = host.Endpoint
+	var url string = host.Endpoint + "/" + path
 
-	response, err := utils.GetHttp[TResponse](url, stmt, nil)
+	response, err := utils.RequestHttp[TResponse](method, url, body, headers)
 	if err != nil {
 		return response, err
 	}

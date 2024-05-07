@@ -26,7 +26,7 @@ func Instantiate(ctx context.Context, runtime *wazero.Runtime) error {
 	b.NewFunctionBuilder().WithFunc(hostInvokeClassifier).Export("invokeClassifier")
 	b.NewFunctionBuilder().WithFunc(hostComputeEmbedding).Export("computeEmbedding")
 	b.NewFunctionBuilder().WithFunc(hostInvokeTextGenerator).Export("invokeTextGenerator")
-	b.NewFunctionBuilder().WithFunc(hostFetchGet).Export("fetchGet")
+	b.NewFunctionBuilder().WithFunc(hostFetch).Export("fetch")
 
 	_, err := b.Instantiate(ctx)
 	if err != nil {
