@@ -87,7 +87,11 @@ func GetHandlerMux() http.Handler {
 	mux.HandleFunc("/health", healthHandler)
 
 	// Add CORS support to all endpoints.
-	return cors.Default().Handler(mux)
+	c := cors.New(cors.Options{
+		AllowCredentials: true,
+	})
+
+	return c.Handler(mux)
 }
 
 func healthHandler(w http.ResponseWriter, r *http.Request) {

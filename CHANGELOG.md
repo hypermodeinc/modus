@@ -1,5 +1,9 @@
 # Change Log
 
+## 2024-05-07 - UNRELEASED
+
+- Add `Access-Control-Allow-Credentials` in CORS preflight [#177](https://github.com/gohypermode/runtime/pull/177)
+
 ## 2024-05-03 - Version 0.6.4
 
 - Add CORS support to all endpoints [#171](https://github.com/gohypermode/runtime/pull/171)
