@@ -21,11 +21,7 @@ jobs:
             - name: Generate Code
               run: go generate ./...
             - name: golang-lint
-              env:
-                GOGC: 10
-              uses: golangci/golangci-lint-action@v5
+              uses: golangci/golangci-lint-action@v6
               with:
                 version: latest
-                working-directory: .
-                only-new-issues: true
                 args: --timeout=10m
