@@ -86,12 +86,26 @@ func GetHandlerMux() http.Handler {
 	// Also register the health endpoint, un-instrumented.
 	mux.HandleFunc("/health", healthHandler)
 
+	// Restrict the HTTP methods for all above handlers to GET and POST.
+	handler := restrictHttpMethods(mux)
+
 	// Add CORS support to all endpoints.
 	c := cors.New(cors.Options{
 		AllowedHeaders: []string{"Authorization", "Content-Type"},
 	})
 
-	return c.Handler(mux)
+	return c.Handler(handler)
+}
+
+func restrictHttpMethods(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodGet, http.MethodPost:
+			next.ServeHTTP(w, r)
+		default:
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		}
+	})
 }
 
 func healthHandler(w http.ResponseWriter, r *http.Request) {
