@@ -116,7 +116,7 @@ func WriteInferenceHistoryToDB(model manifest.Model, input, output string) {
 		if table == "" {
 			table = "local_instance"
 		}
-		err := db.WithTx(ctx, func(ctx context.Context, tx pgx.Tx) error {
+		err := db.WithTx(ctx, func(tx pgx.Tx) error {
 			// Replace with your code to write to the database
 			query := fmt.Sprintf(
 				"INSERT INTO %s (model_name, model_task, source_model, model_provider, model_host, model_version, model_hash, input, output) "+

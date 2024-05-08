@@ -43,13 +43,13 @@ func GetTx(ctx context.Context) (pgx.Tx, error) {
 	return tx, nil
 }
 
-func WithTx(ctx context.Context, fn func(context.Context, pgx.Tx) error) error {
+func WithTx(ctx context.Context, fn func(pgx.Tx) error) error {
 	tx, err := GetTx(ctx)
 	if err != nil {
 		return err
 	}
 
-	err = fn(ctx, tx)
+	err = fn(tx)
 	if err != nil {
 		rollbackErr := tx.Rollback(ctx)
 		if rollbackErr != nil {
