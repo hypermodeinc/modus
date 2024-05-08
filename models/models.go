@@ -8,6 +8,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
 	"time"
 
 	"hmruntime/config"
@@ -111,12 +112,16 @@ func WriteInferenceHistoryToDB(model manifest.Model, input, output string) {
 
 	go func() {
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		table := os.Getenv("NAMESPACE")
+		if table == "" {
+			table = "local_instance"
+		}
 		err := db.WithTx(ctx, func(ctx context.Context, tx pgx.Tx) error {
 			// Replace with your code to write to the database
-			_, err := tx.Exec(ctx,
-				"INSERT INTO local_instance (model_name, model_task, source_model, model_provider, model_host, model_version, model_hash, input, output) "+
-					"VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)",
-				model.Name, model.Task, model.SourceModel, model.Provider, model.Host, "1", model.Hash(), input, output)
+			query := fmt.Sprintf(
+				"INSERT INTO %s (model_name, model_task, source_model, model_provider, model_host, model_version, model_hash, input, output) "+
+					"VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)", table)
+			_, err := tx.Exec(ctx, query, model.Name, model.Task, model.SourceModel, model.Provider, model.Host, "1", model.Hash(), input, output)
 			return err
 		})
 
