@@ -1,5 +1,9 @@
 # Change Log
 
+## UNRELEASED
+
+- Remove `Access-Control-Allow-Credentials`. Add `Access-Control-Request-Headers`. [#180](https://github.com/gohypermode/runtime/pull/180)
+
 ## 2024-05-07 - Version 0.6.5
 
 - Add `Access-Control-Allow-Credentials` in CORS preflight [#177](https://github.com/gohypermode/runtime/pull/177)
