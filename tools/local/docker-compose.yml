@@ -1,0 +1,19 @@
+services:
+ 
+  db:
+    image: postgres
+    restart: always
+    expose:
+      - 5433
+    ports:
+      - 5433:5433
+    environment:
+      POSTGRES_DB: my-runtime-db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    command: -p 5433
+
+volumes:
+  pgdata:

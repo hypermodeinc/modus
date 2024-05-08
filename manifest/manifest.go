@@ -4,6 +4,11 @@
 
 package manifest
 
+import (
+	"crypto/sha256"
+	"encoding/hex"
+)
+
 var manifestFiles = map[string]Manifest{
 	"hypermode.json": &HypermodeData,
 }
@@ -55,4 +60,17 @@ type EmbeddingSpec struct {
 type TrainingInstruction struct {
 	ModelName string   `json:"modelName"`
 	Labels    []string `json:"labels"`
+}
+
+func (m Model) Hash() string {
+	// Concatenate the attributes into a single string
+	data := m.Name + string(m.Task) + m.SourceModel + m.Provider
+
+	// Compute the SHA-256 hash
+	hash := sha256.Sum256([]byte(data))
+
+	// Convert the hash to a hexadecimal string
+	hashStr := hex.EncodeToString(hash[:])
+
+	return hashStr
 }

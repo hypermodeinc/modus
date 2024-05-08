@@ -6,6 +6,7 @@ package openai
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	"hmruntime/hosts"
@@ -58,6 +59,13 @@ func ChatCompletion(ctx context.Context, model manifest.Model, host manifest.Hos
 	if result.Error.Message != "" {
 		return models.ChatResponse{}, fmt.Errorf("error returned from OpenAI: %s", result.Error.Message)
 	}
+
+	// write the results to the database
+	resultBytes, err := json.Marshal(result)
+	if err != nil {
+		return result, fmt.Errorf("error marshalling result: %w", err)
+	}
+	models.WriteInferenceHistoryToDB(model, sentence, string(resultBytes))
 
 	return result, nil
 }

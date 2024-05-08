@@ -9,3 +9,4 @@ type contextKey string
 const ExecutionIdContextKey contextKey = "execution_id"
 const PluginContextKey contextKey = "plugin"
 const FunctionOutputContextKey contextKey = "function_output"
+const InferenceHistoryDBKey contextKey = "inference_history_db"

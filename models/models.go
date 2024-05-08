@@ -6,12 +6,17 @@ package models
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"time"
 
 	"hmruntime/config"
+	"hmruntime/db"
 	"hmruntime/hosts"
 	"hmruntime/manifest"
 	"hmruntime/utils"
+
+	"github.com/jackc/pgx/v5"
 )
 
 // generic output format for models functions
@@ -86,7 +91,42 @@ func PostToModelEndpoint[TResult any](ctx context.Context, sentenceMap map[strin
 	for i, v := range res.Predictions {
 		result[keys[i]] = v
 	}
+
+	// write the results to the database
+	sentenceMapBytes, err := json.Marshal(sentenceMap)
+	if err != nil {
+		return result, fmt.Errorf("error marshalling sentenceMap: %w", err)
+	}
+	resultBytes, err := json.Marshal(result)
+	if err != nil {
+		return result, fmt.Errorf("error marshalling result: %w", err)
+	}
+
+	WriteInferenceHistoryToDB(model, string(sentenceMapBytes), string(resultBytes))
+
 	return result, nil
+}
+
+func WriteInferenceHistoryToDB(model manifest.Model, input, output string) {
+
+	go func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		err := db.WithTx(ctx, func(ctx context.Context, tx pgx.Tx) error {
+			// Replace with your code to write to the database
+			_, err := tx.Exec(ctx,
+				"INSERT INTO local_instance (model_name, model_task, source_model, model_provider, model_host, model_version, model_hash, input, output) "+
+					"VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)",
+				model.Name, model.Task, model.SourceModel, model.Provider, model.Host, "1", model.Hash(), input, output)
+			return err
+		})
+
+		if err != nil {
+			// Handle error
+			fmt.Println("Error writing to inference history database:", err)
+		}
+		cancel()
+	}()
+
 }
 
 type PredictionResult[T any] struct {
