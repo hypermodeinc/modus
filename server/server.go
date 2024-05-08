@@ -88,7 +88,7 @@ func GetHandlerMux() http.Handler {
 
 	// Add CORS support to all endpoints.
 	c := cors.New(cors.Options{
-		AllowCredentials: true,
+		AllowedHeaders: []string{"Authorization", "Content-Type"},
 	})
 
 	return c.Handler(mux)
