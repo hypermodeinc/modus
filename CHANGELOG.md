@@ -1,6 +1,6 @@
 # Change Log
 
-## UNRELEASED
+## 2024-05-08 - Version 0.6.6
 
 - Remove `Access-Control-Allow-Credentials`. Add `Access-Control-Request-Headers` [#180](https://github.com/gohypermode/runtime/pull/180)
 - Restrict incoming http requests methods [#182](https://github.com/gohypermode/runtime/pull/182)
