@@ -91,7 +91,7 @@ func TestPostExternalModelEndpoint(t *testing.T) {
 			Predictions: b.Instances,
 		}
 		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(resp)
+		_ = json.NewEncoder(w).Encode(resp)
 	})
 	// Create a mock server with the handler to act as the external model endpoint
 	tsrv := httptest.NewServer(handler)

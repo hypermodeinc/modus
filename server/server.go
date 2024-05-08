@@ -113,5 +113,5 @@ func healthHandler(w http.ResponseWriter, r *http.Request) {
 	ver := config.GetVersionNumber()
 	w.WriteHeader(http.StatusOK)
 	utils.WriteJsonContentHeader(w)
-	w.Write([]byte(`{"status":"ok","environment":"` + env + `","version":"` + ver + `"}`))
+	_, _ = w.Write([]byte(`{"status":"ok","environment":"` + env + `","version":"` + ver + `"}`))
 }

@@ -49,9 +49,9 @@ func HandleGraphQLRequest(w http.ResponseWriter, r *http.Request) {
 		logger.Warn(ctx).Msg(msg)
 		utils.WriteJsonContentHeader(w)
 		if ok, _ := gqlRequest.IsIntrospectionQuery(); ok {
-			w.Write([]byte(`{"data":{"__schema":{"types":[]}}}`))
+			_, _ = w.Write([]byte(`{"data":{"__schema":{"types":[]}}}`))
 		} else {
-			w.Write([]byte(fmt.Sprintf(`{"errors":[{"message":"%s"}]}`, msg)))
+			_, _ = w.Write([]byte(fmt.Sprintf(`{"errors":[{"message":"%s"}]}`, msg)))
 		}
 		return
 	}
@@ -89,7 +89,7 @@ func HandleGraphQLRequest(w http.ResponseWriter, r *http.Request) {
 			// NOTE: we intentionally don't log this, to avoid a bad actor spamming the logs
 			// TODO: we should capture metrics here though
 			utils.WriteJsonContentHeader(w)
-			requestErrors.WriteResponse(w)
+			_, _ = requestErrors.WriteResponse(w)
 		} else {
 			msg := "Failed to execute GraphQL query."
 			logger.Err(ctx, err).Msg(msg)
@@ -108,7 +108,7 @@ func HandleGraphQLRequest(w http.ResponseWriter, r *http.Request) {
 
 	// Return the response
 	utils.WriteJsonContentHeader(w)
-	w.Write(response)
+	_, _ = w.Write(response)
 }
 
 func addOutputToResponse(response []byte, output map[string]datasource.FunctionOutput) ([]byte, error) {
