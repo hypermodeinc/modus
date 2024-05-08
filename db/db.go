@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"fmt"
 	"hmruntime/config"
 	"hmruntime/logger"
 	"os"
@@ -32,6 +33,9 @@ func GetInferenceHistoryDB() *pgxpool.Pool {
 }
 
 func GetTx(ctx context.Context) (pgx.Tx, error) {
+	if dbpool == nil {
+		return nil, fmt.Errorf("database pool is not initialized")
+	}
 	tx, err := dbpool.Begin(ctx)
 	if err != nil {
 		return nil, err
