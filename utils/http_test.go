@@ -168,7 +168,7 @@ func Test_PostHttp_StringResult(t *testing.T) {
 func Test_PostHttp_BytesResult(t *testing.T) {
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte{1, 2, 3, 4, 5})
+		_, _ = w.Write([]byte{1, 2, 3, 4, 5})
 	})
 	server := httptest.NewServer(handler)
 	defer server.Close()
