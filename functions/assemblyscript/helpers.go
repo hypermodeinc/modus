@@ -109,7 +109,6 @@ func getMapSubtypeInfo(path string) (plugins.TypeInfo, plugins.TypeInfo) {
 }
 
 func getTypeInfo(path string) plugins.TypeInfo {
-
 	var name string
 	if isPrimitive(path) {
 		name = path
@@ -156,8 +155,17 @@ func getTypeDefinition(ctx context.Context, typePath string) (plugins.TypeDefini
 	return info, nil
 }
 
-func GetTypeInfo[T any]() plugins.TypeInfo {
+type HasTypeInfo interface {
+	GetTypeInfo() plugins.TypeInfo
+}
+
+func GetTypeInfo[T any]() (plugins.TypeInfo, error) {
 	var v T
+
+	if t, ok := any(&v).(HasTypeInfo); ok {
+		return t.GetTypeInfo(), nil
+	}
+
 	switch any(v).(type) {
 	case bool:
 		return getTypeInfo("bool"), nil
