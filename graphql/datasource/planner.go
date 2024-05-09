@@ -7,10 +7,10 @@ package datasource
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 
 	"hmruntime/logger"
+	"hmruntime/utils"
 
 	"github.com/wundergraph/graphql-go-tools/v2/pkg/ast"
 	"github.com/wundergraph/graphql-go-tools/v2/pkg/engine/plan"
@@ -184,7 +184,7 @@ func (p *Planner[T]) captureInputData(fieldRef int) error {
 				Renderer: resolve.NewJSONVariableRenderer(),
 			})
 
-		escapedKey, err := json.Marshal(argName)
+		escapedKey, err := utils.JsonSerialize(argName)
 		if err != nil {
 			return err
 		}
@@ -200,9 +200,9 @@ func (p *Planner[T]) captureInputData(fieldRef int) error {
 }
 
 func (p *Planner[T]) ConfigureFetch() resolve.FetchConfiguration {
-	fnJson, err := json.Marshal(p.template.function)
+	fnJson, err := utils.JsonSerialize(p.template.function)
 	if err != nil {
-		logger.Error(p.ctx).Err(err).Msg("Error marshalling json while configuring graphql fetch.")
+		logger.Error(p.ctx).Err(err).Msg("Error serializing json while configuring graphql fetch.")
 		return resolve.FetchConfiguration{}
 	}
 

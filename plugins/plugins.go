@@ -6,7 +6,6 @@ package plugins
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"time"
 
@@ -126,7 +125,7 @@ func GetPluginMetadata(ctx context.Context, cm *wazero.CompiledModule) (PluginMe
 	}
 
 	metadata := PluginMetadata{}
-	err := json.Unmarshal(metadataJson, &metadata)
+	err := utils.JsonDeserialize(metadataJson, &metadata)
 	if err != nil {
 		return PluginMetadata{}, fmt.Errorf("failed to parse plugin metadata: %w", err)
 	}

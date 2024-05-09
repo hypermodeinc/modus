@@ -6,7 +6,6 @@ package hostfunctions
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 
 	"hmruntime/functions/assemblyscript"
@@ -15,6 +14,7 @@ import (
 	"hmruntime/manifest"
 	"hmruntime/models"
 	"hmruntime/models/openai"
+	"hmruntime/utils"
 
 	wasm "github.com/tetratelabs/wazero/api"
 )
@@ -69,7 +69,7 @@ func hostInvokeTextGenerator(ctx context.Context, mod wasm.Module, pModelName ui
 		// safeguard: test is the output is a valid json
 		// test every Choices.Message.Content
 		for _, choice := range result.Choices {
-			_, err := json.Marshal(choice.Message.Content)
+			_, err := utils.JsonSerialize(choice.Message.Content)
 			if err != nil {
 				logger.Err(ctx, err).Msg("One of the generated message is not a valid JSON.")
 				return 0

@@ -19,7 +19,11 @@ func writeResult[T any](ctx context.Context, mod wasm.Module, val T) (uint32, er
 		// fast path for strings
 		return assemblyscript.WriteString(ctx, mod, any(val).(string))
 	default:
-		typ := assemblyscript.GetTypeInfo[T]()
+		typ, err := assemblyscript.GetTypeInfo[T]()
+		if err != nil {
+			return 0, err
+		}
+
 		p, err := assemblyscript.EncodeValue(ctx, mod, typ, val)
 		return uint32(p), err
 	}
@@ -35,8 +39,13 @@ func readParam[T any](ctx context.Context, mod wasm.Module, p uint32, v *T) erro
 			return err
 		}
 		*v = any(s).(T)
+
 	default:
-		typ := assemblyscript.GetTypeInfo[T]()
+		typ, err := assemblyscript.GetTypeInfo[T]()
+		if err != nil {
+			return err
+		}
+
 		data, err := assemblyscript.DecodeValueAs[T](ctx, mod, typ, uint64(p))
 		if err != nil {
 			return err

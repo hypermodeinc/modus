@@ -6,12 +6,12 @@ package hostfunctions
 
 import (
 	"context"
-	"encoding/json"
 
 	"hmruntime/connections"
 	"hmruntime/functions/assemblyscript"
 	"hmruntime/hosts"
 	"hmruntime/logger"
+	"hmruntime/utils"
 
 	wasm "github.com/tetratelabs/wazero/api"
 )
@@ -26,8 +26,8 @@ func hostExecuteGQL(ctx context.Context, mod wasm.Module, pHostName uint32, pStm
 	}
 
 	vars := make(map[string]any)
-	if err := json.Unmarshal([]byte(sVars), &vars); err != nil {
-		logger.Err(ctx, err).Msg("Error unmarshalling GraphQL variables.")
+	if err := utils.JsonDeserialize([]byte(sVars), &vars); err != nil {
+		logger.Err(ctx, err).Msg("Error deserializing GraphQL variables.")
 		return 0
 	}
 

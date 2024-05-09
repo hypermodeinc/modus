@@ -109,7 +109,6 @@ func getMapSubtypeInfo(path string) (plugins.TypeInfo, plugins.TypeInfo) {
 }
 
 func getTypeInfo(path string) plugins.TypeInfo {
-
 	var name string
 	if isPrimitive(path) {
 		name = path
@@ -156,84 +155,108 @@ func getTypeDefinition(ctx context.Context, typePath string) (plugins.TypeDefini
 	return info, nil
 }
 
-func GetTypeInfo[T any]() plugins.TypeInfo {
+type HasTypeInfo interface {
+	GetTypeInfo() plugins.TypeInfo
+}
+
+func GetTypeInfo[T any]() (plugins.TypeInfo, error) {
 	var v T
+
+	if t, ok := any(&v).(HasTypeInfo); ok {
+		return t.GetTypeInfo(), nil
+	}
+
 	switch any(v).(type) {
 	case bool:
-		return getTypeInfo("bool")
+		return getTypeInfo("bool"), nil
 	case int8:
-		return getTypeInfo("i8")
+		return getTypeInfo("i8"), nil
 	case int16:
-		return getTypeInfo("i16")
+		return getTypeInfo("i16"), nil
 	case int32, int:
-		return getTypeInfo("i32")
+		return getTypeInfo("i32"), nil
 	case int64:
-		return getTypeInfo("i64")
+		return getTypeInfo("i64"), nil
 	case uint8:
-		return getTypeInfo("u8")
+		return getTypeInfo("u8"), nil
 	case uint16:
-		return getTypeInfo("u16")
+		return getTypeInfo("u16"), nil
 	case uint32, uint:
-		return getTypeInfo("u32")
+		return getTypeInfo("u32"), nil
 	case uint64:
-		return getTypeInfo("u64")
+		return getTypeInfo("u64"), nil
 	case float32:
-		return getTypeInfo("f32")
+		return getTypeInfo("f32"), nil
 	case float64:
-		return getTypeInfo("f64")
+		return getTypeInfo("f64"), nil
 	case []byte:
-		return ArrayBufferType
+		return ArrayBufferType, nil
 	case string:
-		return StringType
+		return StringType, nil
 	}
 
 	t := reflect.TypeFor[T]()
 	return getTypeInfoForReflectedType(t)
 }
 
-func getTypeInfoForReflectedType(t reflect.Type) plugins.TypeInfo {
+func getTypeInfoForReflectedType(t reflect.Type) (plugins.TypeInfo, error) {
 	switch t.Kind() {
 	case reflect.Bool:
-		return getTypeInfo("bool")
+		return getTypeInfo("bool"), nil
 	case reflect.Int8:
-		return getTypeInfo("i8")
+		return getTypeInfo("i8"), nil
 	case reflect.Int16:
-		return getTypeInfo("i16")
+		return getTypeInfo("i16"), nil
 	case reflect.Int32, reflect.Int:
-		return getTypeInfo("i32")
+		return getTypeInfo("i32"), nil
 	case reflect.Int64:
-		return getTypeInfo("i64")
+		return getTypeInfo("i64"), nil
 	case reflect.Uint8:
-		return getTypeInfo("u8")
+		return getTypeInfo("u8"), nil
 	case reflect.Uint16:
-		return getTypeInfo("u16")
+		return getTypeInfo("u16"), nil
 	case reflect.Uint32, reflect.Uint:
-		return getTypeInfo("u32")
+		return getTypeInfo("u32"), nil
 	case reflect.Uint64:
-		return getTypeInfo("u64")
+		return getTypeInfo("u64"), nil
 	case reflect.Float32:
-		return getTypeInfo("f32")
+		return getTypeInfo("f32"), nil
 	case reflect.Float64:
-		return getTypeInfo("f64")
+		return getTypeInfo("f64"), nil
 	case reflect.String:
-		return StringType
+		return StringType, nil
+
 	case reflect.Slice:
 		if t.Elem().Kind() == reflect.Uint8 {
-			return ArrayBufferType
+			return ArrayBufferType, nil
 		}
-		elemType := getTypeInfoForReflectedType(t.Elem())
+
+		elemType, err := getTypeInfoForReflectedType(t.Elem())
+		if err != nil {
+			return plugins.TypeInfo{}, err
+		}
+
 		return plugins.TypeInfo{
 			Name: elemType.Name + "[]",
 			Path: "~lib/array/Array<" + elemType.Path + ">",
-		}
+		}, nil
+
 	case reflect.Map:
-		keyType := getTypeInfoForReflectedType(t.Key())
-		valueType := getTypeInfoForReflectedType(t.Elem())
+		keyType, err := getTypeInfoForReflectedType(t.Key())
+		if err != nil {
+			return plugins.TypeInfo{}, err
+		}
+
+		valueType, err := getTypeInfoForReflectedType(t.Elem())
+		if err != nil {
+			return plugins.TypeInfo{}, err
+		}
+
 		return plugins.TypeInfo{
 			Name: "Map<" + keyType.Name + ", " + valueType.Name + ">",
 			Path: "~lib/map/Map<" + keyType.Path + "," + valueType.Path + ">",
-		}
+		}, nil
 	}
 
-	return plugins.TypeInfo{}
+	return plugins.TypeInfo{}, fmt.Errorf("unsupported type kind %s", t.Kind())
 }

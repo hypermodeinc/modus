@@ -6,7 +6,6 @@ package utils
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -87,9 +86,9 @@ func Test_PostHttp(t *testing.T) {
 		}
 
 		var payload Payload
-		err = json.Unmarshal(body, &payload)
+		err = JsonDeserialize(body, &payload)
 		if err != nil {
-			t.Fatalf("Failed to unmarshal request payload: %v", err)
+			t.Fatalf("Failed to deserialize request payload: %v", err)
 		}
 
 		expectedPayload := Payload{
