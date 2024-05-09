@@ -192,10 +192,9 @@ func transformValue(data []byte, tf *fieldInfo) (result []byte, err error) {
 					return nil, err
 				}
 				if dataType == jsonparser.String {
-					v, err = utils.JsonSerialize(string(v))
-					if err != nil {
-						return nil, err
-					}
+					// Note, string values here will be escaped for internal quotes, newlines, etc.,
+					// but will be missing outer quotes.  So we need to add them back.
+					v = []byte(`"` + string(v) + `"`)
 				}
 				val, err = transformValue(v, f)
 				if err != nil {
