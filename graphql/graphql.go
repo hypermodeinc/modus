@@ -6,7 +6,6 @@ package graphql
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -151,7 +150,7 @@ func addOutputToResponse(response []byte, output map[string]datasource.FunctionO
 		return nil, err
 	}
 
-	invocationData, err := json.Marshal(invocations)
+	invocationData, err := utils.JsonSerialize(invocations)
 	if err != nil {
 		return nil, err
 	}

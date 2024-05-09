@@ -7,7 +7,6 @@ package datasource
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 
@@ -38,16 +37,17 @@ type Source struct{}
 func (s Source) Load(ctx context.Context, input []byte, writer io.Writer) error {
 
 	// Parse the input to get the function call info
-	callInfo, err := parseInput(input)
+	var ci callInfo
+	err := utils.JsonDeserialize(input, &ci)
 	if err != nil {
 		return fmt.Errorf("error parsing input: %w", err)
 	}
 
 	// Load the data
-	result, gqlErrors, err := s.callFunction(ctx, callInfo)
+	result, gqlErrors, err := s.callFunction(ctx, ci)
 
 	// Write the response
-	err = writeGraphQLResponse(writer, result, gqlErrors, err, callInfo)
+	err = writeGraphQLResponse(writer, result, gqlErrors, err, ci)
 	if err != nil {
 		logger.Error(ctx).Err(err).Msg("Error creating GraphQL response.")
 	}
@@ -98,15 +98,6 @@ func (s Source) callFunction(ctx context.Context, callInfo callInfo) (any, []res
 	return result, gqlErrors, err
 }
 
-func parseInput(input []byte) (callInfo, error) {
-	dec := json.NewDecoder(bytes.NewReader(input))
-	dec.UseNumber()
-
-	var ci callInfo
-	err := dec.Decode(&ci)
-	return ci, err
-}
-
 func writeGraphQLResponse(writer io.Writer, result any, gqlErrors []resolve.GraphQLError, fnErr error, ci callInfo) error {
 
 	// Include the function error (except any we've filtered out)
@@ -120,11 +111,11 @@ func writeGraphQLResponse(writer io.Writer, result any, gqlErrors []resolve.Grap
 		})
 	}
 
-	// If there are GraphQL errors, marshal them to json
+	// If there are GraphQL errors, serialize them as json
 	var jsonErrors []byte
 	if len(gqlErrors) > 0 {
 		var err error
-		jsonErrors, err = json.Marshal(gqlErrors)
+		jsonErrors, err = utils.JsonSerialize(gqlErrors)
 		if err != nil {
 			return err
 		}
@@ -137,7 +128,7 @@ func writeGraphQLResponse(writer io.Writer, result any, gqlErrors []resolve.Grap
 	}
 
 	// Get the data as json from the result
-	jsonData, err := json.Marshal(result)
+	jsonData, err := utils.JsonSerialize(result)
 	if err != nil {
 		return err
 	}
@@ -201,7 +192,7 @@ func transformValue(data []byte, tf *fieldInfo) (result []byte, err error) {
 					return nil, err
 				}
 				if dataType == jsonparser.String {
-					v, err = json.Marshal(string(v))
+					v, err = utils.JsonSerialize(string(v))
 					if err != nil {
 						return nil, err
 					}

@@ -5,8 +5,6 @@
 package utils
 
 import (
-	"bytes"
-	"encoding/json"
 	"os"
 	"strconv"
 	"strings"
@@ -36,16 +34,13 @@ func ParseNameAndVersion(s string) (name string, version string) {
 }
 
 func ConvertToMap(data any) (map[string]any, error) {
-	j, err := json.Marshal(data)
+	j, err := JsonSerialize(data)
 	if err != nil {
 		return nil, err
 	}
 
-	dec := json.NewDecoder(bytes.NewReader(j))
-	dec.UseNumber()
-
 	var m map[string]any
-	err = dec.Decode(&m)
+	err = JsonDeserialize(j, &m)
 	if err != nil {
 		return nil, err
 	}
@@ -56,12 +51,12 @@ func ConvertToMap(data any) (map[string]any, error) {
 func ConvertToStruct[T any](data map[string]any) (T, error) {
 	var result T
 
-	j, err := json.Marshal(data)
+	j, err := JsonSerialize(data)
 	if err != nil {
 		return result, err
 	}
 
-	err = json.Unmarshal(j, &result)
+	err = JsonDeserialize(j, &result)
 	if err != nil {
 		return result, err
 	}
