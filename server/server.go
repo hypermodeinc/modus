@@ -30,9 +30,14 @@ func Start(ctx context.Context) {
 
 	// Create the configuration for the server.
 	mux := GetHandlerMux()
-	server := &http.Server{
-		Addr:    fmt.Sprintf(":%d", config.Port),
-		Handler: mux,
+	server := &http.Server{Handler: mux}
+	if utils.HypermodeDebugEnabled() {
+		// If we are in debug mode, only listen on localhost.
+		// This prevents getting nagged for firewall permissions each launch.
+		server.Addr = fmt.Sprintf("localhost:%d", config.Port)
+	} else {
+		// Otherwise, listen on all interfaces.
+		server.Addr = fmt.Sprintf(":%d", config.Port)
 	}
 
 	// Start the server in a goroutine so we can listen for signals to shutdown.
