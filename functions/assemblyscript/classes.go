@@ -7,9 +7,10 @@ package assemblyscript
 import (
 	"context"
 	"fmt"
+	"reflect"
+	"strings"
 
 	"hmruntime/plugins"
-	"hmruntime/utils"
 
 	wasm "github.com/tetratelabs/wazero/api"
 )
@@ -106,62 +107,76 @@ func readField(ctx context.Context, mem wasm.Memory, typ plugins.TypeInfo, offse
 }
 
 func writeClass(ctx context.Context, mod wasm.Module, def plugins.TypeDefinition, data any) (offset uint32, err error) {
-	switch data := data.(type) {
-	case map[string]any:
 
-		// unpin everything when done
-		pins := make([]uint32, 0, len(def.Fields)+1)
-		defer func() {
-			for _, ptr := range pins {
-				err = unpinWasmMemory(ctx, mod, ptr)
-				if err != nil {
-					break
-				}
+	// unpin everything when done
+	pins := make([]uint32, 0, len(def.Fields)+1)
+	defer func() {
+		for _, ptr := range pins {
+			err = unpinWasmMemory(ctx, mod, ptr)
+			if err != nil {
+				break
 			}
-		}()
+		}
+	}()
 
-		// Allocate memory for the object
-		offset, err = allocateWasmMemory(ctx, mod, def.Size, def.Id)
+	// Allocate memory for the object
+	offset, err = allocateWasmMemory(ctx, mod, def.Size, def.Id)
+	if err != nil {
+		return 0, err
+	}
+
+	// we need to pin the object in memory so it doesn't get garbage collected
+	// if we allocate more memory when writing a field before returning the object
+	err = pinWasmMemory(ctx, mod, offset)
+	if err != nil {
+		return 0, err
+	}
+	pins = append(pins, offset)
+
+	// When reading from a struct, we need to use reflection to access the fields.
+	// Reflect the data value just once to avoid the overhead of reflection for each field.
+	var rv reflect.Value
+	if _, ok := data.(map[string]any); !ok {
+		rv = reflect.ValueOf(data)
+	}
+
+	// Loop over all fields in the class definition.
+	for _, field := range def.Fields {
+
+		// Read the field value from the data object.
+		var val any
+		switch data := data.(type) {
+		case map[string]any:
+			// When reading from a map, field matching should be case sensitive.
+			// This allows the user to control the casing of the fields in their GraphQL
+			// types, to match the casing of the fields in their AssemblyScript classes.
+			val = data[field.Name]
+		default:
+			// When reading directly from a struct, field matching should be case insensitive.
+			// This allows our host functions to use Go-defined structs with different casing
+			// than the AssemblyScript class definition.
+			f := rv.FieldByNameFunc(func(s string) bool { return strings.EqualFold(s, field.Name) })
+			val = f.Interface()
+		}
+
+		// Write the field value to WASM memory.
+		fieldOffset := offset + field.Offset
+		ptr, err := writeField(ctx, mod, field.Type, fieldOffset, val)
 		if err != nil {
 			return 0, err
 		}
 
-		// we need to pin the object in memory so it doesn't get garbage collected
-		// if we allocate more memory when writing a field before returning the object
-		err = pinWasmMemory(ctx, mod, offset)
-		if err != nil {
-			return 0, err
-		}
-		pins = append(pins, offset)
-
-		// write fields
-		for _, field := range def.Fields {
-			val := data[field.Name]
-			fieldOffset := offset + field.Offset
-			ptr, err := writeField(ctx, mod, field.Type, fieldOffset, val)
+		// If we allocated memory for the field, we need to pin it too.
+		if ptr != 0 {
+			err = pinWasmMemory(ctx, mod, ptr)
 			if err != nil {
 				return 0, err
 			}
-
-			// If we allocated memory for the field, we need to pin it too.
-			if ptr != 0 {
-				err = pinWasmMemory(ctx, mod, ptr)
-				if err != nil {
-					return 0, err
-				}
-				pins = append(pins, ptr)
-			}
+			pins = append(pins, ptr)
 		}
-
-		return offset, nil
-
-	default:
-		m, err := utils.ConvertToMap(data)
-		if err != nil {
-			return 0, err
-		}
-		return writeClass(ctx, mod, def, m)
 	}
+
+	return offset, nil
 }
 
 func writeField(ctx context.Context, mod wasm.Module, typ plugins.TypeInfo, offset uint32, val any) (ptr uint32, err error) {

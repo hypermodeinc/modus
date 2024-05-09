@@ -35,12 +35,6 @@ func ParseNameAndVersion(s string) (name string, version string) {
 	return s[:i], s[i+1:]
 }
 
-func ConvertToMap(data any) (map[string]any, error) {
-	var m map[string]any
-	err := mapstructure.Decode(data, &m)
-	return m, err
-}
-
 func ConvertToStruct[T any](data map[string]any) (T, error) {
 	var result T
 	err := mapstructure.Decode(data, &result)
