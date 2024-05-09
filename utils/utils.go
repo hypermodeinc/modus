@@ -8,8 +8,6 @@ import (
 	"os"
 	"strconv"
 	"strings"
-
-	"github.com/go-viper/mapstructure/v2"
 )
 
 func If[T any](condition bool, trueVal, falseVal T) T {
@@ -33,12 +31,6 @@ func ParseNameAndVersion(s string) (name string, version string) {
 		return s, ""
 	}
 	return s[:i], s[i+1:]
-}
-
-func ConvertToStruct[T any](data map[string]any) (T, error) {
-	var result T
-	err := mapstructure.Decode(data, &result)
-	return result, err
 }
 
 func EnvVarFlagEnabled(envVarName string) bool {

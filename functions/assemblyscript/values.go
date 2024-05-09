@@ -11,8 +11,8 @@ import (
 	"reflect"
 
 	"hmruntime/plugins"
-	"hmruntime/utils"
 
+	"github.com/go-viper/mapstructure/v2"
 	wasm "github.com/tetratelabs/wazero/api"
 )
 
@@ -146,7 +146,9 @@ func DecodeValueAs[T any](ctx context.Context, mod wasm.Module, typ plugins.Type
 	case T:
 		return v, nil
 	case map[string]any:
-		out, err := utils.ConvertToStruct[T](v)
+
+		var out T
+		err := mapstructure.Decode(v, &out)
 		if err != nil {
 			return result, err
 		}
