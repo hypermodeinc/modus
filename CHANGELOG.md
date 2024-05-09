@@ -1,5 +1,9 @@
 # Change Log
 
+## UNRELEASED
+
+- Sentry is no longer used when `HYPERMODE_DEBUG` is enabled [#187](https://github.com/gohypermode/runtime/pull/187)
+
 ## 2024-05-08 - Version 0.6.6
 
 - Remove `Access-Control-Allow-Credentials`. Add `Access-Control-Request-Headers` [#180](https://github.com/gohypermode/runtime/pull/180)

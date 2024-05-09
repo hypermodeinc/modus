@@ -20,8 +20,15 @@ import (
 const sentryDsn = "https://d0de28f77651b88c22af84598882d60a@o4507057700470784.ingest.us.sentry.io/4507153498636288"
 
 var rootSourcePath string
+var sentryInitialized bool
 
 func InitSentry(rootPath string) {
+
+	// Don't initialize Sentry when running in debug mode.
+	if HypermodeDebugEnabled() {
+		return
+	}
+
 	rootSourcePath = rootPath
 	err := sentry.Init(sentry.ClientOptions{
 		Dsn:         sentryDsn,
@@ -44,10 +51,14 @@ func InitSentry(rootPath string) {
 		// We don't have our logger yet, so just log to stderr.
 		log.Fatalf("sentry.Init: %s", err)
 	}
+
+	sentryInitialized = true
 }
 
 func FlushSentryEvents() {
-	sentry.Flush(5 * time.Second)
+	if sentryInitialized {
+		sentry.Flush(5 * time.Second)
+	}
 }
 
 func NewSentryTransactionForCurrentFunc(ctx context.Context) (*sentry.Span, context.Context) {
