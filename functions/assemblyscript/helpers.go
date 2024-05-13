@@ -18,11 +18,12 @@ import (
 
 // These are the managed types that we handle directly.
 var typeMap = map[string]string{
-	"~lib/string/String":       "string",
-	"~lib/array/Array":         "Array",
-	"~lib/map/Map":             "Map",
-	"~lib/date/Date":           "Date",
-	"~lib/wasi_date/wasi_Date": "Date",
+	"~lib/arraybuffer/ArrayBuffer": "ArrayBuffer",
+	"~lib/string/String":           "string",
+	"~lib/array/Array":             "Array",
+	"~lib/map/Map":                 "Map",
+	"~lib/date/Date":               "Date",
+	"~lib/wasi_date/wasi_Date":     "Date",
 }
 
 // Allocate memory within the AssemblyScript module.
