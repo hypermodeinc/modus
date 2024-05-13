@@ -36,11 +36,7 @@ func GetTx(ctx context.Context) (pgx.Tx, error) {
 	if dbpool == nil {
 		return nil, fmt.Errorf("database pool is not initialized")
 	}
-	tx, err := dbpool.Begin(ctx)
-	if err != nil {
-		return nil, err
-	}
-	return tx, nil
+	return dbpool.Begin(ctx)
 }
 
 func WithTx(ctx context.Context, fn func(pgx.Tx) error) error {
@@ -48,13 +44,10 @@ func WithTx(ctx context.Context, fn func(pgx.Tx) error) error {
 	if err != nil {
 		return err
 	}
+	defer tx.Rollback(ctx)
 
 	err = fn(tx)
 	if err != nil {
-		rollbackErr := tx.Rollback(ctx)
-		if rollbackErr != nil {
-			logger.Error(ctx).Err(rollbackErr).Msg("Error rolling back transaction.")
-		}
 		return err
 	}
 
