@@ -1,6 +1,6 @@
 # Change Log
 
-## UNRELEASED
+## 2024-05-13 - Version 0.7.0
 
 - Sentry is no longer used when `HYPERMODE_DEBUG` is enabled [#187](https://github.com/gohypermode/runtime/pull/187)
 - Only listen on `localhost` when `HYPERMODE_DEBUG` is enabled, to prevent firewall prompt [#188](https://github.com/gohypermode/runtime/pull/188)
