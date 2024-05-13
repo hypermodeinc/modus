@@ -146,32 +146,92 @@ func DecodeValueAs[T any](ctx context.Context, mod wasm.Module, typ plugins.Type
 	case T:
 		return v, nil
 	case map[string]any:
-
-		var out T
-		err := mapstructure.Decode(v, &out)
-		if err != nil {
-			return result, err
-		}
-		return out, nil
+		return mapToStruct[T](v)
 	case []kvp:
-		switch any(result).(type) {
-		case []kvp:
-			return any(v).(T), nil
-		}
-
-		// convert to map type specified by T
-		mapType := reflect.TypeOf(result)
-		if mapType.Kind() != reflect.Map {
-			return result, fmt.Errorf("unexpected type %T, expected a map type", result)
-		}
-		m := reflect.MakeMapWithSize(mapType, len(v))
-		for _, kv := range v {
-			m.SetMapIndex(reflect.ValueOf(kv.Key), reflect.ValueOf(kv.Value))
-		}
-		return m.Interface().(T), nil
+		return kvpsToMap[T](v)
 	}
 
 	return result, fmt.Errorf("unexpected type %T, expected %T", r, result)
+}
+
+var kvpsType = reflect.TypeOf([]kvp{})
+
+func mapToStructDecodeHook(f reflect.Type, t reflect.Type, data any) (any, error) {
+	if t.Kind() == reflect.Map && f.Kind() == reflect.Slice && f == kvpsType {
+		// convert from kvp[] to map
+		val := data.([]kvp)
+		mapType := reflect.MapOf(t.Key(), t.Elem())
+		m := reflect.MakeMapWithSize(mapType, len(val))
+		for _, kv := range val {
+			rk := reflect.ValueOf(kv.Key)
+			rv := reflect.ValueOf(kv.Value)
+			if rv.Kind() == reflect.Map && t.Elem().Kind() == reflect.Struct {
+				ps, err := mapToStructReflected(kv.Value.(map[string]any), t.Elem())
+				if err != nil {
+					return nil, err
+				}
+				// s is a wrapped pointer to the struct value
+				rv = reflect.ValueOf(ps).Elem()
+			}
+
+			m.SetMapIndex(rk, rv)
+		}
+		return m.Interface(), nil
+	}
+	return data, nil
+}
+
+func mapToStructReflected(m map[string]any, t reflect.Type) (any, error) {
+
+	result := reflect.New(t).Interface()
+	config := &mapstructure.DecoderConfig{
+		Result:     &result,
+		DecodeHook: mapToStructDecodeHook,
+	}
+
+	decoder, err := mapstructure.NewDecoder(config)
+	if err != nil {
+		return result, err
+	}
+
+	err = decoder.Decode(m)
+	return result, err
+}
+
+func mapToStruct[T any](m map[string]any) (T, error) {
+	var result T
+
+	config := &mapstructure.DecoderConfig{
+		Result:     &result,
+		DecodeHook: mapToStructDecodeHook,
+	}
+
+	decoder, err := mapstructure.NewDecoder(config)
+	if err != nil {
+		return result, err
+	}
+
+	err = decoder.Decode(m)
+	return result, err
+}
+
+func kvpsToMap[T any](v []kvp) (T, error) {
+	var result T
+	switch any(result).(type) {
+	case []kvp:
+		return any(v).(T), nil
+	}
+
+	// convert to map type specified by T
+	mapType := reflect.TypeOf(result)
+	if mapType.Kind() != reflect.Map {
+		return result, fmt.Errorf("unexpected type %T, expected a map type", result)
+	}
+	m := reflect.MakeMapWithSize(mapType, len(v))
+	for _, kv := range v {
+		m.SetMapIndex(reflect.ValueOf(kv.Key), reflect.ValueOf(kv.Value))
+	}
+	return m.Interface().(T), nil
 }
 
 func DecodeValue(ctx context.Context, mod wasm.Module, typ plugins.TypeInfo, val uint64) (data any, err error) {
