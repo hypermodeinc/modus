@@ -16,6 +16,10 @@ var httpClient = &http.Client{
 	Timeout: 10 * time.Second,
 }
 
+func HttpClient() *http.Client {
+	return httpClient
+}
+
 func sendHttp(req *http.Request) ([]byte, error) {
 	response, err := httpClient.Do(req)
 	if err != nil {

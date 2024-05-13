@@ -30,6 +30,17 @@ func GetHost(hostName string) (manifest.Host, error) {
 	return manifest.Host{}, fmt.Errorf("a host '%s' was not found", hostName)
 }
 
+func GetHostForUrl(url string) (manifest.Host, error) {
+	for _, host := range manifest.HypermodeData.Hosts {
+		// case insensitive version of strings.HasPrefix
+		if len(url) >= len(host.Endpoint) && strings.EqualFold(host.Endpoint, url[:len(host.Endpoint)]) {
+			return host, nil
+		}
+	}
+
+	return manifest.Host{}, fmt.Errorf("a host for url '%s' was not found in the manifest", url)
+}
+
 func GetHostKey(ctx context.Context, host manifest.Host) (string, error) {
 	var key string
 	var err error
