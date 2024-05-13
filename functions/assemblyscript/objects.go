@@ -18,9 +18,10 @@ import (
 
 func readObject(ctx context.Context, mem wasm.Memory, typ plugins.TypeInfo, offset uint32) (data any, err error) {
 	switch typ.Name {
+	case "ArrayBuffer":
+		return readBytes(mem, offset)
 	case "string":
 		return ReadString(mem, offset)
-
 	case "Date":
 		return readDate(mem, offset)
 	}
@@ -45,8 +46,14 @@ func readObject(ctx context.Context, mem wasm.Memory, typ plugins.TypeInfo, offs
 }
 
 func writeObject(ctx context.Context, mod wasm.Module, typ plugins.TypeInfo, val any) (offset uint32, err error) {
-
 	switch typ.Name {
+	case "ArrayBuffer":
+		bytes, ok := val.([]byte)
+		if !ok {
+			return 0, fmt.Errorf("input value is not a byte array")
+		}
+		return writeBytes(ctx, mod, bytes)
+
 	case "string":
 		s, ok := val.(string)
 		if !ok {
