@@ -11,7 +11,7 @@
 - Improve support for marshaling classes [#189](https://github.com/gohypermode/runtime/pull/189) [#191](https://github.com/gohypermode/runtime/pull/191)
 - Add support for binary data fields [#190](https://github.com/gohypermode/runtime/pull/190)
 - Add host function for HTTP fetch [#191](https://github.com/gohypermode/runtime/pull/191)
-\
+
 ## 2024-05-08 - Version 0.6.6
 
 - Remove `Access-Control-Allow-Credentials`. Add `Access-Control-Request-Headers` [#180](https://github.com/gohypermode/runtime/pull/180)
