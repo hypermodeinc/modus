@@ -111,7 +111,11 @@ func WithTx(ctx context.Context, fn func(pgx.Tx) error) error {
 	if tx == nil {
 		return nil
 	}
-	defer tx.Rollback(ctx)
+	defer func() {
+		if err := tx.Rollback(ctx); err != nil {
+			logger.Error(ctx).Err(err).Msg("Failed to rollback transaction")
+		}
+	}()
 
 	err = fn(tx)
 	if err != nil {
