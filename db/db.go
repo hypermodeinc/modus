@@ -13,7 +13,7 @@ import (
 )
 
 var dbpool *pgxpool.Pool
-var dbWrites = make(chan InferenceHistory, 1000)
+var dbWrites = make(chan InferenceHistory, 10000)
 var dbBuffer = make([]InferenceHistory, 0)
 
 type InferenceHistory struct {
