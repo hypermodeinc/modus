@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"hmruntime/db"
 	"hmruntime/hosts"
 	"hmruntime/manifest"
 	"hmruntime/models"
@@ -50,7 +51,9 @@ func ChatCompletion(ctx context.Context, model manifest.Model, host manifest.Hos
 		"Authorization": "Bearer " + key,
 	}
 
+	start := utils.GetTime()
 	result, err := utils.PostHttp[models.ChatResponse](endpoint, reqBody, headers)
+	end := utils.GetTime()
 
 	if err != nil {
 		return models.ChatResponse{}, fmt.Errorf("error posting to OpenAI: %w", err)
@@ -65,7 +68,7 @@ func ChatCompletion(ctx context.Context, model manifest.Model, host manifest.Hos
 	if err != nil {
 		return result, fmt.Errorf("error marshalling result: %w", err)
 	}
-	models.WriteInferenceHistoryToDB(model, sentence, string(resultBytes))
+	db.WriteInferenceHistory(model, sentence, string(resultBytes), start, end)
 
 	return result, nil
 }

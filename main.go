@@ -72,7 +72,7 @@ func initRuntimeServices(ctx context.Context) {
 	aws.Initialize(ctx)
 
 	// Initialize the inference history database
-	db.Initialize()
+	db.Initialize(ctx)
 
 	// Initialize the storage system
 	storage.Initialize(ctx)

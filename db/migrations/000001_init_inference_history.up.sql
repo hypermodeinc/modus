@@ -8,5 +8,6 @@ CREATE TABLE IF NOT EXISTS "local_instance" (
     model_hash TEXT NOT NULL,
     input TEXT NOT NULL,
     output TEXT NOT NULL,
-    created_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+    started_at TIMESTAMP(3)NOT NULL,
+    ended_at TIMESTAMP(3) NOT NULL
 );

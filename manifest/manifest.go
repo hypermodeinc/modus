@@ -64,7 +64,7 @@ type TrainingInstruction struct {
 
 func (m Model) Hash() string {
 	// Concatenate the attributes into a single string
-	data := m.Name + string(m.Task) + m.SourceModel + m.Provider
+	data := m.Name + "|" + string(m.Task) + "|" + m.SourceModel + "|" + m.Provider
 
 	// Compute the SHA-256 hash
 	hash := sha256.Sum256([]byte(data))
