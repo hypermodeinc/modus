@@ -4,6 +4,14 @@
 
 -  Add Model Inference History to runtime [#186](https://github.com/gohypermode/runtime/pull/186)
 
+## 2024-05-13 - Version 0.7.0
+
+- Sentry is no longer used when `HYPERMODE_DEBUG` is enabled [#187](https://github.com/gohypermode/runtime/pull/187)
+- Only listen on `localhost` when `HYPERMODE_DEBUG` is enabled, to prevent firewall prompt [#188](https://github.com/gohypermode/runtime/pull/188)
+- Improve support for marshaling classes [#189](https://github.com/gohypermode/runtime/pull/189) [#191](https://github.com/gohypermode/runtime/pull/191)
+- Add support for binary data fields [#190](https://github.com/gohypermode/runtime/pull/190)
+- Add host function for HTTP fetch [#191](https://github.com/gohypermode/runtime/pull/191)
+\
 ## 2024-05-08 - Version 0.6.6
 
 - Remove `Access-Control-Allow-Credentials`. Add `Access-Control-Request-Headers` [#180](https://github.com/gohypermode/runtime/pull/180)

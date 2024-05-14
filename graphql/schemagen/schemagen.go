@@ -309,7 +309,9 @@ func convertType(asType string, typeDefs *map[string]TypeDefinition, firstPass b
 	// convert scalar types
 	// TODO: How do we want to provide GraphQL ID scalar types? Maybe they're annotated? or maybe by naming convention?
 	switch asType {
-	case "string":
+	case "string", "ArrayBuffer":
+		// NOTE: ArrayBuffers are converted to []byte.  If the bytes represent valid UTF-8 strings,
+		// Go will serialize them as actual strings.  Otherwise, the data will be base64 encoded.
 		return "String" + n, nil
 	case "bool":
 		return "Boolean" + n, nil
