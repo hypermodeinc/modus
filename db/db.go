@@ -3,29 +3,31 @@ package db
 import (
 	"context"
 	"fmt"
-	"hmruntime/logger"
-	"hmruntime/manifest"
 	"os"
 	"time"
+
+	"hmruntime/config"
+	"hmruntime/logger"
+	"hmruntime/manifest"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 var dbpool *pgxpool.Pool
-var GlobalInferenceWriter *InferenceWriter
+var GlobalInferenceWriter *inferenceWriter
 
 const batchSize = 100
 const chanSize = 10000
 
-type InferenceWriter struct {
-	buffer     chan InferenceHistory
+type inferenceWriter struct {
+	buffer     chan inferenceHistory
 	numDropped int
 	quit       chan struct{}
 	done       chan struct{}
 }
 
-type InferenceHistory struct {
+type inferenceHistory struct {
 	Model  manifest.Model
 	Input  string
 	Output string
@@ -33,16 +35,16 @@ type InferenceHistory struct {
 	End    time.Time
 }
 
-func NewInferenceWriter() {
-	GlobalInferenceWriter = &InferenceWriter{
-		buffer: make(chan InferenceHistory, chanSize),
+func NewInferenceWriter(ctx context.Context) {
+	GlobalInferenceWriter = &inferenceWriter{
+		buffer: make(chan inferenceHistory, chanSize),
 		quit:   make(chan struct{}),
 		done:   make(chan struct{}),
 	}
-	go GlobalInferenceWriter.worker()
+	go GlobalInferenceWriter.worker(ctx)
 }
 
-func (w *InferenceWriter) Write(data InferenceHistory) {
+func (w *inferenceWriter) Write(data inferenceHistory) {
 	select {
 	case w.buffer <- data:
 	default:
@@ -50,45 +52,45 @@ func (w *InferenceWriter) Write(data InferenceHistory) {
 	}
 }
 
-func (w *InferenceWriter) Stop() {
+func (w *inferenceWriter) Stop() {
 	close(w.quit)
 	<-w.done
 }
 
-func (w *InferenceWriter) worker() {
+func (w *inferenceWriter) worker(ctx context.Context) {
 	var batchIndex int
-	var batch [batchSize]InferenceHistory
-	timer := time.NewTimer(10 * time.Second)
+	var batch [batchSize]inferenceHistory
+	timer := time.NewTimer(config.RefreshInterval)
 	for {
 		select {
 		case data := <-w.buffer:
 			batch[batchIndex] = data
 			batchIndex++
 			if batchIndex == batchSize {
-				w.flush(batch[:batchSize])
+				w.flush(ctx, batch[:batchSize], timer)
 				batchIndex = 0
 			}
 		case <-timer.C:
-			w.flush(batch[:batchIndex])
+			w.flush(ctx, batch[:batchIndex], timer)
 			batchIndex = 0
-			timer.Reset(10 * time.Second)
 		case <-w.quit:
-			w.flush(batch[:batchSize])
+			w.flush(ctx, batch[:batchSize], timer)
 			close(w.done)
 			return
 		}
 	}
 }
 
-func (w *InferenceWriter) flush(batch []InferenceHistory) {
+func (w *inferenceWriter) flush(ctx context.Context, batch []inferenceHistory, timer *time.Timer) {
 	if len(batch) == 0 {
 		return
 	}
-	WriteInferenceHistoryToDB(batch)
+	WriteInferenceHistoryToDB(ctx, batch)
+	timer.Reset(10 * time.Second)
 }
 
 func WriteInferenceHistory(model manifest.Model, input, output string, start, end time.Time) {
-	GlobalInferenceWriter.Write(InferenceHistory{
+	GlobalInferenceWriter.Write(inferenceHistory{
 		Model:  model,
 		Input:  input,
 		Output: output,
@@ -97,8 +99,7 @@ func WriteInferenceHistory(model manifest.Model, input, output string, start, en
 	})
 }
 
-func WriteInferenceHistoryToDB(batch []InferenceHistory) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+func WriteInferenceHistoryToDB(ctx context.Context, batch []inferenceHistory) {
 	table := os.Getenv("NAMESPACE")
 	if table == "" {
 		table = "local_instance"
@@ -122,7 +123,6 @@ func WriteInferenceHistoryToDB(batch []InferenceHistory) {
 		// Handle error
 		fmt.Println("Error writing to inference history database:", err)
 	}
-	cancel()
 
 }
 
@@ -134,7 +134,7 @@ func Initialize(ctx context.Context) {
 	if err != nil {
 		logger.Warn(ctx).Err(err).Msg("Database pool initialization failed.")
 	}
-	NewInferenceWriter()
+	NewInferenceWriter(ctx)
 }
 
 func GetInferenceHistoryDB() *pgxpool.Pool {
