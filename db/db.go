@@ -69,10 +69,12 @@ func (w *inferenceWriter) worker(ctx context.Context) {
 			if batchIndex == batchSize {
 				w.flush(ctx, batch[:batchSize], timer)
 				batchIndex = 0
+				timer.Reset(config.RefreshInterval)
 			}
 		case <-timer.C:
 			w.flush(ctx, batch[:batchIndex], timer)
 			batchIndex = 0
+			timer.Reset(config.RefreshInterval)
 		case <-w.quit:
 			w.flush(ctx, batch[:batchSize], timer)
 			close(w.done)
