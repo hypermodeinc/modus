@@ -95,7 +95,6 @@ func stopRuntimeServices(ctx context.Context) {
 	logger.Close()
 
 	db.Stop()
-	db.GetInferenceHistoryDB().Close()
 }
 
 func getRootSourcePath() string {
