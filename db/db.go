@@ -15,7 +15,7 @@ import (
 )
 
 var dbpool *pgxpool.Pool
-var GlobalInferenceWriter *inferenceWriter
+var globalInferenceWriter *inferenceWriter
 
 const batchSize = 100
 const chanSize = 10000
@@ -35,13 +35,13 @@ type inferenceHistory struct {
 	End    time.Time
 }
 
-func NewInferenceWriter(ctx context.Context) {
-	GlobalInferenceWriter = &inferenceWriter{
+func Start(ctx context.Context) {
+	globalInferenceWriter = &inferenceWriter{
 		buffer: make(chan inferenceHistory, chanSize),
 		quit:   make(chan struct{}),
 		done:   make(chan struct{}),
 	}
-	go GlobalInferenceWriter.worker(ctx)
+	go globalInferenceWriter.worker(ctx)
 }
 
 func (w *inferenceWriter) Write(data inferenceHistory) {
@@ -52,9 +52,19 @@ func (w *inferenceWriter) Write(data inferenceHistory) {
 	}
 }
 
-func (w *inferenceWriter) Stop() {
-	close(w.quit)
-	<-w.done
+func Stop() {
+	close(globalInferenceWriter.quit)
+	<-globalInferenceWriter.done
+}
+
+func WriteInferenceHistory(model manifest.Model, input, output string, start, end time.Time) {
+	globalInferenceWriter.Write(inferenceHistory{
+		Model:  model,
+		Input:  input,
+		Output: output,
+		Start:  start,
+		End:    end,
+	})
 }
 
 func (w *inferenceWriter) worker(ctx context.Context) {
@@ -69,12 +79,10 @@ func (w *inferenceWriter) worker(ctx context.Context) {
 			if batchIndex == batchSize {
 				w.flush(ctx, batch[:batchSize], timer)
 				batchIndex = 0
-				timer.Reset(config.RefreshInterval)
 			}
 		case <-timer.C:
 			w.flush(ctx, batch[:batchIndex], timer)
 			batchIndex = 0
-			timer.Reset(config.RefreshInterval)
 		case <-w.quit:
 			w.flush(ctx, batch[:batchSize], timer)
 			close(w.done)
@@ -88,17 +96,7 @@ func (w *inferenceWriter) flush(ctx context.Context, batch []inferenceHistory, t
 		return
 	}
 	WriteInferenceHistoryToDB(ctx, batch)
-	timer.Reset(10 * time.Second)
-}
-
-func WriteInferenceHistory(model manifest.Model, input, output string, start, end time.Time) {
-	GlobalInferenceWriter.Write(inferenceHistory{
-		Model:  model,
-		Input:  input,
-		Output: output,
-		Start:  start,
-		End:    end,
-	})
+	timer.Reset(config.RefreshInterval)
 }
 
 func WriteInferenceHistoryToDB(ctx context.Context, batch []inferenceHistory) {
@@ -123,7 +121,7 @@ func WriteInferenceHistoryToDB(ctx context.Context, batch []inferenceHistory) {
 
 	if err != nil {
 		// Handle error
-		fmt.Println("Error writing to inference history database:", err)
+		logger.Error(ctx).Err(err).Msg("Error writing to inference history database")
 	}
 
 }
@@ -136,7 +134,7 @@ func Initialize(ctx context.Context) {
 	if err != nil {
 		logger.Warn(ctx).Err(err).Msg("Database pool initialization failed.")
 	}
-	NewInferenceWriter(ctx)
+	Start(ctx)
 }
 
 func GetInferenceHistoryDB() *pgxpool.Pool {
