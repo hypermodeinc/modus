@@ -94,6 +94,7 @@ func stopRuntimeServices(ctx context.Context) {
 	wasmhost.RuntimeInstance.Close(ctx)
 	logger.Close()
 
+	db.GlobalInferenceWriter.Stop()
 	db.GetInferenceHistoryDB().Close()
 }
 
