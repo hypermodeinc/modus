@@ -34,12 +34,11 @@ type InferenceHistory struct {
 }
 
 func NewInferenceWriter() {
-	w := &InferenceWriter{
+	GlobalInferenceWriter = &InferenceWriter{
 		buffer: make(chan InferenceHistory, chanSize),
 		quit:   make(chan struct{}),
 		done:   make(chan struct{}),
 	}
-	GlobalInferenceWriter = w
 	go GlobalInferenceWriter.worker()
 }
 
