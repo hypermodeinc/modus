@@ -13,8 +13,17 @@ import (
 )
 
 var dbpool *pgxpool.Pool
-var dbWrites = make(chan InferenceHistory, 10000)
-var dbBuffer = make([]InferenceHistory, 0)
+var GlobalInferenceWriter *InferenceWriter
+
+const batchSize = 100
+const chanSize = 10000
+
+type InferenceWriter struct {
+	buffer     chan InferenceHistory
+	numDropped int
+	quit       chan struct{}
+	done       chan struct{}
+}
 
 type InferenceHistory struct {
 	Model  manifest.Model
@@ -24,8 +33,63 @@ type InferenceHistory struct {
 	End    time.Time
 }
 
+func NewInferenceWriter() {
+	w := &InferenceWriter{
+		buffer: make(chan InferenceHistory, chanSize),
+		quit:   make(chan struct{}),
+		done:   make(chan struct{}),
+	}
+	GlobalInferenceWriter = w
+	go GlobalInferenceWriter.worker()
+}
+
+func (w *InferenceWriter) Write(data InferenceHistory) {
+	select {
+	case w.buffer <- data:
+	default:
+		w.numDropped++
+	}
+}
+
+func (w *InferenceWriter) Stop() {
+	close(w.quit)
+	<-w.done
+}
+
+func (w *InferenceWriter) worker() {
+	var batchIndex int
+	var batch [batchSize]InferenceHistory
+	timer := time.NewTimer(10 * time.Second)
+	for {
+		select {
+		case data := <-w.buffer:
+			batch[batchIndex] = data
+			batchIndex++
+			if batchIndex == batchSize {
+				w.flush(batch[:batchSize])
+				batchIndex = 0
+			}
+		case <-timer.C:
+			w.flush(batch[:batchIndex])
+			batchIndex = 0
+			timer.Reset(10 * time.Second)
+		case <-w.quit:
+			w.flush(batch[:batchSize])
+			close(w.done)
+			return
+		}
+	}
+}
+
+func (w *InferenceWriter) flush(batch []InferenceHistory) {
+	if len(batch) == 0 {
+		return
+	}
+	WriteInferenceHistoryToDB(batch)
+}
+
 func WriteInferenceHistory(model manifest.Model, input, output string, start, end time.Time) {
-	dbBuffer = append(dbBuffer, InferenceHistory{
+	GlobalInferenceWriter.Write(InferenceHistory{
 		Model:  model,
 		Input:  input,
 		Output: output,
@@ -34,48 +98,32 @@ func WriteInferenceHistory(model manifest.Model, input, output string, start, en
 	})
 }
 
-func AsyncFlushInferenceHistory() {
-	ticker := time.NewTicker(10 * time.Second)
-	go func() {
-		for range ticker.C {
-			for len(dbBuffer) > 0 {
-				select {
-				case dbWrites <- dbBuffer[0]:
-					dbBuffer = dbBuffer[1:]
-				default:
-					// dbWrites is full, wait before trying again
-					time.Sleep(1 * time.Second)
-				}
-			}
-		}
-	}()
-}
-
-func WriteInferenceHistoryToDB() {
-	go func() {
-		for data := range dbWrites {
-			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-			table := os.Getenv("NAMESPACE")
-			if table == "" {
-				table = "local_instance"
-			}
-			version := "1"
-			err := WithTx(ctx, func(tx pgx.Tx) error {
-				query := fmt.Sprintf(
-					"INSERT INTO %s (model_name, model_task, source_model, model_provider, model_host, model_version, model_hash, input, output, started_at, ended_at) "+
-						"VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)", table)
-				_, err := tx.Exec(ctx, query, data.Model.Name, data.Model.Task, data.Model.SourceModel, data.Model.Provider, data.Model.Host,
-					version, data.Model.Hash(), data.Input, data.Output, data.Start, data.End)
-				return err
-			})
-
+func WriteInferenceHistoryToDB(batch []InferenceHistory) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	table := os.Getenv("NAMESPACE")
+	if table == "" {
+		table = "local_instance"
+	}
+	version := "1"
+	err := WithTx(ctx, func(tx pgx.Tx) error {
+		for _, data := range batch {
+			query := fmt.Sprintf(
+				"INSERT INTO %s (model_name, model_task, source_model, model_provider, model_host, model_version, model_hash, input, output, started_at, ended_at) "+
+					"VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)", table)
+			_, err := tx.Exec(ctx, query, data.Model.Name, data.Model.Task, data.Model.SourceModel, data.Model.Provider, data.Model.Host,
+				version, data.Model.Hash(), data.Input, data.Output, data.Start, data.End)
 			if err != nil {
-				// Handle error
-				fmt.Println("Error writing to inference history database:", err)
+				return err
 			}
-			cancel()
 		}
-	}()
+		return nil
+	})
+
+	if err != nil {
+		// Handle error
+		fmt.Println("Error writing to inference history database:", err)
+	}
+	cancel()
 
 }
 
@@ -87,8 +135,7 @@ func Initialize(ctx context.Context) {
 	if err != nil {
 		logger.Warn(ctx).Err(err).Msg("Database pool initialization failed.")
 	}
-	AsyncFlushInferenceHistory()
-	WriteInferenceHistoryToDB()
+	NewInferenceWriter()
 }
 
 func GetInferenceHistoryDB() *pgxpool.Pool {
