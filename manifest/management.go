@@ -6,7 +6,6 @@ package manifest
 
 import (
 	"context"
-	"encoding/json"
 
 	"hmruntime/logger"
 	"hmruntime/storage"
@@ -60,7 +59,7 @@ func loadAppData(ctx context.Context, filename string) error {
 		}
 
 		// Now parse the JSON
-		err = json.Unmarshal(bytes, manifestFiles[filename])
+		err = utils.JsonDeserialize(bytes, manifestFiles[filename])
 		if err != nil {
 			return err
 		}

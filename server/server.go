@@ -30,9 +30,14 @@ func Start(ctx context.Context) {
 
 	// Create the configuration for the server.
 	mux := GetHandlerMux()
-	server := &http.Server{
-		Addr:    fmt.Sprintf(":%d", config.Port),
-		Handler: mux,
+	server := &http.Server{Handler: mux}
+	if utils.HypermodeDebugEnabled() {
+		// If we are in debug mode, only listen on localhost.
+		// This prevents getting nagged for firewall permissions each launch.
+		server.Addr = fmt.Sprintf("localhost:%d", config.Port)
+	} else {
+		// Otherwise, listen on all interfaces.
+		server.Addr = fmt.Sprintf(":%d", config.Port)
 	}
 
 	// Start the server in a goroutine so we can listen for signals to shutdown.
@@ -86,8 +91,26 @@ func GetHandlerMux() http.Handler {
 	// Also register the health endpoint, un-instrumented.
 	mux.HandleFunc("/health", healthHandler)
 
+	// Restrict the HTTP methods for all above handlers to GET and POST.
+	handler := restrictHttpMethods(mux)
+
 	// Add CORS support to all endpoints.
-	return cors.Default().Handler(mux)
+	c := cors.New(cors.Options{
+		AllowedHeaders: []string{"Authorization", "Content-Type"},
+	})
+
+	return c.Handler(handler)
+}
+
+func restrictHttpMethods(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodGet, http.MethodPost:
+			next.ServeHTTP(w, r)
+		default:
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		}
+	})
 }
 
 func healthHandler(w http.ResponseWriter, r *http.Request) {
@@ -95,5 +118,5 @@ func healthHandler(w http.ResponseWriter, r *http.Request) {
 	ver := config.GetVersionNumber()
 	w.WriteHeader(http.StatusOK)
 	utils.WriteJsonContentHeader(w)
-	w.Write([]byte(`{"status":"ok","environment":"` + env + `","version":"` + ver + `"}`))
+	_, _ = w.Write([]byte(`{"status":"ok","environment":"` + env + `","version":"` + ver + `"}`))
 }

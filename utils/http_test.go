@@ -6,7 +6,6 @@ package utils
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -87,9 +86,9 @@ func Test_PostHttp(t *testing.T) {
 		}
 
 		var payload Payload
-		err = json.Unmarshal(body, &payload)
+		err = JsonDeserialize(body, &payload)
 		if err != nil {
-			t.Fatalf("Failed to unmarshal request payload: %v", err)
+			t.Fatalf("Failed to deserialize request payload: %v", err)
 		}
 
 		expectedPayload := Payload{
@@ -168,7 +167,7 @@ func Test_PostHttp_StringResult(t *testing.T) {
 func Test_PostHttp_BytesResult(t *testing.T) {
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte{1, 2, 3, 4, 5})
+		_, _ = w.Write([]byte{1, 2, 3, 4, 5})
 	})
 	server := httptest.NewServer(handler)
 	defer server.Close()

@@ -6,7 +6,6 @@ package utils
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -15,6 +14,10 @@ import (
 
 var httpClient = &http.Client{
 	Timeout: 10 * time.Second,
+}
+
+func HttpClient() *http.Client {
+	return httpClient
 }
 
 func sendHttp(req *http.Request) ([]byte, error) {
@@ -45,9 +48,9 @@ func PostHttp[TResult any](url string, payload any, headers map[string]string) (
 		buf = bytes.NewBuffer([]byte(payload))
 	default:
 		ct = "application/json"
-		jsonPayload, err := json.Marshal(payload)
+		jsonPayload, err := JsonSerialize(payload)
 		if err != nil {
-			return result, fmt.Errorf("error marshaling payload: %w", err)
+			return result, fmt.Errorf("error serializing payload: %w", err)
 		}
 		buf = bytes.NewBuffer(jsonPayload)
 	}
@@ -77,9 +80,9 @@ func PostHttp[TResult any](url string, payload any, headers map[string]string) (
 		return any(string(content)).(TResult), nil
 	}
 
-	err = json.Unmarshal(content, &result)
+	err = JsonDeserialize(content, &result)
 	if err != nil {
-		return result, fmt.Errorf("error unmarshalling response: %w", err)
+		return result, fmt.Errorf("error deserializing response: %w", err)
 	}
 
 	return result, nil

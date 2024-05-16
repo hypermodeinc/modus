@@ -20,11 +20,11 @@ func GetHashCode(data any) uint32 {
 		return xxhash.Checksum32(t)
 	case uint64, int64:
 		buf := bytes.NewBuffer(make([]byte, 0, 8))
-		binary.Write(buf, binary.LittleEndian, data)
+		_ = binary.Write(buf, binary.LittleEndian, data)
 		return xxhash.Checksum32(buf.Bytes())
 	case uint32, int32, uint, int:
 		buf := bytes.NewBuffer(make([]byte, 0, 4))
-		binary.Write(buf, binary.LittleEndian, data)
+		_ = binary.Write(buf, binary.LittleEndian, data)
 		return xxhash.Checksum32(buf.Bytes())
 	case uint16:
 		return hash32(uint32(t), 2)
