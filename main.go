@@ -22,6 +22,7 @@ import (
 	"hmruntime/server"
 	"hmruntime/storage"
 	"hmruntime/utils"
+	"hmruntime/vector"
 	"hmruntime/wasmhost"
 
 	"github.com/joho/godotenv"
@@ -84,6 +85,9 @@ func initRuntimeServices(ctx context.Context) {
 
 	// Initialize the GraphQL engine
 	graphql.Initialize()
+
+	// Initialize in mem vector factory
+	vector.InitializeInMemFactory()
 }
 
 func stopRuntimeServices(ctx context.Context) {

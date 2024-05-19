@@ -25,6 +25,8 @@ func Instantiate(ctx context.Context, runtime *wazero.Runtime) error {
 	b.NewFunctionBuilder().WithFunc(hostExecuteGQL).Export("executeGQL")
 	b.NewFunctionBuilder().WithFunc(hostInvokeClassifier).Export("invokeClassifier")
 	b.NewFunctionBuilder().WithFunc(hostComputeEmbedding).Export("computeEmbedding")
+	b.NewFunctionBuilder().WithFunc(hostEmbedAndIndex).Export("embedAndIndex")
+	b.NewFunctionBuilder().WithFunc(hostEmbedAndSearchIndex).Export("embedAndSearchIndex")
 	b.NewFunctionBuilder().WithFunc(hostInvokeTextGenerator).Export("invokeTextGenerator")
 	b.NewFunctionBuilder().WithFunc(hostFetch).Export("httpFetch")
 

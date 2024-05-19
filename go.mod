@@ -11,6 +11,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.28.7
 	github.com/aws/aws-sdk-go-v2/service/sts v1.28.7
 	github.com/buger/jsonparser v1.1.1
+	github.com/chewxy/math32 v1.10.1
 	github.com/getsentry/sentry-go v0.27.0
 	github.com/go-viper/mapstructure/v2 v2.0.0-alpha.1
 	github.com/google/uuid v1.6.0
