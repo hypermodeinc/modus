@@ -77,6 +77,13 @@ var (
 			Buckets: []float64{1, 10, 100, 1000},
 		},
 	)
+
+	DroppedInferencesNum = prometheus.NewCounter(
+		prometheus.CounterOpts{
+			Name: "runtime_dropped_inferencess_num",
+			Help: "Number of dropped inference requests",
+		},
+	)
 )
 
 func init() {
@@ -87,6 +94,7 @@ func init() {
 		httpResponseSizeBytes,
 		FunctionExecutionsNum,
 		FunctionExecutionDurationMilliseconds,
+		DroppedInferencesNum,
 	)
 }
 
