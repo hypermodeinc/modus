@@ -95,6 +95,9 @@ func WriteInferenceHistoryToDB(ctx context.Context, batch []inferenceHistory) {
 		table = "local_instance"
 	}
 	err := WithTx(ctx, func(tx pgx.Tx) error {
+		if tx == nil {
+			return nil
+		}
 		b := &pgx.Batch{}
 		for _, data := range batch {
 			query := fmt.Sprintf("INSERT INTO %s (model_hash, input, output, started_at, duration_ms) VALUES ($1, $2, $3, $4, $5)", table)
