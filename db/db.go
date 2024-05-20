@@ -103,7 +103,11 @@ func WriteInferenceHistoryToDB(ctx context.Context, batch []inferenceHistory) {
 		}
 
 		br := tx.SendBatch(ctx, b)
-		defer br.Close()
+		defer func() {
+			if err := br.Close(); err != nil {
+				logger.Error(ctx).Err(err).Msg("Error closing batch")
+			}
+		}()
 
 		for range batch {
 			_, err := br.Exec()
