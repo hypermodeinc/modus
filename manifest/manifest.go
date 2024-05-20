@@ -34,6 +34,7 @@ const (
 )
 
 type Model struct {
+	ID          string    `json:"id"`
 	Name        string    `json:"name"`
 	Task        ModelTask `json:"task"`
 	SourceModel string    `json:"sourceModel"`
