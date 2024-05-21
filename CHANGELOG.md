@@ -1,5 +1,9 @@
 # Change Log
 
+## UNRELEASED
+
+- Pass auth headers correctly when invoking a GraphQL API [#196](https://github.com/gohypermode/runtime/pull/196)
+
 ## 2024-05-13 - Version 0.7.0
 
 - Sentry is no longer used when `HYPERMODE_DEBUG` is enabled [#187](https://github.com/gohypermode/runtime/pull/187)
