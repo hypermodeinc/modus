@@ -134,6 +134,10 @@ You can also use any S3 bucket or path you like.  If a path is not specified, th
 _The shared sandbox is intended for temporary use.  In production, each customer's backend gets a separate path within a single bucket._
 
 ## Using Model Inference History Locally
+Install golang-migrate using
+```sh
+brew install golang-migrate
+```
 To set up the model inference history table, run the following commands
 ```sh
 cd tools/local && docker-compose up
