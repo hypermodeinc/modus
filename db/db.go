@@ -97,8 +97,8 @@ func WriteInferenceHistoryToDB(ctx context.Context, batch []inferenceHistory) {
 	err := WithTx(ctx, func(tx pgx.Tx) error {
 		b := &pgx.Batch{}
 		for _, data := range batch {
-			query := fmt.Sprintf("INSERT INTO %s (model_id, input, output, started_at, duration_ms) VALUES ($1, $2, $3, $4, $5)", table)
-			args := []interface{}{data.model.ID, data.input, data.output, data.start, data.end.Sub(data.start).Milliseconds()}
+			query := fmt.Sprintf("INSERT INTO %s (model_hash, input, output, started_at, duration_ms) VALUES ($1, $2, $3, $4, $5)", table)
+			args := []interface{}{data.model.Hash(), data.input, data.output, data.start, data.end.Sub(data.start).Milliseconds()}
 			b.Queue(query, args...)
 		}
 
