@@ -36,7 +36,7 @@ func ExecuteGraphqlApi(ctx context.Context, host manifest.Host, stmt string, var
 		headers[host.AuthHeader] = key
 	}
 
-	response, err := utils.PostHttp[[]byte](host.Endpoint, request, nil)
+	response, err := utils.PostHttp[[]byte](host.Endpoint, request, headers)
 	if err != nil {
 		return "", fmt.Errorf("error posting GraphQL statement: %w", err)
 	}
