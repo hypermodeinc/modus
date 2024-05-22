@@ -6,7 +6,6 @@ package models
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 
 	"hmruntime/config"
@@ -91,17 +90,7 @@ func PostToModelEndpoint[TResult any](ctx context.Context, sentenceMap map[strin
 		result[keys[i]] = v
 	}
 
-	// write the results to the database
-	sentenceMapBytes, err := json.Marshal(sentenceMap)
-	if err != nil {
-		return result, fmt.Errorf("error marshalling sentenceMap: %w", err)
-	}
-	resultBytes, err := json.Marshal(result)
-	if err != nil {
-		return result, fmt.Errorf("error marshalling result: %w", err)
-	}
-
-	db.WriteInferenceHistory(model, string(sentenceMapBytes), string(resultBytes), start, end)
+	db.WriteInferenceHistory(model, sentenceMap, result, start, end)
 
 	return result, nil
 }

@@ -9,7 +9,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"hmruntime/db"
 	"hmruntime/manifest"
 )
 
@@ -28,7 +27,6 @@ type mockModelResponse struct {
 
 // TestMain runs in the main goroutine and can do whatever setup and teardown is necessary around a call to m.Run
 func TestMain(m *testing.M) {
-	db.Initialize(context.Background())
 	manifest.HypermodeData = manifest.HypermodeManifest{
 		Models: []manifest.Model{
 			{

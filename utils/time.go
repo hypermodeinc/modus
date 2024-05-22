@@ -77,5 +77,5 @@ func ParseTime(s string) (time.Time, error) {
 
 // GetTime returns the current time.
 func GetTime() time.Time {
-	return time.Now()
+	return time.Now().UTC()
 }

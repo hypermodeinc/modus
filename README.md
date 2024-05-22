@@ -146,6 +146,7 @@ This will start a local postgres instance. To add the inference history table an
 ```sh
 export POSTGRESQL_URL='postgresql://postgres:postgres@localhost:5433/my-runtime-db?sslmode=disable' && migrate -database ${POSTGRESQL_URL} -path db/migrations up
 ```
+TODO: remove this and replace with [embedded-postgres](https://github.com/fergusstrange/embedded-postgres)
 
 Now any model inference will be logged in the `local_instance` table in the `my-runtime-db` database.
 
