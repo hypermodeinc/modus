@@ -25,7 +25,7 @@ require (
 	github.com/tailscale/hujson v0.0.0-20221223112325-20486734a56a
 	github.com/tetratelabs/wazero v1.7.2
 	github.com/wundergraph/graphql-go-tools/execution v1.0.1
-	github.com/wundergraph/graphql-go-tools/v2 v2.0.0-rc.37
+	github.com/wundergraph/graphql-go-tools/v2 v2.0.0-rc.44
 )
 
 require (
