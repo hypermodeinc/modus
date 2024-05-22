@@ -158,7 +158,12 @@ func WithTx(ctx context.Context, fn func(pgx.Tx) error) error {
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback(ctx)
+	defer func() {
+		err := tx.Rollback(ctx)
+		if err != nil {
+			return
+		}
+	}()
 
 	err = fn(tx)
 	if err != nil {
