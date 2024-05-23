@@ -11,9 +11,10 @@ import (
 
 	"hmruntime/db"
 	"hmruntime/hosts"
-	"hmruntime/manifest"
 	"hmruntime/models"
 	"hmruntime/utils"
+
+	"github.com/hypermodeAI/manifest"
 )
 
 type ChatContext struct {
@@ -25,7 +26,7 @@ type ResponseFormat struct {
 	Type string `json:"type"`
 }
 
-func ChatCompletion(ctx context.Context, model manifest.Model, host manifest.Host, instruction string, sentence string, outputFormat models.OutputFormat) (models.ChatResponse, error) {
+func ChatCompletion(ctx context.Context, model manifest.ModelInfo, host manifest.HostInfo, instruction string, sentence string, outputFormat models.OutputFormat) (models.ChatResponse, error) {
 
 	// Get the OpenAI API key to use for this model
 	key, err := hosts.GetHostKey(ctx, host)

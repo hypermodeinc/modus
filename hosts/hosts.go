@@ -3,11 +3,14 @@ package hosts
 import (
 	"context"
 	"fmt"
-	"hmruntime/aws"
-	"hmruntime/config"
-	"hmruntime/manifest"
 	"os"
 	"strings"
+
+	"hmruntime/aws"
+	"hmruntime/config"
+	"hmruntime/manifestdata"
+
+	"github.com/hypermodeAI/manifest"
 )
 
 const hostKeyPrefix = "HYP_HOST_KEY_"
@@ -15,33 +18,33 @@ const hostKeyPrefix = "HYP_HOST_KEY_"
 const HypermodeHost string = "hypermode"
 const OpenAIHost string = "openai"
 
-func GetHost(hostName string) (manifest.Host, error) {
+func GetHost(hostName string) (manifest.HostInfo, error) {
 
 	if hostName == HypermodeHost {
-		return manifest.Host{Name: HypermodeHost}, nil
+		return manifest.HostInfo{Name: HypermodeHost}, nil
 	}
 
-	for _, host := range manifest.HypermodeData.Hosts {
+	for _, host := range manifestdata.Manifest.Hosts {
 		if host.Name == hostName {
 			return host, nil
 		}
 	}
 
-	return manifest.Host{}, fmt.Errorf("a host '%s' was not found", hostName)
+	return manifest.HostInfo{}, fmt.Errorf("a host '%s' was not found", hostName)
 }
 
-func GetHostForUrl(url string) (manifest.Host, error) {
-	for _, host := range manifest.HypermodeData.Hosts {
+func GetHostForUrl(url string) (manifest.HostInfo, error) {
+	for _, host := range manifestdata.Manifest.Hosts {
 		// case insensitive version of strings.HasPrefix
 		if len(url) >= len(host.Endpoint) && strings.EqualFold(host.Endpoint, url[:len(host.Endpoint)]) {
 			return host, nil
 		}
 	}
 
-	return manifest.Host{}, fmt.Errorf("a host for url '%s' was not found in the manifest", url)
+	return manifest.HostInfo{}, fmt.Errorf("a host for url '%s' was not found in the manifest", url)
 }
 
-func GetHostKey(ctx context.Context, host manifest.Host) (string, error) {
+func GetHostKey(ctx context.Context, host manifest.HostInfo) (string, error) {
 	var key string
 	var err error
 
@@ -77,7 +80,7 @@ func GetHostKey(ctx context.Context, host manifest.Host) (string, error) {
 	return "", fmt.Errorf("error getting key for host '%s': %w", host.Name, err)
 }
 
-func getWellKnownEnvironmentVariable(host manifest.Host) string {
+func getWellKnownEnvironmentVariable(host manifest.HostInfo) string {
 
 	// Some model hosts have well-known environment variables that are used to store the model key.
 	// We should support these to make it easier for users to set up their environment.
