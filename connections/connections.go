@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"hmruntime/hosts"
 	"hmruntime/logger"
-	"hmruntime/manifest"
 	"hmruntime/utils"
 
 	"github.com/buger/jsonparser"
+	"github.com/hypermodeAI/manifest"
 )
 
 type request struct {
@@ -16,7 +16,7 @@ type request struct {
 	Variables map[string]any `json:"variables"`
 }
 
-func ExecuteGraphqlApi(ctx context.Context, host manifest.Host, stmt string, vars map[string]any) (string, error) {
+func ExecuteGraphqlApi(ctx context.Context, host manifest.HostInfo, stmt string, vars map[string]any) (string, error) {
 	request := request{
 		Query:     stmt,
 		Variables: vars,

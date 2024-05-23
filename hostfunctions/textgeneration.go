@@ -11,11 +11,11 @@ import (
 	"hmruntime/functions/assemblyscript"
 	"hmruntime/hosts"
 	"hmruntime/logger"
-	"hmruntime/manifest"
 	"hmruntime/models"
 	"hmruntime/models/openai"
 	"hmruntime/utils"
 
+	"github.com/hypermodeAI/manifest"
 	wasm "github.com/tetratelabs/wazero/api"
 )
 

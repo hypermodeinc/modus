@@ -18,7 +18,7 @@ import (
 	"hmruntime/functions"
 	"hmruntime/graphql"
 	"hmruntime/logger"
-	"hmruntime/manifest"
+	"hmruntime/manifestdata"
 	"hmruntime/server"
 	"hmruntime/storage"
 	"hmruntime/utils"
@@ -74,13 +74,13 @@ func initRuntimeServices(ctx context.Context) {
 	storage.Initialize(ctx)
 
 	// Watch for function registration requests
-	functions.MonitorRegistration()
+	functions.MonitorRegistration(ctx)
 
 	// Load app data and monitor for changes
-	manifest.MonitorAppDataFiles()
+	manifestdata.MonitorManifestFile(ctx)
 
 	// Load plugins and monitor for changes
-	wasmhost.MonitorPlugins()
+	wasmhost.MonitorPlugins(ctx)
 
 	// Initialize the GraphQL engine
 	graphql.Initialize()
