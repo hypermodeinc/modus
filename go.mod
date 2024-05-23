@@ -14,6 +14,7 @@ require (
 	github.com/getsentry/sentry-go v0.27.0
 	github.com/go-viper/mapstructure/v2 v2.0.0-alpha.1
 	github.com/google/uuid v1.6.0
+	github.com/hypermodeAI/manifest v0.1.1
 	github.com/jensneuse/abstractlogger v0.0.4
 	github.com/joho/godotenv v1.5.1
 	github.com/prometheus/client_golang v1.19.1
@@ -22,7 +23,6 @@ require (
 	github.com/rs/xid v1.5.0
 	github.com/rs/zerolog v1.32.0
 	github.com/stretchr/testify v1.9.0
-	github.com/tailscale/hujson v0.0.0-20221223112325-20486734a56a
 	github.com/tetratelabs/wazero v1.7.2
 	github.com/wundergraph/graphql-go-tools/execution v1.0.2
 	github.com/wundergraph/graphql-go-tools/v2 v2.0.0-rc.44
@@ -64,6 +64,7 @@ require (
 	github.com/r3labs/sse/v2 v2.10.0 // indirect
 	github.com/santhosh-tekuri/jsonschema/v5 v5.3.1 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
+	github.com/tailscale/hujson v0.0.0-20221223112325-20486734a56a // indirect
 	github.com/tidwall/gjson v1.17.1 // indirect
 	github.com/tidwall/match v1.1.1 // indirect
 	github.com/tidwall/pretty v1.2.1 // indirect

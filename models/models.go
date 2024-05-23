@@ -10,8 +10,10 @@ import (
 
 	"hmruntime/config"
 	"hmruntime/hosts"
-	"hmruntime/manifest"
+	"hmruntime/manifestdata"
 	"hmruntime/utils"
+
+	"github.com/hypermodeAI/manifest"
 )
 
 // generic output format for models functions
@@ -24,17 +26,17 @@ const (
 	OutputFormatJson OutputFormat = "json_object"
 )
 
-func GetModel(modelName string, task manifest.ModelTask) (manifest.Model, error) {
-	for _, model := range manifest.HypermodeData.Models {
+func GetModel(modelName string, task manifest.ModelTask) (manifest.ModelInfo, error) {
+	for _, model := range manifestdata.Manifest.Models {
 		if model.Name == modelName && model.Task == task {
 			return model, nil
 		}
 	}
 
-	return manifest.Model{}, fmt.Errorf("a model '%s' for task '%s' was not found", modelName, task)
+	return manifest.ModelInfo{}, fmt.Errorf("a model '%s' for task '%s' was not found", modelName, task)
 }
 
-func PostToModelEndpoint[TResult any](ctx context.Context, sentenceMap map[string]string, model manifest.Model) (map[string]TResult, error) {
+func PostToModelEndpoint[TResult any](ctx context.Context, sentenceMap map[string]string, model manifest.ModelInfo) (map[string]TResult, error) {
 
 	// self hosted models takes in array, can optimize for parallelizing later
 	keys, sentences := []string{}, []string{}
