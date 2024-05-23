@@ -6,6 +6,7 @@ import (
 	"os"
 	"time"
 
+	"hmruntime/aws"
 	"hmruntime/config"
 	"hmruntime/logger"
 	"hmruntime/metrics"
@@ -136,9 +137,20 @@ func WriteInferenceHistoryToDB(ctx context.Context, batch []inferenceHistory) {
 }
 
 func Initialize(ctx context.Context) {
-	connStr := os.Getenv("HYPERMODE_METADATA_DB")
-
+	var connStr string
 	var err error
+	if config.GetEnvironmentName() == "dev" {
+		connStr = os.Getenv("HYPERMODE_METADATA_DB")
+	} else {
+		ns := os.Getenv("NAMESPACE")
+		secretName := ns + "_HYPERMODE_METADATA_DB"
+		connStr, err = aws.GetSecretString(ctx, secretName)
+		if err != nil {
+			logger.Err(ctx, err).Msg("Error getting database connection string")
+			return
+		}
+	}
+
 	tempDBPool, err := pgxpool.New(ctx, connStr)
 	if err != nil {
 		logger.Warn(ctx).Err(err).Msg("Database pool initialization failed.")
