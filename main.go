@@ -15,6 +15,7 @@ import (
 
 	"hmruntime/aws"
 	"hmruntime/config"
+	"hmruntime/db"
 	"hmruntime/functions"
 	"hmruntime/graphql"
 	"hmruntime/logger"
@@ -70,6 +71,9 @@ func initRuntimeServices(ctx context.Context) {
 	// Initialize AWS functionality
 	aws.Initialize(ctx)
 
+	// Initialize the inference history database
+	db.Initialize(ctx)
+
 	// Initialize the storage system
 	storage.Initialize(ctx)
 
@@ -89,6 +93,8 @@ func initRuntimeServices(ctx context.Context) {
 func stopRuntimeServices(ctx context.Context) {
 	wasmhost.RuntimeInstance.Close(ctx)
 	logger.Close()
+
+	db.Stop()
 }
 
 func getRootSourcePath() string {

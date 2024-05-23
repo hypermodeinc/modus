@@ -2,6 +2,7 @@
 
 ## UNRELEASED
 
+- Add Model Inference History to runtime [#186](https://github.com/gohypermode/runtime/pull/186)
 - Pass auth headers correctly when invoking a GraphQL API [#196](https://github.com/gohypermode/runtime/pull/196)
 - Use shared manifest module to read `hypermode.json` [#199](https://github.com/gohypermode/runtime/pull/199)
 

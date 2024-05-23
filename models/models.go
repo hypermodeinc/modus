@@ -9,6 +9,7 @@ import (
 	"fmt"
 
 	"hmruntime/config"
+	"hmruntime/db"
 	"hmruntime/hosts"
 	"hmruntime/manifestdata"
 	"hmruntime/utils"
@@ -75,7 +76,9 @@ func PostToModelEndpoint[TResult any](ctx context.Context, sentenceMap map[strin
 		headers[host.AuthHeader] = key
 	}
 
+	start := utils.GetTime()
 	res, err := utils.PostHttp[PredictionResult[TResult]](endpoint, req, headers)
+	end := utils.GetTime()
 	if err != nil {
 		return map[string]TResult{}, err
 	}
@@ -88,6 +91,9 @@ func PostToModelEndpoint[TResult any](ctx context.Context, sentenceMap map[strin
 	for i, v := range res.Predictions {
 		result[keys[i]] = v
 	}
+
+	db.WriteInferenceHistory(ctx, model, sentenceMap, result, start, end)
+
 	return result, nil
 }
 
