@@ -6,6 +6,7 @@ import (
 	"os"
 	"time"
 
+	"hmruntime/config"
 	"hmruntime/logger"
 	"hmruntime/metrics"
 	"hmruntime/utils"
@@ -127,7 +128,9 @@ func WriteInferenceHistoryToDB(ctx context.Context, batch []inferenceHistory) {
 
 	if err != nil {
 		// Handle error
-		logger.Err(ctx, err).Msg("Error writing to inference history database")
+		if config.GetEnvironmentName() != "dev" {
+			logger.Err(ctx, err).Msg("Error writing to inference history database")
+		}
 	}
 
 }
