@@ -92,7 +92,7 @@ func PostToModelEndpoint[TResult any](ctx context.Context, sentenceMap map[strin
 		result[keys[i]] = v
 	}
 
-	db.WriteInferenceHistory(model, sentenceMap, result, start, end)
+	db.WriteInferenceHistory(ctx, model, sentenceMap, result, start, end)
 
 	return result, nil
 }

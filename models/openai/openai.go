@@ -69,7 +69,7 @@ func ChatCompletion(ctx context.Context, model manifest.ModelInfo, host manifest
 	if err != nil {
 		return result, fmt.Errorf("error marshalling result: %w", err)
 	}
-	db.WriteInferenceHistory(model, sentence, string(resultBytes), start, end)
+	db.WriteInferenceHistory(ctx, model, sentence, string(resultBytes), start, end)
 
 	return result, nil
 }

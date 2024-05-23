@@ -7,10 +7,10 @@ import (
 	"time"
 
 	"hmruntime/logger"
-	"hmruntime/manifest"
 	"hmruntime/metrics"
 	"hmruntime/utils"
 
+	"github.com/hypermodeAI/manifest"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -31,7 +31,7 @@ type inferenceWriter struct {
 }
 
 type inferenceHistory struct {
-	model  manifest.Model
+	model  manifest.ModelInfo
 	input  any
 	output any
 	start  time.Time
@@ -52,7 +52,9 @@ func Stop() {
 	globalInferenceWriter.dbpool.Close()
 }
 
-func WriteInferenceHistory(model manifest.Model, input, output any, start, end time.Time) {
+func WriteInferenceHistory(ctx context.Context, model manifest.ModelInfo, input, output any, start, end time.Time) {
+	span := utils.NewSentrySpanForCurrentFunc(ctx)
+	defer span.Finish()
 	globalInferenceWriter.Write(inferenceHistory{
 		model:  model,
 		input:  input,
@@ -92,6 +94,8 @@ func WriteInferenceHistoryToDB(ctx context.Context, batch []inferenceHistory) {
 	if len(batch) == 0 {
 		return
 	}
+	transaction, ctx := utils.NewSentryTransactionForCurrentFunc(ctx)
+	defer transaction.Finish()
 	err := WithTx(ctx, func(tx pgx.Tx) error {
 		b := &pgx.Batch{}
 		for _, data := range batch {
