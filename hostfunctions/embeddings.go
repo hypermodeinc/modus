@@ -9,11 +9,11 @@ import (
 	"math/rand"
 
 	"hmruntime/logger"
-	"hmruntime/manifest"
 	"hmruntime/models"
 	"hmruntime/vector"
 	"hmruntime/vector/in_mem"
 
+	"github.com/hypermodeAI/manifest"
 	wasm "github.com/tetratelabs/wazero/api"
 )
 

@@ -133,6 +133,23 @@ You can also use any S3 bucket or path you like.  If a path is not specified, th
 
 _The shared sandbox is intended for temporary use.  In production, each customer's backend gets a separate path within a single bucket._
 
+## Using Model Inference History Locally
+Install golang-migrate using
+```sh
+brew install golang-migrate
+```
+To set up the model inference history table, run the following commands
+```sh
+cd tools/local && docker-compose up
+```
+This will start a local postgres instance. To add the inference history table and the schema, from a separate terminal in the root runtime directory, run the following command
+```sh
+export POSTGRESQL_URL='postgresql://postgres:postgres@localhost:5433/my-runtime-db?sslmode=disable' && migrate -database ${POSTGRESQL_URL} -path db/migrations up
+```
+TODO: remove this and replace with [embedded-postgres](https://github.com/fergusstrange/embedded-postgres)
+
+Now any model inference will be logged in the `local_instance` table in the `my-runtime-db` database.
+
 #### Troubleshooting
 
 **error posting to model endpoint: error getting model key: error getting secret: NoCredentialProviders: no valid providers in chain. Deprecated.**

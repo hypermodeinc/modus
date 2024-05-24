@@ -8,9 +8,9 @@ import (
 	"context"
 
 	"hmruntime/logger"
-	"hmruntime/manifest"
 	"hmruntime/models"
 
+	"github.com/hypermodeAI/manifest"
 	wasm "github.com/tetratelabs/wazero/api"
 )
 

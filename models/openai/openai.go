@@ -6,12 +6,15 @@ package openai
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
+	"hmruntime/db"
 	"hmruntime/hosts"
-	"hmruntime/manifest"
 	"hmruntime/models"
 	"hmruntime/utils"
+
+	"github.com/hypermodeAI/manifest"
 )
 
 type ChatContext struct {
@@ -23,7 +26,7 @@ type ResponseFormat struct {
 	Type string `json:"type"`
 }
 
-func ChatCompletion(ctx context.Context, model manifest.Model, host manifest.Host, instruction string, sentence string, outputFormat models.OutputFormat) (models.ChatResponse, error) {
+func ChatCompletion(ctx context.Context, model manifest.ModelInfo, host manifest.HostInfo, instruction string, sentence string, outputFormat models.OutputFormat) (models.ChatResponse, error) {
 
 	// Get the OpenAI API key to use for this model
 	key, err := hosts.GetHostKey(ctx, host)
@@ -49,7 +52,9 @@ func ChatCompletion(ctx context.Context, model manifest.Model, host manifest.Hos
 		"Authorization": "Bearer " + key,
 	}
 
+	start := utils.GetTime()
 	result, err := utils.PostHttp[models.ChatResponse](endpoint, reqBody, headers)
+	end := utils.GetTime()
 
 	if err != nil {
 		return models.ChatResponse{}, fmt.Errorf("error posting to OpenAI: %w", err)
@@ -58,6 +63,13 @@ func ChatCompletion(ctx context.Context, model manifest.Model, host manifest.Hos
 	if result.Error.Message != "" {
 		return models.ChatResponse{}, fmt.Errorf("error returned from OpenAI: %s", result.Error.Message)
 	}
+
+	// write the results to the database
+	resultBytes, err := json.Marshal(result)
+	if err != nil {
+		return result, fmt.Errorf("error marshalling result: %w", err)
+	}
+	db.WriteInferenceHistory(ctx, model, sentence, string(resultBytes), start, end)
 
 	return result, nil
 }

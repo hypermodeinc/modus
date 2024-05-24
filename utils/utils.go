@@ -8,6 +8,8 @@ import (
 	"os"
 	"strconv"
 	"strings"
+
+	"github.com/google/uuid"
 )
 
 func If[T any](condition bool, trueVal, falseVal T) T {
@@ -53,4 +55,8 @@ func TrimStringBefore(s string, sep string) string {
 		return parts[1]
 	}
 	return s
+}
+
+func GeneratUUID() string {
+	return uuid.Must(uuid.NewV7()).String()
 }

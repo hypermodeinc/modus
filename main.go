@@ -15,10 +15,11 @@ import (
 
 	"hmruntime/aws"
 	"hmruntime/config"
+	"hmruntime/db"
 	"hmruntime/functions"
 	"hmruntime/graphql"
 	"hmruntime/logger"
-	"hmruntime/manifest"
+	"hmruntime/manifestdata"
 	"hmruntime/server"
 	"hmruntime/storage"
 	"hmruntime/utils"
@@ -71,17 +72,20 @@ func initRuntimeServices(ctx context.Context) {
 	// Initialize AWS functionality
 	aws.Initialize(ctx)
 
+	// Initialize the inference history database
+	db.Initialize(ctx)
+
 	// Initialize the storage system
 	storage.Initialize(ctx)
 
 	// Watch for function registration requests
-	functions.MonitorRegistration()
+	functions.MonitorRegistration(ctx)
 
 	// Load app data and monitor for changes
-	manifest.MonitorAppDataFiles()
+	manifestdata.MonitorManifestFile(ctx)
 
 	// Load plugins and monitor for changes
-	wasmhost.MonitorPlugins()
+	wasmhost.MonitorPlugins(ctx)
 
 	// Initialize the GraphQL engine
 	graphql.Initialize()
@@ -93,6 +97,8 @@ func initRuntimeServices(ctx context.Context) {
 func stopRuntimeServices(ctx context.Context) {
 	wasmhost.RuntimeInstance.Close(ctx)
 	logger.Close()
+
+	db.Stop()
 }
 
 func getRootSourcePath() string {

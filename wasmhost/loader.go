@@ -24,9 +24,8 @@ func RegisterPluginLoadedCallback(callback func(ctx context.Context, metadata pl
 	pluginLoaded = callback
 }
 
-func MonitorPlugins() {
+func MonitorPlugins(ctx context.Context) {
 	loadPluginFile := func(fi storage.FileInfo) error {
-		ctx := context.Background()
 		err := loadPlugin(ctx, fi.Name)
 		if err != nil {
 			logger.Err(ctx, err).
@@ -40,7 +39,6 @@ func MonitorPlugins() {
 	sm.Added = loadPluginFile
 	sm.Modified = loadPluginFile
 	sm.Removed = func(fi storage.FileInfo) error {
-		ctx := context.Background()
 		err := unloadPlugin(ctx, fi.Name)
 		if err != nil {
 			logger.Err(ctx, err).
@@ -55,7 +53,7 @@ func MonitorPlugins() {
 			RegistrationRequest <- true
 		}
 	}
-	sm.Start()
+	sm.Start(ctx)
 }
 
 func loadPlugin(ctx context.Context, filename string) error {
