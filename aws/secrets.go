@@ -48,7 +48,7 @@ func GetSecrets(ctx context.Context, prefix string) (map[string]string, error) {
 
 	secrets := make(map[string]string)
 	for _, secret := range out.SecretValues {
-		name := strings.TrimPrefix(*secret.Name, prefix)
+		name := strings.Trim(strings.TrimPrefix(*secret.Name, prefix), "/")
 		secrets[name] = *secret.SecretString
 	}
 

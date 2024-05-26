@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"os/user"
 	"regexp"
 	"strings"
 
@@ -23,11 +24,21 @@ import (
 
 func GetHostSecrets(ctx context.Context, host manifest.HostInfo) (map[string]string, error) {
 	if config.UseAwsSecrets {
-		prefix := strings.Trim(strings.Join([]string{
-			os.Getenv("NAMESPACE"),
-			host.Name,
-		}, "/"), "/")
 
+		ns := os.Getenv("NAMESPACE")
+		if ns == "" {
+			if config.GetEnvironmentName() == "dev" {
+				user, err := user.Current()
+				if err != nil {
+					return nil, fmt.Errorf("could not get current user from the os: %w", err)
+				}
+				ns = "dev/" + user.Username
+			} else {
+				return nil, fmt.Errorf("NAMESPACE environment variable is not set")
+			}
+		}
+
+		prefix := strings.Trim(strings.Join([]string{ns, host.Name}, "/"), "/")
 		secrets, err := aws.GetSecrets(ctx, prefix)
 		if err != nil {
 			return nil, err
