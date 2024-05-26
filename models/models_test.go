@@ -28,8 +28,8 @@ type mockModelResponse struct {
 // TestMain runs in the main goroutine and can do whatever setup and teardown is necessary around a call to m.Run
 func TestMain(m *testing.M) {
 	manifestdata.Manifest = manifest.HypermodeManifest{
-		Models: []manifest.ModelInfo{
-			{
+		Models: map[string]manifest.ModelInfo{
+			testModelName: {
 				Name:        testModelName,
 				Task:        testModelTask,
 				SourceModel: "",
@@ -37,11 +37,11 @@ func TestMain(m *testing.M) {
 				Host:        testHostName,
 			},
 		},
-		Hosts: []manifest.HostInfo{
-			{
-				Name:       testHostName,
-				Endpoint:   "",
-				AuthHeader: "",
+		Hosts: map[string]manifest.HostInfo{
+			testHostName: {
+				Name:     testHostName,
+				Endpoint: "",
+				// AuthHeader: "",
 			},
 		},
 	}
@@ -81,6 +81,7 @@ func TestGetModels(t *testing.T) {
 }
 
 func TestPostExternalModelEndpoint(t *testing.T) {
+
 	// Create an http handler that simply echoes the input strings
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var b requestBody
@@ -93,16 +94,20 @@ func TestPostExternalModelEndpoint(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 		_ = json.NewEncoder(w).Encode(resp)
 	})
+
 	// Create a mock server with the handler to act as the external model endpoint
 	tsrv := httptest.NewServer(handler)
 	defer tsrv.Close()
-	manifestdata.Manifest.Hosts[0].Endpoint = tsrv.URL
+
+	h := manifestdata.Manifest.Hosts[testHostName]
+	h.Endpoint = tsrv.URL
+	manifestdata.Manifest.Hosts[testHostName] = h
 
 	sentenceMap := map[string]string{
 		"key1": "value1",
 		"key2": "value2",
 	}
-	testModel := manifestdata.Manifest.Models[0]
+	testModel := manifestdata.Manifest.Models[testModelName]
 	resp, err := PostToModelEndpoint[string](context.Background(), sentenceMap, testModel)
 	assert.NoError(t, err)
 

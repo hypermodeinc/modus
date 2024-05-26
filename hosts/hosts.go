@@ -1,19 +1,21 @@
+/*
+ * Copyright 2024 Hypermode, Inc.
+ */
+
 package hosts
 
 import (
 	"context"
 	"fmt"
-	"os"
+	"net/http"
+	urlpkg "net/url"
 	"strings"
 
-	"hmruntime/aws"
-	"hmruntime/config"
 	"hmruntime/manifestdata"
+	"hmruntime/utils"
 
 	"github.com/hypermodeAI/manifest"
 )
-
-const hostKeyPrefix = "HYP_HOST_KEY_"
 
 const HypermodeHost string = "hypermode"
 const OpenAIHost string = "openai"
@@ -24,19 +26,35 @@ func GetHost(hostName string) (manifest.HostInfo, error) {
 		return manifest.HostInfo{Name: HypermodeHost}, nil
 	}
 
-	for _, host := range manifestdata.Manifest.Hosts {
-		if host.Name == hostName {
-			return host, nil
-		}
+	host, ok := manifestdata.Manifest.Hosts[hostName]
+	if ok {
+		return host, nil
 	}
 
 	return manifest.HostInfo{}, fmt.Errorf("a host '%s' was not found", hostName)
 }
 
 func GetHostForUrl(url string) (manifest.HostInfo, error) {
+
+	// Ensure the url is valid
+	u, err := urlpkg.ParseRequestURI(url)
+	if err != nil {
+		return manifest.HostInfo{}, err
+	}
+
+	// Remove components not used for lookup
+	u.User = nil
+	u.RawQuery = ""
+	u.Fragment = ""
+	url = u.String()
+
+	// Find the host that matches the url
+	// Either endpoint must match completely, or baseUrl must be a prefix of the url
+	// (case insensitive comparison, either way)
 	for _, host := range manifestdata.Manifest.Hosts {
-		// case insensitive version of strings.HasPrefix
-		if len(url) >= len(host.Endpoint) && strings.EqualFold(host.Endpoint, url[:len(host.Endpoint)]) {
+		if host.Endpoint != "" && strings.EqualFold(host.Endpoint, url) {
+			return host, nil
+		} else if host.BaseURL != "" && len(url) >= len(host.BaseURL) && strings.EqualFold(host.BaseURL, url[:len(host.BaseURL)]) {
 			return host, nil
 		}
 	}
@@ -44,51 +62,14 @@ func GetHostForUrl(url string) (manifest.HostInfo, error) {
 	return manifest.HostInfo{}, fmt.Errorf("a host for url '%s' was not found in the manifest", url)
 }
 
-func GetHostKey(ctx context.Context, host manifest.HostInfo) (string, error) {
-	var key string
-	var err error
-
-	if config.UseAwsSecrets {
-		var hostKey string
-		ns := os.Getenv("NAMESPACE")
-		if ns == "" {
-			hostKey = host.Name
-		} else {
-			hostKey = ns + "/" + host.Name
-		}
-		// Get the model key from AWS Secrets Manager, using the model name as the secret.
-		key, err = aws.GetSecretString(ctx, hostKey)
-		if key != "" {
-			return key, nil
-		}
-	} else {
-		// Try well-known environment variables first, then model-specific environment variables.
-		key := getWellKnownEnvironmentVariable(host)
-		if key != "" {
-			return key, nil
-		}
-
-		keyEnvVar := hostKeyPrefix + strings.ToUpper(strings.ReplaceAll(host.Name, "-", "_"))
-		key = os.Getenv(keyEnvVar)
-		if key != "" {
-			return key, nil
-		} else {
-			err = fmt.Errorf("environment variable '%s' not found", keyEnvVar)
-		}
+func PostToHostEndpoint[TResult any](ctx context.Context, host manifest.HostInfo, payload any) (*utils.HttpResult[TResult], error) {
+	if host.Endpoint == "" {
+		return nil, fmt.Errorf("host endpoint is not defined")
 	}
 
-	return "", fmt.Errorf("error getting key for host '%s': %w", host.Name, err)
-}
-
-func getWellKnownEnvironmentVariable(host manifest.HostInfo) string {
-
-	// Some model hosts have well-known environment variables that are used to store the model key.
-	// We should support these to make it easier for users to set up their environment.
-	// We can expand this list as we add more model hosts.
-
-	switch host.Name {
-	case OpenAIHost:
-		return os.Getenv("OPENAI_API_KEY")
+	bs := func(ctx context.Context, req *http.Request) error {
+		return ApplyHostSecrets(ctx, host, req)
 	}
-	return ""
+
+	return utils.PostHttp[TResult](ctx, host.Endpoint, payload, bs)
 }

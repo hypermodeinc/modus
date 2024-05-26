@@ -7,6 +7,7 @@ package models
 import (
 	"context"
 	"fmt"
+	"net/http"
 
 	"hmruntime/config"
 	"hmruntime/db"
@@ -52,47 +53,44 @@ func PostToModelEndpoint[TResult any](ctx context.Context, sentenceMap map[strin
 	req := map[string][]string{"instances": sentences}
 
 	var endpoint string
-	headers := map[string]string{}
+	var bs func(context.Context, *http.Request) error
 
 	switch model.Host {
 	case hosts.HypermodeHost:
 		endpoint = fmt.Sprintf("http://%s.%s/%s:predict", model.Name, config.ModelHost, model.Task)
 	default:
-		// If the model is not hosted by Hypermode, we need to get the model key and add it to the request headers
+
 		host, err := hosts.GetHost(model.Host)
 		if err != nil {
-			return map[string]TResult{}, err
+			return nil, err
+		}
+
+		if host.Endpoint == "" {
+			return nil, fmt.Errorf("host endpoint is not defined")
 		}
 
 		endpoint = host.Endpoint
-		if host.AuthHeader == "" {
-			break
-		}
-		key, err := hosts.GetHostKey(ctx, host)
-		if err != nil {
-			return map[string]TResult{}, err
-		}
 
-		headers[host.AuthHeader] = key
+		bs = func(ctx context.Context, req *http.Request) error {
+			return hosts.ApplyHostSecrets(ctx, host, req)
+		}
 	}
 
-	start := utils.GetTime()
-	res, err := utils.PostHttp[PredictionResult[TResult]](endpoint, req, headers)
-	end := utils.GetTime()
+	res, err := utils.PostHttp[PredictionResult[TResult]](ctx, endpoint, req, bs)
 	if err != nil {
 		return map[string]TResult{}, err
 	}
-	if len(res.Predictions) != len(keys) {
+	if len(res.Data.Predictions) != len(keys) {
 		return map[string]TResult{}, fmt.Errorf("number of predictions does not match number of sentences")
 	}
 
 	// map the results back to the original sentences
 	result := make(map[string]TResult)
-	for i, v := range res.Predictions {
+	for i, v := range res.Data.Predictions {
 		result[keys[i]] = v
 	}
 
-	db.WriteInferenceHistory(ctx, model, sentenceMap, result, start, end)
+	db.WriteInferenceHistory(ctx, model, sentenceMap, result, res.StartTime, res.EndTime)
 
 	return result, nil
 }

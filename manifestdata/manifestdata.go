@@ -54,12 +54,19 @@ func loadManifest(ctx context.Context) error {
 		return err
 	}
 
-	m, err := manifest.ReadManifest(bytes)
+	man, err := manifest.ReadManifest(bytes)
 	if err != nil {
 		return err
 	}
 
+	if !man.IsCurrentVersion() {
+		logger.Warn(ctx).
+			Str("filename", manifestFileName).
+			Int("manifest_version", man.Version).
+			Msg("The manifest file is in a deprecated format.  Please update it to the current format.")
+	}
+
 	// Only update the Manifest global when we have successfully read the manifest.
-	Manifest = m
+	Manifest = man
 	return nil
 }

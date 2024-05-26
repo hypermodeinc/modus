@@ -14,7 +14,7 @@ require (
 	github.com/getsentry/sentry-go v0.27.0
 	github.com/go-viper/mapstructure/v2 v2.0.0-alpha.1
 	github.com/google/uuid v1.6.0
-	github.com/hypermodeAI/manifest v0.1.1
+	github.com/hypermodeAI/manifest v0.2.2
 	github.com/jackc/pgx/v5 v5.5.5
 	github.com/jensneuse/abstractlogger v0.0.4
 	github.com/joho/godotenv v1.5.1

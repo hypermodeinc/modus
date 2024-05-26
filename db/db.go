@@ -144,7 +144,7 @@ func Initialize(ctx context.Context) {
 	} else {
 		ns := os.Getenv("NAMESPACE")
 		secretName := ns + "_HYPERMODE_METADATA_DB"
-		connStr, err = aws.GetSecretString(ctx, secretName)
+		connStr, err = aws.GetSecret(ctx, secretName)
 		if err != nil {
 			logger.Err(ctx, err).Msg("Error getting database connection string")
 			return

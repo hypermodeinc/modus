@@ -8,7 +8,6 @@ import (
 	"context"
 	"fmt"
 
-	"hmruntime/functions/assemblyscript"
 	"hmruntime/hosts"
 	"hmruntime/logger"
 	"hmruntime/utils"
@@ -45,7 +44,7 @@ func hostExecuteGQL(ctx context.Context, mod wasm.Module, pHostName uint32, pStm
 		return 0
 	}
 
-	offset, err := assemblyscript.WriteString(ctx, mod, result)
+	offset, err := writeResult(ctx, mod, result)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error writing result to wasm memory.")
 		return 0
@@ -60,30 +59,19 @@ type graphqlRequest struct {
 }
 
 func executeGraphql(ctx context.Context, host manifest.HostInfo, stmt string, vars map[string]any) (string, error) {
-	request := graphqlRequest{
+	// https://graphql.org/learn/serving-over-http/
+	requestPayload := graphqlRequest{
 		Query:     stmt,
 		Variables: vars,
 	}
 
-	headers := map[string]string{}
-
-	if host.Endpoint == "" {
-		return "", fmt.Errorf("host endpoint is not defined")
-	}
-	if host.AuthHeader != "" {
-		key, err := hosts.GetHostSecret(ctx, host, host.AuthHeader)
-		if err != nil {
-			return "", err
-		}
-
-		headers[host.AuthHeader] = key
-	}
-
-	response, err := utils.PostHttp[[]byte](host.Endpoint, request, headers)
+	result, err := hosts.PostToHostEndpoint[[]byte](ctx, host, requestPayload)
 	if err != nil {
 		return "", fmt.Errorf("error posting GraphQL statement: %w", err)
 	}
 
+	// Check for errors in the response so we can log them.
+	response := result.Data
 	gqlErrors, dataType, _, err := jsonparser.Get(response, "errors")
 	if err != nil && err != jsonparser.KeyPathNotFoundError {
 		return "", fmt.Errorf("error parsing GraphQL response: %w", err)

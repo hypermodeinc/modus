@@ -6,6 +6,7 @@ package utils
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -34,8 +35,17 @@ func sendHttp(req *http.Request) ([]byte, error) {
 	return io.ReadAll(response.Body)
 }
 
-func PostHttp[TResult any](url string, payload any, headers map[string]string) (TResult, error) {
-	var result TResult
+type HttpResult[T any] struct {
+	Data      T
+	StartTime time.Time
+	EndTime   time.Time
+}
+
+func (r HttpResult[T]) Duration() time.Duration {
+	return r.EndTime.Sub(r.StartTime)
+}
+
+func PostHttp[TResult any](ctx context.Context, url string, payload any, beforeSend func(context.Context, *http.Request) error) (*HttpResult[TResult], error) {
 	var ct string
 	var buf *bytes.Buffer
 
@@ -50,42 +60,52 @@ func PostHttp[TResult any](url string, payload any, headers map[string]string) (
 		ct = "application/json"
 		jsonPayload, err := JsonSerialize(payload)
 		if err != nil {
-			return result, fmt.Errorf("error serializing payload: %w", err)
+			return nil, fmt.Errorf("error serializing payload: %w", err)
 		}
 		buf = bytes.NewBuffer(jsonPayload)
 	}
 
-	req, err := http.NewRequest(http.MethodPost, url, buf)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, buf)
 	if err != nil {
-		return result, fmt.Errorf("error creating request: %w", err)
+		return nil, fmt.Errorf("error creating request: %w", err)
 	}
 
-	if _, ok := headers["Content-Type"]; !ok {
+	if beforeSend != nil {
+		err = beforeSend(ctx, req)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if req.Header.Get("Content-Type") == "" {
 		req.Header.Set("Content-Type", ct)
 	}
 
-	for k, v := range headers {
-		req.Header.Set(k, v)
-	}
-
+	startTime := GetTime()
 	content, err := sendHttp(req)
+	endTime := GetTime()
 	if err != nil {
-		return result, fmt.Errorf("error sending HTTP request: %w", err)
+		return nil, fmt.Errorf("error sending HTTP request: %w", err)
 	}
 
+	var result TResult
 	switch any(result).(type) {
 	case []byte:
-		return any(content).(TResult), nil
+		result = any(content).(TResult)
 	case string:
-		return any(string(content)).(TResult), nil
+		result = any(string(content)).(TResult)
+	default:
+		err = JsonDeserialize(content, &result)
+		if err != nil {
+			return nil, fmt.Errorf("error deserializing response: %w", err)
+		}
 	}
 
-	err = JsonDeserialize(content, &result)
-	if err != nil {
-		return result, fmt.Errorf("error deserializing response: %w", err)
-	}
-
-	return result, nil
+	return &HttpResult[TResult]{
+		Data:      result,
+		StartTime: startTime,
+		EndTime:   endTime,
+	}, nil
 }
 
 func WriteJsonContentHeader(w http.ResponseWriter) {

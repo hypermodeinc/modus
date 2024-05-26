@@ -91,8 +91,8 @@ github.com/hashicorp/golang-lru v1.0.2 h1:dV3g9Z/unq5DpblPpw+Oqcv4dU/1omnb4Ok8iP
 github.com/hashicorp/golang-lru v1.0.2/go.mod h1:iADmTwqILo4mZ8BN3D2Q6+9jd8WM5uGBxy+E8yxSoD4=
 github.com/hashicorp/golang-lru/v2 v2.0.3 h1:kmRrRLlInXvng0SmLxmQpQkpbYAvcXm7NPDrgxJa9mE=
 github.com/hashicorp/golang-lru/v2 v2.0.3/go.mod h1:QeFd9opnmA6QUJc5vARoKUSoFhyfM2/ZepoAG6RGpeM=
-github.com/hypermodeAI/manifest v0.1.1 h1:iBP5Fp0QkKKbFNLj6L+qINQjjoViQqEMUn+oF5pnH10=
-github.com/hypermodeAI/manifest v0.1.1/go.mod h1:hxNr0BCLz1hejv4Efrur7qSQQMdrIBMc9Nus+VanjjA=
+github.com/hypermodeAI/manifest v0.2.2 h1:L//Gphg7GzQJN5hXB3aZOSBpc8l5RFL40aEW1/5TAW4=
+github.com/hypermodeAI/manifest v0.2.2/go.mod h1:uFam8SPmQ1fbacRTZBHN8R+Vib8ehHnA5FpeLO+Kofc=
 github.com/jackc/pgpassfile v1.0.0 h1:/6Hmqy13Ss2zCq62VdNG8tM1wchn8zjSGOBJ6icpsIM=
 github.com/jackc/pgpassfile v1.0.0/go.mod h1:CEx0iS5ambNFdcRtxPj5JhEz+xB6uRky5eyVu/W2HEg=
 github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a h1:bbPeKD0xmW/Y25WS6cokEszi5g+S0QxI/d45PkRi7Nk=

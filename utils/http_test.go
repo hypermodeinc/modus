@@ -6,6 +6,7 @@ package utils
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -108,7 +109,7 @@ func Test_PostHttp(t *testing.T) {
 	payload := Payload{
 		Message: "Hello, World!",
 	}
-	result, err := PostHttp[Response](url, payload, nil)
+	result, err := PostHttp[Response](context.Background(), url, payload, nil)
 	if err != nil {
 		t.Fatalf("Failed to make HTTP request: %v", err)
 	}
@@ -116,7 +117,7 @@ func Test_PostHttp(t *testing.T) {
 	expectedResult := Response{
 		Result: "success",
 	}
-	if !reflect.DeepEqual(result, expectedResult) {
+	if !reflect.DeepEqual(result.Data, expectedResult) {
 		t.Errorf("Unexpected response. Got: %+v, want: %+v", result, expectedResult)
 	}
 }
@@ -133,12 +134,13 @@ func Test_PostHttp_CustomContentType(t *testing.T) {
 	server := httptest.NewServer(handler)
 	defer server.Close()
 
-	headers := map[string]string{
-		"Content-Type": customContentType,
+	bs := func(ctx context.Context, req *http.Request) error {
+		req.Header.Set("Content-Type", customContentType)
+		return nil
 	}
 
 	url := server.URL
-	_, err := PostHttp[string](url, nil, headers)
+	_, err := PostHttp[string](context.Background(), url, nil, bs)
 	if err != nil {
 		t.Fatalf("Failed to make HTTP request: %v", err)
 	}
@@ -153,13 +155,13 @@ func Test_PostHttp_StringResult(t *testing.T) {
 	defer server.Close()
 
 	url := server.URL
-	result, err := PostHttp[string](url, nil, nil)
+	result, err := PostHttp[string](context.Background(), url, nil, nil)
 	if err != nil {
 		t.Fatalf("Failed to make HTTP request: %v", err)
 	}
 
 	expectedResult := "success"
-	if result != expectedResult {
+	if result.Data != expectedResult {
 		t.Errorf("Unexpected response. Got: %s, want: %s", result, expectedResult)
 	}
 }
@@ -173,13 +175,13 @@ func Test_PostHttp_BytesResult(t *testing.T) {
 	defer server.Close()
 
 	url := server.URL
-	result, err := PostHttp[[]byte](url, nil, nil)
+	result, err := PostHttp[[]byte](context.Background(), url, nil, nil)
 	if err != nil {
 		t.Fatalf("Failed to make HTTP request: %v", err)
 	}
 
 	expectedResult := []byte{1, 2, 3, 4, 5}
-	if !bytes.Equal(result, expectedResult) {
+	if !bytes.Equal(result.Data, expectedResult) {
 		t.Errorf("Unexpected response. Got: %v, want: %v", result, expectedResult)
 	}
 }

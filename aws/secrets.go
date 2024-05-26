@@ -7,10 +7,12 @@ package aws
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"hmruntime/utils"
 
 	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
+	"github.com/aws/aws-sdk-go-v2/service/secretsmanager/types"
 )
 
 var smClient *secretsmanager.Client
@@ -26,7 +28,37 @@ func initSecretsManager() {
 	smClient = secretsmanager.NewFromConfig(awsConfig)
 }
 
-func GetSecretString(ctx context.Context, secretId string) (string, error) {
+func GetSecrets(ctx context.Context, prefix string) (map[string]string, error) {
+	transaction, ctx := utils.NewSentryTransactionForCurrentFunc(ctx)
+	defer transaction.Finish()
+
+	// TODO: use the secrets cache the secrets, but we can't just look them up in the cache by prefix
+	// We'll need to update the cache automatically when secrets are modified.
+
+	out, err := smClient.BatchGetSecretValue(ctx, &secretsmanager.BatchGetSecretValueInput{
+		Filters: []types.Filter{{
+			Key:    types.FilterNameStringTypeName,
+			Values: []string{prefix},
+		}},
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	secrets := make(map[string]string)
+	for _, secret := range out.SecretValues {
+		name := strings.TrimPrefix(*secret.Name, prefix)
+		secrets[name] = *secret.SecretString
+	}
+
+	// TODO: Cache the secret for future use
+	// secretsCache[secretId] = *secretValue.SecretString
+
+	return secrets, nil
+}
+
+func GetSecret(ctx context.Context, secretId string) (string, error) {
 	transaction, ctx := utils.NewSentryTransactionForCurrentFunc(ctx)
 	defer transaction.Finish()
 
