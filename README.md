@@ -26,27 +26,46 @@ _Note: You can use either `-` or `--` prefixes, and you use either a space or `=
 
 ## Environment Variables
 
-Some model hosts have pre-established well-known environment variable names.
-The Hypermode Runtime will use them if they are available:
+The following environment variables are used by the Hypermode Runtime:
 
-- `OPENAI_API_KEY` - If set, will be used by an model who's host is `"openai"`.
+- `ENVIRONMENT` - The name of the environment, such as `dev`, `stage`, or `prod`.  Defaults to `dev` when not specified.
+- `NAMESPACE` - Used in non-dev (ie. stage/prod) environments to retrieve the Kubernetes namespace for the Hypermode backend.
+- `HYPERMODE_METADATA_DB` - Used in dev environment only, to set a connection string to a local Posrgres database to use for Hypermode metadata.
 
-Alternatively, any model can have its key passed as an environment variable,
-using the following convention:
+### Local Secrets
 
-- `HYP_MODEL_KEY_<MODEL_NAME>` - Can be used to specify keys for any model.
-  - _Substitute `<MODEL_NAME>` for the upper-cased name of the model._
-  - _Replace any hyphen (`-`) characters with underscore (`_`) characters._
+When running locally, in addition to the above, secrets are passed by environment variable using the following convention: 
+
+```
+HYPERMODE_<HOST_NAME>_<SECRET_NAME>
+```
+  - Substitute `<HOST_NAME>` for the upper-cased name of the model, replacing hyphens (`-`) with underscores (`_`).
+  - Substitute `<SECRET_NAME>` for the upper-cased name of the secret variable used in the manifest.
+
+For example, if the manifest contains the host entry:
+
+```json
+"my-api": {
+  "endpoint":"https://api.example.com/",
+  "headers": {
+    "Authorization": "Bearer {{AUTH_TOKEN}}"
+  }
+},
+```
+
+... then the corresponding environment variable name would be `HYPERMODE_MY_API_AUTH_TOKEN`.
+The value of that environment variable would be used as the bearer token for any requests to that host.
 
 ### Using a `.env` file
 
 While environment variables can be set through traditional mechanisms, they can also (optionally)
 be set in a file called `.env`, placed in the plugins path.  The file should be a simple list of
-key/value pairs.  For example:
+key/value pairs for each environment variable you want to set when the Runtime is loaded.
 
+For example:
 ```
-HYP_MODEL_KEY_FOO=abc123
-HYP_MODEL_KEY_BAR=xyz456
+HYPERMODE_FOO=abc123
+HYPERMODE_BAR=xyz456
 ```
 
 ## Building the Runtime
@@ -134,33 +153,32 @@ You can also use any S3 bucket or path you like.  If a path is not specified, th
 _The shared sandbox is intended for temporary use.  In production, each customer's backend gets a separate path within a single bucket._
 
 ## Using Model Inference History Locally
-Install golang-migrate using
+
+To set up the model inference history table, run the following command, which will start a local postgres instance. 
+
+```sh
+cd tools/local
+docker-compose up
+```
+
+Next, you will need to apply the database schema using the [golang-migrate](https://github.com/golang-migrate/migrate) utility.
+
+On MacOS, you can install this utility with the following:
+
 ```sh
 brew install golang-migrate
 ```
-To set up the model inference history table, run the following commands
+
+Then, you can apply the migration as follows:
+
 ```sh
-cd tools/local && docker-compose up
+export POSTGRESQL_URL='postgresql://postgres:postgres@localhost:5433/my-runtime-db?sslmode=disable'
+migrate -database ${POSTGRESQL_URL} -path db/migrations up
 ```
-This will start a local postgres instance. To add the inference history table and the schema, from a separate terminal in the root runtime directory, run the following command
-```sh
-export POSTGRESQL_URL='postgresql://postgres:postgres@localhost:5433/my-runtime-db?sslmode=disable' && migrate -database ${POSTGRESQL_URL} -path db/migrations up
-```
-TODO: remove this and replace with [embedded-postgres](https://github.com/fergusstrange/embedded-postgres)
 
-Now any model inference will be logged in the `local_instance` table in the `my-runtime-db` database.
+Now any model inference will be logged in the `inferences` table in the `my-runtime-db` database.
 
-#### Troubleshooting
-
-**error posting to model endpoint: error getting model key: error getting secret: NoCredentialProviders: no valid providers in chain. Deprecated.**
-
-Your are missing `export AWS_SDK_LOAD_CONFIG=true`
-
-or your AWS region is wrong, or you do not have an AWS secret set for the ModelSpec name. Add via:
-
-`aws secretsmanager create-secret --name '<ModelSpec.name>' --secret-string '<apikey>'
-`
-### Unit Testing
+## Unit Testing
 
 Unit tests are created using Go's [built-in unit test support](https://go.dev/doc/tutorial/add-a-test).
 
