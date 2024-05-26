@@ -6,6 +6,7 @@ package hosts
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 	"net/http"
 	"os"
@@ -96,16 +97,47 @@ func ApplyHostSecrets(ctx context.Context, host manifest.HostInfo, req *http.Req
 	return nil
 }
 
-var templateRegex = regexp.MustCompile(`{{\s*(.+?)\s*}}`)
+var templateRegex = regexp.MustCompile(`{{\s*(?:base64\((.+?):(.+?)\)|(.+?))\s*}}`)
 
 func applySecretsToString(ctx context.Context, secrets map[string]string, s string) string {
 	return templateRegex.ReplaceAllStringFunc(s, func(match string) string {
-		key := templateRegex.FindStringSubmatch(match)[1]
-		val, ok := secrets[key]
-		if !ok {
-			logger.Warn(ctx).Str("key", key).Msg("Secret not found.")
+		submatches := templateRegex.FindStringSubmatch(match)
+		if len(submatches) != 4 {
+			logger.Warn(ctx).Str("match", match).Msg("Invalid template.")
 			return match
 		}
-		return val
+
+		// standard secret template
+		nameKey := submatches[3]
+		if nameKey != "" {
+			val, ok := secrets[nameKey]
+			if !ok {
+				logger.Warn(ctx).Str("name", nameKey).Msg("Secret not found.")
+				return match
+			}
+			return val
+		}
+
+		// base64 secret template
+		userKey := submatches[1]
+		passKey := submatches[2]
+		if userKey != "" && passKey != "" {
+			user, ok := secrets[userKey]
+			if !ok {
+				logger.Warn(ctx).Str("name", userKey).Msg("Secret not found.")
+				return match
+			}
+
+			pass, ok := secrets[passKey]
+			if !ok {
+				logger.Warn(ctx).Str("name", passKey).Msg("Secret not found.")
+				return match
+			}
+
+			return base64.StdEncoding.EncodeToString([]byte(user + ":" + pass))
+		}
+
+		logger.Warn(ctx).Str("template", match).Msg("Invalid secret variable template.")
+		return match
 	})
 }
