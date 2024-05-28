@@ -96,8 +96,16 @@ func hostEmbedAndIndex(ctx context.Context, mod wasm.Module, pModelName uint32, 
 	for k, v := range result {
 		// generate random uint64
 		uid := uint64(rand.Uint32())
-		index.Insert(ctx, nil, uid, v)
-		index.InsertDataNode(ctx, nil, uid, k)
+		_, err := index.Insert(ctx, nil, uid, v)
+		if err != nil {
+			logger.Err(ctx, err).Msg("Error inserting into index.")
+			return 0
+		}
+		err = index.InsertDataNode(ctx, nil, uid, k)
+		if err != nil {
+			logger.Err(ctx, err).Msg("Error inserting data node into index.")
+			return 0
+		}
 	}
 
 	offset, err := writeResult(ctx, mod, result)

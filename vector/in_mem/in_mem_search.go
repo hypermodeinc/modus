@@ -9,7 +9,6 @@ import (
 )
 
 type InMemBruteForceIndex struct {
-	pred string
 	// vectorNodes is a map of uint64 to []float64
 	vectorNodes map[uint64][]float64
 	dataNodes   map[uint64]string
