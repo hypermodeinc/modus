@@ -15,7 +15,7 @@ import (
 var provider storageProvider
 
 type storageProvider interface {
-	initialize()
+	initialize(ctx context.Context)
 	listFiles(ctx context.Context, extension string) ([]FileInfo, error)
 	getFileContents(ctx context.Context, name string) ([]byte, error)
 }
@@ -36,7 +36,7 @@ func Initialize(ctx context.Context) {
 		provider = &localStorageProvider{}
 	}
 
-	provider.initialize()
+	provider.initialize(ctx)
 }
 
 func ListFiles(ctx context.Context, extension string) ([]FileInfo, error) {

@@ -13,18 +13,18 @@ import (
 
 	"hmruntime/aws"
 	"hmruntime/config"
+	"hmruntime/logger"
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/rs/zerolog/log"
 )
 
 type awsStorageProvider struct {
 	s3Client *s3.Client
 }
 
-func (stg *awsStorageProvider) initialize() {
+func (stg *awsStorageProvider) initialize(ctx context.Context) {
 	if config.S3Bucket == "" {
-		log.Fatal().Msg("An S3 bucket is required when using AWS storage.  Exiting.")
+		logger.Fatal(ctx).Msg("An S3 bucket is required when using AWS storage.  Exiting.")
 	}
 
 	// Initialize the S3 service client.
