@@ -2,74 +2,49 @@
  * Copyright 2024 Hypermode, Inc.
  */
 
-package hosts
+package secrets
 
 import (
 	"context"
 	"encoding/base64"
 	"fmt"
 	"net/http"
-	"os"
-	"os/user"
 	"regexp"
-	"strings"
 
-	"hmruntime/aws"
 	"hmruntime/config"
 	"hmruntime/logger"
-	"hmruntime/manifestdata"
+	"hmruntime/utils"
 
 	"github.com/hypermodeAI/manifest"
 )
 
-func GetHostSecrets(ctx context.Context, host manifest.HostInfo) (map[string]string, error) {
+var provider secretsProvider
+
+type secretsProvider interface {
+	initialize(ctx context.Context)
+	getSecret(ctx context.Context, name string) (string, error)
+	getHostSecrets(ctx context.Context, host manifest.HostInfo) (map[string]string, error)
+}
+
+func Initialize(ctx context.Context) {
+	span := utils.NewSentrySpanForCurrentFunc(ctx)
+	defer span.Finish()
+
 	if config.UseAwsSecrets {
-
-		ns := os.Getenv("NAMESPACE")
-		if ns == "" {
-			if config.GetEnvironmentName() == "dev" {
-				user, err := user.Current()
-				if err != nil {
-					return nil, fmt.Errorf("could not get current user from the os: %w", err)
-				}
-				ns = "dev/" + user.Username
-			} else {
-				return nil, fmt.Errorf("NAMESPACE environment variable is not set")
-			}
-		}
-
-		prefix := strings.Trim(strings.Join([]string{ns, host.Name}, "/"), "/")
-		secrets, err := aws.GetSecrets(ctx, prefix)
-		if err != nil {
-			return nil, err
-		}
-
-		// Migrate old auth header secret to the new location
-		// TODO: Remove this when we no longer need to support the old manifest format
-		oldAuthHeaderSecret, ok := secrets[""]
-		if ok {
-			if manifestdata.Manifest.Version == 1 {
-				secrets[manifest.V1AuthHeaderVariableName] = oldAuthHeaderSecret
-				delete(secrets, "")
-				logger.Warn(ctx).Msg("Used deprecated auth header secret.  Please update the manifest to use a template such as {{SECRET_NAME}} and migrate the old secret in Secrets Manager.")
-			} else {
-				logger.Warn(ctx).Msg("The manifest is current, but the deprecated auth header secret was found.  Please remove the old secret in Secrets Manager.")
-			}
-		}
-
-		return secrets, nil
+		provider = &awsSecretsProvider{}
 	} else {
-		prefix := "HYPERMODE_" + strings.ToUpper(strings.ReplaceAll(host.Name, "-", "_")) + "_"
-		secrets := make(map[string]string)
-		for _, e := range os.Environ() {
-			if strings.HasPrefix(e, prefix) {
-				pair := strings.SplitN(e, "=", 2)
-				secrets[pair[0][len(prefix):]] = pair[1]
-			}
-		}
-
-		return secrets, nil
+		provider = &localSecretsProvider{}
 	}
+
+	provider.initialize(ctx)
+}
+
+func GetSecret(ctx context.Context, name string) (string, error) {
+	return provider.getSecret(ctx, name)
+}
+
+func GetHostSecrets(ctx context.Context, host manifest.HostInfo) (map[string]string, error) {
+	return provider.getHostSecrets(ctx, host)
 }
 
 func GetHostSecret(ctx context.Context, host manifest.HostInfo, secretName string) (string, error) {

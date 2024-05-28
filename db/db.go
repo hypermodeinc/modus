@@ -3,13 +3,12 @@ package db
 import (
 	"context"
 	"fmt"
-	"os"
 	"time"
 
-	"hmruntime/aws"
 	"hmruntime/config"
 	"hmruntime/logger"
 	"hmruntime/metrics"
+	"hmruntime/secrets"
 	"hmruntime/utils"
 
 	"github.com/hypermodeAI/manifest"
@@ -137,18 +136,10 @@ func WriteInferenceHistoryToDB(ctx context.Context, batch []inferenceHistory) {
 }
 
 func Initialize(ctx context.Context) {
-	var connStr string
-	var err error
-	if config.GetEnvironmentName() == "dev" {
-		connStr = os.Getenv("HYPERMODE_METADATA_DB")
-	} else {
-		ns := os.Getenv("NAMESPACE")
-		secretName := ns + "_HYPERMODE_METADATA_DB"
-		connStr, err = aws.GetSecret(ctx, secretName)
-		if err != nil {
-			logger.Err(ctx, err).Msg("Error getting database connection string")
-			return
-		}
+	connStr, err := secrets.GetSecret(ctx, "HYPERMODE_METADATA_DB")
+	if err != nil {
+		logger.Err(ctx, err).Msg("Error getting database connection string")
+		return
 	}
 
 	tempDBPool, err := pgxpool.New(ctx, connStr)

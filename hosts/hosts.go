@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"hmruntime/manifestdata"
+	"hmruntime/secrets"
 	"hmruntime/utils"
 
 	"github.com/hypermodeAI/manifest"
@@ -68,7 +69,7 @@ func PostToHostEndpoint[TResult any](ctx context.Context, host manifest.HostInfo
 	}
 
 	bs := func(ctx context.Context, req *http.Request) error {
-		return ApplyHostSecrets(ctx, host, req)
+		return secrets.ApplyHostSecrets(ctx, host, req)
 	}
 
 	return utils.PostHttp[TResult](ctx, host.Endpoint, payload, bs)

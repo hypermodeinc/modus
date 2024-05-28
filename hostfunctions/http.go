@@ -14,6 +14,7 @@ import (
 	"hmruntime/hosts"
 	"hmruntime/logger"
 	"hmruntime/plugins"
+	"hmruntime/secrets"
 	"hmruntime/utils"
 
 	wasm "github.com/tetratelabs/wazero/api"
@@ -97,7 +98,7 @@ func hostFetch(ctx context.Context, mod wasm.Module, pRequest uint32) (pResponse
 		req.Header[header.Name] = header.Values
 	}
 
-	err = hosts.ApplyHostSecrets(ctx, host, req)
+	err = secrets.ApplyHostSecrets(ctx, host, req)
 	if err != nil {
 		logger.Err(ctx, err).
 			Str("host", host.Name).
