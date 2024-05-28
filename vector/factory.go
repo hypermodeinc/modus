@@ -80,7 +80,10 @@ func (hf *IndexFactory[T]) createWithLock(
 			return nil, err
 		}
 		for i, vector := range chunk {
-			retVal.Insert(context.Background(), nil, uids[i], vector)
+			_, err := retVal.Insert(context.Background(), nil, uids[i], vector)
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 	err := retVal.ApplyOptions(o)

@@ -83,8 +83,7 @@ func hostEmbedAndIndex(ctx context.Context, mod wasm.Module, pModelName uint32, 
 	}
 	if index == nil {
 		// create index
-		vector.GlobalIndexFactory.Create(collectionName, nil, nil, &in_mem.InMemBruteForceIndex{})
-		index, err = vector.GlobalIndexFactory.Find(collectionName)
+		index, err = vector.GlobalIndexFactory.Create(collectionName, nil, nil, &in_mem.InMemBruteForceIndex{})
 		if err != nil {
 			logger.Err(ctx, err).Msg("Error creating index.")
 			return 0
