@@ -12,9 +12,9 @@ import (
 	"hmruntime/utils"
 )
 
-var impl storageImplementation
+var provider storageProvider
 
-type storageImplementation interface {
+type storageProvider interface {
 	initialize()
 	listFiles(ctx context.Context, extension string) ([]FileInfo, error)
 	getFileContents(ctx context.Context, name string) ([]byte, error)
@@ -31,24 +31,24 @@ func Initialize(ctx context.Context) {
 	defer span.Finish()
 
 	if config.UseAwsStorage {
-		impl = &awsStorage{}
+		provider = &awsStorageProvider{}
 	} else {
-		impl = &localStorage{}
+		provider = &localStorageProvider{}
 	}
 
-	impl.initialize()
+	provider.initialize()
 }
 
 func ListFiles(ctx context.Context, extension string) ([]FileInfo, error) {
 	span := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
 
-	return impl.listFiles(ctx, extension)
+	return provider.listFiles(ctx, extension)
 }
 
 func GetFileContents(ctx context.Context, name string) ([]byte, error) {
 	span := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
 
-	return impl.getFileContents(ctx, name)
+	return provider.getFileContents(ctx, name)
 }

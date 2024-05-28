@@ -15,10 +15,10 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-type localStorage struct {
+type localStorageProvider struct {
 }
 
-func (stg *localStorage) initialize() {
+func (stg *localStorageProvider) initialize() {
 	if config.StoragePath == "" {
 		log.Fatal().Msg("A storage path is required when using local storage.  Exiting.")
 	}
@@ -39,7 +39,7 @@ func (stg *localStorage) initialize() {
 	}
 }
 
-func (stg *localStorage) listFiles(ctx context.Context, extension string) ([]FileInfo, error) {
+func (stg *localStorageProvider) listFiles(ctx context.Context, extension string) ([]FileInfo, error) {
 	entries, err := os.ReadDir(config.StoragePath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list files in storage directory: %w", err)
@@ -64,7 +64,7 @@ func (stg *localStorage) listFiles(ctx context.Context, extension string) ([]Fil
 	return files, nil
 }
 
-func (stg *localStorage) getFileContents(ctx context.Context, name string) ([]byte, error) {
+func (stg *localStorageProvider) getFileContents(ctx context.Context, name string) ([]byte, error) {
 	path := filepath.Join(config.StoragePath, name)
 	content, err := os.ReadFile(path)
 	if err != nil {
