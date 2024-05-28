@@ -76,27 +76,28 @@ func hostEmbedAndIndex(ctx context.Context, mod wasm.Module, pModelName uint32, 
 		return 0
 	}
 
-	index, err := vector.GlobalInMemIndexFactory.Find(collectionName)
+	index, err := vector.GlobalIndexFactory.Find(collectionName)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error finding index.")
 		return 0
 	}
 	if index == nil {
-		vector.GlobalInMemIndexFactory.Create(collectionName, nil, nil, 64)
-		index, err = vector.GlobalInMemIndexFactory.Find(collectionName)
+		// create index
+		vector.GlobalIndexFactory.Create(collectionName, nil, nil, &in_mem.InMemBruteForceIndex{})
+		index, err = vector.GlobalIndexFactory.Find(collectionName)
 		if err != nil {
 			logger.Err(ctx, err).Msg("Error creating index.")
 			return 0
 		}
 	}
-	// convert index to InMemIndex
-	bfIndex := index.(*in_mem.InMemBruteForceIndex)
+	// // convert index to InMemIndex
+	// bfIndex := index.(*in_mem.InMemBruteForceIndex)
 
 	for k, v := range result {
 		// generate random uint64
 		uid := uint64(rand.Uint32())
-		bfIndex.Insert(ctx, nil, uid, v)
-		bfIndex.InsertDataNode(ctx, nil, uid, k)
+		index.Insert(ctx, nil, uid, v)
+		index.InsertDataNode(ctx, nil, uid, k)
 	}
 
 	offset, err := writeResult(ctx, mod, result)
@@ -133,7 +134,7 @@ func hostEmbedAndSearchIndex(ctx context.Context, mod wasm.Module, pModelName ui
 		return 0
 	}
 
-	index, err := vector.GlobalInMemIndexFactory.Find(collectionName)
+	index, err := vector.GlobalIndexFactory.Find(collectionName)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error finding index.")
 		return 0

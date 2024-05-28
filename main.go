@@ -91,7 +91,7 @@ func initRuntimeServices(ctx context.Context) {
 	graphql.Initialize()
 
 	// Initialize in mem vector factory
-	vector.InitializeInMemFactory()
+	vector.InitializeIndexFactory()
 }
 
 func stopRuntimeServices(ctx context.Context) {

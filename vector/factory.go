@@ -1,31 +1,39 @@
-package in_mem
+package vector
 
 import (
+	"context"
 	"errors"
+	c "hmruntime/vector/constraints"
 	"hmruntime/vector/index"
 	"sync"
 
 	"hmruntime/vector/options"
 )
 
-type InMemIndexFactory struct {
-	indexMap map[string]index.VectorIndex[float64]
+var GlobalIndexFactory *IndexFactory[float64]
+
+func InitializeIndexFactory() {
+	GlobalIndexFactory = CreateFactory[float64]()
+}
+
+type IndexFactory[T c.Float] struct {
+	indexMap map[string]index.VectorIndex[T]
 	mu       sync.RWMutex
 }
 
-// CreateFactory creates an instance of the private struct InMemIndexFactory.
+// CreateFactory creates an instance of the private struct IndexFactory.
 // NOTE: if T and floatBits do not match in # of bits, there will be consequences.
-func CreateFactory() *InMemIndexFactory {
-	f := &InMemIndexFactory{
-		indexMap: map[string]index.VectorIndex[float64]{},
+func CreateFactory[T c.Float]() *IndexFactory[T] {
+	f := &IndexFactory[T]{
+		indexMap: map[string]index.VectorIndex[T]{},
 	}
 	return f
 }
 
 // Implements NamedFactory interface for use as a plugin.
-func (hf *InMemIndexFactory) Name() string { return "in_mem" }
+func (hf *IndexFactory[T]) Name() string { return "in_mem" }
 
-func (hf *InMemIndexFactory) isNameAvailableWithLock(name string) bool {
+func (hf *IndexFactory[T]) isNameAvailableWithLock(name string) bool {
 	_, nameUsed := hf.indexMap[name]
 	return !nameUsed
 }
@@ -34,7 +42,7 @@ func (hf *InMemIndexFactory) isNameAvailableWithLock(name string) bool {
 // IndexFactory interface (see vector-indexer/index/index.go for details).
 // We define here options for exponent, maxLevels, efSearch, efConstruction,
 // and metric.
-func (hf *InMemIndexFactory) AllowedOptions() options.AllowedOptions {
+func (hf *IndexFactory[T]) AllowedOptions() options.AllowedOptions {
 	retVal := options.NewAllowedOptions()
 
 	return retVal
@@ -46,39 +54,36 @@ func (hf *InMemIndexFactory) AllowedOptions() options.AllowedOptions {
 // multFactor, maxLevels, efConstruction, maxNeighbors, and efSearch using struct parameters.
 // It then populates the HNSW graphs using the InsertChunk function until there are no more items to populate.
 // Finally, the function adds the name and hnsw object to the in memory map and returns the object.
-func (hf *InMemIndexFactory) Create(
+func (hf *IndexFactory[T]) Create(
 	name string,
 	o options.Options,
-	source index.VectorSource[float64],
-	floatBits int) (index.VectorIndex[float64], error) {
+	source index.VectorSource[T],
+	index index.VectorIndex[T]) (index.VectorIndex[T], error) {
 	hf.mu.Lock()
 	defer hf.mu.Unlock()
-	return hf.createWithLock(name, o, source, floatBits)
+	return hf.createWithLock(name, o, source, index)
 }
 
-func (hf *InMemIndexFactory) createWithLock(
+func (hf *IndexFactory[T]) createWithLock(
 	name string,
 	o options.Options,
-	source index.VectorSource[float64],
-	floatBits int) (index.VectorIndex[float64], error) {
+	source index.VectorSource[T],
+	index index.VectorIndex[T]) (index.VectorIndex[T], error) {
 	if !hf.isNameAvailableWithLock(name) {
 		err := errors.New("index with name " + name + " already exists")
 		return nil, err
 	}
-	retVal := &InMemBruteForceIndex{
-		pred:        name,
-		vectorNodes: map[uint64][]float64{},
-	}
+	retVal := index
 	// while NextChunk() returns a chunk of vectors and their corresponding uids, insert them into the index graph
 	for chunk, uids, more, err := source.NextChunk(); more; {
 		if err != nil {
 			return nil, err
 		}
 		for i, vector := range chunk {
-			retVal.vectorNodes[uids[i]] = vector
+			retVal.Insert(context.Background(), nil, uids[i], vector)
 		}
 	}
-	err := retVal.applyOptions(o)
+	err := retVal.ApplyOptions(o)
 	if err != nil {
 		return nil, err
 	}
@@ -88,26 +93,26 @@ func (hf *InMemIndexFactory) createWithLock(
 
 // Find is an implementation of the IndexFactory interface function, invoked by an persistentIndexFactory
 // instance. It returns the VectorIndex corresponding with a string name using the in memory map.
-func (hf *InMemIndexFactory) Find(name string) (index.VectorIndex[float64], error) {
+func (hf *IndexFactory[T]) Find(name string) (index.VectorIndex[T], error) {
 	hf.mu.RLock()
 	defer hf.mu.RUnlock()
 	return hf.findWithLock(name)
 }
 
-func (hf *InMemIndexFactory) findWithLock(name string) (index.VectorIndex[float64], error) {
+func (hf *IndexFactory[T]) findWithLock(name string) (index.VectorIndex[T], error) {
 	vecInd := hf.indexMap[name]
 	return vecInd, nil
 }
 
 // Remove is an implementation of the IndexFactory interface function, invoked by an persistentIndexFactory
 // instance. It removes the VectorIndex corresponding with a string name using the in memory map.
-func (hf *InMemIndexFactory) Remove(name string) error {
+func (hf *IndexFactory[T]) Remove(name string) error {
 	hf.mu.Lock()
 	defer hf.mu.Unlock()
 	return hf.removeWithLock(name)
 }
 
-func (hf *InMemIndexFactory) removeWithLock(name string) error {
+func (hf *IndexFactory[T]) removeWithLock(name string) error {
 	delete(hf.indexMap, name)
 	return nil
 }
@@ -118,11 +123,11 @@ func (hf *InMemIndexFactory) removeWithLock(name string) error {
 // via the Create function using the passed VectorSource. If the VectorIndex
 // does not exist, it creates that VectorIndex corresponding with the name using
 // the VectorSource.
-func (hf *InMemIndexFactory) CreateOrReplace(
+func (hf *IndexFactory[T]) CreateOrReplace(
 	name string,
 	o options.Options,
-	source index.VectorSource[float64],
-	floatBits int) (index.VectorIndex[float64], error) {
+	source index.VectorSource[T],
+	index index.VectorIndex[T]) (index.VectorIndex[T], error) {
 	hf.mu.Lock()
 	defer hf.mu.Unlock()
 	vi, err := hf.findWithLock(name)
@@ -135,5 +140,5 @@ func (hf *InMemIndexFactory) CreateOrReplace(
 			return nil, err
 		}
 	}
-	return hf.createWithLock(name, o, source, floatBits)
+	return hf.createWithLock(name, o, source, index)
 }

@@ -51,56 +51,6 @@ func (vs *emptyVectorSource[T]) NextChunk() ([][]T, []uint64, bool, error) {
 	return nil, nil, false, nil
 }
 
-// IndexFactory is responsible for being able to create, find, and remove
-// VectorIndexes. There is no "update" as of now; just remove and create.
-//
-// It is expected that the IndexFactory has some notion of persistence, but
-// it is perfectly happy to support a total in-memory solution. To achieve
-// persistence, it is the responsibility of the implementations of IndexFactory
-// to reference the persistent storage.
-type IndexFactory[T c.Float] interface {
-	// Specifies the set of allowed options and a corresponding means to
-	// parse a string version of those options.
-	AllowedOptions() options.AllowedOptions
-
-	// Create is expected to create a VectorIndex, or generate an error
-	// if the name already has a corresponding VectorIndex or other problems.
-	// The name will be associated with with the generated VectorIndex
-	// such that if we Create an index with the name "foo", then later
-	// attempt to find the index with name "foo", it will refer to the
-	// same object.
-	// The set of vectors to use in the index process is defined by
-	// source.
-	Create(name string, o options.Options, source VectorSource[T], floatBits int) (VectorIndex[T], error)
-
-	// Find is expected to retrieve the VectorIndex corresponding with the
-	// name. If it attempts to find a name that does not exist, the VectorIndex
-	// will return as a nil value. It should throw an error in persistent storage
-	// issues when accessing information.
-	Find(name string) (VectorIndex[T], error)
-
-	// Remove is expected to delete the VectorIndex corresponding with the name.
-	// If removing a name that doesn't exist, nothing will happen and no errors
-	// are thrown. An error should only be thrown if there is issues accessing
-	// persistent storage information.
-	Remove(name string) error
-
-	// CreateOrReplace will create a new index -- as defined by the Create
-	// function -- if it does not yet exist, otherwise, it will replace any
-	// index with the given name.
-	CreateOrReplace(name string, o options.Options, source VectorSource[T], floatBits int) (VectorIndex[T], error)
-}
-
-// A NamedFactory serves the use-case where you want to have named IndexFactory
-// implementations where the NamedFactory is used as a plugin.
-type NamedFactory[T c.Float] interface {
-	IndexFactory[T]
-
-	// The Name returned represents the name of the factory rather than the
-	// name of any particular index.
-	Name() string
-}
-
 // SearchFilter defines a predicate function that we will use to determine
 // whether or not a given vector is "interesting". When used in the context
 // of VectorIndex.Search, a true result means that we want to keep the result
@@ -135,6 +85,12 @@ type OptionalIndexSupport[T c.Float] interface {
 type VectorIndex[T c.Float] interface {
 	OptionalIndexSupport[T]
 
+	// Specifies the set of allowed options and a corresponding means to
+	// parse a string version of those options.
+	AllowedOptions() options.AllowedOptions
+
+	ApplyOptions(o options.Options) error
+
 	// Search will find the uids for a given set of vectors based on the
 	// input query, limiting to the specified maximum number of results.
 	// The filter parameter indicates that we might discard certain parameters
@@ -158,6 +114,9 @@ type VectorIndex[T c.Float] interface {
 	// Insert will add a vector and uuid into the existing VectorIndex. If
 	// uuid already exists, it should throw an error to not insert duplicate uuids
 	Insert(ctx context.Context, c CacheType, uuid uint64, vec []T) ([]*KeyValue, error)
+
+	// InsertDataNode will add a data node to the existing VectorIndex
+	InsertDataNode(ctx context.Context, c CacheType, uuid uint64, data string) error
 
 	// OptionalFeatures() returns a collection of optional features that
 	// may be supported by this class. By default, every implementation

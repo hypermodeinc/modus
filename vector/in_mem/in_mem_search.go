@@ -15,7 +15,11 @@ type InMemBruteForceIndex struct {
 	dataNodes   map[uint64]string
 }
 
-func (ims *InMemBruteForceIndex) applyOptions(o options.Options) error {
+func (ims *InMemBruteForceIndex) AllowedOptions() options.AllowedOptions {
+	return nil
+}
+
+func (ims *InMemBruteForceIndex) ApplyOptions(o options.Options) error {
 	return nil
 }
 
