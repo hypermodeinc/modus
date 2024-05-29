@@ -1,5 +1,9 @@
 # Change Log
 
+## UNRELEASED
+
+- Fix compatibility with v1 `authHeader` secret [#208](https://github.com/gohypermode/runtime/pull/208)
+
 ## 2024-05-29 - Version 0.8.0
 
 - Add Model Inference History to runtime [#186](https://github.com/gohypermode/runtime/pull/186)
