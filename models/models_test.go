@@ -44,7 +44,6 @@ func TestMain(m *testing.M) {
 			testHostName: {
 				Name:     testHostName,
 				Endpoint: "",
-				// AuthHeader: "",
 			},
 		},
 	}

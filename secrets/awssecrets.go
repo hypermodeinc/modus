@@ -42,7 +42,10 @@ func (sp *awsSecretsProvider) initialize(ctx context.Context) {
 	sp.prefix = ns + "/"
 
 	// Populate the cache with all secrets in the namespace.
-	sp.populateSecretsCache(ctx)
+	err = sp.populateSecretsCache(ctx)
+	if err != nil {
+		logger.Fatal(ctx).Err(err).Msg("Failed to populate the secrets cache.")
+	}
 
 	// Monitor for updates to the secrets.
 	go sp.monitorForUpdates(ctx)
