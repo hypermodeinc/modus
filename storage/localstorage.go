@@ -8,38 +8,37 @@ import (
 	"context"
 	"fmt"
 	"hmruntime/config"
+	"hmruntime/logger"
 	"os"
 	"path/filepath"
 	"strings"
-
-	"github.com/rs/zerolog/log"
 )
 
-type localStorage struct {
+type localStorageProvider struct {
 }
 
-func (stg *localStorage) initialize() {
+func (stg *localStorageProvider) initialize(ctx context.Context) {
 	if config.StoragePath == "" {
-		log.Fatal().Msg("A storage path is required when using local storage.  Exiting.")
+		logger.Fatal(ctx).Msg("A storage path is required when using local storage.  Exiting.")
 	}
 
 	if _, err := os.Stat(config.StoragePath); os.IsNotExist(err) {
-		log.Info().
+		logger.Info(ctx).
 			Str("path", config.StoragePath).
 			Msg("Creating local storage directory.")
 		err := os.MkdirAll(config.StoragePath, 0755)
 		if err != nil {
-			log.Fatal().Err(err).
+			logger.Fatal(ctx).Err(err).
 				Msg("Failed to create local storage directory.  Exiting.")
 		}
 	} else {
-		log.Info().
+		logger.Info(ctx).
 			Str("path", config.StoragePath).
 			Msg("Found local storage directory.")
 	}
 }
 
-func (stg *localStorage) listFiles(ctx context.Context, extension string) ([]FileInfo, error) {
+func (stg *localStorageProvider) listFiles(ctx context.Context, extension string) ([]FileInfo, error) {
 	entries, err := os.ReadDir(config.StoragePath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list files in storage directory: %w", err)
@@ -64,7 +63,7 @@ func (stg *localStorage) listFiles(ctx context.Context, extension string) ([]Fil
 	return files, nil
 }
 
-func (stg *localStorage) getFileContents(ctx context.Context, name string) ([]byte, error) {
+func (stg *localStorageProvider) getFileContents(ctx context.Context, name string) ([]byte, error) {
 	path := filepath.Join(config.StoragePath, name)
 	content, err := os.ReadFile(path)
 	if err != nil {

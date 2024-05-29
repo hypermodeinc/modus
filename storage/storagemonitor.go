@@ -44,7 +44,7 @@ func (sm *StorageMonitor) Start(ctx context.Context) {
 		var loggedError = false
 
 		for {
-			files, err := impl.listFiles(ctx, sm.extension)
+			files, err := provider.listFiles(ctx, sm.extension)
 			if err != nil {
 				// Don't stop watching. We'll just try again on the next cycle.
 				if !loggedError {

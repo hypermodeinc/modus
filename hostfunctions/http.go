@@ -14,6 +14,7 @@ import (
 	"hmruntime/hosts"
 	"hmruntime/logger"
 	"hmruntime/plugins"
+	"hmruntime/secrets"
 	"hmruntime/utils"
 
 	wasm "github.com/tetratelabs/wazero/api"
@@ -81,7 +82,9 @@ func hostFetch(ctx context.Context, mod wasm.Module, pRequest uint32) (pResponse
 
 	host, err := hosts.GetHostForUrl(request.Url)
 	if err != nil {
-		logger.Err(ctx, err).Msg("Error getting host.")
+		logger.Err(ctx, err).
+			Str("url", request.Url).
+			Msg("Error getting host.")
 		return 0
 	}
 
@@ -91,19 +94,16 @@ func hostFetch(ctx context.Context, mod wasm.Module, pRequest uint32) (pResponse
 		logger.Err(ctx, err).Msg("Error creating request.")
 		return 0
 	}
-
 	for _, header := range request.Headers.Data {
 		req.Header[header.Name] = header.Values
 	}
 
-	if host.AuthHeader != "" {
-		key, err := hosts.GetHostKey(ctx, host)
-		if err != nil {
-			logger.Err(ctx, err).Msg("Error getting host key.")
-			return 0
-		}
-
-		req.Header.Set(host.AuthHeader, key)
+	err = secrets.ApplyHostSecrets(ctx, host, req)
+	if err != nil {
+		logger.Err(ctx, err).
+			Str("host", host.Name).
+			Msg("Error applying host secrets.")
+		return 0
 	}
 
 	resp, err := utils.HttpClient().Do(req)

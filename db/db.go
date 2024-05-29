@@ -3,13 +3,12 @@ package db
 import (
 	"context"
 	"fmt"
-	"os"
 	"time"
 
-	"hmruntime/aws"
 	"hmruntime/config"
 	"hmruntime/logger"
 	"hmruntime/metrics"
+	"hmruntime/secrets"
 	"hmruntime/utils"
 
 	"github.com/hypermodeAI/manifest"
@@ -110,7 +109,7 @@ func WriteInferenceHistoryToDB(ctx context.Context, batch []inferenceHistory) {
 				return err
 			}
 			query := fmt.Sprintf("INSERT INTO %s (id, model_hash, input, output, started_at, duration_ms) VALUES ($1, $2, $3, $4, $5, $6)", inferencesTable)
-			args := []any{utils.GeneratUUID(), data.model.Hash(), input, output, data.start, data.end.Sub(data.start).Milliseconds()}
+			args := []any{utils.GenerateUUIDV7(), data.model.Hash(), input, output, data.start, data.end.Sub(data.start).Milliseconds()}
 			b.Queue(query, args...)
 		}
 
@@ -137,18 +136,10 @@ func WriteInferenceHistoryToDB(ctx context.Context, batch []inferenceHistory) {
 }
 
 func Initialize(ctx context.Context) {
-	var connStr string
-	var err error
-	if config.GetEnvironmentName() == "dev" {
-		connStr = os.Getenv("HYPERMODE_METADATA_DB")
-	} else {
-		ns := os.Getenv("NAMESPACE")
-		secretName := ns + "_HYPERMODE_METADATA_DB"
-		connStr, err = aws.GetSecretString(ctx, secretName)
-		if err != nil {
-			logger.Err(ctx, err).Msg("Error getting database connection string")
-			return
-		}
+	connStr, err := secrets.GetSecretValue(ctx, "HYPERMODE_METADATA_DB")
+	if err != nil {
+		logger.Err(ctx, err).Msg("Error getting database connection string")
+		return
 	}
 
 	tempDBPool, err := pgxpool.New(ctx, connStr)

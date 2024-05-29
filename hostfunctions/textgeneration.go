@@ -46,7 +46,7 @@ func hostInvokeTextGenerator(ctx context.Context, mod wasm.Module, pModelName ui
 		return 0
 	}
 
-	var result models.ChatResponse
+	var result *models.ChatResponse
 	switch model.Host {
 	case hosts.OpenAIHost:
 		result, err = openai.ChatCompletion(ctx, model, host, instruction, sentence, outputFormat)
