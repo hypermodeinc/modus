@@ -7,6 +7,7 @@ package secrets
 import (
 	"context"
 	"fmt"
+	"maps"
 	"strings"
 	"time"
 
@@ -152,10 +153,12 @@ func (sp *awsSecretsProvider) monitorForUpdates(ctx context.Context) {
 		} else {
 			// Update the cache with the new secret values.
 			// We don't need to batch these requests, because it's unlikely that we'll have more than a few modified secrets at a time.
+			remainder := maps.Clone(sp.cache)
 			for _, secret := range secrets {
 
 				key := strings.TrimPrefix(*secret.Name, sp.prefix)
 				if cachedSecret, ok := sp.cache[key]; ok {
+					delete(remainder, key)
 					if sp.getCurrentVersionId(secret) == *cachedSecret.VersionId {
 						continue
 					}
@@ -178,6 +181,11 @@ func (sp *awsSecretsProvider) monitorForUpdates(ctx context.Context) {
 					VersionId:     secretValue.VersionId,
 					VersionStages: secretValue.VersionStages,
 				}
+			}
+
+			// Remove secrets that were deleted
+			for key := range remainder {
+				delete(sp.cache, key)
 			}
 		}
 
