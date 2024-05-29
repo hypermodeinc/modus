@@ -1,6 +1,6 @@
 # Change Log
 
-## UNRELEASED
+## 2024-05-29 - Version 0.8.0
 
 - Add Model Inference History to runtime [#186](https://github.com/gohypermode/runtime/pull/186)
 - Pass auth headers correctly when invoking a GraphQL API [#196](https://github.com/gohypermode/runtime/pull/196)
