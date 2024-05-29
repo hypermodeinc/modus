@@ -7,8 +7,8 @@ package secrets
 import (
 	"context"
 	"fmt"
-	"path"
 	"strings"
+	"time"
 
 	"hmruntime/aws"
 	"hmruntime/config"
@@ -22,7 +22,9 @@ import (
 )
 
 type awsSecretsProvider struct {
-	smClient *secretsmanager.Client
+	prefix string
+	client *secretsmanager.Client
+	cache  map[string]types.SecretValueEntry
 }
 
 func (sp *awsSecretsProvider) initialize(ctx context.Context) {
@@ -30,11 +32,24 @@ func (sp *awsSecretsProvider) initialize(ctx context.Context) {
 	// This is safe to hold onto for the lifetime of the application.
 	// See https://github.com/aws/aws-sdk-go-v2/discussions/2566
 	cfg := aws.GetAwsConfig()
-	sp.smClient = secretsmanager.NewFromConfig(cfg)
+	sp.client = secretsmanager.NewFromConfig(cfg)
+
+	// Set the prefix based on the namespace for the backend.
+	ns, err := config.GetNamespace()
+	if err != nil {
+		logger.Fatal(ctx).Err(err).Msg("Failed to get the namespace.")
+	}
+	sp.prefix = ns + "/"
+
+	// Populate the cache with all secrets in the namespace.
+	sp.populateSecretsCache(ctx)
+
+	// Monitor for updates to the secrets.
+	go sp.monitorForUpdates(ctx)
 }
 
 func (sp *awsSecretsProvider) getHostSecrets(ctx context.Context, host manifest.HostInfo) (map[string]string, error) {
-	secrets, err := sp.getSecrets(ctx, host.Name)
+	secrets, err := sp.getSecrets(ctx, host.Name+"/")
 	if err != nil {
 		return nil, err
 	}
@@ -56,73 +71,156 @@ func (sp *awsSecretsProvider) getHostSecrets(ctx context.Context, host manifest.
 }
 
 func (sp *awsSecretsProvider) getSecrets(ctx context.Context, prefix string) (map[string]string, error) {
-	transaction, ctx := utils.NewSentryTransactionForCurrentFunc(ctx)
-	defer transaction.Finish()
+	span := utils.NewSentrySpanForCurrentFunc(ctx)
+	defer span.Finish()
 
-	// All secrets are prefixed with the namespace for the backend.
-	ns, err := config.GetNamespace()
-	if err != nil {
-		return nil, err
-	}
-	prefix = path.Join(ns, prefix)
-
-	// TODO: use the secrets cache the secrets, but we can't just look them up in the cache by prefix
-	// We'll need to update the cache automatically when secrets are modified.
-
-	// TODO: handle pagination
-
-	out, err := sp.smClient.BatchGetSecretValue(ctx, &secretsmanager.BatchGetSecretValueInput{
-		Filters: []types.Filter{{
-			Key:    types.FilterNameStringTypeName,
-			Values: []string{prefix},
-		}},
-	})
-
-	if err != nil {
-		return nil, err
+	results := make(map[string]string)
+	for key, secret := range sp.cache {
+		if strings.HasPrefix(key, prefix) {
+			name := strings.TrimPrefix(key, prefix)
+			results[name] = *secret.SecretString
+		}
 	}
 
-	secrets := make(map[string]string)
-	for _, secret := range out.SecretValues {
-		name := strings.Trim(strings.TrimPrefix(*secret.Name, prefix), "/")
-		secrets[name] = *secret.SecretString
-	}
-
-	// TODO: Cache the secret for future use
-	// secretsCache[secretId] = *secretValue.SecretString
-
-	return secrets, nil
+	return results, nil
 }
 
 func (sp *awsSecretsProvider) getSecretValue(ctx context.Context, name string) (string, error) {
+	span := utils.NewSentrySpanForCurrentFunc(ctx)
+	defer span.Finish()
+
+	val, ok := sp.cache[name]
+	if !ok {
+		return "", fmt.Errorf("secret %s not found", name)
+	}
+
+	return *val.SecretString, nil
+}
+
+func (sp *awsSecretsProvider) populateSecretsCache(ctx context.Context) error {
 	transaction, ctx := utils.NewSentryTransactionForCurrentFunc(ctx)
 	defer transaction.Finish()
 
-	// // Return the secret from the cache if it exists
-	// if secret, ok := secretsCache[secretId]; ok {
-	// 	return secret, nil
-	// }
-
-	// All secrets are prefixed with the namespace for the backend.
-	ns, err := config.GetNamespace()
-	if err != nil {
-		return "", err
-	}
-	name = path.Join(ns, name)
-
-	secretValue, err := sp.smClient.GetSecretValue(ctx, &secretsmanager.GetSecretValueInput{
-		SecretId: &name,
+	p := secretsmanager.NewBatchGetSecretValuePaginator(sp.client, &secretsmanager.BatchGetSecretValueInput{
+		Filters: []types.Filter{{
+			Key:    types.FilterNameStringTypeName,
+			Values: []string{sp.prefix},
+		}},
 	})
 
-	if err != nil {
-		return "", fmt.Errorf("error getting secret: %w", err)
-	}
-	if secretValue.SecretString == nil {
-		return "", fmt.Errorf("secret string was empty")
+	for p.HasMorePages() {
+		page, err := p.NextPage(ctx)
+		if err != nil {
+			return err
+		}
+
+		if len(page.SecretValues) == 0 {
+			continue
+		}
+
+		if len(sp.cache) == 0 {
+			sp.cache = make(map[string]types.SecretValueEntry, len(page.SecretValues))
+		}
+
+		for _, secret := range page.SecretValues {
+			key := strings.TrimPrefix(*secret.Name, sp.prefix)
+			sp.cache[key] = secret
+		}
 	}
 
-	// // Cache the secret for future use
-	// secretsCache[secretId] = *secretValue.SecretString
+	if len(sp.cache) == 0 {
+		sp.cache = make(map[string]types.SecretValueEntry)
+	}
 
-	return *secretValue.SecretString, nil
+	return nil
+}
+
+func (sp *awsSecretsProvider) monitorForUpdates(ctx context.Context) {
+	ticker := time.NewTicker(config.RefreshInterval)
+	defer ticker.Stop()
+
+	for {
+		transaction, ctx := utils.NewSentryTransactionForCurrentFunc(ctx)
+		defer transaction.Finish()
+
+		secrets, err := sp.listSecrets(ctx)
+		if err != nil {
+			logger.Err(ctx, err).Msg("Failed to list secrets.")
+		} else {
+			// Update the cache with the new secret values.
+			// We don't need to batch these requests, because it's unlikely that we'll have more than a few modified secrets at a time.
+			for _, secret := range secrets {
+
+				key := strings.TrimPrefix(*secret.Name, sp.prefix)
+				if cachedSecret, ok := sp.cache[key]; ok {
+					if sp.getCurrentVersionId(secret) == *cachedSecret.VersionId {
+						continue
+					}
+				}
+
+				secretValue, err := sp.client.GetSecretValue(ctx, &secretsmanager.GetSecretValueInput{
+					SecretId: secret.ARN,
+				})
+				if err != nil {
+					logger.Err(ctx, err).Msgf("Failed to get secret value for %s.", *secret.Name)
+					continue
+				}
+
+				sp.cache[key] = types.SecretValueEntry{
+					ARN:           secretValue.ARN,
+					CreatedDate:   secretValue.CreatedDate,
+					Name:          secretValue.Name,
+					SecretBinary:  secretValue.SecretBinary,
+					SecretString:  secretValue.SecretString,
+					VersionId:     secretValue.VersionId,
+					VersionStages: secretValue.VersionStages,
+				}
+			}
+		}
+
+		// Wait for next cycle
+		select {
+		case <-ticker.C:
+			continue
+		case <-ctx.Done():
+			return
+		}
+	}
+}
+
+func (sp *awsSecretsProvider) getCurrentVersionId(s types.SecretListEntry) string {
+	for k, v := range s.SecretVersionsToStages {
+		if v[0] == "AWSCURRENT" {
+			return k
+		}
+	}
+	return ""
+}
+
+func (sp *awsSecretsProvider) listSecrets(ctx context.Context) ([]types.SecretListEntry, error) {
+	transaction, ctx := utils.NewSentryTransactionForCurrentFunc(ctx)
+	defer transaction.Finish()
+
+	p := secretsmanager.NewListSecretsPaginator(sp.client, &secretsmanager.ListSecretsInput{
+		Filters: []types.Filter{{
+			Key:    types.FilterNameStringTypeName,
+			Values: []string{sp.prefix},
+		}},
+	})
+
+	var results []types.SecretListEntry
+	for p.HasMorePages() {
+		page, err := p.NextPage(ctx)
+		if err != nil {
+			return nil, err
+		}
+
+		if len(results) == 0 {
+			results = make([]types.SecretListEntry, 0, len(page.SecretList))
+		}
+
+		results = append(results, page.SecretList...)
+	}
+
+	return results, nil
 }
