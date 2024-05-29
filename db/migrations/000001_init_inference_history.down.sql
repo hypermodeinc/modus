@@ -1,1 +1,1 @@
-DROP TABLE IF EXISTS "local_instance";
+DROP TABLE IF EXISTS "inferences";

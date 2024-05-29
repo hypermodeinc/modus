@@ -109,7 +109,7 @@ func WriteInferenceHistoryToDB(ctx context.Context, batch []inferenceHistory) {
 				return err
 			}
 			query := fmt.Sprintf("INSERT INTO %s (id, model_hash, input, output, started_at, duration_ms) VALUES ($1, $2, $3, $4, $5, $6)", inferencesTable)
-			args := []any{utils.GeneratUUID(), data.model.Hash(), input, output, data.start, data.end.Sub(data.start).Milliseconds()}
+			args := []any{utils.GenerateUUIDV7(), data.model.Hash(), input, output, data.start, data.end.Sub(data.start).Milliseconds()}
 			b.Queue(query, args...)
 		}
 
