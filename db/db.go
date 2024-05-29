@@ -136,7 +136,7 @@ func WriteInferenceHistoryToDB(ctx context.Context, batch []inferenceHistory) {
 }
 
 func Initialize(ctx context.Context) {
-	connStr, err := secrets.GetSecret(ctx, "HYPERMODE_METADATA_DB")
+	connStr, err := secrets.GetSecretValue(ctx, "HYPERMODE_METADATA_DB")
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error getting database connection string")
 		return

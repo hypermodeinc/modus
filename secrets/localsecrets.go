@@ -32,7 +32,7 @@ func (sp *localSecretsProvider) getHostSecrets(ctx context.Context, host manifes
 	return secrets, nil
 }
 
-func (sp *localSecretsProvider) getSecret(ctx context.Context, name string) (string, error) {
+func (sp *localSecretsProvider) getSecretValue(ctx context.Context, name string) (string, error) {
 	v := os.Getenv(name)
 	if v == "" {
 		return "", fmt.Errorf("environment variable %s was not found", name)

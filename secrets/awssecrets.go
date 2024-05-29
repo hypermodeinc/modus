@@ -94,7 +94,7 @@ func (sp *awsSecretsProvider) getSecrets(ctx context.Context, prefix string) (ma
 	return secrets, nil
 }
 
-func (sp *awsSecretsProvider) getSecret(ctx context.Context, name string) (string, error) {
+func (sp *awsSecretsProvider) getSecretValue(ctx context.Context, name string) (string, error) {
 	transaction, ctx := utils.NewSentryTransactionForCurrentFunc(ctx)
 	defer transaction.Finish()
 
