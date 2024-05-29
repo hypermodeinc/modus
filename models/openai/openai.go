@@ -8,11 +8,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"regexp"
 
 	"hmruntime/db"
 	"hmruntime/hosts"
+	"hmruntime/manifestdata"
 	"hmruntime/models"
-	"hmruntime/utils"
 
 	"github.com/hypermodeAI/manifest"
 )
@@ -26,15 +27,30 @@ type ResponseFormat struct {
 	Type string `json:"type"`
 }
 
-func ChatCompletion(ctx context.Context, model manifest.ModelInfo, host manifest.HostInfo, instruction string, sentence string, outputFormat models.OutputFormat) (models.ChatResponse, error) {
+var authHeaderRegex = regexp.MustCompile(`^Bearer {{\s*\w+?\s*}}$`)
 
-	// Get the OpenAI API key to use for this model
-	key, err := hosts.GetHostKey(ctx, host)
-	if err != nil {
-		return models.ChatResponse{}, err
+func ChatCompletion(ctx context.Context, model manifest.ModelInfo, host manifest.HostInfo, instruction string, sentence string, outputFormat models.OutputFormat) (*models.ChatResponse, error) {
+
+	// We ignore the model endpoint and use the OpenAI chat completion endpoint
+	host.Endpoint = "https://api.openai.com/v1/chat/completions"
+
+	// Validate that the host has an Authorization header containing a Bearer token
+	authHeaderValue, ok := host.Headers["Authorization"]
+	if !ok {
+		// Handle how the key was passed in the old V1 manifest format
+		if manifestdata.Manifest.Version == 1 && len(host.Headers) == 1 {
+			for k, v := range host.Headers {
+				apiKey := v
+				delete(host.Headers, k)
+				host.Headers["Authorization"] = "Bearer " + apiKey
+			}
+		} else {
+			return nil, fmt.Errorf("host must have an Authorization header containing a Bearer token")
+		}
+	} else if !authHeaderRegex.MatchString(authHeaderValue) {
+		return nil, fmt.Errorf("host Authorization header must be of the form: \"Bearer {{SECRET_NAME}}\"")
 	}
 
-	// build the request body following OpenAI API
 	reqBody := ChatContext{
 		Model: model.SourceModel,
 		ResponseFormat: ResponseFormat{
@@ -46,30 +62,21 @@ func ChatCompletion(ctx context.Context, model manifest.ModelInfo, host manifest
 		},
 	}
 
-	// We ignore the model endpoint and use the OpenAI endpoint
-	const endpoint = "https://api.openai.com/v1/chat/completions"
-	headers := map[string]string{
-		"Authorization": "Bearer " + key,
-	}
-
-	start := utils.GetTime()
-	result, err := utils.PostHttp[models.ChatResponse](endpoint, reqBody, headers)
-	end := utils.GetTime()
-
+	result, err := hosts.PostToHostEndpoint[models.ChatResponse](ctx, host, reqBody)
 	if err != nil {
-		return models.ChatResponse{}, fmt.Errorf("error posting to OpenAI: %w", err)
+		return nil, fmt.Errorf("error posting to OpenAI: %w", err)
 	}
 
-	if result.Error.Message != "" {
-		return models.ChatResponse{}, fmt.Errorf("error returned from OpenAI: %s", result.Error.Message)
+	if result.Data.Error.Message != "" {
+		return &result.Data, fmt.Errorf("error returned from OpenAI: %s", result.Data.Error.Message)
 	}
 
 	// write the results to the database
 	resultBytes, err := json.Marshal(result)
 	if err != nil {
-		return result, fmt.Errorf("error marshalling result: %w", err)
+		return nil, fmt.Errorf("error marshalling result: %w", err)
 	}
-	db.WriteInferenceHistory(ctx, model, sentence, string(resultBytes), start, end)
+	db.WriteInferenceHistory(ctx, model, sentence, string(resultBytes), result.StartTime, result.EndTime)
 
-	return result, nil
+	return &result.Data, nil
 }

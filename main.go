@@ -20,6 +20,7 @@ import (
 	"hmruntime/graphql"
 	"hmruntime/logger"
 	"hmruntime/manifestdata"
+	"hmruntime/secrets"
 	"hmruntime/server"
 	"hmruntime/storage"
 	"hmruntime/utils"
@@ -71,11 +72,14 @@ func initRuntimeServices(ctx context.Context) {
 	// Initialize AWS functionality
 	aws.Initialize(ctx)
 
-	// Initialize the inference history database
-	db.Initialize(ctx)
+	// Initialize the secrets provider
+	secrets.Initialize(ctx)
 
-	// Initialize the storage system
+	// Initialize the storage provider
 	storage.Initialize(ctx)
+
+	// Initialize the metadata database
+	db.Initialize(ctx)
 
 	// Watch for function registration requests
 	functions.MonitorRegistration(ctx)

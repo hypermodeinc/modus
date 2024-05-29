@@ -13,18 +13,18 @@ import (
 
 	"hmruntime/aws"
 	"hmruntime/config"
+	"hmruntime/logger"
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/rs/zerolog/log"
 )
 
-type awsStorage struct {
+type awsStorageProvider struct {
 	s3Client *s3.Client
 }
 
-func (stg *awsStorage) initialize() {
+func (stg *awsStorageProvider) initialize(ctx context.Context) {
 	if config.S3Bucket == "" {
-		log.Fatal().Msg("An S3 bucket is required when using AWS storage.  Exiting.")
+		logger.Fatal(ctx).Msg("An S3 bucket is required when using AWS storage.  Exiting.")
 	}
 
 	// Initialize the S3 service client.
@@ -34,7 +34,7 @@ func (stg *awsStorage) initialize() {
 	stg.s3Client = s3.NewFromConfig(cfg)
 }
 
-func (stg *awsStorage) listFiles(ctx context.Context, extension string) ([]FileInfo, error) {
+func (stg *awsStorageProvider) listFiles(ctx context.Context, extension string) ([]FileInfo, error) {
 
 	input := &s3.ListObjectsV2Input{
 		Bucket: &config.S3Bucket,
@@ -63,7 +63,7 @@ func (stg *awsStorage) listFiles(ctx context.Context, extension string) ([]FileI
 	return files, nil
 }
 
-func (stg *awsStorage) getFileContents(ctx context.Context, name string) ([]byte, error) {
+func (stg *awsStorageProvider) getFileContents(ctx context.Context, name string) ([]byte, error) {
 	key := path.Join(config.S3Path, name)
 	input := &s3.GetObjectInput{
 		Bucket: &config.S3Bucket,

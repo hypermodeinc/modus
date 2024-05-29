@@ -51,10 +51,6 @@ func initialize(ctx context.Context) error {
 
 	awsConfig = cfg
 
-	if hmConfig.UseAwsSecrets {
-		initSecretsManager()
-	}
-
 	logger.Info(ctx).
 		Str("region", awsConfig.Region).
 		Str("account", *identity.Account).
