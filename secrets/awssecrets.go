@@ -24,7 +24,7 @@ import (
 type awsSecretsProvider struct {
 	prefix string
 	client *secretsmanager.Client
-	cache  map[string]types.SecretValueEntry
+	cache  map[string]*types.SecretValueEntry
 }
 
 func (sp *awsSecretsProvider) initialize(ctx context.Context) {
@@ -122,17 +122,17 @@ func (sp *awsSecretsProvider) populateSecretsCache(ctx context.Context) error {
 		}
 
 		if len(sp.cache) == 0 {
-			sp.cache = make(map[string]types.SecretValueEntry, len(page.SecretValues))
+			sp.cache = make(map[string]*types.SecretValueEntry, len(page.SecretValues))
 		}
 
 		for _, secret := range page.SecretValues {
 			key := strings.TrimPrefix(*secret.Name, sp.prefix)
-			sp.cache[key] = secret
+			sp.cache[key] = &secret
 		}
 	}
 
 	if len(sp.cache) == 0 {
-		sp.cache = make(map[string]types.SecretValueEntry)
+		sp.cache = make(map[string]*types.SecretValueEntry)
 	}
 
 	return nil
@@ -169,7 +169,7 @@ func (sp *awsSecretsProvider) monitorForUpdates(ctx context.Context) {
 					continue
 				}
 
-				sp.cache[key] = types.SecretValueEntry{
+				sp.cache[key] = &types.SecretValueEntry{
 					ARN:           secretValue.ARN,
 					CreatedDate:   secretValue.CreatedDate,
 					Name:          secretValue.Name,
