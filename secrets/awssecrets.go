@@ -7,6 +7,7 @@ package secrets
 import (
 	"context"
 	"fmt"
+	"maps"
 	"strings"
 	"time"
 
@@ -24,7 +25,7 @@ import (
 type awsSecretsProvider struct {
 	prefix string
 	client *secretsmanager.Client
-	cache  map[string]types.SecretValueEntry
+	cache  map[string]*types.SecretValueEntry
 }
 
 func (sp *awsSecretsProvider) initialize(ctx context.Context) {
@@ -122,17 +123,17 @@ func (sp *awsSecretsProvider) populateSecretsCache(ctx context.Context) error {
 		}
 
 		if len(sp.cache) == 0 {
-			sp.cache = make(map[string]types.SecretValueEntry, len(page.SecretValues))
+			sp.cache = make(map[string]*types.SecretValueEntry, len(page.SecretValues))
 		}
 
 		for _, secret := range page.SecretValues {
 			key := strings.TrimPrefix(*secret.Name, sp.prefix)
-			sp.cache[key] = secret
+			sp.cache[key] = &secret
 		}
 	}
 
 	if len(sp.cache) == 0 {
-		sp.cache = make(map[string]types.SecretValueEntry)
+		sp.cache = make(map[string]*types.SecretValueEntry)
 	}
 
 	return nil
@@ -152,10 +153,12 @@ func (sp *awsSecretsProvider) monitorForUpdates(ctx context.Context) {
 		} else {
 			// Update the cache with the new secret values.
 			// We don't need to batch these requests, because it's unlikely that we'll have more than a few modified secrets at a time.
+			remainder := maps.Clone(sp.cache)
 			for _, secret := range secrets {
 
 				key := strings.TrimPrefix(*secret.Name, sp.prefix)
 				if cachedSecret, ok := sp.cache[key]; ok {
+					delete(remainder, key)
 					if sp.getCurrentVersionId(secret) == *cachedSecret.VersionId {
 						continue
 					}
@@ -169,7 +172,7 @@ func (sp *awsSecretsProvider) monitorForUpdates(ctx context.Context) {
 					continue
 				}
 
-				sp.cache[key] = types.SecretValueEntry{
+				sp.cache[key] = &types.SecretValueEntry{
 					ARN:           secretValue.ARN,
 					CreatedDate:   secretValue.CreatedDate,
 					Name:          secretValue.Name,
@@ -178,6 +181,11 @@ func (sp *awsSecretsProvider) monitorForUpdates(ctx context.Context) {
 					VersionId:     secretValue.VersionId,
 					VersionStages: secretValue.VersionStages,
 				}
+			}
+
+			// Remove secrets that were deleted
+			for key := range remainder {
+				delete(sp.cache, key)
 			}
 		}
 
