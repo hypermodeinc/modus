@@ -97,30 +97,33 @@ func applySecretsToString(ctx context.Context, secrets map[string]string, s stri
 		nameKey := submatches[3]
 		if nameKey != "" {
 			val, ok := secrets[nameKey]
-			if !ok {
-				logger.Warn(ctx).Str("name", nameKey).Msg("Secret not found.")
-				return match
+			if ok {
+				return val
 			}
-			return val
+
+			logger.Warn(ctx).Str("name", nameKey).Msg("Secret not found.")
+			return ""
 		}
 
 		// base64 secret template
 		userKey := submatches[1]
 		passKey := submatches[2]
 		if userKey != "" && passKey != "" {
-			user, ok := secrets[userKey]
-			if !ok {
+			user, userOk := secrets[userKey]
+			if !userOk {
 				logger.Warn(ctx).Str("name", userKey).Msg("Secret not found.")
-				return match
 			}
 
-			pass, ok := secrets[passKey]
-			if !ok {
+			pass, passOk := secrets[passKey]
+			if !passOk {
 				logger.Warn(ctx).Str("name", passKey).Msg("Secret not found.")
-				return match
 			}
 
-			return base64.StdEncoding.EncodeToString([]byte(user + ":" + pass))
+			if userOk && passOk {
+				return base64.StdEncoding.EncodeToString([]byte(user + ":" + pass))
+			} else {
+				return ""
+			}
 		}
 
 		logger.Warn(ctx).Str("template", match).Msg("Invalid secret variable template.")
