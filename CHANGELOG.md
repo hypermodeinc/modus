@@ -1,8 +1,9 @@
 # Change Log
 
-## UNRELEASED
-- improve openai inference history storage [#209](https://github.com/hypermodeAI/runtime/pull/209)
+## 2024-05-30 - Version 0.8.1
+
 - Fix compatibility with v1 `authHeader` secret [#208](https://github.com/gohypermode/runtime/pull/208)
+- Fix double-escaped JSON in OpenAI inference history [#209](https://github.com/hypermodeAI/runtime/pull/209)
 
 ## 2024-05-29 - Version 0.8.0
 
