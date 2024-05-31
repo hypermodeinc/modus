@@ -31,8 +31,8 @@ import (
 
 func main() {
 
-	// Parse the command line flags
-	config.ParseCommandLineFlags()
+	// Initialize the configuration
+	config.Initialize()
 
 	// Initialize the logger
 	log := logger.Initialize()

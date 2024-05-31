@@ -36,14 +36,10 @@ func (sp *awsSecretsProvider) initialize(ctx context.Context) {
 	sp.client = secretsmanager.NewFromConfig(cfg)
 
 	// Set the prefix based on the namespace for the backend.
-	ns, err := config.GetNamespace()
-	if err != nil {
-		logger.Fatal(ctx).Err(err).Msg("Failed to get the namespace.")
-	}
-	sp.prefix = ns + "/"
+	sp.prefix = config.GetNamespace() + "/"
 
 	// Populate the cache with all secrets in the namespace.
-	err = sp.populateSecretsCache(ctx)
+	err := sp.populateSecretsCache(ctx)
 	if err != nil {
 		logger.Fatal(ctx).Err(err).Msg("Failed to populate the secrets cache.")
 	}
