@@ -12,19 +12,39 @@ import (
 
 const devEnvironmentName = "dev"
 
+var environment string
+var namespace string
+
 func GetEnvironmentName() string {
-	env := os.Getenv("ENVIRONMENT")
-	if env == "" {
-		return devEnvironmentName
+	return environment
+}
+
+func setEnvironmentName() {
+	environment = os.Getenv("ENVIRONMENT")
+	if environment == "" {
+		environment = devEnvironmentName
 	}
-	return env
 }
 
 func IsDevEnvironment() bool {
-	return GetEnvironmentName() == devEnvironmentName
+	return environment == devEnvironmentName
 }
 
-func GetNamespace() (string, error) {
+func GetNamespace() string {
+	return namespace
+}
+
+func setNamespace() {
+	var err error
+	namespace, err = getNamespaceFromOS()
+	if err != nil {
+		// We don't have our logger yet, so just log to stderr.
+		fmt.Fprintf(os.Stderr, "Error getting namespace: %v\n", err)
+		os.Exit(1)
+	}
+}
+
+func getNamespaceFromOS() (string, error) {
 
 	// In development, we'll use "dev/<username>" in lieu of the namespace.
 	if IsDevEnvironment() {
