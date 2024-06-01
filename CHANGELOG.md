@@ -3,6 +3,7 @@
 ## UNRELEASED
 
 - Send backend ID with Sentry events [#211](https://github.com/gohypermode/runtime/pull/211)
+- Add some logging for secrets [#212](https://github.com/gohypermode/runtime/pull/212)
 
 ## 2024-05-30 - Version 0.8.1
 

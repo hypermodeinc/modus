@@ -124,11 +124,13 @@ func (sp *awsSecretsProvider) populateSecretsCache(ctx context.Context) error {
 		for _, secret := range page.SecretValues {
 			key := strings.TrimPrefix(*secret.Name, sp.prefix)
 			sp.cache[key] = &secret
+			logger.Info(ctx).Str("key", key).Msg("Secret loaded.")
 		}
 	}
 
 	if len(sp.cache) == 0 {
 		sp.cache = make(map[string]*types.SecretValueEntry)
+		logger.Info(ctx).Msg("No secrets loaded.")
 	}
 
 	return nil
@@ -176,11 +178,14 @@ func (sp *awsSecretsProvider) monitorForUpdates(ctx context.Context) {
 					VersionId:     secretValue.VersionId,
 					VersionStages: secretValue.VersionStages,
 				}
+
+				logger.Info(ctx).Str("key", key).Msg("Secret updated.")
 			}
 
 			// Remove secrets that were deleted
 			for key := range remainder {
 				delete(sp.cache, key)
+				logger.Info(ctx).Str("key", key).Msg("Secret removed.")
 			}
 		}
 
