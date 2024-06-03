@@ -1,8 +1,12 @@
 package vector
 
 import (
+	"bytes"
 	"context"
+	"encoding/gob"
 	"errors"
+	"fmt"
+	"hmruntime/storage"
 	c "hmruntime/vector/constraints"
 	"hmruntime/vector/index"
 	"sync"
@@ -14,6 +18,17 @@ var GlobalIndexFactory *IndexFactory[float64]
 
 func InitializeIndexFactory() {
 	GlobalIndexFactory = CreateFactory[float64]()
+	err := GlobalIndexFactory.ReadFromWAL()
+	if err != nil {
+		fmt.Println("Error reading from WAL, ", err)
+	}
+}
+
+func CloseIndexFactory() {
+	err := GlobalIndexFactory.WriteToWAL()
+	if err != nil {
+		fmt.Println("Error writing to WAL, ", err)
+	}
 }
 
 type IndexFactory[T c.Float] struct {
@@ -144,4 +159,35 @@ func (hf *IndexFactory[T]) CreateOrReplace(
 		}
 	}
 	return hf.createWithLock(name, o, source, index)
+}
+
+func (hf *IndexFactory[T]) WriteToWAL() error {
+	var buf bytes.Buffer
+
+	encoder := gob.NewEncoder(&buf)
+
+	if err := encoder.Encode(hf.indexMap); err != nil {
+		return err
+	}
+
+	// write using storage.WriteFile
+	storage.WriteFile(context.Background(), "index.wal", buf.Bytes())
+
+	return nil
+}
+
+func (hf *IndexFactory[T]) ReadFromWAL() error {
+	// read using storage.ReadFile
+	data, err := storage.GetFileContents(context.Background(), "index.wal")
+	if err != nil {
+		return fmt.Errorf("could not get file content, %s", err)
+	}
+
+	decoder := gob.NewDecoder(bytes.NewReader(data))
+
+	if err := decoder.Decode(&hf.indexMap); err != nil {
+		return fmt.Errorf("could not decode file content, %s", err)
+	}
+
+	return nil
 }

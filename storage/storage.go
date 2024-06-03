@@ -18,6 +18,7 @@ type storageProvider interface {
 	initialize(ctx context.Context)
 	listFiles(ctx context.Context, extension string) ([]FileInfo, error)
 	getFileContents(ctx context.Context, name string) ([]byte, error)
+	writeFile(ctx context.Context, name string, contents []byte) error
 }
 
 type FileInfo struct {
@@ -51,4 +52,11 @@ func GetFileContents(ctx context.Context, name string) ([]byte, error) {
 	defer span.Finish()
 
 	return provider.getFileContents(ctx, name)
+}
+
+func WriteFile(ctx context.Context, name string, contents []byte) error {
+	span := utils.NewSentrySpanForCurrentFunc(ctx)
+	defer span.Finish()
+
+	return provider.writeFile(ctx, name, contents)
 }

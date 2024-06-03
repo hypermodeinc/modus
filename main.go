@@ -103,6 +103,8 @@ func stopRuntimeServices(ctx context.Context) {
 	logger.Close()
 
 	db.Stop()
+
+	vector.CloseIndexFactory()
 }
 
 func getRootSourcePath() string {

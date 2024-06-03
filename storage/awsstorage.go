@@ -83,3 +83,19 @@ func (stg *awsStorageProvider) getFileContents(ctx context.Context, name string)
 
 	return content, nil
 }
+
+func (stg *awsStorageProvider) writeFile(ctx context.Context, name string, contents []byte) error {
+	key := path.Join(config.S3Path, name)
+	input := &s3.PutObjectInput{
+		Bucket: &config.S3Bucket,
+		Key:    &key,
+		Body:   strings.NewReader(string(contents)),
+	}
+
+	_, err := stg.s3Client.PutObject(ctx, input)
+	if err != nil {
+		return fmt.Errorf("failed to write file %s to S3: %w", name, err)
+	}
+
+	return nil
+}

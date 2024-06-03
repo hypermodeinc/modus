@@ -3,9 +3,11 @@ package in_mem
 import (
 	"container/heap"
 	"context"
+	"encoding/gob"
 	"hmruntime/vector/index"
 	"hmruntime/vector/options"
 	"hmruntime/vector/utils"
+	"os"
 )
 
 type InMemBruteForceIndex struct {
@@ -81,4 +83,24 @@ func (ims *InMemBruteForceIndex) InsertDataNode(ctx context.Context, c index.Cac
 
 func (ims *InMemBruteForceIndex) GetDataNode(ctx context.Context, c index.CacheType, uid uint64) string {
 	return ims.dataNodes[uid]
+}
+
+func (ims *InMemBruteForceIndex) WriteToWAL(filename string) error {
+	file, err := os.Create(filename)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	encoder := gob.NewEncoder(file)
+
+	if err := encoder.Encode(ims.vectorNodes); err != nil {
+		return err
+	}
+
+	if err := encoder.Encode(ims.dataNodes); err != nil {
+		return err
+	}
+
+	return nil
 }
