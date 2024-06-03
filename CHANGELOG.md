@@ -1,6 +1,6 @@
 # Change Log
 
-## UNRELEASED
+## 2024-06-03 - Version 0.8.2
 
 - Send backend ID with Sentry events [#211](https://github.com/gohypermode/runtime/pull/211) [#213](https://github.com/gohypermode/runtime/pull/213)
 - Add some logging for secrets [#212](https://github.com/gohypermode/runtime/pull/212)
