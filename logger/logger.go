@@ -47,6 +47,13 @@ func Initialize() *zerolog.Logger {
 		}
 	}
 
+	// Log the runtime version to every log line, except in development.
+	if !config.IsDevEnvironment() {
+		log.Logger = log.Logger.With().
+			Str("runtime_version", config.GetVersionNumber()).
+			Logger()
+	}
+
 	// Use zerolog-sentry to route error, fatal, and panic logs to Sentry.
 	zlsWriter, err := zls.NewWithHub(sentry.CurrentHub(), zls.WithBreadcrumbs())
 	if err != nil {

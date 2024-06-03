@@ -6,7 +6,6 @@ package openai
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"regexp"
 
@@ -71,12 +70,7 @@ func ChatCompletion(ctx context.Context, model manifest.ModelInfo, host manifest
 		return &result.Data, fmt.Errorf("error returned from OpenAI: %s", result.Data.Error.Message)
 	}
 
-	// write the results to the database
-	resultBytes, err := json.Marshal(result)
-	if err != nil {
-		return nil, fmt.Errorf("error marshalling result: %w", err)
-	}
-	db.WriteInferenceHistory(ctx, model, sentence, string(resultBytes), result.StartTime, result.EndTime)
+	db.WriteInferenceHistory(ctx, model, reqBody, result.Data, result.StartTime, result.EndTime)
 
 	return &result.Data, nil
 }

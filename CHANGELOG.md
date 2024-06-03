@@ -1,5 +1,16 @@
 # Change Log
 
+## 2024-06-03 - Version 0.8.2
+
+- Send backend ID with Sentry events [#211](https://github.com/gohypermode/runtime/pull/211) [#213](https://github.com/gohypermode/runtime/pull/213)
+- Add some logging for secrets [#212](https://github.com/gohypermode/runtime/pull/212)
+- Update logging to include Runtime version [#215](https://github.com/gohypermode/runtime/pull/215)
+
+## 2024-05-30 - Version 0.8.1
+
+- Fix compatibility with v1 `authHeader` secret [#208](https://github.com/gohypermode/runtime/pull/208)
+- Fix double-escaped JSON in OpenAI inference history [#209](https://github.com/hypermodeAI/runtime/pull/209)
+
 ## 2024-05-29 - Version 0.8.0
 
 - Add Model Inference History to runtime [#186](https://github.com/gohypermode/runtime/pull/186)

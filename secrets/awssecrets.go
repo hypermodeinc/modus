@@ -36,14 +36,10 @@ func (sp *awsSecretsProvider) initialize(ctx context.Context) {
 	sp.client = secretsmanager.NewFromConfig(cfg)
 
 	// Set the prefix based on the namespace for the backend.
-	ns, err := config.GetNamespace()
-	if err != nil {
-		logger.Fatal(ctx).Err(err).Msg("Failed to get the namespace.")
-	}
-	sp.prefix = ns + "/"
+	sp.prefix = config.GetNamespace() + "/"
 
 	// Populate the cache with all secrets in the namespace.
-	err = sp.populateSecretsCache(ctx)
+	err := sp.populateSecretsCache(ctx)
 	if err != nil {
 		logger.Fatal(ctx).Err(err).Msg("Failed to populate the secrets cache.")
 	}
@@ -60,11 +56,10 @@ func (sp *awsSecretsProvider) getHostSecrets(ctx context.Context, host manifest.
 
 	// Migrate old auth header secret to the new location
 	// TODO: Remove this when we no longer need to support the old manifest format
-	oldAuthHeaderSecret, ok := secrets[""]
+	oldAuthHeaderSecret, ok := sp.cache[host.Name]
 	if ok {
 		if manifestdata.Manifest.Version == 1 {
-			secrets[manifest.V1AuthHeaderVariableName] = oldAuthHeaderSecret
-			delete(secrets, "")
+			secrets[manifest.V1AuthHeaderVariableName] = *oldAuthHeaderSecret.SecretString
 			logger.Warn(ctx).Msg("Used deprecated auth header secret.  Please update the manifest to use a template such as {{SECRET_NAME}} and migrate the old secret in Secrets Manager.")
 		} else {
 			logger.Warn(ctx).Msg("The manifest is current, but the deprecated auth header secret was found.  Please remove the old secret in Secrets Manager.")
@@ -129,11 +124,13 @@ func (sp *awsSecretsProvider) populateSecretsCache(ctx context.Context) error {
 		for _, secret := range page.SecretValues {
 			key := strings.TrimPrefix(*secret.Name, sp.prefix)
 			sp.cache[key] = &secret
+			logger.Info(ctx).Str("key", key).Msg("Secret loaded.")
 		}
 	}
 
 	if len(sp.cache) == 0 {
 		sp.cache = make(map[string]*types.SecretValueEntry)
+		logger.Info(ctx).Msg("No secrets loaded.")
 	}
 
 	return nil
@@ -181,11 +178,14 @@ func (sp *awsSecretsProvider) monitorForUpdates(ctx context.Context) {
 					VersionId:     secretValue.VersionId,
 					VersionStages: secretValue.VersionStages,
 				}
+
+				logger.Info(ctx).Str("key", key).Msg("Secret updated.")
 			}
 
 			// Remove secrets that were deleted
 			for key := range remainder {
 				delete(sp.cache, key)
+				logger.Info(ctx).Str("key", key).Msg("Secret removed.")
 			}
 		}
 

@@ -35,6 +35,7 @@ func InitSentry(rootPath string) {
 		Environment: config.GetEnvironmentName(),
 		Release:     config.GetVersionNumber(),
 		BeforeSend:  sentryBeforeSend,
+		BeforeSendTransaction: sentryBeforeSendTransaction,
 
 		// Note - We use Prometheus for _metrics_ (see hmruntime/metrics package).
 		// However, we can still use Sentry for _tracing_ to allow us to improve performance of the Runtime.
@@ -106,5 +107,20 @@ func sentryBeforeSend(event *sentry.Event, hint *sentry.EventHint) *sentry.Event
 		}
 	}
 
+	sentryAddExtras(event)
 	return event
+}
+
+
+func sentryBeforeSendTransaction(event *sentry.Event, hint *sentry.EventHint) *sentry.Event {
+	sentryAddExtras(event)
+	return event
+}
+
+// Include any extra information that may be useful for debugging.
+func sentryAddExtras(event *sentry.Event) {
+	if event.Extra == nil {
+		event.Extra = make(map[string]interface{})
+	}
+	event.Extra["backend"] = config.GetNamespace()
 }
