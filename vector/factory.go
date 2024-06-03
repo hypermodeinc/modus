@@ -10,6 +10,9 @@ import (
 	c "hmruntime/vector/constraints"
 	"hmruntime/vector/index"
 	"sync"
+	"time"
+
+	"github.com/cenkalti/backoff/v4"
 
 	"hmruntime/vector/options"
 )
@@ -166,28 +169,45 @@ func (hf *IndexFactory[T]) WriteToWAL() error {
 
 	encoder := gob.NewEncoder(&buf)
 
-	if err := encoder.Encode(hf.indexMap); err != nil {
-		return err
+	operation := func() error {
+		if err := encoder.Encode(hf.indexMap); err != nil {
+			return fmt.Errorf("could not encode file content, %s", err)
+		}
+
+		// write using storage.WriteFile
+		if err := storage.WriteFile(context.Background(), "index.wal", buf.Bytes()); err != nil {
+			return fmt.Errorf("could not write to file, %s", err)
+		}
+		return nil
 	}
 
-	// write using storage.WriteFile
-	storage.WriteFile(context.Background(), "index.wal", buf.Bytes())
+	exponentialBackoff := backoff.NewExponentialBackOff()
+	exponentialBackoff.MaxElapsedTime = 10 * time.Second
 
-	return nil
+	return backoff.Retry(operation, exponentialBackoff)
 }
 
 func (hf *IndexFactory[T]) ReadFromWAL() error {
 	// read using storage.ReadFile
-	data, err := storage.GetFileContents(context.Background(), "index.wal")
-	if err != nil {
-		return fmt.Errorf("could not get file content, %s", err)
+
+	operation := func() error {
+		data, err := storage.GetFileContents(context.Background(), "index.wal")
+		if err != nil {
+			return fmt.Errorf("could not get file content, %s", err)
+		}
+
+		decoder := gob.NewDecoder(bytes.NewReader(data))
+
+		if err := decoder.Decode(&hf.indexMap); err != nil {
+			return fmt.Errorf("could not decode file content, %s", err)
+		}
+
+		return nil
 	}
 
-	decoder := gob.NewDecoder(bytes.NewReader(data))
+	exponentialBackoff := backoff.NewExponentialBackOff()
+	exponentialBackoff.MaxElapsedTime = 10 * time.Second
 
-	if err := decoder.Decode(&hf.indexMap); err != nil {
-		return fmt.Errorf("could not decode file content, %s", err)
-	}
+	return backoff.Retry(operation, exponentialBackoff)
 
-	return nil
 }
