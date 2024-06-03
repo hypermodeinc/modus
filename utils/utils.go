@@ -8,9 +8,12 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync/atomic"
 
 	"github.com/google/uuid"
 )
+
+var atomicCounter uint64
 
 func If[T any](condition bool, trueVal, falseVal T) T {
 	if condition {
@@ -59,4 +62,8 @@ func TrimStringBefore(s string, sep string) string {
 
 func GenerateUUIDV7() string {
 	return uuid.Must(uuid.NewV7()).String()
+}
+
+func NextUint64() uint64 {
+	return atomic.AddUint64(&atomicCounter, 1)
 }

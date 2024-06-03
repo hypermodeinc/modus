@@ -6,10 +6,10 @@ package hostfunctions
 
 import (
 	"context"
-	"math/rand"
 
 	"hmruntime/logger"
 	"hmruntime/models"
+	"hmruntime/utils"
 	"hmruntime/vector"
 	"hmruntime/vector/in_mem"
 
@@ -94,7 +94,7 @@ func hostEmbedAndIndex(ctx context.Context, mod wasm.Module, pModelName uint32, 
 
 	for k, v := range result {
 		// generate random uint64
-		uid := uint64(rand.Uint32())
+		uid := utils.NextUint64()
 		_, err := index.Insert(ctx, nil, uid, v)
 		if err != nil {
 			logger.Err(ctx, err).Msg("Error inserting into index.")
