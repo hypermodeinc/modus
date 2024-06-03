@@ -174,7 +174,6 @@ func (hf *IndexFactory[T]) WriteToWAL() error {
 			return fmt.Errorf("could not encode file content, %s", err)
 		}
 
-		// write using storage.WriteFile
 		if err := storage.WriteFile(context.Background(), "index.wal", buf.Bytes()); err != nil {
 			return fmt.Errorf("could not write to file, %s", err)
 		}
@@ -188,7 +187,6 @@ func (hf *IndexFactory[T]) WriteToWAL() error {
 }
 
 func (hf *IndexFactory[T]) ReadFromWAL() error {
-	// read using storage.ReadFile
 
 	operation := func() error {
 		data, err := storage.GetFileContents(context.Background(), "index.wal")
