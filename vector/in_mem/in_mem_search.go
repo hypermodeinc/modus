@@ -1,11 +1,11 @@
 package in_mem
 
 import (
+	"container/heap"
 	"context"
 	"hmruntime/vector/index"
 	"hmruntime/vector/options"
 	"hmruntime/vector/utils"
-	"sort"
 )
 
 type InMemBruteForceIndex struct {
@@ -29,28 +29,30 @@ func (ims *InMemBruteForceIndex) emptyFinalResultWithError(e error) (
 
 func (ims *InMemBruteForceIndex) Search(ctx context.Context, c index.CacheType, query []float64, maxResults int, filter index.SearchFilter[float64]) ([]uint64, error) {
 	// calculate cosine similarity and return top maxResults results
-	type result struct {
-		uid        uint64
-		similarity float64
-	}
-	var results []result
+	var results utils.MinTupleHeap[float64]
+	heap.Init(&results)
 	for uid, vector := range ims.vectorNodes {
 		similarity, err := utils.CosineSimilarity[float64](query, vector, 64)
 		if err != nil {
 			return nil, err
 		}
-		results = append(results, result{uid, similarity})
+		if results.Len() < maxResults {
+			results.Push(utils.InitHeapElement(similarity, uid, false))
+		} else if utils.IsBetterScoreForSimilarity(similarity, results[0].GetValue()) {
+			results.Pop()
+			results.Push(utils.InitHeapElement(similarity, uid, false))
+		}
 	}
-
-	// Sort results by similarity in descending order
-	sort.Slice(results, func(i, j int) bool {
-		return results[i].similarity > results[j].similarity
-	})
 
 	// Return top maxResults results
 	var uids []uint64
-	for i := 0; i < maxResults && i < len(results); i++ {
-		uids = append(uids, results[i].uid)
+	for len(results) > 0 {
+		top := heap.Pop(&results).(*utils.MinHeapElement[float64])
+		uids = append(uids, top.GetIndex())
+	}
+	// Reverse the uids to get the highest similarity first
+	for i, j := 0, len(uids)-1; i < j; i, j = i+1, j-1 {
+		uids[i], uids[j] = uids[j], uids[i]
 	}
 	return uids, nil
 }
