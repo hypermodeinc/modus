@@ -12,7 +12,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/sts v1.28.11
 	github.com/buger/jsonparser v1.1.1
 	github.com/getsentry/sentry-go v0.28.0
-	github.com/go-viper/mapstructure/v2 v2.0.0-alpha.1
+	github.com/go-viper/mapstructure/v2 v2.0.0
 	github.com/google/uuid v1.6.0
 	github.com/hypermodeAI/manifest v0.2.5
 	github.com/jackc/pgx/v5 v5.6.0
