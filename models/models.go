@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"hmruntime/config"
 	"hmruntime/db"
@@ -58,7 +59,7 @@ func PostToModelEndpoint[TResult any](ctx context.Context, sentenceMap map[strin
 
 	switch model.Host {
 	case hosts.HypermodeHost:
-		endpoint = fmt.Sprintf("http://%s.%s/%s:predict", model.Name, config.ModelHost, model.Task)
+		endpoint = fmt.Sprintf("http://%s.%s/%s:predict", strings.ToLower(model.Name), config.ModelHost, model.Task)
 	default:
 
 		host, err := hosts.GetHost(model.Host)
