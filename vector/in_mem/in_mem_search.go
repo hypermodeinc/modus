@@ -11,9 +11,8 @@ import (
 )
 
 type InMemBruteForceIndex struct {
-	// vectorNodes is a map of uint64 to []float64
-	vectorNodes map[uint64][]float64
-	dataNodes   map[uint64]string
+	// vectorNodes is a map of string to []float64
+	vectorNodes map[string][]float64
 }
 
 func (ims *InMemBruteForceIndex) AllowedOptions() options.AllowedOptions {
@@ -29,7 +28,7 @@ func (ims *InMemBruteForceIndex) emptyFinalResultWithError(e error) (
 	return index.NewSearchPathResult(), e
 }
 
-func (ims *InMemBruteForceIndex) Search(ctx context.Context, c index.CacheType, query []float64, maxResults int, filter index.SearchFilter[float64]) ([]uint64, error) {
+func (ims *InMemBruteForceIndex) Search(ctx context.Context, c index.CacheType, query []float64, maxResults int, filter index.SearchFilter[float64]) ([]string, error) {
 	// calculate cosine similarity and return top maxResults results
 	var results utils.MinTupleHeap[float64]
 	heap.Init(&results)
@@ -47,7 +46,7 @@ func (ims *InMemBruteForceIndex) Search(ctx context.Context, c index.CacheType, 
 	}
 
 	// Return top maxResults results
-	var uids []uint64
+	var uids []string
 	for len(results) > 0 {
 		top := heap.Pop(&results).(*utils.MinHeapElement[float64])
 		uids = append(uids, top.GetIndex())
@@ -59,7 +58,7 @@ func (ims *InMemBruteForceIndex) Search(ctx context.Context, c index.CacheType, 
 	return uids, nil
 }
 
-func (ims *InMemBruteForceIndex) SearchWithUid(ctx context.Context, c index.CacheType, queryUid uint64, maxResults int, filter index.SearchFilter[float64]) ([]uint64, error) {
+func (ims *InMemBruteForceIndex) SearchWithUid(ctx context.Context, c index.CacheType, queryUid string, maxResults int, filter index.SearchFilter[float64]) ([]string, error) {
 	query := ims.vectorNodes[queryUid]
 	if query == nil {
 		return nil, nil
@@ -71,18 +70,14 @@ func (ims *InMemBruteForceIndex) SearchWithPath(ctx context.Context, c index.Cac
 	return ims.emptyFinalResultWithError(nil)
 }
 
-func (ims *InMemBruteForceIndex) Insert(ctx context.Context, c index.CacheType, uid uint64, vector []float64) ([]*index.KeyValue, error) {
+func (ims *InMemBruteForceIndex) Insert(ctx context.Context, c index.CacheType, uid string, vector []float64) ([]*index.KeyValue, error) {
 	ims.vectorNodes[uid] = vector
 	return nil, nil
 }
 
-func (ims *InMemBruteForceIndex) InsertDataNode(ctx context.Context, c index.CacheType, uid uint64, data string) error {
-	ims.dataNodes[uid] = data
+func (ims *InMemBruteForceIndex) Delete(ctx context.Context, c index.CacheType, uid string) error {
+	delete(ims.vectorNodes, uid)
 	return nil
-}
-
-func (ims *InMemBruteForceIndex) GetDataNode(ctx context.Context, c index.CacheType, uid uint64) string {
-	return ims.dataNodes[uid]
 }
 
 func (ims *InMemBruteForceIndex) WriteToWAL(filename string) error {
@@ -95,10 +90,6 @@ func (ims *InMemBruteForceIndex) WriteToWAL(filename string) error {
 	encoder := gob.NewEncoder(file)
 
 	if err := encoder.Encode(ims.vectorNodes); err != nil {
-		return err
-	}
-
-	if err := encoder.Encode(ims.dataNodes); err != nil {
 		return err
 	}
 

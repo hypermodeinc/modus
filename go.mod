@@ -11,6 +11,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.29.1
 	github.com/aws/aws-sdk-go-v2/service/sts v1.28.10
 	github.com/buger/jsonparser v1.1.1
+	github.com/cenkalti/backoff/v4 v4.3.0
 	github.com/chewxy/math32 v1.10.1
 	github.com/getsentry/sentry-go v0.28.0
 	github.com/go-viper/mapstructure/v2 v2.0.0-alpha.1
@@ -47,7 +48,6 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.24.3 // indirect
 	github.com/aws/smithy-go v1.20.2 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
-	github.com/cenkalti/backoff/v4 v4.3.0 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dlclark/regexp2 v1.11.0 // indirect

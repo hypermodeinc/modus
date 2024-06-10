@@ -6,14 +6,14 @@ import (
 
 type MinHeapElement[T c.Float] struct {
 	value T
-	index uint64
+	index string
 	// An element that is "filteredOut" is one that should be removed
 	// from final consideration due to it not matching the passed in
 	// filter criteria.
 }
 
 func InitHeapElement[T c.Float](
-	val T, i uint64, filteredOut bool) *MinHeapElement[T] {
+	val T, i string, filteredOut bool) *MinHeapElement[T] {
 	return &MinHeapElement[T]{
 		value: val,
 		index: i,
@@ -24,7 +24,7 @@ func (e MinHeapElement[T]) GetValue() T {
 	return e.value
 }
 
-func (e MinHeapElement[T]) GetIndex() uint64 {
+func (e MinHeapElement[T]) GetIndex() string {
 	return e.index
 }
 

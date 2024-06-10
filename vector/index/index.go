@@ -10,26 +10,26 @@ import (
 
 // VectorSource defines the process of getting a sequence of Vectors for
 // use in defining a new VectorIndex. Each returned vector is assumed
-// to be associated with a unique identifier specified by a uint64.
+// to be associated with a unique identifier specified by a string.
 // Iteration proceeds until Next() or NextChunk() returns an indicator
 // that there are no more values.
 type VectorSource[T c.Float] interface {
 	// Next will return a vector (specified by []Float) to be indexed,
-	// a unique identifier (uint64), an indicator of whether or not the
+	// a unique identifier (string), an indicator of whether or not the
 	// value is valid, and possibly an error if there are troubles reaching
 	// an underlying persistent storage.
 	// Note that if the bool return value is true, you should accept the
 	// returned value, but a false value indicates that the returned float
-	// and uint64 should be ignored.
+	// and string should be ignored.
 	// If returned error is not nil, you should expect that the bool returned
 	// value is false, and that the sourcing process is not recoverable
 	// (i.e., if you want to retry, you need to start from the beginning).
-	Next() ([]T, uint64, bool, error)
+	Next() ([]T, string, bool, error)
 
 	// NextChunk behaves like Next(), but returns multiple floats at the same
 	// time. The choice of how many to return is based on the VectorSource
 	// implementation.
-	NextChunk() ([][]T, []uint64, bool, error)
+	NextChunk() ([][]T, []string, bool, error)
 }
 
 type emptyVectorSource[T c.Float] struct{}
@@ -42,12 +42,12 @@ func EmptyVectorSource[T c.Float]() VectorSource[T] {
 }
 
 // Next() is part of VectorSource interface implementation.
-func (vs *emptyVectorSource[T]) Next() ([]T, uint64, bool, error) {
-	return nil, 0, false, nil
+func (vs *emptyVectorSource[T]) Next() ([]T, string, bool, error) {
+	return nil, "", false, nil
 }
 
 // NextChunk() is part of VectorSource interface implementation.
-func (vs *emptyVectorSource[T]) NextChunk() ([][]T, []uint64, bool, error) {
+func (vs *emptyVectorSource[T]) NextChunk() ([][]T, []string, bool, error) {
 	return nil, nil, false, nil
 }
 
@@ -55,13 +55,13 @@ func (vs *emptyVectorSource[T]) NextChunk() ([][]T, []uint64, bool, error) {
 // whether or not a given vector is "interesting". When used in the context
 // of VectorIndex.Search, a true result means that we want to keep the result
 // in the returned list, and a false result implies we should skip.
-type SearchFilter[T c.Float] func(query, resultVal []T, resultUID uint64) bool
+type SearchFilter[T c.Float] func(query, resultVal []T, resultUID string) bool
 
 // AcceptAll implements SearchFilter by way of accepting all results.
-func AcceptAll[T c.Float](_, _ []T, _ uint64) bool { return true }
+func AcceptAll[T c.Float](_, _ []T, _ string) bool { return true }
 
 // AcceptNone implements SearchFilter by way of rejecting all results.
-func AcceptNone[T c.Float](_, _ []T, _ uint64) bool { return false }
+func AcceptNone[T c.Float](_, _ []T, _ string) bool { return false }
 
 // OptionalIndexSupport defines abilities that might not be universally
 // supported by all VectorIndex types. A VectorIndex will technically
@@ -99,7 +99,7 @@ type VectorIndex[T c.Float] interface {
 	// been filtered out.
 	Search(ctx context.Context, c CacheType, query []T,
 		maxResults int,
-		filter SearchFilter[T]) ([]uint64, error)
+		filter SearchFilter[T]) ([]string, error)
 
 	// SearchWithUid will find the uids for a given set of vectors based on the
 	// input queryUid, limiting to the specified maximum number of results.
@@ -107,16 +107,17 @@ type VectorIndex[T c.Float] interface {
 	// based on some input criteria. The maxResults count is counted *after*
 	// being filtered. In other words, we only count those results that had not
 	// been filtered out.
-	SearchWithUid(ctx context.Context, c CacheType, queryUid uint64,
+	SearchWithUid(ctx context.Context, c CacheType, queryUid string,
 		maxResults int,
-		filter SearchFilter[T]) ([]uint64, error)
+		filter SearchFilter[T]) ([]string, error)
 
 	// Insert will add a vector and uuid into the existing VectorIndex. If
 	// uuid already exists, it should throw an error to not insert duplicate uuids
-	Insert(ctx context.Context, c CacheType, uuid uint64, vec []T) ([]*KeyValue, error)
+	Insert(ctx context.Context, c CacheType, uuid string, vec []T) ([]*KeyValue, error)
 
-	// InsertDataNode will add a data node to the existing VectorIndex
-	InsertDataNode(ctx context.Context, c CacheType, uuid uint64, data string) error
+	// Delete will remove a vector and uuid from the existing VectorIndex. If
+	// uuid does not exist, it should throw an error to not delete non-existent uuids
+	Delete(ctx context.Context, c CacheType, uuid string) error
 
 	// OptionalFeatures() returns a collection of optional features that
 	// may be supported by this class. By default, every implementation
@@ -133,13 +134,13 @@ type VectorIndex[T c.Float] interface {
 // A Txn is an interface representation of a persistent storage transaction,
 // where multiple operations are performed on a database
 type Txn interface {
-	// StartTs gets the exact time that the transaction started, returned in uint64 format
-	StartTs() uint64
+	// StartTs gets the exact time that the transaction started, returned in string format
+	StartTs() string
 	// Get uses a []byte key to return the Value corresponding to the key
 	Get(key []byte) (rval Value, rerr error)
 	// GetWithLockHeld uses a []byte key to return the Value corresponding to the key with a mutex lock held
 	GetWithLockHeld(key []byte) (rval Value, rerr error)
-	Find(prefix []byte, filter func(val []byte) bool) (uint64, error)
+	Find(prefix []byte, filter func(val []byte) bool) (string, error)
 	// Adds a mutation operation on a index.Txn interface, where the mutation
 	// is represented in the form of an index.DirectedEdge
 	AddMutation(ctx context.Context, key []byte, t *KeyValue) error
@@ -157,7 +158,7 @@ type LocalCache interface {
 	Get(key []byte) (rval Value, rerr error)
 	// GetWithLockHeld uses a []byte key to return the Value corresponding to the key with a mutex lock held
 	GetWithLockHeld(key []byte) (rval Value, rerr error)
-	Find(prefix []byte, filter func(val []byte) bool) (uint64, error)
+	Find(prefix []byte, filter func(val []byte) bool) (string, error)
 }
 
 // Value is an interface representation of the value of a persistent storage system
@@ -166,6 +167,6 @@ type Value interface{}
 // CacheType is an interface representation of the cache of a persistent storage system
 type CacheType interface {
 	Get(key []byte) (rval Value, rerr error)
-	Ts() uint64
-	Find(prefix []byte, filter func(val []byte) bool) (uint64, error)
+	Ts() string
+	Find(prefix []byte, filter func(val []byte) bool) (string, error)
 }
