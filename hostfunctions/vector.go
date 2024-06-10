@@ -8,6 +8,12 @@ import (
 	wasm "github.com/tetratelabs/wazero/api"
 )
 
+type VectorIndexActionResult struct {
+	status string
+	action string
+	name   string
+}
+
 type VectorIndexOperationResult struct {
 	mutation VectorIndexMutationResult
 	query    VectorIndexSearchResult
@@ -30,19 +36,75 @@ type VectorIndexSearchResultObject struct {
 	score float64
 }
 
-func hostInsertToVectorIndex(ctx context.Context, mod wasm.Module, pCollectionName uint32, pVectorIndexName uint32, pId uint32, pVector uint32) uint32 {
-	var collectionName string
+func hostCreateVectorIndex(ctx context.Context, mod wasm.Module, pVectorIndexName uint32) uint32 {
 	var vectorIndexName string
-	var id string
-	var vec []float64
 
-	err := readParams4(ctx, mod, pCollectionName, pVectorIndexName, pId, pVector, &collectionName, &vectorIndexName, &id, &vec)
+	err := readParam(ctx, mod, pVectorIndexName, &vectorIndexName)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error reading input parameters.")
 		return 0
 	}
-	indexName := collectionName + "." + vectorIndexName
-	index, err := vector.GlobalIndexFactory.Find(indexName)
+	_, err = vector.GlobalIndexFactory.Create(vectorIndexName, nil, nil, nil)
+	if err != nil {
+		logger.Err(ctx, err).Msg("Error creating index.")
+		return 0
+	}
+
+	output := &VectorIndexActionResult{
+		status: "success",
+		action: "create",
+		name:   vectorIndexName,
+	}
+
+	offset, err := writeResult(ctx, mod, output)
+	if err != nil {
+		logger.Err(ctx, err).Msg("Error writing result.")
+		return 0
+	}
+
+	return offset
+}
+
+func hostRemoveVectorIndex(ctx context.Context, mod wasm.Module, pVectorIndexName uint32) uint32 {
+	var vectorIndexName string
+
+	err := readParam(ctx, mod, pVectorIndexName, &vectorIndexName)
+	if err != nil {
+		logger.Err(ctx, err).Msg("Error reading input parameters.")
+		return 0
+	}
+	err = vector.GlobalIndexFactory.Remove(vectorIndexName)
+	if err != nil {
+		logger.Err(ctx, err).Msg("Error dropping index.")
+		return 0
+	}
+
+	output := &VectorIndexActionResult{
+		status: "success",
+		action: "drop",
+		name:   vectorIndexName,
+	}
+
+	offset, err := writeResult(ctx, mod, output)
+	if err != nil {
+		logger.Err(ctx, err).Msg("Error writing result.")
+		return 0
+	}
+
+	return offset
+}
+
+func hostInsertToVectorIndex(ctx context.Context, mod wasm.Module, pVectorIndexName uint32, pId uint32, pVector uint32) uint32 {
+	var vectorIndexName string
+	var id string
+	var vec []float64
+
+	err := readParams3(ctx, mod, pVectorIndexName, pId, pVector, &vectorIndexName, &id, &vec)
+	if err != nil {
+		logger.Err(ctx, err).Msg("Error reading input parameters.")
+		return 0
+	}
+	index, err := vector.GlobalIndexFactory.Find(vectorIndexName)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error finding index.")
 		return 0
@@ -75,19 +137,17 @@ func hostInsertToVectorIndex(ctx context.Context, mod wasm.Module, pCollectionNa
 	return offset
 }
 
-func hostSearchVectorIndex(ctx context.Context, mod wasm.Module, pCollectionName uint32, pVectorIndexName uint32, pVector uint32, pLimit uint32) uint32 {
-	var collectionName string
+func hostSearchVectorIndex(ctx context.Context, mod wasm.Module, pVectorIndexName uint32, pVector uint32, pLimit uint32) uint32 {
 	var vectorIndexName string
 	var vec []float64
 	var limit int
 
-	err := readParams4(ctx, mod, pCollectionName, pVectorIndexName, pVector, pLimit, &collectionName, &vectorIndexName, &vec, &limit)
+	err := readParams3(ctx, mod, pVectorIndexName, pVector, pLimit, &vectorIndexName, &vec, &limit)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error reading input parameters.")
 		return 0
 	}
-	indexName := collectionName + "." + vectorIndexName
-	index, err := vector.GlobalIndexFactory.Find(indexName)
+	index, err := vector.GlobalIndexFactory.Find(vectorIndexName)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error finding index.")
 		return 0
@@ -124,19 +184,17 @@ func hostSearchVectorIndex(ctx context.Context, mod wasm.Module, pCollectionName
 	return offset
 }
 
-func hostDeleteFromVectorIndex(ctx context.Context, mod wasm.Module, pCollectionName uint32, pVectorIndexName uint32, pId uint32) uint32 {
-	var collectionName string
+func hostDeleteFromVectorIndex(ctx context.Context, mod wasm.Module, pVectorIndexName uint32, pId uint32) uint32 {
 	var vectorIndexName string
 	var id string
 
-	err := readParams3(ctx, mod, pCollectionName, pVectorIndexName, pId, &collectionName, &vectorIndexName, &id)
+	err := readParams2(ctx, mod, pVectorIndexName, pId, &vectorIndexName, &id)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error reading input parameters.")
 		return 0
 	}
 
-	indexName := collectionName + "." + vectorIndexName
-	index, err := vector.GlobalIndexFactory.Find(indexName)
+	index, err := vector.GlobalIndexFactory.Find(vectorIndexName)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error finding index.")
 		return 0
