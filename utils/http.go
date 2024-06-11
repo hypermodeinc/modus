@@ -28,11 +28,20 @@ func sendHttp(req *http.Request) ([]byte, error) {
 	}
 	defer response.Body.Close()
 
-	if response.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("bad status: %s", response.Status)
+	body, err := io.ReadAll(response.Body)
+	if err != nil {
+		return nil, fmt.Errorf("error reading response body: %w", err)
 	}
 
-	return io.ReadAll(response.Body)
+	if response.StatusCode != http.StatusOK {
+		if len(body) == 0 {
+			return nil, fmt.Errorf("HTTP error: %s", response.Status)
+		} else {
+			return nil, fmt.Errorf("HTTP error: %s\n%s", response.Status, body)
+		}
+	}
+
+	return body, nil
 }
 
 type HttpResult[T any] struct {
@@ -85,7 +94,7 @@ func PostHttp[TResult any](ctx context.Context, url string, payload any, beforeS
 	content, err := sendHttp(req)
 	endTime := GetTime()
 	if err != nil {
-		return nil, fmt.Errorf("error sending HTTP request: %w", err)
+		return nil, err
 	}
 
 	var result TResult
