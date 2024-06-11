@@ -6,12 +6,17 @@ package hostfunctions
 
 import (
 	"context"
+	"fmt"
 
+	hyp_aws "hmruntime/aws"
 	"hmruntime/hosts"
 	"hmruntime/logger"
 	"hmruntime/models"
 	"hmruntime/plugins"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/bedrockruntime"
+	"github.com/hypermodeAI/manifest"
 	wasm "github.com/tetratelabs/wazero/api"
 )
 
@@ -69,12 +74,20 @@ func hostInvokeModel(ctx context.Context, mod wasm.Module, pModelName uint32, pI
 		return 0
 	}
 
+	// TODO: use the provider pattern, not a switch
+
 	var output string
 	switch model.Host {
 	case "hypermode":
 		// not yet implemented
 		logger.Error(ctx).Msg("Hypermode model host not yet implemented.")
 		return 0
+	case "aws-bedrock":
+		output, err = invokeAwsBedrockModel(ctx, model, input)
+		if err != nil {
+			logger.Err(ctx, err).Msg("Error invoking AWS Bedrock model.")
+			return 0
+		}
 	default:
 		host, err := hosts.GetHost(model.Host)
 		if err != nil {
@@ -97,4 +110,20 @@ func hostInvokeModel(ctx context.Context, mod wasm.Module, pModelName uint32, pI
 		return 0
 	}
 	return offset
+}
+
+func invokeAwsBedrockModel(ctx context.Context, model manifest.ModelInfo, input string) (output string, err error) {
+
+	cfg := hyp_aws.GetAwsConfig() // TODO, connect to AWS using the correct credentials
+	client := bedrockruntime.NewFromConfig(cfg)
+
+	modelId := fmt.Sprintf("%s.%s", model.Provider, model.SourceModel)
+
+	result, err := client.InvokeModel(ctx, &bedrockruntime.InvokeModelInput{
+		ModelId:     &modelId,
+		ContentType: aws.String("application/json"),
+		Body:        []byte(input),
+	})
+
+	return string(result.Body), err
 }
