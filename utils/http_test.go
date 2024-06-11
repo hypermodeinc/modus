@@ -41,8 +41,7 @@ func Test_SendHttp(t *testing.T) {
 
 func Test_SendHttp_ErrorResponse(t *testing.T) {
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprint(w, "Internal Server Error")
+		http.Error(w, "Something went wrong!", http.StatusInternalServerError)
 	})
 	server := httptest.NewServer(handler)
 	defer server.Close()
@@ -57,7 +56,7 @@ func Test_SendHttp_ErrorResponse(t *testing.T) {
 		t.Error("Expected an error, but got nil")
 	}
 
-	expected := "bad status: 500 Internal Server Error"
+	expected := "HTTP error: 500 Internal Server Error\nSomething went wrong!\n"
 	if err.Error() != expected {
 		t.Errorf("Unexpected error message. Got: %s, want: %s", err.Error(), expected)
 	}
