@@ -30,14 +30,27 @@ const (
 	OutputFormatJson OutputFormat = "json_object"
 )
 
-func GetModel(modelName string, task manifest.ModelTask) (manifest.ModelInfo, error) {
-	for _, model := range manifestdata.Manifest.Models {
-		if model.Name == modelName && model.Task == task {
-			return model, nil
-		}
+func GetModel(modelName string) (manifest.ModelInfo, error) {
+	model, ok := manifestdata.Manifest.Models[modelName]
+	if !ok {
+		return manifest.ModelInfo{}, fmt.Errorf("model %s was not found", modelName)
 	}
 
-	return manifest.ModelInfo{}, fmt.Errorf("a model '%s' for task '%s' was not found", modelName, task)
+	return model, nil
+}
+
+func GetModelForTask(modelName string, task manifest.ModelTask) (manifest.ModelInfo, error) {
+
+	model, err := GetModel(modelName)
+	if err != nil {
+		return manifest.ModelInfo{}, err
+	}
+
+	if model.Task != task {
+		return manifest.ModelInfo{}, fmt.Errorf("model %s is not a %s model", modelName, task)
+	}
+
+	return model, nil
 }
 
 func PostToModelEndpoint[TResult any](ctx context.Context, sentenceMap map[string]string, model manifest.ModelInfo) (map[string]TResult, error) {

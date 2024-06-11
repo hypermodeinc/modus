@@ -71,7 +71,7 @@ func TestGetModels(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.desc, func(t *testing.T) {
-			model, err := GetModel(tc.modelName, testModelTask)
+			model, err := GetModelForTask(tc.modelName, testModelTask)
 			if tc.valid {
 				assert.NoError(t, err)
 				assert.Equal(t, testModelName, model.Name)

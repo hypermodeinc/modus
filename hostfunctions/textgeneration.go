@@ -29,7 +29,7 @@ func hostInvokeTextGenerator(ctx context.Context, mod wasm.Module, pModelName ui
 	}
 	outputFormat := models.OutputFormat(format)
 
-	model, err := models.GetModel(modelName, manifest.GenerationTask)
+	model, err := models.GetModelForTask(modelName, manifest.GenerationTask)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error getting model.")
 		return 0

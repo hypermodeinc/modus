@@ -24,7 +24,7 @@ func hostComputeEmbedding(ctx context.Context, mod wasm.Module, pModelName uint3
 		return 0
 	}
 
-	model, err := models.GetModel(modelName, manifest.EmbeddingTask)
+	model, err := models.GetModelForTask(modelName, manifest.EmbeddingTask)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error getting model.")
 		return 0

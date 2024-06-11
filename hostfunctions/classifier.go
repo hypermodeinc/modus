@@ -35,7 +35,7 @@ func hostInvokeClassifier(ctx context.Context, mod wasm.Module, pModelName uint3
 		return 0
 	}
 
-	model, err := models.GetModel(modelName, manifest.ClassificationTask)
+	model, err := models.GetModelForTask(modelName, manifest.ClassificationTask)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error getting model.")
 		return 0
