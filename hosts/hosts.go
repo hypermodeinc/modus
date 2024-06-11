@@ -69,6 +69,7 @@ func PostToHostEndpoint[TResult any](ctx context.Context, host manifest.HostInfo
 	}
 
 	bs := func(ctx context.Context, req *http.Request) error {
+		req.Header.Set("Content-Type", "application/json")
 		return secrets.ApplyHostSecrets(ctx, host, req)
 	}
 
