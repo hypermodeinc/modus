@@ -41,7 +41,7 @@ func (w logWriter) Write(p []byte) (n int, err error) {
 
 func (w logWriter) logMessage(line string) {
 	l, message := utils.SplitConsoleOutputLine(line)
-	level := parseLevel(l)
+	level := ParseLevel(l)
 	if level == zerolog.NoLevel {
 		level = w.level
 	}
@@ -52,7 +52,7 @@ func (w logWriter) logMessage(line string) {
 		Msg("Message logged from function.")
 }
 
-func parseLevel(level string) zerolog.Level {
+func ParseLevel(level string) zerolog.Level {
 	switch level {
 	case "debug":
 		return zerolog.DebugLevel
