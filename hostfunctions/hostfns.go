@@ -22,6 +22,7 @@ func Instantiate(ctx context.Context, runtime *wazero.Runtime) error {
 	b := (*runtime).NewHostModuleBuilder(hostModuleName)
 
 	// Each host function should get a line here:
+	b.NewFunctionBuilder().WithFunc(hostLog).Export("log")
 	b.NewFunctionBuilder().WithFunc(hostExecuteGQL).Export("executeGQL")
 	b.NewFunctionBuilder().WithFunc(hostInvokeClassifier).Export("invokeClassifier")
 	b.NewFunctionBuilder().WithFunc(hostComputeEmbedding).Export("computeEmbedding")
