@@ -136,7 +136,12 @@ func processManifestCollections(ctx context.Context, Manifest manifest.Hypermode
 func deleteIndexesNotInManifest(Manifest manifest.HypermodeManifest) {
 	for indexName := range vector.GlobalTextIndexFactory.GetTextIndexMap() {
 		if _, ok := Manifest.Collections[indexName]; !ok {
-			vector.GlobalTextIndexFactory.Remove(indexName)
+			err := vector.GlobalTextIndexFactory.Remove(indexName)
+			if err != nil {
+				logger.Err(context.Background(), err).
+					Str("index_name", indexName).
+					Msg("Failed to remove vector index.")
+			}
 		}
 		vectorIndexMap := vector.GlobalTextIndexFactory.GetTextIndexMap()[indexName].GetVectorIndexMap()
 		if vectorIndexMap == nil {
@@ -145,7 +150,13 @@ func deleteIndexesNotInManifest(Manifest manifest.HypermodeManifest) {
 		for searchMethodName := range vectorIndexMap {
 			_, ok := Manifest.Collections[indexName].SearchMethods[searchMethodName]
 			if !ok {
-				vector.GlobalTextIndexFactory.GetTextIndexMap()[indexName].DeleteVectorIndex(searchMethodName)
+				err := vector.GlobalTextIndexFactory.GetTextIndexMap()[indexName].DeleteVectorIndex(searchMethodName)
+				if err != nil {
+					logger.Err(context.Background(), err).
+						Str("index_name", indexName).
+						Str("search_method_name", searchMethodName).
+						Msg("Failed to remove vector index.")
+				}
 			}
 		}
 	}
