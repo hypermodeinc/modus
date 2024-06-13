@@ -85,6 +85,9 @@ func initRuntimeServices(ctx context.Context) {
 	// Watch for function registration requests
 	functions.MonitorRegistration(ctx)
 
+	// Initialize in mem vector factory
+	vector.InitializeIndexFactory()
+
 	// Load app data and monitor for changes
 	manifestdata.MonitorManifestFile(ctx)
 
@@ -93,9 +96,6 @@ func initRuntimeServices(ctx context.Context) {
 
 	// Initialize the GraphQL engine
 	graphql.Initialize()
-
-	// Initialize in mem vector factory
-	vector.InitializeIndexFactory()
 }
 
 func stopRuntimeServices(ctx context.Context) {

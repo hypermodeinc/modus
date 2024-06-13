@@ -17,42 +17,42 @@ import (
 	"hmruntime/vector/options"
 )
 
-var GlobalIndexFactory *IndexFactory[float64]
+var (
+	GlobalTextIndexFactory *TextIndexFactory[float64]
+	ErrTextIndexNotFound   = fmt.Errorf("text index not found")
+)
 
 func InitializeIndexFactory() {
-	GlobalIndexFactory = CreateFactory[float64]()
-	err := GlobalIndexFactory.ReadFromWAL()
+	GlobalTextIndexFactory = CreateFactory[float64]()
+	err := GlobalTextIndexFactory.ReadFromWAL()
 	if err != nil {
 		fmt.Println("Error reading from WAL, ", err)
 	}
 }
 
 func CloseIndexFactory() {
-	err := GlobalIndexFactory.WriteToWAL()
+	err := GlobalTextIndexFactory.WriteToWAL()
 	if err != nil {
 		fmt.Println("Error writing to WAL, ", err)
 	}
 }
 
-type IndexFactory[T c.Float] struct {
-	indexMap map[string]index.VectorIndex[T]
-	mu       sync.RWMutex
+type TextIndexFactory[T c.Float] struct {
+	textIndexMap map[string]index.TextIndex[T]
+	mu           sync.RWMutex
 }
 
 // CreateFactory creates an instance of the private struct IndexFactory.
 // NOTE: if T and floatBits do not match in # of bits, there will be consequences.
-func CreateFactory[T c.Float]() *IndexFactory[T] {
-	f := &IndexFactory[T]{
-		indexMap: map[string]index.VectorIndex[T]{},
+func CreateFactory[T c.Float]() *TextIndexFactory[T] {
+	f := &TextIndexFactory[T]{
+		textIndexMap: map[string]index.TextIndex[T]{},
 	}
 	return f
 }
 
-// Implements NamedFactory interface for use as a plugin.
-func (hf *IndexFactory[T]) Name() string { return "in_mem" }
-
-func (hf *IndexFactory[T]) isNameAvailableWithLock(name string) bool {
-	_, nameUsed := hf.indexMap[name]
+func (hf *TextIndexFactory[T]) isNameAvailableWithLock(name string) bool {
+	_, nameUsed := hf.textIndexMap[name]
 	return !nameUsed
 }
 
@@ -60,7 +60,7 @@ func (hf *IndexFactory[T]) isNameAvailableWithLock(name string) bool {
 // IndexFactory interface (see vector-indexer/index/index.go for details).
 // We define here options for exponent, maxLevels, efSearch, efConstruction,
 // and metric.
-func (hf *IndexFactory[T]) AllowedOptions() options.AllowedOptions {
+func (hf *TextIndexFactory[T]) AllowedOptions() options.AllowedOptions {
 	retVal := options.NewAllowedOptions()
 
 	return retVal
@@ -72,69 +72,56 @@ func (hf *IndexFactory[T]) AllowedOptions() options.AllowedOptions {
 // multFactor, maxLevels, efConstruction, maxNeighbors, and efSearch using struct parameters.
 // It then populates the HNSW graphs using the InsertChunk function until there are no more items to populate.
 // Finally, the function adds the name and hnsw object to the in memory map and returns the object.
-func (hf *IndexFactory[T]) Create(
+func (hf *TextIndexFactory[T]) Create(
 	name string,
-	o options.Options,
-	source index.VectorSource[T],
-	index index.VectorIndex[T]) (index.VectorIndex[T], error) {
+	index index.TextIndex[T]) (index.TextIndex[T], error) {
 	hf.mu.Lock()
 	defer hf.mu.Unlock()
-	return hf.createWithLock(name, o, source, index)
+	return hf.createWithLock(name, index)
 }
 
-func (hf *IndexFactory[T]) createWithLock(
+func (hf *TextIndexFactory[T]) createWithLock(
 	name string,
-	o options.Options,
-	source index.VectorSource[T],
-	index index.VectorIndex[T]) (index.VectorIndex[T], error) {
+	index index.TextIndex[T]) (index.TextIndex[T], error) {
 	if !hf.isNameAvailableWithLock(name) {
 		err := errors.New("index with name " + name + " already exists")
 		return nil, err
 	}
 	retVal := index
-	// while NextChunk() returns a chunk of vectors and their corresponding uids, insert them into the index graph
-	for chunk, uids, more, err := source.NextChunk(); more; {
-		if err != nil {
-			return nil, err
-		}
-		for i, vector := range chunk {
-			_, err := retVal.Insert(context.Background(), nil, uids[i], vector)
-			if err != nil {
-				return nil, err
-			}
-		}
-	}
-	err := retVal.ApplyOptions(o)
-	if err != nil {
-		return nil, err
-	}
-	hf.indexMap[name] = retVal
+	hf.textIndexMap[name] = retVal
 	return retVal, nil
+}
+
+func (hf *TextIndexFactory[T]) GetTextIndexMap() map[string]index.TextIndex[T] {
+	return hf.textIndexMap
 }
 
 // Find is an implementation of the IndexFactory interface function, invoked by an persistentIndexFactory
 // instance. It returns the VectorIndex corresponding with a string name using the in memory map.
-func (hf *IndexFactory[T]) Find(name string) (index.VectorIndex[T], error) {
+func (hf *TextIndexFactory[T]) Find(name string) (index.TextIndex[T], error) {
 	hf.mu.RLock()
 	defer hf.mu.RUnlock()
 	return hf.findWithLock(name)
 }
 
-func (hf *IndexFactory[T]) findWithLock(name string) (index.VectorIndex[T], error) {
-	vecInd := hf.indexMap[name]
+func (hf *TextIndexFactory[T]) findWithLock(name string) (index.TextIndex[T], error) {
+	vecInd, ok := hf.textIndexMap[name]
+	if !ok {
+		return nil, ErrTextIndexNotFound
+	}
 	return vecInd, nil
 }
 
 // Remove is an implementation of the IndexFactory interface function, invoked by an persistentIndexFactory
 // instance. It removes the VectorIndex corresponding with a string name using the in memory map.
-func (hf *IndexFactory[T]) Remove(name string) error {
+func (hf *TextIndexFactory[T]) Remove(name string) error {
 	hf.mu.Lock()
 	defer hf.mu.Unlock()
 	return hf.removeWithLock(name)
 }
 
-func (hf *IndexFactory[T]) removeWithLock(name string) error {
-	delete(hf.indexMap, name)
+func (hf *TextIndexFactory[T]) removeWithLock(name string) error {
+	delete(hf.textIndexMap, name)
 	return nil
 }
 
@@ -144,11 +131,11 @@ func (hf *IndexFactory[T]) removeWithLock(name string) error {
 // via the Create function using the passed VectorSource. If the VectorIndex
 // does not exist, it creates that VectorIndex corresponding with the name using
 // the VectorSource.
-func (hf *IndexFactory[T]) CreateOrReplace(
+func (hf *TextIndexFactory[T]) CreateOrReplace(
 	name string,
 	o options.Options,
 	source index.VectorSource[T],
-	index index.VectorIndex[T]) (index.VectorIndex[T], error) {
+	index index.TextIndex[T]) (index.TextIndex[T], error) {
 	hf.mu.Lock()
 	defer hf.mu.Unlock()
 	vi, err := hf.findWithLock(name)
@@ -161,16 +148,16 @@ func (hf *IndexFactory[T]) CreateOrReplace(
 			return nil, err
 		}
 	}
-	return hf.createWithLock(name, o, source, index)
+	return hf.createWithLock(name, index)
 }
 
-func (hf *IndexFactory[T]) WriteToWAL() error {
+func (hf *TextIndexFactory[T]) WriteToWAL() error {
 	var buf bytes.Buffer
 
 	encoder := gob.NewEncoder(&buf)
 
 	operation := func() error {
-		if err := encoder.Encode(hf.indexMap); err != nil {
+		if err := encoder.Encode(hf.textIndexMap); err != nil {
 			return fmt.Errorf("could not encode file content, %s", err)
 		}
 
@@ -186,7 +173,7 @@ func (hf *IndexFactory[T]) WriteToWAL() error {
 	return backoff.Retry(operation, exponentialBackoff)
 }
 
-func (hf *IndexFactory[T]) ReadFromWAL() error {
+func (hf *TextIndexFactory[T]) ReadFromWAL() error {
 
 	operation := func() error {
 		data, err := storage.GetFileContents(context.Background(), "index.wal")
@@ -196,7 +183,7 @@ func (hf *IndexFactory[T]) ReadFromWAL() error {
 
 		decoder := gob.NewDecoder(bytes.NewReader(data))
 
-		if err := decoder.Decode(&hf.indexMap); err != nil {
+		if err := decoder.Decode(&hf.textIndexMap); err != nil {
 			return fmt.Errorf("could not decode file content, %s", err)
 		}
 

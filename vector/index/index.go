@@ -4,6 +4,7 @@ import (
 	"context"
 
 	c "hmruntime/vector/constraints"
+	"hmruntime/vector/utils"
 
 	"hmruntime/vector/options"
 )
@@ -81,6 +82,32 @@ type OptionalIndexSupport[T c.Float] interface {
 		filter SearchFilter[T]) (*SearchPathResult, error)
 }
 
+type TextIndex[T c.Float] interface {
+	// GetVectorIndexMap returns the map of searchMethod to VectorIndex
+	GetVectorIndexMap() map[string]VectorIndex[T]
+
+	// GetVectorIndex returns the VectorIndex for a given searchMethod
+	GetVectorIndex(searchMethod string) (VectorIndex[T], error)
+
+	// SetVectorIndex sets the VectorIndex for a given searchMethod
+	SetVectorIndex(searchMethod string, index VectorIndex[T]) error
+
+	// DeleteVectorIndex deletes the VectorIndex for a given searchMethod
+	DeleteVectorIndex(searchMethod string) error
+
+	// InsertText will add a text and uuid into the existing VectorIndex
+	InsertText(ctx context.Context, c CacheType, uuid string, text string) ([]*KeyValue, error)
+
+	// DeleteText will remove a text and uuid from the existing VectorIndex
+	DeleteText(ctx context.Context, c CacheType, uuid string) error
+
+	// GetText will return the text for a given uuid
+	GetText(ctx context.Context, c CacheType, uuid string) (string, error)
+
+	// GetTextMap returns the map of uuid to text
+	GetTextMap() map[string]string
+}
+
 // A VectorIndex can be used to Search for vectors and add vectors to an index.
 type VectorIndex[T c.Float] interface {
 	OptionalIndexSupport[T]
@@ -99,7 +126,7 @@ type VectorIndex[T c.Float] interface {
 	// been filtered out.
 	Search(ctx context.Context, c CacheType, query []T,
 		maxResults int,
-		filter SearchFilter[T]) ([]string, error)
+		filter SearchFilter[T]) (utils.MinTupleHeap[T], error)
 
 	// SearchWithUid will find the uids for a given set of vectors based on the
 	// input queryUid, limiting to the specified maximum number of results.
@@ -109,15 +136,15 @@ type VectorIndex[T c.Float] interface {
 	// been filtered out.
 	SearchWithUid(ctx context.Context, c CacheType, queryUid string,
 		maxResults int,
-		filter SearchFilter[T]) ([]string, error)
+		filter SearchFilter[T]) (utils.MinTupleHeap[T], error)
 
 	// Insert will add a vector and uuid into the existing VectorIndex. If
 	// uuid already exists, it should throw an error to not insert duplicate uuids
-	Insert(ctx context.Context, c CacheType, uuid string, vec []T) ([]*KeyValue, error)
+	InsertVector(ctx context.Context, c CacheType, uuid string, vec []T) ([]*KeyValue, error)
 
 	// Delete will remove a vector and uuid from the existing VectorIndex. If
 	// uuid does not exist, it should throw an error to not delete non-existent uuids
-	Delete(ctx context.Context, c CacheType, uuid string) error
+	DeleteVector(ctx context.Context, c CacheType, uuid string) error
 
 	// OptionalFeatures() returns a collection of optional features that
 	// may be supported by this class. By default, every implementation

@@ -10,6 +10,9 @@ import (
 	"hmruntime/logger"
 	"hmruntime/storage"
 	"hmruntime/utils"
+	"hmruntime/vector"
+	"hmruntime/vector/in_mem"
+	"hmruntime/vector/index"
 
 	"github.com/hypermodeAI/manifest"
 )
@@ -66,7 +69,66 @@ func loadManifest(ctx context.Context) error {
 			Msg("The manifest file is in a deprecated format.  Please update it to the current format.")
 	}
 
+	// add processing of manifest collections to create vector indexes
+	processManifestCollections(ctx, man)
+	deleteIndexesNotInManifest(man)
+
 	// Only update the Manifest global when we have successfully read the manifest.
 	Manifest = man
+
 	return nil
+}
+
+func processManifestCollections(ctx context.Context, Manifest manifest.HypermodeManifest) {
+	for collectionName, collection := range Manifest.Collections {
+		textIndex, err := vector.GlobalTextIndexFactory.Find(collectionName)
+		if err == vector.ErrTextIndexNotFound {
+			textIndex, err = vector.GlobalTextIndexFactory.Create(collectionName, &in_mem.InMemTextIndex[float64]{})
+			if err != nil {
+				logger.Err(ctx, err).
+					Str("collection_name", collectionName).
+					Msg("Failed to create vector index.")
+			}
+		}
+		for searchMethodName, searchMethod := range collection.SearchMethods {
+			_, err := textIndex.GetVectorIndex(searchMethodName)
+
+			// if the index does not exist, create it
+			if err == in_mem.ErrVectorIndexAlreadyExists {
+				var index index.VectorIndex[float64]
+				switch searchMethod.Index.Type {
+				case "sequential":
+					index = &in_mem.InMemBruteForceIndex{}
+				case "":
+					index = &in_mem.InMemBruteForceIndex{}
+				default:
+					logger.Err(ctx, nil).
+						Str("index_type", searchMethod.Index.Type).
+						Msg("Unknown index type.")
+					continue
+				}
+
+				textIndex.SetVectorIndex(searchMethodName, index)
+
+				if err != nil {
+					logger.Err(ctx, err).
+						Str("index_name", searchMethodName).
+						Msg("Failed to create vector index.")
+				}
+			}
+		}
+	}
+}
+
+func deleteIndexesNotInManifest(Manifest manifest.HypermodeManifest) {
+	for indexName := range vector.GlobalTextIndexFactory.GetTextIndexMap() {
+		if _, ok := Manifest.Collections[indexName]; !ok {
+			vector.GlobalTextIndexFactory.Remove(indexName)
+		}
+		for searchMethodName := range vector.GlobalTextIndexFactory.GetTextIndexMap()[indexName].GetVectorIndexMap() {
+			if _, ok := Manifest.Collections[indexName].SearchMethods[searchMethodName]; !ok {
+				vector.GlobalTextIndexFactory.GetTextIndexMap()[indexName].DeleteVectorIndex(searchMethodName)
+			}
+		}
+	}
 }

@@ -8,10 +8,12 @@ import (
 	"hmruntime/vector/options"
 	"hmruntime/vector/utils"
 	"os"
+	"sync"
 )
 
 type InMemBruteForceIndex struct {
 	// vectorNodes is a map of string to []float64
+	mu          sync.RWMutex
 	vectorNodes map[string][]float64
 }
 
@@ -28,8 +30,10 @@ func (ims *InMemBruteForceIndex) emptyFinalResultWithError(e error) (
 	return index.NewSearchPathResult(), e
 }
 
-func (ims *InMemBruteForceIndex) Search(ctx context.Context, c index.CacheType, query []float64, maxResults int, filter index.SearchFilter[float64]) ([]string, error) {
+func (ims *InMemBruteForceIndex) Search(ctx context.Context, c index.CacheType, query []float64, maxResults int, filter index.SearchFilter[float64]) (utils.MinTupleHeap[float64], error) {
 	// calculate cosine similarity and return top maxResults results
+	ims.mu.RLock()
+	defer ims.mu.RUnlock()
 	var results utils.MinTupleHeap[float64]
 	heap.Init(&results)
 	for uid, vector := range ims.vectorNodes {
@@ -38,27 +42,26 @@ func (ims *InMemBruteForceIndex) Search(ctx context.Context, c index.CacheType, 
 			return nil, err
 		}
 		if results.Len() < maxResults {
-			results.Push(utils.InitHeapElement(similarity, uid, false))
+			heap.Push(&results, utils.InitHeapElement(similarity, uid, false))
 		} else if utils.IsBetterScoreForSimilarity(similarity, results[0].GetValue()) {
-			results.Pop()
-			results.Push(utils.InitHeapElement(similarity, uid, false))
+			heap.Pop(&results)
+			heap.Push(&results, utils.InitHeapElement(similarity, uid, false))
 		}
 	}
 
 	// Return top maxResults results
-	var uids []string
-	for len(results) > 0 {
-		top := heap.Pop(&results).(*utils.MinHeapElement[float64])
-		uids = append(uids, top.GetIndex())
+	var finalResults utils.MinTupleHeap[float64]
+	for results.Len() > 0 {
+		finalResults = append(finalResults, *heap.Pop(&results).(*utils.MinHeapElement[float64]))
 	}
-	// Reverse the uids to get the highest similarity first
-	for i, j := 0, len(uids)-1; i < j; i, j = i+1, j-1 {
-		uids[i], uids[j] = uids[j], uids[i]
+	// Reverse the finalResults to get the highest similarity first
+	for i, j := 0, len(finalResults)-1; i < j; i, j = i+1, j-1 {
+		finalResults[i], finalResults[j] = finalResults[j], finalResults[i]
 	}
-	return uids, nil
+	return finalResults, nil
 }
 
-func (ims *InMemBruteForceIndex) SearchWithUid(ctx context.Context, c index.CacheType, queryUid string, maxResults int, filter index.SearchFilter[float64]) ([]string, error) {
+func (ims *InMemBruteForceIndex) SearchWithUid(ctx context.Context, c index.CacheType, queryUid string, maxResults int, filter index.SearchFilter[float64]) (utils.MinTupleHeap[float64], error) {
 	query := ims.vectorNodes[queryUid]
 	if query == nil {
 		return nil, nil
@@ -70,12 +73,16 @@ func (ims *InMemBruteForceIndex) SearchWithPath(ctx context.Context, c index.Cac
 	return ims.emptyFinalResultWithError(nil)
 }
 
-func (ims *InMemBruteForceIndex) Insert(ctx context.Context, c index.CacheType, uid string, vector []float64) ([]*index.KeyValue, error) {
+func (ims *InMemBruteForceIndex) InsertVector(ctx context.Context, c index.CacheType, uid string, vector []float64) ([]*index.KeyValue, error) {
+	ims.mu.Lock()
+	defer ims.mu.Unlock()
 	ims.vectorNodes[uid] = vector
 	return nil, nil
 }
 
-func (ims *InMemBruteForceIndex) Delete(ctx context.Context, c index.CacheType, uid string) error {
+func (ims *InMemBruteForceIndex) DeleteVector(ctx context.Context, c index.CacheType, uid string) error {
+	ims.mu.Lock()
+	defer ims.mu.Unlock()
 	delete(ims.vectorNodes, uid)
 	return nil
 }
