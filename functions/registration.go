@@ -9,7 +9,6 @@ import (
 
 	"hmruntime/logger"
 	"hmruntime/plugins"
-	"hmruntime/wasmhost"
 )
 
 var Functions = make(map[string]FunctionInfo)
@@ -19,38 +18,22 @@ type FunctionInfo struct {
 	Plugin   *plugins.Plugin
 }
 
-func MonitorRegistration(ctx context.Context) {
-	go func() {
-		for {
-			select {
-			case <-wasmhost.RegistrationRequest:
-				r := newRegistration()
-				r.registerAll(ctx)
-				r.cleanup(ctx)
-			case <-ctx.Done():
-				return
-			}
-		}
-	}()
+func RegisterFunctions(ctx context.Context, plugins []plugins.Plugin) {
+	r := &registration{
+		functions: make(map[string]bool),
+		types:     make(map[string]bool),
+	}
+
+	for _, plugin := range plugins {
+		r.registerPlugin(ctx, &plugin)
+	}
+
+	r.cleanup(ctx)
 }
 
 type registration struct {
 	functions map[string]bool
 	types     map[string]bool
-}
-
-func newRegistration() *registration {
-	return &registration{
-		functions: make(map[string]bool),
-		types:     make(map[string]bool),
-	}
-}
-
-func (r *registration) registerAll(ctx context.Context) {
-	var plugins = wasmhost.Plugins.GetAll()
-	for _, plugin := range plugins {
-		r.registerPlugin(ctx, &plugin)
-	}
 }
 
 func (r *registration) registerPlugin(ctx context.Context, plugin *plugins.Plugin) {
