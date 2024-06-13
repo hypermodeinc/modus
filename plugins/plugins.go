@@ -7,6 +7,7 @@ package plugins
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"hmruntime/utils"
@@ -36,6 +37,37 @@ type FunctionSignature struct {
 	Name       string      `json:"name"`
 	Parameters []Parameter `json:"parameters"`
 	ReturnType TypeInfo    `json:"returnType"`
+}
+
+func (f *FunctionSignature) String() string {
+	b := strings.Builder{}
+	b.WriteString(f.Name)
+	b.WriteString("(")
+	for i, p := range f.Parameters {
+		if i > 0 {
+			b.WriteString(", ")
+		}
+		b.WriteString(p.Name)
+		b.WriteString(": ")
+		b.WriteString(p.Type.Name)
+	}
+	b.WriteString("): ")
+	b.WriteString(f.ReturnType.Name)
+	return b.String()
+}
+
+func (f *FunctionSignature) Signature() string {
+	b := strings.Builder{}
+	b.WriteString("(")
+	for i, p := range f.Parameters {
+		if i > 0 {
+			b.WriteString(",")
+		}
+		b.WriteString(p.Type.Name)
+	}
+	b.WriteString("):")
+	b.WriteString(f.ReturnType.Name)
+	return b.String()
 }
 
 type TypeDefinition struct {

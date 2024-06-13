@@ -7,7 +7,10 @@ package hostfunctions
 import (
 	"context"
 	"errors"
+	"fmt"
+	"strings"
 
+	"hmruntime/functions"
 	"hmruntime/functions/assemblyscript"
 
 	wasm "github.com/tetratelabs/wazero/api"
@@ -112,3 +115,38 @@ func readParams4[T1, T2, T3, T4 any](ctx context.Context, mod wasm.Module,
 // 	err6 := readParam[T6](ctx, mod, p6, v6)
 // 	return errors.Join(err1, err2, err3, err4, err5, err6)
 // }
+
+func callFunction(ctx context.Context, mod wasm.Module, fnName string, inputValues ...any) (any, error) {
+	info, ok := functions.Functions[fnName]
+	if !ok {
+		return nil, fmt.Errorf("no function registered named %s", fnName)
+	}
+
+	parameters := make(map[string]any, len(inputValues))
+	for i, value := range inputValues {
+		name := info.Function.Parameters[i].Name
+		parameters[name] = value
+	}
+
+	return functions.CallFunction(ctx, mod, info, parameters)
+}
+
+func verifyFunctionSignature(fnName string, expectedTypes ...string) error {
+	info, ok := functions.Functions[fnName]
+	if !ok {
+		return fmt.Errorf("no function registered named %s", fnName)
+	}
+
+	if len(expectedTypes) == 0 {
+		return errors.New("expectedTypes must not be empty")
+	}
+	l := len(expectedTypes)
+	expectedSig := fmt.Sprintf("(%s):%s", strings.Join(expectedTypes[:l-1], ","), expectedTypes[l-1])
+
+	sig := info.Function.Signature()
+	if sig != expectedSig {
+		return fmt.Errorf("function %s has signature %s, expected %s", fnName, sig, expectedSig)
+	}
+
+	return nil
+}
