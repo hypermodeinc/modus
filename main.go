@@ -16,7 +16,6 @@ import (
 	"hmruntime/aws"
 	"hmruntime/config"
 	"hmruntime/db"
-	"hmruntime/functions"
 	"hmruntime/graphql"
 	"hmruntime/logger"
 	"hmruntime/manifestdata"
@@ -81,9 +80,6 @@ func initRuntimeServices(ctx context.Context) {
 
 	// Initialize the metadata database
 	db.Initialize(ctx)
-
-	// Watch for function registration requests
-	functions.MonitorRegistration(ctx)
 
 	// Initialize in mem vector factory
 	vector.InitializeIndexFactory()
