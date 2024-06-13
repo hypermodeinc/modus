@@ -19,6 +19,13 @@ type InMemTextIndex[T c.Float] struct {
 	vectorIndexes map[string]index.VectorIndex[T]
 }
 
+func NewTextIndex[T c.Float]() *InMemTextIndex[T] {
+	return &InMemTextIndex[T]{
+		textMap:       map[string]string{},
+		vectorIndexes: map[string]index.VectorIndex[T]{},
+	}
+}
+
 func (ti *InMemTextIndex[T]) GetVectorIndexMap() map[string]index.VectorIndex[T] {
 	ti.mu.RLock()
 	defer ti.mu.RUnlock()

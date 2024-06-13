@@ -25,6 +25,7 @@ import (
 	"hmruntime/utils"
 	"hmruntime/vector"
 	"hmruntime/wasmhost"
+	"hmruntime/wasmhost/module"
 
 	"github.com/joho/godotenv"
 )
@@ -84,18 +85,18 @@ func initRuntimeServices(ctx context.Context) {
 	// Initialize in mem vector factory
 	vector.InitializeIndexFactory()
 
-	// Load app data and monitor for changes
-	manifestdata.MonitorManifestFile(ctx)
-
 	// Load plugins and monitor for changes
 	wasmhost.MonitorPlugins(ctx)
+
+	// Load app data and monitor for changes
+	manifestdata.MonitorManifestFile(ctx)
 
 	// Initialize the GraphQL engine
 	graphql.Initialize()
 }
 
 func stopRuntimeServices(ctx context.Context) {
-	wasmhost.RuntimeInstance.Close(ctx)
+	module.RuntimeInstance.Close(ctx)
 	logger.Close()
 
 	db.Stop()

@@ -13,10 +13,9 @@ import (
 	"hmruntime/functions"
 	"hmruntime/logger"
 	"hmruntime/utils"
-	"hmruntime/wasmhost"
+	"hmruntime/wasmhost/module"
 
 	"github.com/buger/jsonparser"
-	"github.com/rs/xid"
 	"github.com/wundergraph/graphql-go-tools/v2/pkg/engine/resolve"
 )
 
@@ -44,7 +43,7 @@ func (s Source) Load(ctx context.Context, input []byte, writer io.Writer) error 
 	}
 
 	// Load the data
-	result, gqlErrors, err := s.callFunction(ctx, ci)
+	result, gqlErrors, err := s.callFunctionByCallInfo(ctx, ci)
 
 	// Write the response
 	err = writeGraphQLResponse(writer, result, gqlErrors, err, ci)
@@ -55,7 +54,7 @@ func (s Source) Load(ctx context.Context, input []byte, writer io.Writer) error 
 	return err
 }
 
-func (s Source) callFunction(ctx context.Context, callInfo callInfo) (any, []resolve.GraphQLError, error) {
+func (s Source) callFunctionByCallInfo(ctx context.Context, callInfo callInfo) (any, []resolve.GraphQLError, error) {
 
 	// Get the function info
 	info, ok := functions.Functions[callInfo.Function.Name]
@@ -63,24 +62,15 @@ func (s Source) callFunction(ctx context.Context, callInfo callInfo) (any, []res
 		return nil, nil, fmt.Errorf("no function registered named %s", callInfo.Function.Name)
 	}
 
-	// Prepare the context that will be used throughout the function execution
-	executionId := xid.New().String()
-	ctx = context.WithValue(ctx, utils.ExecutionIdContextKey, executionId)
-	ctx = context.WithValue(ctx, utils.PluginContextKey, info.Plugin)
-
-	// Also prepare a slice to capture log messages sent through the "log" host function.
-	messages := []utils.LogMessage{}
-	ctx = context.WithValue(ctx, utils.FunctionMessagesContextKey, &messages)
-
-	// Create output buffers for the function to write stdout/stderr to
-	buffers := utils.OutputBuffers{}
+	// Prepare the context, buffers, and messages
+	ctx, executionId, buffers, messages := module.Setup(ctx, info)
 
 	// Get a module instance for this request.
 	// Each request will get its own instance of the plugin module, so that we can run
 	// multiple requests in parallel without risk of corrupting the module's memory.
 	// This also protects against security risk, as each request will have its own
 	// isolated memory space.  (One request cannot access another request's memory.)
-	mod, err := wasmhost.GetModuleInstance(ctx, info.Plugin, &buffers)
+	mod, err := module.GetModuleInstance(ctx, info.Plugin, &buffers)
 	if err != nil {
 		return nil, nil, err
 	}

@@ -2,7 +2,7 @@
  * Copyright 2024 Hypermode, Inc.
  */
 
-package hostfunctions
+package module
 
 import (
 	"hmruntime/functions"
@@ -22,7 +22,7 @@ func Test_VerifyFunctionSignature(t *testing.T) {
 			ReturnType: plugins.TypeInfo{Name: "bool"},
 		}}
 
-	err := verifyFunctionSignature("myFunction", "int", "string", "bool")
+	err := VerifyFunctionSignature("myFunction", "int", "string", "bool")
 	if err != nil {
 		t.Errorf("verifyFunctionSignature failed: %v", err)
 	}
@@ -34,12 +34,12 @@ func Test_VerifyFunctionSignature(t *testing.T) {
 		},
 	}
 
-	err = verifyFunctionSignature("anotherFunction", "bool")
+	err = VerifyFunctionSignature("anotherFunction", "bool")
 	if err != nil {
 		t.Errorf("verifyFunctionSignature failed: %v", err)
 	}
 
-	err = verifyFunctionSignature("nonExistentFunction", "float64")
+	err = VerifyFunctionSignature("nonExistentFunction", "float64")
 	if err == nil {
 		t.Error("verifyFunctionSignature should have returned an error for non-existent function")
 	}

@@ -30,6 +30,7 @@ func Instantiate(ctx context.Context, runtime *wazero.Runtime) error {
 	b.NewFunctionBuilder().WithFunc(hostDeleteFromTextIndex).Export("deleteFromTextIndex")
 	b.NewFunctionBuilder().WithFunc(hostSearchTextIndex).Export("searchTextIndex")
 	b.NewFunctionBuilder().WithFunc(hostRecomputeTextIndex).Export("recomputeTextIndex")
+	b.NewFunctionBuilder().WithFunc(hostGetText).Export("getText")
 	b.NewFunctionBuilder().WithFunc(hostInvokeTextGenerator).Export("invokeTextGenerator")
 	b.NewFunctionBuilder().WithFunc(hostFetch).Export("httpFetch")
 

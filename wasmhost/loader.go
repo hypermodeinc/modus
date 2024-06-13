@@ -14,6 +14,7 @@ import (
 	"hmruntime/plugins"
 	"hmruntime/storage"
 	"hmruntime/utils"
+	"hmruntime/wasmhost/module"
 
 	"github.com/tetratelabs/wazero"
 )
@@ -50,7 +51,7 @@ func MonitorPlugins(ctx context.Context) {
 	}
 	sm.Changed = func(errors []error) {
 		if len(errors) == 0 {
-			plugins := Plugins.GetAll()
+			plugins := module.Plugins.GetAll()
 			functions.RegisterFunctions(ctx, plugins)
 		}
 	}
@@ -90,6 +91,8 @@ func loadPlugin(ctx context.Context, filename string) error {
 	// Log the details of the loaded plugin.
 	logPluginLoaded(ctx, plugin)
 
+	// check for vector index difference
+
 	// Notify the callback that a plugin has been loaded.
 	err = pluginLoaded(ctx, metadata)
 	if err != nil {
@@ -103,7 +106,7 @@ func compileModule(ctx context.Context, bytes []byte) (wazero.CompiledModule, er
 	span := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
 
-	cm, err := RuntimeInstance.CompileModule(ctx, bytes)
+	cm, err := module.RuntimeInstance.CompileModule(ctx, bytes)
 	if err != nil {
 		return nil, fmt.Errorf("failed to compile the plugin: %w", err)
 	}
@@ -123,7 +126,7 @@ func makePlugin(ctx context.Context, cm *wazero.CompiledModule, filename string,
 
 	// Create and store the plugin.
 	plugin := plugins.Plugin{Module: cm, Metadata: metadata, FileName: filename, Types: types}
-	Plugins.AddOrUpdate(plugin)
+	module.Plugins.AddOrUpdate(plugin)
 
 	return plugin
 }
@@ -177,7 +180,7 @@ func unloadPlugin(ctx context.Context, filename string) error {
 	transaction, ctx := utils.NewSentryTransactionForCurrentFunc(ctx)
 	defer transaction.Finish()
 
-	p, ok := Plugins.GetByFile(filename)
+	p, ok := module.Plugins.GetByFile(filename)
 	if !ok {
 		return fmt.Errorf("plugin not found: %s", filename)
 	}
@@ -186,6 +189,6 @@ func unloadPlugin(ctx context.Context, filename string) error {
 		Str("build_id", p.BuildId()).
 		Msg("Unloading plugin.")
 
-	Plugins.Remove(p)
+	module.Plugins.Remove(p)
 	return (*p.Module).Close(ctx)
 }

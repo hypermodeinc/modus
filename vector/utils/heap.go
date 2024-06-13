@@ -13,8 +13,8 @@ type MinHeapElement[T c.Float] struct {
 }
 
 func InitHeapElement[T c.Float](
-	val T, i string, filteredOut bool) *MinHeapElement[T] {
-	return &MinHeapElement[T]{
+	val T, i string, filteredOut bool) MinHeapElement[T] {
+	return MinHeapElement[T]{
 		value: val,
 		index: i,
 	}

@@ -2,33 +2,56 @@ package hostfunctions
 
 import (
 	"context"
+
 	"hmruntime/logger"
 	"hmruntime/manifestdata"
+	"hmruntime/plugins"
 	"hmruntime/utils"
 	"hmruntime/vector"
+	"hmruntime/wasmhost/module"
 
 	wasm "github.com/tetratelabs/wazero/api"
 )
 
-type VectorIndexOperationResult struct {
-	mutation VectorIndexMutationResult
-	query    VectorIndexSearchResult
+type textIndexMutationResult struct {
+	Collection string
+	Operation  string
+	Status     string
+	ID         string
 }
 
-type VectorIndexMutationResult struct {
-	status    string
-	operation string
-	id        string
+func (r *textIndexMutationResult) GetTypeInfo() plugins.TypeInfo {
+	return plugins.TypeInfo{
+		Name: "TextIndexMutationResult",
+		Path: "~lib/@hypermode/functions-as/assembly/collections/TextIndexMutationResult",
+	}
 }
 
-type VectorIndexSearchResult struct {
-	status  string
-	objects []VectorIndexSearchResultObject
+type textIndexSearchResult struct {
+	Collection   string
+	SearchMethod string
+	Status       string
+	Objects      []textIndexSearchResultObject
 }
 
-type VectorIndexSearchResultObject struct {
-	id    string
-	score float64
+func (r *textIndexSearchResult) GetTypeInfo() plugins.TypeInfo {
+	return plugins.TypeInfo{
+		Name: "TextIndexSearchResult",
+		Path: "~lib/@hypermode/functions-as/assembly/collections/TextIndexSearchResult",
+	}
+}
+
+type textIndexSearchResultObject struct {
+	ID    string
+	Text  string
+	Score float64
+}
+
+func (r *textIndexSearchResultObject) GetTypeInfo() plugins.TypeInfo {
+	return plugins.TypeInfo{
+		Name: "TextIndexSearchResultObject",
+		Path: "~lib/@hypermode/functions-as/assembly/collections/TextIndexSearchResultObject",
+	}
 }
 
 func hostUpsertToTextIndex(ctx context.Context, mod wasm.Module, pCollection uint32, pId uint32, pText uint32) uint32 {
@@ -36,7 +59,12 @@ func hostUpsertToTextIndex(ctx context.Context, mod wasm.Module, pCollection uin
 	var id string
 	var text string
 
-	err := readParams3(ctx, mod, pCollection, pId, pText, &collection, &id, &text)
+	var err error
+	if pId != 0 {
+		err = readParams3(ctx, mod, pCollection, pId, pText, &collection, &id, &text)
+	} else {
+		err = readParams2(ctx, mod, pCollection, pText, &collection, &text)
+	}
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error reading input parameters.")
 		return 0
@@ -65,19 +93,25 @@ func hostUpsertToTextIndex(ctx context.Context, mod wasm.Module, pCollection uin
 		}
 
 		embedder := searchMethod.Embedder
-		err = verifyFunctionSignature(embedder, "string", "f64[]")
+		err = module.VerifyFunctionSignature(embedder, "string", "f64[]")
 		if err != nil {
 			logger.Err(ctx, err).Msg("Error verifying function signature.")
 			return 0
 		}
 
-		result, err := callFunction(ctx, mod, embedder, text)
+		result, err := module.CallFunctionByNameWithModule(ctx, mod, embedder, text)
 		if err != nil {
 			logger.Err(ctx, err).Msg("Error calling function.")
 			return 0
 		}
 
-		textVec := result.([]float64)
+		resultArr := result.([]interface{})
+
+		textVec := make([]float64, len(resultArr))
+		for i, val := range resultArr {
+			textVec[i] = val.(float64)
+		}
+
 		_, err = vectorIndex.InsertVector(ctx, nil, id, textVec)
 		if err != nil {
 			logger.Err(ctx, err).Msg("Error inserting into vector index.")
@@ -90,12 +124,11 @@ func hostUpsertToTextIndex(ctx context.Context, mod wasm.Module, pCollection uin
 		return 0
 	}
 
-	output := &VectorIndexOperationResult{
-		mutation: VectorIndexMutationResult{
-			status:    "success",
-			operation: "insert",
-			id:        id,
-		},
+	output := textIndexMutationResult{
+		Collection: collection,
+		Status:     "success",
+		Operation:  "insert",
+		ID:         id,
 	}
 
 	offset, err := writeResult(ctx, mod, output)
@@ -135,12 +168,11 @@ func hostDeleteFromTextIndex(ctx context.Context, mod wasm.Module, pCollection u
 		return 0
 	}
 
-	output := &VectorIndexOperationResult{
-		mutation: VectorIndexMutationResult{
-			status:    "success",
-			operation: "delete",
-			id:        id,
-		},
+	output := textIndexMutationResult{
+		Collection: collection,
+		Status:     "success",
+		Operation:  "delete",
+		ID:         id,
 	}
 
 	offset, err := writeResult(ctx, mod, output)
@@ -153,14 +185,15 @@ func hostDeleteFromTextIndex(ctx context.Context, mod wasm.Module, pCollection u
 }
 
 func hostSearchTextIndex(ctx context.Context, mod wasm.Module, pCollection uint32, pSearchMethod uint32,
-	pText uint32, pLimit uint32) uint32 {
+	pText uint32, pLimit uint32, pReturnText uint32) uint32 {
 	var collection string
 	var searchMethod string
 	var text string
-	var limit int
+	var limit int32
+	var returnText bool
 
-	err := readParams4(ctx, mod, pCollection, pSearchMethod, pText, pLimit,
-		&collection, &searchMethod, &text, &limit)
+	err := readParams5(ctx, mod, pCollection, pSearchMethod, pText, pLimit, pReturnText,
+		&collection, &searchMethod, &text, &limit, &returnText)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error reading input parameters.")
 		return 0
@@ -179,36 +212,53 @@ func hostSearchTextIndex(ctx context.Context, mod wasm.Module, pCollection uint3
 	}
 
 	embedder := manifestdata.Manifest.Collections[collection].SearchMethods[searchMethod].Embedder
-	err = verifyFunctionSignature(embedder, "string", "f64[]")
+	err = module.VerifyFunctionSignature(embedder, "string", "f64[]")
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error verifying function signature.")
 		return 0
 	}
 
-	result, err := callFunction(ctx, mod, embedder, text)
+	result, err := module.CallFunctionByNameWithModule(ctx, mod, embedder, text)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error calling function.")
 		return 0
 	}
 
-	textVec := result.([]float64)
-	objects, err := vectorIndex.Search(ctx, nil, textVec, limit, nil)
+	resultArr := result.([]interface{})
+	textVec := make([]float64, len(resultArr))
+	for i, val := range resultArr {
+		textVec[i] = val.(float64)
+	}
+
+	objects, err := vectorIndex.Search(ctx, nil, textVec, int(limit), nil)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error searching vector index.")
 		return 0
 	}
 
-	output := &VectorIndexOperationResult{
-		query: VectorIndexSearchResult{
-			status:  "success",
-			objects: make([]VectorIndexSearchResultObject, len(objects)),
-		},
+	output := textIndexSearchResult{
+		Collection: collection,
+		Status:     "success",
+		Objects:    make([]textIndexSearchResultObject, len(objects)),
 	}
 
 	for i, object := range objects {
-		output.query.objects[i] = VectorIndexSearchResultObject{
-			id:    object.GetIndex(),
-			score: object.GetValue(),
+		if returnText {
+			text, err := textIndex.GetText(ctx, nil, object.GetIndex())
+			if err != nil {
+				logger.Err(ctx, err).Msg("Error getting text.")
+				return 0
+			}
+			output.Objects[i] = textIndexSearchResultObject{
+				ID:    object.GetIndex(),
+				Text:  text,
+				Score: object.GetValue(),
+			}
+		} else {
+			output.Objects[i] = textIndexSearchResultObject{
+				ID:    object.GetIndex(),
+				Score: object.GetValue(),
+			}
 		}
 	}
 
@@ -244,35 +294,56 @@ func hostRecomputeTextIndex(ctx context.Context, mod wasm.Module, pCollection ui
 	}
 
 	embedder := manifestdata.Manifest.Collections[collection].SearchMethods[searchMethod].Embedder
-	err = verifyFunctionSignature(embedder, "string", "f64[]")
+	err = module.VerifyFunctionSignature(embedder, "string", "f64[]")
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error verifying function signature.")
 		return 0
 	}
 
-	for uuid, text := range textIndex.GetTextMap() {
-		result, err := callFunction(ctx, mod, embedder, text)
-		if err != nil {
-			logger.Err(ctx, err).Msg("Error calling function.")
-			return 0
-		}
-
-		textVec := result.([]float64)
-		_, err = vectorIndex.InsertVector(ctx, nil, uuid, textVec)
-		if err != nil {
-			logger.Err(ctx, err).Msg("Error inserting into vector index.")
-			return 0
-		}
+	err = vector.ProcessTextMapWithModule(ctx, mod, textIndex, embedder, vectorIndex)
+	if err != nil {
+		logger.Err(ctx, err).Msg("Error processing text map.")
+		return 0
 	}
 
-	output := &VectorIndexOperationResult{
-		mutation: VectorIndexMutationResult{
-			status:    "success",
-			operation: "recompute",
-		},
+	output := textIndexMutationResult{
+		Collection: collection,
+		Status:     "success",
+		Operation:  "recompute",
 	}
 
 	offset, err := writeResult(ctx, mod, output)
+	if err != nil {
+		logger.Err(ctx, err).Msg("Error writing result.")
+		return 0
+	}
+
+	return offset
+}
+
+func hostGetText(ctx context.Context, mod wasm.Module, pCollection uint32, pId uint32) uint32 {
+	var collection string
+	var id string
+
+	err := readParams2(ctx, mod, pCollection, pId, &collection, &id)
+	if err != nil {
+		logger.Err(ctx, err).Msg("Error reading input parameters.")
+		return 0
+	}
+
+	textIndex, err := vector.GlobalTextIndexFactory.Find(collection)
+	if err != nil {
+		logger.Err(ctx, err).Msg("Error finding text index.")
+		return 0
+	}
+
+	text, err := textIndex.GetText(ctx, nil, id)
+	if err != nil {
+		logger.Err(ctx, err).Msg("Error getting text.")
+		return 0
+	}
+
+	offset, err := writeResult(ctx, mod, text)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error writing result.")
 		return 0

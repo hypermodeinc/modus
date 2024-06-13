@@ -11,26 +11,38 @@ import (
 	"sync"
 )
 
-type InMemBruteForceIndex struct {
+type SequentialVectorIndex struct {
 	// vectorNodes is a map of string to []float64
 	mu          sync.RWMutex
 	vectorNodes map[string][]float64
 }
 
-func (ims *InMemBruteForceIndex) AllowedOptions() options.AllowedOptions {
+func NewSequentialVectorIndex() *SequentialVectorIndex {
+	return &SequentialVectorIndex{
+		vectorNodes: make(map[string][]float64),
+	}
+}
+
+func (ims *SequentialVectorIndex) GetVectorNodesMap() map[string][]float64 {
+	ims.mu.RLock()
+	defer ims.mu.RUnlock()
+	return ims.vectorNodes
+}
+
+func (ims *SequentialVectorIndex) AllowedOptions() options.AllowedOptions {
 	return nil
 }
 
-func (ims *InMemBruteForceIndex) ApplyOptions(o options.Options) error {
+func (ims *SequentialVectorIndex) ApplyOptions(o options.Options) error {
 	return nil
 }
 
-func (ims *InMemBruteForceIndex) emptyFinalResultWithError(e error) (
+func (ims *SequentialVectorIndex) emptyFinalResultWithError(e error) (
 	*index.SearchPathResult, error) {
 	return index.NewSearchPathResult(), e
 }
 
-func (ims *InMemBruteForceIndex) Search(ctx context.Context, c index.CacheType, query []float64, maxResults int, filter index.SearchFilter[float64]) (utils.MinTupleHeap[float64], error) {
+func (ims *SequentialVectorIndex) Search(ctx context.Context, c index.CacheType, query []float64, maxResults int, filter index.SearchFilter[float64]) (utils.MinTupleHeap[float64], error) {
 	// calculate cosine similarity and return top maxResults results
 	ims.mu.RLock()
 	defer ims.mu.RUnlock()
@@ -52,7 +64,7 @@ func (ims *InMemBruteForceIndex) Search(ctx context.Context, c index.CacheType, 
 	// Return top maxResults results
 	var finalResults utils.MinTupleHeap[float64]
 	for results.Len() > 0 {
-		finalResults = append(finalResults, *heap.Pop(&results).(*utils.MinHeapElement[float64]))
+		finalResults = append(finalResults, heap.Pop(&results).(utils.MinHeapElement[float64]))
 	}
 	// Reverse the finalResults to get the highest similarity first
 	for i, j := 0, len(finalResults)-1; i < j; i, j = i+1, j-1 {
@@ -61,7 +73,7 @@ func (ims *InMemBruteForceIndex) Search(ctx context.Context, c index.CacheType, 
 	return finalResults, nil
 }
 
-func (ims *InMemBruteForceIndex) SearchWithUid(ctx context.Context, c index.CacheType, queryUid string, maxResults int, filter index.SearchFilter[float64]) (utils.MinTupleHeap[float64], error) {
+func (ims *SequentialVectorIndex) SearchWithUid(ctx context.Context, c index.CacheType, queryUid string, maxResults int, filter index.SearchFilter[float64]) (utils.MinTupleHeap[float64], error) {
 	query := ims.vectorNodes[queryUid]
 	if query == nil {
 		return nil, nil
@@ -69,25 +81,25 @@ func (ims *InMemBruteForceIndex) SearchWithUid(ctx context.Context, c index.Cach
 	return ims.Search(ctx, c, query, maxResults, filter)
 }
 
-func (ims *InMemBruteForceIndex) SearchWithPath(ctx context.Context, c index.CacheType, query []float64, maxResults int, filter index.SearchFilter[float64]) (*index.SearchPathResult, error) {
+func (ims *SequentialVectorIndex) SearchWithPath(ctx context.Context, c index.CacheType, query []float64, maxResults int, filter index.SearchFilter[float64]) (*index.SearchPathResult, error) {
 	return ims.emptyFinalResultWithError(nil)
 }
 
-func (ims *InMemBruteForceIndex) InsertVector(ctx context.Context, c index.CacheType, uid string, vector []float64) ([]*index.KeyValue, error) {
+func (ims *SequentialVectorIndex) InsertVector(ctx context.Context, c index.CacheType, uid string, vector []float64) ([]*index.KeyValue, error) {
 	ims.mu.Lock()
 	defer ims.mu.Unlock()
 	ims.vectorNodes[uid] = vector
 	return nil, nil
 }
 
-func (ims *InMemBruteForceIndex) DeleteVector(ctx context.Context, c index.CacheType, uid string) error {
+func (ims *SequentialVectorIndex) DeleteVector(ctx context.Context, c index.CacheType, uid string) error {
 	ims.mu.Lock()
 	defer ims.mu.Unlock()
 	delete(ims.vectorNodes, uid)
 	return nil
 }
 
-func (ims *InMemBruteForceIndex) WriteToWAL(filename string) error {
+func (ims *SequentialVectorIndex) WriteToWAL(filename string) error {
 	file, err := os.Create(filename)
 	if err != nil {
 		return err
