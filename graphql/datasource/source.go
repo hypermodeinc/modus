@@ -68,7 +68,11 @@ func (s Source) callFunction(ctx context.Context, callInfo callInfo) (any, []res
 	ctx = context.WithValue(ctx, utils.ExecutionIdContextKey, executionId)
 	ctx = context.WithValue(ctx, utils.PluginContextKey, info.Plugin)
 
-	// Create output buffers for the function to write logs to
+	// Also prepare a slice to capture log messages sent through the "log" host function.
+	messages := []utils.LogMessage{}
+	ctx = context.WithValue(ctx, utils.FunctionMessagesContextKey, &messages)
+
+	// Create output buffers for the function to write stdout/stderr to
 	buffers := utils.OutputBuffers{}
 
 	// Get a module instance for this request.
@@ -92,8 +96,9 @@ func (s Source) callFunction(ctx context.Context, callInfo callInfo) (any, []res
 		Buffers:     buffers,
 	}
 
-	// Transform error lines in the output buffers to GraphQL errors
-	gqlErrors := transformErrors(buffers, callInfo)
+	// Transform messages (and error lines in the output buffers) to GraphQL errors
+	messages = append(messages, utils.TransformConsoleOutput(buffers)...)
+	gqlErrors := transformErrors(messages, callInfo)
 
 	return result, gqlErrors, err
 }
@@ -238,8 +243,7 @@ func transformValue(data []byte, tf *fieldInfo) (result []byte, err error) {
 	return buf.Bytes(), nil
 }
 
-func transformErrors(buffers utils.OutputBuffers, ci callInfo) []resolve.GraphQLError {
-	messages := utils.TransformConsoleOutput(buffers)
+func transformErrors(messages []utils.LogMessage, ci callInfo) []resolve.GraphQLError {
 	errors := make([]resolve.GraphQLError, 0, len(messages))
 	for _, msg := range messages {
 		// Only include errors.  Other messages will be captured later and

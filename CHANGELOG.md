@@ -3,6 +3,8 @@
 ## UNRELEASED
 
 - Lowercase model name before invoking for hypermode hosted models [#221](https://github.com/gohypermode/runtime/pull/221)
+- Improve HTTP error messages [#222](https://github.com/gohypermode/runtime/pull/222)
+- Add host function for direct logging [#224](https://github.com/gohypermode/runtime/pull/224)
 
 ## 2024-06-03 - Version 0.8.2
 
