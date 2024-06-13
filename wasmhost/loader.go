@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"time"
 
+	"hmruntime/functions"
 	"hmruntime/logger"
 	"hmruntime/plugins"
 	"hmruntime/storage"
@@ -49,8 +50,8 @@ func MonitorPlugins(ctx context.Context) {
 	}
 	sm.Changed = func(errors []error) {
 		if len(errors) == 0 {
-			// Signal that we need to register functions
-			RegistrationRequest <- true
+			plugins := Plugins.GetAll()
+			functions.RegisterFunctions(ctx, plugins)
 		}
 	}
 	sm.Start(ctx)
