@@ -2,8 +2,6 @@ package hostfunctions
 
 import (
 	"context"
-	"fmt"
-	"hmruntime/functions"
 	"hmruntime/logger"
 	"hmruntime/manifestdata"
 	"hmruntime/utils"
@@ -31,24 +29,6 @@ type VectorIndexSearchResult struct {
 type VectorIndexSearchResultObject struct {
 	id    string
 	score float64
-}
-
-func getEmbedderFunctionInfo(embedder string) (functions.FunctionInfo, error) {
-	info, ok := functions.Functions[embedder]
-	if !ok {
-		return functions.FunctionInfo{}, fmt.Errorf("embedder function not found: %s", embedder)
-	}
-	if len(info.Function.Parameters) > 1 {
-		return functions.FunctionInfo{}, fmt.Errorf("embedder function must have only one parameter: %s", embedder)
-	}
-	if info.Function.Parameters[0].Type.Name != "string" {
-		return functions.FunctionInfo{}, fmt.Errorf("embedder function must take a string parameter: %s", embedder)
-	}
-	if info.Function.ReturnType.Name != "f64[]" {
-		return functions.FunctionInfo{}, fmt.Errorf("embedder function must return a float64 array: %s", embedder)
-	}
-
-	return info, nil
 }
 
 func hostUpsertToTextIndex(ctx context.Context, mod wasm.Module, pCollection uint32, pId uint32, pText uint32) uint32 {
@@ -85,16 +65,13 @@ func hostUpsertToTextIndex(ctx context.Context, mod wasm.Module, pCollection uin
 		}
 
 		embedder := searchMethod.Embedder
-		info, err := getEmbedderFunctionInfo(embedder)
+		err = verifyFunctionSignature(embedder, "string", "f64[]")
 		if err != nil {
-			logger.Err(ctx, err).Msg("Error getting embedder function info.")
+			logger.Err(ctx, err).Msg("Error verifying function signature.")
 			return 0
 		}
 
-		parameters := make(map[string]interface{})
-		parameters[info.Function.Parameters[0].Name] = text
-
-		result, err := functions.CallFunction(ctx, mod, info, parameters)
+		result, err := callFunction(ctx, mod, embedder, text)
 		if err != nil {
 			logger.Err(ctx, err).Msg("Error calling function.")
 			return 0
@@ -202,16 +179,13 @@ func hostSearchTextIndex(ctx context.Context, mod wasm.Module, pCollection uint3
 	}
 
 	embedder := manifestdata.Manifest.Collections[collection].SearchMethods[searchMethod].Embedder
-	info, err := getEmbedderFunctionInfo(embedder)
+	err = verifyFunctionSignature(embedder, "string", "f64[]")
 	if err != nil {
-		logger.Err(ctx, err).Msg("Error getting embedder function info.")
+		logger.Err(ctx, err).Msg("Error verifying function signature.")
 		return 0
 	}
 
-	parameters := make(map[string]interface{})
-	parameters[info.Function.Parameters[0].Name] = text
-
-	result, err := functions.CallFunction(ctx, mod, info, parameters)
+	result, err := callFunction(ctx, mod, embedder, text)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error calling function.")
 		return 0
@@ -270,17 +244,14 @@ func hostRecomputeTextIndex(ctx context.Context, mod wasm.Module, pCollection ui
 	}
 
 	embedder := manifestdata.Manifest.Collections[collection].SearchMethods[searchMethod].Embedder
-	info, err := getEmbedderFunctionInfo(embedder)
+	err = verifyFunctionSignature(embedder, "string", "f64[]")
 	if err != nil {
-		logger.Err(ctx, err).Msg("Error getting embedder function info.")
+		logger.Err(ctx, err).Msg("Error verifying function signature.")
 		return 0
 	}
 
 	for uuid, text := range textIndex.GetTextMap() {
-		parameters := make(map[string]interface{})
-		parameters[info.Function.Parameters[0].Name] = text
-
-		result, err := functions.CallFunction(ctx, mod, info, parameters)
+		result, err := callFunction(ctx, mod, embedder, text)
 		if err != nil {
 			logger.Err(ctx, err).Msg("Error calling function.")
 			return 0

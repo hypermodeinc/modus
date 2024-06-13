@@ -116,8 +116,6 @@ func readParams4[T1, T2, T3, T4 any](ctx context.Context, mod wasm.Module,
 // 	return errors.Join(err1, err2, err3, err4, err5, err6)
 // }
 
-var _ = callFunction // @jairad26 - remove this plz
-
 func callFunction(ctx context.Context, mod wasm.Module, fnName string, inputValues ...any) (any, error) {
 	info, ok := functions.Functions[fnName]
 	if !ok {
