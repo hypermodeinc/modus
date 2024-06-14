@@ -3,7 +3,7 @@ package in_mem
 import (
 	"context"
 	"fmt"
-	c "hmruntime/vector/constraints"
+
 	"hmruntime/vector/index"
 	"sync"
 )
@@ -13,26 +13,26 @@ var (
 	ErrVectorIndexNotFound      = fmt.Errorf("vector index not found")
 )
 
-type InMemTextIndex[T c.Float] struct {
+type InMemTextIndex struct {
 	mu            sync.RWMutex
 	textMap       map[string]string
-	vectorIndexes map[string]index.VectorIndex[T]
+	vectorIndexes map[string]index.VectorIndex
 }
 
-func NewTextIndex[T c.Float]() *InMemTextIndex[T] {
-	return &InMemTextIndex[T]{
+func NewTextIndex() *InMemTextIndex {
+	return &InMemTextIndex{
 		textMap:       map[string]string{},
-		vectorIndexes: map[string]index.VectorIndex[T]{},
+		vectorIndexes: map[string]index.VectorIndex{},
 	}
 }
 
-func (ti *InMemTextIndex[T]) GetVectorIndexMap() map[string]index.VectorIndex[T] {
+func (ti *InMemTextIndex) GetVectorIndexMap() map[string]index.VectorIndex {
 	ti.mu.RLock()
 	defer ti.mu.RUnlock()
 	return ti.vectorIndexes
 }
 
-func (ti *InMemTextIndex[T]) GetVectorIndex(name string) (index.VectorIndex[T], error) {
+func (ti *InMemTextIndex) GetVectorIndex(name string) (index.VectorIndex, error) {
 	ti.mu.RLock()
 	defer ti.mu.RUnlock()
 	if ind, ok := ti.vectorIndexes[name]; !ok {
@@ -42,7 +42,7 @@ func (ti *InMemTextIndex[T]) GetVectorIndex(name string) (index.VectorIndex[T], 
 	}
 }
 
-func (ti *InMemTextIndex[T]) SetVectorIndex(name string, index index.VectorIndex[T]) error {
+func (ti *InMemTextIndex) SetVectorIndex(name string, index index.VectorIndex) error {
 	ti.mu.Lock()
 	defer ti.mu.Unlock()
 	if _, ok := ti.vectorIndexes[name]; ok {
@@ -52,34 +52,34 @@ func (ti *InMemTextIndex[T]) SetVectorIndex(name string, index index.VectorIndex
 	return nil
 }
 
-func (ti *InMemTextIndex[T]) DeleteVectorIndex(name string) error {
+func (ti *InMemTextIndex) DeleteVectorIndex(name string) error {
 	ti.mu.Lock()
 	defer ti.mu.Unlock()
 	delete(ti.vectorIndexes, name)
 	return nil
 }
 
-func (ti *InMemTextIndex[T]) InsertText(ctx context.Context, c index.CacheType, uuid string, text string) ([]*index.KeyValue, error) {
+func (ti *InMemTextIndex) InsertText(ctx context.Context, c index.CacheType, uuid string, text string) ([]*index.KeyValue, error) {
 	ti.mu.Lock()
 	defer ti.mu.Unlock()
 	ti.textMap[uuid] = text
 	return nil, nil
 }
 
-func (ti *InMemTextIndex[T]) DeleteText(ctx context.Context, c index.CacheType, uuid string) error {
+func (ti *InMemTextIndex) DeleteText(ctx context.Context, c index.CacheType, uuid string) error {
 	ti.mu.Lock()
 	defer ti.mu.Unlock()
 	delete(ti.textMap, uuid)
 	return nil
 }
 
-func (ti *InMemTextIndex[T]) GetText(ctx context.Context, c index.CacheType, uuid string) (string, error) {
+func (ti *InMemTextIndex) GetText(ctx context.Context, c index.CacheType, uuid string) (string, error) {
 	ti.mu.RLock()
 	defer ti.mu.RUnlock()
 	return ti.textMap[uuid], nil
 }
 
-func (ti *InMemTextIndex[T]) GetTextMap() map[string]string {
+func (ti *InMemTextIndex) GetTextMap() map[string]string {
 	ti.mu.RLock()
 	defer ti.mu.RUnlock()
 	return ti.textMap

@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/gob"
 	"hmruntime/vector/index"
-	"hmruntime/vector/options"
 	"hmruntime/vector/utils"
 	"os"
 	"sync"
@@ -29,27 +28,19 @@ func (ims *SequentialVectorIndex) GetVectorNodesMap() map[string][]float64 {
 	return ims.vectorNodes
 }
 
-func (ims *SequentialVectorIndex) AllowedOptions() options.AllowedOptions {
-	return nil
-}
-
-func (ims *SequentialVectorIndex) ApplyOptions(o options.Options) error {
-	return nil
-}
-
 func (ims *SequentialVectorIndex) emptyFinalResultWithError(e error) (
 	*index.SearchPathResult, error) {
 	return index.NewSearchPathResult(), e
 }
 
-func (ims *SequentialVectorIndex) Search(ctx context.Context, c index.CacheType, query []float64, maxResults int, filter index.SearchFilter[float64]) (utils.MinTupleHeap[float64], error) {
+func (ims *SequentialVectorIndex) Search(ctx context.Context, c index.CacheType, query []float64, maxResults int, filter index.SearchFilter) (utils.MinTupleHeap, error) {
 	// calculate cosine similarity and return top maxResults results
 	ims.mu.RLock()
 	defer ims.mu.RUnlock()
-	var results utils.MinTupleHeap[float64]
+	var results utils.MinTupleHeap
 	heap.Init(&results)
 	for uid, vector := range ims.vectorNodes {
-		similarity, err := utils.CosineSimilarity[float64](query, vector, 64)
+		similarity, err := utils.CosineSimilarity(query, vector, 64)
 		if err != nil {
 			return nil, err
 		}
@@ -62,9 +53,9 @@ func (ims *SequentialVectorIndex) Search(ctx context.Context, c index.CacheType,
 	}
 
 	// Return top maxResults results
-	var finalResults utils.MinTupleHeap[float64]
+	var finalResults utils.MinTupleHeap
 	for results.Len() > 0 {
-		finalResults = append(finalResults, heap.Pop(&results).(utils.MinHeapElement[float64]))
+		finalResults = append(finalResults, heap.Pop(&results).(utils.MinHeapElement))
 	}
 	// Reverse the finalResults to get the highest similarity first
 	for i, j := 0, len(finalResults)-1; i < j; i, j = i+1, j-1 {
@@ -73,7 +64,7 @@ func (ims *SequentialVectorIndex) Search(ctx context.Context, c index.CacheType,
 	return finalResults, nil
 }
 
-func (ims *SequentialVectorIndex) SearchWithUid(ctx context.Context, c index.CacheType, queryUid string, maxResults int, filter index.SearchFilter[float64]) (utils.MinTupleHeap[float64], error) {
+func (ims *SequentialVectorIndex) SearchWithUid(ctx context.Context, c index.CacheType, queryUid string, maxResults int, filter index.SearchFilter) (utils.MinTupleHeap, error) {
 	query := ims.vectorNodes[queryUid]
 	if query == nil {
 		return nil, nil
@@ -81,7 +72,7 @@ func (ims *SequentialVectorIndex) SearchWithUid(ctx context.Context, c index.Cac
 	return ims.Search(ctx, c, query, maxResults, filter)
 }
 
-func (ims *SequentialVectorIndex) SearchWithPath(ctx context.Context, c index.CacheType, query []float64, maxResults int, filter index.SearchFilter[float64]) (*index.SearchPathResult, error) {
+func (ims *SequentialVectorIndex) SearchWithPath(ctx context.Context, c index.CacheType, query []float64, maxResults int, filter index.SearchFilter) (*index.SearchPathResult, error) {
 	return ims.emptyFinalResultWithError(nil)
 }
 

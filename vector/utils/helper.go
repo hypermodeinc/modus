@@ -4,8 +4,6 @@ import (
 	"errors"
 	"math"
 
-	c "hmruntime/vector/constraints"
-
 	"github.com/chewxy/math32"
 )
 
@@ -33,30 +31,30 @@ const (
 	NsSeparator = "-"
 )
 
-func IsBetterScoreForDistance[T c.Float](a, b T) bool {
+func IsBetterScoreForDistance(a, b float64) bool {
 	return a < b
 }
 
-func IsBetterScoreForSimilarity[T c.Float](a, b T) bool {
+func IsBetterScoreForSimilarity(a, b float64) bool {
 	return a > b
 }
 
-func norm[T c.Float](v []T, floatBits int) T {
+func norm(v []float64, floatBits int) float64 {
 	vectorNorm, _ := DotProduct(v, v, floatBits)
 	if floatBits == 32 {
-		return T(math32.Sqrt(float32(vectorNorm)))
+		return float64(math32.Sqrt(float32(vectorNorm)))
 	}
 	if floatBits == 64 {
-		return T(math.Sqrt(float64(vectorNorm)))
+		return float64(math.Sqrt(float64(vectorNorm)))
 	}
 	panic("Invalid floatBits")
 }
 
-// This needs to implement signature of SimilarityType[T].distanceScore
+// This needs to implement signature of SimilarityType.distanceScore
 // function, hence it takes in a floatBits parameter,
 // but doesn't actually use it.
-func DotProduct[T c.Float](a, b []T, floatBits int) (T, error) {
-	var dotProduct T
+func DotProduct(a, b []float64, floatBits int) (float64, error) {
+	var dotProduct float64
 	if len(a) != len(b) {
 		err := errors.New("can not compute dot product on vectors of different lengths")
 		return dotProduct, err
@@ -67,31 +65,31 @@ func DotProduct[T c.Float](a, b []T, floatBits int) (T, error) {
 	return dotProduct, nil
 }
 
-// This needs to implement signature of SimilarityType[T].distanceScore
+// This needs to implement signature of SimilarityType.distanceScore
 // function, hence it takes in a floatBits parameter.
-func CosineSimilarity[T c.Float](a, b []T, floatBits int) (T, error) {
+func CosineSimilarity(a, b []float64, floatBits int) (float64, error) {
 	dotProd, err := DotProduct(a, b, floatBits)
 	if err != nil {
 		return 0, err
 	}
-	normA := norm[T](a, floatBits)
-	normB := norm[T](b, floatBits)
+	normA := norm(a, floatBits)
+	normB := norm(b, floatBits)
 	if normA == 0 || normB == 0 {
 		err := errors.New("can not compute cosine similarity on zero vector")
-		var empty T
+		var empty float64
 		return empty, err
 	}
 	return dotProd / (normA * normB), nil
 }
 
-// This needs to implement signature of SimilarityType[T].distanceScore
+// This needs to implement signature of SimilarityType.distanceScore
 // function, hence it takes in a floatBits parameter,
 // but doesn't actually use it.
-func EuclidianDistanceSq[T c.Float](a, b []T, floatBits int) (T, error) {
+func EuclidianDistanceSq(a, b []float64, floatBits int) (float64, error) {
 	if len(a) != len(b) {
 		return 0, errors.New("can not subtract vectors of different lengths")
 	}
-	var distSq T
+	var distSq float64
 	for i := range a {
 		val := a[i] - b[i]
 		distSq += val * val

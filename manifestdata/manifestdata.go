@@ -83,7 +83,7 @@ func processManifestCollections(ctx context.Context, Manifest manifest.Hypermode
 	for collectionName, collection := range Manifest.Collections {
 		textIndex, err := vector.GlobalTextIndexFactory.Find(collectionName)
 		if err == vector.ErrTextIndexNotFound {
-			textIndex, err = vector.GlobalTextIndexFactory.Create(collectionName, in_mem.NewTextIndex[float64]())
+			textIndex, err = vector.GlobalTextIndexFactory.Create(collectionName, in_mem.NewTextIndex())
 			if err != nil {
 				logger.Err(ctx, err).
 					Str("collection_name", collectionName).
@@ -96,7 +96,7 @@ func processManifestCollections(ctx context.Context, Manifest manifest.Hypermode
 			// if the index does not exist, create it
 			// TODO also populate the vector index by running the embedding function to compute vectors ahead of time
 			if err == in_mem.ErrVectorIndexNotFound {
-				var vectorIndex index.VectorIndex[float64]
+				var vectorIndex index.VectorIndex
 				switch searchMethod.Index.Type {
 				case "sequential":
 					vectorIndex = in_mem.NewSequentialVectorIndex()

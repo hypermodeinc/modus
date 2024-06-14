@@ -1,52 +1,48 @@
 package utils
 
-import (
-	c "hmruntime/vector/constraints"
-)
-
-type MinHeapElement[T c.Float] struct {
-	value T
+type MinHeapElement struct {
+	value float64
 	index string
 	// An element that is "filteredOut" is one that should be removed
 	// from final consideration due to it not matching the passed in
 	// filter criteria.
 }
 
-func InitHeapElement[T c.Float](
-	val T, i string, filteredOut bool) MinHeapElement[T] {
-	return MinHeapElement[T]{
+func InitHeapElement(
+	val float64, i string, filteredOut bool) MinHeapElement {
+	return MinHeapElement{
 		value: val,
 		index: i,
 	}
 }
 
-func (e MinHeapElement[T]) GetValue() T {
+func (e MinHeapElement) GetValue() float64 {
 	return e.value
 }
 
-func (e MinHeapElement[T]) GetIndex() string {
+func (e MinHeapElement) GetIndex() string {
 	return e.index
 }
 
-type MinTupleHeap[T c.Float] []MinHeapElement[T]
+type MinTupleHeap []MinHeapElement
 
-func (h MinTupleHeap[T]) Len() int {
+func (h MinTupleHeap) Len() int {
 	return len(h)
 }
 
-func (h MinTupleHeap[T]) Less(i, j int) bool {
+func (h MinTupleHeap) Less(i, j int) bool {
 	return h[i].value < h[j].value
 }
 
-func (h MinTupleHeap[T]) Swap(i, j int) {
+func (h MinTupleHeap) Swap(i, j int) {
 	h[i], h[j] = h[j], h[i]
 }
 
-func (h *MinTupleHeap[T]) Push(x interface{}) {
-	*h = append(*h, x.(MinHeapElement[T]))
+func (h *MinTupleHeap) Push(x interface{}) {
+	*h = append(*h, x.(MinHeapElement))
 }
 
-func (h *MinTupleHeap[T]) Pop() interface{} {
+func (h *MinTupleHeap) Pop() interface{} {
 	old := *h
 	n := len(old)
 	x := old[n-1]

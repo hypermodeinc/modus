@@ -7,23 +7,21 @@ import (
 	"errors"
 	"fmt"
 	"hmruntime/storage"
-	c "hmruntime/vector/constraints"
+
 	"hmruntime/vector/index"
 	"sync"
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
-
-	"hmruntime/vector/options"
 )
 
 var (
-	GlobalTextIndexFactory *TextIndexFactory[float64]
+	GlobalTextIndexFactory *TextIndexFactory
 	ErrTextIndexNotFound   = fmt.Errorf("text index not found")
 )
 
 func InitializeIndexFactory() {
-	GlobalTextIndexFactory = CreateFactory[float64]()
+	GlobalTextIndexFactory = CreateFactory()
 	err := GlobalTextIndexFactory.ReadFromWAL()
 	if err != nil {
 		fmt.Println("Error reading from WAL, ", err)
@@ -37,33 +35,23 @@ func CloseIndexFactory() {
 	}
 }
 
-type TextIndexFactory[T c.Float] struct {
-	textIndexMap map[string]index.TextIndex[T]
+type TextIndexFactory struct {
+	textIndexMap map[string]index.TextIndex
 	mu           sync.RWMutex
 }
 
 // CreateFactory creates an instance of the private struct IndexFactory.
 // NOTE: if T and floatBits do not match in # of bits, there will be consequences.
-func CreateFactory[T c.Float]() *TextIndexFactory[T] {
-	f := &TextIndexFactory[T]{
-		textIndexMap: map[string]index.TextIndex[T]{},
+func CreateFactory() *TextIndexFactory {
+	f := &TextIndexFactory{
+		textIndexMap: map[string]index.TextIndex{},
 	}
 	return f
 }
 
-func (hf *TextIndexFactory[T]) isNameAvailableWithLock(name string) bool {
+func (hf *TextIndexFactory) isNameAvailableWithLock(name string) bool {
 	_, nameUsed := hf.textIndexMap[name]
 	return !nameUsed
-}
-
-// hf.AllowedOptions() allows persistentIndexFactory to implement the
-// IndexFactory interface (see vector-indexer/index/index.go for details).
-// We define here options for exponent, maxLevels, efSearch, efConstruction,
-// and metric.
-func (hf *TextIndexFactory[T]) AllowedOptions() options.AllowedOptions {
-	retVal := options.NewAllowedOptions()
-
-	return retVal
 }
 
 // Create is an implementation of the IndexFactory interface function, invoked by an HNSWIndexFactory
@@ -72,17 +60,17 @@ func (hf *TextIndexFactory[T]) AllowedOptions() options.AllowedOptions {
 // multFactor, maxLevels, efConstruction, maxNeighbors, and efSearch using struct parameters.
 // It then populates the HNSW graphs using the InsertChunk function until there are no more items to populate.
 // Finally, the function adds the name and hnsw object to the in memory map and returns the object.
-func (hf *TextIndexFactory[T]) Create(
+func (hf *TextIndexFactory) Create(
 	name string,
-	index index.TextIndex[T]) (index.TextIndex[T], error) {
+	index index.TextIndex) (index.TextIndex, error) {
 	hf.mu.Lock()
 	defer hf.mu.Unlock()
 	return hf.createWithLock(name, index)
 }
 
-func (hf *TextIndexFactory[T]) createWithLock(
+func (hf *TextIndexFactory) createWithLock(
 	name string,
-	index index.TextIndex[T]) (index.TextIndex[T], error) {
+	index index.TextIndex) (index.TextIndex, error) {
 	if !hf.isNameAvailableWithLock(name) {
 		err := errors.New("index with name " + name + " already exists")
 		return nil, err
@@ -92,19 +80,19 @@ func (hf *TextIndexFactory[T]) createWithLock(
 	return retVal, nil
 }
 
-func (hf *TextIndexFactory[T]) GetTextIndexMap() map[string]index.TextIndex[T] {
+func (hf *TextIndexFactory) GetTextIndexMap() map[string]index.TextIndex {
 	return hf.textIndexMap
 }
 
 // Find is an implementation of the IndexFactory interface function, invoked by an persistentIndexFactory
 // instance. It returns the VectorIndex corresponding with a string name using the in memory map.
-func (hf *TextIndexFactory[T]) Find(name string) (index.TextIndex[T], error) {
+func (hf *TextIndexFactory) Find(name string) (index.TextIndex, error) {
 	hf.mu.RLock()
 	defer hf.mu.RUnlock()
 	return hf.findWithLock(name)
 }
 
-func (hf *TextIndexFactory[T]) findWithLock(name string) (index.TextIndex[T], error) {
+func (hf *TextIndexFactory) findWithLock(name string) (index.TextIndex, error) {
 	vecInd, ok := hf.textIndexMap[name]
 	if !ok {
 		return nil, ErrTextIndexNotFound
@@ -114,13 +102,13 @@ func (hf *TextIndexFactory[T]) findWithLock(name string) (index.TextIndex[T], er
 
 // Remove is an implementation of the IndexFactory interface function, invoked by an persistentIndexFactory
 // instance. It removes the VectorIndex corresponding with a string name using the in memory map.
-func (hf *TextIndexFactory[T]) Remove(name string) error {
+func (hf *TextIndexFactory) Remove(name string) error {
 	hf.mu.Lock()
 	defer hf.mu.Unlock()
 	return hf.removeWithLock(name)
 }
 
-func (hf *TextIndexFactory[T]) removeWithLock(name string) error {
+func (hf *TextIndexFactory) removeWithLock(name string) error {
 	delete(hf.textIndexMap, name)
 	return nil
 }
@@ -131,11 +119,10 @@ func (hf *TextIndexFactory[T]) removeWithLock(name string) error {
 // via the Create function using the passed VectorSource. If the VectorIndex
 // does not exist, it creates that VectorIndex corresponding with the name using
 // the VectorSource.
-func (hf *TextIndexFactory[T]) CreateOrReplace(
+func (hf *TextIndexFactory) CreateOrReplace(
 	name string,
-	o options.Options,
-	source index.VectorSource[T],
-	index index.TextIndex[T]) (index.TextIndex[T], error) {
+	source index.VectorSource,
+	index index.TextIndex) (index.TextIndex, error) {
 	hf.mu.Lock()
 	defer hf.mu.Unlock()
 	vi, err := hf.findWithLock(name)
@@ -151,7 +138,7 @@ func (hf *TextIndexFactory[T]) CreateOrReplace(
 	return hf.createWithLock(name, index)
 }
 
-func (hf *TextIndexFactory[T]) WriteToWAL() error {
+func (hf *TextIndexFactory) WriteToWAL() error {
 	var buf bytes.Buffer
 
 	encoder := gob.NewEncoder(&buf)
@@ -173,7 +160,7 @@ func (hf *TextIndexFactory[T]) WriteToWAL() error {
 	return backoff.Retry(operation, exponentialBackoff)
 }
 
-func (hf *TextIndexFactory[T]) ReadFromWAL() error {
+func (hf *TextIndexFactory) ReadFromWAL() error {
 
 	operation := func() error {
 		data, err := storage.GetFileContents(context.Background(), "index.wal")

@@ -3,10 +3,7 @@ package index
 import (
 	"context"
 
-	c "hmruntime/vector/constraints"
 	"hmruntime/vector/utils"
-
-	"hmruntime/vector/options"
 )
 
 // VectorSource defines the process of getting a sequence of Vectors for
@@ -14,7 +11,7 @@ import (
 // to be associated with a unique identifier specified by a string.
 // Iteration proceeds until Next() or NextChunk() returns an indicator
 // that there are no more values.
-type VectorSource[T c.Float] interface {
+type VectorSource interface {
 	// Next will return a vector (specified by []Float) to be indexed,
 	// a unique identifier (string), an indicator of whether or not the
 	// value is valid, and possibly an error if there are troubles reaching
@@ -25,30 +22,30 @@ type VectorSource[T c.Float] interface {
 	// If returned error is not nil, you should expect that the bool returned
 	// value is false, and that the sourcing process is not recoverable
 	// (i.e., if you want to retry, you need to start from the beginning).
-	Next() ([]T, string, bool, error)
+	Next() ([]float64, string, bool, error)
 
 	// NextChunk behaves like Next(), but returns multiple floats at the same
 	// time. The choice of how many to return is based on the VectorSource
 	// implementation.
-	NextChunk() ([][]T, []string, bool, error)
+	NextChunk() ([][]float64, []string, bool, error)
 }
 
-type emptyVectorSource[T c.Float] struct{}
+type emptyVectorSource struct{}
 
 // EmptyVectorSource returns an implementation of the VectorSource interface
 // that supplies no elements. This is useful when creating an initially empty
 // vector index.
-func EmptyVectorSource[T c.Float]() VectorSource[T] {
-	return &emptyVectorSource[T]{}
+func EmptyVectorSource() VectorSource {
+	return &emptyVectorSource{}
 }
 
 // Next() is part of VectorSource interface implementation.
-func (vs *emptyVectorSource[T]) Next() ([]T, string, bool, error) {
+func (vs *emptyVectorSource) Next() ([]float64, string, bool, error) {
 	return nil, "", false, nil
 }
 
 // NextChunk() is part of VectorSource interface implementation.
-func (vs *emptyVectorSource[T]) NextChunk() ([][]T, []string, bool, error) {
+func (vs *emptyVectorSource) NextChunk() ([][]float64, []string, bool, error) {
 	return nil, nil, false, nil
 }
 
@@ -56,19 +53,19 @@ func (vs *emptyVectorSource[T]) NextChunk() ([][]T, []string, bool, error) {
 // whether or not a given vector is "interesting". When used in the context
 // of VectorIndex.Search, a true result means that we want to keep the result
 // in the returned list, and a false result implies we should skip.
-type SearchFilter[T c.Float] func(query, resultVal []T, resultUID string) bool
+type SearchFilter func(query, resultVal []float64, resultUID string) bool
 
 // AcceptAll implements SearchFilter by way of accepting all results.
-func AcceptAll[T c.Float](_, _ []T, _ string) bool { return true }
+func AcceptAll(_, _ []float64, _ string) bool { return true }
 
 // AcceptNone implements SearchFilter by way of rejecting all results.
-func AcceptNone[T c.Float](_, _ []T, _ string) bool { return false }
+func AcceptNone(_, _ []float64, _ string) bool { return false }
 
 // OptionalIndexSupport defines abilities that might not be universally
 // supported by all VectorIndex types. A VectorIndex will technically
 // define the functions required by OptionalIndexSupport, but may do so
 // by way of simply returning an errors.ErrUnsupported result.
-type OptionalIndexSupport[T c.Float] interface {
+type OptionalIndexSupport interface {
 	// SearchWithPath(ctx, c, query, maxResults, filter) is similar to
 	// Search(ctx, c, query, maxResults, filter), but returns an extended
 	// set of content in the search results.
@@ -77,20 +74,20 @@ type OptionalIndexSupport[T c.Float] interface {
 	SearchWithPath(
 		ctx context.Context,
 		c CacheType,
-		query []T,
+		query []float64,
 		maxResults int,
-		filter SearchFilter[T]) (*SearchPathResult, error)
+		filter SearchFilter) (*SearchPathResult, error)
 }
 
-type TextIndex[T c.Float] interface {
+type TextIndex interface {
 	// GetVectorIndexMap returns the map of searchMethod to VectorIndex
-	GetVectorIndexMap() map[string]VectorIndex[T]
+	GetVectorIndexMap() map[string]VectorIndex
 
 	// GetVectorIndex returns the VectorIndex for a given searchMethod
-	GetVectorIndex(searchMethod string) (VectorIndex[T], error)
+	GetVectorIndex(searchMethod string) (VectorIndex, error)
 
 	// SetVectorIndex sets the VectorIndex for a given searchMethod
-	SetVectorIndex(searchMethod string, index VectorIndex[T]) error
+	SetVectorIndex(searchMethod string, index VectorIndex) error
 
 	// DeleteVectorIndex deletes the VectorIndex for a given searchMethod
 	DeleteVectorIndex(searchMethod string) error
@@ -109,14 +106,8 @@ type TextIndex[T c.Float] interface {
 }
 
 // A VectorIndex can be used to Search for vectors and add vectors to an index.
-type VectorIndex[T c.Float] interface {
-	OptionalIndexSupport[T]
-
-	// Specifies the set of allowed options and a corresponding means to
-	// parse a string version of those options.
-	AllowedOptions() options.AllowedOptions
-
-	ApplyOptions(o options.Options) error
+type VectorIndex interface {
+	OptionalIndexSupport
 
 	// Search will find the uids for a given set of vectors based on the
 	// input query, limiting to the specified maximum number of results.
@@ -124,9 +115,9 @@ type VectorIndex[T c.Float] interface {
 	// based on some input criteria. The maxResults count is counted *after*
 	// being filtered. In other words, we only count those results that had not
 	// been filtered out.
-	Search(ctx context.Context, c CacheType, query []T,
+	Search(ctx context.Context, c CacheType, query []float64,
 		maxResults int,
-		filter SearchFilter[T]) (utils.MinTupleHeap[T], error)
+		filter SearchFilter) (utils.MinTupleHeap, error)
 
 	// SearchWithUid will find the uids for a given set of vectors based on the
 	// input queryUid, limiting to the specified maximum number of results.
@@ -136,11 +127,11 @@ type VectorIndex[T c.Float] interface {
 	// been filtered out.
 	SearchWithUid(ctx context.Context, c CacheType, queryUid string,
 		maxResults int,
-		filter SearchFilter[T]) (utils.MinTupleHeap[T], error)
+		filter SearchFilter) (utils.MinTupleHeap, error)
 
 	// Insert will add a vector and uuid into the existing VectorIndex. If
 	// uuid already exists, it should throw an error to not insert duplicate uuids
-	InsertVector(ctx context.Context, c CacheType, uuid string, vec []T) ([]*KeyValue, error)
+	InsertVector(ctx context.Context, c CacheType, uuid string, vec []float64) ([]*KeyValue, error)
 
 	// Delete will remove a vector and uuid from the existing VectorIndex. If
 	// uuid does not exist, it should throw an error to not delete non-existent uuids

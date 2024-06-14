@@ -3,14 +3,13 @@ package vector
 import (
 	"context"
 
-	c "hmruntime/vector/constraints"
 	"hmruntime/vector/index"
 	"hmruntime/wasmhost/module"
 
 	wasm "github.com/tetratelabs/wazero/api"
 )
 
-func ProcessTextMap[T c.Float](ctx context.Context, textIndex index.TextIndex[T], embedder string, vectorIndex index.VectorIndex[T]) error {
+func ProcessTextMap(ctx context.Context, textIndex index.TextIndex, embedder string, vectorIndex index.VectorIndex) error {
 
 	for uuid, text := range textIndex.GetTextMap() {
 		result, err := module.CallFunctionByName(ctx, embedder, text)
@@ -20,9 +19,9 @@ func ProcessTextMap[T c.Float](ctx context.Context, textIndex index.TextIndex[T]
 
 		resultArr := result.([]interface{})
 
-		textVec := make([]T, len(resultArr))
+		textVec := make([]float64, len(resultArr))
 		for i, val := range resultArr {
-			textVec[i] = val.(T)
+			textVec[i] = val.(float64)
 		}
 
 		_, err = vectorIndex.InsertVector(ctx, nil, uuid, textVec)
@@ -33,7 +32,7 @@ func ProcessTextMap[T c.Float](ctx context.Context, textIndex index.TextIndex[T]
 	return nil
 }
 
-func ProcessTextMapWithModule[T c.Float](ctx context.Context, mod wasm.Module, textIndex index.TextIndex[T], embedder string, vectorIndex index.VectorIndex[T]) error {
+func ProcessTextMapWithModule(ctx context.Context, mod wasm.Module, textIndex index.TextIndex, embedder string, vectorIndex index.VectorIndex) error {
 
 	for uuid, text := range textIndex.GetTextMap() {
 		result, err := module.CallFunctionByNameWithModule(ctx, mod, embedder, text)
@@ -43,9 +42,9 @@ func ProcessTextMapWithModule[T c.Float](ctx context.Context, mod wasm.Module, t
 
 		resultArr := result.([]interface{})
 
-		textVec := make([]T, len(resultArr))
+		textVec := make([]float64, len(resultArr))
 		for i, val := range resultArr {
-			textVec[i] = val.(T)
+			textVec[i] = val.(float64)
 		}
 
 		_, err = vectorIndex.InsertVector(ctx, nil, uuid, textVec)

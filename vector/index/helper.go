@@ -3,18 +3,16 @@ package index
 import (
 	"encoding/binary"
 	"math"
-
-	c "hmruntime/vector/constraints"
 )
 
-// BytesAsFloatArray[T c.Float](encoded) converts encoded into a []T,
+// BytesAsFloatArray(encoded) converts encoded into a []T,
 // where T is either float32 or float64, depending on the value of floatBits.
 // Let floatBytes = floatBits/8. If len(encoded) % floatBytes is
 // not 0, it will ignore any trailing bytes, and simply convert floatBytes
 // bytes at a time to generate the entries.
 // The result is appended to the given retVal slice. If retVal is nil
 // then a new slice is created and appended to.
-func BytesAsFloatArray[T c.Float](encoded []byte, retVal *[]T, floatBits int) {
+func BytesAsFloatArray(encoded []byte, retVal *[]float64, floatBits int) {
 	// Unfortunately, this is not as simple as casting the result,
 	// and it is also not possible to directly use the
 	// golang "unsafe" library to directly do the conversion.
@@ -43,21 +41,15 @@ func BytesAsFloatArray[T c.Float](encoded []byte, retVal *[]T, floatBits int) {
 		// I have found via Google search. It's unclear why this
 		// should be a preference.
 		if retVal == nil {
-			retVal = &[]T{}
+			retVal = &[]float64{}
 		}
-		*retVal = append(*retVal, BytesToFloat[T](encoded, floatBits))
+		*retVal = append(*retVal, BytesToFloat(encoded))
 
 		encoded = encoded[(floatBytes):]
 	}
 }
 
-func BytesToFloat[T c.Float](encoded []byte, floatBits int) T {
-	if floatBits == 32 {
-		bits := binary.LittleEndian.Uint32(encoded)
-		return T(math.Float32frombits(bits))
-	} else if floatBits == 64 {
-		bits := binary.LittleEndian.Uint64(encoded)
-		return T(math.Float64frombits(bits))
-	}
-	panic("Invalid floatBits")
+func BytesToFloat(encoded []byte) float64 {
+	bits := binary.LittleEndian.Uint64(encoded)
+	return float64(math.Float64frombits(bits))
 }
