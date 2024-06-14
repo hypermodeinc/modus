@@ -18,6 +18,8 @@ import (
 	"github.com/cenkalti/backoff/v4"
 )
 
+const textIndexFactoryWriteInterval = 1 * time.Hour
+
 var (
 	GlobalTextIndexFactory *TextIndexFactory
 	ErrTextIndexNotFound   = fmt.Errorf("text index not found")
@@ -25,22 +27,44 @@ var (
 
 func InitializeIndexFactory(ctx context.Context) {
 	GlobalTextIndexFactory = CreateFactory()
-	err := GlobalTextIndexFactory.ReadFromBin(ctx)
+	err := GlobalTextIndexFactory.ReadFromBin()
 	if err != nil {
 		logger.Error(ctx).Err(err).Msg("Error reading index factory from bin")
 	}
+	go GlobalTextIndexFactory.worker(ctx)
 }
 
 func CloseIndexFactory(ctx context.Context) {
-	err := GlobalTextIndexFactory.WriteToBin(ctx)
-	if err != nil {
-		logger.Error(ctx).Err(err).Msg("Error writing index factory to bin")
-	}
+	close(GlobalTextIndexFactory.quit)
+	<-GlobalTextIndexFactory.done
 }
 
 type TextIndexFactory struct {
 	textIndexMap map[string]interfaces.TextIndex
 	mu           sync.RWMutex
+	quit         chan struct{}
+	done         chan struct{}
+}
+
+func (tif *TextIndexFactory) worker(ctx context.Context) {
+	ticker := time.NewTicker(textIndexFactoryWriteInterval)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ticker.C:
+			err := tif.WriteToBin()
+			if err != nil {
+				logger.Error(ctx).Err(err).Msg("Error writing index factory to bin")
+			}
+		case <-tif.quit:
+			err := tif.WriteToBin()
+			if err != nil {
+				logger.Error(ctx).Err(err).Msg("Error writing index factory to bin")
+			}
+			close(tif.done)
+			return
+		}
+	}
 }
 
 // CreateFactory creates an instance of the private struct IndexFactory.
@@ -48,6 +72,8 @@ type TextIndexFactory struct {
 func CreateFactory() *TextIndexFactory {
 	f := &TextIndexFactory{
 		textIndexMap: map[string]interfaces.TextIndex{},
+		quit:         make(chan struct{}),
+		done:         make(chan struct{}),
 	}
 	return f
 }
@@ -141,7 +167,7 @@ func (hf *TextIndexFactory) CreateOrReplace(
 	return hf.createWithLock(name, index)
 }
 
-func (hf *TextIndexFactory) WriteToBin(ctx context.Context) error {
+func (hf *TextIndexFactory) WriteToBin() error {
 	operation := func() error {
 		data, err := json.Marshal(hf.textIndexMap)
 		if err != nil {
@@ -160,7 +186,7 @@ func (hf *TextIndexFactory) WriteToBin(ctx context.Context) error {
 	return backoff.Retry(operation, exponentialBackoff)
 }
 
-func (hf *TextIndexFactory) ReadFromBin(ctx context.Context) error {
+func (hf *TextIndexFactory) ReadFromBin() error {
 	operation := func() error {
 		data, err := storage.GetFileContents(context.Background(), "index_factory.bin")
 		if err != nil {
