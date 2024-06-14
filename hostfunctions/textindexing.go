@@ -88,12 +88,8 @@ func hostUpsertToTextIndex(ctx context.Context, mod wasm.Module, pCollection uin
 	var id string
 	var text string
 
-	var err error
-	if pId != 0 {
-		err = readParams3(ctx, mod, pCollection, pId, pText, &collection, &id, &text)
-	} else {
-		err = readParams2(ctx, mod, pCollection, pText, &collection, &text)
-	}
+	err := readParams3(ctx, mod, pCollection, pId, pText, &collection, &id, &text)
+
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error reading input parameters.")
 
