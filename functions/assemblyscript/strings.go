@@ -21,7 +21,9 @@ var StringType = plugins.TypeInfo{
 }
 
 func ReadString(mem wasm.Memory, offset uint32) (data string, err error) {
-
+	if offset == 0 {
+		return "", nil
+	}
 	// AssemblyScript managed objects have their classid stored 8 bytes before the offset.
 	// See https://www.assemblyscript.org/runtime.html#memory-layout
 
