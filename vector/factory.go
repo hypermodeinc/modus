@@ -1,14 +1,17 @@
 package vector
 
 import (
-	"bytes"
 	"context"
-	"encoding/gob"
+	"encoding/json"
 	"errors"
 	"fmt"
-	"hmruntime/storage"
 
+	"hmruntime/logger"
+	"hmruntime/storage"
+	"hmruntime/vector/in_mem"
 	"hmruntime/vector/index"
+	"hmruntime/vector/index/interfaces"
+
 	"sync"
 	"time"
 
@@ -20,23 +23,23 @@ var (
 	ErrTextIndexNotFound   = fmt.Errorf("text index not found")
 )
 
-func InitializeIndexFactory() {
+func InitializeIndexFactory(ctx context.Context) {
 	GlobalTextIndexFactory = CreateFactory()
-	err := GlobalTextIndexFactory.ReadFromWAL()
+	err := GlobalTextIndexFactory.ReadFromBin(ctx)
 	if err != nil {
-		fmt.Println("Error reading from WAL, ", err)
+		logger.Error(ctx).Err(err).Msg("Error reading index factory from bin")
 	}
 }
 
-func CloseIndexFactory() {
-	err := GlobalTextIndexFactory.WriteToWAL()
+func CloseIndexFactory(ctx context.Context) {
+	err := GlobalTextIndexFactory.WriteToBin(ctx)
 	if err != nil {
-		fmt.Println("Error writing to WAL, ", err)
+		logger.Error(ctx).Err(err).Msg("Error writing index factory to bin")
 	}
 }
 
 type TextIndexFactory struct {
-	textIndexMap map[string]index.TextIndex
+	textIndexMap map[string]interfaces.TextIndex
 	mu           sync.RWMutex
 }
 
@@ -44,7 +47,7 @@ type TextIndexFactory struct {
 // NOTE: if T and floatBits do not match in # of bits, there will be consequences.
 func CreateFactory() *TextIndexFactory {
 	f := &TextIndexFactory{
-		textIndexMap: map[string]index.TextIndex{},
+		textIndexMap: map[string]interfaces.TextIndex{},
 	}
 	return f
 }
@@ -62,7 +65,7 @@ func (hf *TextIndexFactory) isNameAvailableWithLock(name string) bool {
 // Finally, the function adds the name and hnsw object to the in memory map and returns the object.
 func (hf *TextIndexFactory) Create(
 	name string,
-	index index.TextIndex) (index.TextIndex, error) {
+	index interfaces.TextIndex) (interfaces.TextIndex, error) {
 	hf.mu.Lock()
 	defer hf.mu.Unlock()
 	return hf.createWithLock(name, index)
@@ -70,7 +73,7 @@ func (hf *TextIndexFactory) Create(
 
 func (hf *TextIndexFactory) createWithLock(
 	name string,
-	index index.TextIndex) (index.TextIndex, error) {
+	index interfaces.TextIndex) (interfaces.TextIndex, error) {
 	if !hf.isNameAvailableWithLock(name) {
 		err := errors.New("index with name " + name + " already exists")
 		return nil, err
@@ -80,19 +83,19 @@ func (hf *TextIndexFactory) createWithLock(
 	return retVal, nil
 }
 
-func (hf *TextIndexFactory) GetTextIndexMap() map[string]index.TextIndex {
+func (hf *TextIndexFactory) GetTextIndexMap() map[string]interfaces.TextIndex {
 	return hf.textIndexMap
 }
 
 // Find is an implementation of the IndexFactory interface function, invoked by an persistentIndexFactory
 // instance. It returns the VectorIndex corresponding with a string name using the in memory map.
-func (hf *TextIndexFactory) Find(name string) (index.TextIndex, error) {
+func (hf *TextIndexFactory) Find(name string) (interfaces.TextIndex, error) {
 	hf.mu.RLock()
 	defer hf.mu.RUnlock()
 	return hf.findWithLock(name)
 }
 
-func (hf *TextIndexFactory) findWithLock(name string) (index.TextIndex, error) {
+func (hf *TextIndexFactory) findWithLock(name string) (interfaces.TextIndex, error) {
 	vecInd, ok := hf.textIndexMap[name]
 	if !ok {
 		return nil, ErrTextIndexNotFound
@@ -122,7 +125,7 @@ func (hf *TextIndexFactory) removeWithLock(name string) error {
 func (hf *TextIndexFactory) CreateOrReplace(
 	name string,
 	source index.VectorSource,
-	index index.TextIndex) (index.TextIndex, error) {
+	index interfaces.TextIndex) (interfaces.TextIndex, error) {
 	hf.mu.Lock()
 	defer hf.mu.Unlock()
 	vi, err := hf.findWithLock(name)
@@ -138,17 +141,14 @@ func (hf *TextIndexFactory) CreateOrReplace(
 	return hf.createWithLock(name, index)
 }
 
-func (hf *TextIndexFactory) WriteToWAL() error {
-	var buf bytes.Buffer
-
-	encoder := gob.NewEncoder(&buf)
-
+func (hf *TextIndexFactory) WriteToBin(ctx context.Context) error {
 	operation := func() error {
-		if err := encoder.Encode(hf.textIndexMap); err != nil {
+		data, err := json.Marshal(hf.textIndexMap)
+		if err != nil {
 			return fmt.Errorf("could not encode file content, %s", err)
 		}
 
-		if err := storage.WriteFile(context.Background(), "index.wal", buf.Bytes()); err != nil {
+		if err := storage.WriteFile(context.Background(), "index_factory.bin", data); err != nil {
 			return fmt.Errorf("could not write to file, %s", err)
 		}
 		return nil
@@ -160,18 +160,22 @@ func (hf *TextIndexFactory) WriteToWAL() error {
 	return backoff.Retry(operation, exponentialBackoff)
 }
 
-func (hf *TextIndexFactory) ReadFromWAL() error {
-
+func (hf *TextIndexFactory) ReadFromBin(ctx context.Context) error {
 	operation := func() error {
-		data, err := storage.GetFileContents(context.Background(), "index.wal")
+		data, err := storage.GetFileContents(context.Background(), "index_factory.bin")
 		if err != nil {
 			return fmt.Errorf("could not get file content, %s", err)
 		}
 
-		decoder := gob.NewDecoder(bytes.NewReader(data))
+		newMap := make(map[string]*in_mem.InMemTextIndex)
 
-		if err := decoder.Decode(&hf.textIndexMap); err != nil {
+		if err := json.Unmarshal(data, &newMap); err != nil {
 			return fmt.Errorf("could not decode file content, %s", err)
+		}
+
+		hf.textIndexMap = make(map[string]interfaces.TextIndex)
+		for k, v := range newMap {
+			hf.textIndexMap[k] = v
 		}
 
 		return nil
@@ -181,5 +185,4 @@ func (hf *TextIndexFactory) ReadFromWAL() error {
 	exponentialBackoff.MaxElapsedTime = 10 * time.Second
 
 	return backoff.Retry(operation, exponentialBackoff)
-
 }

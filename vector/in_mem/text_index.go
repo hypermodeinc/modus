@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"hmruntime/vector/index"
+	"hmruntime/vector/index/interfaces"
 	"sync"
 )
 
@@ -15,72 +16,72 @@ var (
 
 type InMemTextIndex struct {
 	mu            sync.RWMutex
-	textMap       map[string]string
-	vectorIndexes map[string]index.VectorIndex
+	TextMap       map[string]string
+	VectorIndexes map[string]*interfaces.VectorIndexWrapper
 }
 
 func NewTextIndex() *InMemTextIndex {
 	return &InMemTextIndex{
-		textMap:       map[string]string{},
-		vectorIndexes: map[string]index.VectorIndex{},
+		TextMap:       map[string]string{},
+		VectorIndexes: map[string]*interfaces.VectorIndexWrapper{},
 	}
 }
 
-func (ti *InMemTextIndex) GetVectorIndexMap() map[string]index.VectorIndex {
+func (ti *InMemTextIndex) GetVectorIndexMap() map[string]*interfaces.VectorIndexWrapper {
 	ti.mu.RLock()
 	defer ti.mu.RUnlock()
-	return ti.vectorIndexes
+	return ti.VectorIndexes
 }
 
-func (ti *InMemTextIndex) GetVectorIndex(name string) (index.VectorIndex, error) {
+func (ti *InMemTextIndex) GetVectorIndex(name string) (*interfaces.VectorIndexWrapper, error) {
 	ti.mu.RLock()
 	defer ti.mu.RUnlock()
-	if ind, ok := ti.vectorIndexes[name]; !ok {
+	if ind, ok := ti.VectorIndexes[name]; !ok {
 		return nil, ErrVectorIndexNotFound
 	} else {
 		return ind, nil
 	}
 }
 
-func (ti *InMemTextIndex) SetVectorIndex(name string, index index.VectorIndex) error {
+func (ti *InMemTextIndex) SetVectorIndex(name string, index *interfaces.VectorIndexWrapper) error {
 	ti.mu.Lock()
 	defer ti.mu.Unlock()
-	if _, ok := ti.vectorIndexes[name]; ok {
+	if _, ok := ti.VectorIndexes[name]; ok {
 		return ErrVectorIndexAlreadyExists
 	}
-	ti.vectorIndexes[name] = index
+	ti.VectorIndexes[name] = index
 	return nil
 }
 
 func (ti *InMemTextIndex) DeleteVectorIndex(name string) error {
 	ti.mu.Lock()
 	defer ti.mu.Unlock()
-	delete(ti.vectorIndexes, name)
+	delete(ti.VectorIndexes, name)
 	return nil
 }
 
 func (ti *InMemTextIndex) InsertText(ctx context.Context, c index.CacheType, uuid string, text string) ([]*index.KeyValue, error) {
 	ti.mu.Lock()
 	defer ti.mu.Unlock()
-	ti.textMap[uuid] = text
+	ti.TextMap[uuid] = text
 	return nil, nil
 }
 
 func (ti *InMemTextIndex) DeleteText(ctx context.Context, c index.CacheType, uuid string) error {
 	ti.mu.Lock()
 	defer ti.mu.Unlock()
-	delete(ti.textMap, uuid)
+	delete(ti.TextMap, uuid)
 	return nil
 }
 
 func (ti *InMemTextIndex) GetText(ctx context.Context, c index.CacheType, uuid string) (string, error) {
 	ti.mu.RLock()
 	defer ti.mu.RUnlock()
-	return ti.textMap[uuid], nil
+	return ti.TextMap[uuid], nil
 }
 
 func (ti *InMemTextIndex) GetTextMap() map[string]string {
 	ti.mu.RLock()
 	defer ti.mu.RUnlock()
-	return ti.textMap
+	return ti.TextMap
 }

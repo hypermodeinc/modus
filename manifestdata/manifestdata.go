@@ -12,7 +12,8 @@ import (
 	"hmruntime/utils"
 	"hmruntime/vector"
 	"hmruntime/vector/in_mem"
-	"hmruntime/vector/index"
+	"hmruntime/vector/in_mem/sequential"
+	"hmruntime/vector/index/interfaces"
 
 	"github.com/hypermodeAI/manifest"
 )
@@ -96,12 +97,14 @@ func processManifestCollections(ctx context.Context, Manifest manifest.Hypermode
 			// if the index does not exist, create it
 			// TODO also populate the vector index by running the embedding function to compute vectors ahead of time
 			if err == in_mem.ErrVectorIndexNotFound {
-				var vectorIndex index.VectorIndex
+				vectorIndex := &interfaces.VectorIndexWrapper{}
 				switch searchMethod.Index.Type {
 				case "sequential":
-					vectorIndex = in_mem.NewSequentialVectorIndex()
+					vectorIndex.Type = sequential.SequentialVectorIndexType
+					vectorIndex.VectorIndex = sequential.NewSequentialVectorIndex()
 				case "":
-					vectorIndex = in_mem.NewSequentialVectorIndex()
+					vectorIndex.Type = sequential.SequentialVectorIndexType
+					vectorIndex.VectorIndex = sequential.NewSequentialVectorIndex()
 				default:
 					logger.Err(ctx, nil).
 						Str("index_type", searchMethod.Index.Type).

@@ -2,8 +2,6 @@ package index
 
 import (
 	"context"
-
-	"hmruntime/vector/utils"
 )
 
 // VectorSource defines the process of getting a sequence of Vectors for
@@ -60,94 +58,6 @@ func AcceptAll(_, _ []float64, _ string) bool { return true }
 
 // AcceptNone implements SearchFilter by way of rejecting all results.
 func AcceptNone(_, _ []float64, _ string) bool { return false }
-
-// OptionalIndexSupport defines abilities that might not be universally
-// supported by all VectorIndex types. A VectorIndex will technically
-// define the functions required by OptionalIndexSupport, but may do so
-// by way of simply returning an errors.ErrUnsupported result.
-type OptionalIndexSupport interface {
-	// SearchWithPath(ctx, c, query, maxResults, filter) is similar to
-	// Search(ctx, c, query, maxResults, filter), but returns an extended
-	// set of content in the search results.
-	// The full contents returned are indicated by the SearchPathResult.
-	// See the description there for more info.
-	SearchWithPath(
-		ctx context.Context,
-		c CacheType,
-		query []float64,
-		maxResults int,
-		filter SearchFilter) (*SearchPathResult, error)
-}
-
-type TextIndex interface {
-	// GetVectorIndexMap returns the map of searchMethod to VectorIndex
-	GetVectorIndexMap() map[string]VectorIndex
-
-	// GetVectorIndex returns the VectorIndex for a given searchMethod
-	GetVectorIndex(searchMethod string) (VectorIndex, error)
-
-	// SetVectorIndex sets the VectorIndex for a given searchMethod
-	SetVectorIndex(searchMethod string, index VectorIndex) error
-
-	// DeleteVectorIndex deletes the VectorIndex for a given searchMethod
-	DeleteVectorIndex(searchMethod string) error
-
-	// InsertText will add a text and uuid into the existing VectorIndex
-	InsertText(ctx context.Context, c CacheType, uuid string, text string) ([]*KeyValue, error)
-
-	// DeleteText will remove a text and uuid from the existing VectorIndex
-	DeleteText(ctx context.Context, c CacheType, uuid string) error
-
-	// GetText will return the text for a given uuid
-	GetText(ctx context.Context, c CacheType, uuid string) (string, error)
-
-	// GetTextMap returns the map of uuid to text
-	GetTextMap() map[string]string
-}
-
-// A VectorIndex can be used to Search for vectors and add vectors to an index.
-type VectorIndex interface {
-	OptionalIndexSupport
-
-	// Search will find the uids for a given set of vectors based on the
-	// input query, limiting to the specified maximum number of results.
-	// The filter parameter indicates that we might discard certain parameters
-	// based on some input criteria. The maxResults count is counted *after*
-	// being filtered. In other words, we only count those results that had not
-	// been filtered out.
-	Search(ctx context.Context, c CacheType, query []float64,
-		maxResults int,
-		filter SearchFilter) (utils.MinTupleHeap, error)
-
-	// SearchWithUid will find the uids for a given set of vectors based on the
-	// input queryUid, limiting to the specified maximum number of results.
-	// The filter parameter indicates that we might discard certain parameters
-	// based on some input criteria. The maxResults count is counted *after*
-	// being filtered. In other words, we only count those results that had not
-	// been filtered out.
-	SearchWithUid(ctx context.Context, c CacheType, queryUid string,
-		maxResults int,
-		filter SearchFilter) (utils.MinTupleHeap, error)
-
-	// Insert will add a vector and uuid into the existing VectorIndex. If
-	// uuid already exists, it should throw an error to not insert duplicate uuids
-	InsertVector(ctx context.Context, c CacheType, uuid string, vec []float64) ([]*KeyValue, error)
-
-	// Delete will remove a vector and uuid from the existing VectorIndex. If
-	// uuid does not exist, it should throw an error to not delete non-existent uuids
-	DeleteVector(ctx context.Context, c CacheType, uuid string) error
-
-	// OptionalFeatures() returns a collection of optional features that
-	// may be supported by this class. By default, every implementation
-	// should attempt to faithfully define each of the above functions,
-	// but an index type that cannot support some optional capability
-	// can be allowed to "implement" the feature by returning
-	// an errors.NotSupported result.
-	// This result should almost always match the result returned by
-	// the factory used to generate this.
-	// (This condition may be relaxed in the future, but for now,
-	// it is safer to make this assumption).
-}
 
 // A Txn is an interface representation of a persistent storage transaction,
 // where multiple operations are performed on a database

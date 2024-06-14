@@ -43,7 +43,7 @@ func (s Source) Load(ctx context.Context, input []byte, writer io.Writer) error 
 	}
 
 	// Load the data
-	result, gqlErrors, err := s.callFunctionByCallInfo(ctx, ci)
+	result, gqlErrors, err := s.callFunctionWithCallInfo(ctx, ci)
 
 	// Write the response
 	err = writeGraphQLResponse(writer, result, gqlErrors, err, ci)
@@ -54,7 +54,7 @@ func (s Source) Load(ctx context.Context, input []byte, writer io.Writer) error 
 	return err
 }
 
-func (s Source) callFunctionByCallInfo(ctx context.Context, callInfo callInfo) (any, []resolve.GraphQLError, error) {
+func (s Source) callFunctionWithCallInfo(ctx context.Context, callInfo callInfo) (any, []resolve.GraphQLError, error) {
 
 	// Get the function info
 	info, ok := functions.Functions[callInfo.Function.Name]

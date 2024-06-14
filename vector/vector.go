@@ -3,13 +3,13 @@ package vector
 import (
 	"context"
 
-	"hmruntime/vector/index"
+	"hmruntime/vector/index/interfaces"
 	"hmruntime/wasmhost/module"
 
 	wasm "github.com/tetratelabs/wazero/api"
 )
 
-func ProcessTextMap(ctx context.Context, textIndex index.TextIndex, embedder string, vectorIndex index.VectorIndex) error {
+func ProcessTextMap(ctx context.Context, textIndex interfaces.TextIndex, embedder string, vectorIndex interfaces.VectorIndex) error {
 
 	for uuid, text := range textIndex.GetTextMap() {
 		result, err := module.CallFunctionByName(ctx, embedder, text)
@@ -32,7 +32,7 @@ func ProcessTextMap(ctx context.Context, textIndex index.TextIndex, embedder str
 	return nil
 }
 
-func ProcessTextMapWithModule(ctx context.Context, mod wasm.Module, textIndex index.TextIndex, embedder string, vectorIndex index.VectorIndex) error {
+func ProcessTextMapWithModule(ctx context.Context, mod wasm.Module, textIndex interfaces.TextIndex, embedder string, vectorIndex interfaces.VectorIndex) error {
 
 	for uuid, text := range textIndex.GetTextMap() {
 		result, err := module.CallFunctionByNameWithModule(ctx, mod, embedder, text)

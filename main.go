@@ -83,7 +83,7 @@ func initRuntimeServices(ctx context.Context) {
 	db.Initialize(ctx)
 
 	// Initialize in mem vector factory
-	vector.InitializeIndexFactory()
+	vector.InitializeIndexFactory(ctx)
 
 	// Load plugins and monitor for changes
 	wasmhost.MonitorPlugins(ctx)
@@ -96,12 +96,11 @@ func initRuntimeServices(ctx context.Context) {
 }
 
 func stopRuntimeServices(ctx context.Context) {
+	vector.CloseIndexFactory(ctx)
 	module.RuntimeInstance.Close(ctx)
 	logger.Close()
 
 	db.Stop()
-
-	vector.CloseIndexFactory()
 }
 
 func getRootSourcePath() string {

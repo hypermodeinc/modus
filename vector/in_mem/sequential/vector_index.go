@@ -1,4 +1,4 @@
-package in_mem
+package sequential
 
 import (
 	"container/heap"
@@ -10,22 +10,26 @@ import (
 	"sync"
 )
 
+const (
+	SequentialVectorIndexType = "SequentialVectorIndex"
+)
+
 type SequentialVectorIndex struct {
 	// vectorNodes is a map of string to []float64
 	mu          sync.RWMutex
-	vectorNodes map[string][]float64
+	VectorNodes map[string][]float64
 }
 
 func NewSequentialVectorIndex() *SequentialVectorIndex {
 	return &SequentialVectorIndex{
-		vectorNodes: make(map[string][]float64),
+		VectorNodes: make(map[string][]float64),
 	}
 }
 
 func (ims *SequentialVectorIndex) GetVectorNodesMap() map[string][]float64 {
 	ims.mu.RLock()
 	defer ims.mu.RUnlock()
-	return ims.vectorNodes
+	return ims.VectorNodes
 }
 
 func (ims *SequentialVectorIndex) emptyFinalResultWithError(e error) (
@@ -39,7 +43,7 @@ func (ims *SequentialVectorIndex) Search(ctx context.Context, c index.CacheType,
 	defer ims.mu.RUnlock()
 	var results utils.MinTupleHeap
 	heap.Init(&results)
-	for uid, vector := range ims.vectorNodes {
+	for uid, vector := range ims.VectorNodes {
 		similarity, err := utils.CosineSimilarity(query, vector, 64)
 		if err != nil {
 			return nil, err
@@ -65,7 +69,7 @@ func (ims *SequentialVectorIndex) Search(ctx context.Context, c index.CacheType,
 }
 
 func (ims *SequentialVectorIndex) SearchWithUid(ctx context.Context, c index.CacheType, queryUid string, maxResults int, filter index.SearchFilter) (utils.MinTupleHeap, error) {
-	query := ims.vectorNodes[queryUid]
+	query := ims.VectorNodes[queryUid]
 	if query == nil {
 		return nil, nil
 	}
@@ -79,14 +83,14 @@ func (ims *SequentialVectorIndex) SearchWithPath(ctx context.Context, c index.Ca
 func (ims *SequentialVectorIndex) InsertVector(ctx context.Context, c index.CacheType, uid string, vector []float64) ([]*index.KeyValue, error) {
 	ims.mu.Lock()
 	defer ims.mu.Unlock()
-	ims.vectorNodes[uid] = vector
+	ims.VectorNodes[uid] = vector
 	return nil, nil
 }
 
 func (ims *SequentialVectorIndex) DeleteVector(ctx context.Context, c index.CacheType, uid string) error {
 	ims.mu.Lock()
 	defer ims.mu.Unlock()
-	delete(ims.vectorNodes, uid)
+	delete(ims.VectorNodes, uid)
 	return nil
 }
 
@@ -99,7 +103,7 @@ func (ims *SequentialVectorIndex) WriteToWAL(filename string) error {
 
 	encoder := gob.NewEncoder(file)
 
-	if err := encoder.Encode(ims.vectorNodes); err != nil {
+	if err := encoder.Encode(ims.VectorNodes); err != nil {
 		return err
 	}
 

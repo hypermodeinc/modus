@@ -139,6 +139,12 @@ func Initialize(ctx context.Context) {
 	connStr, err := secrets.GetSecretValue(ctx, "HYPERMODE_METADATA_DB")
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error getting database connection string")
+		globalInferenceWriter = &inferenceWriter{
+			dbpool: nil,
+			buffer: make(chan inferenceHistory, chanSize),
+			quit:   make(chan struct{}),
+			done:   make(chan struct{}),
+		}
 		return
 	}
 

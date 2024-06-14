@@ -335,9 +335,10 @@ func hostSearchTextIndex(ctx context.Context, mod wasm.Module, pCollection uint3
 	}
 
 	output := textIndexSearchResult{
-		Collection: collection,
-		Status:     "success",
-		Objects:    make([]textIndexSearchResultObject, len(objects)),
+		Collection:   collection,
+		SearchMethod: searchMethod,
+		Status:       "success",
+		Objects:      make([]textIndexSearchResultObject, len(objects)),
 	}
 
 	for i, object := range objects {
