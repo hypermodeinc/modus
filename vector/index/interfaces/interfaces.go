@@ -115,15 +115,4 @@ type VectorIndex interface {
 	// Delete will remove a vector and uuid from the existing VectorIndex. If
 	// uuid does not exist, it should throw an error to not delete non-existent uuids
 	DeleteVector(ctx context.Context, c index.CacheType, uuid string) error
-
-	// OptionalFeatures() returns a collection of optional features that
-	// may be supported by this class. By default, every implementation
-	// should attempt to faithfully define each of the above functions,
-	// but an index type that cannot support some optional capability
-	// can be allowed to "implement" the feature by returning
-	// an errors.NotSupported result.
-	// This result should almost always match the result returned by
-	// the factory used to generate this.
-	// (This condition may be relaxed in the future, but for now,
-	// it is safer to make this assumption).
 }

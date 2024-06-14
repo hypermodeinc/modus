@@ -67,8 +67,6 @@ func (tif *TextIndexFactory) worker(ctx context.Context) {
 	}
 }
 
-// CreateFactory creates an instance of the private struct IndexFactory.
-// NOTE: if T and floatBits do not match in # of bits, there will be consequences.
 func CreateFactory() *TextIndexFactory {
 	f := &TextIndexFactory{
 		textIndexMap: map[string]interfaces.TextIndex{},
@@ -83,12 +81,6 @@ func (hf *TextIndexFactory) isNameAvailableWithLock(name string) bool {
 	return !nameUsed
 }
 
-// Create is an implementation of the IndexFactory interface function, invoked by an HNSWIndexFactory
-// instance. It takes in a string name and a VectorSource implementation, and returns a VectorIndex and error
-// flag. It creates an HNSW instance using the index name and populates other parts of the HNSW struct such as
-// multFactor, maxLevels, efConstruction, maxNeighbors, and efSearch using struct parameters.
-// It then populates the HNSW graphs using the InsertChunk function until there are no more items to populate.
-// Finally, the function adds the name and hnsw object to the in memory map and returns the object.
 func (hf *TextIndexFactory) Create(
 	name string,
 	index interfaces.TextIndex) (interfaces.TextIndex, error) {
@@ -113,8 +105,6 @@ func (hf *TextIndexFactory) GetTextIndexMap() map[string]interfaces.TextIndex {
 	return hf.textIndexMap
 }
 
-// Find is an implementation of the IndexFactory interface function, invoked by an persistentIndexFactory
-// instance. It returns the VectorIndex corresponding with a string name using the in memory map.
 func (hf *TextIndexFactory) Find(name string) (interfaces.TextIndex, error) {
 	hf.mu.RLock()
 	defer hf.mu.RUnlock()
@@ -129,8 +119,6 @@ func (hf *TextIndexFactory) findWithLock(name string) (interfaces.TextIndex, err
 	return vecInd, nil
 }
 
-// Remove is an implementation of the IndexFactory interface function, invoked by an persistentIndexFactory
-// instance. It removes the VectorIndex corresponding with a string name using the in memory map.
 func (hf *TextIndexFactory) Remove(name string) error {
 	hf.mu.Lock()
 	defer hf.mu.Unlock()
@@ -142,12 +130,6 @@ func (hf *TextIndexFactory) removeWithLock(name string) error {
 	return nil
 }
 
-// CreateOrReplace is an implementation of the IndexFactory interface funciton,
-// invoked by an persistentIndexFactory. It checks if a VectorIndex
-// correpsonding with name exists. If it does, it removes it, and replaces it
-// via the Create function using the passed VectorSource. If the VectorIndex
-// does not exist, it creates that VectorIndex corresponding with the name using
-// the VectorSource.
 func (hf *TextIndexFactory) CreateOrReplace(
 	name string,
 	source index.VectorSource,
