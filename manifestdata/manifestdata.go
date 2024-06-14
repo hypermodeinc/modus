@@ -99,7 +99,11 @@ func processManifestCollections(ctx context.Context, Manifest manifest.Hypermode
 			if err == in_mem.ErrVectorIndexNotFound {
 				vectorIndex := &interfaces.VectorIndexWrapper{}
 				switch searchMethod.Index.Type {
-				case "sequential":
+				case interfaces.SequentialManifestType:
+					vectorIndex.Type = sequential.SequentialVectorIndexType
+					vectorIndex.VectorIndex = sequential.NewSequentialVectorIndex()
+				case interfaces.HnswManifestType:
+					// TODO: Implement hnsw
 					vectorIndex.Type = sequential.SequentialVectorIndexType
 					vectorIndex.VectorIndex = sequential.NewSequentialVectorIndex()
 				case "":

@@ -14,6 +14,11 @@ var (
 	ErrInvalidVectorIndexType = fmt.Errorf("invalid vector index type")
 )
 
+const (
+	SequentialManifestType = "sequential"
+	HnswManifestType       = "hnsw"
+)
+
 type VectorIndexWrapper struct {
 	Type string `json:"Type"`
 	VectorIndex
