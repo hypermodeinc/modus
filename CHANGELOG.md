@@ -2,6 +2,7 @@
 
 ## UNRELEASED
 
+- Add nullable check in ReadString [#228](https://github.com/hypermodeAI/runtime/pull/228)
 - Lowercase model name before invoking for hypermode hosted models [#221](https://github.com/gohypermode/runtime/pull/221)
 - Improve HTTP error messages [#222](https://github.com/gohypermode/runtime/pull/222)
 - Add host function for direct logging [#224](https://github.com/gohypermode/runtime/pull/224)

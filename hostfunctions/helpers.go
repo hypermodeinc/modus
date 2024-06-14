@@ -30,6 +30,9 @@ func writeResult[T any](ctx context.Context, mod wasm.Module, val T) (uint32, er
 }
 
 func readParam[T any](ctx context.Context, mod wasm.Module, p uint32, v *T) error {
+	if p == 0 {
+		return nil
+	}
 	switch any(*v).(type) {
 	case string:
 		// fast path for strings
