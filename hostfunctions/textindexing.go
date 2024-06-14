@@ -166,7 +166,7 @@ func hostUpsertToTextIndex(ctx context.Context, mod wasm.Module, pCollection uin
 			textVec[i] = val.(float64)
 		}
 
-		_, err = vectorIndex.InsertVector(ctx, nil, id, textVec)
+		_, err = vectorIndex.InsertVector(ctx, id, textVec)
 		if err != nil {
 			logger.Err(ctx, err).Msg("Error inserting into vector index.")
 
@@ -177,7 +177,7 @@ func hostUpsertToTextIndex(ctx context.Context, mod wasm.Module, pCollection uin
 			return offset
 		}
 	}
-	_, err = textIndex.InsertText(ctx, nil, id, text)
+	_, err = textIndex.InsertText(ctx, id, text)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error inserting into text index.")
 
@@ -222,7 +222,7 @@ func hostDeleteFromTextIndex(ctx context.Context, mod wasm.Module, pCollection u
 		return offset
 	}
 	for _, vectorIndex := range textIndex.GetVectorIndexMap() {
-		err = vectorIndex.DeleteVector(ctx, nil, id)
+		err = vectorIndex.DeleteVector(ctx, id)
 		if err != nil {
 			logger.Err(ctx, err).Msg("Error deleting from index.")
 
@@ -233,7 +233,7 @@ func hostDeleteFromTextIndex(ctx context.Context, mod wasm.Module, pCollection u
 			return offset
 		}
 	}
-	err = textIndex.DeleteText(ctx, nil, id)
+	err = textIndex.DeleteText(ctx, id)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error deleting from index.")
 
@@ -323,7 +323,7 @@ func hostSearchTextIndex(ctx context.Context, mod wasm.Module, pCollection uint3
 		textVec[i] = val.(float64)
 	}
 
-	objects, err := vectorIndex.Search(ctx, nil, textVec, int(limit), nil)
+	objects, err := vectorIndex.Search(ctx, textVec, int(limit), nil)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error searching vector index.")
 
@@ -343,7 +343,7 @@ func hostSearchTextIndex(ctx context.Context, mod wasm.Module, pCollection uint3
 
 	for i, object := range objects {
 		if returnText {
-			text, err := textIndex.GetText(ctx, nil, object.GetIndex())
+			text, err := textIndex.GetText(ctx, object.GetIndex())
 			if err != nil {
 				logger.Err(ctx, err).Msg("Error getting text.")
 
@@ -459,7 +459,7 @@ func hostGetText(ctx context.Context, mod wasm.Module, pCollection uint32, pId u
 		return 0
 	}
 
-	text, err := textIndex.GetText(ctx, nil, id)
+	text, err := textIndex.GetText(ctx, id)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error getting text.")
 		return 0

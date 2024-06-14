@@ -24,7 +24,7 @@ func ProcessTextMap(ctx context.Context, textIndex interfaces.TextIndex, embedde
 			textVec[i] = val.(float64)
 		}
 
-		_, err = vectorIndex.InsertVector(ctx, nil, uuid, textVec)
+		_, err = vectorIndex.InsertVector(ctx, uuid, textVec)
 		if err != nil {
 			return err
 		}
@@ -47,7 +47,7 @@ func ProcessTextMapWithModule(ctx context.Context, mod wasm.Module, textIndex in
 			textVec[i] = val.(float64)
 		}
 
-		_, err = vectorIndex.InsertVector(ctx, nil, uuid, textVec)
+		_, err = vectorIndex.InsertVector(ctx, uuid, textVec)
 		if err != nil {
 			return err
 		}

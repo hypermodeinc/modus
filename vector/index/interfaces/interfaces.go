@@ -73,13 +73,13 @@ type TextIndex interface {
 	DeleteVectorIndex(searchMethod string) error
 
 	// InsertText will add a text and uuid into the existing VectorIndex
-	InsertText(ctx context.Context, c index.CacheType, uuid string, text string) ([]*index.KeyValue, error)
+	InsertText(ctx context.Context, uuid string, text string) ([]*index.KeyValue, error)
 
 	// DeleteText will remove a text and uuid from the existing VectorIndex
-	DeleteText(ctx context.Context, c index.CacheType, uuid string) error
+	DeleteText(ctx context.Context, uuid string) error
 
 	// GetText will return the text for a given uuid
-	GetText(ctx context.Context, c index.CacheType, uuid string) (string, error)
+	GetText(ctx context.Context, uuid string) (string, error)
 
 	// GetTextMap returns the map of uuid to text
 	GetTextMap() map[string]string
@@ -94,7 +94,7 @@ type VectorIndex interface {
 	// based on some input criteria. The maxResults count is counted *after*
 	// being filtered. In other words, we only count those results that had not
 	// been filtered out.
-	Search(ctx context.Context, c index.CacheType, query []float64,
+	Search(ctx context.Context, query []float64,
 		maxResults int,
 		filter index.SearchFilter) (utils.MinTupleHeap, error)
 
@@ -104,15 +104,15 @@ type VectorIndex interface {
 	// based on some input criteria. The maxResults count is counted *after*
 	// being filtered. In other words, we only count those results that had not
 	// been filtered out.
-	SearchWithUid(ctx context.Context, c index.CacheType, queryUid string,
+	SearchWithUid(ctx context.Context, queryUid string,
 		maxResults int,
 		filter index.SearchFilter) (utils.MinTupleHeap, error)
 
 	// Insert will add a vector and uuid into the existing VectorIndex. If
 	// uuid already exists, it should throw an error to not insert duplicate uuids
-	InsertVector(ctx context.Context, c index.CacheType, uuid string, vec []float64) ([]*index.KeyValue, error)
+	InsertVector(ctx context.Context, uuid string, vec []float64) ([]*index.KeyValue, error)
 
 	// Delete will remove a vector and uuid from the existing VectorIndex. If
 	// uuid does not exist, it should throw an error to not delete non-existent uuids
-	DeleteVector(ctx context.Context, c index.CacheType, uuid string) error
+	DeleteVector(ctx context.Context, uuid string) error
 }

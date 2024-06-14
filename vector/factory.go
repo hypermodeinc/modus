@@ -9,7 +9,6 @@ import (
 	"hmruntime/logger"
 	"hmruntime/storage"
 	"hmruntime/vector/in_mem"
-	"hmruntime/vector/index"
 	"hmruntime/vector/index/interfaces"
 
 	"sync"
@@ -132,7 +131,6 @@ func (hf *TextIndexFactory) removeWithLock(name string) error {
 
 func (hf *TextIndexFactory) CreateOrReplace(
 	name string,
-	source index.VectorSource,
 	index interfaces.TextIndex) (interfaces.TextIndex, error) {
 	hf.mu.Lock()
 	defer hf.mu.Unlock()

@@ -60,21 +60,21 @@ func (ti *InMemTextIndex) DeleteVectorIndex(name string) error {
 	return nil
 }
 
-func (ti *InMemTextIndex) InsertText(ctx context.Context, c index.CacheType, uuid string, text string) ([]*index.KeyValue, error) {
+func (ti *InMemTextIndex) InsertText(ctx context.Context, uuid string, text string) ([]*index.KeyValue, error) {
 	ti.mu.Lock()
 	defer ti.mu.Unlock()
 	ti.TextMap[uuid] = text
 	return nil, nil
 }
 
-func (ti *InMemTextIndex) DeleteText(ctx context.Context, c index.CacheType, uuid string) error {
+func (ti *InMemTextIndex) DeleteText(ctx context.Context, uuid string) error {
 	ti.mu.Lock()
 	defer ti.mu.Unlock()
 	delete(ti.TextMap, uuid)
 	return nil
 }
 
-func (ti *InMemTextIndex) GetText(ctx context.Context, c index.CacheType, uuid string) (string, error) {
+func (ti *InMemTextIndex) GetText(ctx context.Context, uuid string) (string, error) {
 	ti.mu.RLock()
 	defer ti.mu.RUnlock()
 	return ti.TextMap[uuid], nil
