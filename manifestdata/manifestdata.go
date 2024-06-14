@@ -84,6 +84,8 @@ func processManifestCollections(ctx context.Context, Manifest manifest.Hypermode
 	for collectionName, collection := range Manifest.Collections {
 		textIndex, err := vector.GlobalTextIndexFactory.Find(collectionName)
 		if err == vector.ErrTextIndexNotFound {
+			// forces all users to use in-memory index for now
+			// TODO implement other types of indexes based on manifest info
 			textIndex, err = vector.GlobalTextIndexFactory.Create(collectionName, in_mem.NewTextIndex())
 			if err != nil {
 				logger.Err(ctx, err).
