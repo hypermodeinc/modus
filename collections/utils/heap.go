@@ -1,7 +1,7 @@
 package utils
 
 type MinHeapElement struct {
-	value float64
+	value float32
 	index string
 	// An element that is "filteredOut" is one that should be removed
 	// from final consideration due to it not matching the passed in
@@ -9,14 +9,14 @@ type MinHeapElement struct {
 }
 
 func InitHeapElement(
-	val float64, i string, filteredOut bool) MinHeapElement {
+	val float32, i string, filteredOut bool) MinHeapElement {
 	return MinHeapElement{
 		value: val,
 		index: i,
 	}
 }
 
-func (e MinHeapElement) GetValue() float64 {
+func (e MinHeapElement) GetValue() float32 {
 	return e.value
 }
 

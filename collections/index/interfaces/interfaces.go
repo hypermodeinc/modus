@@ -99,7 +99,7 @@ type VectorIndex interface {
 	// based on some input criteria. The maxResults count is counted *after*
 	// being filtered. In other words, we only count those results that had not
 	// been filtered out.
-	Search(ctx context.Context, query []float64,
+	Search(ctx context.Context, query []float32,
 		maxResults int,
 		filter index.SearchFilter) (utils.MinTupleHeap, error)
 
@@ -115,9 +115,12 @@ type VectorIndex interface {
 
 	// Insert will add a vector and uuid into the existing VectorIndex. If
 	// uuid already exists, it should throw an error to not insert duplicate uuids
-	InsertVector(ctx context.Context, uuid string, vec []float64) ([]*index.KeyValue, error)
+	InsertVector(ctx context.Context, uuid string, vec []float32) ([]*index.KeyValue, error)
 
 	// Delete will remove a vector and uuid from the existing VectorIndex. If
 	// uuid does not exist, it should throw an error to not delete non-existent uuids
 	DeleteVector(ctx context.Context, uuid string) error
+
+	// GetVector will return the vector for a given uuid
+	GetVector(ctx context.Context, uuid string) ([]float32, error)
 }

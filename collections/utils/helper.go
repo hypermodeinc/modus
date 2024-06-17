@@ -2,7 +2,7 @@ package utils
 
 import (
 	"errors"
-	"math"
+	"fmt"
 
 	"github.com/chewxy/math32"
 )
@@ -31,30 +31,24 @@ const (
 	NsSeparator = "-"
 )
 
-func IsBetterScoreForDistance(a, b float64) bool {
+func IsBetterScoreForDistance(a, b float32) bool {
 	return a < b
 }
 
-func IsBetterScoreForSimilarity(a, b float64) bool {
+func IsBetterScoreForSimilarity(a, b float32) bool {
 	return a > b
 }
 
-func norm(v []float64, floatBits int) float64 {
-	vectorNorm, _ := DotProduct(v, v, floatBits)
-	if floatBits == 32 {
-		return float64(math32.Sqrt(float32(vectorNorm)))
-	}
-	if floatBits == 64 {
-		return float64(math.Sqrt(float64(vectorNorm)))
-	}
-	panic("Invalid floatBits")
+func norm(v []float32) float32 {
+	vectorNorm, _ := DotProduct(v, v)
+	return float32(math32.Sqrt(float32(vectorNorm)))
 }
 
 // This needs to implement signature of SimilarityType.distanceScore
 // function, hence it takes in a floatBits parameter,
 // but doesn't actually use it.
-func DotProduct(a, b []float64, floatBits int) (float64, error) {
-	var dotProduct float64
+func DotProduct(a, b []float32) (float32, error) {
+	var dotProduct float32
 	if len(a) != len(b) {
 		err := errors.New("can not compute dot product on vectors of different lengths")
 		return dotProduct, err
@@ -67,16 +61,16 @@ func DotProduct(a, b []float64, floatBits int) (float64, error) {
 
 // This needs to implement signature of SimilarityType.distanceScore
 // function, hence it takes in a floatBits parameter.
-func CosineSimilarity(a, b []float64, floatBits int) (float64, error) {
-	dotProd, err := DotProduct(a, b, floatBits)
+func CosineSimilarity(a, b []float32) (float32, error) {
+	dotProd, err := DotProduct(a, b)
 	if err != nil {
 		return 0, err
 	}
-	normA := norm(a, floatBits)
-	normB := norm(b, floatBits)
+	normA := norm(a)
+	normB := norm(b)
 	if normA == 0 || normB == 0 {
 		err := errors.New("can not compute cosine similarity on zero vector")
-		var empty float64
+		var empty float32
 		return empty, err
 	}
 	return dotProd / (normA * normB), nil
@@ -85,11 +79,11 @@ func CosineSimilarity(a, b []float64, floatBits int) (float64, error) {
 // This needs to implement signature of SimilarityType.distanceScore
 // function, hence it takes in a floatBits parameter,
 // but doesn't actually use it.
-func EuclidianDistanceSq(a, b []float64, floatBits int) (float64, error) {
+func EuclidianDistanceSq(a, b []float32, floatBits int) (float32, error) {
 	if len(a) != len(b) {
 		return 0, errors.New("can not subtract vectors of different lengths")
 	}
-	var distSq float64
+	var distSq float32
 	for i := range a {
 		val := a[i] - b[i]
 		distSq += val * val
@@ -103,4 +97,22 @@ func ConcatStrings(strs ...string) string {
 		total += s
 	}
 	return total
+}
+
+func ConvertToFloat32Array(result any) ([]float32, error) {
+	resultArr, ok := result.([]interface{})
+	if !ok {
+		return nil, fmt.Errorf("error converting type to float32: %v", result)
+	}
+	textVec := make([]float32, len(resultArr))
+	for i, val := range resultArr {
+		if v, ok := val.(float64); ok {
+			textVec[i] = float32(v)
+		} else if v, ok := val.(float32); ok {
+			textVec[i] = v
+		} else {
+			return nil, fmt.Errorf("error converting type to float32: %v", val)
+		}
+	}
+	return textVec, nil
 }

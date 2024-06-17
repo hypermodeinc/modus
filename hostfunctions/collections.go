@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"hmruntime/collections"
+	collection_utils "hmruntime/collections/utils"
 	"hmruntime/logger"
 	"hmruntime/manifestdata"
 	"hmruntime/plugins"
@@ -62,7 +63,7 @@ func (r *collectionSearchResult) GetTypeInfo() plugins.TypeInfo {
 type collectionSearchResultObject struct {
 	ID    string
 	Text  string
-	Score float64
+	Score float32
 }
 
 func (r *collectionSearchResultObject) GetTypeInfo() plugins.TypeInfo {
@@ -105,6 +106,16 @@ func WriteCollectionSearchResultOffset(ctx context.Context, mod wasm.Module, col
 		Status:       status,
 		Objects:      objects,
 		Error:        error,
+	}
+
+	return writeResult(ctx, mod, output)
+}
+
+func WriteCollectionSearchResultObjectOffset(ctx context.Context, mod wasm.Module, id, text string, score float32) (uint32, error) {
+	output := collectionSearchResultObject{
+		ID:    id,
+		Text:  text,
+		Score: score,
 	}
 
 	return writeResult(ctx, mod, output)
@@ -182,11 +193,9 @@ func hostUpsertToCollection(ctx context.Context, mod wasm.Module, pCollectionNam
 			return offset
 		}
 
-		resultArr := result.([]interface{})
-
-		textVec := make([]float64, len(resultArr))
-		for i, val := range resultArr {
-			textVec[i] = val.(float64)
+		textVec, err := collection_utils.ConvertToFloat32Array(result)
+		if err != nil {
+			logger.Err(ctx, err).Msg("Error converting to float32.")
 		}
 
 		_, err = vectorIndex.InsertVector(ctx, id, textVec)
@@ -340,10 +349,9 @@ func hostSearchCollection(ctx context.Context, mod wasm.Module, pCollectionName 
 		return offset
 	}
 
-	resultArr := result.([]interface{})
-	textVec := make([]float64, len(resultArr))
-	for i, val := range resultArr {
-		textVec[i] = val.(float64)
+	textVec, err := collection_utils.ConvertToFloat32Array(result)
+	if err != nil {
+		logger.Err(ctx, err).Msg("Error converting to float32.")
 	}
 
 	objects, err := vectorIndex.Search(ctx, textVec, int(limit), nil)
@@ -389,6 +397,57 @@ func hostSearchCollection(ctx context.Context, mod wasm.Module, pCollectionName 
 		}
 	}
 
+	offset, err := writeResult(ctx, mod, output)
+	if err != nil {
+		logger.Err(ctx, err).Msg("Error writing result.")
+	}
+
+	return offset
+}
+
+func hostComputeSimilarity(ctx context.Context, mod wasm.Module, pCollectionName uint32, pSearchMethod uint32, pId1 uint32, pId2 uint32) uint32 {
+	var collectionName string
+	var searchMethod string
+	var id1 string
+	var id2 string
+
+	err := readParams4(ctx, mod, pCollectionName, pSearchMethod, pId1, pId2, &collectionName, &searchMethod, &id1, &id2)
+	if err != nil {
+		logger.Err(ctx, err).Msg("Error reading input parameters.")
+		return 0
+	}
+
+	collection, err := collections.GlobalCollectionFactory.Find(collectionName)
+	if err != nil {
+		logger.Err(ctx, err).Msg("Error finding collectionName.")
+		return 0
+	}
+
+	vectorIndex, err := collection.GetVectorIndex(searchMethod)
+	if err != nil {
+		logger.Err(ctx, err).Msg("Error finding search method.")
+		return 0
+	}
+
+	vec1, err := vectorIndex.GetVector(ctx, id1)
+	if err != nil {
+		logger.Err(ctx, err).Msg("Error getting vector.")
+		return 0
+	}
+
+	vec2, err := vectorIndex.GetVector(ctx, id2)
+	if err != nil {
+		logger.Err(ctx, err).Msg("Error getting vector.")
+		return 0
+	}
+
+	similarity, err := collection_utils.CosineSimilarity(vec1, vec2)
+	if err != nil {
+		logger.Err(ctx, err).Msg("Error computing similarity.")
+		return 0
+	}
+
+	output, nil := WriteCollectionSearchResultObjectOffset(ctx, mod, "", "", similarity)
 	offset, err := writeResult(ctx, mod, output)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error writing result.")

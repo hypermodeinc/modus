@@ -15,18 +15,18 @@ const (
 )
 
 type SequentialVectorIndex struct {
-	// vectorNodes is a map of string to []float64
+	// vectorNodes is a map of string to []float32
 	mu          sync.RWMutex
-	VectorNodes map[string][]float64
+	VectorNodes map[string][]float32
 }
 
 func NewSequentialVectorIndex() *SequentialVectorIndex {
 	return &SequentialVectorIndex{
-		VectorNodes: make(map[string][]float64),
+		VectorNodes: make(map[string][]float32),
 	}
 }
 
-func (ims *SequentialVectorIndex) GetVectorNodesMap() map[string][]float64 {
+func (ims *SequentialVectorIndex) GetVectorNodesMap() map[string][]float32 {
 	ims.mu.RLock()
 	defer ims.mu.RUnlock()
 	return ims.VectorNodes
@@ -37,7 +37,7 @@ func (ims *SequentialVectorIndex) emptyFinalResultWithError(e error) (
 	return index.NewSearchPathResult(), e
 }
 
-func (ims *SequentialVectorIndex) Search(ctx context.Context, query []float64, maxResults int, filter index.SearchFilter) (utils.MinTupleHeap, error) {
+func (ims *SequentialVectorIndex) Search(ctx context.Context, query []float32, maxResults int, filter index.SearchFilter) (utils.MinTupleHeap, error) {
 	// calculate cosine similarity and return top maxResults results
 	ims.mu.RLock()
 	defer ims.mu.RUnlock()
@@ -47,7 +47,7 @@ func (ims *SequentialVectorIndex) Search(ctx context.Context, query []float64, m
 		if filter != nil && !filter(query, vector, uid) {
 			continue
 		}
-		similarity, err := utils.CosineSimilarity(query, vector, 64)
+		similarity, err := utils.CosineSimilarity(query, vector)
 		if err != nil {
 			return nil, err
 		}
@@ -79,11 +79,11 @@ func (ims *SequentialVectorIndex) SearchWithUid(ctx context.Context, queryUid st
 	return ims.Search(ctx, query, maxResults, filter)
 }
 
-func (ims *SequentialVectorIndex) SearchWithPath(ctx context.Context, query []float64, maxResults int, filter index.SearchFilter) (*index.SearchPathResult, error) {
+func (ims *SequentialVectorIndex) SearchWithPath(ctx context.Context, query []float32, maxResults int, filter index.SearchFilter) (*index.SearchPathResult, error) {
 	return ims.emptyFinalResultWithError(nil)
 }
 
-func (ims *SequentialVectorIndex) InsertVector(ctx context.Context, uid string, vector []float64) ([]*index.KeyValue, error) {
+func (ims *SequentialVectorIndex) InsertVector(ctx context.Context, uid string, vector []float32) ([]*index.KeyValue, error) {
 	ims.mu.Lock()
 	defer ims.mu.Unlock()
 	ims.VectorNodes[uid] = vector
@@ -95,6 +95,12 @@ func (ims *SequentialVectorIndex) DeleteVector(ctx context.Context, uid string) 
 	defer ims.mu.Unlock()
 	delete(ims.VectorNodes, uid)
 	return nil
+}
+
+func (ims *SequentialVectorIndex) GetVector(ctx context.Context, uid string) ([]float32, error) {
+	ims.mu.RLock()
+	defer ims.mu.RUnlock()
+	return ims.VectorNodes[uid], nil
 }
 
 func (ims *SequentialVectorIndex) WriteToWAL(filename string) error {

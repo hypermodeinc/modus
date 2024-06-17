@@ -12,7 +12,7 @@ import (
 // bytes at a time to generate the entries.
 // The result is appended to the given retVal slice. If retVal is nil
 // then a new slice is created and appended to.
-func BytesAsFloatArray(encoded []byte, retVal *[]float64, floatBits int) {
+func BytesAsFloatArray(encoded []byte, retVal *[]float32) {
 	// Unfortunately, this is not as simple as casting the result,
 	// and it is also not possible to directly use the
 	// golang "unsafe" library to directly do the conversion.
@@ -25,7 +25,7 @@ func BytesAsFloatArray(encoded []byte, retVal *[]float64, floatBits int) {
 	// TODO Potential optimization: If we detect that current machine is
 	// using LittleEndian format, there might be a way of making this
 	// work with the golang "unsafe" library.
-	floatBytes := floatBits / 8
+	floatBytes := 4
 
 	*retVal = (*retVal)[:0]
 	resultLen := len(encoded) / floatBytes
@@ -41,7 +41,7 @@ func BytesAsFloatArray(encoded []byte, retVal *[]float64, floatBits int) {
 		// I have found via Google search. It's unclear why this
 		// should be a preference.
 		if retVal == nil {
-			retVal = &[]float64{}
+			retVal = &[]float32{}
 		}
 		*retVal = append(*retVal, BytesToFloat(encoded))
 
@@ -49,7 +49,7 @@ func BytesAsFloatArray(encoded []byte, retVal *[]float64, floatBits int) {
 	}
 }
 
-func BytesToFloat(encoded []byte) float64 {
-	bits := binary.LittleEndian.Uint64(encoded)
-	return float64(math.Float64frombits(bits))
+func BytesToFloat(encoded []byte) float32 {
+	bits := binary.LittleEndian.Uint32(encoded)
+	return float32(math.Float32frombits(bits))
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"hmruntime/collections/index/interfaces"
+	"hmruntime/collections/utils"
 	"hmruntime/wasmhost/module"
 
 	wasm "github.com/tetratelabs/wazero/api"
@@ -19,9 +20,9 @@ func ProcessTextMap(ctx context.Context, collection interfaces.Collection, embed
 
 		resultArr := result.([]interface{})
 
-		textVec := make([]float64, len(resultArr))
+		textVec := make([]float32, len(resultArr))
 		for i, val := range resultArr {
-			textVec[i] = val.(float64)
+			textVec[i] = val.(float32)
 		}
 
 		_, err = vectorIndex.InsertVector(ctx, uuid, textVec)
@@ -40,11 +41,9 @@ func ProcessTextMapWithModule(ctx context.Context, mod wasm.Module, collection i
 			return err
 		}
 
-		resultArr := result.([]interface{})
-
-		textVec := make([]float64, len(resultArr))
-		for i, val := range resultArr {
-			textVec[i] = val.(float64)
+		textVec, err := utils.ConvertToFloat32Array(result)
+		if err != nil {
+			return err
 		}
 
 		_, err = vectorIndex.InsertVector(ctx, uuid, textVec)
