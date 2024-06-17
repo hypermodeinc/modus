@@ -1,4 +1,4 @@
-package vector
+package collections
 
 import (
 	"context"
@@ -6,10 +6,10 @@ import (
 	"errors"
 	"fmt"
 
+	"hmruntime/collections/in_mem"
+	"hmruntime/collections/index/interfaces"
 	"hmruntime/logger"
 	"hmruntime/storage"
-	"hmruntime/vector/in_mem"
-	"hmruntime/vector/index/interfaces"
 
 	"sync"
 	"time"
@@ -20,32 +20,32 @@ import (
 const textIndexFactoryWriteInterval = 1 * time.Hour
 
 var (
-	GlobalTextIndexFactory *TextIndexFactory
-	ErrTextIndexNotFound   = fmt.Errorf("text index not found")
+	GlobalCollectionFactory *CollectionFactory
+	ErrCollectionNotFound   = fmt.Errorf("text index not found")
 )
 
 func InitializeIndexFactory(ctx context.Context) {
-	GlobalTextIndexFactory = CreateFactory()
-	err := GlobalTextIndexFactory.ReadFromBin()
+	GlobalCollectionFactory = CreateFactory()
+	err := GlobalCollectionFactory.ReadFromBin()
 	if err != nil {
 		logger.Error(ctx).Err(err).Msg("Error reading index factory from bin")
 	}
-	go GlobalTextIndexFactory.worker(ctx)
+	go GlobalCollectionFactory.worker(ctx)
 }
 
 func CloseIndexFactory(ctx context.Context) {
-	close(GlobalTextIndexFactory.quit)
-	<-GlobalTextIndexFactory.done
+	close(GlobalCollectionFactory.quit)
+	<-GlobalCollectionFactory.done
 }
 
-type TextIndexFactory struct {
-	textIndexMap map[string]interfaces.TextIndex
+type CollectionFactory struct {
+	textIndexMap map[string]interfaces.Collection
 	mu           sync.RWMutex
 	quit         chan struct{}
 	done         chan struct{}
 }
 
-func (tif *TextIndexFactory) worker(ctx context.Context) {
+func (tif *CollectionFactory) worker(ctx context.Context) {
 	ticker := time.NewTicker(textIndexFactoryWriteInterval)
 	defer ticker.Stop()
 	for {
@@ -66,31 +66,31 @@ func (tif *TextIndexFactory) worker(ctx context.Context) {
 	}
 }
 
-func CreateFactory() *TextIndexFactory {
-	f := &TextIndexFactory{
-		textIndexMap: map[string]interfaces.TextIndex{},
+func CreateFactory() *CollectionFactory {
+	f := &CollectionFactory{
+		textIndexMap: map[string]interfaces.Collection{},
 		quit:         make(chan struct{}),
 		done:         make(chan struct{}),
 	}
 	return f
 }
 
-func (hf *TextIndexFactory) isNameAvailableWithLock(name string) bool {
+func (hf *CollectionFactory) isNameAvailableWithLock(name string) bool {
 	_, nameUsed := hf.textIndexMap[name]
 	return !nameUsed
 }
 
-func (hf *TextIndexFactory) Create(
+func (hf *CollectionFactory) Create(
 	name string,
-	index interfaces.TextIndex) (interfaces.TextIndex, error) {
+	index interfaces.Collection) (interfaces.Collection, error) {
 	hf.mu.Lock()
 	defer hf.mu.Unlock()
 	return hf.createWithLock(name, index)
 }
 
-func (hf *TextIndexFactory) createWithLock(
+func (hf *CollectionFactory) createWithLock(
 	name string,
-	index interfaces.TextIndex) (interfaces.TextIndex, error) {
+	index interfaces.Collection) (interfaces.Collection, error) {
 	if !hf.isNameAvailableWithLock(name) {
 		err := errors.New("index with name " + name + " already exists")
 		return nil, err
@@ -100,38 +100,38 @@ func (hf *TextIndexFactory) createWithLock(
 	return retVal, nil
 }
 
-func (hf *TextIndexFactory) GetTextIndexMap() map[string]interfaces.TextIndex {
+func (hf *CollectionFactory) GetCollectionMap() map[string]interfaces.Collection {
 	return hf.textIndexMap
 }
 
-func (hf *TextIndexFactory) Find(name string) (interfaces.TextIndex, error) {
+func (hf *CollectionFactory) Find(name string) (interfaces.Collection, error) {
 	hf.mu.RLock()
 	defer hf.mu.RUnlock()
 	return hf.findWithLock(name)
 }
 
-func (hf *TextIndexFactory) findWithLock(name string) (interfaces.TextIndex, error) {
+func (hf *CollectionFactory) findWithLock(name string) (interfaces.Collection, error) {
 	vecInd, ok := hf.textIndexMap[name]
 	if !ok {
-		return nil, ErrTextIndexNotFound
+		return nil, ErrCollectionNotFound
 	}
 	return vecInd, nil
 }
 
-func (hf *TextIndexFactory) Remove(name string) error {
+func (hf *CollectionFactory) Remove(name string) error {
 	hf.mu.Lock()
 	defer hf.mu.Unlock()
 	return hf.removeWithLock(name)
 }
 
-func (hf *TextIndexFactory) removeWithLock(name string) error {
+func (hf *CollectionFactory) removeWithLock(name string) error {
 	delete(hf.textIndexMap, name)
 	return nil
 }
 
-func (hf *TextIndexFactory) CreateOrReplace(
+func (hf *CollectionFactory) CreateOrReplace(
 	name string,
-	index interfaces.TextIndex) (interfaces.TextIndex, error) {
+	index interfaces.Collection) (interfaces.Collection, error) {
 	hf.mu.Lock()
 	defer hf.mu.Unlock()
 	vi, err := hf.findWithLock(name)
@@ -147,7 +147,7 @@ func (hf *TextIndexFactory) CreateOrReplace(
 	return hf.createWithLock(name, index)
 }
 
-func (hf *TextIndexFactory) WriteToBin() error {
+func (hf *CollectionFactory) WriteToBin() error {
 	operation := func() error {
 		data, err := json.Marshal(hf.textIndexMap)
 		if err != nil {
@@ -166,20 +166,20 @@ func (hf *TextIndexFactory) WriteToBin() error {
 	return backoff.Retry(operation, exponentialBackoff)
 }
 
-func (hf *TextIndexFactory) ReadFromBin() error {
+func (hf *CollectionFactory) ReadFromBin() error {
 	operation := func() error {
 		data, err := storage.GetFileContents(context.Background(), "index_factory.bin")
 		if err != nil {
 			return fmt.Errorf("could not get file content, %s", err)
 		}
 
-		newMap := make(map[string]*in_mem.InMemTextIndex)
+		newMap := make(map[string]*in_mem.InMemCollection)
 
 		if err := json.Unmarshal(data, &newMap); err != nil {
 			return fmt.Errorf("could not decode file content, %s", err)
 		}
 
-		hf.textIndexMap = make(map[string]interfaces.TextIndex)
+		hf.textIndexMap = make(map[string]interfaces.Collection)
 		for k, v := range newMap {
 			hf.textIndexMap[k] = v
 		}

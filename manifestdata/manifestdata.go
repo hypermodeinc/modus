@@ -7,13 +7,13 @@ package manifestdata
 import (
 	"context"
 
+	"hmruntime/collections"
+	"hmruntime/collections/in_mem"
+	"hmruntime/collections/in_mem/sequential"
+	"hmruntime/collections/index/interfaces"
 	"hmruntime/logger"
 	"hmruntime/storage"
 	"hmruntime/utils"
-	"hmruntime/vector"
-	"hmruntime/vector/in_mem"
-	"hmruntime/vector/in_mem/sequential"
-	"hmruntime/vector/index/interfaces"
 
 	"github.com/hypermodeAI/manifest"
 )
@@ -82,11 +82,11 @@ func loadManifest(ctx context.Context) error {
 
 func processManifestCollections(ctx context.Context, Manifest manifest.HypermodeManifest) {
 	for collectionName, collection := range Manifest.Collections {
-		textIndex, err := vector.GlobalTextIndexFactory.Find(collectionName)
-		if err == vector.ErrTextIndexNotFound {
+		textIndex, err := collections.GlobalCollectionFactory.Find(collectionName)
+		if err == collections.ErrCollectionNotFound {
 			// forces all users to use in-memory index for now
 			// TODO implement other types of indexes based on manifest info
-			textIndex, err = vector.GlobalTextIndexFactory.Create(collectionName, in_mem.NewTextIndex())
+			textIndex, err = collections.GlobalCollectionFactory.Create(collectionName, in_mem.NewCollection())
 			if err != nil {
 				logger.Err(ctx, err).
 					Str("collection_name", collectionName).
@@ -121,7 +121,7 @@ func processManifestCollections(ctx context.Context, Manifest manifest.Hypermode
 				// populate index here
 				if len(textIndex.GetTextMap()) != 0 {
 
-					err = vector.ProcessTextMap(ctx, textIndex, searchMethod.Embedder, vectorIndex)
+					err = collections.ProcessTextMap(ctx, textIndex, searchMethod.Embedder, vectorIndex)
 					if err != nil {
 						logger.Err(ctx, err).
 							Str("index_name", searchMethodName).
@@ -143,23 +143,23 @@ func processManifestCollections(ctx context.Context, Manifest manifest.Hypermode
 }
 
 func deleteIndexesNotInManifest(Manifest manifest.HypermodeManifest) {
-	for indexName := range vector.GlobalTextIndexFactory.GetTextIndexMap() {
+	for indexName := range collections.GlobalCollectionFactory.GetCollectionMap() {
 		if _, ok := Manifest.Collections[indexName]; !ok {
-			err := vector.GlobalTextIndexFactory.Remove(indexName)
+			err := collections.GlobalCollectionFactory.Remove(indexName)
 			if err != nil {
 				logger.Err(context.Background(), err).
 					Str("index_name", indexName).
 					Msg("Failed to remove vector index.")
 			}
 		}
-		vectorIndexMap := vector.GlobalTextIndexFactory.GetTextIndexMap()[indexName].GetVectorIndexMap()
+		vectorIndexMap := collections.GlobalCollectionFactory.GetCollectionMap()[indexName].GetVectorIndexMap()
 		if vectorIndexMap == nil {
 			continue
 		}
 		for searchMethodName := range vectorIndexMap {
 			_, ok := Manifest.Collections[indexName].SearchMethods[searchMethodName]
 			if !ok {
-				err := vector.GlobalTextIndexFactory.GetTextIndexMap()[indexName].DeleteVectorIndex(searchMethodName)
+				err := collections.GlobalCollectionFactory.GetCollectionMap()[indexName].DeleteVectorIndex(searchMethodName)
 				if err != nil {
 					logger.Err(context.Background(), err).
 						Str("index_name", indexName).

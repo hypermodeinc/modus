@@ -7,7 +7,7 @@ type SearchPathResult struct {
 	// The collection of nearest-neighbors in sorted order after filtlering
 	// out neighbors that fail any Filter criteria.
 	Neighbors []uint64
-	// The path from the start of search to the closest neighbor vector.
+	// The path from the start of search to the closest neighbor collections.
 	Path []uint64
 	// A collection of captured named counters that occurred for the
 	// particular search.

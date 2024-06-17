@@ -14,6 +14,7 @@ import (
 	"runtime"
 
 	"hmruntime/aws"
+	"hmruntime/collections"
 	"hmruntime/config"
 	"hmruntime/db"
 	"hmruntime/graphql"
@@ -23,7 +24,6 @@ import (
 	"hmruntime/server"
 	"hmruntime/storage"
 	"hmruntime/utils"
-	"hmruntime/vector"
 	"hmruntime/wasmhost"
 	"hmruntime/wasmhost/module"
 
@@ -83,7 +83,7 @@ func initRuntimeServices(ctx context.Context) {
 	db.Initialize(ctx)
 
 	// Initialize in mem vector factory
-	vector.InitializeIndexFactory(ctx)
+	collections.InitializeIndexFactory(ctx)
 
 	// Load plugins and monitor for changes
 	wasmhost.MonitorPlugins(ctx)
@@ -96,7 +96,7 @@ func initRuntimeServices(ctx context.Context) {
 }
 
 func stopRuntimeServices(ctx context.Context) {
-	vector.CloseIndexFactory(ctx)
+	collections.CloseIndexFactory(ctx)
 	module.RuntimeInstance.Close(ctx)
 	logger.Close()
 

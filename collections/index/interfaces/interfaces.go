@@ -5,9 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"hmruntime/vector/in_mem/sequential"
-	"hmruntime/vector/index"
-	"hmruntime/vector/utils"
+	"hmruntime/collections/in_mem/sequential"
+	"hmruntime/collections/index"
+	"hmruntime/collections/utils"
 )
 
 var (
@@ -64,7 +64,7 @@ func (v *VectorIndexWrapper) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-type TextIndex interface {
+type Collection interface {
 	// GetVectorIndexMap returns the map of searchMethod to VectorIndex
 	GetVectorIndexMap() map[string]*VectorIndexWrapper
 

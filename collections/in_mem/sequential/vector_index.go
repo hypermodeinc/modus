@@ -4,8 +4,8 @@ import (
 	"container/heap"
 	"context"
 	"encoding/gob"
-	"hmruntime/vector/index"
-	"hmruntime/vector/utils"
+	"hmruntime/collections/index"
+	"hmruntime/collections/utils"
 	"os"
 	"sync"
 )

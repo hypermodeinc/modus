@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 
+	"hmruntime/collections"
 	"hmruntime/logger"
 	"hmruntime/manifestdata"
 	"hmruntime/plugins"
 	"hmruntime/utils"
-	"hmruntime/vector"
 	"hmruntime/wasmhost/module"
 
 	wasm "github.com/tetratelabs/wazero/api"
@@ -24,8 +24,8 @@ type textIndexMutationResult struct {
 
 func (r *textIndexMutationResult) GetTypeInfo() plugins.TypeInfo {
 	return plugins.TypeInfo{
-		Name: "TextIndexMutationResult",
-		Path: "~lib/@hypermode/functions-as/assembly/collections/TextIndexMutationResult",
+		Name: "CollectionMutationResult",
+		Path: "~lib/@hypermode/functions-as/assembly/collections/CollectionMutationResult",
 	}
 }
 
@@ -39,8 +39,8 @@ type textIndexSearchResult struct {
 
 func (r *textIndexSearchResult) GetTypeInfo() plugins.TypeInfo {
 	return plugins.TypeInfo{
-		Name: "TextIndexSearchResult",
-		Path: "~lib/@hypermode/functions-as/assembly/collections/TextIndexSearchResult",
+		Name: "CollectionSearchResult",
+		Path: "~lib/@hypermode/functions-as/assembly/collections/CollectionSearchResult",
 	}
 }
 
@@ -52,12 +52,12 @@ type textIndexSearchResultObject struct {
 
 func (r *textIndexSearchResultObject) GetTypeInfo() plugins.TypeInfo {
 	return plugins.TypeInfo{
-		Name: "TextIndexSearchResultObject",
-		Path: "~lib/@hypermode/functions-as/assembly/collections/TextIndexSearchResultObject",
+		Name: "CollectionSearchResultObject",
+		Path: "~lib/@hypermode/functions-as/assembly/collections/CollectionSearchResultObject",
 	}
 }
 
-func WriteTextIndexMutationResultOffset(ctx context.Context, mod wasm.Module, collection, operation, status, id, error string) (uint32, error) {
+func WriteCollectionMutationResultOffset(ctx context.Context, mod wasm.Module, collection, operation, status, id, error string) (uint32, error) {
 	output := textIndexMutationResult{
 		Collection: collection,
 		Operation:  operation,
@@ -69,7 +69,7 @@ func WriteTextIndexMutationResultOffset(ctx context.Context, mod wasm.Module, co
 	return writeResult(ctx, mod, output)
 }
 
-func WriteTextIndexSearchResultOffset(ctx context.Context, mod wasm.Module, collection, searchMethod, status string,
+func WriteCollectionSearchResultOffset(ctx context.Context, mod wasm.Module, collection, searchMethod, status string,
 	objects []textIndexSearchResultObject, error string) (uint32, error) {
 
 	output := textIndexSearchResult{
@@ -83,7 +83,7 @@ func WriteTextIndexSearchResultOffset(ctx context.Context, mod wasm.Module, coll
 	return writeResult(ctx, mod, output)
 }
 
-func hostUpsertToTextIndex(ctx context.Context, mod wasm.Module, pCollection uint32, pId uint32, pText uint32) uint32 {
+func hostUpsertToCollection(ctx context.Context, mod wasm.Module, pCollection uint32, pId uint32, pText uint32) uint32 {
 	var collection string
 	var id string
 	var text string
@@ -93,7 +93,7 @@ func hostUpsertToTextIndex(ctx context.Context, mod wasm.Module, pCollection uin
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error reading input parameters.")
 
-		offset, err := WriteTextIndexMutationResultOffset(ctx, mod, collection, "upsert", "error", "", fmt.Sprintf("Error reading input parameters: %s", err.Error()))
+		offset, err := WriteCollectionMutationResultOffset(ctx, mod, collection, "upsert", "error", "", fmt.Sprintf("Error reading input parameters: %s", err.Error()))
 		if err != nil {
 			logger.Err(ctx, err).Msg("Error writing result.")
 		}
@@ -108,11 +108,11 @@ func hostUpsertToTextIndex(ctx context.Context, mod wasm.Module, pCollection uin
 	collectionData := manifestdata.Manifest.Collections[collection]
 
 	// insert text into text index
-	textIndex, err := vector.GlobalTextIndexFactory.Find(collection)
+	textIndex, err := collections.GlobalCollectionFactory.Find(collection)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error finding collection.")
 
-		offset, err := WriteTextIndexMutationResultOffset(ctx, mod, collection, "upsert", "error", "", fmt.Sprintf("Error finding collection: %s", err.Error()))
+		offset, err := WriteCollectionMutationResultOffset(ctx, mod, collection, "upsert", "error", "", fmt.Sprintf("Error finding collection: %s", err.Error()))
 		if err != nil {
 			logger.Err(ctx, err).Msg("Error writing result.")
 		}
@@ -125,7 +125,7 @@ func hostUpsertToTextIndex(ctx context.Context, mod wasm.Module, pCollection uin
 		if err != nil {
 			logger.Err(ctx, err).Msg("Error finding search method.")
 
-			offset, err := WriteTextIndexMutationResultOffset(ctx, mod, collection, "upsert", "error", "", fmt.Sprintf("Error finding search method: %s", err.Error()))
+			offset, err := WriteCollectionMutationResultOffset(ctx, mod, collection, "upsert", "error", "", fmt.Sprintf("Error finding search method: %s", err.Error()))
 			if err != nil {
 				logger.Err(ctx, err).Msg("Error writing result.")
 			}
@@ -137,7 +137,7 @@ func hostUpsertToTextIndex(ctx context.Context, mod wasm.Module, pCollection uin
 		if err != nil {
 			logger.Err(ctx, err).Msg("Error verifying function signature.")
 
-			offset, err := WriteTextIndexMutationResultOffset(ctx, mod, collection, "upsert", "error", "", fmt.Sprintf("Error verifying function signature: %s", err.Error()))
+			offset, err := WriteCollectionMutationResultOffset(ctx, mod, collection, "upsert", "error", "", fmt.Sprintf("Error verifying function signature: %s", err.Error()))
 			if err != nil {
 				logger.Err(ctx, err).Msg("Error writing result.")
 			}
@@ -148,7 +148,7 @@ func hostUpsertToTextIndex(ctx context.Context, mod wasm.Module, pCollection uin
 		if err != nil {
 			logger.Err(ctx, err).Msg("Error calling function.")
 
-			offset, err := WriteTextIndexMutationResultOffset(ctx, mod, collection, "upsert", "error", "", fmt.Sprintf("Error calling function: %s", err.Error()))
+			offset, err := WriteCollectionMutationResultOffset(ctx, mod, collection, "upsert", "error", "", fmt.Sprintf("Error calling function: %s", err.Error()))
 			if err != nil {
 				logger.Err(ctx, err).Msg("Error writing result.")
 			}
@@ -166,7 +166,7 @@ func hostUpsertToTextIndex(ctx context.Context, mod wasm.Module, pCollection uin
 		if err != nil {
 			logger.Err(ctx, err).Msg("Error inserting into vector index.")
 
-			offset, err := WriteTextIndexMutationResultOffset(ctx, mod, collection, "upsert", "error", "", fmt.Sprintf("Error inserting into vector index: %s", err.Error()))
+			offset, err := WriteCollectionMutationResultOffset(ctx, mod, collection, "upsert", "error", "", fmt.Sprintf("Error inserting into vector index: %s", err.Error()))
 			if err != nil {
 				logger.Err(ctx, err).Msg("Error writing result.")
 			}
@@ -177,14 +177,14 @@ func hostUpsertToTextIndex(ctx context.Context, mod wasm.Module, pCollection uin
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error inserting into text index.")
 
-		offset, err := WriteTextIndexMutationResultOffset(ctx, mod, collection, "upsert", "error", "", fmt.Sprintf("Error inserting into text index: %s", err.Error()))
+		offset, err := WriteCollectionMutationResultOffset(ctx, mod, collection, "upsert", "error", "", fmt.Sprintf("Error inserting into text index: %s", err.Error()))
 		if err != nil {
 			logger.Err(ctx, err).Msg("Error writing result.")
 		}
 		return offset
 	}
 
-	offset, err := WriteTextIndexMutationResultOffset(ctx, mod, collection, "upsert", "success", id, "")
+	offset, err := WriteCollectionMutationResultOffset(ctx, mod, collection, "upsert", "success", id, "")
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error writing result.")
 	}
@@ -192,7 +192,7 @@ func hostUpsertToTextIndex(ctx context.Context, mod wasm.Module, pCollection uin
 	return offset
 }
 
-func hostDeleteFromTextIndex(ctx context.Context, mod wasm.Module, pCollection uint32, pId uint32) uint32 {
+func hostDeleteFromCollection(ctx context.Context, mod wasm.Module, pCollection uint32, pId uint32) uint32 {
 	var collection string
 	var id string
 
@@ -200,18 +200,18 @@ func hostDeleteFromTextIndex(ctx context.Context, mod wasm.Module, pCollection u
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error reading input parameters.")
 
-		offset, err := WriteTextIndexMutationResultOffset(ctx, mod, collection, "delete", "error", "", fmt.Sprintf("Error reading input parameters: %s", err.Error()))
+		offset, err := WriteCollectionMutationResultOffset(ctx, mod, collection, "delete", "error", "", fmt.Sprintf("Error reading input parameters: %s", err.Error()))
 		if err != nil {
 			logger.Err(ctx, err).Msg("Error writing result.")
 		}
 		return offset
 	}
 
-	textIndex, err := vector.GlobalTextIndexFactory.Find(collection)
+	textIndex, err := collections.GlobalCollectionFactory.Find(collection)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error finding collection.")
 
-		offset, err := WriteTextIndexMutationResultOffset(ctx, mod, collection, "delete", "error", "", fmt.Sprintf("Error finding collection: %s", err.Error()))
+		offset, err := WriteCollectionMutationResultOffset(ctx, mod, collection, "delete", "error", "", fmt.Sprintf("Error finding collection: %s", err.Error()))
 		if err != nil {
 			logger.Err(ctx, err).Msg("Error writing result.")
 		}
@@ -222,7 +222,7 @@ func hostDeleteFromTextIndex(ctx context.Context, mod wasm.Module, pCollection u
 		if err != nil {
 			logger.Err(ctx, err).Msg("Error deleting from index.")
 
-			offset, err := WriteTextIndexMutationResultOffset(ctx, mod, collection, "delete", "error", "", fmt.Sprintf("Error deleting from index: %s", err.Error()))
+			offset, err := WriteCollectionMutationResultOffset(ctx, mod, collection, "delete", "error", "", fmt.Sprintf("Error deleting from index: %s", err.Error()))
 			if err != nil {
 				logger.Err(ctx, err).Msg("Error writing result.")
 			}
@@ -233,14 +233,14 @@ func hostDeleteFromTextIndex(ctx context.Context, mod wasm.Module, pCollection u
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error deleting from index.")
 
-		offset, err := WriteTextIndexMutationResultOffset(ctx, mod, collection, "delete", "error", "", fmt.Sprintf("Error deleting from index: %s", err.Error()))
+		offset, err := WriteCollectionMutationResultOffset(ctx, mod, collection, "delete", "error", "", fmt.Sprintf("Error deleting from index: %s", err.Error()))
 		if err != nil {
 			logger.Err(ctx, err).Msg("Error writing result.")
 		}
 		return offset
 	}
 
-	offset, err := WriteTextIndexMutationResultOffset(ctx, mod, collection, "delete", "success", id, "")
+	offset, err := WriteCollectionMutationResultOffset(ctx, mod, collection, "delete", "success", id, "")
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error writing result.")
 	}
@@ -248,7 +248,7 @@ func hostDeleteFromTextIndex(ctx context.Context, mod wasm.Module, pCollection u
 	return offset
 }
 
-func hostSearchTextIndex(ctx context.Context, mod wasm.Module, pCollection uint32, pSearchMethod uint32,
+func hostSearchCollection(ctx context.Context, mod wasm.Module, pCollection uint32, pSearchMethod uint32,
 	pText uint32, pLimit uint32, pReturnText uint32) uint32 {
 	var collection string
 	var searchMethod string
@@ -261,18 +261,18 @@ func hostSearchTextIndex(ctx context.Context, mod wasm.Module, pCollection uint3
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error reading input parameters.")
 
-		offset, err := WriteTextIndexSearchResultOffset(ctx, mod, collection, searchMethod, "error", nil, fmt.Sprintf("Error reading input parameters: %s", err.Error()))
+		offset, err := WriteCollectionSearchResultOffset(ctx, mod, collection, searchMethod, "error", nil, fmt.Sprintf("Error reading input parameters: %s", err.Error()))
 		if err != nil {
 			logger.Err(ctx, err).Msg("Error writing result.")
 		}
 		return offset
 	}
 
-	textIndex, err := vector.GlobalTextIndexFactory.Find(collection)
+	textIndex, err := collections.GlobalCollectionFactory.Find(collection)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error finding collection.")
 
-		offset, err := WriteTextIndexSearchResultOffset(ctx, mod, collection, searchMethod, "error", nil, fmt.Sprintf("Error finding collection: %s", err.Error()))
+		offset, err := WriteCollectionSearchResultOffset(ctx, mod, collection, searchMethod, "error", nil, fmt.Sprintf("Error finding collection: %s", err.Error()))
 		if err != nil {
 			logger.Err(ctx, err).Msg("Error writing result.")
 		}
@@ -283,7 +283,7 @@ func hostSearchTextIndex(ctx context.Context, mod wasm.Module, pCollection uint3
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error finding search method.")
 
-		offset, err := WriteTextIndexSearchResultOffset(ctx, mod, collection, searchMethod, "error", nil, fmt.Sprintf("Error finding search method: %s", err.Error()))
+		offset, err := WriteCollectionSearchResultOffset(ctx, mod, collection, searchMethod, "error", nil, fmt.Sprintf("Error finding search method: %s", err.Error()))
 		if err != nil {
 			logger.Err(ctx, err).Msg("Error writing result.")
 		}
@@ -295,7 +295,7 @@ func hostSearchTextIndex(ctx context.Context, mod wasm.Module, pCollection uint3
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error verifying function signature.")
 
-		offset, err := WriteTextIndexSearchResultOffset(ctx, mod, collection, searchMethod, "error", nil, fmt.Sprintf("Error verifying function signature: %s", err.Error()))
+		offset, err := WriteCollectionSearchResultOffset(ctx, mod, collection, searchMethod, "error", nil, fmt.Sprintf("Error verifying function signature: %s", err.Error()))
 		if err != nil {
 			logger.Err(ctx, err).Msg("Error writing result.")
 		}
@@ -306,7 +306,7 @@ func hostSearchTextIndex(ctx context.Context, mod wasm.Module, pCollection uint3
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error calling function.")
 
-		offset, err := WriteTextIndexSearchResultOffset(ctx, mod, collection, searchMethod, "error", nil, fmt.Sprintf("Error calling function: %s", err.Error()))
+		offset, err := WriteCollectionSearchResultOffset(ctx, mod, collection, searchMethod, "error", nil, fmt.Sprintf("Error calling function: %s", err.Error()))
 		if err != nil {
 			logger.Err(ctx, err).Msg("Error writing result.")
 		}
@@ -323,7 +323,7 @@ func hostSearchTextIndex(ctx context.Context, mod wasm.Module, pCollection uint3
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error searching vector index.")
 
-		offset, err := WriteTextIndexSearchResultOffset(ctx, mod, collection, searchMethod, "error", nil, fmt.Sprintf("Error searching vector index: %s", err.Error()))
+		offset, err := WriteCollectionSearchResultOffset(ctx, mod, collection, searchMethod, "error", nil, fmt.Sprintf("Error searching vector index: %s", err.Error()))
 		if err != nil {
 			logger.Err(ctx, err).Msg("Error writing result.")
 		}
@@ -343,7 +343,7 @@ func hostSearchTextIndex(ctx context.Context, mod wasm.Module, pCollection uint3
 			if err != nil {
 				logger.Err(ctx, err).Msg("Error getting text.")
 
-				offset, err := WriteTextIndexSearchResultOffset(ctx, mod, collection, searchMethod, "error", nil, fmt.Sprintf("Error getting text: %s", err.Error()))
+				offset, err := WriteCollectionSearchResultOffset(ctx, mod, collection, searchMethod, "error", nil, fmt.Sprintf("Error getting text: %s", err.Error()))
 				if err != nil {
 					logger.Err(ctx, err).Msg("Error writing result.")
 				}
@@ -370,7 +370,7 @@ func hostSearchTextIndex(ctx context.Context, mod wasm.Module, pCollection uint3
 	return offset
 }
 
-func hostRecomputeTextIndex(ctx context.Context, mod wasm.Module, pCollection uint32, pSearchMethod uint32) uint32 {
+func hostRecomputeSearchMethod(ctx context.Context, mod wasm.Module, pCollection uint32, pSearchMethod uint32) uint32 {
 	var collection string
 	var searchMethod string
 
@@ -378,18 +378,18 @@ func hostRecomputeTextIndex(ctx context.Context, mod wasm.Module, pCollection ui
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error reading input parameters.")
 
-		offset, err := WriteTextIndexMutationResultOffset(ctx, mod, collection, "recompute", "error", "", fmt.Sprintf("Error reading input parameters: %s", err.Error()))
+		offset, err := WriteCollectionMutationResultOffset(ctx, mod, collection, "recompute", "error", "", fmt.Sprintf("Error reading input parameters: %s", err.Error()))
 		if err != nil {
 			logger.Err(ctx, err).Msg("Error writing result.")
 		}
 		return offset
 	}
 
-	textIndex, err := vector.GlobalTextIndexFactory.Find(collection)
+	textIndex, err := collections.GlobalCollectionFactory.Find(collection)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error finding collection.")
 
-		offset, err := WriteTextIndexMutationResultOffset(ctx, mod, collection, "recompute", "error", "", fmt.Sprintf("Error finding collection: %s", err.Error()))
+		offset, err := WriteCollectionMutationResultOffset(ctx, mod, collection, "recompute", "error", "", fmt.Sprintf("Error finding collection: %s", err.Error()))
 		if err != nil {
 			logger.Err(ctx, err).Msg("Error writing result.")
 		}
@@ -400,7 +400,7 @@ func hostRecomputeTextIndex(ctx context.Context, mod wasm.Module, pCollection ui
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error finding search method.")
 
-		offset, err := WriteTextIndexMutationResultOffset(ctx, mod, collection, "recompute", "error", "", fmt.Sprintf("Error finding search method: %s", err.Error()))
+		offset, err := WriteCollectionMutationResultOffset(ctx, mod, collection, "recompute", "error", "", fmt.Sprintf("Error finding search method: %s", err.Error()))
 		if err != nil {
 			logger.Err(ctx, err).Msg("Error writing result.")
 		}
@@ -412,25 +412,25 @@ func hostRecomputeTextIndex(ctx context.Context, mod wasm.Module, pCollection ui
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error verifying function signature.")
 
-		offset, err := WriteTextIndexMutationResultOffset(ctx, mod, collection, "recompute", "error", "", fmt.Sprintf("Error verifying function signature: %s", err.Error()))
+		offset, err := WriteCollectionMutationResultOffset(ctx, mod, collection, "recompute", "error", "", fmt.Sprintf("Error verifying function signature: %s", err.Error()))
 		if err != nil {
 			logger.Err(ctx, err).Msg("Error writing result.")
 		}
 		return offset
 	}
 
-	err = vector.ProcessTextMapWithModule(ctx, mod, textIndex, embedder, vectorIndex)
+	err = collections.ProcessTextMapWithModule(ctx, mod, textIndex, embedder, vectorIndex)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error processing text map.")
 
-		offset, err := WriteTextIndexMutationResultOffset(ctx, mod, collection, "recompute", "error", "", fmt.Sprintf("Error processing text map: %s", err.Error()))
+		offset, err := WriteCollectionMutationResultOffset(ctx, mod, collection, "recompute", "error", "", fmt.Sprintf("Error processing text map: %s", err.Error()))
 		if err != nil {
 			logger.Err(ctx, err).Msg("Error writing result.")
 		}
 		return offset
 	}
 
-	offset, err := WriteTextIndexMutationResultOffset(ctx, mod, collection, "recompute", "success", "", "")
+	offset, err := WriteCollectionMutationResultOffset(ctx, mod, collection, "recompute", "success", "", "")
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error writing result.")
 		return 0
@@ -449,7 +449,7 @@ func hostGetText(ctx context.Context, mod wasm.Module, pCollection uint32, pId u
 		return 0
 	}
 
-	textIndex, err := vector.GlobalTextIndexFactory.Find(collection)
+	textIndex, err := collections.GlobalCollectionFactory.Find(collection)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error finding collection.")
 		return 0
