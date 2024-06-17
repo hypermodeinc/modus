@@ -17,7 +17,7 @@ import (
 	"github.com/cenkalti/backoff/v4"
 )
 
-const textIndexFactoryWriteInterval = 1 * time.Hour
+const collectionFactoryWriteInterval = 1 * time.Hour
 
 var (
 	GlobalCollectionFactory *CollectionFactory
@@ -39,14 +39,14 @@ func CloseIndexFactory(ctx context.Context) {
 }
 
 type CollectionFactory struct {
-	textIndexMap map[string]interfaces.Collection
-	mu           sync.RWMutex
-	quit         chan struct{}
-	done         chan struct{}
+	collectionMap map[string]interfaces.Collection
+	mu            sync.RWMutex
+	quit          chan struct{}
+	done          chan struct{}
 }
 
 func (tif *CollectionFactory) worker(ctx context.Context) {
-	ticker := time.NewTicker(textIndexFactoryWriteInterval)
+	ticker := time.NewTicker(collectionFactoryWriteInterval)
 	defer ticker.Stop()
 	for {
 		select {
@@ -68,15 +68,15 @@ func (tif *CollectionFactory) worker(ctx context.Context) {
 
 func CreateFactory() *CollectionFactory {
 	f := &CollectionFactory{
-		textIndexMap: map[string]interfaces.Collection{},
-		quit:         make(chan struct{}),
-		done:         make(chan struct{}),
+		collectionMap: map[string]interfaces.Collection{},
+		quit:          make(chan struct{}),
+		done:          make(chan struct{}),
 	}
 	return f
 }
 
 func (hf *CollectionFactory) isNameAvailableWithLock(name string) bool {
-	_, nameUsed := hf.textIndexMap[name]
+	_, nameUsed := hf.collectionMap[name]
 	return !nameUsed
 }
 
@@ -96,12 +96,12 @@ func (hf *CollectionFactory) createWithLock(
 		return nil, err
 	}
 	retVal := index
-	hf.textIndexMap[name] = retVal
+	hf.collectionMap[name] = retVal
 	return retVal, nil
 }
 
 func (hf *CollectionFactory) GetCollectionMap() map[string]interfaces.Collection {
-	return hf.textIndexMap
+	return hf.collectionMap
 }
 
 func (hf *CollectionFactory) Find(name string) (interfaces.Collection, error) {
@@ -111,7 +111,7 @@ func (hf *CollectionFactory) Find(name string) (interfaces.Collection, error) {
 }
 
 func (hf *CollectionFactory) findWithLock(name string) (interfaces.Collection, error) {
-	vecInd, ok := hf.textIndexMap[name]
+	vecInd, ok := hf.collectionMap[name]
 	if !ok {
 		return nil, ErrCollectionNotFound
 	}
@@ -125,7 +125,7 @@ func (hf *CollectionFactory) Remove(name string) error {
 }
 
 func (hf *CollectionFactory) removeWithLock(name string) error {
-	delete(hf.textIndexMap, name)
+	delete(hf.collectionMap, name)
 	return nil
 }
 
@@ -149,7 +149,7 @@ func (hf *CollectionFactory) CreateOrReplace(
 
 func (hf *CollectionFactory) WriteToBin() error {
 	operation := func() error {
-		data, err := json.Marshal(hf.textIndexMap)
+		data, err := json.Marshal(hf.collectionMap)
 		if err != nil {
 			return fmt.Errorf("could not encode file content, %s", err)
 		}
@@ -179,9 +179,9 @@ func (hf *CollectionFactory) ReadFromBin() error {
 			return fmt.Errorf("could not decode file content, %s", err)
 		}
 
-		hf.textIndexMap = make(map[string]interfaces.Collection)
+		hf.collectionMap = make(map[string]interfaces.Collection)
 		for k, v := range newMap {
-			hf.textIndexMap[k] = v
+			hf.collectionMap[k] = v
 		}
 
 		return nil

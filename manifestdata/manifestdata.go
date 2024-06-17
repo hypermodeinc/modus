@@ -81,20 +81,20 @@ func loadManifest(ctx context.Context) error {
 }
 
 func processManifestCollections(ctx context.Context, Manifest manifest.HypermodeManifest) {
-	for collectionName, collection := range Manifest.Collections {
-		textIndex, err := collections.GlobalCollectionFactory.Find(collectionName)
+	for collectionName, collectionInfo := range Manifest.Collections {
+		collection, err := collections.GlobalCollectionFactory.Find(collectionName)
 		if err == collections.ErrCollectionNotFound {
 			// forces all users to use in-memory index for now
 			// TODO implement other types of indexes based on manifest info
-			textIndex, err = collections.GlobalCollectionFactory.Create(collectionName, in_mem.NewCollection())
+			collection, err = collections.GlobalCollectionFactory.Create(collectionName, in_mem.NewCollection())
 			if err != nil {
 				logger.Err(ctx, err).
 					Str("collection_name", collectionName).
 					Msg("Failed to create vector index.")
 			}
 		}
-		for searchMethodName, searchMethod := range collection.SearchMethods {
-			_, err := textIndex.GetVectorIndex(searchMethodName)
+		for searchMethodName, searchMethod := range collectionInfo.SearchMethods {
+			_, err := collection.GetVectorIndex(searchMethodName)
 
 			// if the index does not exist, create it
 			// TODO also populate the vector index by running the embedding function to compute vectors ahead of time
@@ -119,9 +119,9 @@ func processManifestCollections(ctx context.Context, Manifest manifest.Hypermode
 				}
 
 				// populate index here
-				if len(textIndex.GetTextMap()) != 0 {
+				if len(collection.GetTextMap()) != 0 {
 
-					err = collections.ProcessTextMap(ctx, textIndex, searchMethod.Embedder, vectorIndex)
+					err = collections.ProcessTextMap(ctx, collection, searchMethod.Embedder, vectorIndex)
 					if err != nil {
 						logger.Err(ctx, err).
 							Str("index_name", searchMethodName).
@@ -130,7 +130,7 @@ func processManifestCollections(ctx context.Context, Manifest manifest.Hypermode
 					}
 				}
 
-				err = textIndex.SetVectorIndex(searchMethodName, vectorIndex)
+				err = collection.SetVectorIndex(searchMethodName, vectorIndex)
 
 				if err != nil {
 					logger.Err(ctx, err).
