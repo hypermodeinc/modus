@@ -63,7 +63,7 @@ func (r *collectionSearchResult) GetTypeInfo() plugins.TypeInfo {
 type collectionSearchResultObject struct {
 	ID    string
 	Text  string
-	Score float32
+	Score float64
 }
 
 func (r *collectionSearchResultObject) GetTypeInfo() plugins.TypeInfo {
@@ -111,7 +111,7 @@ func WriteCollectionSearchResultOffset(ctx context.Context, mod wasm.Module, col
 	return writeResult(ctx, mod, output)
 }
 
-func WriteCollectionSearchResultObjectOffset(ctx context.Context, mod wasm.Module, id, text string, score float32) (uint32, error) {
+func WriteCollectionSearchResultObjectOffset(ctx context.Context, mod wasm.Module, id, text string, score float64) (uint32, error) {
 	output := collectionSearchResultObject{
 		ID:    id,
 		Text:  text,

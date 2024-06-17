@@ -31,11 +31,7 @@ const (
 	NsSeparator = "-"
 )
 
-func IsBetterScoreForDistance(a, b float32) bool {
-	return a < b
-}
-
-func IsBetterScoreForSimilarity(a, b float32) bool {
+func IsBetterScoreForSimilarity(a, b float64) bool {
 	return a > b
 }
 
@@ -61,7 +57,7 @@ func DotProduct(a, b []float32) (float32, error) {
 
 // This needs to implement signature of SimilarityType.distanceScore
 // function, hence it takes in a floatBits parameter.
-func CosineSimilarity(a, b []float32) (float32, error) {
+func CosineSimilarity(a, b []float32) (float64, error) {
 	dotProd, err := DotProduct(a, b)
 	if err != nil {
 		return 0, err
@@ -70,25 +66,11 @@ func CosineSimilarity(a, b []float32) (float32, error) {
 	normB := norm(b)
 	if normA == 0 || normB == 0 {
 		err := errors.New("can not compute cosine similarity on zero vector")
-		var empty float32
+		var empty float64
 		return empty, err
 	}
-	return dotProd / (normA * normB), nil
-}
 
-// This needs to implement signature of SimilarityType.distanceScore
-// function, hence it takes in a floatBits parameter,
-// but doesn't actually use it.
-func EuclidianDistanceSq(a, b []float32, floatBits int) (float32, error) {
-	if len(a) != len(b) {
-		return 0, errors.New("can not subtract vectors of different lengths")
-	}
-	var distSq float32
-	for i := range a {
-		val := a[i] - b[i]
-		distSq += val * val
-	}
-	return distSq, nil
+	return float64(dotProd) / (float64(normA) * float64(normB)), nil
 }
 
 func ConcatStrings(strs ...string) string {
