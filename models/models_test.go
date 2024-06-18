@@ -16,7 +16,6 @@ import (
 
 const (
 	testModelName = "test"
-	testModelTask = "echo"
 	testHostName  = "mock"
 )
 
@@ -34,7 +33,6 @@ func TestMain(m *testing.M) {
 		Models: map[string]manifest.ModelInfo{
 			testModelName: {
 				Name:        testModelName,
-				Task:        testModelTask,
 				SourceModel: "",
 				Provider:    "",
 				Host:        testHostName,
@@ -71,7 +69,7 @@ func TestGetModels(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.desc, func(t *testing.T) {
-			model, err := GetModelForTask(tc.modelName, testModelTask)
+			model, err := GetModel(tc.modelName)
 			if tc.valid {
 				assert.NoError(t, err)
 				assert.Equal(t, testModelName, model.Name)

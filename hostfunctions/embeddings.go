@@ -10,7 +10,6 @@ import (
 	"hmruntime/logger"
 	"hmruntime/models"
 
-	"github.com/hypermodeAI/manifest"
 	wasm "github.com/tetratelabs/wazero/api"
 )
 
@@ -24,7 +23,7 @@ func hostComputeEmbedding(ctx context.Context, mod wasm.Module, pModelName uint3
 		return 0
 	}
 
-	model, err := models.GetModelForTask(modelName, manifest.EmbeddingTask)
+	model, err := models.GetModel(modelName)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error getting model.")
 		return 0

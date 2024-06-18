@@ -39,20 +39,6 @@ func GetModel(modelName string) (manifest.ModelInfo, error) {
 	return model, nil
 }
 
-func GetModelForTask(modelName string, task manifest.ModelTask) (manifest.ModelInfo, error) {
-
-	model, err := GetModel(modelName)
-	if err != nil {
-		return manifest.ModelInfo{}, err
-	}
-
-	if model.Task != task {
-		return manifest.ModelInfo{}, fmt.Errorf("model %s is not a %s model", modelName, task)
-	}
-
-	return model, nil
-}
-
 func PostToModelEndpoint[TResult any](ctx context.Context, sentenceMap map[string]string, model manifest.ModelInfo) (map[string]TResult, error) {
 
 	// self hosted models takes in array, can optimize for parallelizing later
@@ -72,7 +58,8 @@ func PostToModelEndpoint[TResult any](ctx context.Context, sentenceMap map[strin
 
 	switch model.Host {
 	case hosts.HypermodeHost:
-		endpoint = fmt.Sprintf("http://%s.%s/%s:predict", strings.ToLower(model.Name), config.ModelHost, model.Task)
+		// TODO: make sure this is the correct endpoint URL for Kserve
+		endpoint = fmt.Sprintf("http://%s.%s/", strings.ToLower(model.Name), config.ModelHost)
 	default:
 
 		host, err := hosts.GetHost(model.Host)
