@@ -46,6 +46,9 @@ func (ti *InMemCollection) GetVectorIndex(name string) (*interfaces.VectorIndexW
 func (ti *InMemCollection) SetVectorIndex(name string, index *interfaces.VectorIndexWrapper) error {
 	ti.mu.Lock()
 	defer ti.mu.Unlock()
+	if ti.VectorIndexMap == nil {
+		ti.VectorIndexMap = map[string]*interfaces.VectorIndexWrapper{}
+	}
 	if _, ok := ti.VectorIndexMap[name]; ok {
 		return ErrVectorIndexAlreadyExists
 	}

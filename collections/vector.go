@@ -18,11 +18,9 @@ func ProcessTextMap(ctx context.Context, collection interfaces.Collection, embed
 			return err
 		}
 
-		resultArr := result.([]interface{})
-
-		textVec := make([]float32, len(resultArr))
-		for i, val := range resultArr {
-			textVec[i] = val.(float32)
+		textVec, err := utils.ConvertToFloat32Array(result)
+		if err != nil {
+			return err
 		}
 
 		_, err = vectorIndex.InsertVector(ctx, uuid, textVec)
