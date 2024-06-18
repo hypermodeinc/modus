@@ -133,7 +133,7 @@ func processManifestCollections(ctx context.Context, Manifest manifest.Hypermode
 						if err != nil {
 							logger.Err(ctx, err).
 								Str("index_name", searchMethodName).
-								Msg("Failed to process vector map.")
+								Msg("Failed to process text map.")
 						}
 					}
 				}()
