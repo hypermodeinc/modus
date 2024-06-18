@@ -128,7 +128,7 @@ func WriteInferenceHistoryToDB(ctx context.Context, batch []inferenceHistory) {
 
 	if err != nil {
 		// Handle error
-		if config.GetEnvironmentName() != "dev" {
+		if config.GetEnvironmentName() != config.DevEnvironmentName {
 			logger.Err(ctx, err).Msg("Error writing to inference history database")
 		}
 	}

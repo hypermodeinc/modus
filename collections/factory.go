@@ -8,6 +8,7 @@ import (
 
 	"hmruntime/collections/in_mem"
 	"hmruntime/collections/index/interfaces"
+	"hmruntime/config"
 	"hmruntime/logger"
 	"hmruntime/storage"
 
@@ -17,7 +18,7 @@ import (
 	"github.com/cenkalti/backoff/v4"
 )
 
-const collectionFactoryWriteInterval = 1 * time.Hour
+const collectionFactoryWriteInterval = 1
 
 var (
 	GlobalCollectionFactory *CollectionFactory
@@ -46,7 +47,13 @@ type CollectionFactory struct {
 }
 
 func (tif *CollectionFactory) worker(ctx context.Context) {
-	ticker := time.NewTicker(collectionFactoryWriteInterval)
+	var ticker *time.Ticker
+	if config.GetEnvironmentName() == config.DevEnvironmentName {
+		ticker = time.NewTicker(collectionFactoryWriteInterval * time.Minute)
+	} else {
+		ticker = time.NewTicker(collectionFactoryWriteInterval * time.Hour)
+	}
+
 	defer ticker.Stop()
 	for {
 		select {

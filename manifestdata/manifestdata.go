@@ -70,9 +70,10 @@ func loadManifest(ctx context.Context) error {
 			Msg("The manifest file is in a deprecated format.  Please update it to the current format.")
 	}
 
+	// remove indexes that are not in the manifest
+	deleteIndexesNotInManifest(man)
 	// add processing of manifest collections to create vector indexes
 	processManifestCollections(ctx, man)
-	deleteIndexesNotInManifest(man)
 
 	// Only update the Manifest global when we have successfully read the manifest.
 	Manifest = man
@@ -118,25 +119,24 @@ func processManifestCollections(ctx context.Context, Manifest manifest.Hypermode
 					continue
 				}
 
-				// populate index here
-				if len(collection.GetTextMap()) != 0 {
-
-					err = collections.ProcessTextMap(ctx, collection, searchMethod.Embedder, vectorIndex)
-					if err != nil {
-						logger.Err(ctx, err).
-							Str("index_name", searchMethodName).
-							Msg("Failed to process text map.")
-						continue
-					}
-				}
-
 				err = collection.SetVectorIndex(searchMethodName, vectorIndex)
-
 				if err != nil {
 					logger.Err(ctx, err).
 						Str("index_name", searchMethodName).
 						Msg("Failed to create vector index.")
 				}
+
+				// populate index in background
+				go func() {
+					if len(collection.GetTextMap()) != 0 {
+						err = collections.ProcessTextMap(ctx, collection, searchMethod.Embedder, collection.GetVectorIndexMap()[searchMethodName])
+						if err != nil {
+							logger.Err(ctx, err).
+								Str("index_name", searchMethodName).
+								Msg("Failed to process vector map.")
+						}
+					}
+				}()
 			}
 		}
 	}
