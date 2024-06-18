@@ -5,12 +5,12 @@ go 1.22
 require (
 	github.com/OneOfOne/xxhash v1.2.8
 	github.com/archdx/zerolog-sentry v1.8.3
-	github.com/aws/aws-sdk-go-v2 v1.27.2
-	github.com/aws/aws-sdk-go-v2/config v1.27.18
-	github.com/aws/aws-sdk-go-v2/service/bedrockruntime v1.9.2
-	github.com/aws/aws-sdk-go-v2/service/s3 v1.55.1
-	github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.30.0
-	github.com/aws/aws-sdk-go-v2/service/sts v1.28.12
+	github.com/aws/aws-sdk-go-v2 v1.29.0
+	github.com/aws/aws-sdk-go-v2/config v1.27.20
+	github.com/aws/aws-sdk-go-v2/service/bedrockruntime v1.10.0
+	github.com/aws/aws-sdk-go-v2/service/s3 v1.56.0
+	github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.31.0
+	github.com/aws/aws-sdk-go-v2/service/sts v1.29.0
 	github.com/buger/jsonparser v1.1.1
 	github.com/getsentry/sentry-go v0.28.1
 	github.com/go-viper/mapstructure/v2 v2.0.0
@@ -27,35 +27,33 @@ require (
 	github.com/stretchr/testify v1.9.0
 	github.com/tetratelabs/wazero v1.7.3
 	github.com/wundergraph/graphql-go-tools/execution v1.0.3
-	github.com/wundergraph/graphql-go-tools/v2 v2.0.0-rc.47
+	github.com/wundergraph/graphql-go-tools/v2 v2.0.0-rc.48
 )
 
 require (
-	github.com/alitto/pond v1.8.3 // indirect
+	github.com/alitto/pond v1.9.0 // indirect
 	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.6.2 // indirect
-	github.com/aws/aws-sdk-go-v2/credentials v1.17.18 // indirect
-	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.16.5 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/configsources v1.3.9 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.6.9 // indirect
+	github.com/aws/aws-sdk-go-v2/credentials v1.17.20 // indirect
+	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.16.7 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/configsources v1.3.11 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.6.11 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/ini v1.8.0 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/v4a v1.3.9 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/v4a v1.3.11 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.11.2 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.3.11 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.11.11 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.17.9 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sso v1.20.11 // indirect
-	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.24.5 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.3.13 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.11.13 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.17.11 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sso v1.21.0 // indirect
+	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.25.0 // indirect
 	github.com/aws/smithy-go v1.20.2 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
-	github.com/chzyer/readline v1.5.1 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dlclark/regexp2 v1.11.0 // indirect
 	github.com/dop251/goja v0.0.0-20240610225006-393f6d42497b // indirect
 	github.com/go-sourcemap/sourcemap v2.1.4+incompatible // indirect
-	github.com/google/pprof v0.0.0-20240528025155-186aa0362fba // indirect
+	github.com/google/pprof v0.0.0-20240618054019-d3b898a103f8 // indirect
 	github.com/hashicorp/golang-lru v1.0.2 // indirect
-	github.com/ianlancetaylor/demangle v0.0.0-20240312041847-bd984b5ce465 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
 	github.com/jackc/puddle/v2 v2.2.1 // indirect
@@ -76,8 +74,8 @@ require (
 	github.com/tidwall/match v1.1.1 // indirect
 	github.com/tidwall/pretty v1.2.1 // indirect
 	github.com/tidwall/sjson v1.2.5 // indirect
-	github.com/wundergraph/cosmo/composition-go v0.0.0-20240611191809-92d2025e0bd7 // indirect
-	github.com/wundergraph/cosmo/router v0.0.0-20240611191809-92d2025e0bd7 // indirect
+	github.com/wundergraph/cosmo/composition-go v0.0.0-20240615181156-299b4fa24ad0 // indirect
+	github.com/wundergraph/cosmo/router v0.0.0-20240615181156-299b4fa24ad0 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.27.0 // indirect
