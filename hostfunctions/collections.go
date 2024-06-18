@@ -555,3 +555,29 @@ func hostGetText(ctx context.Context, mod wasm.Module, pCollectionName uint32, p
 
 	return offset
 }
+
+func hostGetTexts(ctx context.Context, mod wasm.Module, pCollectionName uint32) uint32 {
+	var collectionName string
+
+	err := readParam(ctx, mod, pCollectionName, &collectionName)
+	if err != nil {
+		logger.Err(ctx, err).Msg("Error reading input parameters.")
+		return 0
+	}
+
+	collection, err := collections.GlobalCollectionFactory.Find(collectionName)
+	if err != nil {
+		logger.Err(ctx, err).Msg("Error finding collectionName.")
+		return 0
+	}
+
+	textMap := collection.GetTextMap()
+
+	offset, err := writeResult(ctx, mod, textMap)
+	if err != nil {
+		logger.Err(ctx, err).Msg("Error writing result.")
+		return 0
+	}
+
+	return offset
+}

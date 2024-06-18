@@ -32,6 +32,7 @@ func Instantiate(ctx context.Context, runtime *wazero.Runtime) error {
 	b.NewFunctionBuilder().WithFunc(hostRecomputeSearchMethod).Export("recomputeSearchMethod")
 	b.NewFunctionBuilder().WithFunc(hostComputeSimilarity).Export("computeSimilarity")
 	b.NewFunctionBuilder().WithFunc(hostGetText).Export("getText")
+	b.NewFunctionBuilder().WithFunc(hostGetTexts).Export("getTexts")
 	b.NewFunctionBuilder().WithFunc(hostInvokeTextGenerator).Export("invokeTextGenerator")
 	b.NewFunctionBuilder().WithFunc(hostFetch).Export("httpFetch")
 
