@@ -171,19 +171,19 @@ func deleteIndexesNotInManifest(Manifest manifest.HypermodeManifest) {
 }
 
 func CatchEmbedderReqs(ctx context.Context) {
-	go func() {
-		for functionCall := range FnCallChannel {
-			collection, err := GlobalCollectionFactory.Find(functionCall.CollectionName)
-			if err != nil {
-				logger.Err(context.Background(), err).Msg("Error finding collection")
-				continue
-			}
+	for functionCall := range FnCallChannel {
+		collection, err := GlobalCollectionFactory.Find(functionCall.CollectionName)
+		if err != nil {
+			logger.Err(context.Background(), err).Msg("Error finding collection")
+			continue
+		}
+		go func() {
 			err = ProcessTextMap(ctx, collection, functionCall.EmbedderFnName,
 				collection.GetVectorIndexMap()[functionCall.SearchMethodName])
 
 			if err != nil {
 				logger.Err(context.Background(), err).Msg("Error processing text map")
 			}
-		}
-	}()
+		}()
+	}
 }
