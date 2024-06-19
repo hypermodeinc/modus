@@ -68,5 +68,9 @@ func loadManifest(ctx context.Context) error {
 
 	// Only update the Manifest global when we have successfully read the manifest.
 	Manifest = man
-	return nil
+
+	// Trigger the manifest loaded event.
+	err = triggerManifestLoaded(ctx)
+
+	return err
 }

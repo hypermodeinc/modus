@@ -18,13 +18,6 @@ import (
 	"github.com/tetratelabs/wazero"
 )
 
-var pluginLoaded func(ctx context.Context, metadata plugins.PluginMetadata) error
-
-// Registers a callback function that is called when a plugin is loaded.
-func RegisterPluginLoadedCallback(callback func(ctx context.Context, metadata plugins.PluginMetadata) error) {
-	pluginLoaded = callback
-}
-
 func MonitorPlugins(ctx context.Context) {
 	loadPluginFile := func(fi storage.FileInfo) error {
 		err := loadPlugin(ctx, fi.Name)
@@ -90,13 +83,10 @@ func loadPlugin(ctx context.Context, filename string) error {
 	// Log the details of the loaded plugin.
 	logPluginLoaded(ctx, plugin)
 
-	// Notify the callback that a plugin has been loaded.
-	err = pluginLoaded(ctx, metadata)
-	if err != nil {
-		return err
-	}
+	// Trigger the plugin loaded event.
+	err = triggerPluginLoaded(ctx, metadata)
 
-	return nil
+	return err
 }
 
 func compileModule(ctx context.Context, bytes []byte) (wazero.CompiledModule, error) {
