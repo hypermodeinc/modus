@@ -24,6 +24,7 @@ import (
 )
 
 func Initialize() {
+	// The GraphQL engine's Activate function should be called when a plugin is loaded.
 	wasmhost.RegisterPluginLoadedCallback(engine.Activate)
 }
 
