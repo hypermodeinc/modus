@@ -14,13 +14,6 @@ import (
 	"github.com/hypermodeAI/manifest"
 )
 
-var manifestLoaded func(ctx context.Context, manifest manifest.HypermodeManifest)
-
-// Registers a callback function that is called when a manifest is loaded.
-func RegisterManifestLoadedCallback(callback func(ctx context.Context, manifest manifest.HypermodeManifest)) {
-	manifestLoaded = callback
-}
-
 const manifestFileName = "hypermode.json"
 
 var Manifest manifest.HypermodeManifest = manifest.HypermodeManifest{}
@@ -73,11 +66,15 @@ func loadManifest(ctx context.Context) error {
 			Msg("The manifest file is in a deprecated format.  Please update it to the current format.")
 	}
 
-	// Call the callback function if it is registered.
-	manifestLoaded(ctx, man)
-
 	// Only update the Manifest global when we have successfully read the manifest.
 	Manifest = man
+
+	// Trigger the manifest loaded event.
+	err = triggerManifestLoaded(ctx, man)
+	if err != nil {
+		logger.Err(ctx, err).
+			Msg("Failed to trigger manifest loaded event.")
+	}
 
 	return nil
 }

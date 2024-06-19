@@ -65,9 +65,10 @@ func ProcessTextMapWithModule(ctx context.Context, mod wasm.Module, collection i
 	return nil
 }
 
-func CleanAndProcessManifest(ctx context.Context, Manifest manifest.HypermodeManifest) {
+func CleanAndProcessManifest(ctx context.Context, Manifest manifest.HypermodeManifest) error {
 	deleteIndexesNotInManifest(Manifest)
 	processManifestCollections(ctx, Manifest)
+	return nil
 }
 
 func processManifestCollections(ctx context.Context, Manifest manifest.HypermodeManifest) {
