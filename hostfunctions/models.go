@@ -98,7 +98,11 @@ func hostInvokeModel(ctx context.Context, mod wasm.Module, pModelName uint32, pI
 
 func invokeAwsBedrockModel(ctx context.Context, model manifest.ModelInfo, input string) (output string, err error) {
 
-	cfg := hyp_aws.GetAwsConfig() // TODO, connect to AWS using the correct credentials
+	// NOTE: Bedrock support is experimental, and not advertised to users.
+	// It currently uses the same AWS credentials as the Runtime.
+	// In the future, we will support user-provided credentials for Bedrock.
+
+	cfg := hyp_aws.GetAwsConfig() // TODO, connect to AWS using the user-provided credentials
 	client := bedrockruntime.NewFromConfig(cfg)
 
 	modelId := fmt.Sprintf("%s.%s", model.Provider, model.SourceModel)
