@@ -6,11 +6,9 @@ package manifestdata
 
 import (
 	"context"
-
-	"github.com/hypermodeAI/manifest"
 )
 
-type ManifestLoadedCallback = func(ctx context.Context, manifest manifest.HypermodeManifest) error
+type ManifestLoadedCallback = func(ctx context.Context) error
 
 var manifestLoadedCallbacks []ManifestLoadedCallback
 
@@ -18,9 +16,9 @@ func RegisterManifestLoadedCallback(callback ManifestLoadedCallback) {
 	manifestLoadedCallbacks = append(manifestLoadedCallbacks, callback)
 }
 
-func triggerManifestLoaded(ctx context.Context, manifest manifest.HypermodeManifest) error {
+func triggerManifestLoaded(ctx context.Context) error {
 	for _, callback := range manifestLoadedCallbacks {
-		err := callback(ctx, manifest)
+		err := callback(ctx)
 		if err != nil {
 			return err
 		}

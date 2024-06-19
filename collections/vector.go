@@ -9,6 +9,7 @@ import (
 	"hmruntime/collections/index/interfaces"
 	"hmruntime/collections/utils"
 	"hmruntime/logger"
+	"hmruntime/manifestdata"
 	"hmruntime/wasmhost/module"
 
 	"github.com/hypermodeAI/manifest"
@@ -65,9 +66,9 @@ func ProcessTextMapWithModule(ctx context.Context, mod wasm.Module, collection i
 	return nil
 }
 
-func CleanAndProcessManifest(ctx context.Context, Manifest manifest.HypermodeManifest) error {
-	deleteIndexesNotInManifest(Manifest)
-	processManifestCollections(ctx, Manifest)
+func CleanAndProcessManifest(ctx context.Context) error {
+	deleteIndexesNotInManifest(manifestdata.Manifest)
+	processManifestCollections(ctx, manifestdata.Manifest)
 	return nil
 }
 
