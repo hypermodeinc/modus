@@ -70,7 +70,7 @@ func loadManifest(ctx context.Context) error {
 	Manifest = man
 
 	// Trigger the manifest loaded event.
-	triggerManifestLoaded(ctx)
+	err = triggerManifestLoaded(ctx)
 
-	return nil
+	return err
 }
