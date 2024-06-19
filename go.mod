@@ -7,6 +7,7 @@ require (
 	github.com/archdx/zerolog-sentry v1.8.3
 	github.com/aws/aws-sdk-go-v2 v1.29.0
 	github.com/aws/aws-sdk-go-v2/config v1.27.20
+	github.com/aws/aws-sdk-go-v2/service/bedrockruntime v1.10.0
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.56.0
 	github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.31.0
 	github.com/aws/aws-sdk-go-v2/service/sts v1.29.0
@@ -14,7 +15,7 @@ require (
 	github.com/getsentry/sentry-go v0.28.1
 	github.com/go-viper/mapstructure/v2 v2.0.0
 	github.com/google/uuid v1.6.0
-	github.com/hypermodeAI/manifest v0.2.6
+	github.com/hypermodeAI/manifest v0.2.7
 	github.com/jackc/pgx/v5 v5.6.0
 	github.com/jensneuse/abstractlogger v0.0.4
 	github.com/joho/godotenv v1.5.1
