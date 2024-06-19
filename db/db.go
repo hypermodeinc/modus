@@ -39,6 +39,33 @@ type inferenceHistory struct {
 	end    time.Time
 }
 
+func (h *inferenceHistory) getJson() (string, string, error) {
+	input, err := getInferenceDataJson(h.input)
+	if err != nil {
+		return "", "", err
+	}
+	output, err := getInferenceDataJson(h.output)
+	if err != nil {
+		return "", "", err
+	}
+	return input, output, nil
+}
+
+func getInferenceDataJson(val any) (string, error) {
+
+	switch t := val.(type) {
+	case string:
+		// strings values are presumed to be already serialized as JSON
+		return t, nil
+	}
+
+	bytes, err := utils.JsonSerialize(val)
+	if err != nil {
+		return "", err
+	}
+	return string(bytes), nil
+}
+
 func (w *inferenceWriter) Write(data inferenceHistory) {
 	select {
 	case w.buffer <- data:
@@ -100,11 +127,7 @@ func WriteInferenceHistoryToDB(ctx context.Context, batch []inferenceHistory) {
 	err := WithTx(ctx, func(tx pgx.Tx) error {
 		b := &pgx.Batch{}
 		for _, data := range batch {
-			input, err := utils.JsonSerialize(data.input)
-			if err != nil {
-				return err
-			}
-			output, err := utils.JsonSerialize(data.output)
+			input, output, err := data.getJson()
 			if err != nil {
 				return err
 			}
