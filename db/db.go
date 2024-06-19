@@ -53,12 +53,15 @@ func (h *inferenceHistory) getJson() (string, string, error) {
 
 func getInferenceDataJson(val any) (string, error) {
 
+	// Strings values are presumed to be already serialized as JSON.
+	// They might be formatted, but we don't care because we store them
+	// in JSONB columns in Postgres, which doesn't preserve formatting.
 	switch t := val.(type) {
 	case string:
-		// strings values are presumed to be already serialized as JSON
 		return t, nil
 	}
 
+	// For all other types, we serialize to JSON ourselves.
 	bytes, err := utils.JsonSerialize(val)
 	if err != nil {
 		return "", err
