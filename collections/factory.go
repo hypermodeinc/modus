@@ -11,6 +11,8 @@ import (
 	"hmruntime/config"
 	"hmruntime/logger"
 	"hmruntime/manifestdata"
+	"hmruntime/modules"
+	"hmruntime/plugins"
 	"hmruntime/storage"
 
 	"sync"
@@ -33,6 +35,10 @@ func InitializeIndexFactory(ctx context.Context) {
 		logger.Error(ctx).Err(err).Msg("Error reading index factory from bin")
 	}
 	manifestdata.RegisterManifestLoadedCallback(CleanAndProcessManifest)
+	modules.RegisterPluginLoadedCallback(func(ctx context.Context, metadata plugins.PluginMetadata) error {
+		CatchEmbedderReqs(ctx)
+		return nil
+	})
 	go GlobalCollectionFactory.worker(ctx)
 }
 

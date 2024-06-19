@@ -12,8 +12,8 @@ import (
 
 	"hmruntime/functions"
 	"hmruntime/logger"
+	"hmruntime/modules"
 	"hmruntime/utils"
-	"hmruntime/wasmhost/module"
 
 	"github.com/buger/jsonparser"
 	"github.com/wundergraph/graphql-go-tools/v2/pkg/engine/resolve"
@@ -63,14 +63,14 @@ func (s Source) callFunctionWithCallInfo(ctx context.Context, callInfo callInfo)
 	}
 
 	// Prepare the context, buffers, and messages
-	ctx, executionId, buffers, messages := module.Setup(ctx, info)
+	ctx, executionId, buffers, messages := modules.Setup(ctx, info)
 
 	// Get a module instance for this request.
 	// Each request will get its own instance of the plugin module, so that we can run
 	// multiple requests in parallel without risk of corrupting the module's memory.
 	// This also protects against security risk, as each request will have its own
 	// isolated memory space.  (One request cannot access another request's memory.)
-	mod, err := module.GetModuleInstance(ctx, info.Plugin, &buffers)
+	mod, err := modules.GetModuleInstance(ctx, info.Plugin, &buffers)
 	if err != nil {
 		return nil, nil, err
 	}

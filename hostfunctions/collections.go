@@ -8,9 +8,9 @@ import (
 	collection_utils "hmruntime/collections/utils"
 	"hmruntime/logger"
 	"hmruntime/manifestdata"
+	"hmruntime/modules"
 	"hmruntime/plugins"
 	"hmruntime/utils"
-	"hmruntime/wasmhost/module"
 
 	wasm "github.com/tetratelabs/wazero/api"
 )
@@ -181,7 +181,7 @@ func hostUpsertToCollection(ctx context.Context, mod wasm.Module, pCollectionNam
 		}
 
 		embedder := searchMethod.Embedder
-		err = module.VerifyFunctionSignature(embedder, "string", "f64[]")
+		err = modules.VerifyFunctionSignature(embedder, "string", "f64[]")
 		if err != nil {
 			logger.Err(ctx, err).Msg("Error verifying function signature.")
 
@@ -192,7 +192,7 @@ func hostUpsertToCollection(ctx context.Context, mod wasm.Module, pCollectionNam
 			return offset
 		}
 
-		result, err := module.CallFunctionByNameWithModule(ctx, mod, embedder, text)
+		result, err := modules.CallFunctionByNameWithModule(ctx, mod, embedder, text)
 		if err != nil {
 			logger.Err(ctx, err).Msg("Error calling function.")
 
@@ -327,7 +327,7 @@ func hostSearchCollection(ctx context.Context, mod wasm.Module, pCollectionName 
 	}
 
 	embedder := manifestdata.Manifest.Collections[collectionName].SearchMethods[searchMethod].Embedder
-	err = module.VerifyFunctionSignature(embedder, "string", "f64[]")
+	err = modules.VerifyFunctionSignature(embedder, "string", "f64[]")
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error verifying function signature.")
 
@@ -338,7 +338,7 @@ func hostSearchCollection(ctx context.Context, mod wasm.Module, pCollectionName 
 		return offset
 	}
 
-	result, err := module.CallFunctionByNameWithModule(ctx, mod, embedder, text)
+	result, err := modules.CallFunctionByNameWithModule(ctx, mod, embedder, text)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error calling function.")
 
@@ -494,7 +494,7 @@ func hostRecomputeSearchMethod(ctx context.Context, mod wasm.Module, pCollection
 	}
 
 	embedder := manifestdata.Manifest.Collections[collectionName].SearchMethods[searchMethod].Embedder
-	err = module.VerifyFunctionSignature(embedder, "string", "f64[]")
+	err = modules.VerifyFunctionSignature(embedder, "string", "f64[]")
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error verifying function signature.")
 

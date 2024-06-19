@@ -20,12 +20,12 @@ import (
 	"hmruntime/graphql"
 	"hmruntime/logger"
 	"hmruntime/manifestdata"
+	"hmruntime/modules"
 	"hmruntime/secrets"
 	"hmruntime/server"
 	"hmruntime/storage"
 	"hmruntime/utils"
 	"hmruntime/wasmhost"
-	"hmruntime/wasmhost/module"
 
 	"github.com/joho/godotenv"
 )
@@ -89,7 +89,7 @@ func initRuntimeServices(ctx context.Context) {
 	manifestdata.MonitorManifestFile(ctx)
 
 	// Load plugins and monitor for changes
-	wasmhost.MonitorPlugins(ctx)
+	modules.MonitorPlugins(ctx)
 
 	// Initialize the GraphQL engine
 	graphql.Initialize()
@@ -97,7 +97,7 @@ func initRuntimeServices(ctx context.Context) {
 
 func stopRuntimeServices(ctx context.Context) {
 	collections.CloseIndexFactory(ctx)
-	module.RuntimeInstance.Close(ctx)
+	modules.RuntimeInstance.Close(ctx)
 	logger.Close()
 
 	db.Stop()

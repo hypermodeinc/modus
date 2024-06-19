@@ -2,20 +2,18 @@
  * Copyright 2024 Hypermode, Inc.
  */
 
-package wasmhost
+package modules
 
 import (
 	"context"
 	"fmt"
 	"time"
 
-	"hmruntime/collections"
 	"hmruntime/functions"
 	"hmruntime/logger"
 	"hmruntime/plugins"
 	"hmruntime/storage"
 	"hmruntime/utils"
-	"hmruntime/wasmhost/module"
 
 	"github.com/tetratelabs/wazero"
 )
@@ -45,7 +43,7 @@ func MonitorPlugins(ctx context.Context) {
 	}
 	sm.Changed = func(errors []error) {
 		if len(errors) == 0 {
-			plugins := module.Plugins.GetAll()
+			plugins := Plugins.GetAll()
 			functions.RegisterFunctions(ctx, plugins)
 		}
 	}
@@ -62,7 +60,7 @@ func loadPlugin(ctx context.Context, filename string) error {
 		return err
 	}
 
-	// Compile the plugin into a module.
+	// Compile the plugin into a
 	cm, err := compileModule(ctx, bytes)
 	if err != nil {
 		return err
@@ -91,34 +89,14 @@ func loadPlugin(ctx context.Context, filename string) error {
 		return err
 	}
 
-	CatchEmbedderReqs(ctx)
-
 	return nil
-}
-
-func CatchEmbedderReqs(ctx context.Context) {
-	go func() {
-		for functionCall := range collections.FnCallChannel {
-			collection, err := collections.GlobalCollectionFactory.Find(functionCall.CollectionName)
-			if err != nil {
-				logger.Err(context.Background(), err).Msg("Error finding collection")
-				continue
-			}
-			err = collections.ProcessTextMap(ctx, collection, functionCall.EmbedderFnName,
-				collection.GetVectorIndexMap()[functionCall.SearchMethodName])
-
-			if err != nil {
-				logger.Err(context.Background(), err).Msg("Error processing text map")
-			}
-		}
-	}()
 }
 
 func compileModule(ctx context.Context, bytes []byte) (wazero.CompiledModule, error) {
 	span := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
 
-	cm, err := module.RuntimeInstance.CompileModule(ctx, bytes)
+	cm, err := RuntimeInstance.CompileModule(ctx, bytes)
 	if err != nil {
 		return nil, fmt.Errorf("failed to compile the plugin: %w", err)
 	}
@@ -138,7 +116,7 @@ func makePlugin(ctx context.Context, cm *wazero.CompiledModule, filename string,
 
 	// Create and store the plugin.
 	plugin := plugins.Plugin{Module: cm, Metadata: metadata, FileName: filename, Types: types}
-	module.Plugins.AddOrUpdate(plugin)
+	Plugins.AddOrUpdate(plugin)
 
 	return plugin
 }
@@ -192,7 +170,7 @@ func unloadPlugin(ctx context.Context, filename string) error {
 	transaction, ctx := utils.NewSentryTransactionForCurrentFunc(ctx)
 	defer transaction.Finish()
 
-	p, ok := module.Plugins.GetByFile(filename)
+	p, ok := Plugins.GetByFile(filename)
 	if !ok {
 		return fmt.Errorf("plugin not found: %s", filename)
 	}
@@ -201,6 +179,6 @@ func unloadPlugin(ctx context.Context, filename string) error {
 		Str("build_id", p.BuildId()).
 		Msg("Unloading plugin.")
 
-	module.Plugins.Remove(p)
+	Plugins.Remove(p)
 	return (*p.Module).Close(ctx)
 }

@@ -10,7 +10,7 @@ import (
 	"hmruntime/collections/utils"
 	"hmruntime/logger"
 	"hmruntime/manifestdata"
-	"hmruntime/wasmhost/module"
+	"hmruntime/modules"
 
 	"github.com/hypermodeAI/manifest"
 	wasm "github.com/tetratelabs/wazero/api"
@@ -27,7 +27,7 @@ var FnCallChannel = make(chan EmbedderFnCall)
 func ProcessTextMap(ctx context.Context, collection interfaces.Collection, embedder string, vectorIndex interfaces.VectorIndex) error {
 
 	for uuid, text := range collection.GetTextMap() {
-		result, err := module.CallFunctionByName(ctx, embedder, text)
+		result, err := modules.CallFunctionByName(ctx, embedder, text)
 		if err != nil {
 			return err
 		}
@@ -48,7 +48,7 @@ func ProcessTextMap(ctx context.Context, collection interfaces.Collection, embed
 func ProcessTextMapWithModule(ctx context.Context, mod wasm.Module, collection interfaces.Collection, embedder string, vectorIndex interfaces.VectorIndex) error {
 
 	for uuid, text := range collection.GetTextMap() {
-		result, err := module.CallFunctionByNameWithModule(ctx, mod, embedder, text)
+		result, err := modules.CallFunctionByNameWithModule(ctx, mod, embedder, text)
 		if err != nil {
 			return err
 		}
@@ -168,4 +168,22 @@ func deleteIndexesNotInManifest(Manifest manifest.HypermodeManifest) {
 			}
 		}
 	}
+}
+
+func CatchEmbedderReqs(ctx context.Context) {
+	go func() {
+		for functionCall := range FnCallChannel {
+			collection, err := GlobalCollectionFactory.Find(functionCall.CollectionName)
+			if err != nil {
+				logger.Err(context.Background(), err).Msg("Error finding collection")
+				continue
+			}
+			err = ProcessTextMap(ctx, collection, functionCall.EmbedderFnName,
+				collection.GetVectorIndexMap()[functionCall.SearchMethodName])
+
+			if err != nil {
+				logger.Err(context.Background(), err).Msg("Error processing text map")
+			}
+		}
+	}()
 }

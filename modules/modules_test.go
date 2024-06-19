@@ -2,7 +2,7 @@
  * Copyright 2024 Hypermode, Inc.
  */
 
-package module
+package modules
 
 import (
 	"hmruntime/functions"
