@@ -37,26 +37,20 @@ func IsBetterScoreForSimilarity(a, b float64) bool {
 
 func norm(v []float32) float32 {
 	vectorNorm, _ := DotProduct(v, v)
-	return float32(math32.Sqrt(float32(vectorNorm)))
+	return math32.Sqrt(vectorNorm)
 }
 
-// This needs to implement signature of SimilarityType.distanceScore
-// function, hence it takes in a floatBits parameter,
-// but doesn't actually use it.
 func DotProduct(a, b []float32) (float32, error) {
-	var dotProduct float32
 	if len(a) != len(b) {
-		err := errors.New("can not compute dot product on vectors of different lengths")
-		return dotProduct, err
+		return 0, errors.New("can not compute dot product on vectors of different lengths")
 	}
+	var dotProduct float32
 	for i := range a {
 		dotProduct += a[i] * b[i]
 	}
 	return dotProduct, nil
 }
 
-// This needs to implement signature of SimilarityType.distanceScore
-// function, hence it takes in a floatBits parameter.
 func CosineSimilarity(a, b []float32) (float64, error) {
 	dotProd, err := DotProduct(a, b)
 	if err != nil {

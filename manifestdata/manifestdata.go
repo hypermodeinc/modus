@@ -6,6 +6,7 @@ package manifestdata
 
 import (
 	"context"
+	"strings"
 
 	"hmruntime/collections"
 	"hmruntime/collections/in_mem"
@@ -131,9 +132,17 @@ func processManifestCollections(ctx context.Context, Manifest manifest.Hypermode
 					if len(collection.GetTextMap()) != 0 {
 						err = collections.ProcessTextMap(ctx, collection, searchMethod.Embedder, collection.GetVectorIndexMap()[searchMethodName])
 						if err != nil {
-							logger.Err(ctx, err).
-								Str("index_name", searchMethodName).
-								Msg("Failed to process text map.")
+							if strings.Contains(err.Error(), "no function registered named ") {
+								collections.FnCallChannel <- collections.EmbedderFnCall{
+									EmbedderFnName:   searchMethod.Embedder,
+									CollectionName:   collectionName,
+									SearchMethodName: searchMethodName,
+								}
+							} else {
+								logger.Err(ctx, err).
+									Str("index_name", searchMethodName).
+									Msg("Failed to process text map.")
+							}
 						}
 					}
 				}()

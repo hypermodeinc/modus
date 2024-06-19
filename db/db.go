@@ -156,7 +156,7 @@ func WriteInferenceHistoryToDB(ctx context.Context, batch []inferenceHistory) {
 
 	if err != nil {
 		// Handle error
-		if config.GetEnvironmentName() != config.DevEnvironmentName {
+		if !config.IsDevEnvironment() {
 			logger.Err(ctx, err).Msg("Error writing to inference history database")
 		}
 	}
@@ -164,15 +164,15 @@ func WriteInferenceHistoryToDB(ctx context.Context, batch []inferenceHistory) {
 }
 
 func Initialize(ctx context.Context) {
+	globalInferenceWriter = &inferenceWriter{
+		dbpool: nil,
+		buffer: make(chan inferenceHistory, chanSize),
+		quit:   make(chan struct{}),
+		done:   make(chan struct{}),
+	}
 	connStr, err := secrets.GetSecretValue(ctx, "HYPERMODE_METADATA_DB")
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error getting database connection string")
-		globalInferenceWriter = &inferenceWriter{
-			dbpool: nil,
-			buffer: make(chan inferenceHistory, chanSize),
-			quit:   make(chan struct{}),
-			done:   make(chan struct{}),
-		}
 		return
 	}
 
@@ -180,12 +180,7 @@ func Initialize(ctx context.Context) {
 	if err != nil {
 		logger.Warn(ctx).Err(err).Msg("Database pool initialization failed.")
 	}
-	globalInferenceWriter = &inferenceWriter{
-		dbpool: tempDBPool,
-		buffer: make(chan inferenceHistory, chanSize),
-		quit:   make(chan struct{}),
-		done:   make(chan struct{}),
-	}
+	globalInferenceWriter.dbpool = tempDBPool
 	go globalInferenceWriter.worker(ctx)
 }
 

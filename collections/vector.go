@@ -10,6 +10,14 @@ import (
 	wasm "github.com/tetratelabs/wazero/api"
 )
 
+type EmbedderFnCall struct {
+	EmbedderFnName   string
+	CollectionName   string
+	SearchMethodName string
+}
+
+var FnCallChannel = make(chan EmbedderFnCall)
+
 func ProcessTextMap(ctx context.Context, collection interfaces.Collection, embedder string, vectorIndex interfaces.VectorIndex) error {
 
 	for uuid, text := range collection.GetTextMap() {

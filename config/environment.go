@@ -10,7 +10,7 @@ import (
 	"os/user"
 )
 
-const DevEnvironmentName = "dev"
+const devEnvironmentName = "dev"
 
 var environment string
 var namespace string
@@ -22,12 +22,12 @@ func GetEnvironmentName() string {
 func setEnvironmentName() {
 	environment = os.Getenv("ENVIRONMENT")
 	if environment == "" {
-		environment = DevEnvironmentName
+		environment = devEnvironmentName
 	}
 }
 
 func IsDevEnvironment() bool {
-	return environment == DevEnvironmentName
+	return environment == devEnvironmentName
 }
 
 func GetNamespace() string {

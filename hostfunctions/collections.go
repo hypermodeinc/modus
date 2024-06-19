@@ -145,12 +145,22 @@ func hostUpsertToCollection(ctx context.Context, mod wasm.Module, pCollectionNam
 	// Get the collectionName data from the manifest
 	collectionData := manifestdata.Manifest.Collections[collectionName]
 
-	// insert text into text index
 	collection, err := collections.GlobalCollectionFactory.Find(collectionName)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error finding collectionName.")
 
 		offset, err := WriteCollectionMutationResultOffset(ctx, mod, collectionName, "upsert", "error", "", fmt.Sprintf("Error finding collectionName: %s", err.Error()))
+		if err != nil {
+			logger.Err(ctx, err).Msg("Error writing result.")
+		}
+		return offset
+	}
+
+	_, err = collection.InsertText(ctx, id, text)
+	if err != nil {
+		logger.Err(ctx, err).Msg("Error inserting into text index.")
+
+		offset, err := WriteCollectionMutationResultOffset(ctx, mod, collectionName, "upsert", "error", "", fmt.Sprintf("Error inserting into text index: %s", err.Error()))
 		if err != nil {
 			logger.Err(ctx, err).Msg("Error writing result.")
 		}
@@ -208,16 +218,6 @@ func hostUpsertToCollection(ctx context.Context, mod wasm.Module, pCollectionNam
 			}
 			return offset
 		}
-	}
-	_, err = collection.InsertText(ctx, id, text)
-	if err != nil {
-		logger.Err(ctx, err).Msg("Error inserting into text index.")
-
-		offset, err := WriteCollectionMutationResultOffset(ctx, mod, collectionName, "upsert", "error", "", fmt.Sprintf("Error inserting into text index: %s", err.Error()))
-		if err != nil {
-			logger.Err(ctx, err).Msg("Error writing result.")
-		}
-		return offset
 	}
 
 	offset, err := WriteCollectionMutationResultOffset(ctx, mod, collectionName, "upsert", "success", id, "")

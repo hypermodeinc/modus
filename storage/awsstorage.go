@@ -5,6 +5,7 @@
 package storage
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io"
@@ -89,7 +90,7 @@ func (stg *awsStorageProvider) writeFile(ctx context.Context, name string, conte
 	input := &s3.PutObjectInput{
 		Bucket: &config.S3Bucket,
 		Key:    &key,
-		Body:   strings.NewReader(string(contents)),
+		Body:   bytes.NewReader(contents),
 	}
 
 	_, err := stg.s3Client.PutObject(ctx, input)

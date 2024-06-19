@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"time"
 
+	"hmruntime/collections"
 	"hmruntime/functions"
 	"hmruntime/logger"
 	"hmruntime/plugins"
@@ -91,15 +92,33 @@ func loadPlugin(ctx context.Context, filename string) error {
 	// Log the details of the loaded plugin.
 	logPluginLoaded(ctx, plugin)
 
-	// check for vector index difference
-
 	// Notify the callback that a plugin has been loaded.
 	err = pluginLoaded(ctx, metadata)
 	if err != nil {
 		return err
 	}
 
+	CatchEmbedderReqs(ctx)
+
 	return nil
+}
+
+func CatchEmbedderReqs(ctx context.Context) {
+	go func() {
+		for functionCall := range collections.FnCallChannel {
+			collection, err := collections.GlobalCollectionFactory.Find(functionCall.CollectionName)
+			if err != nil {
+				logger.Err(context.Background(), err).Msg("Error finding collection")
+				continue
+			}
+			err = collections.ProcessTextMap(ctx, collection, functionCall.EmbedderFnName,
+				collection.GetVectorIndexMap()[functionCall.SearchMethodName])
+
+			if err != nil {
+				logger.Err(context.Background(), err).Msg("Error processing text map")
+			}
+		}
+	}()
 }
 
 func compileModule(ctx context.Context, bytes []byte) (wazero.CompiledModule, error) {

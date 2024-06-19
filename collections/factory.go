@@ -48,7 +48,7 @@ type CollectionFactory struct {
 
 func (tif *CollectionFactory) worker(ctx context.Context) {
 	var ticker *time.Ticker
-	if config.GetEnvironmentName() == config.DevEnvironmentName {
+	if config.IsDevEnvironment() {
 		ticker = time.NewTicker(collectionFactoryWriteInterval * time.Minute)
 	} else {
 		ticker = time.NewTicker(collectionFactoryWriteInterval * time.Hour)

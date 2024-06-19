@@ -85,11 +85,11 @@ func initRuntimeServices(ctx context.Context) {
 	// Initialize in mem vector factory
 	collections.InitializeIndexFactory(ctx)
 
-	// Load plugins and monitor for changes
-	wasmhost.MonitorPlugins(ctx)
-
 	// Load app data and monitor for changes
 	manifestdata.MonitorManifestFile(ctx)
+
+	// Load plugins and monitor for changes
+	wasmhost.MonitorPlugins(ctx)
 
 	// Initialize the GraphQL engine
 	graphql.Initialize()

@@ -3,10 +3,8 @@ package sequential
 import (
 	"container/heap"
 	"context"
-	"encoding/gob"
 	"hmruntime/collections/index"
 	"hmruntime/collections/utils"
-	"os"
 	"sync"
 )
 
@@ -101,20 +99,4 @@ func (ims *SequentialVectorIndex) GetVector(ctx context.Context, uid string) ([]
 	ims.mu.RLock()
 	defer ims.mu.RUnlock()
 	return ims.VectorNodes[uid], nil
-}
-
-func (ims *SequentialVectorIndex) WriteToWAL(filename string) error {
-	file, err := os.Create(filename)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-
-	encoder := gob.NewEncoder(file)
-
-	if err := encoder.Encode(ims.VectorNodes); err != nil {
-		return err
-	}
-
-	return nil
 }
