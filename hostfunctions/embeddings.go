@@ -29,7 +29,7 @@ func hostComputeEmbedding(ctx context.Context, mod wasm.Module, pModelName uint3
 		return 0
 	}
 
-	result, err := models.PostToModelEndpoint[[]float64](ctx, sentenceMap, model)
+	result, err := models.PostToModelEndpoint_Old[[]float64](ctx, sentenceMap, model)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error posting to model endpoint.")
 		return 0

@@ -40,7 +40,7 @@ func hostInvokeClassifier(ctx context.Context, mod wasm.Module, pModelName uint3
 		return 0
 	}
 
-	result, err := models.PostToModelEndpoint[classifierResult](ctx, sentenceMap, model)
+	result, err := models.PostToModelEndpoint_Old[classifierResult](ctx, sentenceMap, model)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error posting to model endpoint.")
 		return 0

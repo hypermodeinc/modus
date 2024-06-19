@@ -108,7 +108,7 @@ func TestPostExternalModelEndpoint(t *testing.T) {
 		"key2": "value2",
 	}
 	testModel := manifestdata.Manifest.Models[testModelName]
-	resp, err := PostToModelEndpoint[string](context.Background(), sentenceMap, testModel)
+	resp, err := PostToModelEndpoint_Old[string](context.Background(), sentenceMap, testModel)
 	assert.NoError(t, err)
 
 	// Expected response is the same as the input sentence map,

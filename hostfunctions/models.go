@@ -9,10 +9,11 @@ import (
 	"fmt"
 
 	hyp_aws "hmruntime/aws"
-	"hmruntime/hosts"
+	"hmruntime/db"
 	"hmruntime/logger"
 	"hmruntime/models"
 	"hmruntime/plugins"
+	"hmruntime/utils"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/bedrockruntime"
@@ -74,34 +75,17 @@ func hostInvokeModel(ctx context.Context, mod wasm.Module, pModelName uint32, pI
 		return 0
 	}
 
-	// TODO: use the provider pattern, not a switch
-
+	// TODO: use the provider pattern instead of branching
 	var output string
-	switch model.Host {
-	case "hypermode":
-		// not yet implemented
-		logger.Error(ctx).Msg("Hypermode model host not yet implemented.")
-		return 0
-	case "aws-bedrock":
+	if model.Host == "aws-bedrock" {
 		output, err = invokeAwsBedrockModel(ctx, model, input)
-		if err != nil {
-			logger.Err(ctx, err).Msg("Error invoking AWS Bedrock model.")
-			return 0
-		}
-	default:
-		host, err := hosts.GetHost(model.Host)
-		if err != nil {
-			logger.Err(ctx, err).Msg("Error getting model host.")
-			return 0
-		}
+	} else {
+		output, err = models.PostToModelEndpoint[string](ctx, model, input)
+	}
 
-		result, err := hosts.PostToHostEndpoint[string](ctx, host, input)
-		if err != nil {
-			logger.Err(ctx, err).Msg("Error posting to model endpoint.")
-			return 0
-		}
-
-		output = result.Data
+	if err != nil {
+		logger.Err(ctx, err).Msg("Error posting to model endpoint.")
+		return 0
 	}
 
 	offset, err := writeResult(ctx, mod, output)
@@ -119,11 +103,17 @@ func invokeAwsBedrockModel(ctx context.Context, model manifest.ModelInfo, input 
 
 	modelId := fmt.Sprintf("%s.%s", model.Provider, model.SourceModel)
 
+	startTime := utils.GetTime()
 	result, err := client.InvokeModel(ctx, &bedrockruntime.InvokeModelInput{
 		ModelId:     &modelId,
 		ContentType: aws.String("application/json"),
 		Body:        []byte(input),
 	})
+	endTime := utils.GetTime()
 
-	return string(result.Body), err
+	output = string(result.Body)
+
+	db.WriteInferenceHistory(ctx, model, input, output, startTime, endTime)
+
+	return output, err
 }
