@@ -39,34 +39,36 @@ type inferenceHistory struct {
 	end    time.Time
 }
 
-func (h *inferenceHistory) getJson() (string, string, error) {
-	input, err := getInferenceDataJson(h.input)
+func (h *inferenceHistory) getJson() (input []byte, output []byte, err error) {
+	input, err = getInferenceDataJson(h.input)
 	if err != nil {
-		return "", "", err
+		return nil, nil, err
 	}
-	output, err := getInferenceDataJson(h.output)
+	output, err = getInferenceDataJson(h.output)
 	if err != nil {
-		return "", "", err
+		return nil, nil, err
 	}
 	return input, output, nil
 }
 
-func getInferenceDataJson(val any) (string, error) {
+func getInferenceDataJson(val any) ([]byte, error) {
 
-	// Strings values are presumed to be already serialized as JSON.
-	// They might be formatted, but we don't care because we store them
-	// in JSONB columns in Postgres, which doesn't preserve formatting.
+	// If the value is a byte slice or string, it must already have been serialized as JSON.
+	// It might be formatted, but we don't care because we store in a JSONB column in Postgres,
+	// which doesn't preserve formatting.
 	switch t := val.(type) {
-	case string:
+	case []byte:
 		return t, nil
+	case string:
+		return []byte(t), nil
 	}
 
 	// For all other types, we serialize to JSON ourselves.
 	bytes, err := utils.JsonSerialize(val)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-	return string(bytes), nil
+	return bytes, nil
 }
 
 func (w *inferenceWriter) Write(data inferenceHistory) {
