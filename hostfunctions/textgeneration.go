@@ -15,7 +15,6 @@ import (
 	"hmruntime/models/openai"
 	"hmruntime/utils"
 
-	"github.com/hypermodeAI/manifest"
 	wasm "github.com/tetratelabs/wazero/api"
 )
 
@@ -29,7 +28,7 @@ func hostInvokeTextGenerator(ctx context.Context, mod wasm.Module, pModelName ui
 	}
 	outputFormat := models.OutputFormat(format)
 
-	model, err := models.GetModel(modelName, manifest.GenerationTask)
+	model, err := models.GetModel(modelName)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error getting model.")
 		return 0

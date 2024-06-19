@@ -35,6 +35,8 @@ func Instantiate(ctx context.Context, runtime *wazero.Runtime) error {
 	b.NewFunctionBuilder().WithFunc(hostGetTexts).Export("getTexts")
 	b.NewFunctionBuilder().WithFunc(hostInvokeTextGenerator).Export("invokeTextGenerator")
 	b.NewFunctionBuilder().WithFunc(hostFetch).Export("httpFetch")
+	b.NewFunctionBuilder().WithFunc(hostLookupModel).Export("lookupModel")
+	b.NewFunctionBuilder().WithFunc(hostInvokeModel).Export("invokeModel")
 
 	_, err := b.Instantiate(ctx)
 	if err != nil {

@@ -30,17 +30,79 @@ const (
 	OutputFormatJson OutputFormat = "json_object"
 )
 
-func GetModel(modelName string, task manifest.ModelTask) (manifest.ModelInfo, error) {
-	for _, model := range manifestdata.Manifest.Models {
-		if model.Name == modelName && model.Task == task {
-			return model, nil
+func GetModel(modelName string) (manifest.ModelInfo, error) {
+	model, ok := manifestdata.Manifest.Models[modelName]
+	if !ok {
+		return manifest.ModelInfo{}, fmt.Errorf("model %s was not found", modelName)
+	}
+
+	return model, nil
+}
+
+func getModelEndpointAndHost(model manifest.ModelInfo) (string, manifest.HostInfo, error) {
+
+	host, err := hosts.GetHost(model.Host)
+	if err != nil {
+		return "", manifest.HostInfo{}, err
+	}
+
+	if host.Name == hosts.HypermodeHost {
+		// TODO: make sure this is the correct endpoint URL for Kserve
+		endpoint := fmt.Sprintf("http://%s.%s/", strings.ToLower(model.Name), config.ModelHost)
+		return endpoint, host, nil
+	}
+
+	if host.BaseURL != "" && host.Endpoint != "" {
+		return "", host, fmt.Errorf("specify either base URL or endpoint for a host, not both")
+	}
+
+	if host.BaseURL != "" {
+		if model.Path == "" {
+			return "", host, fmt.Errorf("model path is not defined")
+		}
+		endpoint := fmt.Sprintf("%s/%s", strings.TrimRight(host.BaseURL, "/"), strings.TrimLeft(model.Path, "/"))
+		return endpoint, host, nil
+	}
+
+	if model.Path != "" {
+		return "", host, fmt.Errorf("model path is defined but host has no base URL")
+	}
+
+	return host.Endpoint, host, nil
+}
+
+func PostToModelEndpoint[TResult any](ctx context.Context, model manifest.ModelInfo, payload any) (TResult, error) {
+	span := utils.NewSentrySpanForCurrentFunc(ctx)
+	defer span.Finish()
+
+	endpoint, host, err := getModelEndpointAndHost(model)
+	if err != nil {
+		var empty TResult
+		return empty, err
+	}
+
+	var bs func(context.Context, *http.Request) error
+	if host.Name != hosts.HypermodeHost {
+		bs = func(ctx context.Context, req *http.Request) error {
+			req.Header.Set("Content-Type", "application/json")
+			return secrets.ApplyHostSecrets(ctx, host, req)
 		}
 	}
 
-	return manifest.ModelInfo{}, fmt.Errorf("a model '%s' for task '%s' was not found", modelName, task)
+	res, err := utils.PostHttp[TResult](ctx, endpoint, payload, bs)
+	if err != nil {
+		var empty TResult
+		return empty, err
+	}
+
+	db.WriteInferenceHistory(ctx, model, payload, res.Data, res.StartTime, res.EndTime)
+
+	return res.Data, nil
 }
 
-func PostToModelEndpoint[TResult any](ctx context.Context, sentenceMap map[string]string, model manifest.ModelInfo) (map[string]TResult, error) {
+func PostToModelEndpoint_Old[TResult any](ctx context.Context, sentenceMap map[string]string, model manifest.ModelInfo) (map[string]TResult, error) {
+	span := utils.NewSentrySpanForCurrentFunc(ctx)
+	defer span.Finish()
 
 	// self hosted models takes in array, can optimize for parallelizing later
 	keys, sentences := []string{}, []string{}
@@ -54,45 +116,20 @@ func PostToModelEndpoint[TResult any](ctx context.Context, sentenceMap map[strin
 	// create a map of sentences to send to the model
 	req := map[string][]string{"instances": sentences}
 
-	var endpoint string
-	var bs func(context.Context, *http.Request) error
-
-	switch model.Host {
-	case hosts.HypermodeHost:
-		endpoint = fmt.Sprintf("http://%s.%s/%s:predict", strings.ToLower(model.Name), config.ModelHost, model.Task)
-	default:
-
-		host, err := hosts.GetHost(model.Host)
-		if err != nil {
-			return nil, err
-		}
-
-		if host.Endpoint == "" {
-			return nil, fmt.Errorf("host endpoint is not defined")
-		}
-
-		endpoint = host.Endpoint
-
-		bs = func(ctx context.Context, req *http.Request) error {
-			return secrets.ApplyHostSecrets(ctx, host, req)
-		}
-	}
-
-	res, err := utils.PostHttp[PredictionResult[TResult]](ctx, endpoint, req, bs)
+	res, err := PostToModelEndpoint[PredictionResult[TResult]](ctx, model, req)
 	if err != nil {
-		return map[string]TResult{}, err
+		return nil, err
 	}
-	if len(res.Data.Predictions) != len(keys) {
-		return map[string]TResult{}, fmt.Errorf("number of predictions does not match number of sentences")
+
+	if len(res.Predictions) != len(keys) {
+		return nil, fmt.Errorf("number of predictions does not match number of sentences")
 	}
 
 	// map the results back to the original sentences
 	result := make(map[string]TResult)
-	for i, v := range res.Data.Predictions {
+	for i, v := range res.Predictions {
 		result[keys[i]] = v
 	}
-
-	db.WriteInferenceHistory(ctx, model, sentenceMap, result, res.StartTime, res.EndTime)
 
 	return result, nil
 }
