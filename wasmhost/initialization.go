@@ -10,6 +10,7 @@ import (
 
 	"hmruntime/hostfunctions"
 	"hmruntime/logger"
+	"hmruntime/modules"
 	"hmruntime/utils"
 
 	"github.com/tetratelabs/wazero"
@@ -22,7 +23,7 @@ func InitWasmHost(ctx context.Context) {
 
 	cfg := wazero.NewRuntimeConfig()
 	cfg = cfg.WithCloseOnContextDone(true)
-	RuntimeInstance = wazero.NewRuntimeWithConfig(ctx, cfg)
+	modules.RuntimeInstance = wazero.NewRuntimeWithConfig(ctx, cfg)
 
 	err := initHostModules(ctx)
 	if err != nil {
@@ -41,7 +42,7 @@ func initHostModules(ctx context.Context) error {
 	}
 
 	// Connect Hypermode host functions
-	err = hostfunctions.Instantiate(ctx, &RuntimeInstance)
+	err = hostfunctions.Instantiate(ctx, &modules.RuntimeInstance)
 	if err != nil {
 		return err
 	}
@@ -53,7 +54,7 @@ func instantiateWasiFunctions(ctx context.Context) error {
 	span := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
 
-	b := RuntimeInstance.NewHostModuleBuilder(wasi.ModuleName)
+	b := modules.RuntimeInstance.NewHostModuleBuilder(wasi.ModuleName)
 	wasi.NewFunctionExporter().ExportFunctions(b)
 
 	// If we ever need to override any of the WASI functions, we can do so here.
