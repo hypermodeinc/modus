@@ -70,7 +70,9 @@ func (ims *SequentialVectorIndex) Search(ctx context.Context, query []float32, m
 }
 
 func (ims *SequentialVectorIndex) SearchWithUid(ctx context.Context, queryUid string, maxResults int, filter index.SearchFilter) (utils.MinTupleHeap, error) {
+	ims.mu.RLock()
 	query := ims.VectorNodes[queryUid]
+	ims.mu.RUnlock()
 	if query == nil {
 		return nil, nil
 	}

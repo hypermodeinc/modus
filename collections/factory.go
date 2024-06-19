@@ -10,6 +10,7 @@ import (
 	"hmruntime/collections/index/interfaces"
 	"hmruntime/config"
 	"hmruntime/logger"
+	"hmruntime/manifestdata"
 	"hmruntime/storage"
 
 	"sync"
@@ -31,6 +32,7 @@ func InitializeIndexFactory(ctx context.Context) {
 	if err != nil {
 		logger.Error(ctx).Err(err).Msg("Error reading index factory from bin")
 	}
+	manifestdata.RegisterManifestLoadedCallback(CleanAndProcessManifest)
 	go GlobalCollectionFactory.worker(ctx)
 }
 
@@ -47,6 +49,7 @@ type CollectionFactory struct {
 }
 
 func (tif *CollectionFactory) worker(ctx context.Context) {
+	defer close(tif.done)
 	var ticker *time.Ticker
 	if config.IsDevEnvironment() {
 		ticker = time.NewTicker(collectionFactoryWriteInterval * time.Minute)
@@ -67,7 +70,6 @@ func (tif *CollectionFactory) worker(ctx context.Context) {
 			if err != nil {
 				logger.Error(ctx).Err(err).Msg("Error writing index factory to bin")
 			}
-			close(tif.done)
 			return
 		}
 	}

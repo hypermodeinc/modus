@@ -51,5 +51,5 @@ func BytesAsFloatArray(encoded []byte, retVal *[]float32) {
 
 func BytesToFloat(encoded []byte) float32 {
 	bits := binary.LittleEndian.Uint32(encoded)
-	return float32(math.Float32frombits(bits))
+	return math.Float32frombits(bits)
 }
