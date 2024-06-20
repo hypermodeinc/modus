@@ -12,8 +12,8 @@ import (
 	"hmruntime/graphql/datasource"
 	"hmruntime/graphql/engine"
 	"hmruntime/logger"
+	"hmruntime/modules"
 	"hmruntime/utils"
-	"hmruntime/wasmhost"
 
 	"github.com/buger/jsonparser"
 	eng "github.com/wundergraph/graphql-go-tools/execution/engine"
@@ -25,7 +25,7 @@ import (
 
 func Initialize() {
 	// The GraphQL engine's Activate function should be called when a plugin is loaded.
-	wasmhost.RegisterPluginLoadedCallback(engine.Activate)
+	modules.RegisterPluginLoadedCallback(engine.Activate)
 }
 
 func HandleGraphQLRequest(w http.ResponseWriter, r *http.Request) {
