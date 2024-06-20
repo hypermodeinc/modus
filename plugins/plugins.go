@@ -125,7 +125,7 @@ func (p *Plugin) Language() PluginLanguage {
 	switch libName {
 	case "@hypermode/functions-as":
 		return AssemblyScript
-	case "gohypermode/functions-go":
+	case "hypermodeAI/functions-go":
 		return GoLang
 	default:
 		return UnknownLanguage

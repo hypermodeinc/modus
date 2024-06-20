@@ -46,9 +46,9 @@ func instantiateHostFunctions(ctx context.Context) {
 	b.NewFunctionBuilder().WithFunc(hostFetch).Export("httpFetch")
 	b.NewFunctionBuilder().WithFunc(hostLookupModel).Export("lookupModel")
 	b.NewFunctionBuilder().WithFunc(hostInvokeModel).Export("invokeModel")
+	b.NewFunctionBuilder().WithFunc(databaseQuery).Export("databaseQuery")
 
-	_, err := b.Instantiate(ctx)
-	if err != nil {
+	if _, err := b.Instantiate(ctx); err != nil {
 		logger.Fatal(ctx).Err(err).
 			Str("module", hostModuleName).
 			Msg("Failed to instantiate the host module.  Exiting.")
@@ -64,8 +64,7 @@ func instantiateWasiFunctions(ctx context.Context) {
 
 	// If we ever need to override any of the WASI functions, we can do so here.
 
-	_, err := b.Instantiate(ctx)
-	if err != nil {
+	if _, err := b.Instantiate(ctx); err != nil {
 		logger.Fatal(ctx).Err(err).
 			Str("module", wasi.ModuleName).
 			Msg("Failed to instantiate the host module.  Exiting.")

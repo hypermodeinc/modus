@@ -90,7 +90,10 @@ func initRuntimeServices(ctx context.Context) {
 	collections.InitializeIndexFactory(ctx)
 
 	// Load app data and monitor for changes
-	manifestdata.MonitorManifestFile(ctx)
+	onChange := func([]error) {
+		hostfunctions.ShutdownPools()
+	}
+	manifestdata.MonitorManifestFile(ctx, onChange)
 
 	// Load plugins and monitor for changes
 	pluginmanager.MonitorPlugins(ctx)
@@ -105,6 +108,7 @@ func stopRuntimeServices(ctx context.Context) {
 	logger.Close()
 
 	db.Stop()
+	hostfunctions.ShutdownPools()
 }
 
 func getRootSourcePath() string {

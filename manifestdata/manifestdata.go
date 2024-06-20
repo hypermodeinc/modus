@@ -18,7 +18,7 @@ const manifestFileName = "hypermode.json"
 
 var Manifest manifest.HypermodeManifest = manifest.HypermodeManifest{}
 
-func MonitorManifestFile(ctx context.Context) {
+func MonitorManifestFile(ctx context.Context, changed func([]error)) {
 	loadFile := func(file storage.FileInfo) error {
 		if file.Name != manifestFileName {
 			return nil
@@ -42,6 +42,7 @@ func MonitorManifestFile(ctx context.Context) {
 	sm := storage.NewStorageMonitor(".json")
 	sm.Added = loadFile
 	sm.Modified = loadFile
+	sm.Changed = changed
 	sm.Start(ctx)
 }
 

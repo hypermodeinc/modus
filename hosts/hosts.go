@@ -21,26 +21,24 @@ import (
 const HypermodeHost string = "hypermode"
 const OpenAIHost string = "openai"
 
-func GetHost(hostName string) (manifest.HostInfo, error) {
-
+func GetHTTPHost(hostName string) (manifest.HTTPHostInfo, error) {
 	if hostName == HypermodeHost {
-		return manifest.HostInfo{Name: HypermodeHost}, nil
+		return manifest.HTTPHostInfo{Name: HypermodeHost}, nil
 	}
 
 	host, ok := manifestdata.Manifest.Hosts[hostName]
-	if ok {
-		return host, nil
+	if ok && host.HostType() == manifest.HostTypeHTTP {
+		return host.(manifest.HTTPHostInfo), nil
 	}
 
-	return manifest.HostInfo{}, fmt.Errorf("a host '%s' was not found", hostName)
+	return manifest.HTTPHostInfo{}, fmt.Errorf("a http host '%s' was not found", hostName)
 }
 
-func GetHostForUrl(url string) (manifest.HostInfo, error) {
-
+func GetHTTPHostForUrl(url string) (manifest.HTTPHostInfo, error) {
 	// Ensure the url is valid
 	u, err := urlpkg.ParseRequestURI(url)
 	if err != nil {
-		return manifest.HostInfo{}, err
+		return manifest.HTTPHostInfo{}, err
 	}
 
 	// Remove components not used for lookup
@@ -52,7 +50,12 @@ func GetHostForUrl(url string) (manifest.HostInfo, error) {
 	// Find the host that matches the url
 	// Either endpoint must match completely, or baseUrl must be a prefix of the url
 	// (case insensitive comparison, either way)
-	for _, host := range manifestdata.Manifest.Hosts {
+	for _, h := range manifestdata.Manifest.Hosts {
+		if h.HostType() != manifest.HostTypeHTTP {
+			continue
+		}
+
+		host := h.(manifest.HTTPHostInfo)
 		if host.Endpoint != "" && strings.EqualFold(host.Endpoint, url) {
 			return host, nil
 		} else if host.BaseURL != "" && len(url) >= len(host.BaseURL) && strings.EqualFold(host.BaseURL, url[:len(host.BaseURL)]) {
@@ -60,16 +63,18 @@ func GetHostForUrl(url string) (manifest.HostInfo, error) {
 		}
 	}
 
-	return manifest.HostInfo{}, fmt.Errorf("a host for url '%s' was not found in the manifest", url)
+	return manifest.HTTPHostInfo{}, fmt.Errorf("a host for url '%s' was not found in the manifest", url)
 }
 
-func PostToHostEndpoint[TResult any](ctx context.Context, host manifest.HostInfo, payload any) (*utils.HttpResult[TResult], error) {
+func PostToHostEndpoint[TResult any](ctx context.Context, host manifest.HTTPHostInfo, payload any) (
+	*utils.HttpResult[TResult], error) {
+
 	if host.Endpoint == "" {
 		return nil, fmt.Errorf("host endpoint is not defined")
 	}
 
 	bs := func(ctx context.Context, req *http.Request) error {
-		return secrets.ApplyHostSecrets(ctx, host, req)
+		return secrets.ApplyHTTPHostSecrets(ctx, host, req)
 	}
 
 	return utils.PostHttp[TResult](ctx, host.Endpoint, payload, bs)

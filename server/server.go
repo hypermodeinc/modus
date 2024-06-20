@@ -62,7 +62,13 @@ func Start(ctx context.Context) {
 	// Wait for a signal to shutdown the server.
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
-	<-sigChan
+
+	select {
+	case <-ctx.Done():
+		logger.Info(ctx).Msg("Context canceled.  Stopping HTTP server...")
+	case <-sigChan:
+		logger.Info(ctx).Msg("Signal received.  Stopping HTTP server...")
+	}
 
 	// Shutdown the server gracefully.
 	shutdownCtx, shutdownRelease := context.WithTimeout(ctx, shutdownTimeout)

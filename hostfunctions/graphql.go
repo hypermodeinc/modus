@@ -32,7 +32,7 @@ func hostExecuteGQL(ctx context.Context, mod wasm.Module, pHostName uint32, pStm
 		return 0
 	}
 
-	host, err := hosts.GetHost(hostName)
+	host, err := hosts.GetHTTPHost(hostName)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error getting host.")
 		return 0
@@ -58,7 +58,7 @@ type graphqlRequest struct {
 	Variables map[string]any `json:"variables"`
 }
 
-func executeGraphql(ctx context.Context, host manifest.HostInfo, stmt string, vars map[string]any) (string, error) {
+func executeGraphql(ctx context.Context, host manifest.HTTPHostInfo, stmt string, vars map[string]any) (string, error) {
 	// https://graphql.org/learn/serving-over-http/
 	requestPayload := graphqlRequest{
 		Query:     stmt,

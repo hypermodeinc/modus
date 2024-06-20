@@ -39,7 +39,7 @@ func TestMain(m *testing.M) {
 			},
 		},
 		Hosts: map[string]manifest.HostInfo{
-			testHostName: {
+			testHostName: manifest.HTTPHostInfo{
 				Name:     testHostName,
 				Endpoint: "",
 			},
@@ -81,7 +81,6 @@ func TestGetModels(t *testing.T) {
 }
 
 func TestPostExternalModelEndpoint(t *testing.T) {
-
 	// Create an http handler that simply echoes the input strings
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var b requestBody
@@ -99,7 +98,7 @@ func TestPostExternalModelEndpoint(t *testing.T) {
 	tsrv := httptest.NewServer(handler)
 	defer tsrv.Close()
 
-	h := manifestdata.Manifest.Hosts[testHostName]
+	h := manifestdata.Manifest.Hosts[testHostName].(manifest.HTTPHostInfo)
 	h.Endpoint = tsrv.URL
 	manifestdata.Manifest.Hosts[testHostName] = h
 
