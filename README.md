@@ -30,7 +30,7 @@ The following environment variables are used by the Hypermode Runtime:
 
 - `ENVIRONMENT` - The name of the environment, such as `dev`, `stage`, or `prod`.  Defaults to `dev` when not specified.
 - `NAMESPACE` - Used in non-dev (ie. stage/prod) environments to retrieve the Kubernetes namespace for the Hypermode backend.
-- `HYPERMODE_METADATA_DB` - Used in dev environment only, to set a connection string to a local Posrgres database to use for Hypermode metadata.
+- `HYPERMODE_METADATA_DB` - Used in dev environment only, to set a connection string to a local Postgres database to use for Hypermode metadata.
 
 ### Local Secrets
 
