@@ -6,7 +6,9 @@ import (
 
 	"hmruntime/collections/in_mem"
 	"hmruntime/collections/in_mem/sequential"
+	"hmruntime/collections/index"
 	"hmruntime/collections/index/interfaces"
+	"hmruntime/collections/redis"
 	"hmruntime/collections/utils"
 	"hmruntime/logger"
 	"hmruntime/manifestdata"
@@ -26,7 +28,7 @@ var FnCallChannel = make(chan EmbedderFnCall)
 
 func ProcessTextMap(ctx context.Context, collection interfaces.Collection, embedder string, vectorIndex interfaces.VectorIndex) error {
 
-	for uuid, text := range collection.GetTextMap() {
+	for uuid, text := range collection.GetTextMap(ctx) {
 		result, err := modules.CallFunctionByName(ctx, embedder, text)
 		if err != nil {
 			return err
@@ -37,7 +39,7 @@ func ProcessTextMap(ctx context.Context, collection interfaces.Collection, embed
 			return err
 		}
 
-		_, err = vectorIndex.InsertVector(ctx, uuid, textVec)
+		err = vectorIndex.InsertVector(ctx, uuid, textVec)
 		if err != nil {
 			return err
 		}
@@ -47,7 +49,7 @@ func ProcessTextMap(ctx context.Context, collection interfaces.Collection, embed
 
 func ProcessTextMapWithModule(ctx context.Context, mod wasm.Module, collection interfaces.Collection, embedder string, vectorIndex interfaces.VectorIndex) error {
 
-	for uuid, text := range collection.GetTextMap() {
+	for uuid, text := range collection.GetTextMap(ctx) {
 		result, err := modules.CallFunctionByNameWithModule(ctx, mod, embedder, text)
 		if err != nil {
 			return err
@@ -58,7 +60,7 @@ func ProcessTextMapWithModule(ctx context.Context, mod wasm.Module, collection i
 			return err
 		}
 
-		_, err = vectorIndex.InsertVector(ctx, uuid, textVec)
+		err = vectorIndex.InsertVector(ctx, uuid, textVec)
 		if err != nil {
 			return err
 		}
@@ -90,19 +92,25 @@ func processManifestCollections(ctx context.Context, Manifest manifest.Hypermode
 
 			// if the index does not exist, create it
 			// TODO also populate the vector index by running the embedding function to compute vectors ahead of time
-			if err == in_mem.ErrVectorIndexNotFound {
+			if err == index.ErrVectorIndexNotFound {
 				vectorIndex := &interfaces.VectorIndexWrapper{}
 				switch searchMethod.Index.Type {
 				case interfaces.SequentialManifestType:
 					vectorIndex.Type = sequential.SequentialVectorIndexType
-					vectorIndex.VectorIndex = sequential.NewSequentialVectorIndex()
+					indexName := collectionName + ":" + searchMethodName
+					vectorIndex.VectorIndex = redis.NewRedisVectorIndex(indexName, interfaces.SequentialManifestType)
+					// vectorIndex.VectorIndex = sequential.NewSequentialVectorIndex()
 				case interfaces.HnswManifestType:
 					// TODO: Implement hnsw
 					vectorIndex.Type = sequential.SequentialVectorIndexType
-					vectorIndex.VectorIndex = sequential.NewSequentialVectorIndex()
+					indexName := collectionName + ":" + searchMethodName
+					vectorIndex.VectorIndex = redis.NewRedisVectorIndex(indexName, interfaces.HnswManifestType)
+					// vectorIndex.VectorIndex = sequential.NewSequentialVectorIndex()
 				case "":
 					vectorIndex.Type = sequential.SequentialVectorIndexType
-					vectorIndex.VectorIndex = sequential.NewSequentialVectorIndex()
+					indexName := collectionName + ":" + searchMethodName
+					vectorIndex.VectorIndex = redis.NewRedisVectorIndex(indexName, interfaces.SequentialManifestType)
+					// vectorIndex.VectorIndex = sequential.NewSequentialVectorIndex()
 				default:
 					logger.Err(ctx, nil).
 						Str("index_type", searchMethod.Index.Type).
@@ -119,7 +127,7 @@ func processManifestCollections(ctx context.Context, Manifest manifest.Hypermode
 
 				// populate index in background
 				go func() {
-					if len(collection.GetTextMap()) != 0 {
+					if len(collection.GetTextMap(ctx)) != 0 {
 						err = ProcessTextMap(ctx, collection, searchMethod.Embedder, collection.GetVectorIndexMap()[searchMethodName])
 						if err != nil {
 							if strings.Contains(err.Error(), "no function registered named ") {

@@ -15,5 +15,19 @@ services:
       - pgdata1:/var/lib/postgresql/data1
     command: -p 5433
 
+  redis:
+    image: "redis:latest"
+    container_name: "redis-server"
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - redis-net
+
 volumes:
   pgdata1:
+  redis-data:
+
+networks:
+  redis-net:

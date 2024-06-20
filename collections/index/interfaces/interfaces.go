@@ -12,6 +12,7 @@ import (
 
 var (
 	ErrInvalidVectorIndexType = fmt.Errorf("invalid vector index type")
+	ErrInvalidVectorIndexName = fmt.Errorf("invalid vector index name")
 )
 
 const (
@@ -78,7 +79,7 @@ type Collection interface {
 	DeleteVectorIndex(searchMethod string) error
 
 	// InsertText will add a text and uuid into the existing VectorIndex
-	InsertText(ctx context.Context, uuid string, text string) ([]*index.KeyValue, error)
+	InsertText(ctx context.Context, uuid string, text string) error
 
 	// DeleteText will remove a text and uuid from the existing VectorIndex
 	DeleteText(ctx context.Context, uuid string) error
@@ -87,7 +88,7 @@ type Collection interface {
 	GetText(ctx context.Context, uuid string) (string, error)
 
 	// GetTextMap returns the map of uuid to text
-	GetTextMap() map[string]string
+	GetTextMap(ctx context.Context) map[string]string
 }
 
 // A VectorIndex can be used to Search for vectors and add vectors to an index.
@@ -115,7 +116,7 @@ type VectorIndex interface {
 
 	// Insert will add a vector and uuid into the existing VectorIndex. If
 	// uuid already exists, it should throw an error to not insert duplicate uuids
-	InsertVector(ctx context.Context, uuid string, vec []float32) ([]*index.KeyValue, error)
+	InsertVector(ctx context.Context, uuid string, vec []float32) error
 
 	// Delete will remove a vector and uuid from the existing VectorIndex. If
 	// uuid does not exist, it should throw an error to not delete non-existent uuids

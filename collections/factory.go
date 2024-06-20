@@ -8,6 +8,7 @@ import (
 
 	"hmruntime/collections/in_mem"
 	"hmruntime/collections/index/interfaces"
+	"hmruntime/collections/redis"
 	"hmruntime/config"
 	"hmruntime/logger"
 	"hmruntime/manifestdata"
@@ -30,16 +31,17 @@ var (
 
 func InitializeIndexFactory(ctx context.Context) {
 	GlobalCollectionFactory = CreateFactory()
-	err := GlobalCollectionFactory.ReadFromBin()
-	if err != nil {
-		logger.Error(ctx).Err(err).Msg("Error reading index factory from bin")
-	}
+	// err := GlobalCollectionFactory.ReadFromBin()
+	// if err != nil {
+	// 	logger.Error(ctx).Err(err).Msg("Error reading index factory from bin")
+	// }
+	redis.InitializeRedisClient()
 	manifestdata.RegisterManifestLoadedCallback(CleanAndProcessManifest)
 	modules.RegisterPluginLoadedCallback(func(ctx context.Context, metadata plugins.PluginMetadata) error {
 		CatchEmbedderReqs(ctx)
 		return nil
 	})
-	go GlobalCollectionFactory.worker(ctx)
+	// go GlobalCollectionFactory.worker(ctx)
 }
 
 func CloseIndexFactory(ctx context.Context) {

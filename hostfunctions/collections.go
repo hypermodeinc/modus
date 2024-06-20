@@ -156,7 +156,7 @@ func hostUpsertToCollection(ctx context.Context, mod wasm.Module, pCollectionNam
 		return offset
 	}
 
-	_, err = collection.InsertText(ctx, id, text)
+	err = collection.InsertText(ctx, id, text)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error inserting into text index.")
 
@@ -208,7 +208,7 @@ func hostUpsertToCollection(ctx context.Context, mod wasm.Module, pCollectionNam
 			logger.Err(ctx, err).Msg("Error converting to float32.")
 		}
 
-		_, err = vectorIndex.InsertVector(ctx, id, textVec)
+		err = vectorIndex.InsertVector(ctx, id, textVec)
 		if err != nil {
 			logger.Err(ctx, err).Msg("Error inserting into vector index.")
 
@@ -571,7 +571,7 @@ func hostGetTexts(ctx context.Context, mod wasm.Module, pCollectionName uint32) 
 		return 0
 	}
 
-	textMap := collection.GetTextMap()
+	textMap := collection.GetTextMap(ctx)
 
 	offset, err := writeResult(ctx, mod, textMap)
 	if err != nil {

@@ -2,7 +2,13 @@ package index
 
 import (
 	"encoding/binary"
+	"fmt"
 	"math"
+)
+
+var (
+	ErrVectorIndexAlreadyExists = fmt.Errorf("vector index already exists")
+	ErrVectorIndexNotFound      = fmt.Errorf("vector index not found")
 )
 
 // BytesAsFloatArray(encoded) converts encoded into a []T,

@@ -2,16 +2,10 @@ package in_mem
 
 import (
 	"context"
-	"fmt"
 
 	"hmruntime/collections/index"
 	"hmruntime/collections/index/interfaces"
 	"sync"
-)
-
-var (
-	ErrVectorIndexAlreadyExists = fmt.Errorf("vector index already exists")
-	ErrVectorIndexNotFound      = fmt.Errorf("vector index not found")
 )
 
 type InMemCollection struct {
@@ -37,22 +31,22 @@ func (ti *InMemCollection) GetVectorIndex(name string) (*interfaces.VectorIndexW
 	ti.mu.RLock()
 	defer ti.mu.RUnlock()
 	if ind, ok := ti.VectorIndexMap[name]; !ok {
-		return nil, ErrVectorIndexNotFound
+		return nil, index.ErrVectorIndexNotFound
 	} else {
 		return ind, nil
 	}
 }
 
-func (ti *InMemCollection) SetVectorIndex(name string, index *interfaces.VectorIndexWrapper) error {
+func (ti *InMemCollection) SetVectorIndex(name string, vectorIndex *interfaces.VectorIndexWrapper) error {
 	ti.mu.Lock()
 	defer ti.mu.Unlock()
 	if ti.VectorIndexMap == nil {
 		ti.VectorIndexMap = map[string]*interfaces.VectorIndexWrapper{}
 	}
 	if _, ok := ti.VectorIndexMap[name]; ok {
-		return ErrVectorIndexAlreadyExists
+		return index.ErrVectorIndexAlreadyExists
 	}
-	ti.VectorIndexMap[name] = index
+	ti.VectorIndexMap[name] = vectorIndex
 	return nil
 }
 
@@ -63,11 +57,11 @@ func (ti *InMemCollection) DeleteVectorIndex(name string) error {
 	return nil
 }
 
-func (ti *InMemCollection) InsertText(ctx context.Context, uuid string, text string) ([]*index.KeyValue, error) {
+func (ti *InMemCollection) InsertText(ctx context.Context, uuid string, text string) error {
 	ti.mu.Lock()
 	defer ti.mu.Unlock()
 	ti.TextMap[uuid] = text
-	return nil, nil
+	return nil
 }
 
 func (ti *InMemCollection) DeleteText(ctx context.Context, uuid string) error {
@@ -83,7 +77,7 @@ func (ti *InMemCollection) GetText(ctx context.Context, uuid string) (string, er
 	return ti.TextMap[uuid], nil
 }
 
-func (ti *InMemCollection) GetTextMap() map[string]string {
+func (ti *InMemCollection) GetTextMap(ctx context.Context) map[string]string {
 	ti.mu.RLock()
 	defer ti.mu.RUnlock()
 	return ti.TextMap

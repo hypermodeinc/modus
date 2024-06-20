@@ -30,11 +30,6 @@ func (ims *SequentialVectorIndex) GetVectorNodesMap() map[string][]float32 {
 	return ims.VectorNodes
 }
 
-func (ims *SequentialVectorIndex) emptyFinalResultWithError(e error) (
-	*index.SearchPathResult, error) {
-	return index.NewSearchPathResult(), e
-}
-
 func (ims *SequentialVectorIndex) Search(ctx context.Context, query []float32, maxResults int, filter index.SearchFilter) (utils.MinTupleHeap, error) {
 	// calculate cosine similarity and return top maxResults results
 	ims.mu.RLock()
@@ -79,15 +74,11 @@ func (ims *SequentialVectorIndex) SearchWithUid(ctx context.Context, queryUid st
 	return ims.Search(ctx, query, maxResults, filter)
 }
 
-func (ims *SequentialVectorIndex) SearchWithPath(ctx context.Context, query []float32, maxResults int, filter index.SearchFilter) (*index.SearchPathResult, error) {
-	return ims.emptyFinalResultWithError(nil)
-}
-
-func (ims *SequentialVectorIndex) InsertVector(ctx context.Context, uid string, vector []float32) ([]*index.KeyValue, error) {
+func (ims *SequentialVectorIndex) InsertVector(ctx context.Context, uid string, vector []float32) error {
 	ims.mu.Lock()
 	defer ims.mu.Unlock()
 	ims.VectorNodes[uid] = vector
-	return nil, nil
+	return nil
 }
 
 func (ims *SequentialVectorIndex) DeleteVector(ctx context.Context, uid string) error {
