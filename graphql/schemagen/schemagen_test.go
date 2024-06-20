@@ -68,6 +68,14 @@ func Test_GetGraphQLSchema(t *testing.T) {
 			{
 				Name: "Person[]",
 			},
+			// This should be excluded from the final schema
+			{
+				Name: "Header",
+				Fields: []plugins.Field{
+					{Name: "name", Type: plugins.TypeInfo{Name:"string"}},
+					{Name: "values", Type: plugins.TypeInfo{Name:"string[]"}},
+				},
+			},
 		},
 	}
 
