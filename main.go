@@ -14,7 +14,6 @@ import (
 	"runtime"
 
 	"hmruntime/aws"
-	"hmruntime/collections"
 	"hmruntime/config"
 	"hmruntime/db"
 	"hmruntime/graphql"
@@ -82,9 +81,6 @@ func initRuntimeServices(ctx context.Context) {
 	// Initialize the metadata database
 	db.Initialize(ctx)
 
-	// Initialize in mem vector factory
-	collections.InitializeIndexFactory(ctx)
-
 	// Load app data and monitor for changes
 	manifestdata.MonitorManifestFile(ctx)
 
@@ -96,7 +92,6 @@ func initRuntimeServices(ctx context.Context) {
 }
 
 func stopRuntimeServices(ctx context.Context) {
-	collections.CloseIndexFactory(ctx)
 	modules.RuntimeInstance.Close(ctx)
 	logger.Close()
 
