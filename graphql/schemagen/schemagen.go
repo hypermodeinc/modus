@@ -136,7 +136,7 @@ func writeSchemaHeader(buf *bytes.Buffer, metadata plugins.PluginMetadata) {
 }
 
 func writeSchema(buf *bytes.Buffer, functions []FunctionSignature, typeDefs []TypeDefinition) {
-	var consumedTypeNames = make([]string, 0)
+	var consumedTypeNames = make(map[string]bool)
 	// sort functions and type definitions
 	slices.SortFunc(functions, func(a, b FunctionSignature) int {
 		return cmp.Compare(a.Name, b.Name)
@@ -145,26 +145,18 @@ func writeSchema(buf *bytes.Buffer, functions []FunctionSignature, typeDefs []Ty
 		return cmp.Compare(a.Name, b.Name)
 	})
 
-	isTypeRefd := func(name string) bool {
-		for _, n := range consumedTypeNames {
-			if n == name {
-				return true
-			}
-		}
-		return false
-	}
-
 	// write query functions
 	buf.WriteString("type Query {\n")
 	for _, f := range functions {
 		for _, p := range f.Parameters {
 			var t = getBaseType(p.Type)
-			if isCustomType(t) {
-				consumedTypeNames = append(consumedTypeNames, t)
+			if isCustomType(p.Type) {
+				consumedTypeNames[t] = true
 			}
 		}
-		if isCustomType(getBaseType(f.ReturnType)) {
-			consumedTypeNames = append(consumedTypeNames, getBaseType(f.ReturnType))
+		var t = getBaseType(f.ReturnType)
+		if isCustomType(f.ReturnType) {
+			consumedTypeNames[t] = true
 		}
 
 		buf.WriteString("  ")
@@ -190,7 +182,7 @@ func writeSchema(buf *bytes.Buffer, functions []FunctionSignature, typeDefs []Ty
 	// write scalars
 	wroteScalar := false
 	for _, t := range typeDefs {
-		if !isTypeRefd(t.Name) {
+		if !consumedTypeNames[t.Name] {
 			continue
 		}
 		if len(t.Fields) > 0 || strings.HasSuffix(t.Name, "[]") || strings.HasPrefix(t.Name, "Map<") {
@@ -208,7 +200,7 @@ func writeSchema(buf *bytes.Buffer, functions []FunctionSignature, typeDefs []Ty
 
 	// write types
 	for _, t := range typeDefs {
-		if !isTypeRefd(t.Name) {
+		if !consumedTypeNames[t.Name] {
 			continue
 		}
 		if (len(t.Fields)) == 0 {
@@ -393,8 +385,13 @@ func isCustomType(name string) bool {
 	if strings.HasSuffix(name, "!") {
 		return isCustomType(strings.TrimSuffix(name, "!"))
 	}
-	
-	return name != "String" && name != "Int" && name != "Float" && name != "Boolean"
+
+	switch name {
+	case "String", "Int", "Float", "Boolean":
+		return false
+	default:
+		return true
+	}
 }
 
 func getBaseType(name string) string {
