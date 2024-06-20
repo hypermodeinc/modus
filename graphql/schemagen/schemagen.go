@@ -393,6 +393,7 @@ func isCustomType(name string) bool {
 	if strings.HasSuffix(name, "!") {
 		return isCustomType(strings.TrimSuffix(name, "!"))
 	}
+	
 	return name != "String" && name != "Int" && name != "Float" && name != "Boolean"
 }
 
@@ -403,5 +404,6 @@ func getBaseType(name string) string {
 	if strings.HasSuffix(name, "!") {
 		return getBaseType(strings.TrimSuffix(name, "!"))
 	}
+
 	return name
 }
