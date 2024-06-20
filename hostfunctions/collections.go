@@ -571,7 +571,11 @@ func hostGetTexts(ctx context.Context, mod wasm.Module, pCollectionName uint32) 
 		return 0
 	}
 
-	textMap := collection.GetTextMap(ctx)
+	textMap, err := collection.GetTextMap(ctx)
+	if err != nil {
+		logger.Err(ctx, err).Msg("Error getting text map.")
+		return 0
+	}
 
 	offset, err := writeResult(ctx, mod, textMap)
 	if err != nil {

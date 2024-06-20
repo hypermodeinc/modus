@@ -40,9 +40,9 @@ func (rvi *RedisVectorIndex) Search(ctx context.Context, query []float32, maxRes
 		return nil, err
 	}
 
-	searchQueryStr := fmt.Sprintf("*=>[KNN %s @vector_field $vec AS score]", fmt.Sprint(maxResults))
 	indexName := fmt.Sprintf("vector:%s", rvi.name)
-	response, err := RedisClient.Do(ctx, "FT.SEARCH", indexName, searchQueryStr, "SORTBY", "score", "PARAMS", "2", "vec", queryVectorJson).Result()
+	searchQueryStr := fmt.Sprintf("*=>[KNN %d @vector_field $BLOB AS my_scores]", maxResults)
+	response, err := RedisClient.Do(ctx, "FT.SEARCH", indexName, searchQueryStr, "PARAMS", "2", "BLOB", string(queryVectorJson), "SORTBY", "my_scores", "DIALECT", "2").Result()
 	if err != nil {
 		return nil, err
 	}
@@ -83,8 +83,8 @@ func (rvi *RedisVectorIndex) CreateRedisVectorIndex(ctx context.Context, vector 
 	}
 
 	indexName := fmt.Sprintf("vector:%s", rvi.name)
-	_, err := RedisClient.Do(ctx, "FT.CREATE", indexName, "SCHEMA", "HASH", "PREFIX", "1",
-		rvi.name, "SCHEMA", "vector_field", "VECTOR", redisIndexType,
+	_, err := RedisClient.Do(ctx, "FT.CREATE", indexName, "ON", "HASH", "PREFIX", "1", rvi.name,
+		"SCHEMA", "vector_field", "VECTOR", redisIndexType,
 		"6",
 		"TYPE", "FLOAT32",
 		"DIM", fmt.Sprint(len(vector)),
@@ -98,13 +98,6 @@ func (rvi *RedisVectorIndex) CreateRedisVectorIndex(ctx context.Context, vector 
 func (rvi *RedisVectorIndex) InsertVector(ctx context.Context, uuid string, vector []float32) error {
 	rvi.mu.Lock()
 	defer rvi.mu.Unlock()
-	if !rvi.containsVectors {
-		err := rvi.CreateRedisVectorIndex(ctx, vector)
-		if err != nil {
-			return err
-		}
-		rvi.containsVectors = true
-	}
 
 	vectorJson, err := json.Marshal(vector)
 	if err != nil {
@@ -119,6 +112,14 @@ func (rvi *RedisVectorIndex) InsertVector(ctx context.Context, uuid string, vect
 
 	if err != nil {
 		return err
+	}
+
+	if !rvi.containsVectors {
+		err := rvi.CreateRedisVectorIndex(ctx, vector)
+		if err != nil {
+			return err
+		}
+		rvi.containsVectors = true
 	}
 
 	return nil
@@ -148,8 +149,7 @@ func (rvi *RedisVectorIndex) DeleteVector(ctx context.Context, uuid string) erro
 }
 
 func (rvi *RedisVectorIndex) GetVector(ctx context.Context, uuid string) ([]float32, error) {
-	hash := fmt.Sprintf("vector:%s", uuid)
-	result, err := RedisClient.HGet(ctx, hash, "vector_field").Result()
+	result, err := RedisClient.HGet(ctx, rvi.name, "vector_field").Result()
 	if err != nil {
 		return nil, err
 	}

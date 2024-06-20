@@ -16,7 +16,7 @@ services:
     command: -p 5433
 
   redis:
-    image: "redis:latest"
+    image: redislabs/redisearch:latest
     container_name: "redis-server"
     ports:
       - "6379:6379"

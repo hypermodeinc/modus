@@ -20,6 +20,10 @@ func NewCollection(name string) *RedisCollection {
 	}
 }
 
+func (rc *RedisCollection) GetName() string {
+	return rc.name
+}
+
 func (rc *RedisCollection) GetVectorIndexMap() map[string]*interfaces.VectorIndexWrapper {
 	rc.mu.RLock()
 	defer rc.mu.RUnlock()

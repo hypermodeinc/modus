@@ -10,15 +10,20 @@ import (
 
 type InMemCollection struct {
 	mu             sync.RWMutex
+	name           string
 	TextMap        map[string]string
 	VectorIndexMap map[string]*interfaces.VectorIndexWrapper
 }
 
-func NewCollection() *InMemCollection {
+func NewCollection(name string) *InMemCollection {
 	return &InMemCollection{
 		TextMap:        map[string]string{},
 		VectorIndexMap: map[string]*interfaces.VectorIndexWrapper{},
 	}
+}
+
+func (ti *InMemCollection) GetName() string {
+	return ti.name
 }
 
 func (ti *InMemCollection) GetVectorIndexMap() map[string]*interfaces.VectorIndexWrapper {
@@ -77,8 +82,8 @@ func (ti *InMemCollection) GetText(ctx context.Context, uuid string) (string, er
 	return ti.TextMap[uuid], nil
 }
 
-func (ti *InMemCollection) GetTextMap(ctx context.Context) map[string]string {
+func (ti *InMemCollection) GetTextMap(ctx context.Context) (map[string]string, error) {
 	ti.mu.RLock()
 	defer ti.mu.RUnlock()
-	return ti.TextMap
+	return ti.TextMap, nil
 }

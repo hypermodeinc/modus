@@ -4,7 +4,6 @@ import (
 	"context"
 	"strings"
 
-	"hmruntime/collections/in_mem"
 	"hmruntime/collections/in_mem/sequential"
 	"hmruntime/collections/index"
 	"hmruntime/collections/index/interfaces"
@@ -27,8 +26,13 @@ type EmbedderFnCall struct {
 var FnCallChannel = make(chan EmbedderFnCall)
 
 func ProcessTextMap(ctx context.Context, collection interfaces.Collection, embedder string, vectorIndex interfaces.VectorIndex) error {
-
-	for uuid, text := range collection.GetTextMap(ctx) {
+	textMap, err := collection.GetTextMap(ctx)
+	if err != nil {
+		logger.Err(ctx, err).
+			Str("colletion_name", collection.GetName()).
+			Msg("Failed to get text map.")
+	}
+	for uuid, text := range textMap {
 		result, err := modules.CallFunctionByName(ctx, embedder, text)
 		if err != nil {
 			return err
@@ -49,7 +53,13 @@ func ProcessTextMap(ctx context.Context, collection interfaces.Collection, embed
 
 func ProcessTextMapWithModule(ctx context.Context, mod wasm.Module, collection interfaces.Collection, embedder string, vectorIndex interfaces.VectorIndex) error {
 
-	for uuid, text := range collection.GetTextMap(ctx) {
+	textMap, err := collection.GetTextMap(ctx)
+	if err != nil {
+		logger.Err(ctx, err).
+			Str("colletion_name", collection.GetName()).
+			Msg("Failed to get text map.")
+	}
+	for uuid, text := range textMap {
 		result, err := modules.CallFunctionByNameWithModule(ctx, mod, embedder, text)
 		if err != nil {
 			return err
@@ -80,7 +90,7 @@ func processManifestCollections(ctx context.Context, Manifest manifest.Hypermode
 		if err == ErrCollectionNotFound {
 			// forces all users to use in-memory index for now
 			// TODO implement other types of indexes based on manifest info
-			collection, err = GlobalCollectionFactory.Create(collectionName, in_mem.NewCollection())
+			collection, err = GlobalCollectionFactory.Create(collectionName, redis.NewCollection(collectionName))
 			if err != nil {
 				logger.Err(ctx, err).
 					Str("collection_name", collectionName).
@@ -127,7 +137,13 @@ func processManifestCollections(ctx context.Context, Manifest manifest.Hypermode
 
 				// populate index in background
 				go func() {
-					if len(collection.GetTextMap(ctx)) != 0 {
+					textMap, err := collection.GetTextMap(ctx)
+					if err != nil {
+						logger.Err(ctx, err).
+							Str("colletion_name", collectionName).
+							Msg("Failed to get text map.")
+					}
+					if len(textMap) != 0 {
 						err = ProcessTextMap(ctx, collection, searchMethod.Embedder, collection.GetVectorIndexMap()[searchMethodName])
 						if err != nil {
 							if strings.Contains(err.Error(), "no function registered named ") {

@@ -66,6 +66,8 @@ func (v *VectorIndexWrapper) UnmarshalJSON(data []byte) error {
 }
 
 type Collection interface {
+	GetName() string
+
 	// GetVectorIndexMap returns the map of searchMethod to VectorIndex
 	GetVectorIndexMap() map[string]*VectorIndexWrapper
 
@@ -88,7 +90,7 @@ type Collection interface {
 	GetText(ctx context.Context, uuid string) (string, error)
 
 	// GetTextMap returns the map of uuid to text
-	GetTextMap(ctx context.Context) map[string]string
+	GetTextMap(ctx context.Context) (map[string]string, error)
 }
 
 // A VectorIndex can be used to Search for vectors and add vectors to an index.
