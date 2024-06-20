@@ -71,6 +71,10 @@ func loadManifest(ctx context.Context) error {
 
 	// Trigger the manifest loaded event.
 	err = triggerManifestLoaded(ctx)
+	if err != nil {
+		logger.Err(ctx, err).
+			Msg("Failed to trigger manifest loaded event.")
+	}
 
-	return err
+	return nil
 }

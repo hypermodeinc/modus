@@ -60,7 +60,7 @@ func loadPlugin(ctx context.Context, filename string) error {
 		return err
 	}
 
-	// Compile the plugin into a module.
+	// Compile the plugin into a
 	cm, err := compileModule(ctx, bytes)
 	if err != nil {
 		return err
@@ -85,8 +85,11 @@ func loadPlugin(ctx context.Context, filename string) error {
 
 	// Trigger the plugin loaded event.
 	err = triggerPluginLoaded(ctx, metadata)
+	if err != nil {
+		return err
+	}
 
-	return err
+	return nil
 }
 
 func compileModule(ctx context.Context, bytes []byte) (wazero.CompiledModule, error) {
