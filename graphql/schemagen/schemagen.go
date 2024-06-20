@@ -379,13 +379,7 @@ func newType(name string, fields []NameTypePair, typeDefs *map[string]TypeDefini
 }
 
 func isCustomType(name string) bool {
-	if strings.HasPrefix(name, "[") {
-		return isCustomType(name[1 : len(name)-2])
-	}
-	if strings.HasSuffix(name, "!") {
-		return isCustomType(strings.TrimSuffix(name, "!"))
-	}
-
+	name = getBaseType(name)
 	switch name {
 	case "String", "Int", "Float", "Boolean":
 		return false
