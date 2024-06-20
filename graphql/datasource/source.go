@@ -16,6 +16,7 @@ import (
 	"hmruntime/utils"
 
 	"github.com/buger/jsonparser"
+	"github.com/rs/xid"
 	"github.com/wundergraph/graphql-go-tools/v2/pkg/engine/resolve"
 )
 
@@ -62,8 +63,17 @@ func (s Source) callFunctionWithCallInfo(ctx context.Context, callInfo callInfo)
 		return nil, nil, fmt.Errorf("no function registered named %s", callInfo.Function.Name)
 	}
 
-	// Prepare the context, buffers, and messages
-	ctx, executionId, buffers, messages := modules.Setup(ctx, info)
+	// Prepare the context that will be used throughout the function execution
+	executionId := xid.New().String()
+	ctx = context.WithValue(ctx, utils.ExecutionIdContextKey, executionId)
+	ctx = context.WithValue(ctx, utils.PluginContextKey, info.Plugin)
+
+	// Also prepare a slice to capture log messages sent through the "log" host function.
+	messages := []utils.LogMessage{}
+	ctx = context.WithValue(ctx, utils.FunctionMessagesContextKey, &messages)
+
+	// Create output buffers for the function to write stdout/stderr to
+	buffers := utils.OutputBuffers{}
 
 	// Get a module instance for this request.
 	// Each request will get its own instance of the plugin module, so that we can run

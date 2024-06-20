@@ -2,7 +2,6 @@
 
 ## UNRELEASED
 
-- Add sequential vector search [#202](https://github.com/hypermodeAI/runtime/pull/202)
 - Add nullable check in ReadString [#228](https://github.com/hypermodeAI/runtime/pull/228)
 - Lowercase model name before invoking for hypermode hosted models [#221](https://github.com/gohypermode/runtime/pull/221)
 - Improve HTTP error messages [#222](https://github.com/gohypermode/runtime/pull/222)

@@ -89,19 +89,19 @@ func readParams4[T1, T2, T3, T4 any](ctx context.Context, mod wasm.Module,
 	return errors.Join(err1, err2, err3, err4)
 }
 
-func readParams5[T1, T2, T3, T4, T5 any](ctx context.Context, mod wasm.Module,
-	p1, p2, p3, p4, p5 uint32,
-	v1 *T1, v2 *T2, v3 *T3, v4 *T4, v5 *T5,
-) error {
-	err1 := readParam[T1](ctx, mod, p1, v1)
-	err2 := readParam[T2](ctx, mod, p2, v2)
-	err3 := readParam[T3](ctx, mod, p3, v3)
-	err4 := readParam[T4](ctx, mod, p4, v4)
-	err5 := readParam[T5](ctx, mod, p5, v5)
-	return errors.Join(err1, err2, err3, err4, err5)
-}
-
 // uncomment to enable as needed (or add more)
+
+// func readParams5[T1, T2, T3, T4, T5 any](ctx context.Context, mod wasm.Module,
+// 	p1, p2, p3, p4, p5 uint32,
+// 	v1 *T1, v2 *T2, v3 *T3, v4 *T4, v5 *T5,
+// ) error {
+// 	err1 := readParam[T1](ctx, mod, p1, v1)
+// 	err2 := readParam[T2](ctx, mod, p2, v2)
+// 	err3 := readParam[T3](ctx, mod, p3, v3)
+// 	err4 := readParam[T4](ctx, mod, p4, v4)
+// 	err5 := readParam[T5](ctx, mod, p5, v5)
+// 	return errors.Join(err1, err2, err3, err4, err5)
+// }
 
 // func readParams6[T1, T2, T3, T4, T5, T6 any](ctx context.Context, mod wasm.Module,
 // 	p1, p2, p3, p4, p5, p6 uint32,

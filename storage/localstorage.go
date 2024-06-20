@@ -72,13 +72,3 @@ func (stg *localStorageProvider) getFileContents(ctx context.Context, name strin
 
 	return content, nil
 }
-
-func (stg *localStorageProvider) writeFile(ctx context.Context, name string, contents []byte) error {
-	path := filepath.Join(config.StoragePath, name)
-	err := os.WriteFile(path, contents, 0644)
-	if err != nil {
-		return fmt.Errorf("failed to write file %s to local storage: %w", name, err)
-	}
-
-	return nil
-}
