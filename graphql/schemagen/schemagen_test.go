@@ -63,11 +63,38 @@ func Test_GetGraphQLSchema(t *testing.T) {
 				Fields: []plugins.Field{
 					{Name: "name", Type: plugins.TypeInfo{Name: "string"}},
 					{Name: "age", Type: plugins.TypeInfo{Name: "i32"}},
+					{Name: "addresses", Type: plugins.TypeInfo{Name: "Address[]"}},
 				},
 			},
 			{
 				Name: "Person[]",
 			},
+			{
+				Name: "Address",
+				Fields: []plugins.Field{
+					{Name: "street", Type: plugins.TypeInfo{Name: "string"}},
+					{Name: "city", Type: plugins.TypeInfo{Name: "string"}},
+					{Name: "state", Type: plugins.TypeInfo{Name: "string"}},
+					{Name: "country", Type: plugins.TypeInfo{Name: "string"}},
+					{Name: "postalCode", Type: plugins.TypeInfo{Name: "string"}},
+					{Name: "location", Type: plugins.TypeInfo{Name: "Coordinates"}},
+				},
+			},
+			{
+				Name: "Coordinates",
+				Fields: []plugins.Field{
+					{Name: "lat", Type: plugins.TypeInfo{Name: "f64"}},
+					{Name: "lon", Type: plugins.TypeInfo{Name: "f64"}},
+				},
+			},
+			// This should be excluded from the final schema
+			// {
+			// 	Name: "Header",
+			// 	Fields: []plugins.Field{
+			// 		{Name: "name", Type: plugins.TypeInfo{Name: "string"}},
+			// 		{Name: "values", Type: plugins.TypeInfo{Name: "string[]"}},
+			// 	},
+			// },
 		},
 	}
 
@@ -86,9 +113,24 @@ func Test_GetGraphQLSchema(t *testing.T) {
 scalar Timestamp
 scalar Void
 
+type Address {
+  street: String!
+  city: String!
+  state: String!
+  country: String!
+  postalCode: String!
+  location: Coordinates!
+}
+
+type Coordinates {
+  lat: Float!
+  lon: Float!
+}
+
 type Person {
   name: String!
   age: Int!
+  addresses: [Address!]!
 }
 
 type StringStringPair {
