@@ -92,6 +92,10 @@ func (ti *InMemCollection) InsertTextToMemory(ctx context.Context, id int64, key
 func (ti *InMemCollection) DeleteText(ctx context.Context, key string) error {
 	ti.mu.Lock()
 	defer ti.mu.Unlock()
+	err := db.DeleteCollectionText(ctx, ti.collectionName, key)
+	if err != nil {
+		return err
+	}
 	delete(ti.TextMap, key)
 	return nil
 }
@@ -115,5 +119,7 @@ func (ti *InMemCollection) GetExternalId(ctx context.Context, key string) (int64
 }
 
 func (ti *InMemCollection) GetCheckpointId(ctx context.Context) (int64, error) {
+	ti.mu.RLock()
+	defer ti.mu.RUnlock()
 	return ti.lastInsertedID, nil
 }

@@ -118,5 +118,7 @@ func (ims *SequentialVectorIndex) GetVector(ctx context.Context, key string) ([]
 }
 
 func (ims *SequentialVectorIndex) GetCheckpointId(ctx context.Context) (int64, error) {
+	ims.mu.RLock()
+	defer ims.mu.RUnlock()
 	return ims.lastInsertedID, nil
 }
