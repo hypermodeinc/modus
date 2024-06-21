@@ -2,23 +2,18 @@ package collections
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 
-	"hmruntime/collections/in_mem"
 	"hmruntime/collections/index/interfaces"
 	"hmruntime/db"
 	"hmruntime/logger"
 	"hmruntime/manifestdata"
 	"hmruntime/pluginmanager"
 	"hmruntime/plugins"
-	"hmruntime/storage"
 
 	"sync"
 	"time"
-
-	"github.com/cenkalti/backoff/v4"
 )
 
 const collectionFactoryWriteInterval = 1
@@ -81,6 +76,7 @@ func (hf *CollectionFactory) isNameAvailableWithLock(name string) bool {
 }
 
 func (hf *CollectionFactory) Create(
+	ctx context.Context,
 	name string,
 	index interfaces.Collection) (interfaces.Collection, error) {
 	hf.mu.Lock()
@@ -104,7 +100,7 @@ func (hf *CollectionFactory) GetCollectionMap() map[string]interfaces.Collection
 	return hf.collectionMap
 }
 
-func (hf *CollectionFactory) Find(name string) (interfaces.Collection, error) {
+func (hf *CollectionFactory) Find(ctx context.Context, name string) (interfaces.Collection, error) {
 	hf.mu.RLock()
 	defer hf.mu.RUnlock()
 	return hf.findWithLock(name)
@@ -118,9 +114,13 @@ func (hf *CollectionFactory) findWithLock(name string) (interfaces.Collection, e
 	return vecInd, nil
 }
 
-func (hf *CollectionFactory) Remove(name string) error {
+func (hf *CollectionFactory) Remove(ctx context.Context, name string) error {
 	hf.mu.Lock()
 	defer hf.mu.Unlock()
+	err := db.DeleteCollectionTexts(ctx, name)
+	if err != nil {
+		return err
+	}
 	return hf.removeWithLock(name)
 }
 
@@ -130,6 +130,7 @@ func (hf *CollectionFactory) removeWithLock(name string) error {
 }
 
 func (hf *CollectionFactory) CreateOrReplace(
+	ctx context.Context,
 	name string,
 	index interfaces.Collection) (interfaces.Collection, error) {
 	hf.mu.Lock()
@@ -145,52 +146,6 @@ func (hf *CollectionFactory) CreateOrReplace(
 		}
 	}
 	return hf.createWithLock(name, index)
-}
-
-func (hf *CollectionFactory) WriteToBin() error {
-	operation := func() error {
-		data, err := json.Marshal(hf.collectionMap)
-		if err != nil {
-			return fmt.Errorf("could not encode file content, %s", err)
-		}
-
-		if err := storage.WriteFile(context.Background(), "index_factory.bin", data); err != nil {
-			return fmt.Errorf("could not write to file, %s", err)
-		}
-		return nil
-	}
-
-	exponentialBackoff := backoff.NewExponentialBackOff()
-	exponentialBackoff.MaxElapsedTime = 10 * time.Second
-
-	return backoff.Retry(operation, exponentialBackoff)
-}
-
-func (hf *CollectionFactory) ReadFromBin() error {
-	operation := func() error {
-		data, err := storage.GetFileContents(context.Background(), "index_factory.bin")
-		if err != nil {
-			return fmt.Errorf("could not get file content, %s", err)
-		}
-
-		newMap := make(map[string]*in_mem.InMemCollection)
-
-		if err := json.Unmarshal(data, &newMap); err != nil {
-			return fmt.Errorf("could not decode file content, %s", err)
-		}
-
-		hf.collectionMap = make(map[string]interfaces.Collection)
-		for k, v := range newMap {
-			hf.collectionMap[k] = v
-		}
-
-		return nil
-	}
-
-	exponentialBackoff := backoff.NewExponentialBackOff()
-	exponentialBackoff.MaxElapsedTime = 10 * time.Second
-
-	return backoff.Retry(operation, exponentialBackoff)
 }
 
 func (hf *CollectionFactory) ReadFromPostgres(ctx context.Context) {

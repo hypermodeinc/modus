@@ -91,7 +91,7 @@ func ProcessTextMapWithModule(ctx context.Context, mod wasm.Module, collection i
 }
 
 func CleanAndProcessManifest(ctx context.Context) error {
-	deleteIndexesNotInManifest(manifestdata.Manifest)
+	deleteIndexesNotInManifest(ctx, manifestdata.Manifest)
 	processManifestCollections(ctx, manifestdata.Manifest)
 	GlobalCollectionFactory.ReadFromPostgres(ctx)
 	return nil
@@ -99,11 +99,11 @@ func CleanAndProcessManifest(ctx context.Context) error {
 
 func processManifestCollections(ctx context.Context, Manifest manifest.HypermodeManifest) {
 	for collectionName, collectionInfo := range Manifest.Collections {
-		collection, err := GlobalCollectionFactory.Find(collectionName)
+		collection, err := GlobalCollectionFactory.Find(ctx, collectionName)
 		if err == ErrCollectionNotFound {
 			// forces all users to use in-memory index for now
 			// TODO implement other types of indexes based on manifest info
-			collection, err = GlobalCollectionFactory.Create(collectionName, in_mem.NewCollection(collectionName))
+			collection, err = GlobalCollectionFactory.Create(ctx, collectionName, in_mem.NewCollection(collectionName))
 			if err != nil {
 				logger.Err(ctx, err).
 					Str("collection_name", collectionName).
@@ -111,7 +111,7 @@ func processManifestCollections(ctx context.Context, Manifest manifest.Hypermode
 			}
 		}
 		for searchMethodName, searchMethod := range collectionInfo.SearchMethods {
-			_, err := collection.GetVectorIndex(searchMethodName)
+			_, err := collection.GetVectorIndex(ctx, searchMethodName)
 
 			// if the index does not exist, create it
 			// TODO also populate the vector index by running the embedding function to compute vectors ahead of time
@@ -135,7 +135,7 @@ func processManifestCollections(ctx context.Context, Manifest manifest.Hypermode
 					continue
 				}
 
-				err = collection.SetVectorIndex(searchMethodName, vectorIndex)
+				err = collection.SetVectorIndex(ctx, searchMethodName, vectorIndex)
 				if err != nil {
 					logger.Err(ctx, err).
 						Str("index_name", searchMethodName).
@@ -172,10 +172,10 @@ func processManifestCollections(ctx context.Context, Manifest manifest.Hypermode
 	}
 }
 
-func deleteIndexesNotInManifest(Manifest manifest.HypermodeManifest) {
+func deleteIndexesNotInManifest(ctx context.Context, Manifest manifest.HypermodeManifest) {
 	for collectionName := range GlobalCollectionFactory.GetCollectionMap() {
 		if _, ok := Manifest.Collections[collectionName]; !ok {
-			err := GlobalCollectionFactory.Remove(collectionName)
+			err := GlobalCollectionFactory.Remove(ctx, collectionName)
 			if err != nil {
 				logger.Err(context.Background(), err).
 					Str("index_name", collectionName).
@@ -189,7 +189,7 @@ func deleteIndexesNotInManifest(Manifest manifest.HypermodeManifest) {
 		for searchMethodName := range vectorIndexMap {
 			_, ok := Manifest.Collections[collectionName].SearchMethods[searchMethodName]
 			if !ok {
-				err := GlobalCollectionFactory.GetCollectionMap()[collectionName].DeleteVectorIndex(searchMethodName)
+				err := GlobalCollectionFactory.GetCollectionMap()[collectionName].DeleteVectorIndex(ctx, searchMethodName)
 				if err != nil {
 					logger.Err(context.Background(), err).
 						Str("index_name", collectionName).
@@ -204,7 +204,7 @@ func deleteIndexesNotInManifest(Manifest manifest.HypermodeManifest) {
 func CatchEmbedderReqs(ctx context.Context) {
 	go func() {
 		for functionCall := range FnCallChannel {
-			collection, err := GlobalCollectionFactory.Find(functionCall.CollectionName)
+			collection, err := GlobalCollectionFactory.Find(ctx, functionCall.CollectionName)
 			if err != nil {
 				logger.Err(context.Background(), err).Msg("Error finding collection")
 				continue

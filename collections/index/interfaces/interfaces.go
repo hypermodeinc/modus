@@ -72,13 +72,13 @@ type Collection interface {
 	GetVectorIndexMap() map[string]*VectorIndexWrapper
 
 	// GetVectorIndex returns the VectorIndex for a given searchMethod
-	GetVectorIndex(searchMethod string) (*VectorIndexWrapper, error)
+	GetVectorIndex(ctx context.Context, searchMethod string) (*VectorIndexWrapper, error)
 
 	// SetVectorIndex sets the VectorIndex for a given searchMethod
-	SetVectorIndex(searchMethod string, index *VectorIndexWrapper) error
+	SetVectorIndex(ctx context.Context, searchMethod string, index *VectorIndexWrapper) error
 
 	// DeleteVectorIndex deletes the VectorIndex for a given searchMethod
-	DeleteVectorIndex(searchMethod string) error
+	DeleteVectorIndex(ctx context.Context, searchMethod string) error
 
 	// InsertText will add a text and key into the existing VectorIndex
 	InsertText(ctx context.Context, key string, text string) error

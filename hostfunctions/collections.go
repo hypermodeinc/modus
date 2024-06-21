@@ -146,7 +146,7 @@ func hostUpsertToCollection(ctx context.Context, mod wasm.Module, pCollectionNam
 	// Get the collectionName data from the manifest
 	collectionData := manifestdata.Manifest.Collections[collectionName]
 
-	collection, err := collections.GlobalCollectionFactory.Find(collectionName)
+	collection, err := collections.GlobalCollectionFactory.Find(ctx, collectionName)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error finding collectionName.")
 
@@ -170,7 +170,7 @@ func hostUpsertToCollection(ctx context.Context, mod wasm.Module, pCollectionNam
 
 	// compute embeddings for each search method, and insert into vector index
 	for searchMethodName, searchMethod := range collectionData.SearchMethods {
-		vectorIndex, err := collection.GetVectorIndex(searchMethodName)
+		vectorIndex, err := collection.GetVectorIndex(ctx, searchMethodName)
 		if err != nil {
 			logger.Err(ctx, err).Msg("Error finding search method.")
 
@@ -263,7 +263,7 @@ func hostDeleteFromCollection(ctx context.Context, mod wasm.Module, pCollectionN
 		return offset
 	}
 
-	collection, err := collections.GlobalCollectionFactory.Find(collectionName)
+	collection, err := collections.GlobalCollectionFactory.Find(ctx, collectionName)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error finding collectionName.")
 
@@ -334,7 +334,7 @@ func hostSearchCollection(ctx context.Context, mod wasm.Module, pCollectionName 
 		return offset
 	}
 
-	collection, err := collections.GlobalCollectionFactory.Find(collectionName)
+	collection, err := collections.GlobalCollectionFactory.Find(ctx, collectionName)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error finding collectionName.")
 
@@ -345,7 +345,7 @@ func hostSearchCollection(ctx context.Context, mod wasm.Module, pCollectionName 
 		return offset
 	}
 
-	vectorIndex, err := collection.GetVectorIndex(searchMethod)
+	vectorIndex, err := collection.GetVectorIndex(ctx, searchMethod)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error finding search method.")
 
@@ -461,13 +461,13 @@ func hostComputeSimilarity(ctx context.Context, mod wasm.Module, pCollectionName
 		return 0
 	}
 
-	collection, err := collections.GlobalCollectionFactory.Find(collectionName)
+	collection, err := collections.GlobalCollectionFactory.Find(ctx, collectionName)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error finding collectionName.")
 		return 0
 	}
 
-	vectorIndex, err := collection.GetVectorIndex(searchMethod)
+	vectorIndex, err := collection.GetVectorIndex(ctx, searchMethod)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error finding search method.")
 		return 0
@@ -515,7 +515,7 @@ func hostRecomputeSearchMethod(ctx context.Context, mod wasm.Module, pCollection
 		return offset
 	}
 
-	collection, err := collections.GlobalCollectionFactory.Find(collectionName)
+	collection, err := collections.GlobalCollectionFactory.Find(ctx, collectionName)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error finding collectionName.")
 
@@ -526,7 +526,7 @@ func hostRecomputeSearchMethod(ctx context.Context, mod wasm.Module, pCollection
 		return offset
 	}
 
-	vectorIndex, err := collection.GetVectorIndex(searchMethod)
+	vectorIndex, err := collection.GetVectorIndex(ctx, searchMethod)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error finding search method.")
 
@@ -591,7 +591,7 @@ func hostGetText(ctx context.Context, mod wasm.Module, pCollectionName uint32, p
 		return 0
 	}
 
-	collection, err := collections.GlobalCollectionFactory.Find(collectionName)
+	collection, err := collections.GlobalCollectionFactory.Find(ctx, collectionName)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error finding collectionName.")
 		return 0
@@ -621,7 +621,7 @@ func hostGetTexts(ctx context.Context, mod wasm.Module, pCollectionName uint32) 
 		return 0
 	}
 
-	collection, err := collections.GlobalCollectionFactory.Find(collectionName)
+	collection, err := collections.GlobalCollectionFactory.Find(ctx, collectionName)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error finding collectionName.")
 		return 0

@@ -120,6 +120,17 @@ func WriteCollectionText(ctx context.Context, collectionName, key, text string) 
 	return id, nil
 }
 
+func DeleteCollectionTexts(ctx context.Context, collectionName string) error {
+	return WithTx(ctx, func(tx pgx.Tx) error {
+		query := fmt.Sprintf("DELETE FROM %s WHERE collection = $1", collectionTextsTable)
+		_, err := tx.Exec(ctx, query, collectionName)
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+}
+
 func DeleteCollectionText(ctx context.Context, collectionName, key string) error {
 	return WithTx(ctx, func(tx pgx.Tx) error {
 		query := fmt.Sprintf("DELETE FROM %s WHERE collection = $1 AND key = $2", collectionTextsTable)
@@ -158,6 +169,23 @@ func WriteCollectionVector(ctx context.Context, searchMethodName string, textId 
 		return 0, "", err
 	}
 	return vectorId, key, nil
+}
+
+func DeleteCollectionVectors(ctx context.Context, collectionName, searchMethodName string) error {
+	return WithTx(ctx, func(tx pgx.Tx) error {
+		query := fmt.Sprintf(`
+		DELETE FROM %s cv 
+		USING %s ct 
+		WHERE ct.id = cv.text_id 
+		AND ct.collection = $1 
+		AND cv.search_method = $2`,
+			collectionVectorsTable, collectionTextsTable)
+		_, err := tx.Exec(ctx, query, collectionName, searchMethodName)
+		if err != nil {
+			return err
+		}
+		return nil
+	})
 }
 
 func DeleteCollectionVector(ctx context.Context, searchMethodName string, textId int64) error {

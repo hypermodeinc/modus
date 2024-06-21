@@ -13,9 +13,9 @@ type InMemCollection struct {
 	mu             sync.RWMutex
 	collectionName string
 	lastInsertedID int64
-	TextMap        map[string]string // key: text
-	IdMap          map[string]int64  // key: postgres id
-	VectorIndexMap map[string]*interfaces.VectorIndexWrapper
+	TextMap        map[string]string                         // key: text
+	IdMap          map[string]int64                          // key: postgres id
+	VectorIndexMap map[string]*interfaces.VectorIndexWrapper // searchMethod: vectorIndex
 }
 
 func NewCollection(name string) *InMemCollection {
@@ -37,33 +37,37 @@ func (ti *InMemCollection) GetVectorIndexMap() map[string]*interfaces.VectorInde
 	return ti.VectorIndexMap
 }
 
-func (ti *InMemCollection) GetVectorIndex(name string) (*interfaces.VectorIndexWrapper, error) {
+func (ti *InMemCollection) GetVectorIndex(ctx context.Context, searchMethod string) (*interfaces.VectorIndexWrapper, error) {
 	ti.mu.RLock()
 	defer ti.mu.RUnlock()
-	if ind, ok := ti.VectorIndexMap[name]; !ok {
+	if ind, ok := ti.VectorIndexMap[searchMethod]; !ok {
 		return nil, index.ErrVectorIndexNotFound
 	} else {
 		return ind, nil
 	}
 }
 
-func (ti *InMemCollection) SetVectorIndex(name string, vectorIndex *interfaces.VectorIndexWrapper) error {
+func (ti *InMemCollection) SetVectorIndex(ctx context.Context, searchMethod string, vectorIndex *interfaces.VectorIndexWrapper) error {
 	ti.mu.Lock()
 	defer ti.mu.Unlock()
 	if ti.VectorIndexMap == nil {
 		ti.VectorIndexMap = map[string]*interfaces.VectorIndexWrapper{}
 	}
-	if _, ok := ti.VectorIndexMap[name]; ok {
+	if _, ok := ti.VectorIndexMap[searchMethod]; ok {
 		return index.ErrVectorIndexAlreadyExists
 	}
-	ti.VectorIndexMap[name] = vectorIndex
+	ti.VectorIndexMap[searchMethod] = vectorIndex
 	return nil
 }
 
-func (ti *InMemCollection) DeleteVectorIndex(name string) error {
+func (ti *InMemCollection) DeleteVectorIndex(ctx context.Context, searchMethod string) error {
 	ti.mu.Lock()
 	defer ti.mu.Unlock()
-	delete(ti.VectorIndexMap, name)
+	err := db.DeleteCollectionVectors(ctx, ti.collectionName, searchMethod)
+	if err != nil {
+		return err
+	}
+	delete(ti.VectorIndexMap, searchMethod)
 	return nil
 }
 
