@@ -9,7 +9,6 @@
 - Add host function for direct logging [#224](https://github.com/gohypermode/runtime/pull/224)
 - Refactoring, and add helpers for calling functions [#226](https://github.com/gohypermode/runtime/pull/226)
 - Add support for new model interface [#229](https://github.com/gohypermode/runtime/pull/229)
-- Remove extraneous types in GraphQL schemas [#236](https://github.com/hypermodeAI/runtime/pull/236)
 
 ## 2024-06-03 - Version 0.8.2
 
