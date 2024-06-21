@@ -8,8 +8,7 @@ import (
 
 	"hmruntime/collections/in_mem"
 	"hmruntime/collections/index/interfaces"
-	"hmruntime/collections/redis"
-	"hmruntime/config"
+	"hmruntime/db"
 	"hmruntime/logger"
 	"hmruntime/manifestdata"
 	"hmruntime/modules"
@@ -26,22 +25,17 @@ const collectionFactoryWriteInterval = 1
 
 var (
 	GlobalCollectionFactory *CollectionFactory
-	ErrCollectionNotFound   = fmt.Errorf("text index not found")
+	ErrCollectionNotFound   = fmt.Errorf("collection not found")
 )
 
 func InitializeIndexFactory(ctx context.Context) {
 	GlobalCollectionFactory = CreateFactory()
-	// err := GlobalCollectionFactory.ReadFromBin()
-	// if err != nil {
-	// 	logger.Error(ctx).Err(err).Msg("Error reading index factory from bin")
-	// }
-	redis.InitializeRedisClient()
 	manifestdata.RegisterManifestLoadedCallback(CleanAndProcessManifest)
 	modules.RegisterPluginLoadedCallback(func(ctx context.Context, metadata plugins.PluginMetadata) error {
 		CatchEmbedderReqs(ctx)
 		return nil
 	})
-	// go GlobalCollectionFactory.worker(ctx)
+	go GlobalCollectionFactory.worker(ctx)
 }
 
 func CloseIndexFactory(ctx context.Context) {
@@ -58,26 +52,15 @@ type CollectionFactory struct {
 
 func (tif *CollectionFactory) worker(ctx context.Context) {
 	defer close(tif.done)
-	var ticker *time.Ticker
-	if config.IsDevEnvironment() {
-		ticker = time.NewTicker(collectionFactoryWriteInterval * time.Minute)
-	} else {
-		ticker = time.NewTicker(collectionFactoryWriteInterval * time.Hour)
-	}
+	ticker := time.NewTicker(collectionFactoryWriteInterval * time.Minute)
 
 	defer ticker.Stop()
 	for {
 		select {
 		case <-ticker.C:
-			err := tif.WriteToBin()
-			if err != nil {
-				logger.Error(ctx).Err(err).Msg("Error writing index factory to bin")
-			}
+			// read from postgres all collections & searchMethod after lastInsertedID
+			tif.ReadFromPostgres(ctx)
 		case <-tif.quit:
-			err := tif.WriteToBin()
-			if err != nil {
-				logger.Error(ctx).Err(err).Msg("Error writing index factory to bin")
-			}
 			return
 		}
 	}
@@ -208,4 +191,77 @@ func (hf *CollectionFactory) ReadFromBin() error {
 	exponentialBackoff.MaxElapsedTime = 10 * time.Second
 
 	return backoff.Retry(operation, exponentialBackoff)
+}
+
+func (hf *CollectionFactory) ReadFromPostgres(ctx context.Context) {
+	for _, collection := range hf.collectionMap {
+		err := LoadTextsIntoCollection(ctx, collection)
+		if err != nil {
+			logger.Err(ctx, err).
+				Str("collection_name", collection.GetCollectionName()).
+				Msg("Failed to load texts into collection.")
+		}
+
+		for _, vectorIndex := range collection.GetVectorIndexMap() {
+			err = LoadVectorsIntoVectorIndex(ctx, vectorIndex, collection)
+			if err != nil {
+				logger.Err(ctx, err).
+					Str("collection_name", collection.GetCollectionName()).
+					Str("search_method", vectorIndex.GetSearchMethodName()).
+					Msg("Failed to load vectors into vector index.")
+			}
+		}
+	}
+}
+
+func LoadTextsIntoCollection(ctx context.Context, collection interfaces.Collection) error {
+	// Get checkpoint id for collection
+	textCheckpointId, err := collection.GetCheckpointId(ctx)
+	if err != nil {
+		return err
+	}
+
+	// Query all texts from checkpoint
+	textIds, keys, texts, err := db.QueryCollectionTextsFromCheckpoint(ctx, collection.GetCollectionName(), textCheckpointId)
+	if err != nil {
+		return err
+	}
+	if len(textIds) != len(keys) || len(keys) != len(texts) {
+		return errors.New("mismatch in keys and texts")
+	}
+
+	// Insert all texts into collection
+	for i := range textIds {
+		err = collection.InsertTextToMemory(ctx, textIds[i], keys[i], texts[i])
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func LoadVectorsIntoVectorIndex(ctx context.Context, vectorIndex *interfaces.VectorIndexWrapper, collection interfaces.Collection) error {
+	// Get checkpoint id for vector index
+	vecCheckpointId, err := vectorIndex.GetCheckpointId(ctx)
+	if err != nil {
+		return err
+	}
+
+	// Query all vectors from checkpoint
+	vectorIds, keys, vectors, err := db.QueryCollectionVectorsFromCheckpoint(ctx, collection.GetCollectionName(), vectorIndex.GetSearchMethodName(), vecCheckpointId)
+	if err != nil {
+		return err
+	}
+	if len(vectorIds) != len(vectors) || len(keys) != len(vectors) {
+		return errors.New("mismatch in keys and vectors")
+	}
+
+	// Insert all vectors into vector index
+	for i := range vectorIds {
+		err = vectorIndex.InsertVectorToMemory(ctx, vectorIds[i], keys[i], vectors[i])
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }

@@ -5,25 +5,30 @@ import (
 
 	"hmruntime/collections/index"
 	"hmruntime/collections/index/interfaces"
+	"hmruntime/db"
 	"sync"
 )
 
 type InMemCollection struct {
 	mu             sync.RWMutex
-	name           string
-	TextMap        map[string]string
+	collectionName string
+	lastInsertedID int64
+	TextMap        map[string]string // key: text
+	IdMap          map[string]int64  // key: postgres id
 	VectorIndexMap map[string]*interfaces.VectorIndexWrapper
 }
 
 func NewCollection(name string) *InMemCollection {
 	return &InMemCollection{
+		collectionName: name,
 		TextMap:        map[string]string{},
+		IdMap:          map[string]int64{},
 		VectorIndexMap: map[string]*interfaces.VectorIndexWrapper{},
 	}
 }
 
-func (ti *InMemCollection) GetName() string {
-	return ti.name
+func (ti *InMemCollection) GetCollectionName() string {
+	return ti.collectionName
 }
 
 func (ti *InMemCollection) GetVectorIndexMap() map[string]*interfaces.VectorIndexWrapper {
@@ -62,28 +67,49 @@ func (ti *InMemCollection) DeleteVectorIndex(name string) error {
 	return nil
 }
 
-func (ti *InMemCollection) InsertText(ctx context.Context, uuid string, text string) error {
+func (ti *InMemCollection) InsertText(ctx context.Context, key string, text string) error {
+	id, err := db.WriteCollectionText(ctx, ti.collectionName, key, text)
+	if err != nil {
+		return err
+	}
+
+	return ti.InsertTextToMemory(ctx, id, key, text)
+}
+
+func (ti *InMemCollection) InsertTextToMemory(ctx context.Context, id int64, key string, text string) error {
 	ti.mu.Lock()
 	defer ti.mu.Unlock()
-	ti.TextMap[uuid] = text
+	ti.TextMap[key] = text
+	ti.IdMap[key] = id
+	ti.lastInsertedID = id
 	return nil
 }
 
-func (ti *InMemCollection) DeleteText(ctx context.Context, uuid string) error {
+func (ti *InMemCollection) DeleteText(ctx context.Context, key string) error {
 	ti.mu.Lock()
 	defer ti.mu.Unlock()
-	delete(ti.TextMap, uuid)
+	delete(ti.TextMap, key)
 	return nil
 }
 
-func (ti *InMemCollection) GetText(ctx context.Context, uuid string) (string, error) {
+func (ti *InMemCollection) GetText(ctx context.Context, key string) (string, error) {
 	ti.mu.RLock()
 	defer ti.mu.RUnlock()
-	return ti.TextMap[uuid], nil
+	return ti.TextMap[key], nil
 }
 
 func (ti *InMemCollection) GetTextMap(ctx context.Context) (map[string]string, error) {
 	ti.mu.RLock()
 	defer ti.mu.RUnlock()
 	return ti.TextMap, nil
+}
+
+func (ti *InMemCollection) GetExternalId(ctx context.Context, key string) (int64, error) {
+	ti.mu.RLock()
+	defer ti.mu.RUnlock()
+	return ti.IdMap[key], nil
+}
+
+func (ti *InMemCollection) GetCheckpointId(ctx context.Context) (int64, error) {
+	return ti.lastInsertedID, nil
 }

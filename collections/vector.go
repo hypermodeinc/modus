@@ -4,10 +4,10 @@ import (
 	"context"
 	"strings"
 
+	"hmruntime/collections/in_mem"
 	"hmruntime/collections/in_mem/sequential"
 	"hmruntime/collections/index"
 	"hmruntime/collections/index/interfaces"
-	"hmruntime/collections/redis"
 	"hmruntime/collections/utils"
 	"hmruntime/logger"
 	"hmruntime/manifestdata"
@@ -29,10 +29,10 @@ func ProcessTextMap(ctx context.Context, collection interfaces.Collection, embed
 	textMap, err := collection.GetTextMap(ctx)
 	if err != nil {
 		logger.Err(ctx, err).
-			Str("colletion_name", collection.GetName()).
+			Str("colletion_name", collection.GetCollectionName()).
 			Msg("Failed to get text map.")
 	}
-	for uuid, text := range textMap {
+	for key, text := range textMap {
 		result, err := modules.CallFunctionByName(ctx, embedder, text)
 		if err != nil {
 			return err
@@ -43,7 +43,11 @@ func ProcessTextMap(ctx context.Context, collection interfaces.Collection, embed
 			return err
 		}
 
-		err = vectorIndex.InsertVector(ctx, uuid, textVec)
+		id, err := collection.GetExternalId(ctx, key)
+		if err != nil {
+			return err
+		}
+		err = vectorIndex.InsertVector(ctx, id, textVec)
 		if err != nil {
 			return err
 		}
@@ -56,10 +60,10 @@ func ProcessTextMapWithModule(ctx context.Context, mod wasm.Module, collection i
 	textMap, err := collection.GetTextMap(ctx)
 	if err != nil {
 		logger.Err(ctx, err).
-			Str("colletion_name", collection.GetName()).
+			Str("colletion_name", collection.GetCollectionName()).
 			Msg("Failed to get text map.")
 	}
-	for uuid, text := range textMap {
+	for key, text := range textMap {
 		result, err := modules.CallFunctionByNameWithModule(ctx, mod, embedder, text)
 		if err != nil {
 			return err
@@ -70,7 +74,11 @@ func ProcessTextMapWithModule(ctx context.Context, mod wasm.Module, collection i
 			return err
 		}
 
-		err = vectorIndex.InsertVector(ctx, uuid, textVec)
+		id, err := collection.GetExternalId(ctx, key)
+		if err != nil {
+			return err
+		}
+		err = vectorIndex.InsertVector(ctx, id, textVec)
 		if err != nil {
 			return err
 		}
@@ -81,6 +89,7 @@ func ProcessTextMapWithModule(ctx context.Context, mod wasm.Module, collection i
 func CleanAndProcessManifest(ctx context.Context) error {
 	deleteIndexesNotInManifest(manifestdata.Manifest)
 	processManifestCollections(ctx, manifestdata.Manifest)
+	GlobalCollectionFactory.ReadFromPostgres(ctx)
 	return nil
 }
 
@@ -90,7 +99,7 @@ func processManifestCollections(ctx context.Context, Manifest manifest.Hypermode
 		if err == ErrCollectionNotFound {
 			// forces all users to use in-memory index for now
 			// TODO implement other types of indexes based on manifest info
-			collection, err = GlobalCollectionFactory.Create(collectionName, redis.NewCollection(collectionName))
+			collection, err = GlobalCollectionFactory.Create(collectionName, in_mem.NewCollection(collectionName))
 			if err != nil {
 				logger.Err(ctx, err).
 					Str("collection_name", collectionName).
@@ -107,20 +116,14 @@ func processManifestCollections(ctx context.Context, Manifest manifest.Hypermode
 				switch searchMethod.Index.Type {
 				case interfaces.SequentialManifestType:
 					vectorIndex.Type = sequential.SequentialVectorIndexType
-					indexName := collectionName + ":" + searchMethodName
-					vectorIndex.VectorIndex = redis.NewRedisVectorIndex(indexName, interfaces.SequentialManifestType)
-					// vectorIndex.VectorIndex = sequential.NewSequentialVectorIndex()
+					vectorIndex.VectorIndex = sequential.NewSequentialVectorIndex(collectionName, searchMethodName)
 				case interfaces.HnswManifestType:
 					// TODO: Implement hnsw
 					vectorIndex.Type = sequential.SequentialVectorIndexType
-					indexName := collectionName + ":" + searchMethodName
-					vectorIndex.VectorIndex = redis.NewRedisVectorIndex(indexName, interfaces.HnswManifestType)
-					// vectorIndex.VectorIndex = sequential.NewSequentialVectorIndex()
+					vectorIndex.VectorIndex = sequential.NewSequentialVectorIndex(collectionName, searchMethodName)
 				case "":
 					vectorIndex.Type = sequential.SequentialVectorIndexType
-					indexName := collectionName + ":" + searchMethodName
-					vectorIndex.VectorIndex = redis.NewRedisVectorIndex(indexName, interfaces.SequentialManifestType)
-					// vectorIndex.VectorIndex = sequential.NewSequentialVectorIndex()
+					vectorIndex.VectorIndex = sequential.NewSequentialVectorIndex(collectionName, searchMethodName)
 				default:
 					logger.Err(ctx, nil).
 						Str("index_type", searchMethod.Index.Type).
@@ -166,26 +169,26 @@ func processManifestCollections(ctx context.Context, Manifest manifest.Hypermode
 }
 
 func deleteIndexesNotInManifest(Manifest manifest.HypermodeManifest) {
-	for indexName := range GlobalCollectionFactory.GetCollectionMap() {
-		if _, ok := Manifest.Collections[indexName]; !ok {
-			err := GlobalCollectionFactory.Remove(indexName)
+	for collectionName := range GlobalCollectionFactory.GetCollectionMap() {
+		if _, ok := Manifest.Collections[collectionName]; !ok {
+			err := GlobalCollectionFactory.Remove(collectionName)
 			if err != nil {
 				logger.Err(context.Background(), err).
-					Str("index_name", indexName).
+					Str("index_name", collectionName).
 					Msg("Failed to remove vector index.")
 			}
 		}
-		vectorIndexMap := GlobalCollectionFactory.GetCollectionMap()[indexName].GetVectorIndexMap()
+		vectorIndexMap := GlobalCollectionFactory.GetCollectionMap()[collectionName].GetVectorIndexMap()
 		if vectorIndexMap == nil {
 			continue
 		}
 		for searchMethodName := range vectorIndexMap {
-			_, ok := Manifest.Collections[indexName].SearchMethods[searchMethodName]
+			_, ok := Manifest.Collections[collectionName].SearchMethods[searchMethodName]
 			if !ok {
-				err := GlobalCollectionFactory.GetCollectionMap()[indexName].DeleteVectorIndex(searchMethodName)
+				err := GlobalCollectionFactory.GetCollectionMap()[collectionName].DeleteVectorIndex(searchMethodName)
 				if err != nil {
 					logger.Err(context.Background(), err).
-						Str("index_name", indexName).
+						Str("index_name", collectionName).
 						Str("search_method_name", searchMethodName).
 						Msg("Failed to remove vector index.")
 				}

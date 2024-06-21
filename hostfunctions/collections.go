@@ -19,7 +19,7 @@ type collectionMutationResult struct {
 	Collection string
 	Operation  string
 	Status     string
-	ID         string
+	Key        string
 	Error      string
 }
 
@@ -61,7 +61,7 @@ func (r *collectionSearchResult) GetTypeInfo() plugins.TypeInfo {
 }
 
 type collectionSearchResultObject struct {
-	ID    string
+	Key   string
 	Text  string
 	Score float64
 }
@@ -73,12 +73,12 @@ func (r *collectionSearchResultObject) GetTypeInfo() plugins.TypeInfo {
 	}
 }
 
-func WriteCollectionMutationResultOffset(ctx context.Context, mod wasm.Module, collectionName, operation, status, id, error string) (uint32, error) {
+func WriteCollectionMutationResultOffset(ctx context.Context, mod wasm.Module, collectionName, operation, status, key, error string) (uint32, error) {
 	output := collectionMutationResult{
 		Collection: collectionName,
 		Operation:  operation,
 		Status:     status,
-		ID:         id,
+		Key:        key,
 		Error:      error,
 	}
 
@@ -111,9 +111,9 @@ func WriteCollectionSearchResultOffset(ctx context.Context, mod wasm.Module, col
 	return writeResult(ctx, mod, output)
 }
 
-func WriteCollectionSearchResultObjectOffset(ctx context.Context, mod wasm.Module, id, text string, score float64) (uint32, error) {
+func WriteCollectionSearchResultObjectOffset(ctx context.Context, mod wasm.Module, key, text string, score float64) (uint32, error) {
 	output := collectionSearchResultObject{
-		ID:    id,
+		Key:   key,
 		Text:  text,
 		Score: score,
 	}
@@ -121,12 +121,12 @@ func WriteCollectionSearchResultObjectOffset(ctx context.Context, mod wasm.Modul
 	return writeResult(ctx, mod, output)
 }
 
-func hostUpsertToCollection(ctx context.Context, mod wasm.Module, pCollectionName uint32, pId uint32, pText uint32) uint32 {
+func hostUpsertToCollection(ctx context.Context, mod wasm.Module, pCollectionName uint32, pKey uint32, pText uint32) uint32 {
 	var collectionName string
-	var id string
+	var key string
 	var text string
 
-	err := readParams3(ctx, mod, pCollectionName, pId, pText, &collectionName, &id, &text)
+	err := readParams3(ctx, mod, pCollectionName, pKey, pText, &collectionName, &key, &text)
 
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error reading input parameters.")
@@ -138,8 +138,8 @@ func hostUpsertToCollection(ctx context.Context, mod wasm.Module, pCollectionNam
 		return offset
 	}
 
-	if id == "" {
-		id = utils.GenerateUUIDV7()
+	if key == "" {
+		key = utils.GenerateUUIDV7()
 	}
 
 	// Get the collectionName data from the manifest
@@ -156,11 +156,11 @@ func hostUpsertToCollection(ctx context.Context, mod wasm.Module, pCollectionNam
 		return offset
 	}
 
-	err = collection.InsertText(ctx, id, text)
+	err = collection.InsertText(ctx, key, text)
 	if err != nil {
-		logger.Err(ctx, err).Msg("Error inserting into text index.")
+		logger.Err(ctx, err).Msg("Error inserting into collection.")
 
-		offset, err := WriteCollectionMutationResultOffset(ctx, mod, collectionName, "upsert", "error", "", fmt.Sprintf("Error inserting into text index: %s", err.Error()))
+		offset, err := WriteCollectionMutationResultOffset(ctx, mod, collectionName, "upsert", "error", "", fmt.Sprintf("Error inserting into collection: %s", err.Error()))
 		if err != nil {
 			logger.Err(ctx, err).Msg("Error writing result.")
 		}
@@ -208,6 +208,11 @@ func hostUpsertToCollection(ctx context.Context, mod wasm.Module, pCollectionNam
 			logger.Err(ctx, err).Msg("Error converting to float32.")
 		}
 
+		id, err := collection.GetExternalId(ctx, key)
+		if err != nil {
+			logger.Err(ctx, err).Msg("Error getting external id.")
+		}
+
 		err = vectorIndex.InsertVector(ctx, id, textVec)
 		if err != nil {
 			logger.Err(ctx, err).Msg("Error inserting into vector index.")
@@ -220,7 +225,7 @@ func hostUpsertToCollection(ctx context.Context, mod wasm.Module, pCollectionNam
 		}
 	}
 
-	offset, err := WriteCollectionMutationResultOffset(ctx, mod, collectionName, "upsert", "success", id, "")
+	offset, err := WriteCollectionMutationResultOffset(ctx, mod, collectionName, "upsert", "success", key, "")
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error writing result.")
 	}
@@ -228,11 +233,11 @@ func hostUpsertToCollection(ctx context.Context, mod wasm.Module, pCollectionNam
 	return offset
 }
 
-func hostDeleteFromCollection(ctx context.Context, mod wasm.Module, pCollectionName uint32, pId uint32) uint32 {
+func hostDeleteFromCollection(ctx context.Context, mod wasm.Module, pCollectionName uint32, pKey uint32) uint32 {
 	var collectionName string
-	var id string
+	var key string
 
-	err := readParams2(ctx, mod, pCollectionName, pId, &collectionName, &id)
+	err := readParams2(ctx, mod, pCollectionName, pKey, &collectionName, &key)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error reading input parameters.")
 
@@ -253,8 +258,9 @@ func hostDeleteFromCollection(ctx context.Context, mod wasm.Module, pCollectionN
 		}
 		return offset
 	}
+	textId, err := collection.GetExternalId(ctx, key)
 	for _, vectorIndex := range collection.GetVectorIndexMap() {
-		err = vectorIndex.DeleteVector(ctx, id)
+		err = vectorIndex.DeleteVector(ctx, textId, key)
 		if err != nil {
 			logger.Err(ctx, err).Msg("Error deleting from index.")
 
@@ -265,7 +271,7 @@ func hostDeleteFromCollection(ctx context.Context, mod wasm.Module, pCollectionN
 			return offset
 		}
 	}
-	err = collection.DeleteText(ctx, id)
+	err = collection.DeleteText(ctx, key)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error deleting from index.")
 
@@ -276,7 +282,7 @@ func hostDeleteFromCollection(ctx context.Context, mod wasm.Module, pCollectionN
 		return offset
 	}
 
-	offset, err := WriteCollectionMutationResultOffset(ctx, mod, collectionName, "delete", "success", id, "")
+	offset, err := WriteCollectionMutationResultOffset(ctx, mod, collectionName, "delete", "success", key, "")
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error writing result.")
 	}
@@ -385,13 +391,13 @@ func hostSearchCollection(ctx context.Context, mod wasm.Module, pCollectionName 
 				return offset
 			}
 			output.Objects[i] = collectionSearchResultObject{
-				ID:    object.GetIndex(),
+				Key:   object.GetIndex(),
 				Text:  text,
 				Score: object.GetValue(),
 			}
 		} else {
 			output.Objects[i] = collectionSearchResultObject{
-				ID:    object.GetIndex(),
+				Key:   object.GetIndex(),
 				Score: object.GetValue(),
 			}
 		}
@@ -525,11 +531,11 @@ func hostRecomputeSearchMethod(ctx context.Context, mod wasm.Module, pCollection
 	return offset
 }
 
-func hostGetText(ctx context.Context, mod wasm.Module, pCollectionName uint32, pId uint32) uint32 {
+func hostGetText(ctx context.Context, mod wasm.Module, pCollectionName uint32, pKey uint32) uint32 {
 	var collectionName string
-	var id string
+	var key string
 
-	err := readParams2(ctx, mod, pCollectionName, pId, &collectionName, &id)
+	err := readParams2(ctx, mod, pCollectionName, pKey, &collectionName, &key)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error reading input parameters.")
 		return 0
@@ -541,7 +547,7 @@ func hostGetText(ctx context.Context, mod wasm.Module, pCollectionName uint32, p
 		return 0
 	}
 
-	text, err := collection.GetText(ctx, id)
+	text, err := collection.GetText(ctx, key)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error getting text.")
 		return 0

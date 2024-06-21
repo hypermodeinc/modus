@@ -66,7 +66,7 @@ func (v *VectorIndexWrapper) UnmarshalJSON(data []byte) error {
 }
 
 type Collection interface {
-	GetName() string
+	GetCollectionName() string
 
 	// GetVectorIndexMap returns the map of searchMethod to VectorIndex
 	GetVectorIndexMap() map[string]*VectorIndexWrapper
@@ -80,23 +80,31 @@ type Collection interface {
 	// DeleteVectorIndex deletes the VectorIndex for a given searchMethod
 	DeleteVectorIndex(searchMethod string) error
 
-	// InsertText will add a text and uuid into the existing VectorIndex
-	InsertText(ctx context.Context, uuid string, text string) error
+	// InsertText will add a text and key into the existing VectorIndex
+	InsertText(ctx context.Context, key string, text string) error
 
-	// DeleteText will remove a text and uuid from the existing VectorIndex
-	DeleteText(ctx context.Context, uuid string) error
+	InsertTextToMemory(ctx context.Context, id int64, key string, text string) error
 
-	// GetText will return the text for a given uuid
-	GetText(ctx context.Context, uuid string) (string, error)
+	// DeleteText will remove a text and key from the existing VectorIndex
+	DeleteText(ctx context.Context, key string) error
 
-	// GetTextMap returns the map of uuid to text
+	// GetText will return the text for a given key
+	GetText(ctx context.Context, key string) (string, error)
+
+	// GetTextMap returns the map of key to text
 	GetTextMap(ctx context.Context) (map[string]string, error)
+
+	// GetExternalId returns the external id for a given key
+	GetExternalId(ctx context.Context, key string) (int64, error)
+
+	GetCheckpointId(ctx context.Context) (int64, error)
 }
 
 // A VectorIndex can be used to Search for vectors and add vectors to an index.
 type VectorIndex interface {
+	GetSearchMethodName() string
 
-	// Search will find the uids for a given set of vectors based on the
+	// Search will find the keys for a given set of vectors based on the
 	// input query, limiting to the specified maximum number of results.
 	// The filter parameter indicates that we might discard certain parameters
 	// based on some input criteria. The maxResults count is counted *after*
@@ -106,24 +114,30 @@ type VectorIndex interface {
 		maxResults int,
 		filter index.SearchFilter) (utils.MinTupleHeap, error)
 
-	// SearchWithUid will find the uids for a given set of vectors based on the
-	// input queryUid, limiting to the specified maximum number of results.
+	// SearchWithKey will find the keys for a given set of vectors based on the
+	// input queryKey, limiting to the specified maximum number of results.
 	// The filter parameter indicates that we might discard certain parameters
 	// based on some input criteria. The maxResults count is counted *after*
 	// being filtered. In other words, we only count those results that had not
 	// been filtered out.
-	SearchWithUid(ctx context.Context, queryUid string,
+	SearchWithKey(ctx context.Context, queryKey string,
 		maxResults int,
 		filter index.SearchFilter) (utils.MinTupleHeap, error)
 
-	// Insert will add a vector and uuid into the existing VectorIndex. If
-	// uuid already exists, it should throw an error to not insert duplicate uuids
-	InsertVector(ctx context.Context, uuid string, vec []float32) error
+	// Insert will add a vector and key into the existing VectorIndex. If
+	// key already exists, it should throw an error to not insert duplicate keys
+	InsertVector(ctx context.Context, textId int64, vec []float32) error
 
-	// Delete will remove a vector and uuid from the existing VectorIndex. If
-	// uuid does not exist, it should throw an error to not delete non-existent uuids
-	DeleteVector(ctx context.Context, uuid string) error
+	// InsertVectorToMemory will add a vector and key into the existing VectorIndex. If
+	// key already exists, it should throw an error to not insert duplicate keys
+	InsertVectorToMemory(ctx context.Context, vectorId int64, key string, vec []float32) error
 
-	// GetVector will return the vector for a given uuid
-	GetVector(ctx context.Context, uuid string) ([]float32, error)
+	// Delete will remove a vector and key from the existing VectorIndex. If
+	// key does not exist, it should throw an error to not delete non-existent keys
+	DeleteVector(ctx context.Context, textId int64, key string) error
+
+	// GetVector will return the vector for a given key
+	GetVector(ctx context.Context, key string) ([]float32, error)
+
+	GetCheckpointId(ctx context.Context) (int64, error)
 }

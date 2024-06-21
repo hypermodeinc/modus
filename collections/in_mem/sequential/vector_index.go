@@ -5,6 +5,7 @@ import (
 	"context"
 	"hmruntime/collections/index"
 	"hmruntime/collections/utils"
+	"hmruntime/db"
 	"sync"
 )
 
@@ -13,21 +14,27 @@ const (
 )
 
 type SequentialVectorIndex struct {
-	// vectorNodes is a map of string to []float32
-	mu          sync.RWMutex
-	VectorNodes map[string][]float32
+	mu               sync.RWMutex
+	searchMethodName string
+	lastInsertedID   int64
+	VectorMap        map[string][]float32 // key: vector
 }
 
-func NewSequentialVectorIndex() *SequentialVectorIndex {
+func NewSequentialVectorIndex(collection, searchMethod string) *SequentialVectorIndex {
 	return &SequentialVectorIndex{
-		VectorNodes: make(map[string][]float32),
+		searchMethodName: searchMethod,
+		VectorMap:        make(map[string][]float32),
 	}
+}
+
+func (ims *SequentialVectorIndex) GetSearchMethodName() string {
+	return ims.searchMethodName
 }
 
 func (ims *SequentialVectorIndex) GetVectorNodesMap() map[string][]float32 {
 	ims.mu.RLock()
 	defer ims.mu.RUnlock()
-	return ims.VectorNodes
+	return ims.VectorMap
 }
 
 func (ims *SequentialVectorIndex) Search(ctx context.Context, query []float32, maxResults int, filter index.SearchFilter) (utils.MinTupleHeap, error) {
@@ -36,8 +43,8 @@ func (ims *SequentialVectorIndex) Search(ctx context.Context, query []float32, m
 	defer ims.mu.RUnlock()
 	var results utils.MinTupleHeap
 	heap.Init(&results)
-	for uid, vector := range ims.VectorNodes {
-		if filter != nil && !filter(query, vector, uid) {
+	for key, vector := range ims.VectorMap {
+		if filter != nil && !filter(query, vector, key) {
 			continue
 		}
 		similarity, err := utils.CosineSimilarity(query, vector)
@@ -45,10 +52,10 @@ func (ims *SequentialVectorIndex) Search(ctx context.Context, query []float32, m
 			return nil, err
 		}
 		if results.Len() < maxResults {
-			heap.Push(&results, utils.InitHeapElement(similarity, uid, false))
+			heap.Push(&results, utils.InitHeapElement(similarity, key, false))
 		} else if utils.IsBetterScoreForSimilarity(similarity, results[0].GetValue()) {
 			heap.Pop(&results)
-			heap.Push(&results, utils.InitHeapElement(similarity, uid, false))
+			heap.Push(&results, utils.InitHeapElement(similarity, key, false))
 		}
 	}
 
@@ -64,9 +71,9 @@ func (ims *SequentialVectorIndex) Search(ctx context.Context, query []float32, m
 	return finalResults, nil
 }
 
-func (ims *SequentialVectorIndex) SearchWithUid(ctx context.Context, queryUid string, maxResults int, filter index.SearchFilter) (utils.MinTupleHeap, error) {
+func (ims *SequentialVectorIndex) SearchWithKey(ctx context.Context, queryKey string, maxResults int, filter index.SearchFilter) (utils.MinTupleHeap, error) {
 	ims.mu.RLock()
-	query := ims.VectorNodes[queryUid]
+	query := ims.VectorMap[queryKey]
 	ims.mu.RUnlock()
 	if query == nil {
 		return nil, nil
@@ -74,22 +81,42 @@ func (ims *SequentialVectorIndex) SearchWithUid(ctx context.Context, queryUid st
 	return ims.Search(ctx, query, maxResults, filter)
 }
 
-func (ims *SequentialVectorIndex) InsertVector(ctx context.Context, uid string, vector []float32) error {
+func (ims *SequentialVectorIndex) InsertVector(ctx context.Context, textId int64, vec []float32) error {
+
+	vectorId, key, err := db.WriteCollectionVector(ctx, ims.searchMethodName, textId, vec)
+	if err != nil {
+		return err
+	}
+
+	return ims.InsertVectorToMemory(ctx, vectorId, key, vec)
+
+}
+
+func (ims *SequentialVectorIndex) InsertVectorToMemory(ctx context.Context, vectorId int64, key string, vec []float32) error {
 	ims.mu.Lock()
 	defer ims.mu.Unlock()
-	ims.VectorNodes[uid] = vector
+	ims.VectorMap[key] = vec
+	ims.lastInsertedID = vectorId
 	return nil
 }
 
-func (ims *SequentialVectorIndex) DeleteVector(ctx context.Context, uid string) error {
+func (ims *SequentialVectorIndex) DeleteVector(ctx context.Context, textId int64, key string) error {
 	ims.mu.Lock()
 	defer ims.mu.Unlock()
-	delete(ims.VectorNodes, uid)
+	err := db.DeleteCollectionVector(ctx, ims.searchMethodName, textId)
+	if err != nil {
+		return err
+	}
+	delete(ims.VectorMap, key)
 	return nil
 }
 
-func (ims *SequentialVectorIndex) GetVector(ctx context.Context, uid string) ([]float32, error) {
+func (ims *SequentialVectorIndex) GetVector(ctx context.Context, key string) ([]float32, error) {
 	ims.mu.RLock()
 	defer ims.mu.RUnlock()
-	return ims.VectorNodes[uid], nil
+	return ims.VectorMap[key], nil
+}
+
+func (ims *SequentialVectorIndex) GetCheckpointId(ctx context.Context) (int64, error) {
+	return ims.lastInsertedID, nil
 }
