@@ -17,6 +17,7 @@ import (
 	"hmruntime/config"
 	"hmruntime/db"
 	"hmruntime/graphql"
+	"hmruntime/hostfunctions"
 	"hmruntime/logger"
 	"hmruntime/manifestdata"
 	"hmruntime/secrets"
@@ -67,6 +68,9 @@ func initRuntimeServices(ctx context.Context) {
 
 	// Initialize the WebAssembly runtime
 	wasmhost.InitWasmHost(ctx)
+
+	// Register the host functions with the runtime
+	hostfunctions.RegisterHostFunctions(ctx)
 
 	// Initialize AWS functionality
 	aws.Initialize(ctx)
