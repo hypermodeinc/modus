@@ -581,7 +581,7 @@ func hostRecomputeSearchMethod(ctx context.Context, mod wasm.Module, pCollection
 	return offset
 }
 
-func hostGetText(ctx context.Context, mod wasm.Module, pCollectionName uint32, pKey uint32) uint32 {
+func hostGetTextFromCollection(ctx context.Context, mod wasm.Module, pCollectionName uint32, pKey uint32) uint32 {
 	var collectionName string
 	var key string
 
@@ -612,7 +612,7 @@ func hostGetText(ctx context.Context, mod wasm.Module, pCollectionName uint32, p
 	return offset
 }
 
-func hostGetTexts(ctx context.Context, mod wasm.Module, pCollectionName uint32) uint32 {
+func hostGetTextsFromCollection(ctx context.Context, mod wasm.Module, pCollectionName uint32) uint32 {
 	var collectionName string
 
 	err := readParam(ctx, mod, pCollectionName, &collectionName)
