@@ -16,7 +16,12 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-var globalRuntimePostgresWriter *runtimePostgresWriter = &runtimePostgresWriter{}
+var globalRuntimePostgresWriter *runtimePostgresWriter = &runtimePostgresWriter{
+	dbpool: nil,
+	buffer: make(chan inferenceHistory, chanSize),
+	quit:   make(chan struct{}),
+	done:   make(chan struct{}),
+}
 
 const batchSize = 100
 const chanSize = 10000
@@ -204,8 +209,8 @@ func QueryCollectionTextsFromCheckpoint(ctx context.Context, collection string, 
 	var keys []string
 	var texts []string
 	err := WithTx(ctx, func(tx pgx.Tx) error {
-		query := fmt.Sprintf("SELECT id, key, text FROM %s WHERE collection = $1 AND id > $2", collectionTextsTable)
-		rows, err := tx.Query(ctx, query, collection, textCheckpointId)
+		query := fmt.Sprintf("SELECT id, key, text FROM %s WHERE id > $1 AND collection = $2", collectionTextsTable)
+		rows, err := tx.Query(ctx, query, textCheckpointId, collection)
 		if err != nil {
 			return err
 		}
@@ -244,8 +249,8 @@ func QueryCollectionVectorsFromCheckpoint(ctx context.Context, collectionName, s
 		query := fmt.Sprintf(`SELECT cv.id, ct.key, cv.vector 
                   FROM %s cv 
                   JOIN %s ct ON cv.text_id = ct.id 
-                  WHERE ct.collection = $1 AND cv.search_method = $2 AND cv.id > $3`, collectionVectorsTable, collectionTextsTable)
-		rows, err := tx.Query(ctx, query, collectionName, searchMethodName, vecCheckpointId)
+                  WHERE cv.id > $1 AND ct.collection = $2 AND cv.search_method = $3`, collectionVectorsTable, collectionTextsTable)
+		rows, err := tx.Query(ctx, query, vecCheckpointId, collectionName, searchMethodName)
 		if err != nil {
 			return err
 		}
@@ -343,23 +348,17 @@ func WriteInferenceHistoryToDB(ctx context.Context, batch []inferenceHistory) {
 }
 
 func Initialize(ctx context.Context) {
-	globalRuntimePostgresWriter = &runtimePostgresWriter{
-		dbpool: nil,
-		buffer: make(chan inferenceHistory, chanSize),
-		quit:   make(chan struct{}),
-		done:   make(chan struct{}),
-	}
 	connStr, err := secrets.GetSecretValue(ctx, "HYPERMODE_METADATA_DB")
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error getting database connection string")
 		return
 	}
 
-	tempDBPool, err := pgxpool.New(ctx, connStr)
+	pool, err := pgxpool.New(ctx, connStr)
 	if err != nil {
 		logger.Warn(ctx).Err(err).Msg("Database pool initialization failed.")
 	}
-	globalRuntimePostgresWriter.dbpool = tempDBPool
+	globalRuntimePostgresWriter.dbpool = pool
 	go globalRuntimePostgresWriter.worker(ctx)
 }
 
