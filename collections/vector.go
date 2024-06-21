@@ -11,7 +11,7 @@ import (
 	"hmruntime/collections/utils"
 	"hmruntime/logger"
 	"hmruntime/manifestdata"
-	"hmruntime/modules"
+	"hmruntime/wasmhost"
 
 	"github.com/hypermodeAI/manifest"
 	wasm "github.com/tetratelabs/wazero/api"
@@ -33,10 +33,12 @@ func ProcessTextMap(ctx context.Context, collection interfaces.Collection, embed
 			Msg("Failed to get text map.")
 	}
 	for key, text := range textMap {
-		result, err := modules.CallFunctionByName(ctx, embedder, text)
+		executionInfo, err := wasmhost.CallFunction(ctx, embedder, text)
 		if err != nil {
 			return err
 		}
+
+		result := executionInfo.Result
 
 		textVec, err := utils.ConvertToFloat32Array(result)
 		if err != nil {
@@ -64,10 +66,12 @@ func ProcessTextMapWithModule(ctx context.Context, mod wasm.Module, collection i
 			Msg("Failed to get text map.")
 	}
 	for key, text := range textMap {
-		result, err := modules.CallFunctionByNameWithModule(ctx, mod, embedder, text)
+		executionInfo, err := wasmhost.CallFunction(ctx, embedder, text)
 		if err != nil {
 			return err
 		}
+
+		result := executionInfo.Result
 
 		textVec, err := utils.ConvertToFloat32Array(result)
 		if err != nil {

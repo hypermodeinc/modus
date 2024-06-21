@@ -6,11 +6,12 @@ import (
 
 	"hmruntime/collections"
 	collection_utils "hmruntime/collections/utils"
+	"hmruntime/functions"
 	"hmruntime/logger"
 	"hmruntime/manifestdata"
-	"hmruntime/modules"
 	"hmruntime/plugins"
 	"hmruntime/utils"
+	"hmruntime/wasmhost"
 
 	wasm "github.com/tetratelabs/wazero/api"
 )
@@ -181,7 +182,18 @@ func hostUpsertToCollection(ctx context.Context, mod wasm.Module, pCollectionNam
 		}
 
 		embedder := searchMethod.Embedder
-		err = modules.VerifyFunctionSignature(embedder, "string", "f64[]")
+		info, err := functions.GetFunctionInfo(embedder)
+		if err != nil {
+			logger.Err(ctx, err).Msg("Error getting function info.")
+
+			offset, err := WriteCollectionMutationResultOffset(ctx, mod, collectionName, "upsert", "error", "", fmt.Sprintf("Error getting function info: %s", err.Error()))
+			if err != nil {
+				logger.Err(ctx, err).Msg("Error writing result.")
+			}
+			return offset
+		}
+
+		err = functions.VerifyFunctionSignature(info, "string", "f64[]")
 		if err != nil {
 			logger.Err(ctx, err).Msg("Error verifying function signature.")
 
@@ -192,7 +204,7 @@ func hostUpsertToCollection(ctx context.Context, mod wasm.Module, pCollectionNam
 			return offset
 		}
 
-		result, err := modules.CallFunctionByNameWithModule(ctx, mod, embedder, text)
+		executionInfo, err := wasmhost.CallFunction(ctx, embedder, text)
 		if err != nil {
 			logger.Err(ctx, err).Msg("Error calling function.")
 
@@ -202,6 +214,8 @@ func hostUpsertToCollection(ctx context.Context, mod wasm.Module, pCollectionNam
 			}
 			return offset
 		}
+
+		result := executionInfo.Result
 
 		textVec, err := collection_utils.ConvertToFloat32Array(result)
 		if err != nil {
@@ -333,18 +347,43 @@ func hostSearchCollection(ctx context.Context, mod wasm.Module, pCollectionName 
 	}
 
 	embedder := manifestdata.Manifest.Collections[collectionName].SearchMethods[searchMethod].Embedder
-	err = modules.VerifyFunctionSignature(embedder, "string", "f64[]")
-	if err != nil {
-		logger.Err(ctx, err).Msg("Error verifying function signature.")
 
-		offset, err := WriteCollectionSearchResultOffset(ctx, mod, collectionName, searchMethod, "error", nil, fmt.Sprintf("Error verifying function signature: %s", err.Error()))
+	info, err := functions.GetFunctionInfo(embedder)
+	if err != nil {
+		logger.Err(ctx, err).Msg("Error getting function info.")
+
+		offset, err := WriteCollectionSearchResultOffset(ctx, mod, collectionName, searchMethod, "error", nil, fmt.Sprintf("Error getting function info: %s", err.Error()))
 		if err != nil {
 			logger.Err(ctx, err).Msg("Error writing result.")
 		}
 		return offset
 	}
 
-	result, err := modules.CallFunctionByNameWithModule(ctx, mod, embedder, text)
+	err = functions.VerifyFunctionSignature(info, "string", "f64[]")
+	if err != nil {
+		logger.Err(ctx, err).Msg("Error verifying function signature.")
+
+		offset, err := WriteCollectionMutationResultOffset(ctx, mod, collectionName, "upsert", "error", "", fmt.Sprintf("Error verifying function signature: %s", err.Error()))
+		if err != nil {
+			logger.Err(ctx, err).Msg("Error writing result.")
+		}
+		return offset
+	}
+
+	executionInfo, err := wasmhost.CallFunction(ctx, embedder, text)
+	if err != nil {
+		logger.Err(ctx, err).Msg("Error calling function.")
+
+		offset, err := WriteCollectionMutationResultOffset(ctx, mod, collectionName, "upsert", "error", "", fmt.Sprintf("Error calling function: %s", err.Error()))
+		if err != nil {
+			logger.Err(ctx, err).Msg("Error writing result.")
+		}
+		return offset
+	}
+
+	result := executionInfo.Result
+
+	textVec, err := collection_utils.ConvertToFloat32Array(result)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error calling function.")
 
@@ -355,7 +394,7 @@ func hostSearchCollection(ctx context.Context, mod wasm.Module, pCollectionName 
 		return offset
 	}
 
-	textVec, err := collection_utils.ConvertToFloat32Array(result)
+	textVec, err = collection_utils.ConvertToFloat32Array(result)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error converting to float32.")
 	}
@@ -500,11 +539,22 @@ func hostRecomputeSearchMethod(ctx context.Context, mod wasm.Module, pCollection
 	}
 
 	embedder := manifestdata.Manifest.Collections[collectionName].SearchMethods[searchMethod].Embedder
-	err = modules.VerifyFunctionSignature(embedder, "string", "f64[]")
+	info, err := functions.GetFunctionInfo(embedder)
+	if err != nil {
+		logger.Err(ctx, err).Msg("Error getting function info.")
+
+		offset, err := WriteCollectionSearchResultOffset(ctx, mod, collectionName, searchMethod, "error", nil, fmt.Sprintf("Error getting function info: %s", err.Error()))
+		if err != nil {
+			logger.Err(ctx, err).Msg("Error writing result.")
+		}
+		return offset
+	}
+
+	err = functions.VerifyFunctionSignature(info, "string", "f64[]")
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error verifying function signature.")
 
-		offset, err := WriteCollectionMutationResultOffset(ctx, mod, collectionName, "recompute", "error", "", fmt.Sprintf("Error verifying function signature: %s", err.Error()))
+		offset, err := WriteCollectionMutationResultOffset(ctx, mod, collectionName, "upsert", "error", "", fmt.Sprintf("Error verifying function signature: %s", err.Error()))
 		if err != nil {
 			logger.Err(ctx, err).Msg("Error writing result.")
 		}

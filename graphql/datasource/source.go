@@ -12,8 +12,8 @@ import (
 
 	"hmruntime/functions"
 	"hmruntime/logger"
-	"hmruntime/modules"
 	"hmruntime/utils"
+	"hmruntime/wasmhost"
 
 	"github.com/buger/jsonparser"
 	"github.com/wundergraph/graphql-go-tools/v2/pkg/engine/resolve"
@@ -43,7 +43,7 @@ func (s Source) Load(ctx context.Context, input []byte, writer io.Writer) error 
 	}
 
 	// Load the data
-	result, gqlErrors, err := s.callFunctionWithCallInfo(ctx, ci)
+	result, gqlErrors, err := s.callFunction(ctx, ci)
 
 	// Write the response
 	err = writeGraphQLResponse(writer, result, gqlErrors, err, ci)
@@ -54,43 +54,25 @@ func (s Source) Load(ctx context.Context, input []byte, writer io.Writer) error 
 	return err
 }
 
-func (s Source) callFunctionWithCallInfo(ctx context.Context, callInfo callInfo) (any, []resolve.GraphQLError, error) {
-
-	// Get the function info
-	info, ok := functions.Functions[callInfo.Function.Name]
-	if !ok {
-		return nil, nil, fmt.Errorf("no function registered named %s", callInfo.Function.Name)
-	}
-
-	// Prepare the context, buffers, and messages
-	ctx, executionId, buffers, messages := modules.Setup(ctx, info)
-
-	// Get a module instance for this request.
-	// Each request will get its own instance of the plugin module, so that we can run
-	// multiple requests in parallel without risk of corrupting the module's memory.
-	// This also protects against security risk, as each request will have its own
-	// isolated memory space.  (One request cannot access another request's memory.)
-	mod, err := modules.GetModuleInstance(ctx, info.Plugin, &buffers)
+func (s Source) callFunction(ctx context.Context, callInfo callInfo) (any, []resolve.GraphQLError, error) {
+	// Call the function
+	info, err := wasmhost.CallFunctionWithParametersMap(ctx, callInfo.Function.Name, callInfo.Parameters)
 	if err != nil {
 		return nil, nil, err
 	}
-	defer mod.Close(ctx)
-
-	// Call the function
-	result, err := functions.CallFunction(ctx, mod, info, callInfo.Parameters)
 
 	// Store the Execution ID and output buffers in the context
 	outputMap := ctx.Value(utils.FunctionOutputContextKey).(map[string]FunctionOutput)
 	outputMap[callInfo.Function.AliasOrName()] = FunctionOutput{
-		ExecutionId: executionId,
-		Buffers:     buffers,
+		ExecutionId: info.ExecutionId,
+		Buffers:     *info.Buffers,
 	}
 
 	// Transform messages (and error lines in the output buffers) to GraphQL errors
-	messages = append(messages, utils.TransformConsoleOutput(buffers)...)
+	messages := append(info.Messages, utils.TransformConsoleOutput(*info.Buffers)...)
 	gqlErrors := transformErrors(messages, callInfo)
 
-	return result, gqlErrors, err
+	return info.Result, gqlErrors, err
 }
 
 func writeGraphQLResponse(writer io.Writer, result any, gqlErrors []resolve.GraphQLError, fnErr error, ci callInfo) error {

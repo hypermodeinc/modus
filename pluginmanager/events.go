@@ -2,7 +2,7 @@
  * Copyright 2024 Hypermode, Inc.
  */
 
-package modules
+package pluginmanager
 
 import (
 	"context"

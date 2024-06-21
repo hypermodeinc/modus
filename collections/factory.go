@@ -11,7 +11,7 @@ import (
 	"hmruntime/db"
 	"hmruntime/logger"
 	"hmruntime/manifestdata"
-	"hmruntime/modules"
+	"hmruntime/pluginmanager"
 	"hmruntime/plugins"
 	"hmruntime/storage"
 
@@ -31,7 +31,7 @@ var (
 func InitializeIndexFactory(ctx context.Context) {
 	GlobalCollectionFactory = CreateFactory()
 	manifestdata.RegisterManifestLoadedCallback(CleanAndProcessManifest)
-	modules.RegisterPluginLoadedCallback(func(ctx context.Context, metadata plugins.PluginMetadata) error {
+	pluginmanager.RegisterPluginLoadedCallback(func(ctx context.Context, metadata plugins.PluginMetadata) error {
 		CatchEmbedderReqs(ctx)
 		return nil
 	})

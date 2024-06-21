@@ -18,9 +18,10 @@ import (
 	"hmruntime/config"
 	"hmruntime/db"
 	"hmruntime/graphql"
+	"hmruntime/hostfunctions"
 	"hmruntime/logger"
 	"hmruntime/manifestdata"
-	"hmruntime/modules"
+	"hmruntime/pluginmanager"
 	"hmruntime/secrets"
 	"hmruntime/server"
 	"hmruntime/storage"
@@ -70,6 +71,9 @@ func initRuntimeServices(ctx context.Context) {
 	// Initialize the WebAssembly runtime
 	wasmhost.InitWasmHost(ctx)
 
+	// Register the host functions with the runtime
+	hostfunctions.RegisterHostFunctions(ctx)
+
 	// Initialize AWS functionality
 	aws.Initialize(ctx)
 
@@ -89,7 +93,7 @@ func initRuntimeServices(ctx context.Context) {
 	manifestdata.MonitorManifestFile(ctx)
 
 	// Load plugins and monitor for changes
-	modules.MonitorPlugins(ctx)
+	pluginmanager.MonitorPlugins(ctx)
 
 	// Initialize the GraphQL engine
 	graphql.Initialize()
@@ -97,7 +101,7 @@ func initRuntimeServices(ctx context.Context) {
 
 func stopRuntimeServices(ctx context.Context) {
 	collections.CloseIndexFactory(ctx)
-	modules.RuntimeInstance.Close(ctx)
+	wasmhost.RuntimeInstance.Close(ctx)
 	logger.Close()
 
 	db.Stop()

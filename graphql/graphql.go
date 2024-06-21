@@ -12,7 +12,7 @@ import (
 	"hmruntime/graphql/datasource"
 	"hmruntime/graphql/engine"
 	"hmruntime/logger"
-	"hmruntime/modules"
+	"hmruntime/pluginmanager"
 	"hmruntime/utils"
 
 	"github.com/buger/jsonparser"
@@ -25,7 +25,7 @@ import (
 
 func Initialize() {
 	// The GraphQL engine's Activate function should be called when a plugin is loaded.
-	modules.RegisterPluginLoadedCallback(engine.Activate)
+	pluginmanager.RegisterPluginLoadedCallback(engine.Activate)
 }
 
 func HandleGraphQLRequest(w http.ResponseWriter, r *http.Request) {

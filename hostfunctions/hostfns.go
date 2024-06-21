@@ -6,20 +6,29 @@ package hostfunctions
 
 import (
 	"context"
-	"fmt"
 
+	"hmruntime/logger"
 	"hmruntime/utils"
+	"hmruntime/wasmhost"
 
-	"github.com/tetratelabs/wazero"
+	wasi "github.com/tetratelabs/wazero/imports/wasi_snapshot_preview1"
 )
 
 const hostModuleName string = "hypermode"
 
-func Instantiate(ctx context.Context, runtime *wazero.Runtime) error {
+func RegisterHostFunctions(ctx context.Context) {
 	span := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
 
-	b := (*runtime).NewHostModuleBuilder(hostModuleName)
+	instantiateHostFunctions(ctx)
+	instantiateWasiFunctions(ctx)
+}
+
+func instantiateHostFunctions(ctx context.Context) {
+	span := utils.NewSentrySpanForCurrentFunc(ctx)
+	defer span.Finish()
+
+	b := wasmhost.RuntimeInstance.NewHostModuleBuilder(hostModuleName)
 
 	// Each host function should get a line here:
 	b.NewFunctionBuilder().WithFunc(hostLog).Export("log")
@@ -40,8 +49,25 @@ func Instantiate(ctx context.Context, runtime *wazero.Runtime) error {
 
 	_, err := b.Instantiate(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to instantiate the %s module: %w", hostModuleName, err)
+		logger.Fatal(ctx).Err(err).
+			Str("module", hostModuleName).
+			Msg("Failed to instantiate the host module.  Exiting.")
 	}
+}
 
-	return nil
+func instantiateWasiFunctions(ctx context.Context) {
+	span := utils.NewSentrySpanForCurrentFunc(ctx)
+	defer span.Finish()
+
+	b := wasmhost.RuntimeInstance.NewHostModuleBuilder(wasi.ModuleName)
+	wasi.NewFunctionExporter().ExportFunctions(b)
+
+	// If we ever need to override any of the WASI functions, we can do so here.
+
+	_, err := b.Instantiate(ctx)
+	if err != nil {
+		logger.Fatal(ctx).Err(err).
+			Str("module", wasi.ModuleName).
+			Msg("Failed to instantiate the host module.  Exiting.")
+	}
 }
