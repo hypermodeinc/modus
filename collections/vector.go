@@ -182,7 +182,11 @@ func deleteIndexesNotInManifest(ctx context.Context, Manifest manifest.Hypermode
 					Msg("Failed to remove vector index.")
 			}
 		}
-		vectorIndexMap := GlobalCollectionFactory.GetCollectionMap()[collectionName].GetVectorIndexMap()
+		collection := GlobalCollectionFactory.GetCollectionMap()[collectionName]
+		if collection == nil {
+			continue
+		}
+		vectorIndexMap := collection.GetVectorIndexMap()
 		if vectorIndexMap == nil {
 			continue
 		}
