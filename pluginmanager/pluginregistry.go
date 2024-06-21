@@ -2,29 +2,29 @@
  * Copyright 2024 Hypermode, Inc.
  */
 
-package plugins
+package pluginmanager
 
 import (
 	"cmp"
+	"hmruntime/plugins"
 	"slices"
 	"sync"
 )
 
+// thread-safe registry of all plugins that are loaded
+var registry = pluginRegistry{
+	nameIndex: make(map[string]*plugins.Plugin),
+	fileIndex: make(map[string]*plugins.Plugin),
+}
+
 type pluginRegistry struct {
-	plugins   []Plugin
-	nameIndex map[string]*Plugin
-	fileIndex map[string]*Plugin
+	plugins   []plugins.Plugin
+	nameIndex map[string]*plugins.Plugin
+	fileIndex map[string]*plugins.Plugin
 	mutex     sync.RWMutex
 }
 
-func NewPluginRegistry() pluginRegistry {
-	return pluginRegistry{
-		nameIndex: make(map[string]*Plugin),
-		fileIndex: make(map[string]*Plugin),
-	}
-}
-
-func (pr *pluginRegistry) AddOrUpdate(plugin Plugin) {
+func (pr *pluginRegistry) AddOrUpdate(plugin plugins.Plugin) {
 	pr.mutex.Lock()
 	defer pr.mutex.Unlock()
 
@@ -44,7 +44,7 @@ func (pr *pluginRegistry) AddOrUpdate(plugin Plugin) {
 	pr.fileIndex[plugin.FileName] = &plugin
 }
 
-func (pr *pluginRegistry) Remove(plugin Plugin) {
+func (pr *pluginRegistry) Remove(plugin plugins.Plugin) {
 	pr.mutex.Lock()
 	defer pr.mutex.Unlock()
 
@@ -59,18 +59,18 @@ func (pr *pluginRegistry) Remove(plugin Plugin) {
 	delete(pr.fileIndex, plugin.FileName)
 }
 
-func (pr *pluginRegistry) GetAll() []Plugin {
+func (pr *pluginRegistry) GetAll() []plugins.Plugin {
 	pr.mutex.RLock()
 	defer pr.mutex.RUnlock()
 
-	plugins := pr.plugins
-	slices.SortFunc(plugins, func(a, b Plugin) int {
+	result := pr.plugins
+	slices.SortFunc(result, func(a, b plugins.Plugin) int {
 		return cmp.Compare(a.Name(), b.Name())
 	})
-	return plugins
+	return result
 }
 
-func (pr *pluginRegistry) GetByName(name string) (Plugin, bool) {
+func (pr *pluginRegistry) GetByName(name string) (plugins.Plugin, bool) {
 	pr.mutex.RLock()
 	defer pr.mutex.RUnlock()
 
@@ -78,11 +78,11 @@ func (pr *pluginRegistry) GetByName(name string) (Plugin, bool) {
 	if ok {
 		return *plugin, true
 	} else {
-		return Plugin{}, false
+		return plugins.Plugin{}, false
 	}
 }
 
-func (pr *pluginRegistry) GetByFile(filename string) (Plugin, bool) {
+func (pr *pluginRegistry) GetByFile(filename string) (plugins.Plugin, bool) {
 	pr.mutex.RLock()
 	defer pr.mutex.RUnlock()
 
@@ -90,6 +90,6 @@ func (pr *pluginRegistry) GetByFile(filename string) (Plugin, bool) {
 	if ok {
 		return *plugin, true
 	} else {
-		return Plugin{}, false
+		return plugins.Plugin{}, false
 	}
 }

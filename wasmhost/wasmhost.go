@@ -23,9 +23,6 @@ import (
 // Global runtime instance for the WASM modules
 var RuntimeInstance wazero.Runtime
 
-// Global, thread-safe registry of all plugins loaded by the host
-var Plugins = plugins.NewPluginRegistry()
-
 // Gets a module instance for the given plugin, used for a single invocation.
 func GetModuleInstance(ctx context.Context, plugin *plugins.Plugin, buffers *utils.OutputBuffers) (wasm.Module, error) {
 
