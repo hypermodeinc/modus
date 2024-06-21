@@ -17,7 +17,7 @@ func ShouldReturnErrorToResponse(err error) bool {
 	return err != errFunctionException
 }
 
-func transformError(err error) error {
+func TransformError(err error) error {
 	if errors.Is(err, errModuleClosed) {
 		return errFunctionException
 	}

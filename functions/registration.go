@@ -6,12 +6,21 @@ package functions
 
 import (
 	"context"
+	"fmt"
 
 	"hmruntime/logger"
 	"hmruntime/plugins"
 )
 
-var Functions = make(map[string]FunctionInfo)
+var functions = make(map[string]FunctionInfo)
+
+func GetFunctionInfo(fnName string) (FunctionInfo, error) {
+	info, ok := functions[fnName]
+	if !ok {
+		return FunctionInfo{}, fmt.Errorf("no function registered named %s", fnName)
+	}
+	return info, nil
+}
 
 type FunctionInfo struct {
 	Function plugins.FunctionSignature
@@ -40,7 +49,7 @@ func (r *registration) registerPlugin(ctx context.Context, plugin *plugins.Plugi
 
 	// Save functions from the metadata to the functions map
 	for _, fn := range plugin.Metadata.Functions {
-		Functions[fn.Name] = FunctionInfo{
+		functions[fn.Name] = FunctionInfo{
 			Function: fn,
 			Plugin:   plugin,
 		}
@@ -57,9 +66,9 @@ func (r *registration) registerPlugin(ctx context.Context, plugin *plugins.Plugi
 func (r *registration) cleanup(ctx context.Context) {
 
 	// Cleanup any previously registered functions
-	for name, fn := range Functions {
+	for name, fn := range functions {
 		if !r.functions[name] {
-			delete(Functions, name)
+			delete(functions, name)
 			logger.Info(ctx).
 				Str("function", name).
 				Str("plugin", fn.Plugin.Name()).
