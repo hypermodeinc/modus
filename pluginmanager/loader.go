@@ -61,7 +61,7 @@ func loadPlugin(ctx context.Context, filename string) error {
 		return err
 	}
 
-	// Compile the plugin into a module.
+	// Compile the plugin into a module
 	cm, err := compileModule(ctx, bytes)
 	if err != nil {
 		return err
