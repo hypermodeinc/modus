@@ -136,7 +136,7 @@ func writeSchemaHeader(buf *bytes.Buffer, metadata plugins.PluginMetadata) {
 }
 
 func writeSchema(buf *bytes.Buffer, functions []FunctionSignature, typeDefs []TypeDefinition) {
-	var consumedTypeNames = make(map[string]bool)
+
 	// sort functions and type definitions
 	slices.SortFunc(functions, func(a, b FunctionSignature) int {
 		return cmp.Compare(a.Name, b.Name)
@@ -148,17 +148,6 @@ func writeSchema(buf *bytes.Buffer, functions []FunctionSignature, typeDefs []Ty
 	// write query functions
 	buf.WriteString("type Query {\n")
 	for _, f := range functions {
-		for _, p := range f.Parameters {
-			var t = getBaseType(p.Type)
-			if isCustomType(p.Type) {
-				consumedTypeNames[t] = true
-			}
-		}
-		var t = getBaseType(f.ReturnType)
-		if isCustomType(f.ReturnType) {
-			consumedTypeNames[t] = true
-		}
-
 		buf.WriteString("  ")
 		buf.WriteString(f.Name)
 		if len(f.Parameters) > 0 {
@@ -182,9 +171,6 @@ func writeSchema(buf *bytes.Buffer, functions []FunctionSignature, typeDefs []Ty
 	// write scalars
 	wroteScalar := false
 	for _, t := range typeDefs {
-		if !consumedTypeNames[t.Name] {
-			continue
-		}
 		if len(t.Fields) > 0 || strings.HasSuffix(t.Name, "[]") || strings.HasPrefix(t.Name, "Map<") {
 			continue
 		}
@@ -200,9 +186,6 @@ func writeSchema(buf *bytes.Buffer, functions []FunctionSignature, typeDefs []Ty
 
 	// write types
 	for _, t := range typeDefs {
-		if !consumedTypeNames[t.Name] {
-			continue
-		}
 		if (len(t.Fields)) == 0 {
 			continue
 		}
@@ -374,27 +357,5 @@ func newType(name string, fields []NameTypePair, typeDefs *map[string]TypeDefini
 			Fields: fields,
 		}
 	}
-
-	return name
-}
-
-func isCustomType(name string) bool {
-	name = getBaseType(name)
-	switch name {
-	case "String", "Int", "Float", "Boolean":
-		return false
-	default:
-		return true
-	}
-}
-
-func getBaseType(name string) string {
-	if strings.HasPrefix(name, "[") {
-		return getBaseType(name[1 : len(name)-2])
-	}
-	if strings.HasSuffix(name, "!") {
-		return getBaseType(strings.TrimSuffix(name, "!"))
-	}
-
 	return name
 }
