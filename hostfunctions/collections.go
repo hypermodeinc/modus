@@ -182,6 +182,7 @@ func hostUpsertToCollection(ctx context.Context, mod wasm.Module, pCollectionNam
 		}
 
 		embedder := searchMethod.Embedder
+
 		info, err := functions.GetFunctionInfo(embedder)
 		if err != nil {
 			logger.Err(ctx, err).Msg("Error getting function info.")
@@ -220,23 +221,11 @@ func hostUpsertToCollection(ctx context.Context, mod wasm.Module, pCollectionNam
 		textVec, err := collection_utils.ConvertToFloat32Array(result)
 		if err != nil {
 			logger.Err(ctx, err).Msg("Error converting to float32.")
-
-			offset, err := WriteCollectionMutationResultOffset(ctx, mod, collectionName, "upsert", "error", "", fmt.Sprintf("Error converting to float32: %s", err.Error()))
-			if err != nil {
-				logger.Err(ctx, err).Msg("Error writing result.")
-			}
-			return offset
 		}
 
 		id, err := collection.GetExternalId(ctx, key)
 		if err != nil {
 			logger.Err(ctx, err).Msg("Error getting external id.")
-
-			offset, err := WriteCollectionMutationResultOffset(ctx, mod, collectionName, "upsert", "error", "", fmt.Sprintf("Error getting external id: %s", err.Error()))
-			if err != nil {
-				logger.Err(ctx, err).Msg("Error writing result.")
-			}
-			return offset
 		}
 
 		err = vectorIndex.InsertVector(ctx, id, textVec)
@@ -294,7 +283,6 @@ func hostDeleteFromCollection(ctx context.Context, mod wasm.Module, pCollectionN
 		}
 		return offset
 	}
-
 	for _, vectorIndex := range collection.GetVectorIndexMap() {
 		err = vectorIndex.DeleteVector(ctx, textId, key)
 		if err != nil {
@@ -407,13 +395,7 @@ func hostSearchCollection(ctx context.Context, mod wasm.Module, pCollectionName 
 
 	textVec, err := collection_utils.ConvertToFloat32Array(result)
 	if err != nil {
-		logger.Err(ctx, err).Msg("Error calling function.")
-
-		offset, err := WriteCollectionSearchResultOffset(ctx, mod, collectionName, searchMethod, "error", nil, fmt.Sprintf("Error calling function: %s", err.Error()))
-		if err != nil {
-			logger.Err(ctx, err).Msg("Error writing result.")
-		}
-		return offset
+		logger.Err(ctx, err).Msg("Error converting to float32.")
 	}
 
 	objects, err := vectorIndex.Search(ctx, textVec, int(limit), nil)
@@ -556,6 +538,7 @@ func hostRecomputeSearchMethod(ctx context.Context, mod wasm.Module, pCollection
 	}
 
 	embedder := manifestdata.Manifest.Collections[collectionName].SearchMethods[searchMethod].Embedder
+
 	info, err := functions.GetFunctionInfo(embedder)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error getting function info.")
@@ -571,7 +554,7 @@ func hostRecomputeSearchMethod(ctx context.Context, mod wasm.Module, pCollection
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error verifying function signature.")
 
-		offset, err := WriteCollectionMutationResultOffset(ctx, mod, collectionName, "upsert", "error", "", fmt.Sprintf("Error verifying function signature: %s", err.Error()))
+		offset, err := WriteCollectionMutationResultOffset(ctx, mod, collectionName, "recompute", "error", "", fmt.Sprintf("Error verifying function signature: %s", err.Error()))
 		if err != nil {
 			logger.Err(ctx, err).Msg("Error writing result.")
 		}
@@ -589,7 +572,7 @@ func hostRecomputeSearchMethod(ctx context.Context, mod wasm.Module, pCollection
 		return offset
 	}
 
-	offset, err := WriteCollectionMutationResultOffset(ctx, mod, collectionName, "recompute", "success", "", "")
+	offset, err := WriteSearchMethodMutationResultOffset(ctx, mod, collectionName, searchMethod, "recompute", "success", "")
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error writing result.")
 		return 0
