@@ -2,13 +2,14 @@
 
 ## UNRELEASED
 
-- Add sequential vector search [#202](https://github.com/hypermodeAI/runtime/pull/202)
 - Add nullable check in ReadString [#228](https://github.com/hypermodeAI/runtime/pull/228)
 - Lowercase model name before invoking for hypermode hosted models [#221](https://github.com/gohypermode/runtime/pull/221)
 - Improve HTTP error messages [#222](https://github.com/gohypermode/runtime/pull/222)
 - Add host function for direct logging [#224](https://github.com/gohypermode/runtime/pull/224)
 - Refactoring, and add helpers for calling functions [#226](https://github.com/gohypermode/runtime/pull/226)
 - Add support for new model interface [#229](https://github.com/gohypermode/runtime/pull/229)
+- Add sequential vector search [#240](https://github.com/hypermodeAI/runtime/pull/240)
+- Update Hypermode-hosted model endpoint URL [#242](https://github.com/gohypermode/runtime/pull/242)
 
 ## 2024-06-03 - Version 0.8.2
 

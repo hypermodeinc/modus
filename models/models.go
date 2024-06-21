@@ -47,8 +47,9 @@ func getModelEndpointAndHost(model manifest.ModelInfo) (string, manifest.HostInf
 	}
 
 	if host.Name == hosts.HypermodeHost {
-		// TODO: make sure this is the correct endpoint URL for Kserve
-		endpoint := fmt.Sprintf("http://%s.%s/", strings.ToLower(model.Name), config.ModelHost)
+		// Compose the Hypermode hosted model endpoint URL.
+		// Example: http://modelname.bckid.svc.cluster.local/v1/models/modelname:predict
+		endpoint := fmt.Sprintf("http://%s.%s/%[1]s:predict", strings.ToLower(model.Name), config.ModelHost)
 		return endpoint, host, nil
 	}
 
