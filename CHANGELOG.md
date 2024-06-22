@@ -2,6 +2,7 @@
 
 ## UNRELEASED
 
+- remove index from mem but maintain pg data when manifest changes [#246](https://github.com/hypermodeAI/runtime/pull/246)
 - Filter collection embedding functions from GraphQL schema [#245](https://github.com/hypermodeAI/runtime/pull/245)
 
 ## 2024-06-21 - Version 0.9.0
