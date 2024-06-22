@@ -21,7 +21,6 @@ import (
 
 type ExecutionInfo struct {
 	ExecutionId string
-	Module      *wasm.Module
 	Buffers     *utils.OutputBuffers
 	Messages    []utils.LogMessage
 	Result      any
@@ -66,7 +65,6 @@ func doCallFunction(ctx context.Context, fnInfo functions.FunctionInfo, paramete
 
 	execInfo := ExecutionInfo{
 		ExecutionId: xid.New().String(),
-		Module:      &mod,
 		Buffers:     buffers,
 		Messages:    []utils.LogMessage{},
 	}
