@@ -63,10 +63,6 @@ func (ti *InMemCollection) SetVectorIndex(ctx context.Context, searchMethod stri
 func (ti *InMemCollection) DeleteVectorIndex(ctx context.Context, searchMethod string) error {
 	ti.mu.Lock()
 	defer ti.mu.Unlock()
-	err := db.DeleteCollectionVectors(ctx, ti.collectionName, searchMethod)
-	if err != nil {
-		return err
-	}
 	delete(ti.VectorIndexMap, searchMethod)
 	return nil
 }

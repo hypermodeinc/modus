@@ -117,10 +117,6 @@ func (hf *CollectionFactory) findWithLock(name string) (interfaces.Collection, e
 func (hf *CollectionFactory) Remove(ctx context.Context, name string) error {
 	hf.mu.Lock()
 	defer hf.mu.Unlock()
-	err := db.DeleteCollectionTexts(ctx, name)
-	if err != nil {
-		return err
-	}
 	return hf.removeWithLock(name)
 }
 
