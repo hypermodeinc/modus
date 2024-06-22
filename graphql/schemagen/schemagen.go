@@ -13,12 +13,13 @@ import (
 	"slices"
 	"strings"
 
-	"hmruntime/manifestdata"
 	"hmruntime/plugins"
 	"hmruntime/utils"
+
+	"github.com/hypermodeAI/manifest"
 )
 
-func GetGraphQLSchema(ctx context.Context, metadata plugins.PluginMetadata, includeHeader bool) (string, error) {
+func GetGraphQLSchema(ctx context.Context, metadata plugins.PluginMetadata, manifest manifest.HypermodeManifest, includeHeader bool) (string, error) {
 	span := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
 
@@ -32,7 +33,7 @@ func GetGraphQLSchema(ctx context.Context, metadata plugins.PluginMetadata, incl
 		return "", fmt.Errorf("failed to generate schema: %+v", errors)
 	}
 
-	functions = filterFunctions(functions)
+	functions = filterFunctions(functions, manifest)
 	types = filterTypes(types, functions)
 
 	buf := bytes.Buffer{}
@@ -112,10 +113,10 @@ func transformFunctions(functions []plugins.FunctionSignature, typeDefs *map[str
 	return results, errors
 }
 
-func filterFunctions(functions []FunctionSignature) []FunctionSignature {
+func filterFunctions(functions []FunctionSignature, manifest manifest.HypermodeManifest) []FunctionSignature {
 	// Get all embedders from the manifest.
 	embedders := make(map[string]bool)
-	for _, collection := range manifestdata.Manifest.Collections {
+	for _, collection := range manifest.Collections {
 		for _, searchMethod := range collection.SearchMethods {
 			embedders[searchMethod.Embedder] = true
 		}
