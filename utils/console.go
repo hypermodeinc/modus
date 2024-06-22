@@ -18,7 +18,7 @@ func (l LogMessage) IsError() bool {
 	return l.Level == "error" || l.Level == "fatal"
 }
 
-func TransformConsoleOutput(buffers OutputBuffers) []LogMessage {
+func TransformConsoleOutput(buffers *OutputBuffers) []LogMessage {
 	return append(transformConsoleOutputLines(&buffers.StdOut), transformConsoleOutputLines(&buffers.StdErr)...)
 }
 
