@@ -11,10 +11,25 @@ import (
 	"hmruntime/plugins"
 	"hmruntime/utils"
 
+	"github.com/hypermodeAI/manifest"
 	"github.com/stretchr/testify/require"
 )
 
 func Test_GetGraphQLSchema(t *testing.T) {
+
+	manifest := manifest.HypermodeManifest{
+		Models: map[string]manifest.ModelInfo{},
+		Hosts:  map[string]manifest.HostInfo{},
+		Collections: map[string]manifest.CollectionInfo{
+			"collection1": {
+				SearchMethods: map[string]manifest.SearchMethodInfo{
+					"search1": {
+						Embedder: "myEmbedder",
+					},
+				},
+			},
+		},
+	}
 
 	metadata := plugins.PluginMetadata{
 		Functions: []plugins.FunctionSignature{
@@ -55,6 +70,14 @@ func Test_GetGraphQLSchema(t *testing.T) {
 			{
 				Name:       "doNothing",
 				ReturnType: plugins.TypeInfo{Name: "void"},
+			},
+			// This should be excluded from the final schema
+			{
+				Name: "myEmbedder",
+				Parameters: []plugins.Parameter{
+					{Name: "text", Type: plugins.TypeInfo{Name: "string"}},
+				},
+				ReturnType: plugins.TypeInfo{Name: "f64[]"},
 			},
 		},
 		Types: []plugins.TypeDefinition{
@@ -98,7 +121,7 @@ func Test_GetGraphQLSchema(t *testing.T) {
 		},
 	}
 
-	result, err := GetGraphQLSchema(context.Background(), metadata, false)
+	result, err := GetGraphQLSchema(context.Background(), metadata, manifest, false)
 
 	expectedSchema := `type Query {
   add(a: Int!, b: Int!): Int!

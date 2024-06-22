@@ -15,6 +15,7 @@ import (
 	"hmruntime/graphql/datasource"
 	"hmruntime/graphql/schemagen"
 	"hmruntime/logger"
+	"hmruntime/manifestdata"
 	"hmruntime/plugins"
 	"hmruntime/utils"
 
@@ -67,7 +68,7 @@ func generateSchema(ctx context.Context, metadata plugins.PluginMetadata) (*gql.
 	span := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
 
-	schemaContent, err := schemagen.GetGraphQLSchema(ctx, metadata, true)
+	schemaContent, err := schemagen.GetGraphQLSchema(ctx, metadata, manifestdata.Manifest, true)
 	if err != nil {
 		return nil, err
 	}

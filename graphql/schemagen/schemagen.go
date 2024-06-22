@@ -15,26 +15,32 @@ import (
 
 	"hmruntime/plugins"
 	"hmruntime/utils"
+
+	"github.com/hypermodeAI/manifest"
 )
 
-func GetGraphQLSchema(ctx context.Context, metadata plugins.PluginMetadata, includeHeader bool) (string, error) {
+func GetGraphQLSchema(ctx context.Context, metadata plugins.PluginMetadata, manifest manifest.HypermodeManifest, includeHeader bool) (string, error) {
 	span := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
 
 	typeDefs := make(map[string]TypeDefinition, len(metadata.Types))
 	errors := transformTypes(metadata.Types, &typeDefs)
 	functions, errs := transformFunctions(metadata.Functions, &typeDefs)
+	types := utils.MapValues(typeDefs)
 	errors = append(errors, errs...)
 
 	if len(errors) > 0 {
 		return "", fmt.Errorf("failed to generate schema: %+v", errors)
 	}
 
+	functions = filterFunctions(functions, manifest)
+	types = filterTypes(types, functions)
+
 	buf := bytes.Buffer{}
 	if includeHeader {
 		writeSchemaHeader(&buf, metadata)
 	}
-	writeSchema(&buf, functions, utils.MapValues(typeDefs))
+	writeSchema(&buf, functions, types)
 	return buf.String(), nil
 }
 
@@ -105,6 +111,34 @@ func transformFunctions(functions []plugins.FunctionSignature, typeDefs *map[str
 	}
 
 	return results, errors
+}
+
+func filterFunctions(functions []FunctionSignature, manifest manifest.HypermodeManifest) []FunctionSignature {
+	// Get all embedders from the manifest.
+	embedders := make(map[string]bool)
+	for _, collection := range manifest.Collections {
+		for _, searchMethod := range collection.SearchMethods {
+			embedders[searchMethod.Embedder] = true
+		}
+	}
+
+	// Filter out functions that are embedders.
+	results := make([]FunctionSignature, 0, len(functions))
+	for _, f := range functions {
+		if !embedders[f.Name] {
+			results = append(results, f)
+		}
+	}
+
+	return results
+}
+
+func filterTypes(types []TypeDefinition, functions []FunctionSignature) []TypeDefinition {
+	// Filter out types that are not used by any function.
+	// Also then recursively filter out types that are not used by any type.
+	// TODO: Implement this.
+	_ = functions
+	return types
 }
 
 func writeSchemaHeader(buf *bytes.Buffer, metadata plugins.PluginMetadata) {
