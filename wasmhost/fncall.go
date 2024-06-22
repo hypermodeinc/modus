@@ -51,27 +51,26 @@ func CallFunctionWithParametersMap(ctx context.Context, fnName string, parameter
 
 func doCallFunction(ctx context.Context, fnInfo functions.FunctionInfo, parameters map[string]any) (*ExecutionInfo, error) {
 
-	// Each request will get its own instance of the plugin module, so that we can run
-	// multiple requests in parallel without risk of corrupting the module's memory.
-	// This also protects against security risk, as each request will have its own
-	// isolated memory space.  (One request cannot access another request's memory.)
-
-	buffers := &utils.OutputBuffers{}
-	mod, err := GetModuleInstance(ctx, fnInfo.Plugin, buffers)
-	if err != nil {
-		return nil, err
-	}
-	defer mod.Close(ctx)
-
 	execInfo := ExecutionInfo{
 		ExecutionId: xid.New().String(),
-		Buffers:     buffers,
+		Buffers:     &utils.OutputBuffers{},
 		Messages:    []utils.LogMessage{},
 	}
 
 	ctx = context.WithValue(ctx, utils.ExecutionIdContextKey, execInfo.ExecutionId)
 	ctx = context.WithValue(ctx, utils.FunctionMessagesContextKey, &execInfo.Messages)
 	ctx = context.WithValue(ctx, utils.PluginContextKey, fnInfo.Plugin)
+
+	// Each request will get its own instance of the plugin module, so that we can run
+	// multiple requests in parallel without risk of corrupting the module's memory.
+	// This also protects against security risk, as each request will have its own
+	// isolated memory space.  (One request cannot access another request's memory.)
+
+	mod, err := GetModuleInstance(ctx, fnInfo.Plugin, execInfo.Buffers)
+	if err != nil {
+		return nil, err
+	}
+	defer mod.Close(ctx)
 
 	logger.Info(ctx).
 		Str("function", fnInfo.Function.Name).
