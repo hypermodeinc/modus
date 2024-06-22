@@ -13,6 +13,7 @@ import (
 	"slices"
 	"strings"
 
+	"hmruntime/manifestdata"
 	"hmruntime/plugins"
 	"hmruntime/utils"
 )
@@ -24,17 +25,21 @@ func GetGraphQLSchema(ctx context.Context, metadata plugins.PluginMetadata, incl
 	typeDefs := make(map[string]TypeDefinition, len(metadata.Types))
 	errors := transformTypes(metadata.Types, &typeDefs)
 	functions, errs := transformFunctions(metadata.Functions, &typeDefs)
+	types := utils.MapValues(typeDefs)
 	errors = append(errors, errs...)
 
 	if len(errors) > 0 {
 		return "", fmt.Errorf("failed to generate schema: %+v", errors)
 	}
 
+	functions = filterFunctions(functions)
+	types = filterTypes(types, functions)
+
 	buf := bytes.Buffer{}
 	if includeHeader {
 		writeSchemaHeader(&buf, metadata)
 	}
-	writeSchema(&buf, functions, utils.MapValues(typeDefs))
+	writeSchema(&buf, functions, types)
 	return buf.String(), nil
 }
 
@@ -105,6 +110,34 @@ func transformFunctions(functions []plugins.FunctionSignature, typeDefs *map[str
 	}
 
 	return results, errors
+}
+
+func filterFunctions(functions []FunctionSignature) []FunctionSignature {
+	// Get all embedders from the manifest.
+	embedders := make(map[string]bool)
+	for _, collection := range manifestdata.Manifest.Collections {
+		for _, searchMethod := range collection.SearchMethods {
+			embedders[searchMethod.Embedder] = true
+		}
+	}
+
+	// Filter out functions that are embedders.
+	results := make([]FunctionSignature, 0, len(functions))
+	for _, f := range functions {
+		if !embedders[f.Name] {
+			results = append(results, f)
+		}
+	}
+
+	return results
+}
+
+func filterTypes(types []TypeDefinition, functions []FunctionSignature) []TypeDefinition {
+	// Filter out types that are not used by any function.
+	// Also then recursively filter out types that are not used by any type.
+	// TODO: Implement this.
+	_ = functions
+	return types
 }
 
 func writeSchemaHeader(buf *bytes.Buffer, metadata plugins.PluginMetadata) {
