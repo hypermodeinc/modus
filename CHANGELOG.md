@@ -10,6 +10,7 @@
 - Add support for new model interface [#229](https://github.com/gohypermode/runtime/pull/229)
 - Add sequential vector search [#240](https://github.com/hypermodeAI/runtime/pull/240)
 - Update Hypermode-hosted model endpoint URL [#242](https://github.com/gohypermode/runtime/pull/242)
+- Fix bug caused by #226 [#243](https://github.com/gohypermode/runtime/pull/243)
 
 ## 2024-06-03 - Version 0.8.2
 
