@@ -9,11 +9,11 @@ import (
 	"fmt"
 	"net/http"
 
-	"hmruntime/graphql/datasource"
 	"hmruntime/graphql/engine"
 	"hmruntime/logger"
 	"hmruntime/pluginmanager"
 	"hmruntime/utils"
+	"hmruntime/wasmhost"
 
 	"github.com/buger/jsonparser"
 	eng "github.com/wundergraph/graphql-go-tools/execution/engine"
@@ -57,7 +57,7 @@ func HandleGraphQLRequest(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Create the output map
-	output := map[string]datasource.FunctionOutput{}
+	output := map[string]*wasmhost.ExecutionInfo{}
 	ctx = context.WithValue(ctx, utils.FunctionOutputContextKey, output)
 
 	// Set tracing options
@@ -111,7 +111,7 @@ func HandleGraphQLRequest(w http.ResponseWriter, r *http.Request) {
 	_, _ = w.Write(response)
 }
 
-func addOutputToResponse(response []byte, output map[string]datasource.FunctionOutput) ([]byte, error) {
+func addOutputToResponse(response []byte, output map[string]*wasmhost.ExecutionInfo) ([]byte, error) {
 
 	type invocationInfo struct {
 		ExecutionId string             `json:"executionId"`

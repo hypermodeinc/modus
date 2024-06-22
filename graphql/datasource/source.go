@@ -26,11 +26,6 @@ type callInfo struct {
 	Parameters map[string]any `json:"data"`
 }
 
-type FunctionOutput struct {
-	ExecutionId string
-	Buffers     utils.OutputBuffers
-}
-
 type Source struct{}
 
 func (s Source) Load(ctx context.Context, input []byte, writer io.Writer) error {
@@ -59,15 +54,12 @@ func (s Source) callFunction(ctx context.Context, callInfo callInfo) (any, []res
 	info, err := wasmhost.CallFunctionWithParametersMap(ctx, callInfo.Function.Name, callInfo.Parameters)
 	// NOTE: don't return the error here, as we want to capture function errors in the response.
 
-	// Store the Execution ID and output buffers in the context
-	outputMap := ctx.Value(utils.FunctionOutputContextKey).(map[string]FunctionOutput)
-	outputMap[callInfo.Function.AliasOrName()] = FunctionOutput{
-		ExecutionId: info.ExecutionId,
-		Buffers:     *info.Buffers,
-	}
+	// Store the execution info into the function output map.
+	outputMap := ctx.Value(utils.FunctionOutputContextKey).(map[string]*wasmhost.ExecutionInfo)
+	outputMap[callInfo.Function.AliasOrName()] = info
 
-	// Transform messages (and error lines in the output buffers) to GraphQL errors
-	messages := append(info.Messages, utils.TransformConsoleOutput(*info.Buffers)...)
+	// Transform messages (and error lines in the output buffers) to GraphQL errors.
+	messages := append(info.Messages, utils.TransformConsoleOutput(info.Buffers)...)
 	gqlErrors := transformErrors(messages, callInfo)
 
 	return info.Result, gqlErrors, err
