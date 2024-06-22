@@ -17,6 +17,10 @@ var registry = pluginRegistry{
 	fileIndex: make(map[string]*plugins.Plugin),
 }
 
+func GetRegisteredPlugins() []plugins.Plugin {
+	return registry.GetAll()
+}
+
 type pluginRegistry struct {
 	plugins   []plugins.Plugin
 	nameIndex map[string]*plugins.Plugin

@@ -11,6 +11,7 @@ import (
 
 	"hmruntime/graphql/engine"
 	"hmruntime/logger"
+	"hmruntime/manifestdata"
 	"hmruntime/pluginmanager"
 	"hmruntime/utils"
 	"hmruntime/wasmhost"
@@ -26,6 +27,23 @@ import (
 func Initialize() {
 	// The GraphQL engine's Activate function should be called when a plugin is loaded.
 	pluginmanager.RegisterPluginLoadedCallback(engine.Activate)
+
+	// It should also be called when the manifest changes, since the manifest can affect function filtering.
+	manifestdata.RegisterManifestLoadedCallback(func(ctx context.Context) error {
+		plugins := pluginmanager.GetRegisteredPlugins()
+		if len(plugins) == 0 {
+			// No plugins are loaded, so there's nothing to do.
+			// This is expected during startup, because the manifest loads before the plugins.
+			return nil
+		}
+
+		if len(plugins) > 1 {
+			// TODO: We should support multiple plugins in the future.
+			logger.Warn(ctx).Msg("Multiple plugins loaded.  Only the first plugin will be used.")
+		}
+
+		return engine.Activate(ctx, plugins[0].Metadata)
+	})
 }
 
 func HandleGraphQLRequest(w http.ResponseWriter, r *http.Request) {
