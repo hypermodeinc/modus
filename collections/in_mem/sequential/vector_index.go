@@ -34,6 +34,13 @@ func (ims *SequentialVectorIndex) GetSearchMethodName() string {
 	return ims.searchMethodName
 }
 
+func (ims *SequentialVectorIndex) SetEmbedderName(embedderName string) error {
+	ims.mu.Lock()
+	defer ims.mu.Unlock()
+	ims.embedderName = embedderName
+	return nil
+}
+
 func (ims *SequentialVectorIndex) GetEmbedderName() string {
 	return ims.embedderName
 }

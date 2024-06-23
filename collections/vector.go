@@ -93,7 +93,7 @@ func processManifestCollections(ctx context.Context, Manifest manifest.Hypermode
 			}
 		}
 		for searchMethodName, searchMethod := range collectionInfo.SearchMethods {
-			_, err := collection.GetVectorIndex(ctx, searchMethodName)
+			vi, err := collection.GetVectorIndex(ctx, searchMethodName)
 
 			// if the index does not exist, create it
 			if err == index.ErrVectorIndexNotFound {
@@ -122,7 +122,19 @@ func processManifestCollections(ctx context.Context, Manifest manifest.Hypermode
 						Str("index_name", searchMethodName).
 						Msg("Failed to create vector index.")
 				}
+			} else if vi.GetEmbedderName() != searchMethod.Embedder {
+				//TODO: figure out what to actually do if the embedder is different, for now just updating the name
+				// what if the user changes the internals? -> they want us to reindex, model might have diff dimensions
+				// but what if they just chaned the name? -> they want us to just update the name. but we cant know that
+				// imo we should just update the name and let the user reindex if they want to
+				err := vi.SetEmbedderName(searchMethod.Embedder)
+				if err != nil {
+					logger.Err(ctx, err).
+						Str("index_name", searchMethodName).
+						Msg("Failed to update vector index.")
+				}
 			}
+
 		}
 	}
 }

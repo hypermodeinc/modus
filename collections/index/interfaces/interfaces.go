@@ -104,6 +104,8 @@ type Collection interface {
 type VectorIndex interface {
 	GetSearchMethodName() string
 
+	SetEmbedderName(embedderName string) error
+
 	GetEmbedderName() string
 
 	// Search will find the keys for a given set of vectors based on the
