@@ -42,6 +42,8 @@ func (ims *SequentialVectorIndex) SetEmbedderName(embedderName string) error {
 }
 
 func (ims *SequentialVectorIndex) GetEmbedderName() string {
+	ims.mu.RLock()
+	defer ims.mu.RUnlock()
 	return ims.embedderName
 }
 
