@@ -76,7 +76,6 @@ func ProcessTextMapWithModule(ctx context.Context, mod wasm.Module, collection i
 func CleanAndProcessManifest(ctx context.Context) error {
 	deleteIndexesNotInManifest(ctx, manifestdata.Manifest)
 	processManifestCollections(ctx, manifestdata.Manifest)
-	GlobalCollectionFactory.ReadFromPostgres(ctx)
 	return nil
 }
 
@@ -97,7 +96,6 @@ func processManifestCollections(ctx context.Context, Manifest manifest.Hypermode
 			_, err := collection.GetVectorIndex(ctx, searchMethodName)
 
 			// if the index does not exist, create it
-			// TODO also populate the vector index by running the embedding function to compute vectors ahead of time
 			if err == index.ErrVectorIndexNotFound {
 				vectorIndex := &interfaces.VectorIndexWrapper{}
 				switch searchMethod.Index.Type {
@@ -134,14 +132,16 @@ func deleteIndexesNotInManifest(ctx context.Context, Manifest manifest.Hypermode
 		if _, ok := Manifest.Collections[collectionName]; !ok {
 			err := GlobalCollectionFactory.Remove(ctx, collectionName)
 			if err != nil {
-				logger.Err(context.Background(), err).
-					Str("index_name", collectionName).
-					Msg("Failed to remove vector index.")
+				logger.Err(ctx, err).
+					Str("collection_name", collectionName).
+					Msg("Failed to remove collection.")
 			}
 		}
-		collection := GlobalCollectionFactory.GetCollectionMap()[collectionName]
-		if collection == nil {
-			continue
+		collection, err := GlobalCollectionFactory.Find(ctx, collectionName)
+		if err != nil {
+			logger.Err(ctx, err).
+				Str("collection_name", collectionName).
+				Msg("Failed to find collection.")
 		}
 		vectorIndexMap := collection.GetVectorIndexMap()
 		if vectorIndexMap == nil {
@@ -150,10 +150,16 @@ func deleteIndexesNotInManifest(ctx context.Context, Manifest manifest.Hypermode
 		for searchMethodName := range vectorIndexMap {
 			_, ok := Manifest.Collections[collectionName].SearchMethods[searchMethodName]
 			if !ok {
-				err := GlobalCollectionFactory.GetCollectionMap()[collectionName].DeleteVectorIndex(ctx, searchMethodName)
+				collection, err := GlobalCollectionFactory.Find(ctx, collectionName)
 				if err != nil {
-					logger.Err(context.Background(), err).
-						Str("index_name", collectionName).
+					logger.Err(ctx, err).
+						Str("collection_name", collectionName).
+						Msg("Failed to find collection.")
+				}
+				err = collection.DeleteVectorIndex(ctx, searchMethodName)
+				if err != nil {
+					logger.Err(ctx, err).
+						Str("collectionName", collectionName).
 						Str("search_method_name", searchMethodName).
 						Msg("Failed to remove vector index.")
 				}

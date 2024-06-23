@@ -4,11 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
 
 	"hmruntime/collections/index/interfaces"
 	"hmruntime/db"
-	e "hmruntime/errors"
+	"hmruntime/functions"
 	"hmruntime/logger"
 	"hmruntime/manifestdata"
 
@@ -26,6 +25,11 @@ var (
 func InitializeIndexFactory(ctx context.Context) {
 	GlobalCollectionFactory = CreateFactory()
 	manifestdata.RegisterManifestLoadedCallback(CleanAndProcessManifest)
+	functions.RegisterFunctionsLoadedCallback(func(ctx context.Context) error {
+		GlobalCollectionFactory.ReadFromPostgres(ctx)
+		return nil
+	})
+
 	go GlobalCollectionFactory.worker(ctx)
 }
 
@@ -244,7 +248,7 @@ func syncTextsWithVectorIndex(ctx context.Context, collection interfaces.Collect
 			key := keys[i]
 			// process text
 			err = ProcessText(ctx, collection, vectorIndex, key, text)
-			if err != nil && !strings.Contains(err.Error(), e.ErrNoFunctionRegistered) {
+			if err != nil {
 				return err
 			}
 		}

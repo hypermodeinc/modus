@@ -8,7 +8,6 @@ import (
 	"context"
 	"fmt"
 
-	"hmruntime/errors"
 	"hmruntime/logger"
 	"hmruntime/plugins"
 )
@@ -18,7 +17,7 @@ var functions = make(map[string]FunctionInfo)
 func GetFunctionInfo(fnName string) (FunctionInfo, error) {
 	info, ok := functions[fnName]
 	if !ok {
-		return FunctionInfo{}, fmt.Errorf(errors.ErrNoFunctionRegistered, fnName)
+		return FunctionInfo{}, fmt.Errorf("no function registered named %s", fnName)
 	}
 	return info, nil
 }
@@ -39,6 +38,8 @@ func RegisterFunctions(ctx context.Context, plugins []plugins.Plugin) {
 	}
 
 	r.cleanup(ctx)
+
+	triggerFunctionsLoaded(ctx)
 }
 
 type registration struct {
