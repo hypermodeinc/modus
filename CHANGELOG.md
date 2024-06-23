@@ -5,6 +5,7 @@
 - Filter collection embedding functions from GraphQL schema [#245](https://github.com/hypermodeAI/runtime/pull/245)
 - Remove collection index from memory when manifest changes [#246](https://github.com/hypermodeAI/runtime/pull/246)
 - Fix missing execution id and plugin from logs from previous functions version [#247](https://github.com/hypermodeAI/runtime/pull/247)
+- Fix content type header when calling Hypermode-hosted models [#248](https://github.com/hypermodeAI/runtime/pull/248)
 
 ## 2024-06-21 - Version 0.9.0
 
