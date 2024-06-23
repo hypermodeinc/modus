@@ -247,7 +247,7 @@ func QueryCollectionVectorsFromCheckpoint(ctx context.Context, collectionName, s
 	var keys []string
 	var vectors [][]float32
 	err := WithTx(ctx, func(tx pgx.Tx) error {
-		query := fmt.Sprintf(`SELECT cv.text_id, cv.id, ct.key, cv.vector 
+		query := fmt.Sprintf(`SELECT ct.id, cv.id, ct.key, cv.vector 
                   FROM %s cv 
                   JOIN %s ct ON cv.text_id = ct.id 
                   WHERE cv.id > $1 AND ct.collection = $2 AND cv.search_method = $3`, collectionVectorsTable, collectionTextsTable)
@@ -258,12 +258,14 @@ func QueryCollectionVectorsFromCheckpoint(ctx context.Context, collectionName, s
 		defer rows.Close()
 
 		for rows.Next() {
+			var textId int64
 			var vectorId int64
 			var key string
 			var vector []float32
-			if err := rows.Scan(&textIds, &vectorId, &key, &vector); err != nil {
+			if err := rows.Scan(&textId, &vectorId, &key, &vector); err != nil {
 				return err
 			}
+			textIds = append(textIds, textId)
 			vectorIds = append(vectorIds, vectorId)
 			keys = append(keys, key)
 			vectors = append(vectors, vector)
