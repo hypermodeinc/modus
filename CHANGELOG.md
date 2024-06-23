@@ -1,6 +1,6 @@
 # Change Log
 
-## UNRELEASED
+## 2024-06-22 - Version 0.9.1
 
 - Filter collection embedding functions from GraphQL schema [#245](https://github.com/hypermodeAI/runtime/pull/245)
 - Remove collection index from memory when manifest changes [#246](https://github.com/hypermodeAI/runtime/pull/246)
