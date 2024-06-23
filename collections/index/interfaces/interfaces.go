@@ -104,6 +104,8 @@ type Collection interface {
 type VectorIndex interface {
 	GetSearchMethodName() string
 
+	GetEmbedderName() string
+
 	// Search will find the keys for a given set of vectors based on the
 	// input query, limiting to the specified maximum number of results.
 	// The filter parameter indicates that we might discard certain parameters
@@ -130,7 +132,7 @@ type VectorIndex interface {
 
 	// InsertVectorToMemory will add a vector and key into the existing VectorIndex. If
 	// key already exists, it should throw an error to not insert duplicate keys
-	InsertVectorToMemory(ctx context.Context, vectorId int64, key string, vec []float32) error
+	InsertVectorToMemory(ctx context.Context, textId, vectorId int64, key string, vec []float32) error
 
 	// Delete will remove a vector and key from the existing VectorIndex. If
 	// key does not exist, it should throw an error to not delete non-existent keys
@@ -140,4 +142,6 @@ type VectorIndex interface {
 	GetVector(ctx context.Context, key string) ([]float32, error)
 
 	GetCheckpointId(ctx context.Context) (int64, error)
+
+	GetLastIndexedTextId(ctx context.Context) (int64, error)
 }

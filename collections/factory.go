@@ -4,13 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
 	"hmruntime/collections/index/interfaces"
 	"hmruntime/db"
+	e "hmruntime/errors"
 	"hmruntime/logger"
 	"hmruntime/manifestdata"
-	"hmruntime/pluginmanager"
-	"hmruntime/plugins"
 
 	"sync"
 	"time"
@@ -26,10 +26,6 @@ var (
 func InitializeIndexFactory(ctx context.Context) {
 	GlobalCollectionFactory = CreateFactory()
 	manifestdata.RegisterManifestLoadedCallback(CleanAndProcessManifest)
-	pluginmanager.RegisterPluginLoadedCallback(func(ctx context.Context, metadata plugins.PluginMetadata) error {
-		CatchEmbedderReqs(ctx)
-		return nil
-	})
 	go GlobalCollectionFactory.worker(ctx)
 }
 
@@ -47,14 +43,15 @@ type CollectionFactory struct {
 
 func (tif *CollectionFactory) worker(ctx context.Context) {
 	defer close(tif.done)
-	ticker := time.NewTicker(collectionFactoryWriteInterval * time.Minute)
+	timer := time.NewTimer(collectionFactoryWriteInterval * time.Minute)
 
-	defer ticker.Stop()
+	defer timer.Stop()
 	for {
 		select {
-		case <-ticker.C:
+		case <-timer.C:
 			// read from postgres all collections & searchMethod after lastInsertedID
 			tif.ReadFromPostgres(ctx)
+			timer.Reset(collectionFactoryWriteInterval * time.Minute)
 		case <-tif.quit:
 			return
 		}
@@ -161,6 +158,16 @@ func (hf *CollectionFactory) ReadFromPostgres(ctx context.Context) {
 					Str("search_method", vectorIndex.GetSearchMethodName()).
 					Msg("Failed to load vectors into vector index.")
 			}
+
+			// catch up on any texts that weren't embedded
+			err := syncTextsWithVectorIndex(ctx, collection, vectorIndex)
+			if err != nil {
+				logger.Err(ctx, err).
+					Str("collection_name", collection.GetCollectionName()).
+					Str("search_method", vectorIndex.GetSearchMethodName()).
+					Msg("Failed to sync text with vector index.")
+			}
+
 		}
 	}
 }
@@ -199,7 +206,7 @@ func LoadVectorsIntoVectorIndex(ctx context.Context, vectorIndex *interfaces.Vec
 	}
 
 	// Query all vectors from checkpoint
-	vectorIds, keys, vectors, err := db.QueryCollectionVectorsFromCheckpoint(ctx, collection.GetCollectionName(), vectorIndex.GetSearchMethodName(), vecCheckpointId)
+	textIds, vectorIds, keys, vectors, err := db.QueryCollectionVectorsFromCheckpoint(ctx, collection.GetCollectionName(), vectorIndex.GetSearchMethodName(), vecCheckpointId)
 	if err != nil {
 		return err
 	}
@@ -209,9 +216,37 @@ func LoadVectorsIntoVectorIndex(ctx context.Context, vectorIndex *interfaces.Vec
 
 	// Insert all vectors into vector index
 	for i := range vectorIds {
-		err = vectorIndex.InsertVectorToMemory(ctx, vectorIds[i], keys[i], vectors[i])
+		err = vectorIndex.InsertVectorToMemory(ctx, textIds[i], vectorIds[i], keys[i], vectors[i])
 		if err != nil {
 			return err
+		}
+	}
+	return nil
+}
+
+func syncTextsWithVectorIndex(ctx context.Context, collection interfaces.Collection, vectorIndex interfaces.VectorIndex) error {
+	// Query all texts from checkpoint
+	lastIndexedTextId, err := vectorIndex.GetLastIndexedTextId(ctx)
+	if err != nil {
+		return err
+	}
+	textIds, keys, texts, err := db.QueryCollectionTextsFromCheckpoint(ctx, collection.GetCollectionName(), lastIndexedTextId)
+	if err != nil {
+		return err
+	}
+	if len(textIds) != len(keys) || len(keys) != len(texts) {
+		return errors.New("mismatch in keys and texts")
+	}
+	// Get last indexed text id
+	for i := range textIds {
+		if textIds[i] > lastIndexedTextId {
+			text := texts[i]
+			key := keys[i]
+			// process text
+			err = ProcessText(ctx, collection, vectorIndex, key, text)
+			if err != nil && !strings.Contains(err.Error(), e.ErrNoFunctionRegistered) {
+				return err
+			}
 		}
 	}
 	return nil

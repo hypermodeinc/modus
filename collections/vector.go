@@ -2,7 +2,6 @@ package collections
 
 import (
 	"context"
-	"strings"
 
 	"hmruntime/collections/in_mem"
 	"hmruntime/collections/in_mem/sequential"
@@ -17,42 +16,26 @@ import (
 	wasm "github.com/tetratelabs/wazero/api"
 )
 
-type EmbedderFnCall struct {
-	EmbedderFnName   string
-	CollectionName   string
-	SearchMethodName string
-}
-
-var FnCallChannel = make(chan EmbedderFnCall)
-
-func ProcessTextMap(ctx context.Context, collection interfaces.Collection, embedder string, vectorIndex interfaces.VectorIndex) error {
-	textMap, err := collection.GetTextMap(ctx)
+func ProcessText(ctx context.Context, collection interfaces.Collection, vectorIndex interfaces.VectorIndex, key, text string) error {
+	executionInfo, err := wasmhost.CallFunction(ctx, vectorIndex.GetEmbedderName(), text)
 	if err != nil {
-		logger.Err(ctx, err).
-			Str("colletion_name", collection.GetCollectionName()).
-			Msg("Failed to get text map.")
+		return err
 	}
-	for key, text := range textMap {
-		executionInfo, err := wasmhost.CallFunction(ctx, embedder, text)
-		if err != nil {
-			return err
-		}
 
-		result := executionInfo.Result
+	result := executionInfo.Result
 
-		textVec, err := utils.ConvertToFloat32Array(result)
-		if err != nil {
-			return err
-		}
+	textVec, err := utils.ConvertToFloat32Array(result)
+	if err != nil {
+		return err
+	}
 
-		id, err := collection.GetExternalId(ctx, key)
-		if err != nil {
-			return err
-		}
-		err = vectorIndex.InsertVector(ctx, id, textVec)
-		if err != nil {
-			return err
-		}
+	id, err := collection.GetExternalId(ctx, key)
+	if err != nil {
+		return err
+	}
+	err = vectorIndex.InsertVector(ctx, id, textVec)
+	if err != nil {
+		return err
 	}
 	return nil
 }
@@ -120,14 +103,14 @@ func processManifestCollections(ctx context.Context, Manifest manifest.Hypermode
 				switch searchMethod.Index.Type {
 				case interfaces.SequentialManifestType:
 					vectorIndex.Type = sequential.SequentialVectorIndexType
-					vectorIndex.VectorIndex = sequential.NewSequentialVectorIndex(collectionName, searchMethodName)
+					vectorIndex.VectorIndex = sequential.NewSequentialVectorIndex(collectionName, searchMethodName, searchMethod.Embedder)
 				case interfaces.HnswManifestType:
 					// TODO: Implement hnsw
 					vectorIndex.Type = sequential.SequentialVectorIndexType
-					vectorIndex.VectorIndex = sequential.NewSequentialVectorIndex(collectionName, searchMethodName)
+					vectorIndex.VectorIndex = sequential.NewSequentialVectorIndex(collectionName, searchMethodName, searchMethod.Embedder)
 				case "":
 					vectorIndex.Type = sequential.SequentialVectorIndexType
-					vectorIndex.VectorIndex = sequential.NewSequentialVectorIndex(collectionName, searchMethodName)
+					vectorIndex.VectorIndex = sequential.NewSequentialVectorIndex(collectionName, searchMethodName, searchMethod.Embedder)
 				default:
 					logger.Err(ctx, nil).
 						Str("index_type", searchMethod.Index.Type).
@@ -141,32 +124,6 @@ func processManifestCollections(ctx context.Context, Manifest manifest.Hypermode
 						Str("index_name", searchMethodName).
 						Msg("Failed to create vector index.")
 				}
-
-				// populate index in background
-				go func() {
-					textMap, err := collection.GetTextMap(ctx)
-					if err != nil {
-						logger.Err(ctx, err).
-							Str("colletion_name", collectionName).
-							Msg("Failed to get text map.")
-					}
-					if len(textMap) != 0 {
-						err = ProcessTextMap(ctx, collection, searchMethod.Embedder, collection.GetVectorIndexMap()[searchMethodName])
-						if err != nil {
-							if strings.Contains(err.Error(), "no function registered named ") {
-								FnCallChannel <- EmbedderFnCall{
-									EmbedderFnName:   searchMethod.Embedder,
-									CollectionName:   collectionName,
-									SearchMethodName: searchMethodName,
-								}
-							} else {
-								logger.Err(ctx, err).
-									Str("index_name", searchMethodName).
-									Msg("Failed to process text map.")
-							}
-						}
-					}
-				}()
 			}
 		}
 	}
@@ -203,23 +160,4 @@ func deleteIndexesNotInManifest(ctx context.Context, Manifest manifest.Hypermode
 			}
 		}
 	}
-}
-
-func CatchEmbedderReqs(ctx context.Context) {
-	go func() {
-		for functionCall := range FnCallChannel {
-			collection, err := GlobalCollectionFactory.Find(ctx, functionCall.CollectionName)
-			if err != nil {
-				logger.Err(context.Background(), err).Msg("Error finding collection")
-				continue
-			}
-
-			err = ProcessTextMap(ctx, collection, functionCall.EmbedderFnName,
-				collection.GetVectorIndexMap()[functionCall.SearchMethodName])
-
-			if err != nil {
-				logger.Err(context.Background(), err).Msg("Error processing text map")
-			}
-		}
-	}()
 }
