@@ -1,5 +1,9 @@
 # Change Log
 
+## UNRELEASED
+
+- add auto embedding for collection based on text checkpoint [#250] (https://github.com/hypermodeAI/runtime/pull/250)
+
 ## 2024-06-22 - Version 0.9.1
 
 - Filter collection embedding functions from GraphQL schema [#245](https://github.com/hypermodeAI/runtime/pull/245)

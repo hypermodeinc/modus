@@ -241,12 +241,13 @@ func QueryCollectionTextsFromCheckpoint(ctx context.Context, collection string, 
 	return textIds, keys, texts, nil
 }
 
-func QueryCollectionVectorsFromCheckpoint(ctx context.Context, collectionName, searchMethodName string, vecCheckpointId int64) ([]int64, []string, [][]float32, error) {
+func QueryCollectionVectorsFromCheckpoint(ctx context.Context, collectionName, searchMethodName string, vecCheckpointId int64) ([]int64, []int64, []string, [][]float32, error) {
+	var textIds []int64
 	var vectorIds []int64
 	var keys []string
 	var vectors [][]float32
 	err := WithTx(ctx, func(tx pgx.Tx) error {
-		query := fmt.Sprintf(`SELECT cv.id, ct.key, cv.vector 
+		query := fmt.Sprintf(`SELECT ct.id, cv.id, ct.key, cv.vector 
                   FROM %s cv 
                   JOIN %s ct ON cv.text_id = ct.id 
                   WHERE cv.id > $1 AND ct.collection = $2 AND cv.search_method = $3`, collectionVectorsTable, collectionTextsTable)
@@ -257,12 +258,14 @@ func QueryCollectionVectorsFromCheckpoint(ctx context.Context, collectionName, s
 		defer rows.Close()
 
 		for rows.Next() {
+			var textId int64
 			var vectorId int64
 			var key string
 			var vector []float32
-			if err := rows.Scan(&vectorId, &key, &vector); err != nil {
+			if err := rows.Scan(&textId, &vectorId, &key, &vector); err != nil {
 				return err
 			}
+			textIds = append(textIds, textId)
 			vectorIds = append(vectorIds, vectorId)
 			keys = append(keys, key)
 			vectors = append(vectors, vector)
@@ -275,10 +278,10 @@ func QueryCollectionVectorsFromCheckpoint(ctx context.Context, collectionName, s
 	})
 
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, nil, nil, err
 	}
 
-	return vectorIds, keys, vectors, nil
+	return textIds, vectorIds, keys, vectors, nil
 }
 
 func (w *runtimePostgresWriter) worker(ctx context.Context) {
