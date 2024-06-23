@@ -82,12 +82,13 @@ func PostToModelEndpoint[TResult any](ctx context.Context, model manifest.ModelI
 		return empty, err
 	}
 
-	var bs func(context.Context, *http.Request) error
-	if host.Name != hosts.HypermodeHost {
-		bs = func(ctx context.Context, req *http.Request) error {
-			req.Header.Set("Content-Type", "application/json")
+	bs := func(ctx context.Context, req *http.Request) error {
+		req.Header.Set("Content-Type", "application/json")
+		if host.Name != hosts.HypermodeHost {
 			return secrets.ApplyHostSecrets(ctx, host, req)
 		}
+
+		return nil
 	}
 
 	res, err := utils.PostHttp[TResult](ctx, endpoint, payload, bs)
