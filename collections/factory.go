@@ -25,9 +25,8 @@ var (
 func InitializeIndexFactory(ctx context.Context) {
 	GlobalCollectionFactory = CreateFactory()
 	manifestdata.RegisterManifestLoadedCallback(CleanAndProcessManifest)
-	functions.RegisterFunctionsLoadedCallback(func(ctx context.Context) error {
+	functions.RegisterFunctionsLoadedCallback(func(ctx context.Context) {
 		GlobalCollectionFactory.ReadFromPostgres(ctx)
-		return nil
 	})
 
 	go GlobalCollectionFactory.worker(ctx)
