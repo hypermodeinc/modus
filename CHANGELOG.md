@@ -2,7 +2,8 @@
 
 ## UNRELEASED
 
-- add auto embedding for collection based on text checkpoint [#250] (https://github.com/hypermodeAI/runtime/pull/250)
+- Add auto-embedding for collection based on text checkpoint [#250](https://github.com/hypermodeAI/runtime/pull/250)
+- Remove extraneous types in graphql schemas [#251] (https://github.com/hypermodeAI/runtime/pull/251)
 
 ## 2024-06-22 - Version 0.9.1
 

@@ -68,6 +68,10 @@ func Test_GetGraphQLSchema(t *testing.T) {
 				ReturnType: plugins.TypeInfo{Name: "Person[]"},
 			},
 			{
+				Name:       "getProductMap",
+				ReturnType: plugins.TypeInfo{Name: "Map<string, Product>"},
+			},
+			{
 				Name:       "doNothing",
 				ReturnType: plugins.TypeInfo{Name: "void"},
 			},
@@ -81,6 +85,21 @@ func Test_GetGraphQLSchema(t *testing.T) {
 			},
 		},
 		Types: []plugins.TypeDefinition{
+			{
+				Name: "Company",
+				Fields: []plugins.Field{
+					{Name: "name", Type: plugins.TypeInfo{Name: "string"}},
+				},
+			},
+			{
+				Name: "Product",
+				Fields: []plugins.Field{
+					{Name: "name", Type: plugins.TypeInfo{Name: "string"}},
+					{Name: "price", Type: plugins.TypeInfo{Name: "f64"}},
+					{Name: "manufacturer", Type: plugins.TypeInfo{Name: "Company"}},
+					{Name: "components", Type: plugins.TypeInfo{Name: "Product[]"}},
+				},
+			},
 			{
 				Name: "Person",
 				Fields: []plugins.Field{
@@ -111,13 +130,13 @@ func Test_GetGraphQLSchema(t *testing.T) {
 				},
 			},
 			// This should be excluded from the final schema
-			// {
-			// 	Name: "Header",
-			// 	Fields: []plugins.Field{
-			// 		{Name: "name", Type: plugins.TypeInfo{Name: "string"}},
-			// 		{Name: "values", Type: plugins.TypeInfo{Name: "string[]"}},
-			// 	},
-			// },
+			{
+				Name: "Header",
+				Fields: []plugins.Field{
+					{Name: "name", Type: plugins.TypeInfo{Name: "string"}},
+					{Name: "values", Type: plugins.TypeInfo{Name: "string[]"}},
+				},
+			},
 		},
 	}
 
@@ -129,6 +148,7 @@ func Test_GetGraphQLSchema(t *testing.T) {
   doNothing: Void
   getPeople: [Person!]!
   getPerson: Person!
+  getProductMap: [StringProductPair!]!
   sayHello(name: String!): String!
   transform(items: [StringStringPair!]!): [StringStringPair!]!
 }
@@ -145,6 +165,10 @@ type Address {
   location: Coordinates!
 }
 
+type Company {
+  name: String!
+}
+
 type Coordinates {
   lat: Float!
   lon: Float!
@@ -154,6 +178,18 @@ type Person {
   name: String!
   age: Int!
   addresses: [Address!]!
+}
+
+type Product {
+  name: String!
+  price: Float!
+  manufacturer: Company!
+  components: [Product!]!
+}
+
+type StringProductPair {
+  key: String!
+  value: Product!
 }
 
 type StringStringPair {
