@@ -2,6 +2,7 @@ package collections
 
 import (
 	"context"
+	"fmt"
 
 	"hmruntime/collections/in_mem"
 	"hmruntime/collections/in_mem/sequential"
@@ -17,23 +18,28 @@ import (
 )
 
 func ProcessText(ctx context.Context, collection interfaces.Collection, vectorIndex interfaces.VectorIndex, key, text string) error {
-	executionInfo, err := wasmhost.CallFunction(ctx, vectorIndex.GetEmbedderName(), text)
+	texts := []string{text}
+	executionInfo, err := wasmhost.CallFunction(ctx, vectorIndex.GetEmbedderName(), texts)
 	if err != nil {
 		return err
 	}
 
 	result := executionInfo.Result
 
-	textVec, err := utils.ConvertToFloat32Array(result)
+	textVecs, err := utils.ConvertToFloat32_2DArray(result)
 	if err != nil {
 		return err
+	}
+
+	if len(textVecs) == 0 {
+		return fmt.Errorf("no vectors returned for text: %s", text)
 	}
 
 	id, err := collection.GetExternalId(ctx, key)
 	if err != nil {
 		return err
 	}
-	err = vectorIndex.InsertVector(ctx, id, textVec)
+	err = vectorIndex.InsertVector(ctx, id, textVecs[0])
 	if err != nil {
 		return err
 	}
@@ -49,23 +55,28 @@ func ProcessTextMapWithModule(ctx context.Context, mod wasm.Module, collection i
 			Msg("Failed to get text map.")
 	}
 	for key, text := range textMap {
-		executionInfo, err := wasmhost.CallFunction(ctx, embedder, text)
+		texts := []string{text}
+		executionInfo, err := wasmhost.CallFunction(ctx, embedder, texts)
 		if err != nil {
 			return err
 		}
 
 		result := executionInfo.Result
 
-		textVec, err := utils.ConvertToFloat32Array(result)
+		textVecs, err := utils.ConvertToFloat32_2DArray(result)
 		if err != nil {
 			return err
+		}
+
+		if len(textVecs) == 0 {
+			return fmt.Errorf("no vectors returned for text: %s", text)
 		}
 
 		id, err := collection.GetExternalId(ctx, key)
 		if err != nil {
 			return err
 		}
-		err = vectorIndex.InsertVector(ctx, id, textVec)
+		err = vectorIndex.InsertVector(ctx, id, textVecs[0])
 		if err != nil {
 			return err
 		}
