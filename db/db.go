@@ -461,9 +461,14 @@ func Initialize(ctx context.Context) {
 	go globalRuntimePostgresWriter.worker(ctx)
 }
 
+var hasWarnedAboutNoDB bool
+
 func GetTx(ctx context.Context) (pgx.Tx, error) {
 	if globalRuntimePostgresWriter.dbpool == nil {
-		logger.Warn(ctx).Msg("Database pool is not initialized. Inference history will not be saved")
+		if !hasWarnedAboutNoDB {
+			logger.Warn(ctx).Msg("Database pool is not initialized. Inference history will not be saved")
+			hasWarnedAboutNoDB = true
+		}
 		return nil, nil
 	}
 	return globalRuntimePostgresWriter.dbpool.Begin(ctx)
@@ -471,7 +476,7 @@ func GetTx(ctx context.Context) (pgx.Tx, error) {
 
 func WithTx(ctx context.Context, fn func(pgx.Tx) error) error {
 	tx, err := GetTx(ctx)
-	if err != nil {
+	if err != nil || tx == nil {
 		return err
 	}
 	defer func() {
