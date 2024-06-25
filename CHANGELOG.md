@@ -1,9 +1,10 @@
 # Change Log
 
-## UNRELEASED
+## 2024-06-25 - Version 0.9.3
 
 - Don't panic when the metadata DB is not configured [#256](https://github.com/hypermodeAI/runtime/pull/256)
 - Don't panic when collections are renamed or deleted [#257](https://github.com/hypermodeAI/runtime/pull/257)
+
 ## 2024-06-24 - Version 0.9.2
 
 - Add auto-embedding for collection based on text checkpoint [#250](https://github.com/hypermodeAI/runtime/pull/250)
