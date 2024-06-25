@@ -13,7 +13,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/sts v1.29.1
 	github.com/buger/jsonparser v1.1.1
 	github.com/chewxy/math32 v1.10.1
-	github.com/docker/docker v27.0.0+incompatible
+	github.com/docker/docker v27.0.1+incompatible
 	github.com/docker/go-connections v0.5.0
 	github.com/getsentry/sentry-go v0.28.1
 	github.com/go-viper/mapstructure/v2 v2.0.0
@@ -30,11 +30,11 @@ require (
 	github.com/stretchr/testify v1.9.0
 	github.com/tetratelabs/wazero v1.7.3
 	github.com/wundergraph/graphql-go-tools/execution v1.0.3
-	github.com/wundergraph/graphql-go-tools/v2 v2.0.0-rc.51
+	github.com/wundergraph/graphql-go-tools/v2 v2.0.0-rc.52
 )
 
 require (
-	github.com/Microsoft/go-winio v0.4.14 // indirect
+	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/alitto/pond v1.9.0 // indirect
 	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.6.2 // indirect
 	github.com/aws/aws-sdk-go-v2/credentials v1.17.21 // indirect
@@ -59,7 +59,7 @@ require (
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/dop251/goja v0.0.0-20240610225006-393f6d42497b // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
-	github.com/go-logr/logr v1.4.1 // indirect
+	github.com/go-logr/logr v1.4.2 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-sourcemap/sourcemap v2.1.4+incompatible // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
@@ -90,12 +90,12 @@ require (
 	github.com/tidwall/match v1.1.1 // indirect
 	github.com/tidwall/pretty v1.2.1 // indirect
 	github.com/tidwall/sjson v1.2.5 // indirect
-	github.com/wundergraph/cosmo/composition-go v0.0.0-20240624160432-5bcf14915115 // indirect
-	github.com/wundergraph/cosmo/router v0.0.0-20240624160432-5bcf14915115 // indirect
-	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.46.1 // indirect
-	go.opentelemetry.io/otel v1.24.0 // indirect
-	go.opentelemetry.io/otel/metric v1.24.0 // indirect
-	go.opentelemetry.io/otel/trace v1.24.0 // indirect
+	github.com/wundergraph/cosmo/composition-go v0.0.0-20240625113344-34359c7407af // indirect
+	github.com/wundergraph/cosmo/router v0.0.0-20240625113344-34359c7407af // indirect
+	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.52.0 // indirect
+	go.opentelemetry.io/otel v1.27.0 // indirect
+	go.opentelemetry.io/otel/metric v1.27.0 // indirect
+	go.opentelemetry.io/otel/trace v1.27.0 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.27.0 // indirect
