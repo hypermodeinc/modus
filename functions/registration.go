@@ -38,6 +38,8 @@ func RegisterFunctions(ctx context.Context, plugins []plugins.Plugin) {
 	}
 
 	r.cleanup(ctx)
+
+	triggerFunctionsLoaded(ctx)
 }
 
 type registration struct {

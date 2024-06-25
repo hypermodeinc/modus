@@ -16,6 +16,7 @@ import (
 	"hmruntime/wasmhost"
 
 	"github.com/buger/jsonparser"
+	"github.com/wundergraph/graphql-go-tools/v2/pkg/engine/datasource/httpclient"
 	"github.com/wundergraph/graphql-go-tools/v2/pkg/engine/resolve"
 )
 
@@ -47,6 +48,11 @@ func (s Source) Load(ctx context.Context, input []byte, writer io.Writer) error 
 	}
 
 	return err
+}
+
+func (Source) LoadWithFiles(ctx context.Context, input []byte, files []httpclient.File, w io.Writer) (err error) {
+	// See https://github.com/wundergraph/graphql-go-tools/pull/758
+	panic("not implemented")
 }
 
 func (s Source) callFunction(ctx context.Context, callInfo callInfo) (any, []resolve.GraphQLError, error) {

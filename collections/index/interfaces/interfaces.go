@@ -80,8 +80,13 @@ type Collection interface {
 	// DeleteVectorIndex deletes the VectorIndex for a given searchMethod
 	DeleteVectorIndex(ctx context.Context, searchMethod string) error
 
+	// InsertTexts will add texts and keys into the existing VectorIndex
+	InsertTexts(ctx context.Context, keys []string, texts []string) error
+
 	// InsertText will add a text and key into the existing VectorIndex
 	InsertText(ctx context.Context, key string, text string) error
+
+	InsertTextsToMemory(ctx context.Context, ids []int64, keys []string, texts []string) error
 
 	InsertTextToMemory(ctx context.Context, id int64, key string, text string) error
 
@@ -104,6 +109,10 @@ type Collection interface {
 type VectorIndex interface {
 	GetSearchMethodName() string
 
+	SetEmbedderName(embedderName string) error
+
+	GetEmbedderName() string
+
 	// Search will find the keys for a given set of vectors based on the
 	// input query, limiting to the specified maximum number of results.
 	// The filter parameter indicates that we might discard certain parameters
@@ -124,13 +133,16 @@ type VectorIndex interface {
 		maxResults int,
 		filter index.SearchFilter) (utils.MinTupleHeap, error)
 
+	// Insert Vectors will add vectors and keys into the existing VectorIndex
+	InsertVectors(ctx context.Context, textIds []int64, vecs [][]float32) error
+
 	// Insert will add a vector and key into the existing VectorIndex. If
 	// key already exists, it should throw an error to not insert duplicate keys
 	InsertVector(ctx context.Context, textId int64, vec []float32) error
 
 	// InsertVectorToMemory will add a vector and key into the existing VectorIndex. If
 	// key already exists, it should throw an error to not insert duplicate keys
-	InsertVectorToMemory(ctx context.Context, vectorId int64, key string, vec []float32) error
+	InsertVectorToMemory(ctx context.Context, textId, vectorId int64, key string, vec []float32) error
 
 	// Delete will remove a vector and key from the existing VectorIndex. If
 	// key does not exist, it should throw an error to not delete non-existent keys
@@ -140,4 +152,6 @@ type VectorIndex interface {
 	GetVector(ctx context.Context, key string) ([]float32, error)
 
 	GetCheckpointId(ctx context.Context) (int64, error)
+
+	GetLastIndexedTextId(ctx context.Context) (int64, error)
 }

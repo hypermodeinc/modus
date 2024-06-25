@@ -20,7 +20,7 @@ type collectionMutationResult struct {
 	Collection string
 	Operation  string
 	Status     string
-	Key        string
+	Keys       []string
 	Error      string
 }
 
@@ -74,12 +74,15 @@ func (r *collectionSearchResultObject) GetTypeInfo() plugins.TypeInfo {
 	}
 }
 
-func WriteCollectionMutationResultOffset(ctx context.Context, mod wasm.Module, collectionName, operation, status, key, error string) (uint32, error) {
+func WriteCollectionMutationResultOffset(ctx context.Context, mod wasm.Module, collectionName, operation, status string, keys []string, error string) (uint32, error) {
+	if keys == nil {
+		keys = []string{}
+	}
 	output := collectionMutationResult{
 		Collection: collectionName,
 		Operation:  operation,
 		Status:     status,
-		Key:        key,
+		Keys:       keys,
 		Error:      error,
 	}
 
@@ -122,25 +125,22 @@ func WriteCollectionSearchResultObjectOffset(ctx context.Context, mod wasm.Modul
 	return writeResult(ctx, mod, output)
 }
 
-func hostUpsertToCollection(ctx context.Context, mod wasm.Module, pCollectionName uint32, pKey uint32, pText uint32) uint32 {
+func hostUpsertToCollection(ctx context.Context, mod wasm.Module, pCollectionName uint32, pKeys uint32, pTexts uint32) uint32 {
 	var collectionName string
-	var key string
-	var text string
+	var keys []string
+	var texts []string
 
-	err := readParams3(ctx, mod, pCollectionName, pKey, pText, &collectionName, &key, &text)
+	err := readParams3(ctx, mod, pCollectionName, pKeys, pTexts, &collectionName, &keys, &texts)
 
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error reading input parameters.")
 
-		offset, err := WriteCollectionMutationResultOffset(ctx, mod, collectionName, "upsert", "error", "", fmt.Sprintf("Error reading input parameters: %s", err.Error()))
+		offset, err := WriteCollectionMutationResultOffset(ctx, mod, collectionName, "upsert", "error", nil, fmt.Sprintf("Error reading input parameters: %s", err.Error()))
 		if err != nil {
 			logger.Err(ctx, err).Msg("Error writing result.")
 		}
 		return offset
-	}
 
-	if key == "" {
-		key = utils.GenerateUUIDV7()
 	}
 
 	// Get the collectionName data from the manifest
@@ -150,18 +150,25 @@ func hostUpsertToCollection(ctx context.Context, mod wasm.Module, pCollectionNam
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error finding collectionName.")
 
-		offset, err := WriteCollectionMutationResultOffset(ctx, mod, collectionName, "upsert", "error", "", fmt.Sprintf("Error finding collectionName: %s", err.Error()))
+		offset, err := WriteCollectionMutationResultOffset(ctx, mod, collectionName, "upsert", "error", nil, fmt.Sprintf("Error finding collectionName: %s", err.Error()))
 		if err != nil {
 			logger.Err(ctx, err).Msg("Error writing result.")
 		}
 		return offset
 	}
 
-	err = collection.InsertText(ctx, key, text)
+	if len(keys) == 0 {
+		keys = make([]string, len(texts))
+		for i := range keys {
+			keys[i] = utils.GenerateUUIDV7()
+		}
+	}
+
+	err = collection.InsertTexts(ctx, keys, texts)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error inserting into collection.")
 
-		offset, err := WriteCollectionMutationResultOffset(ctx, mod, collectionName, "upsert", "error", "", fmt.Sprintf("Error inserting into collection: %s", err.Error()))
+		offset, err := WriteCollectionMutationResultOffset(ctx, mod, collectionName, "upsert", "error", nil, fmt.Sprintf("Error inserting into collection: %s", err.Error()))
 		if err != nil {
 			logger.Err(ctx, err).Msg("Error writing result.")
 		}
@@ -174,7 +181,7 @@ func hostUpsertToCollection(ctx context.Context, mod wasm.Module, pCollectionNam
 		if err != nil {
 			logger.Err(ctx, err).Msg("Error finding search method.")
 
-			offset, err := WriteCollectionMutationResultOffset(ctx, mod, collectionName, "upsert", "error", "", fmt.Sprintf("Error finding search method: %s", err.Error()))
+			offset, err := WriteCollectionMutationResultOffset(ctx, mod, collectionName, "upsert", "error", nil, fmt.Sprintf("Error finding search method: %s", err.Error()))
 			if err != nil {
 				logger.Err(ctx, err).Msg("Error writing result.")
 			}
@@ -187,29 +194,29 @@ func hostUpsertToCollection(ctx context.Context, mod wasm.Module, pCollectionNam
 		if err != nil {
 			logger.Err(ctx, err).Msg("Error getting function info.")
 
-			offset, err := WriteCollectionMutationResultOffset(ctx, mod, collectionName, "upsert", "error", "", fmt.Sprintf("Error getting function info: %s", err.Error()))
+			offset, err := WriteCollectionMutationResultOffset(ctx, mod, collectionName, "upsert", "error", nil, fmt.Sprintf("Error getting function info: %s", err.Error()))
 			if err != nil {
 				logger.Err(ctx, err).Msg("Error writing result.")
 			}
 			return offset
 		}
 
-		err = functions.VerifyFunctionSignature(info, "string", "f64[]")
+		err = functions.VerifyFunctionSignature(info, "string[]", "f32[][]")
 		if err != nil {
 			logger.Err(ctx, err).Msg("Error verifying function signature.")
 
-			offset, err := WriteCollectionMutationResultOffset(ctx, mod, collectionName, "upsert", "error", "", fmt.Sprintf("Error verifying function signature: %s", err.Error()))
+			offset, err := WriteCollectionMutationResultOffset(ctx, mod, collectionName, "upsert", "error", nil, fmt.Sprintf("Error verifying function signature: %s", err.Error()))
 			if err != nil {
 				logger.Err(ctx, err).Msg("Error writing result.")
 			}
 			return offset
 		}
 
-		executionInfo, err := wasmhost.CallFunction(ctx, embedder, text)
+		executionInfo, err := wasmhost.CallFunction(ctx, embedder, texts)
 		if err != nil {
 			logger.Err(ctx, err).Msg("Error calling function.")
 
-			offset, err := WriteCollectionMutationResultOffset(ctx, mod, collectionName, "upsert", "error", "", fmt.Sprintf("Error calling function: %s", err.Error()))
+			offset, err := WriteCollectionMutationResultOffset(ctx, mod, collectionName, "upsert", "error", nil, fmt.Sprintf("Error calling function: %s", err.Error()))
 			if err != nil {
 				logger.Err(ctx, err).Msg("Error writing result.")
 			}
@@ -218,29 +225,44 @@ func hostUpsertToCollection(ctx context.Context, mod wasm.Module, pCollectionNam
 
 		result := executionInfo.Result
 
-		textVec, err := collection_utils.ConvertToFloat32Array(result)
+		textVecs, err := collection_utils.ConvertToFloat32_2DArray(result)
 		if err != nil {
 			logger.Err(ctx, err).Msg("Error converting to float32.")
 		}
 
-		id, err := collection.GetExternalId(ctx, key)
-		if err != nil {
-			logger.Err(ctx, err).Msg("Error getting external id.")
-		}
-
-		err = vectorIndex.InsertVector(ctx, id, textVec)
-		if err != nil {
-			logger.Err(ctx, err).Msg("Error inserting into vector index.")
-
-			offset, err := WriteCollectionMutationResultOffset(ctx, mod, collectionName, "upsert", "error", "", fmt.Sprintf("Error inserting into vector index: %s", err.Error()))
+		if len(textVecs) != len(texts) {
+			offset, err := WriteCollectionMutationResultOffset(ctx, mod, collectionName, "upsert", "error", nil, "length of vectors does not match length of texts.")
 			if err != nil {
 				logger.Err(ctx, err).Msg("Error writing result.")
 			}
 			return offset
 		}
+
+		ids := make([]int64, len(keys))
+		for i := range textVecs {
+			key := keys[i]
+
+			id, err := collection.GetExternalId(ctx, key)
+			if err != nil {
+				logger.Err(ctx, err).Msg("Error getting external id.")
+			}
+			ids[i] = id
+		}
+
+		err = vectorIndex.InsertVectors(ctx, ids, textVecs)
+		if err != nil {
+			logger.Err(ctx, err).Msg("Error inserting into vector index.")
+
+			offset, err := WriteCollectionMutationResultOffset(ctx, mod, collectionName, "upsert", "error", nil, fmt.Sprintf("Error inserting into vector index: %s", err.Error()))
+			if err != nil {
+				logger.Err(ctx, err).Msg("Error writing result.")
+			}
+			return offset
+
+		}
 	}
 
-	offset, err := WriteCollectionMutationResultOffset(ctx, mod, collectionName, "upsert", "success", key, "")
+	offset, err := WriteCollectionMutationResultOffset(ctx, mod, collectionName, "upsert", "success", keys, "")
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error writing result.")
 	}
@@ -256,7 +278,7 @@ func hostDeleteFromCollection(ctx context.Context, mod wasm.Module, pCollectionN
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error reading input parameters.")
 
-		offset, err := WriteCollectionMutationResultOffset(ctx, mod, collectionName, "delete", "error", "", fmt.Sprintf("Error reading input parameters: %s", err.Error()))
+		offset, err := WriteCollectionMutationResultOffset(ctx, mod, collectionName, "delete", "error", nil, fmt.Sprintf("Error reading input parameters: %s", err.Error()))
 		if err != nil {
 			logger.Err(ctx, err).Msg("Error writing result.")
 		}
@@ -267,7 +289,7 @@ func hostDeleteFromCollection(ctx context.Context, mod wasm.Module, pCollectionN
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error finding collectionName.")
 
-		offset, err := WriteCollectionMutationResultOffset(ctx, mod, collectionName, "delete", "error", "", fmt.Sprintf("Error finding collectionName: %s", err.Error()))
+		offset, err := WriteCollectionMutationResultOffset(ctx, mod, collectionName, "delete", "error", nil, fmt.Sprintf("Error finding collectionName: %s", err.Error()))
 		if err != nil {
 			logger.Err(ctx, err).Msg("Error writing result.")
 		}
@@ -277,7 +299,7 @@ func hostDeleteFromCollection(ctx context.Context, mod wasm.Module, pCollectionN
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error getting external id.")
 
-		offset, err := WriteCollectionMutationResultOffset(ctx, mod, collectionName, "delete", "error", "", fmt.Sprintf("Error getting external id: %s", err.Error()))
+		offset, err := WriteCollectionMutationResultOffset(ctx, mod, collectionName, "delete", "error", nil, fmt.Sprintf("Error getting external id: %s", err.Error()))
 		if err != nil {
 			logger.Err(ctx, err).Msg("Error writing result.")
 		}
@@ -288,7 +310,7 @@ func hostDeleteFromCollection(ctx context.Context, mod wasm.Module, pCollectionN
 		if err != nil {
 			logger.Err(ctx, err).Msg("Error deleting from index.")
 
-			offset, err := WriteCollectionMutationResultOffset(ctx, mod, collectionName, "delete", "error", "", fmt.Sprintf("Error deleting from index: %s", err.Error()))
+			offset, err := WriteCollectionMutationResultOffset(ctx, mod, collectionName, "delete", "error", nil, fmt.Sprintf("Error deleting from index: %s", err.Error()))
 			if err != nil {
 				logger.Err(ctx, err).Msg("Error writing result.")
 			}
@@ -299,14 +321,16 @@ func hostDeleteFromCollection(ctx context.Context, mod wasm.Module, pCollectionN
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error deleting from index.")
 
-		offset, err := WriteCollectionMutationResultOffset(ctx, mod, collectionName, "delete", "error", "", fmt.Sprintf("Error deleting from index: %s", err.Error()))
+		offset, err := WriteCollectionMutationResultOffset(ctx, mod, collectionName, "delete", "error", nil, fmt.Sprintf("Error deleting from index: %s", err.Error()))
 		if err != nil {
 			logger.Err(ctx, err).Msg("Error writing result.")
 		}
 		return offset
 	}
 
-	offset, err := WriteCollectionMutationResultOffset(ctx, mod, collectionName, "delete", "success", key, "")
+	keys := []string{key}
+
+	offset, err := WriteCollectionMutationResultOffset(ctx, mod, collectionName, "delete", "success", keys, "")
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error writing result.")
 	}
@@ -369,7 +393,7 @@ func hostSearchCollection(ctx context.Context, mod wasm.Module, pCollectionName 
 		return offset
 	}
 
-	err = functions.VerifyFunctionSignature(info, "string", "f64[]")
+	err = functions.VerifyFunctionSignature(info, "string[]", "f32[][]")
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error verifying function signature.")
 
@@ -380,7 +404,9 @@ func hostSearchCollection(ctx context.Context, mod wasm.Module, pCollectionName 
 		return offset
 	}
 
-	executionInfo, err := wasmhost.CallFunction(ctx, embedder, text)
+	texts := []string{text}
+
+	executionInfo, err := wasmhost.CallFunction(ctx, embedder, texts)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error calling function.")
 
@@ -393,12 +419,20 @@ func hostSearchCollection(ctx context.Context, mod wasm.Module, pCollectionName 
 
 	result := executionInfo.Result
 
-	textVec, err := collection_utils.ConvertToFloat32Array(result)
+	textVecs, err := collection_utils.ConvertToFloat32_2DArray(result)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error converting to float32.")
 	}
 
-	objects, err := vectorIndex.Search(ctx, textVec, int(limit), nil)
+	if len(textVecs) == 0 {
+		offset, err := WriteCollectionSearchResultOffset(ctx, mod, collectionName, searchMethod, "error", nil, "no vectors returned from embedder.")
+		if err != nil {
+			logger.Err(ctx, err).Msg("Error writing result.")
+		}
+		return offset
+	}
+
+	objects, err := vectorIndex.Search(ctx, textVecs[0], int(limit), nil)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error searching vector index.")
 
@@ -508,7 +542,7 @@ func hostRecomputeSearchMethod(ctx context.Context, mod wasm.Module, pCollection
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error reading input parameters.")
 
-		offset, err := WriteCollectionMutationResultOffset(ctx, mod, collectionName, "recompute", "error", "", fmt.Sprintf("Error reading input parameters: %s", err.Error()))
+		offset, err := WriteCollectionMutationResultOffset(ctx, mod, collectionName, "recompute", "error", nil, fmt.Sprintf("Error reading input parameters: %s", err.Error()))
 		if err != nil {
 			logger.Err(ctx, err).Msg("Error writing result.")
 		}
@@ -519,7 +553,7 @@ func hostRecomputeSearchMethod(ctx context.Context, mod wasm.Module, pCollection
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error finding collectionName.")
 
-		offset, err := WriteCollectionMutationResultOffset(ctx, mod, collectionName, "recompute", "error", "", fmt.Sprintf("Error finding collectionName: %s", err.Error()))
+		offset, err := WriteCollectionMutationResultOffset(ctx, mod, collectionName, "recompute", "error", nil, fmt.Sprintf("Error finding collectionName: %s", err.Error()))
 		if err != nil {
 			logger.Err(ctx, err).Msg("Error writing result.")
 		}
@@ -530,7 +564,7 @@ func hostRecomputeSearchMethod(ctx context.Context, mod wasm.Module, pCollection
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error finding search method.")
 
-		offset, err := WriteCollectionMutationResultOffset(ctx, mod, collectionName, "recompute", "error", "", fmt.Sprintf("Error finding search method: %s", err.Error()))
+		offset, err := WriteCollectionMutationResultOffset(ctx, mod, collectionName, "recompute", "error", nil, fmt.Sprintf("Error finding search method: %s", err.Error()))
 		if err != nil {
 			logger.Err(ctx, err).Msg("Error writing result.")
 		}
@@ -543,18 +577,18 @@ func hostRecomputeSearchMethod(ctx context.Context, mod wasm.Module, pCollection
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error getting function info.")
 
-		offset, err := WriteCollectionMutationResultOffset(ctx, mod, collectionName, "recompute", "error", "", fmt.Sprintf("Error getting function info: %s", err.Error()))
+		offset, err := WriteCollectionMutationResultOffset(ctx, mod, collectionName, "recompute", "error", nil, fmt.Sprintf("Error getting function info: %s", err.Error()))
 		if err != nil {
 			logger.Err(ctx, err).Msg("Error writing result.")
 		}
 		return offset
 	}
 
-	err = functions.VerifyFunctionSignature(info, "string", "f64[]")
+	err = functions.VerifyFunctionSignature(info, "string[]", "f32[][]")
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error verifying function signature.")
 
-		offset, err := WriteCollectionMutationResultOffset(ctx, mod, collectionName, "recompute", "error", "", fmt.Sprintf("Error verifying function signature: %s", err.Error()))
+		offset, err := WriteCollectionMutationResultOffset(ctx, mod, collectionName, "recompute", "error", nil, fmt.Sprintf("Error verifying function signature: %s", err.Error()))
 		if err != nil {
 			logger.Err(ctx, err).Msg("Error writing result.")
 		}
@@ -565,7 +599,7 @@ func hostRecomputeSearchMethod(ctx context.Context, mod wasm.Module, pCollection
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error processing text map.")
 
-		offset, err := WriteCollectionMutationResultOffset(ctx, mod, collectionName, "recompute", "error", "", fmt.Sprintf("Error processing text map: %s", err.Error()))
+		offset, err := WriteCollectionMutationResultOffset(ctx, mod, collectionName, "recompute", "error", nil, fmt.Sprintf("Error processing text map: %s", err.Error()))
 		if err != nil {
 			logger.Err(ctx, err).Msg("Error writing result.")
 		}

@@ -2,6 +2,24 @@
 
 ## UNRELEASED
 
+- Don't panic when the metadata DB is not configured [#256](https://github.com/hypermodeAI/runtime/pull/256)
+- Don't panic when collections are renamed or deleted [#257](https://github.com/hypermodeAI/runtime/pull/257)
+## 2024-06-24 - Version 0.9.2
+
+- Add auto-embedding for collection based on text checkpoint [#250](https://github.com/hypermodeAI/runtime/pull/250)
+- Remove extraneous types in graphql schemas [#251](https://github.com/hypermodeAI/runtime/pull/251)
+- Allow arrays as inputs to host functions [#252](https://github.com/hypermodeAI/runtime/pull/252)
+- Add batch upserts & batch recompute for collection & on auto-embedding [#253](https://github.com/hypermodeAI/runtime/pull/253)
+
+## 2024-06-22 - Version 0.9.1
+
+- Filter collection embedding functions from GraphQL schema [#245](https://github.com/hypermodeAI/runtime/pull/245)
+- Remove collection index from memory when manifest changes [#246](https://github.com/hypermodeAI/runtime/pull/246)
+- Fix missing execution id and plugin from logs from previous functions version [#247](https://github.com/hypermodeAI/runtime/pull/247)
+- Fix content type header when calling Hypermode-hosted models [#248](https://github.com/hypermodeAI/runtime/pull/248)
+
+## 2024-06-21 - Version 0.9.0
+
 - Add nullable check in ReadString [#228](https://github.com/hypermodeAI/runtime/pull/228)
 - Lowercase model name before invoking for hypermode hosted models [#221](https://github.com/gohypermode/runtime/pull/221)
 - Improve HTTP error messages [#222](https://github.com/gohypermode/runtime/pull/222)

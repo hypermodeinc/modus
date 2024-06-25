@@ -15,26 +15,32 @@ import (
 
 	"hmruntime/plugins"
 	"hmruntime/utils"
+
+	"github.com/hypermodeAI/manifest"
 )
 
-func GetGraphQLSchema(ctx context.Context, metadata plugins.PluginMetadata, includeHeader bool) (string, error) {
+func GetGraphQLSchema(ctx context.Context, metadata plugins.PluginMetadata, manifest manifest.HypermodeManifest, includeHeader bool) (string, error) {
 	span := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
 
 	typeDefs := make(map[string]TypeDefinition, len(metadata.Types))
 	errors := transformTypes(metadata.Types, &typeDefs)
 	functions, errs := transformFunctions(metadata.Functions, &typeDefs)
+	types := utils.MapValues(typeDefs)
 	errors = append(errors, errs...)
 
 	if len(errors) > 0 {
 		return "", fmt.Errorf("failed to generate schema: %+v", errors)
 	}
 
+	functions = filterFunctions(functions, manifest)
+	types = filterTypes(types, functions)
+
 	buf := bytes.Buffer{}
 	if includeHeader {
 		writeSchemaHeader(&buf, metadata)
 	}
-	writeSchema(&buf, functions, utils.MapValues(typeDefs))
+	writeSchema(&buf, functions, types)
 	return buf.String(), nil
 }
 
@@ -105,6 +111,80 @@ func transformFunctions(functions []plugins.FunctionSignature, typeDefs *map[str
 	}
 
 	return results, errors
+}
+
+func filterFunctions(functions []FunctionSignature, manifest manifest.HypermodeManifest) []FunctionSignature {
+	// Get all embedders from the manifest.
+	embedders := make(map[string]bool)
+	for _, collection := range manifest.Collections {
+		for _, searchMethod := range collection.SearchMethods {
+			embedders[searchMethod.Embedder] = true
+		}
+	}
+
+	// Filter out functions that are embedders.
+	results := make([]FunctionSignature, 0, len(functions))
+	for _, f := range functions {
+		if !embedders[f.Name] {
+			results = append(results, f)
+		}
+	}
+
+	return results
+}
+
+func filterTypes(types []TypeDefinition, functions []FunctionSignature) []TypeDefinition {
+	// Filter out types that are not used by any function.
+	// Also then recursively filter out types that are not used by any type.
+
+	// Make a map of all types
+	typeMap := make(map[string]TypeDefinition, len(types))
+	for _, t := range types {
+		name := getBaseType(t.Name)
+		typeMap[name] = t
+	}
+
+	// Get all types used by functions, including subtypes
+	usedTypes := make(map[string]bool)
+	for _, f := range functions {
+		for _, p := range f.Parameters {
+			addUsedTypes(p.Type, typeMap, &usedTypes)
+		}
+		addUsedTypes(f.ReturnType, typeMap, &usedTypes)
+	}
+
+	// Filter out types that are not used
+	results := make([]TypeDefinition, 0, len(types))
+	for _, t := range types {
+		name := getBaseType(t.Name)
+		if usedTypes[name] {
+			results = append(results, t)
+		}
+	}
+
+	return results
+}
+
+func addUsedTypes(name string, types map[string]TypeDefinition, usedTypes *map[string]bool) {
+	name = getBaseType(name)
+	if (*usedTypes)[name] {
+		return
+	}
+	(*usedTypes)[name] = true
+	if t, ok := types[name]; ok {
+		for _, f := range t.Fields {
+			addUsedTypes(f.Type, types, usedTypes)
+		}
+	}
+}
+
+func getBaseType(name string) string {
+	name = strings.TrimSuffix(name, "!")
+	if strings.HasPrefix(name, "[") {
+		return getBaseType(name[1 : len(name)-2])
+	}
+
+	return name
 }
 
 func writeSchemaHeader(buf *bytes.Buffer, metadata plugins.PluginMetadata) {

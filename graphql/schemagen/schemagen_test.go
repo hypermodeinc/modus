@@ -11,10 +11,25 @@ import (
 	"hmruntime/plugins"
 	"hmruntime/utils"
 
+	"github.com/hypermodeAI/manifest"
 	"github.com/stretchr/testify/require"
 )
 
 func Test_GetGraphQLSchema(t *testing.T) {
+
+	manifest := manifest.HypermodeManifest{
+		Models: map[string]manifest.ModelInfo{},
+		Hosts:  map[string]manifest.HostInfo{},
+		Collections: map[string]manifest.CollectionInfo{
+			"collection1": {
+				SearchMethods: map[string]manifest.SearchMethodInfo{
+					"search1": {
+						Embedder: "myEmbedder",
+					},
+				},
+			},
+		},
+	}
 
 	metadata := plugins.PluginMetadata{
 		Functions: []plugins.FunctionSignature{
@@ -53,11 +68,38 @@ func Test_GetGraphQLSchema(t *testing.T) {
 				ReturnType: plugins.TypeInfo{Name: "Person[]"},
 			},
 			{
+				Name:       "getProductMap",
+				ReturnType: plugins.TypeInfo{Name: "Map<string, Product>"},
+			},
+			{
 				Name:       "doNothing",
 				ReturnType: plugins.TypeInfo{Name: "void"},
 			},
+			// This should be excluded from the final schema
+			{
+				Name: "myEmbedder",
+				Parameters: []plugins.Parameter{
+					{Name: "text", Type: plugins.TypeInfo{Name: "string"}},
+				},
+				ReturnType: plugins.TypeInfo{Name: "f64[]"},
+			},
 		},
 		Types: []plugins.TypeDefinition{
+			{
+				Name: "Company",
+				Fields: []plugins.Field{
+					{Name: "name", Type: plugins.TypeInfo{Name: "string"}},
+				},
+			},
+			{
+				Name: "Product",
+				Fields: []plugins.Field{
+					{Name: "name", Type: plugins.TypeInfo{Name: "string"}},
+					{Name: "price", Type: plugins.TypeInfo{Name: "f64"}},
+					{Name: "manufacturer", Type: plugins.TypeInfo{Name: "Company"}},
+					{Name: "components", Type: plugins.TypeInfo{Name: "Product[]"}},
+				},
+			},
 			{
 				Name: "Person",
 				Fields: []plugins.Field{
@@ -88,17 +130,17 @@ func Test_GetGraphQLSchema(t *testing.T) {
 				},
 			},
 			// This should be excluded from the final schema
-			// {
-			// 	Name: "Header",
-			// 	Fields: []plugins.Field{
-			// 		{Name: "name", Type: plugins.TypeInfo{Name: "string"}},
-			// 		{Name: "values", Type: plugins.TypeInfo{Name: "string[]"}},
-			// 	},
-			// },
+			{
+				Name: "Header",
+				Fields: []plugins.Field{
+					{Name: "name", Type: plugins.TypeInfo{Name: "string"}},
+					{Name: "values", Type: plugins.TypeInfo{Name: "string[]"}},
+				},
+			},
 		},
 	}
 
-	result, err := GetGraphQLSchema(context.Background(), metadata, false)
+	result, err := GetGraphQLSchema(context.Background(), metadata, manifest, false)
 
 	expectedSchema := `type Query {
   add(a: Int!, b: Int!): Int!
@@ -106,6 +148,7 @@ func Test_GetGraphQLSchema(t *testing.T) {
   doNothing: Void
   getPeople: [Person!]!
   getPerson: Person!
+  getProductMap: [StringProductPair!]!
   sayHello(name: String!): String!
   transform(items: [StringStringPair!]!): [StringStringPair!]!
 }
@@ -122,6 +165,10 @@ type Address {
   location: Coordinates!
 }
 
+type Company {
+  name: String!
+}
+
 type Coordinates {
   lat: Float!
   lon: Float!
@@ -131,6 +178,18 @@ type Person {
   name: String!
   age: Int!
   addresses: [Address!]!
+}
+
+type Product {
+  name: String!
+  price: Float!
+  manufacturer: Company!
+  components: [Product!]!
+}
+
+type StringProductPair {
+  key: String!
+  value: Product!
 }
 
 type StringStringPair {
