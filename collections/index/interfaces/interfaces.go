@@ -86,6 +86,8 @@ type Collection interface {
 	// InsertText will add a text and key into the existing VectorIndex
 	InsertText(ctx context.Context, key string, text string) error
 
+	InsertTextsToMemory(ctx context.Context, ids []int64, keys []string, texts []string) error
+
 	InsertTextToMemory(ctx context.Context, id int64, key string, text string) error
 
 	// DeleteText will remove a text and key from the existing VectorIndex

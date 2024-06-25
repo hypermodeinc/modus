@@ -192,12 +192,11 @@ func LoadTextsIntoCollection(ctx context.Context, collection interfaces.Collecti
 	}
 
 	// Insert all texts into collection
-	for i := range textIds {
-		err = collection.InsertTextToMemory(ctx, textIds[i], keys[i], texts[i])
-		if err != nil {
-			return err
-		}
+	err = collection.InsertTextsToMemory(ctx, textIds, keys, texts)
+	if err != nil {
+		return err
 	}
+
 	return nil
 }
 
@@ -241,16 +240,10 @@ func syncTextsWithVectorIndex(ctx context.Context, collection interfaces.Collect
 		return errors.New("mismatch in keys and texts")
 	}
 	// Get last indexed text id
-	for i := range textIds {
-		if textIds[i] > lastIndexedTextId {
-			text := texts[i]
-			key := keys[i]
-			// process text
-			err = ProcessText(ctx, collection, vectorIndex, key, text)
-			if err != nil {
-				return err
-			}
-		}
+	err = ProcessTexts(ctx, collection, vectorIndex, keys, texts)
+	if err != nil {
+		return err
 	}
+
 	return nil
 }

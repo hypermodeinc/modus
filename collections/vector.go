@@ -17,6 +17,53 @@ import (
 	wasm "github.com/tetratelabs/wazero/api"
 )
 
+func ProcessTexts(ctx context.Context, collection interfaces.Collection, vectorIndex interfaces.VectorIndex, keys []string, texts []string) error {
+	if len(keys) != len(texts) {
+		return fmt.Errorf("mismatch in keys and texts")
+	}
+	batchSize := 10
+	for i := 0; i < len(keys); i += batchSize {
+		end := i + batchSize
+		if end > len(keys) {
+			end = len(keys)
+		}
+		keysBatch := keys[i:end]
+		textsBatch := texts[i:end]
+
+		executionInfo, err := wasmhost.CallFunction(ctx, vectorIndex.GetEmbedderName(), textsBatch)
+		if err != nil {
+			return err
+		}
+
+		result := executionInfo.Result
+
+		textVecs, err := utils.ConvertToFloat32_2DArray(result)
+		if err != nil {
+			return err
+		}
+
+		if len(textVecs) == 0 {
+			return fmt.Errorf("no vectors returned for texts: %v", textsBatch)
+		}
+
+		textIds := make([]int64, len(keysBatch))
+
+		for i, key := range keysBatch {
+			textId, err := collection.GetExternalId(ctx, key)
+			if err != nil {
+				return err
+			}
+			textIds[i] = textId
+		}
+
+		err = vectorIndex.InsertVectors(ctx, textIds, textVecs)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func ProcessText(ctx context.Context, collection interfaces.Collection, vectorIndex interfaces.VectorIndex, key, text string) error {
 	texts := []string{text}
 	executionInfo, err := wasmhost.CallFunction(ctx, vectorIndex.GetEmbedderName(), texts)
@@ -35,11 +82,11 @@ func ProcessText(ctx context.Context, collection interfaces.Collection, vectorIn
 		return fmt.Errorf("no vectors returned for text: %s", text)
 	}
 
-	id, err := collection.GetExternalId(ctx, key)
+	textId, err := collection.GetExternalId(ctx, key)
 	if err != nil {
 		return err
 	}
-	err = vectorIndex.InsertVector(ctx, id, textVecs[0])
+	err = vectorIndex.InsertVector(ctx, textId, textVecs[0])
 	if err != nil {
 		return err
 	}

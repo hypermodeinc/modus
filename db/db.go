@@ -205,32 +205,25 @@ func WriteCollectionVectors(ctx context.Context, searchMethodName string, textId
 		}
 
 		// Insert the new rows
-		query := fmt.Sprintf("INSERT INTO %s (search_method, text_id, vector) VALUES ($1, unnest($2::bigint[]), unnest($3::real[])) RETURNING id", collectionVectorsTable)
-		rows, err := tx.Query(ctx, query, searchMethodName, textIds, vectors)
+		query := fmt.Sprintf("INSERT INTO %s (search_method, text_id, vector) VALUES ($1, $2, $3::real[]) RETURNING id", collectionVectorsTable)
+		for i, textId := range textIds {
+			vector := vectors[i]
+			row := tx.QueryRow(ctx, query, searchMethodName, textId, vector)
+			var id int64
+			if err := row.Scan(&id); err != nil {
+				return err
+			}
+			vectorIds[i] = id
+		}
+
+		query = "SELECT key FROM collection_texts WHERE id = ANY($1)"
+		rows, err := tx.Query(ctx, query, textIds)
 		if err != nil {
 			return err
 		}
 		defer rows.Close()
 
 		i := 0
-		for rows.Next() {
-			if err := rows.Scan(&vectorIds[i]); err != nil {
-				return err
-			}
-			i++
-		}
-		if err := rows.Err(); err != nil {
-			return err
-		}
-
-		query = "SELECT key FROM collection_texts WHERE id = ANY($1)"
-		rows, err = tx.Query(ctx, query, textIds)
-		if err != nil {
-			return err
-		}
-		defer rows.Close()
-
-		i = 0
 		for rows.Next() {
 			if err := rows.Scan(&keys[i]); err != nil {
 				return err
