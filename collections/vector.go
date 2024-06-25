@@ -17,11 +17,14 @@ import (
 	wasm "github.com/tetratelabs/wazero/api"
 )
 
+const (
+	batchSize = 10
+)
+
 func ProcessTexts(ctx context.Context, collection interfaces.Collection, vectorIndex interfaces.VectorIndex, keys []string, texts []string) error {
 	if len(keys) != len(texts) {
 		return fmt.Errorf("mismatch in keys and texts")
 	}
-	batchSize := 10
 	for i := 0; i < len(keys); i += batchSize {
 		end := i + batchSize
 		if end > len(keys) {
