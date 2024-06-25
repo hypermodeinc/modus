@@ -98,37 +98,19 @@ func ProcessTextMapWithModule(ctx context.Context, mod wasm.Module, collection i
 	textMap, err := collection.GetTextMap(ctx)
 	if err != nil {
 		logger.Err(ctx, err).
-			Str("colletion_name", collection.GetCollectionName()).
+			Str("collection_name", collection.GetCollectionName()).
 			Msg("Failed to get text map.")
+		return err
 	}
+
+	keys := make([]string, 0, len(textMap))
+	texts := make([]string, 0, len(textMap))
 	for key, text := range textMap {
-		texts := []string{text}
-		executionInfo, err := wasmhost.CallFunction(ctx, embedder, texts)
-		if err != nil {
-			return err
-		}
-
-		result := executionInfo.Result
-
-		textVecs, err := utils.ConvertToFloat32_2DArray(result)
-		if err != nil {
-			return err
-		}
-
-		if len(textVecs) == 0 {
-			return fmt.Errorf("no vectors returned for text: %s", text)
-		}
-
-		id, err := collection.GetExternalId(ctx, key)
-		if err != nil {
-			return err
-		}
-		err = vectorIndex.InsertVector(ctx, id, textVecs[0])
-		if err != nil {
-			return err
-		}
+		keys = append(keys, key)
+		texts = append(texts, text)
 	}
-	return nil
+
+	return ProcessTexts(ctx, collection, vectorIndex, keys, texts)
 }
 
 func CleanAndProcessManifest(ctx context.Context) error {
