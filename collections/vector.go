@@ -2,6 +2,7 @@ package collections
 
 import (
 	"context"
+	"fmt"
 
 	"hmruntime/collections/in_mem"
 	"hmruntime/collections/in_mem/sequential"
@@ -16,24 +17,79 @@ import (
 	wasm "github.com/tetratelabs/wazero/api"
 )
 
+const (
+	batchSize = 10
+)
+
+func ProcessTexts(ctx context.Context, collection interfaces.Collection, vectorIndex interfaces.VectorIndex, keys []string, texts []string) error {
+	if len(keys) != len(texts) {
+		return fmt.Errorf("mismatch in keys and texts")
+	}
+	for i := 0; i < len(keys); i += batchSize {
+		end := i + batchSize
+		if end > len(keys) {
+			end = len(keys)
+		}
+		keysBatch := keys[i:end]
+		textsBatch := texts[i:end]
+
+		executionInfo, err := wasmhost.CallFunction(ctx, vectorIndex.GetEmbedderName(), textsBatch)
+		if err != nil {
+			return err
+		}
+
+		result := executionInfo.Result
+
+		textVecs, err := utils.ConvertToFloat32_2DArray(result)
+		if err != nil {
+			return err
+		}
+
+		if len(textVecs) == 0 {
+			return fmt.Errorf("no vectors returned for texts: %v", textsBatch)
+		}
+
+		textIds := make([]int64, len(keysBatch))
+
+		for i, key := range keysBatch {
+			textId, err := collection.GetExternalId(ctx, key)
+			if err != nil {
+				return err
+			}
+			textIds[i] = textId
+		}
+
+		err = vectorIndex.InsertVectors(ctx, textIds, textVecs)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func ProcessText(ctx context.Context, collection interfaces.Collection, vectorIndex interfaces.VectorIndex, key, text string) error {
-	executionInfo, err := wasmhost.CallFunction(ctx, vectorIndex.GetEmbedderName(), text)
+	texts := []string{text}
+	executionInfo, err := wasmhost.CallFunction(ctx, vectorIndex.GetEmbedderName(), texts)
 	if err != nil {
 		return err
 	}
 
 	result := executionInfo.Result
 
-	textVec, err := utils.ConvertToFloat32Array(result)
+	textVecs, err := utils.ConvertToFloat32_2DArray(result)
 	if err != nil {
 		return err
 	}
 
-	id, err := collection.GetExternalId(ctx, key)
+	if len(textVecs) == 0 {
+		return fmt.Errorf("no vectors returned for text: %s", text)
+	}
+
+	textId, err := collection.GetExternalId(ctx, key)
 	if err != nil {
 		return err
 	}
-	err = vectorIndex.InsertVector(ctx, id, textVec)
+	err = vectorIndex.InsertVector(ctx, textId, textVecs[0])
 	if err != nil {
 		return err
 	}
@@ -45,32 +101,19 @@ func ProcessTextMapWithModule(ctx context.Context, mod wasm.Module, collection i
 	textMap, err := collection.GetTextMap(ctx)
 	if err != nil {
 		logger.Err(ctx, err).
-			Str("colletion_name", collection.GetCollectionName()).
+			Str("collection_name", collection.GetCollectionName()).
 			Msg("Failed to get text map.")
+		return err
 	}
+
+	keys := make([]string, 0, len(textMap))
+	texts := make([]string, 0, len(textMap))
 	for key, text := range textMap {
-		executionInfo, err := wasmhost.CallFunction(ctx, embedder, text)
-		if err != nil {
-			return err
-		}
-
-		result := executionInfo.Result
-
-		textVec, err := utils.ConvertToFloat32Array(result)
-		if err != nil {
-			return err
-		}
-
-		id, err := collection.GetExternalId(ctx, key)
-		if err != nil {
-			return err
-		}
-		err = vectorIndex.InsertVector(ctx, id, textVec)
-		if err != nil {
-			return err
-		}
+		keys = append(keys, key)
+		texts = append(texts, text)
 	}
-	return nil
+
+	return ProcessTexts(ctx, collection, vectorIndex, keys, texts)
 }
 
 func CleanAndProcessManifest(ctx context.Context) error {

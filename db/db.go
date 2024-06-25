@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -104,6 +105,47 @@ func WriteInferenceHistory(ctx context.Context, model manifest.ModelInfo, input,
 	})
 }
 
+func WriteCollectionTexts(ctx context.Context, collectionName string, keys, texts []string) ([]int64, error) {
+	if len(keys) != len(texts) {
+		return nil, errors.New("keys and texts must have the same length")
+	}
+
+	ids := make([]int64, len(keys))
+	err := WithTx(ctx, func(tx pgx.Tx) error {
+		// Delete any existing rows that match the collectionName and keys
+		deleteQuery := fmt.Sprintf("DELETE FROM %s WHERE collection = $1 AND key = ANY($2)", collectionTextsTable)
+		_, err := tx.Exec(ctx, deleteQuery, collectionName, keys)
+		if err != nil {
+			return err
+		}
+
+		// Insert the new rows
+		query := fmt.Sprintf("INSERT INTO %s (collection, key, text) VALUES ($1, unnest($2::text[]), unnest($3::text[])) RETURNING id", collectionTextsTable)
+		rows, err := tx.Query(ctx, query, collectionName, keys, texts)
+		if err != nil {
+			return err
+		}
+		defer rows.Close()
+
+		i := 0
+		for rows.Next() {
+			if err := rows.Scan(&ids[i]); err != nil {
+				return err
+			}
+			i++
+		}
+		if err := rows.Err(); err != nil {
+			return err
+		}
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+	return ids, nil
+}
+
 func WriteCollectionText(ctx context.Context, collectionName, key, text string) (id int64, err error) {
 	err = WithTx(ctx, func(tx pgx.Tx) error {
 		// Delete any existing rows that match the collectionName and key
@@ -145,6 +187,60 @@ func DeleteCollectionText(ctx context.Context, collectionName, key string) error
 		}
 		return nil
 	})
+}
+
+func WriteCollectionVectors(ctx context.Context, searchMethodName string, textIds []int64, vectors [][]float32) ([]int64, []string, error) {
+	if len(textIds) != len(vectors) {
+		return nil, nil, errors.New("textIds and vectors must have the same length")
+	}
+
+	vectorIds := make([]int64, len(textIds))
+	keys := make([]string, len(textIds))
+	err := WithTx(ctx, func(tx pgx.Tx) error {
+		// Delete any existing rows that match the searchMethodName and textIds
+		deleteQuery := fmt.Sprintf("DELETE FROM %s WHERE search_method = $1 AND text_id = ANY($2)", collectionVectorsTable)
+		_, err := tx.Exec(ctx, deleteQuery, searchMethodName, textIds)
+		if err != nil {
+			return err
+		}
+
+		// Insert the new rows
+		query := fmt.Sprintf("INSERT INTO %s (search_method, text_id, vector) VALUES ($1, $2, $3::real[]) RETURNING id", collectionVectorsTable)
+		for i, textId := range textIds {
+			vector := vectors[i]
+			row := tx.QueryRow(ctx, query, searchMethodName, textId, vector)
+			var id int64
+			if err := row.Scan(&id); err != nil {
+				return err
+			}
+			vectorIds[i] = id
+		}
+
+		query = "SELECT key FROM collection_texts WHERE id = ANY($1)"
+		rows, err := tx.Query(ctx, query, textIds)
+		if err != nil {
+			return err
+		}
+		defer rows.Close()
+
+		i := 0
+		for rows.Next() {
+			if err := rows.Scan(&keys[i]); err != nil {
+				return err
+			}
+			i++
+		}
+		if err := rows.Err(); err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, nil, err
+	}
+	return vectorIds, keys, nil
 }
 
 func WriteCollectionVector(ctx context.Context, searchMethodName string, textId int64, vector []float32) (vectorId int64, key string, err error) {

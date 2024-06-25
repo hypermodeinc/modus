@@ -80,8 +80,13 @@ type Collection interface {
 	// DeleteVectorIndex deletes the VectorIndex for a given searchMethod
 	DeleteVectorIndex(ctx context.Context, searchMethod string) error
 
+	// InsertTexts will add texts and keys into the existing VectorIndex
+	InsertTexts(ctx context.Context, keys []string, texts []string) error
+
 	// InsertText will add a text and key into the existing VectorIndex
 	InsertText(ctx context.Context, key string, text string) error
+
+	InsertTextsToMemory(ctx context.Context, ids []int64, keys []string, texts []string) error
 
 	InsertTextToMemory(ctx context.Context, id int64, key string, text string) error
 
@@ -127,6 +132,9 @@ type VectorIndex interface {
 	SearchWithKey(ctx context.Context, queryKey string,
 		maxResults int,
 		filter index.SearchFilter) (utils.MinTupleHeap, error)
+
+	// Insert Vectors will add vectors and keys into the existing VectorIndex
+	InsertVectors(ctx context.Context, textIds []int64, vecs [][]float32) error
 
 	// Insert will add a vector and key into the existing VectorIndex. If
 	// key already exists, it should throw an error to not insert duplicate keys

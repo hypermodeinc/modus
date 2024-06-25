@@ -2,6 +2,7 @@ package in_mem
 
 import (
 	"context"
+	"fmt"
 
 	"hmruntime/collections/index"
 	"hmruntime/collections/index/interfaces"
@@ -67,6 +68,18 @@ func (ti *InMemCollection) DeleteVectorIndex(ctx context.Context, searchMethod s
 	return nil
 }
 
+func (ti *InMemCollection) InsertTexts(ctx context.Context, keys []string, texts []string) error {
+	if len(keys) != len(texts) {
+		return fmt.Errorf("keys and texts must have the same length")
+	}
+	ids, err := db.WriteCollectionTexts(ctx, ti.collectionName, keys, texts)
+	if err != nil {
+		return err
+	}
+
+	return ti.InsertTextsToMemory(ctx, ids, keys, texts)
+}
+
 func (ti *InMemCollection) InsertText(ctx context.Context, key string, text string) error {
 	id, err := db.WriteCollectionText(ctx, ti.collectionName, key, text)
 	if err != nil {
@@ -74,6 +87,22 @@ func (ti *InMemCollection) InsertText(ctx context.Context, key string, text stri
 	}
 
 	return ti.InsertTextToMemory(ctx, id, key, text)
+}
+
+func (ti *InMemCollection) InsertTextsToMemory(ctx context.Context, ids []int64, keys []string, texts []string) error {
+
+	if len(ids) != len(keys) || len(ids) != len(texts) {
+		return fmt.Errorf("ids, keys and texts must have the same length")
+	}
+
+	ti.mu.Lock()
+	defer ti.mu.Unlock()
+	for i, key := range keys {
+		ti.TextMap[key] = texts[i]
+		ti.IdMap[key] = ids[i]
+		ti.lastInsertedID = ids[i]
+	}
+	return nil
 }
 
 func (ti *InMemCollection) InsertTextToMemory(ctx context.Context, id int64, key string, text string) error {
