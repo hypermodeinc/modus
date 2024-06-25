@@ -191,12 +191,14 @@ func deleteIndexesNotInManifest(ctx context.Context, Manifest manifest.Hypermode
 					Str("collection_name", collectionName).
 					Msg("Failed to remove collection.")
 			}
+			continue
 		}
 		collection, err := GlobalCollectionFactory.Find(ctx, collectionName)
 		if err != nil {
 			logger.Err(ctx, err).
 				Str("collection_name", collectionName).
 				Msg("Failed to find collection.")
+			continue
 		}
 		vectorIndexMap := collection.GetVectorIndexMap()
 		if vectorIndexMap == nil {
@@ -205,18 +207,13 @@ func deleteIndexesNotInManifest(ctx context.Context, Manifest manifest.Hypermode
 		for searchMethodName := range vectorIndexMap {
 			_, ok := Manifest.Collections[collectionName].SearchMethods[searchMethodName]
 			if !ok {
-				collection, err := GlobalCollectionFactory.Find(ctx, collectionName)
-				if err != nil {
-					logger.Err(ctx, err).
-						Str("collection_name", collectionName).
-						Msg("Failed to find collection.")
-				}
 				err = collection.DeleteVectorIndex(ctx, searchMethodName)
 				if err != nil {
 					logger.Err(ctx, err).
 						Str("collectionName", collectionName).
 						Str("search_method_name", searchMethodName).
 						Msg("Failed to remove vector index.")
+					continue
 				}
 			}
 		}
