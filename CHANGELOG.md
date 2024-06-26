@@ -1,7 +1,9 @@
 # Change Log
 
 ## UNRELEASED
+
 - Increase batch size for auto-embedding collection texts [#259](https://github.com/hypermodeAI/runtime/pull/259)
+- Fix error with multiline input in GraphQL query [#260](https://github.com/hypermodeAI/runtime/pull/260)
 
 ## 2024-06-25 - Version 0.9.3
 
