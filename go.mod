@@ -28,7 +28,7 @@ require (
 	github.com/stretchr/testify v1.9.0
 	github.com/tetratelabs/wazero v1.7.3
 	github.com/wundergraph/graphql-go-tools/execution v1.0.3
-	github.com/wundergraph/graphql-go-tools/v2 v2.0.0-rc.52
+	github.com/wundergraph/graphql-go-tools/v2 v2.0.0-rc.53
 )
 
 require (
