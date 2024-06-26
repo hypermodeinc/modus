@@ -18,7 +18,7 @@ import (
 )
 
 const (
-	batchSize = 10
+	batchSize = 25
 )
 
 func ProcessTexts(ctx context.Context, collection interfaces.Collection, vectorIndex interfaces.VectorIndex, keys []string, texts []string) error {
