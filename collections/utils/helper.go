@@ -3,6 +3,7 @@ package utils
 import (
 	"errors"
 	"fmt"
+	"math"
 
 	"github.com/chewxy/math32"
 )
@@ -101,4 +102,17 @@ func ConvertToFloat32_2DArray(result any) ([][]float32, error) {
 		}
 	}
 	return textVecs, nil
+}
+
+func EqualFloat32Slices(a, b []float32) bool {
+	const epsilon = 1e-9
+	if len(a) != len(b) {
+		return false
+	}
+	for i := range a {
+		if math.Abs(float64(a[i]-b[i])) > epsilon {
+			return false
+		}
+	}
+	return true
 }
