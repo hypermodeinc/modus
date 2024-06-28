@@ -75,23 +75,24 @@ func TestMultipleSequentialVectorIndexes(t *testing.T) {
 				if !utils.EqualFloat32Slices(expectedVec, resVec) {
 					t.Errorf("index %d: Expected vector %v, got %v", i, expectedVec, resVec)
 				}
+
+				checkpointId, err := index.GetCheckpointId(ctx)
+				if err != nil {
+					t.Errorf("Failed to get checkpoint ID: %v", err)
+				}
+				if checkpointId != textIds[len(textIds)-1] {
+					t.Errorf("Expected checkpoint ID %v, got %v", textIds[len(textIds)-1], checkpointId)
+				}
+
+				lastIndexedTextID, err := index.GetLastIndexedTextId(ctx)
+				if err != nil {
+					t.Errorf("Failed to get last indexed text ID: %v", err)
+				}
+				if lastIndexedTextID != textIds[len(textIds)-1] {
+					t.Errorf("Expected last indexed text ID %v, got %v", textIds[len(textIds)-1], lastIndexedTextID)
+				}
 			}
 
-			checkpointId, err := index.GetCheckpointId(ctx)
-			if err != nil {
-				t.Errorf("Failed to get checkpoint ID: %v", err)
-			}
-			if checkpointId != textIds[len(textIds)-1] {
-				t.Errorf("Expected checkpoint ID %v, got %v", textIds[len(textIds)-1], checkpointId)
-			}
-
-			lastIndexedTextID, err := index.GetLastIndexedTextId(ctx)
-			if err != nil {
-				t.Errorf("Failed to get last indexed text ID: %v", err)
-			}
-			if lastIndexedTextID != textIds[len(textIds)-1] {
-				t.Errorf("Expected last indexed text ID %v, got %v", textIds[len(textIds)-1], lastIndexedTextID)
-			}
 		}(i)
 	}
 
