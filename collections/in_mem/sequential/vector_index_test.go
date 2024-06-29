@@ -27,7 +27,7 @@ func TestMultipleSequentialVectorIndexes(t *testing.T) {
 	numIndexes := 20
 
 	// Create and initialize the indexes
-	for i := 11; i < 11+numIndexes; i++ {
+	for i := 0; i < numIndexes; i++ {
 		wg.Add(1)
 
 		go func(i int) {
