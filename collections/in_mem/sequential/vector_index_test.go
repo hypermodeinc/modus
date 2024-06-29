@@ -24,7 +24,7 @@ func TestMultipleSequentialVectorIndexes(t *testing.T) {
 	var wg sync.WaitGroup
 
 	// Define the number of indexes to create
-	numIndexes := 1
+	numIndexes := 20
 
 	// Create and initialize the indexes
 	for i := 11; i < 11+numIndexes; i++ {
