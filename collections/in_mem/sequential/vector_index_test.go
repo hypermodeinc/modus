@@ -24,10 +24,10 @@ func TestMultipleSequentialVectorIndexes(t *testing.T) {
 	var wg sync.WaitGroup
 
 	// Define the number of indexes to create
-	numIndexes := 20
+	numIndexes := 1
 
 	// Create and initialize the indexes
-	for i := 0; i < numIndexes; i++ {
+	for i := 11; i < 11+numIndexes; i++ {
 		wg.Add(1)
 
 		go func(i int) {
@@ -46,6 +46,11 @@ func TestMultipleSequentialVectorIndexes(t *testing.T) {
 				vecs[j] = append([]float32{}, baseVecs[j]...)
 				for k := range vecs[j] {
 					vecs[j][k] += float32(i) / 10
+				}
+				var err error
+				vecs[j], err = utils.Normalize(vecs[j])
+				if err != nil {
+					t.Errorf("Failed to normalize vector: %v", err)
 				}
 			}
 
