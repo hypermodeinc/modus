@@ -14,7 +14,6 @@ import (
 	"hmruntime/plugins"
 	"hmruntime/utils"
 
-	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 	"github.com/tetratelabs/wazero"
 	wasm "github.com/tetratelabs/wazero/api"
@@ -36,8 +35,12 @@ func GetModuleInstance(ctx context.Context, plugin *plugins.Plugin, buffers *uti
 	wErr := io.MultiWriter(&buffers.StdErr, wErrorLog)
 
 	// Configure the module instance.
+	// Note, we use an anonymous module name (empty string) here,
+	// for concurrency and performance reasons.
+	// See https://github.com/tetratelabs/wazero/pull/2275
+	// And https://gophers.slack.com/archives/C040AKTNTE0/p1719587772724619?thread_ts=1719522663.531579&cid=C040AKTNTE0
 	cfg := wazero.NewModuleConfig().
-		WithName(plugin.Name() + "_" + uuid.NewString()).
+		WithName("").
 		WithSysWalltime().WithSysNanotime().
 		WithRandSource(rand.Reader).
 		WithStdout(wOut).WithStderr(wErr)

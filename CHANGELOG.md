@@ -1,5 +1,10 @@
 # Change Log
 
+## UNRELEASED
+
+- Use anonymous wasm modules for better performance [#264](https://github.com/hypermodeAI/runtime/pull/264)
+
+
 ## 2024-06-26 - Version 0.9.4
 
 - Increase batch size for auto-embedding collection texts [#259](https://github.com/hypermodeAI/runtime/pull/259)
