@@ -8,7 +8,7 @@ require (
 	github.com/aws/aws-sdk-go-v2 v1.30.1
 	github.com/aws/aws-sdk-go-v2/config v1.27.23
 	github.com/aws/aws-sdk-go-v2/service/bedrockruntime v1.12.1
-	github.com/aws/aws-sdk-go-v2/service/s3 v1.57.1
+	github.com/aws/aws-sdk-go-v2/service/s3 v1.58.0
 	github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.32.1
 	github.com/aws/aws-sdk-go-v2/service/sts v1.30.1
 	github.com/buger/jsonparser v1.1.1
