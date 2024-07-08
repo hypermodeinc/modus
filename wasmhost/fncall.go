@@ -127,7 +127,16 @@ func invokeFunction(ctx context.Context, mod wasm.Module, info functions.Functio
 
 		params[i] = param
 	}
-
+	param_mask := uint64(0)
+	for i, p := range info.Function.Parameters {
+		if p.Optional && params[i] != 0 {
+			param_mask |= 1 << i
+			fmt.Println("Name: " + p.Name + "\n" + "Param: ", params[i])
+		}
+	}
+	if param_mask != 0 {
+		params = append(params, param_mask)
+	}
 	// Call the wasm function
 	res, err := fn.Call(ctx, params...)
 	if err != nil {
