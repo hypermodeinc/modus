@@ -114,24 +114,34 @@ func invokeFunction(ctx context.Context, mod wasm.Module, info functions.Functio
 
 	// Get parameters to pass as input to the plugin function
 	params := make([]uint64, len(info.Function.Parameters))
+	param_mask := uint64(0)
+	// Set all bits to 0
 	for i, arg := range info.Function.Parameters {
 		val := parameters[arg.Name]
-		if val == nil {
-			return nil, fmt.Errorf("parameter '%s' is missing", arg.Name)
-		}
 
-		param, err := assemblyscript.EncodeValue(ctx, mod, arg.Type, val)
-		if err != nil {
-			return nil, fmt.Errorf("function parameter '%s' is invalid: %w", arg.Name, err)
-		}
+		if arg.Optional {
+			if val == nil {
+				params[i] = 0
+				param_mask |= 1 << i
+				// Bit set to 1 tells function to replace it with the default value
+			} else {
+				param, err := assemblyscript.EncodeValue(ctx, mod, arg.Type, val)
+				if err != nil {
+					return nil, fmt.Errorf("function parameter '%s' is invalid: %w", arg.Name, err)
+				}
+				params[i] = param
+			}
+		} else {
+			if val == nil {
+				return nil, fmt.Errorf("parameter '%s' is missing", arg.Name)
+			}
 
-		params[i] = param
-	}
-	param_mask := uint64(0)
-	for i, p := range info.Function.Parameters {
-		if p.Optional && params[i] != 0 {
-			param_mask |= 1 << i
-			fmt.Println("Name: " + p.Name + "\n" + "Param: ", params[i])
+			param, err := assemblyscript.EncodeValue(ctx, mod, arg.Type, val)
+			if err != nil {
+				return nil, fmt.Errorf("function parameter '%s' is invalid: %w", arg.Name, err)
+			}
+
+			params[i] = param
 		}
 	}
 	if param_mask != 0 {
