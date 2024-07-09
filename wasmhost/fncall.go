@@ -105,7 +105,7 @@ func doCallFunction(ctx context.Context, fnInfo functions.FunctionInfo, paramete
 	return &execInfo, err
 }
 
-func GetParameters(ctx context.Context, mod wasm.Module, paramInfo []plugins.Parameter, parameters map[string]any) ([]uint64, error) {
+func getParameters(ctx context.Context, mod wasm.Module, paramInfo []plugins.Parameter, parameters map[string]any) ([]uint64, error) {
 	params := make([]uint64, len(paramInfo))
 	mask := uint64(0)
 	has_opt := false
