@@ -118,7 +118,7 @@ func getParameters(ctx context.Context, mod wasm.Module, paramInfo []plugins.Par
 		}
 
 		if val == nil {
-			if arg.Optional {
+			if arg.Optional || arg.Type.Nullable {
 				continue
 			}
 			return nil, fmt.Errorf("parameter '%s' is missing", arg.Name)
