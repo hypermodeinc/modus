@@ -121,8 +121,7 @@ func invokeFunction(ctx context.Context, mod wasm.Module, info functions.Functio
 		if arg.Optional {
 			if val == nil {
 				params[i] = 0
-				param_mask |= 1 << i
-				// Bit set to 1 tells function to replace it with the default value
+				param_mask |= 1 << i // Bit set to 1 tells function to replace it with the default value
 			} else {
 				param, err := assemblyscript.EncodeValue(ctx, mod, arg.Type, val)
 				if err != nil {
