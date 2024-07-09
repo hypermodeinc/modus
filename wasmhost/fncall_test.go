@@ -52,7 +52,7 @@ func Test_GetParameters(t *testing.T) {
 	parameters["z"] = nil
 
 	mockModule := &MockModule{}
-	params, err := GetParameters(context.Background(), mockModule, paramInfo, parameters)
+	params, err := getParameters(context.Background(), mockModule, paramInfo, parameters)
 	require.NoError(t, err)
 	require.Equal(t, uint64(0b000), params[len(params)-1])
 
