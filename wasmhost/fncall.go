@@ -114,8 +114,7 @@ func invokeFunction(ctx context.Context, mod wasm.Module, info functions.Functio
 
 	// Get parameters to pass as input to the plugin function
 	params := make([]uint64, len(info.Function.Parameters))
-	param_mask := uint64(0)
-	// Set all bits to 0
+	param_mask := uint64(0) // Set all bits to 0
 	for i, arg := range info.Function.Parameters {
 		val := parameters[arg.Name]
 
