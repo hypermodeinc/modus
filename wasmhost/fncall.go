@@ -123,13 +123,15 @@ func invokeFunction(ctx context.Context, mod wasm.Module, info functions.Functio
 
 		if arg.Optional {
 			has_opt_param = true
+			if val == nil {
+				param_mask &= ^(1 << i)
+				continue
+			} else {
+				param_mask |= 1 << i
+			}
 		}
 
 		if val == nil {
-			if arg.Optional {
-				param_mask |= 1 << i
-				continue
-			}
 			return nil, fmt.Errorf("parameter '%s' is missing", arg.Name)
 		}
 
