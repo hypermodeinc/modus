@@ -3,7 +3,7 @@
 ## UNRELEASED
 
 - Use anonymous wasm modules for better performance [#264](https://github.com/hypermodeAI/runtime/pull/264)
-
+- Support optional parameters [#294](https://github.com/hypermodeAI/runtime/pull/269)
 
 ## 2024-06-26 - Version 0.9.4
 
