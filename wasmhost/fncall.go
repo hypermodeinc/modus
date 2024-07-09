@@ -150,7 +150,7 @@ func invokeFunction(ctx context.Context, mod wasm.Module, info functions.Functio
 	}
 
 	// Get parameters to pass as input to the plugin function
-	params, err := GetParameters(ctx, mod, info.Function.Parameters, parameters)
+	params, err := getParameters(ctx, mod, info.Function.Parameters, parameters)
 	if err != nil {
 		return nil, err
 	}
