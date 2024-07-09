@@ -13,6 +13,7 @@ import (
 	"hmruntime/functions/assemblyscript"
 	"hmruntime/logger"
 	"hmruntime/metrics"
+	"hmruntime/plugins"
 	"hmruntime/utils"
 
 	"github.com/rs/xid"
@@ -104,6 +105,42 @@ func doCallFunction(ctx context.Context, fnInfo functions.FunctionInfo, paramete
 	return &execInfo, err
 }
 
+func GetParameters(ctx context.Context, mod wasm.Module, paramInfo []plugins.Parameter, parameters map[string]any) ([]uint64, error) {
+	params := make([]uint64, len(paramInfo))
+	mask := uint64(0)
+	has_opt := false
+
+	for i, arg := range paramInfo {
+		val := parameters[arg.Name]
+
+		if arg.Optional {
+			has_opt = true
+		}
+
+		if val == nil {
+			if arg.Optional {
+				continue
+			}
+			return nil, fmt.Errorf("parameter '%s' is missing", arg.Name)
+		}
+
+		mask |= 1 << i
+
+		param, err := assemblyscript.EncodeValue(ctx, mod, arg.Type, val)
+		if err != nil {
+			return nil, fmt.Errorf("function parameter '%s' is invalid: %w", arg.Name, err)
+		}
+
+		params[i] = param
+	}
+
+	if has_opt {
+		params = append(params, mask)
+	}
+
+	return params, nil
+}
+
 func invokeFunction(ctx context.Context, mod wasm.Module, info functions.FunctionInfo, parameters map[string]any) (any, error) {
 
 	// Get the wasm function
@@ -113,39 +150,11 @@ func invokeFunction(ctx context.Context, mod wasm.Module, info functions.Functio
 	}
 
 	// Get parameters to pass as input to the plugin function
-	params := make([]uint64, len(info.Function.Parameters))
-	param_mask := uint64(0)
-
-	has_opt_param := false
-	// Set all bits to 0
-	for i, arg := range info.Function.Parameters {
-		val := parameters[arg.Name]
-
-		if arg.Optional {
-			has_opt_param = true
-			if val == nil {
-				param_mask &= ^(1 << i)
-				continue
-			} else {
-				param_mask |= 1 << i
-			}
-		}
-
-		if val == nil {
-			return nil, fmt.Errorf("parameter '%s' is missing", arg.Name)
-		}
-
-		param, err := assemblyscript.EncodeValue(ctx, mod, arg.Type, val)
-		if err != nil {
-			return nil, fmt.Errorf("function parameter '%s' is invalid: %w", arg.Name, err)
-		}
-
-		params[i] = param
+	params, err := GetParameters(ctx, mod, info.Function.Parameters, parameters)
+	if err != nil {
+		return nil, err
 	}
-	if has_opt_param {
-		params = append(params, param_mask)
-	}
-	// Call the wasm function
+
 	res, err := fn.Call(ctx, params...)
 	if err != nil {
 		return nil, err
