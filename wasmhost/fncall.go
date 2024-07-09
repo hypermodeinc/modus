@@ -13,6 +13,7 @@ import (
 	"hmruntime/functions/assemblyscript"
 	"hmruntime/logger"
 	"hmruntime/metrics"
+	"hmruntime/plugins"
 	"hmruntime/utils"
 
 	"github.com/rs/xid"
@@ -104,21 +105,26 @@ func doCallFunction(ctx context.Context, fnInfo functions.FunctionInfo, paramete
 	return &execInfo, err
 }
 
-func invokeFunction(ctx context.Context, mod wasm.Module, info functions.FunctionInfo, parameters map[string]any) (any, error) {
+func getParameters(ctx context.Context, mod wasm.Module, paramInfo []plugins.Parameter, parameters map[string]any) ([]uint64, error) {
+	params := make([]uint64, len(paramInfo))
+	mask := uint64(0)
+	has_opt := false
 
-	// Get the wasm function
-	fn := mod.ExportedFunction(info.Function.Name)
-	if fn == nil {
-		return nil, fmt.Errorf("function %s not found in plugin %s", info.Function.Name, info.Plugin.Name())
-	}
-
-	// Get parameters to pass as input to the plugin function
-	params := make([]uint64, len(info.Function.Parameters))
-	for i, arg := range info.Function.Parameters {
+	for i, arg := range paramInfo {
 		val := parameters[arg.Name]
+
+		if arg.Optional {
+			has_opt = true
+		}
+
 		if val == nil {
+			if arg.Optional {
+				continue
+			}
 			return nil, fmt.Errorf("parameter '%s' is missing", arg.Name)
 		}
+
+		mask |= 1 << i
 
 		param, err := assemblyscript.EncodeValue(ctx, mod, arg.Type, val)
 		if err != nil {
@@ -128,7 +134,27 @@ func invokeFunction(ctx context.Context, mod wasm.Module, info functions.Functio
 		params[i] = param
 	}
 
-	// Call the wasm function
+	if has_opt {
+		params = append(params, mask)
+	}
+
+	return params, nil
+}
+
+func invokeFunction(ctx context.Context, mod wasm.Module, info functions.FunctionInfo, parameters map[string]any) (any, error) {
+
+	// Get the wasm function
+	fn := mod.ExportedFunction(info.Function.Name)
+	if fn == nil {
+		return nil, fmt.Errorf("function %s not found in plugin %s", info.Function.Name, info.Plugin.Name())
+	}
+
+	// Get parameters to pass as input to the plugin function
+	params, err := getParameters(ctx, mod, info.Function.Parameters, parameters)
+	if err != nil {
+		return nil, err
+	}
+
 	res, err := fn.Call(ctx, params...)
 	if err != nil {
 		return nil, err
