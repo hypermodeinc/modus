@@ -39,7 +39,7 @@ func TestMain(m *testing.M) {
 			},
 		},
 		Hosts: map[string]manifest.HostInfo{
-			testHostName: {
+			testHostName: manifest.HTTPHostInfo{
 				Name:     testHostName,
 				Endpoint: "",
 			},
@@ -99,7 +99,7 @@ func TestPostExternalModelEndpoint(t *testing.T) {
 	tsrv := httptest.NewServer(handler)
 	defer tsrv.Close()
 
-	h := manifestdata.Manifest.Hosts[testHostName]
+	h := manifestdata.Manifest.Hosts[testHostName].(manifest.HTTPHostInfo)
 	h.Endpoint = tsrv.URL
 	manifestdata.Manifest.Hosts[testHostName] = h
 

@@ -80,7 +80,7 @@ func hostFetch(ctx context.Context, mod wasm.Module, pRequest uint32) (pResponse
 		return 0
 	}
 
-	host, err := hosts.GetHostForUrl(request.Url)
+	host, err := hosts.GetHttpHostForUrl(request.Url)
 	if err != nil {
 		logger.Err(ctx, err).
 			Str("url", request.Url).
