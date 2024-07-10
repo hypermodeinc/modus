@@ -11,12 +11,23 @@ import (
 
 // JsonSerialize serializes the given value to JSON.
 // Unlike json.Marshal, it does not escape HTML characters.
+// It also returns results without an extra newline at the end.
 func JsonSerialize(v any) ([]byte, error) {
 	buf := new(bytes.Buffer)
 	enc := json.NewEncoder(buf)
 	enc.SetEscapeHTML(false)
 	err := enc.Encode(v)
-	return buf.Bytes(), err
+	if err != nil {
+		return nil, err
+	}
+
+	// Remove the newline at the end, if there is one
+	bytes := buf.Bytes()
+	if bytes[len(bytes)-1] == '\n' {
+		bytes = bytes[:len(bytes)-1]
+	}
+
+	return bytes, nil
 }
 
 // JsonDeserialize deserializes the given JSON data into the given value.

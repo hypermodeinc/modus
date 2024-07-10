@@ -3,6 +3,7 @@ package utils
 import (
 	"errors"
 	"fmt"
+	"math"
 
 	"github.com/chewxy/math32"
 )
@@ -35,6 +36,17 @@ func IsBetterScoreForSimilarity(a, b float64) bool {
 	return a > b
 }
 
+func Normalize(v []float32) ([]float32, error) {
+	norm := norm(v)
+	if norm == 0 {
+		return nil, errors.New("can not normalize vector with zero norm")
+	}
+	for i := range v {
+		v[i] /= norm
+	}
+	return v, nil
+}
+
 func norm(v []float32) float32 {
 	vectorNorm, _ := DotProduct(v, v)
 	return math32.Sqrt(vectorNorm)
@@ -51,20 +63,14 @@ func DotProduct(a, b []float32) (float32, error) {
 	return dotProduct, nil
 }
 
+// assume normalization for vectors
 func CosineSimilarity(a, b []float32) (float64, error) {
 	dotProd, err := DotProduct(a, b)
 	if err != nil {
 		return 0, err
 	}
-	normA := norm(a)
-	normB := norm(b)
-	if normA == 0 || normB == 0 {
-		err := errors.New("can not compute cosine similarity on zero vector")
-		var empty float64
-		return empty, err
-	}
 
-	return float64(dotProd) / (float64(normA) * float64(normB)), nil
+	return float64(dotProd), nil
 }
 
 func ConcatStrings(strs ...string) string {
@@ -101,4 +107,17 @@ func ConvertToFloat32_2DArray(result any) ([][]float32, error) {
 		}
 	}
 	return textVecs, nil
+}
+
+func EqualFloat32Slices(a, b []float32) bool {
+	const epsilon = 1e-9
+	if len(a) != len(b) {
+		return false
+	}
+	for i := range a {
+		if math.Abs(float64(a[i]-b[i])) > epsilon {
+			return false
+		}
+	}
+	return true
 }
