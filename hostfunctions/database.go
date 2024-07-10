@@ -6,18 +6,18 @@ package hostfunctions
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"sync"
 
 	"hmruntime/logger"
 	"hmruntime/manifestdata"
+	"hmruntime/plugins"
+	"hmruntime/utils"
 
+	"github.com/hypermodeAI/manifest"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	wasm "github.com/tetratelabs/wazero/api"
-
-	"github.com/hypermodeAI/manifest"
 )
 
 var (
@@ -95,20 +95,53 @@ func (r *dsRegistry) getPGPool(ctx context.Context, dsname string) (*postgresqlD
 	return nil, fmt.Errorf("postgresql host [%s] not found", dsname)
 }
 
-func databaseQuery(ctx context.Context, mod wasm.Module, pDSName uint32, pDSType uint32, pQueryData uint32) uint32 {
-	var dsname, dsType, queryData string
-	if err := readParams3(ctx, mod, pDSName, pDSType, pQueryData, &dsname, &dsType, &queryData); err != nil {
+type hostQueryResponse struct {
+	Error        string
+	ResultJson   string
+	RowsAffected uint32
+}
+
+func (r *hostQueryResponse) GetTypeInfo() plugins.TypeInfo {
+	return plugins.TypeInfo{
+		Name: "HostQueryResponse",
+		Path: "~lib/@hypermode/functions-as/assembly/database/HostQueryResponse",
+	}
+}
+
+func hostDatabaseQuery(ctx context.Context, mod wasm.Module, pHostName, pDbType, pStatement, pParamsJson uint32) uint32 {
+	var hostName, dbType, statement, paramsJson string
+	if err := readParams4(ctx, mod,
+		pHostName, pDbType, pStatement, pParamsJson,
+		&hostName, &dbType, &statement, &paramsJson); err != nil {
 		logger.Err(ctx, err).Msg("Error reading input parameters.")
 		return 0
 	}
 
-	response, err := json.Marshal(executeQuery(ctx, dsname, dsType, queryData))
-	if err != nil {
-		logger.Err(ctx, err).Msg("Error serializing response.")
+	var params []any
+	if err := utils.JsonDeserialize([]byte(paramsJson), &params); err != nil {
+		logger.Err(ctx, err).Msg("Error deserializing database query parameters.")
 		return 0
 	}
 
-	offset, err := writeResult(ctx, mod, string(response))
+	pgResponse := executeQuery(ctx, hostName, dbType, statement, params)
+
+	var resultJson []byte
+	if pgResponse.Result != nil {
+		var err error
+		resultJson, err = utils.JsonSerialize(pgResponse.Result)
+		if err != nil {
+			logger.Err(ctx, err).Msg("Error serializing result.")
+			return 0
+		}
+	}
+
+	response := hostQueryResponse{
+		Error:        pgResponse.Error,
+		ResultJson:   string(resultJson),
+		RowsAffected: pgResponse.RowsAffected,
+	}
+
+	offset, err := writeResult(ctx, mod, response)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error writing result to wasm memory.")
 		return 0
@@ -118,44 +151,39 @@ func databaseQuery(ctx context.Context, mod wasm.Module, pDSName uint32, pDSType
 }
 
 type pgResponse struct {
-	Result any    `json:"result"`
-	Error  string `json:"error"`
+	Error        string `json:"error"`
+	Result       any    `json:"result"`
+	RowsAffected uint32 `json:"rowsAffected"`
 }
 
-func executeQuery(ctx context.Context, dsname, dsType, queryData string) *pgResponse {
+func executeQuery(ctx context.Context, dsname, dsType, stmt string, params []any) *pgResponse {
 	switch dsType {
 	case manifest.HostTypePostgresql:
 		ds, err := dsr.getPGPool(ctx, dsname)
 		if err != nil {
 			logger.Err(ctx, err).Msg("Error finding host in manifest.")
-			return &pgResponse{Error: err.Error()}
+			return nil
 		}
 
-		result, err := ds.query(ctx, queryData)
+		result, err := ds.query(ctx, stmt, params)
 		if err != nil {
-			return &pgResponse{Error: err.Error()}
+			logger.Err(ctx, err).Msg("Error executing query.")
+			return nil
 		}
-		return &pgResponse{Result: result}
+
+		return result
 
 	default:
-		logger.Err(ctx, fmt.Errorf("unsupported host type %s", dsType)).
+		logger.Error(ctx).
 			Str("dsname", dsname).
 			Str("dsType", dsType).
 			Msg("Unsupported host type.")
-		return &pgResponse{Error: "unsupported host type"}
+
+		return nil
 	}
 }
 
-type pgInput struct {
-	Query  string `json:"query"`
-	Params []any  `json:"params"`
-}
-
-func (ds *postgresqlDS) query(ctx context.Context, queryData string) (any, error) {
-	var input pgInput
-	if err := json.Unmarshal([]byte(queryData), &input); err != nil {
-		return nil, fmt.Errorf("error parsing query data: %w", err)
-	}
+func (ds *postgresqlDS) query(ctx context.Context, stmt string, params []any) (*pgResponse, error) {
 
 	tx, err := ds.pool.Begin(ctx)
 	if err != nil {
@@ -169,7 +197,7 @@ func (ds *postgresqlDS) query(ctx context.Context, queryData string) (any, error
 	}()
 
 	// TODO: what if connection times out and we need to retry
-	rows, err := tx.Query(ctx, input.Query, input.Params...)
+	rows, err := tx.Query(ctx, stmt, params...)
 	if err != nil {
 		return nil, fmt.Errorf("error running query: %w", err)
 	}
@@ -178,5 +206,16 @@ func (ds *postgresqlDS) query(ctx context.Context, queryData string) (any, error
 	if err != nil {
 		return nil, fmt.Errorf("error reading result: %w", err)
 	}
-	return data, tx.Commit(ctx)
+
+	if err := tx.Commit(ctx); err != nil {
+		return nil, fmt.Errorf("error committing transaction: %w", err)
+	}
+
+	response := &pgResponse{
+		Result: data,
+		// Error: "",
+		// RowsAffected: uint32(len(data)),
+	}
+
+	return response, nil
 }

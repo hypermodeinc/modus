@@ -46,7 +46,7 @@ func instantiateHostFunctions(ctx context.Context) {
 	b.NewFunctionBuilder().WithFunc(hostFetch).Export("httpFetch")
 	b.NewFunctionBuilder().WithFunc(hostLookupModel).Export("lookupModel")
 	b.NewFunctionBuilder().WithFunc(hostInvokeModel).Export("invokeModel")
-	b.NewFunctionBuilder().WithFunc(databaseQuery).Export("databaseQuery")
+	b.NewFunctionBuilder().WithFunc(hostDatabaseQuery).Export("databaseQuery")
 
 	if _, err := b.Instantiate(ctx); err != nil {
 		logger.Fatal(ctx).Err(err).
