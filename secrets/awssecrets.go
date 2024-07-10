@@ -19,7 +19,6 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
 	"github.com/aws/aws-sdk-go-v2/service/secretsmanager/types"
-
 	"github.com/hypermodeAI/manifest"
 )
 

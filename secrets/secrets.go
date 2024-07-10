@@ -60,7 +60,9 @@ func GetHostSecret(ctx context.Context, host manifest.HostInfo, secretName strin
 	return "", fmt.Errorf("could not find secret '%s' for host '%s'", secretName, host.HostName())
 }
 
-func ApplyHostSecrets(ctx context.Context, host manifest.HTTPHostInfo, req *http.Request) error {
+// ApplyHostSecretsToHttpRequest evaluates the given request and replaces any placeholders
+// present in the query parameters and headers with their secret values for the given host.
+func ApplyHostSecretsToHttpRequest(ctx context.Context, host manifest.HTTPHostInfo, req *http.Request) error {
 
 	// get secrets for the host
 	secrets, err := GetHostSecrets(ctx, host)
@@ -83,8 +85,8 @@ func ApplyHostSecrets(ctx context.Context, host manifest.HTTPHostInfo, req *http
 	return nil
 }
 
-// ApplyHostSecretsToString evaluates the given string and replaces any secrets
-// present in the string with their values for the given host.
+// ApplyHostSecretsToString evaluates the given string and replaces any placeholders
+// present in the string with their secret values for the given host.
 func ApplyHostSecretsToString(ctx context.Context, host manifest.HostInfo, str string) (string, error) {
 	secrets, err := GetHostSecrets(ctx, host)
 	if err != nil {

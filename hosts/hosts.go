@@ -82,7 +82,7 @@ func PostToHostEndpoint[TResult any](ctx context.Context, host manifest.HTTPHost
 	}
 
 	bs := func(ctx context.Context, req *http.Request) error {
-		return secrets.ApplyHostSecrets(ctx, host, req)
+		return secrets.ApplyHostSecretsToHttpRequest(ctx, host, req)
 	}
 
 	return utils.PostHttp[TResult](ctx, host.Endpoint, payload, bs)

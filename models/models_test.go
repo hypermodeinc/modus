@@ -81,6 +81,7 @@ func TestGetModels(t *testing.T) {
 }
 
 func TestPostExternalModelEndpoint(t *testing.T) {
+
 	// Create an http handler that simply echoes the input strings
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var b requestBody
