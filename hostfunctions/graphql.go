@@ -32,7 +32,7 @@ func hostExecuteGQL(ctx context.Context, mod wasm.Module, pHostName uint32, pStm
 		return 0
 	}
 
-	host, err := hosts.GetHTTPHost(hostName)
+	host, err := hosts.GetHttpHost(hostName)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error getting host.")
 		return 0

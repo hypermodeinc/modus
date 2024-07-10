@@ -40,7 +40,8 @@ func GetModel(modelName string) (manifest.ModelInfo, error) {
 }
 
 func getModelEndpointAndHost(model manifest.ModelInfo) (string, manifest.HTTPHostInfo, error) {
-	host, err := hosts.GetHTTPHost(model.Host)
+
+	host, err := hosts.GetHttpHost(model.Host)
 	if err != nil {
 		return "", manifest.HTTPHostInfo{}, err
 	}
@@ -84,7 +85,7 @@ func PostToModelEndpoint[TResult any](ctx context.Context, model manifest.ModelI
 	bs := func(ctx context.Context, req *http.Request) error {
 		req.Header.Set("Content-Type", "application/json")
 		if host.Name != hosts.HypermodeHost {
-			return secrets.ApplyHTTPHostSecrets(ctx, host, req)
+			return secrets.ApplyHostSecrets(ctx, host, req)
 		}
 
 		return nil

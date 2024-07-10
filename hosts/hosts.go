@@ -21,20 +21,33 @@ import (
 const HypermodeHost string = "hypermode"
 const OpenAIHost string = "openai"
 
-func GetHTTPHost(hostName string) (manifest.HTTPHostInfo, error) {
+func GetHost(hostName string) (manifest.HostInfo, error) {
 	if hostName == HypermodeHost {
 		return manifest.HTTPHostInfo{Name: HypermodeHost}, nil
 	}
 
-	host, ok := manifestdata.Manifest.Hosts[hostName]
-	if ok && host.HostType() == manifest.HostTypeHTTP {
-		return host.(manifest.HTTPHostInfo), nil
+	if host, ok := manifestdata.Manifest.Hosts[hostName]; ok {
+		return host, nil
 	}
 
-	return manifest.HTTPHostInfo{}, fmt.Errorf("a http host '%s' was not found", hostName)
+	return nil, fmt.Errorf("a host '%s' was not found", hostName)
 }
 
-func GetHTTPHostForUrl(url string) (manifest.HTTPHostInfo, error) {
+func GetHttpHost(hostName string) (manifest.HTTPHostInfo, error) {
+	host, err := GetHost(hostName)
+	if err != nil {
+		return manifest.HTTPHostInfo{}, err
+	}
+
+	if httpHost, ok := host.(manifest.HTTPHostInfo); ok {
+		return httpHost, nil
+	}
+
+	return manifest.HTTPHostInfo{}, fmt.Errorf("host '%s' is not an HTTP host", hostName)
+}
+
+func GetHttpHostForUrl(url string) (manifest.HTTPHostInfo, error) {
+
 	// Ensure the url is valid
 	u, err := urlpkg.ParseRequestURI(url)
 	if err != nil {
@@ -47,34 +60,29 @@ func GetHTTPHostForUrl(url string) (manifest.HTTPHostInfo, error) {
 	u.Fragment = ""
 	url = u.String()
 
-	// Find the host that matches the url
+	// Find the HTTP host that matches the url
 	// Either endpoint must match completely, or baseUrl must be a prefix of the url
 	// (case insensitive comparison, either way)
-	for _, h := range manifestdata.Manifest.Hosts {
-		if h.HostType() != manifest.HostTypeHTTP {
-			continue
-		}
-
-		host := h.(manifest.HTTPHostInfo)
-		if host.Endpoint != "" && strings.EqualFold(host.Endpoint, url) {
-			return host, nil
-		} else if host.BaseURL != "" && len(url) >= len(host.BaseURL) && strings.EqualFold(host.BaseURL, url[:len(host.BaseURL)]) {
-			return host, nil
+	for _, host := range manifestdata.Manifest.Hosts {
+		if httpHost, ok := host.(manifest.HTTPHostInfo); ok {
+			if httpHost.Endpoint != "" && strings.EqualFold(httpHost.Endpoint, url) {
+				return httpHost, nil
+			} else if httpHost.BaseURL != "" && len(url) >= len(httpHost.BaseURL) && strings.EqualFold(httpHost.BaseURL, url[:len(httpHost.BaseURL)]) {
+				return httpHost, nil
+			}
 		}
 	}
 
 	return manifest.HTTPHostInfo{}, fmt.Errorf("a host for url '%s' was not found in the manifest", url)
 }
 
-func PostToHostEndpoint[TResult any](ctx context.Context, host manifest.HTTPHostInfo, payload any) (
-	*utils.HttpResult[TResult], error) {
-
+func PostToHostEndpoint[TResult any](ctx context.Context, host manifest.HTTPHostInfo, payload any) (*utils.HttpResult[TResult], error) {
 	if host.Endpoint == "" {
 		return nil, fmt.Errorf("host endpoint is not defined")
 	}
 
 	bs := func(ctx context.Context, req *http.Request) error {
-		return secrets.ApplyHTTPHostSecrets(ctx, host, req)
+		return secrets.ApplyHostSecrets(ctx, host, req)
 	}
 
 	return utils.PostHttp[TResult](ctx, host.Endpoint, payload, bs)

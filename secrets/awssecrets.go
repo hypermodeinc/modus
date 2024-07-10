@@ -49,17 +49,16 @@ func (sp *awsSecretsProvider) initialize(ctx context.Context) {
 	go sp.monitorForUpdates(ctx)
 }
 
-func (sp *awsSecretsProvider) getHostSecrets(ctx context.Context,
-	host manifest.HostInfo) (map[string]string, error) {
-
-	secrets, err := sp.getSecrets(ctx, host.HostName()+"/")
+func (sp *awsSecretsProvider) getHostSecrets(ctx context.Context, host manifest.HostInfo) (map[string]string, error) {
+	hostName := host.HostName()
+	secrets, err := sp.getSecrets(ctx, hostName+"/")
 	if err != nil {
 		return nil, err
 	}
 
 	// Migrate old auth header secret to the new location
 	// TODO: Remove this when we no longer need to support the old manifest format
-	oldAuthHeaderSecret, ok := sp.cache[host.HostName()]
+	oldAuthHeaderSecret, ok := sp.cache[hostName]
 	if ok {
 		if manifestdata.Manifest.Version == 1 {
 			secrets[manifest.V1AuthHeaderVariableName] = *oldAuthHeaderSecret.SecretString
