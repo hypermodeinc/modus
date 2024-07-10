@@ -17,6 +17,16 @@ import (
 )
 
 func EncodeValue(ctx context.Context, mod wasm.Module, typ plugins.TypeInfo, data any) (val uint64, err error) {
+
+	// Handle null values if the type is nullable
+	if isNullable(typ.Path) {
+		if data == nil {
+			return 0, nil
+		}
+		typ = removeNull(typ)
+	}
+
+	// Primitive types
 	switch typ.Path {
 	case "bool":
 		b, ok := data.(bool)
@@ -257,10 +267,7 @@ func DecodeValue(ctx context.Context, mod wasm.Module, typ plugins.TypeInfo, val
 		if val == 0 {
 			return nil, nil
 		}
-		typ = plugins.TypeInfo{
-			Name: typ.Name[:len(typ.Name)-7], // remove " | null"
-			Path: typ.Path[:len(typ.Path)-5], // remove "|null"
-		}
+		typ = removeNull(typ)
 	}
 
 	// Primitive types
@@ -290,4 +297,11 @@ func DecodeValue(ctx context.Context, mod wasm.Module, typ plugins.TypeInfo, val
 	// Managed types are read from wasm memory
 	mem := mod.Memory()
 	return readObject(ctx, mem, typ, uint32(val))
+}
+
+func removeNull(typ plugins.TypeInfo) plugins.TypeInfo {
+	return plugins.TypeInfo{
+		Name: typ.Name[:len(typ.Name)-7], // remove " | null"
+		Path: typ.Path[:len(typ.Path)-5], // remove "|null"
+	}
 }

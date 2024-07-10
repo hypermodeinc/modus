@@ -77,8 +77,9 @@ type TypeDefinition struct {
 }
 
 type Parameter struct {
-	Name string   `json:"name"`
-	Type TypeInfo `json:"type"`
+	Name     string   `json:"name"`
+	Type     TypeInfo `json:"type"`
+	Optional bool     `json:"optional"`
 }
 
 type Field struct {
@@ -88,8 +89,10 @@ type Field struct {
 }
 
 type TypeInfo struct {
-	Name string `json:"name"`
-	Path string `json:"path"`
+	Name     string         `json:"name"`
+	Path     string         `json:"path"`
+	Language PluginLanguage `json:"-"`
+	Nullable bool           `json:"-"`
 }
 
 type PluginLanguage int
@@ -121,11 +124,15 @@ func (p *Plugin) BuildId() string {
 }
 
 func (p *Plugin) Language() PluginLanguage {
-	libName, _ := utils.ParseNameAndVersion(p.Metadata.Library)
+	return p.Metadata.Language()
+}
+
+func (m *PluginMetadata) Language() PluginLanguage {
+	libName, _ := utils.ParseNameAndVersion(m.Library)
 	switch libName {
 	case "@hypermode/functions-as":
 		return AssemblyScript
-	case "gohypermode/functions-go":
+	case "github.com/hypermodeAI/functions-go":
 		return GoLang
 	default:
 		return UnknownLanguage

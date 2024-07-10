@@ -294,13 +294,22 @@ func convertParameters(parameters []plugins.Parameter, typeDefs *map[string]Type
 
 	results := make([]NameTypePair, len(parameters))
 	for i, p := range parameters {
+
 		t, err := convertType(p.Type.Name, typeDefs, firstPass)
 		if err != nil {
 			return nil, err
 		}
-		results[i] = NameTypePair{
-			Name: p.Name,
-			Type: t,
+		if p.Optional {
+			t = strings.TrimSuffix(t, "!")
+			results[i] = NameTypePair{
+				Name: p.Name,
+				Type: t,
+			}
+		} else {
+			results[i] = NameTypePair{
+				Name: p.Name,
+				Type: t,
+			}
 		}
 	}
 	return results, nil
