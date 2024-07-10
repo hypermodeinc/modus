@@ -1,11 +1,11 @@
 # Change Log
 
-## UNRELEASED
+## 2024-07-09 - Version 0.9.5
 
 - Use anonymous wasm modules for better performance [#264](https://github.com/hypermodeAI/runtime/pull/264)
+- Assume normalized vectors when calculating cosine similarity [#265](https://github.com/hypermodeAI/runtime/pull/265)
 - Support optional parameters [#269](https://github.com/hypermodeAI/runtime/pull/269)
 - Handle null parameters [#270](https://github.com/hypermodeAI/runtime/pull/2270)
-- Assume normalized vectors when calculating cosine similarity [#265](https://github.com/hypermodeAI/runtime/pull/265)
 
 ## 2024-06-26 - Version 0.9.4
 
