@@ -29,7 +29,7 @@ type callInfo struct {
 
 type Source struct{}
 
-func (s Source) Load(ctx context.Context, input []byte, writer io.Writer) error {
+func (s Source) Load(ctx context.Context, input []byte, out *bytes.Buffer) error {
 
 	// Handle newlines in the input - this should only happen in the case of
 	// a GraphQL query that uses triple quotes for a string literal.
@@ -47,7 +47,7 @@ func (s Source) Load(ctx context.Context, input []byte, writer io.Writer) error 
 	result, gqlErrors, err := s.callFunction(ctx, ci)
 
 	// Write the response
-	err = writeGraphQLResponse(writer, result, gqlErrors, err, ci)
+	err = writeGraphQLResponse(out, result, gqlErrors, err, ci)
 	if err != nil {
 		logger.Error(ctx).Err(err).Msg("Error creating GraphQL response.")
 	}
@@ -55,7 +55,7 @@ func (s Source) Load(ctx context.Context, input []byte, writer io.Writer) error 
 	return err
 }
 
-func (Source) LoadWithFiles(ctx context.Context, input []byte, files []httpclient.File, w io.Writer) (err error) {
+func (Source) LoadWithFiles(ctx context.Context, input []byte, files []httpclient.File, out *bytes.Buffer) (err error) {
 	// See https://github.com/wundergraph/graphql-go-tools/pull/758
 	panic("not implemented")
 }
