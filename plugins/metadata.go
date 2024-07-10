@@ -7,6 +7,7 @@ package plugins
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"hmruntime/utils"
 
@@ -30,7 +31,41 @@ func GetPluginMetadata(ctx context.Context, cm *wazero.CompiledModule) (PluginMe
 		return PluginMetadata{}, fmt.Errorf("failed to parse plugin metadata: %w", err)
 	}
 
+	augmentMetadata(&metadata)
 	return metadata, nil
+}
+
+func augmentMetadata(metadata *PluginMetadata) {
+	// Copy the language from the metadata to the types and functions.
+	// Set the nullable flag along the way.
+	lang := metadata.Language()
+	for i, t := range metadata.Types {
+		for j, field := range t.Fields {
+			field.Type.Language = lang
+			field.Type.Nullable = isNullable(field.Type, lang)
+			t.Fields[j] = field
+		}
+		metadata.Types[i] = t
+	}
+	for i, fn := range metadata.Functions {
+		for j, param := range fn.Parameters {
+			param.Type.Language = lang
+			param.Type.Nullable = isNullable(param.Type, lang)
+			fn.Parameters[j] = param
+		}
+		fn.ReturnType.Language = lang
+		fn.ReturnType.Nullable = isNullable(fn.ReturnType, lang)
+		metadata.Functions[i] = fn
+	}
+}
+
+func isNullable(t TypeInfo, lang PluginLanguage) bool {
+	switch lang {
+	case AssemblyScript:
+		return strings.HasSuffix(t.Path, "|null")
+	default:
+		panic(fmt.Sprintf("unsupported language: %v", lang))
+	}
 }
 
 func getCustomSectionData(cm *wazero.CompiledModule, name string) (data []byte, found bool) {
