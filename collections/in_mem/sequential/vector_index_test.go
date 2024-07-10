@@ -47,6 +47,11 @@ func TestMultipleSequentialVectorIndexes(t *testing.T) {
 				for k := range vecs[j] {
 					vecs[j][k] += float32(i) / 10
 				}
+				var err error
+				vecs[j], err = utils.Normalize(vecs[j])
+				if err != nil {
+					t.Errorf("Failed to normalize vector: %v", err)
+				}
 			}
 
 			err := index.InsertVectorsToMemory(ctx, textIds, textIds, keys, vecs)
