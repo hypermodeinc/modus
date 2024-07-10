@@ -1,5 +1,9 @@
 # Change Log
 
+## UNRELEASED
+
+- Update manifest library and usage [#275](https://github.com/hypermodeAI/runtime/pull/275)
+
 ## 2024-07-09 - Version 0.9.5
 
 - Use anonymous wasm modules for better performance [#264](https://github.com/hypermodeAI/runtime/pull/264)
