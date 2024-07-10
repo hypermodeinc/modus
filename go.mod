@@ -91,8 +91,8 @@ require (
 	github.com/tidwall/match v1.1.1 // indirect
 	github.com/tidwall/pretty v1.2.1 // indirect
 	github.com/tidwall/sjson v1.2.5 // indirect
-	github.com/wundergraph/cosmo/composition-go v0.0.0-20240710180314-0930354936d8 // indirect
-	github.com/wundergraph/cosmo/router v0.0.0-20240710180314-0930354936d8 // indirect
+	github.com/wundergraph/cosmo/composition-go v0.0.0-20240710203753-1203d7f711c3 // indirect
+	github.com/wundergraph/cosmo/router v0.0.0-20240710203753-1203d7f711c3 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.53.0 // indirect
 	go.opentelemetry.io/otel v1.28.0 // indirect
 	go.opentelemetry.io/otel/metric v1.28.0 // indirect
