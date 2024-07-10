@@ -28,7 +28,7 @@ type ResponseFormat struct {
 
 var authHeaderRegex = regexp.MustCompile(`^Bearer {{\s*\w+?\s*}}$`)
 
-func ChatCompletion(ctx context.Context, model manifest.ModelInfo, host manifest.HostInfo, instruction string, sentence string, outputFormat models.OutputFormat) (*models.ChatResponse, error) {
+func ChatCompletion(ctx context.Context, model manifest.ModelInfo, host manifest.HTTPHostInfo, instruction string, sentence string, outputFormat models.OutputFormat) (*models.ChatResponse, error) {
 
 	// We ignore the model endpoint and use the OpenAI chat completion endpoint
 	host.Endpoint = "https://api.openai.com/v1/chat/completions"

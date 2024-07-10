@@ -57,10 +57,10 @@ func GetHostSecret(ctx context.Context, host manifest.HostInfo, secretName strin
 		return val, nil
 	}
 
-	return "", fmt.Errorf("could not find secret '%s' for host '%s'", secretName, host.Name)
+	return "", fmt.Errorf("could not find secret '%s' for host '%s'", secretName, host.HostName())
 }
 
-func ApplyHostSecrets(ctx context.Context, host manifest.HostInfo, req *http.Request) error {
+func ApplyHostSecrets(ctx context.Context, host manifest.HTTPHostInfo, req *http.Request) error {
 
 	// get secrets for the host
 	secrets, err := GetHostSecrets(ctx, host)

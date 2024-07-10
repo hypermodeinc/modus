@@ -39,11 +39,11 @@ func GetModel(modelName string) (manifest.ModelInfo, error) {
 	return model, nil
 }
 
-func getModelEndpointAndHost(model manifest.ModelInfo) (string, manifest.HostInfo, error) {
+func getModelEndpointAndHost(model manifest.ModelInfo) (string, manifest.HTTPHostInfo, error) {
 
-	host, err := hosts.GetHost(model.Host)
+	host, err := hosts.GetHttpHost(model.Host)
 	if err != nil {
-		return "", manifest.HostInfo{}, err
+		return "", manifest.HTTPHostInfo{}, err
 	}
 
 	if host.Name == hosts.HypermodeHost {
