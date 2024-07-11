@@ -39,7 +39,7 @@ func Start(ctx context.Context) {
 	storage.Initialize(ctx)
 	db.Initialize(ctx)
 	collections.InitializeIndexFactory(ctx)
-	manifestdata.MonitorManifestFile(ctx, func([]error) { hostfunctions.ShutdownPools() })
+	manifestdata.MonitorManifestFile(ctx)
 	pluginmanager.MonitorPlugins(ctx)
 	graphql.Initialize()
 }
@@ -53,9 +53,8 @@ func Stop(ctx context.Context) {
 	// Unlike start, these should each block until they are fully stopped.
 
 	collections.CloseIndexFactory(ctx)
+	hostfunctions.ShutdownPGPools()
 	wasmhost.RuntimeInstance.Close(ctx)
 	logger.Close()
-
 	db.Stop()
-	hostfunctions.ShutdownPools()
 }

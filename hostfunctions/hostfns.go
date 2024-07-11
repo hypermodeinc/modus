@@ -8,6 +8,7 @@ import (
 	"context"
 
 	"hmruntime/logger"
+	"hmruntime/manifestdata"
 	"hmruntime/utils"
 	"hmruntime/wasmhost"
 
@@ -22,6 +23,11 @@ func RegisterHostFunctions(ctx context.Context) {
 
 	instantiateHostFunctions(ctx)
 	instantiateWasiFunctions(ctx)
+
+	manifestdata.RegisterManifestLoadedCallback(func(ctx context.Context) error {
+		ShutdownPGPools()
+		return nil
+	})
 }
 
 func instantiateHostFunctions(ctx context.Context) {

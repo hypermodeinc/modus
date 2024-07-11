@@ -20,9 +20,7 @@ import (
 	wasm "github.com/tetratelabs/wazero/api"
 )
 
-var (
-	dsr = newDSRegistry()
-)
+var dsr = newDSRegistry()
 
 type postgresqlDS struct {
 	pool *pgxpool.Pool
@@ -39,8 +37,8 @@ func newDSRegistry() *dsRegistry {
 	}
 }
 
-// ShutdownPools shuts down all the connection pools.
-func ShutdownPools() {
+// ShutdownPGPools shuts down all the PostgreSQL connection pools.
+func ShutdownPGPools() {
 	dsr.Lock()
 	defer dsr.Unlock()
 
