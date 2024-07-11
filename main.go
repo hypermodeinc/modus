@@ -59,9 +59,12 @@ func main() {
 	initRuntimeServices(ctx)
 	defer stopRuntimeServices(ctx)
 
+	// Set local mode if debugging is enabled
+	local := utils.HypermodeDebugEnabled()
+
 	// Start the HTTP server to listen for requests.
 	// Note, this function blocks, and handles shutdown gracefully.
-	server.Start(ctx)
+	server.Start(ctx, local)
 }
 
 func initRuntimeServices(ctx context.Context) {

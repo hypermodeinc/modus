@@ -107,7 +107,7 @@ func TestMain(m *testing.M) {
 	ctx, stop := context.WithCancel(context.Background())
 	done := make(chan struct{})
 	go func() {
-		server.Start(ctx)
+		server.Start(ctx, true)
 		close(done)
 	}()
 

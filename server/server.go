@@ -26,13 +26,13 @@ import (
 // shutdownTimeout is the time to wait for the server to shutdown gracefully.
 const shutdownTimeout = 5 * time.Second
 
-func Start(ctx context.Context) {
+func Start(ctx context.Context, local bool) {
 
 	// Create the configuration for the server.
 	mux := GetHandlerMux()
 	server := &http.Server{Handler: mux}
-	if utils.HypermodeDebugEnabled() {
-		// If we are in debug mode, only listen on localhost.
+	if local {
+		// If we are running locally, only listen on localhost.
 		// This prevents getting nagged for firewall permissions each launch.
 		server.Addr = fmt.Sprintf("localhost:%d", config.Port)
 	} else {
