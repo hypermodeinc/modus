@@ -23,7 +23,7 @@ jobs:
       - name: Run Unit Tests
         run: |
           go install github.com/jstemmer/go-junit-report/v2@latest
-          go test -tags -v -race 2>&1 ./... | go-junit-report -set-exit-code -iocopy -out report.xml
+          go test -v -race 2>&1 ./... | go-junit-report -set-exit-code -iocopy -out report.xml
       - name: Generate Test Summary
         if: always()
         uses: test-summary/action@v2

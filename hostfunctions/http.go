@@ -98,7 +98,7 @@ func hostFetch(ctx context.Context, mod wasm.Module, pRequest uint32) (pResponse
 
 	if err := secrets.ApplyHostSecretsToHttpRequest(ctx, host, req); err != nil {
 		logger.Err(ctx, err).
-			Str("host", host.HostName()).
+			Str("host", host.Name).
 			Msg("Error applying host secrets.")
 		return 0
 	}
