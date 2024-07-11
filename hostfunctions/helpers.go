@@ -49,7 +49,19 @@ func readParam[T any](ctx context.Context, mod wasm.Module, p uint32, v *T) erro
 			return err
 		}
 		*v = any(s).(T)
-
+	case *string:
+		// fast path for nullable strings
+		if p == 0 {
+			var s *string
+			*v = any(s).(T)
+		} else {
+			mem := mod.Memory()
+			s, err := assemblyscript.ReadString(mem, p)
+			if err != nil {
+				return err
+			}
+			*v = any(&s).(T)
+		}
 	default:
 		typ, err := assemblyscript.GetTypeInfo[T]()
 		if err != nil {
