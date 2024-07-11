@@ -20,7 +20,7 @@ func EncodeValue(ctx context.Context, mod wasm.Module, typ plugins.TypeInfo, dat
 
 	// Handle null values if the type is nullable
 	if isNullable(typ.Path) {
-		if data == nil {
+		if data == nil || reflect.ValueOf(data).IsNil() {
 			return 0, nil
 		}
 		typ = removeNull(typ)

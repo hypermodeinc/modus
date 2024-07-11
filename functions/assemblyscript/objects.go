@@ -8,6 +8,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"reflect"
 	"time"
 
 	"hmruntime/plugins"
@@ -48,23 +49,44 @@ func readObject(ctx context.Context, mem wasm.Memory, typ plugins.TypeInfo, offs
 func writeObject(ctx context.Context, mod wasm.Module, typ plugins.TypeInfo, val any) (offset uint32, err error) {
 	switch typ.Name {
 	case "ArrayBuffer":
-		bytes, ok := val.([]byte)
-		if !ok {
+		switch v := val.(type) {
+		case []byte:
+			return writeBytes(ctx, mod, v)
+		case *[]byte:
+			if v == nil {
+				return 0, nil
+			}
+			return writeBytes(ctx, mod, *v)
+		default:
 			return 0, fmt.Errorf("input value is not a byte array")
 		}
-		return writeBytes(ctx, mod, bytes)
 
 	case "string":
-		s, ok := val.(string)
-		if !ok {
+		switch v := val.(type) {
+		case string:
+			return WriteString(ctx, mod, v)
+		case *string:
+			if v == nil {
+				return 0, nil
+			}
+			return WriteString(ctx, mod, *v)
+		default:
 			return 0, fmt.Errorf("input value is not a string")
 		}
-		return WriteString(ctx, mod, s)
 
 	case "Date":
 		var t time.Time
 		switch v := val.(type) {
 		case json.Number:
+			n, err := v.Int64()
+			if err != nil {
+				return 0, err
+			}
+			t = time.UnixMilli(n)
+		case *json.Number:
+			if v == nil {
+				return 0, nil
+			}
 			n, err := v.Int64()
 			if err != nil {
 				return 0, err
@@ -76,10 +98,29 @@ func writeObject(ctx context.Context, mod wasm.Module, typ plugins.TypeInfo, val
 			if err != nil {
 				return 0, err
 			}
+		case *string:
+			if v == nil {
+				return 0, nil
+			}
+			var err error
+			t, err = utils.ParseTime(*v)
+			if err != nil {
+				return 0, err
+			}
 		case utils.JSONTime:
 			t = time.Time(v)
+		case *utils.JSONTime:
+			if v == nil {
+				return 0, nil
+			}
+			t = time.Time(*v)
 		case time.Time:
 			t = v
+		case *time.Time:
+			if v == nil {
+				return 0, nil
+			}
+			t = *v
 		default:
 			return 0, fmt.Errorf("input value is not a valid for a time object")
 		}
@@ -90,6 +131,15 @@ func writeObject(ctx context.Context, mod wasm.Module, typ plugins.TypeInfo, val
 	def, err := getTypeDefinition(ctx, typ.Path)
 	if err != nil {
 		return 0, err
+	}
+
+	if reflect.TypeOf(val).Kind() == reflect.Ptr {
+		v := reflect.ValueOf(val)
+		if v.IsNil() {
+			return 0, nil
+		} else {
+			val = v.Elem().Interface()
+		}
 	}
 
 	if isArrayType(typ.Path) {

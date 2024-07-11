@@ -14,10 +14,17 @@ import (
 )
 
 func writeResult[T any](ctx context.Context, mod wasm.Module, val T) (uint32, error) {
-	switch any(val).(type) {
+	switch t := any(val).(type) {
 	case string:
 		// fast path for strings
-		return assemblyscript.WriteString(ctx, mod, any(val).(string))
+		return assemblyscript.WriteString(ctx, mod, t)
+	case *string:
+		// fast path for nullable strings
+		if any(val) == nil {
+			return 0, nil
+		} else {
+			return assemblyscript.WriteString(ctx, mod, *t)
+		}
 	default:
 		typ, err := assemblyscript.GetTypeInfo[T]()
 		if err != nil {
