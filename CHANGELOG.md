@@ -3,6 +3,7 @@
 ## UNRELEASED
 
 - Update manifest library and usage [#275](https://github.com/hypermodeAI/runtime/pull/275)
+- Support pointers when marshalling objects [#277](https://github.com/hypermodeAI/runtime/pull/277)
 
 ## 2024-07-09 - Version 0.9.5
 
