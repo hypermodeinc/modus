@@ -3,6 +3,7 @@
 ## UNRELEASED
 
 - Update manifest library and usage [#275](https://github.com/hypermodeAI/runtime/pull/275)
+- Add support for PostgreSQL host functions [#278](https://github.com/hypermodeAI/runtime/pull/278)
 
 ## 2024-07-09 - Version 0.9.5
 
