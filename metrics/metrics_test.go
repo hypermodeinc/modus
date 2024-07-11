@@ -14,7 +14,7 @@ import (
 	"testing"
 
 	"hmruntime/config"
-	"hmruntime/server"
+	"hmruntime/httpserver"
 
 	"github.com/prometheus/common/expfmt"
 )
@@ -64,7 +64,7 @@ func TestRuntimeMetrics(t *testing.T) {
 
 	setupRuntime()
 
-	mux := server.GetHandlerMux()
+	mux := httpserver.GetHandlerMux()
 	s := httptest.NewServer(mux)
 	defer s.Close()
 

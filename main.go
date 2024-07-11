@@ -13,20 +13,11 @@ import (
 	"path/filepath"
 	"runtime"
 
-	"hmruntime/aws"
-	"hmruntime/collections"
 	"hmruntime/config"
-	"hmruntime/db"
-	"hmruntime/graphql"
-	"hmruntime/hostfunctions"
+	"hmruntime/httpserver"
 	"hmruntime/logger"
-	"hmruntime/manifestdata"
-	"hmruntime/pluginmanager"
-	"hmruntime/secrets"
-	"hmruntime/server"
-	"hmruntime/storage"
+	"hmruntime/services"
 	"hmruntime/utils"
-	"hmruntime/wasmhost"
 
 	"github.com/joho/godotenv"
 )
@@ -54,57 +45,16 @@ func main() {
 	utils.InitSentry(rootSourcePath)
 	defer utils.FlushSentryEvents()
 
-	// Initialize the runtime services
+	// Create the main background context
 	ctx := context.Background()
-	initRuntimeServices(ctx)
-	defer stopRuntimeServices(ctx)
+
+	// Start the runtime services
+	services.Start(ctx)
+	defer services.Stop(ctx)
 
 	// Start the HTTP server to listen for requests.
 	// Note, this function blocks, and handles shutdown gracefully.
-	server.Start(ctx)
-}
-
-func initRuntimeServices(ctx context.Context) {
-	transaction, ctx := utils.NewSentryTransactionForCurrentFunc(ctx)
-	defer transaction.Finish()
-
-	// Initialize the WebAssembly runtime
-	wasmhost.InitWasmHost(ctx)
-
-	// Register the host functions with the runtime
-	hostfunctions.RegisterHostFunctions(ctx)
-
-	// Initialize AWS functionality
-	aws.Initialize(ctx)
-
-	// Initialize the secrets provider
-	secrets.Initialize(ctx)
-
-	// Initialize the storage provider
-	storage.Initialize(ctx)
-
-	// Initialize the metadata database
-	db.Initialize(ctx)
-
-	// Initialize in mem vector factory
-	collections.InitializeIndexFactory(ctx)
-
-	// Load app data and monitor for changes
-	manifestdata.MonitorManifestFile(ctx)
-
-	// Load plugins and monitor for changes
-	pluginmanager.MonitorPlugins(ctx)
-
-	// Initialize the GraphQL engine
-	graphql.Initialize()
-}
-
-func stopRuntimeServices(ctx context.Context) {
-	collections.CloseIndexFactory(ctx)
-	wasmhost.RuntimeInstance.Close(ctx)
-	logger.Close()
-
-	db.Stop()
+	httpserver.Start(ctx)
 }
 
 func getRootSourcePath() string {
