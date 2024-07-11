@@ -18,7 +18,8 @@ import (
 	"time"
 
 	"hmruntime/config"
-	"hmruntime/server"
+	"hmruntime/httpserver"
+	"hmruntime/services"
 
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/image"
@@ -100,14 +101,14 @@ func TestMain(m *testing.M) {
 	config.Port = httpListenPort
 
 	// setup runtime services
-	initRuntimeServices(context.Background())
-	defer stopRuntimeServices(context.Background())
+	services.Start(context.Background())
+	defer services.Stop(context.Background())
 
 	// start HTTP server
 	ctx, stop := context.WithCancel(context.Background())
 	done := make(chan struct{})
 	go func() {
-		server.Start(ctx, true)
+		httpserver.Start(ctx, true)
 		close(done)
 	}()
 
