@@ -14,8 +14,8 @@ import (
 	"runtime"
 
 	"hmruntime/config"
+	"hmruntime/httpserver"
 	"hmruntime/logger"
-	"hmruntime/server"
 	"hmruntime/services"
 	"hmruntime/utils"
 
@@ -54,7 +54,7 @@ func main() {
 
 	// Start the HTTP server to listen for requests.
 	// Note, this function blocks, and handles shutdown gracefully.
-	server.Start(ctx)
+	httpserver.Start(ctx)
 }
 
 func getRootSourcePath() string {
