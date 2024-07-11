@@ -96,8 +96,8 @@ func (r *dsRegistry) getPGPool(ctx context.Context, dsname string) (*postgresqlD
 }
 
 type hostQueryResponse struct {
-	Error        string
-	ResultJson   string
+	Error        *string
+	ResultJson   *string
 	RowsAffected uint32
 }
 
@@ -123,7 +123,11 @@ func hostDatabaseQuery(ctx context.Context, mod wasm.Module, pHostName, pDbType,
 		return 0
 	}
 
-	pgResponse := executeQuery(ctx, hostName, dbType, statement, params)
+	pgResponse, err := executeQuery(ctx, hostName, dbType, statement, params)
+	if err != nil {
+		logger.Err(ctx, err).Msg("Error executing database query.")
+		return 0
+	}
 
 	var resultJson []byte
 	if pgResponse.Result != nil {
@@ -137,8 +141,12 @@ func hostDatabaseQuery(ctx context.Context, mod wasm.Module, pHostName, pDbType,
 
 	response := hostQueryResponse{
 		Error:        pgResponse.Error,
-		ResultJson:   string(resultJson),
 		RowsAffected: pgResponse.RowsAffected,
+	}
+
+	if len(resultJson) > 0 {
+		s := string(resultJson)
+		response.ResultJson = &s
 	}
 
 	offset, err := writeResult(ctx, mod, response)
@@ -151,35 +159,23 @@ func hostDatabaseQuery(ctx context.Context, mod wasm.Module, pHostName, pDbType,
 }
 
 type pgResponse struct {
-	Error        string `json:"error"`
-	Result       any    `json:"result"`
-	RowsAffected uint32 `json:"rowsAffected"`
+	Error        *string
+	Result       any
+	RowsAffected uint32
 }
 
-func executeQuery(ctx context.Context, dsname, dsType, stmt string, params []any) *pgResponse {
+func executeQuery(ctx context.Context, dsname, dsType, stmt string, params []any) (*pgResponse, error) {
 	switch dsType {
 	case manifest.HostTypePostgresql:
 		ds, err := dsr.getPGPool(ctx, dsname)
 		if err != nil {
-			logger.Err(ctx, err).Msg("Error finding host in manifest.")
-			return nil
+			return nil, err
 		}
 
-		result, err := ds.query(ctx, stmt, params)
-		if err != nil {
-			logger.Err(ctx, err).Msg("Error executing query.")
-			return nil
-		}
-
-		return result
+		return ds.query(ctx, stmt, params)
 
 	default:
-		logger.Error(ctx).
-			Str("dsname", dsname).
-			Str("dsType", dsType).
-			Msg("Unsupported host type.")
-
-		return nil
+		return nil, fmt.Errorf("host %s has an unsupported type: %s", dsname, dsType)
 	}
 }
 
@@ -199,22 +195,24 @@ func (ds *postgresqlDS) query(ctx context.Context, stmt string, params []any) (*
 	// TODO: what if connection times out and we need to retry
 	rows, err := tx.Query(ctx, stmt, params...)
 	if err != nil {
-		return nil, fmt.Errorf("error running query: %w", err)
+		return nil, err
 	}
 
 	data, err := pgx.CollectRows(rows, pgx.RowToMap)
 	if err != nil {
-		return nil, fmt.Errorf("error reading result: %w", err)
+		return nil, err
 	}
 
+	rowsAffected := uint32(rows.CommandTag().RowsAffected())
+
 	if err := tx.Commit(ctx); err != nil {
-		return nil, fmt.Errorf("error committing transaction: %w", err)
+		return nil, err
 	}
 
 	response := &pgResponse{
-		Result: data,
 		// Error: "",
-		// RowsAffected: uint32(len(data)),
+		Result:       data,
+		RowsAffected: rowsAffected,
 	}
 
 	return response, nil
