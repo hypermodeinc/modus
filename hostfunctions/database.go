@@ -12,6 +12,7 @@ import (
 	"hmruntime/logger"
 	"hmruntime/manifestdata"
 	"hmruntime/plugins"
+	"hmruntime/secrets"
 	"hmruntime/utils"
 
 	"github.com/hypermodeAI/manifest"
@@ -73,24 +74,29 @@ func (r *dsRegistry) getPGPool(ctx context.Context, dsname string) (*postgresqlD
 		}
 
 		if info.HostType() != manifest.HostTypePostgresql {
-			return nil, fmt.Errorf("host [%s] is not a postgresql host", dsname)
+			return nil, fmt.Errorf("host %s is not a postgresql host", dsname)
 		}
 
 		conf := info.(manifest.PostgresqlHostInfo)
 		if conf.ConnStr == "" {
-			return nil, fmt.Errorf("postgresql host [%s] has empty connString", dsname)
+			return nil, fmt.Errorf("postgresql host %s has empty connString", dsname)
 		}
 
-		dbpool, err := pgxpool.New(ctx, conf.ConnStr)
+		fullConnStr, err := secrets.ApplyHostSecretsToString(ctx, info, conf.ConnStr)
 		if err != nil {
-			return nil, fmt.Errorf("failed to connect to database %s: %w", conf.ConnStr, err)
+			return nil, fmt.Errorf("failed to apply secrets to connection string for host %s: %w", dsname, err)
+		}
+
+		dbpool, err := pgxpool.New(ctx, fullConnStr)
+		if err != nil {
+			return nil, fmt.Errorf("failed to connect to postgres host %s: %w", dsname, err)
 		}
 
 		r.pgCache[dsname] = &postgresqlDS{pool: dbpool}
 		return r.pgCache[dsname], nil
 	}
 
-	return nil, fmt.Errorf("postgresql host [%s] not found", dsname)
+	return nil, fmt.Errorf("postgresql host %s not found", dsname)
 }
 
 type hostQueryResponse struct {
