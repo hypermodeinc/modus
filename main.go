@@ -52,9 +52,12 @@ func main() {
 	services.Start(ctx)
 	defer services.Stop(ctx)
 
+	// Set local mode if debugging is enabled
+	local := utils.HypermodeDebugEnabled()
+
 	// Start the HTTP server to listen for requests.
 	// Note, this function blocks, and handles shutdown gracefully.
-	httpserver.Start(ctx)
+	httpserver.Start(ctx, local)
 }
 
 func getRootSourcePath() string {

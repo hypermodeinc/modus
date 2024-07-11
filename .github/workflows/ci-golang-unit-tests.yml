@@ -1,4 +1,4 @@
-name: ci-golang-tests
+name: ci-golang-unit-tests
 on:
   pull_request:
     types:

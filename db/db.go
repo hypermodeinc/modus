@@ -88,6 +88,10 @@ func (w *runtimePostgresWriter) Write(data inferenceHistory) {
 }
 
 func Stop() {
+	if globalRuntimePostgresWriter.dbpool == nil {
+		return
+	}
+
 	close(globalRuntimePostgresWriter.quit)
 	<-globalRuntimePostgresWriter.done
 	globalRuntimePostgresWriter.dbpool.Close()
@@ -384,6 +388,8 @@ func (w *runtimePostgresWriter) worker(ctx context.Context) {
 	var batchIndex int
 	var batch [batchSize]inferenceHistory
 	timer := time.NewTimer(inferenceRefresherInterval)
+	defer timer.Stop()
+
 	for {
 		select {
 		case data := <-w.buffer:

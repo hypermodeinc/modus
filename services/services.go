@@ -53,8 +53,8 @@ func Stop(ctx context.Context) {
 	// Unlike start, these should each block until they are fully stopped.
 
 	collections.CloseIndexFactory(ctx)
+	hostfunctions.ShutdownPGPools()
 	wasmhost.RuntimeInstance.Close(ctx)
 	logger.Close()
-
 	db.Stop()
 }

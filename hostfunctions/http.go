@@ -72,10 +72,8 @@ func (r *httpHeader) GetTypeInfo() plugins.TypeInfo {
 }
 
 func hostFetch(ctx context.Context, mod wasm.Module, pRequest uint32) (pResponse uint32) {
-
 	var request httpRequest
-	err := readParam(ctx, mod, pRequest, &request)
-	if err != nil {
+	if err := readParam(ctx, mod, pRequest, &request); err != nil {
 		logger.Err(ctx, err).Msg("Error reading input parameters.")
 		return 0
 	}
@@ -98,8 +96,7 @@ func hostFetch(ctx context.Context, mod wasm.Module, pRequest uint32) (pResponse
 		req.Header[header.Name] = header.Values
 	}
 
-	err = secrets.ApplyHostSecrets(ctx, host, req)
-	if err != nil {
+	if err := secrets.ApplyHostSecretsToHttpRequest(ctx, host, req); err != nil {
 		logger.Err(ctx, err).
 			Str("host", host.Name).
 			Msg("Error applying host secrets.")
