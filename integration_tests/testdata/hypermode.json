@@ -1,10 +1,7 @@
 {
   "$schema": "https://manifest.hypermode.com/hypermode.json",
-  "models": {
-    // No models are used by this example, but if you add any, they would go here.
-  },
   "hosts": {
-    "neon": {
+    "my-database": {
       "type": "postgresql",
       "connString": "postgresql://postgres:password@localhost:5432/data?sslmode=disable"
     }

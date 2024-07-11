@@ -1,7 +1,6 @@
 //go:build integration
-// +build integration
 
-package main
+package integration_tests
 
 import (
 	"bytes"
@@ -40,6 +39,10 @@ const (
 
 	healthURL  = "http://localhost:8765/health"
 	graphqlURL = "http://localhost:8765/graphql"
+
+	// Note: most DB query failures will fail with this error message in the graphql response.
+	// The log messages will be more detailed, but those are intentionally not exposed to the client.
+	expectedDbError = "Error performing database query."
 )
 
 type graphQLRequest struct {
@@ -140,11 +143,11 @@ func TestPostgresqlNoConnection(t *testing.T) {
 	// wait here to make sure the plugin is loaded
 	time.Sleep(waitRefreshPluginInterval)
 
-	query := `query QueryPeople {queryPeople}`
+	query := "{ getAllPeople { id name age } }"
 	response, err := runGraphqlQuery(graphQLRequest{Query: query})
 	assert.Nil(t, response)
 	assert.NotNil(t, err)
-	assert.Contains(t, err.Error(), "error setting up a new tx: failed to connect")
+	assert.Contains(t, err.Error(), expectedDbError)
 }
 
 func TestPostgresqlNoHost(t *testing.T) {
@@ -164,11 +167,11 @@ func TestPostgresqlNoHost(t *testing.T) {
 	time.Sleep(waitRefreshPluginInterval)
 
 	// when host name does not exist
-	query := `query QueryPeople {queryPeople}`
+	query := "{ getAllPeople { id name age } }"
 	response, err := runGraphqlQuery(graphQLRequest{Query: query})
 	assert.Nil(t, response)
 	assert.NotNil(t, err)
-	assert.Contains(t, err.Error(), "postgresql host [neon] not found")
+	assert.Contains(t, err.Error(), expectedDbError)
 }
 
 func TestPostgresqlNoPostgresqlHost(t *testing.T) {
@@ -188,11 +191,11 @@ func TestPostgresqlNoPostgresqlHost(t *testing.T) {
 	time.Sleep(waitRefreshPluginInterval)
 
 	// when host name has the wrong host type
-	query := `query QueryPeople {queryPeople}`
+	query := "{ getAllPeople { id name age } }"
 	response, err := runGraphqlQuery(graphQLRequest{Query: query})
 	assert.Nil(t, response)
 	assert.NotNil(t, err)
-	assert.Contains(t, err.Error(), "host [neon] is not a postgresql host")
+	assert.Contains(t, err.Error(), expectedDbError)
 }
 
 func TestPostgresqlWrongConnString(t *testing.T) {
@@ -212,11 +215,11 @@ func TestPostgresqlWrongConnString(t *testing.T) {
 	time.Sleep(waitRefreshPluginInterval)
 
 	// when connection string is wrong
-	query := `query QueryPeople {queryPeople}`
+	query := "{ getAllPeople { id name age } }"
 	response, err := runGraphqlQuery(graphQLRequest{Query: query})
 	assert.Nil(t, response)
 	assert.NotNil(t, err)
-	assert.Contains(t, err.Error(), "failed to parse as keyword/value (invalid keyword/value)")
+	assert.Contains(t, err.Error(), expectedDbError)
 }
 
 func TestPostgresqlNoConnString(t *testing.T) {
@@ -235,11 +238,11 @@ func TestPostgresqlNoConnString(t *testing.T) {
 	time.Sleep(waitRefreshPluginInterval)
 
 	// when host name has no connection string
-	query := `query QueryPeople {queryPeople}`
+	query := "{ getAllPeople { id name age } }"
 	response, err := runGraphqlQuery(graphQLRequest{Query: query})
 	assert.Nil(t, response)
 	assert.NotNil(t, err)
-	assert.Contains(t, err.Error(), "postgresql host [neon] has empty connString")
+	assert.Contains(t, err.Error(), expectedDbError)
 }
 
 type postgresqlSuite struct {
@@ -295,7 +298,7 @@ func (ps *postgresqlSuite) setupPostgresContainer() error {
 		time.Sleep(time.Second)
 
 		pgLog, err := getLogs()
-		if err == nil && 2 == strings.Count(pgLog, "database system is ready to accept connections") {
+		if err == nil && strings.Count(pgLog, "database system is ready to accept connections") == 2 {
 			break
 		}
 
@@ -314,15 +317,11 @@ func (ps *postgresqlSuite) setupPostgresContainer() error {
 	defer conn.Close(context.Background())
 
 	sql := `
-create table people(
-    id serial primary key,
-    name varchar not null,
-    age int not null,
-    balance money not null,
-    privkey bytea not null,
-    created_at timestamp with time zone not null,
-    male boolean,
-    home point
+CREATE TABLE people (
+  id SERIAL PRIMARY KEY,
+  name TEXT NOT NULL,
+  age INT NOT NULL,
+  home POINT NULL
 )`
 	if _, err := conn.Exec(ctx, sql); err != nil {
 		return err
@@ -362,37 +361,29 @@ func (ps *postgresqlSuite) TearDownSuite() {
 func (ps *postgresqlSuite) TestPostgresqlBasicOps() {
 	query := `
 query AddPerson {
-    addPerson(
-        name: "gulsaba"
-        age: 26
-        balance: 678943.34
-        privkey: "this is a secret key"
-        male: false
-        lat: 26.9124
-        lon: 75.7873
-    )
+    addPerson(name: "test", age: 21) {
+        id
+        name
+        age
+    }
 }`
 	_, err := runGraphqlQuery(graphQLRequest{Query: query})
 	ps.Assert().Nil(err)
 }
 
 func (ps *postgresqlSuite) TestPostgresqlWrongTypeInsert() {
-	// try inserting data with wrong type, column: balance
+	// try inserting data with wrong type, column: age
 	query := `
 query AddPerson {
-    addPerson(
-        name: "gulsaba"
-        age: 26
-        balance: "678943"
-        privkey: "this is a secret key"
-        male: false
-        lat: 26.9124
-        lon: 75.7873
-    )
+    addPerson(name: "test", age: "21") {
+        id
+        name
+        age
+    }
 }`
 	_, err := runGraphqlQuery(graphQLRequest{Query: query})
 	ps.Assert().NotNil(err)
-	ps.Assert().Contains(err.Error(), "input value is not a float")
+	ps.Assert().Contains(err.Error(), "input value is not an signed integer")
 }
 
 func TestPostgresqlSuite(t *testing.T) {
