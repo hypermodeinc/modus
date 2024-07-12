@@ -49,27 +49,27 @@ type inferenceHistory struct {
 	end    time.Time
 }
 
-func (w *runtimePostgresWriter) SetPool(ctx context.Context) {
+func (w *runtimePostgresWriter) GetPool(ctx context.Context) *pgxpool.Pool {
+	w.mu.RLock()
+	if w.dbpool != nil {
+		defer w.mu.RUnlock()
+		return w.dbpool
+	}
+	w.mu.RUnlock()
+
 	w.mu.Lock()
 	defer w.mu.Unlock()
 	connStr, err := secrets.GetSecretValue(ctx, "HYPERMODE_METADATA_DB")
 	if err != nil {
-		logger.Err(ctx, err).Msg("Error getting database connection string")
-		return
+		return nil
 	}
 
 	pool, err := pgxpool.New(ctx, connStr)
 	if err != nil {
-		logger.Warn(ctx).Err(err).Msg("Database pool initialization failed.")
+		return nil
 	}
-
 	w.dbpool = pool
-}
-
-func (w *runtimePostgresWriter) GetPool() *pgxpool.Pool {
-	w.mu.RLock()
-	defer w.mu.RUnlock()
-	return w.dbpool
+	return pool
 }
 
 func (w *runtimePostgresWriter) Write(data inferenceHistory) {
@@ -145,14 +145,15 @@ func getInferenceDataJson(val any) ([]byte, error) {
 	return bytes, nil
 }
 
-func Stop() {
-	if globalRuntimePostgresWriter.GetPool() == nil {
+func Stop(ctx context.Context) {
+	pool := globalRuntimePostgresWriter.GetPool(ctx)
+	if pool == nil {
 		return
 	}
 
 	close(globalRuntimePostgresWriter.quit)
 	<-globalRuntimePostgresWriter.done
-	globalRuntimePostgresWriter.GetPool().Close()
+	pool.Close()
 }
 
 func WriteInferenceHistory(ctx context.Context, model manifest.ModelInfo, input, output any, start, end time.Time) {
@@ -483,26 +484,26 @@ func WriteInferenceHistoryToDB(ctx context.Context, batch []inferenceHistory) {
 }
 
 func Initialize(ctx context.Context) {
-	globalRuntimePostgresWriter.SetPool(ctx)
+	// this will initialize the pool and start the worker
+	pool := globalRuntimePostgresWriter.GetPool(ctx)
+	if pool == nil {
+		logger.Warn(ctx).Msg("Database pool is not initialized")
+	}
 	go globalRuntimePostgresWriter.worker(ctx)
 }
 
-var hasWarnedAboutNoDB bool
-
 func GetTx(ctx context.Context) (pgx.Tx, error) {
-	if globalRuntimePostgresWriter.GetPool() == nil {
-		if !hasWarnedAboutNoDB {
-			logger.Warn(ctx).Msg("Database pool is not initialized. Inference history will not be saved")
-			hasWarnedAboutNoDB = true
-		}
-		globalRuntimePostgresWriter.SetPool(ctx)
+	pool := globalRuntimePostgresWriter.GetPool(ctx)
+	if pool == nil {
+		return nil, errors.New("database pool is not initialized")
+	} else {
+		return pool.Begin(ctx)
 	}
-	return globalRuntimePostgresWriter.GetPool().Begin(ctx)
 }
 
 func WithTx(ctx context.Context, fn func(pgx.Tx) error) error {
 	tx, err := GetTx(ctx)
-	if err != nil || tx == nil {
+	if err != nil {
 		return err
 	}
 	defer func() {

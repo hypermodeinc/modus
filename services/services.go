@@ -56,5 +56,5 @@ func Stop(ctx context.Context) {
 	hostfunctions.ShutdownPGPools()
 	wasmhost.RuntimeInstance.Close(ctx)
 	logger.Close()
-	db.Stop()
+	db.Stop(ctx)
 }
