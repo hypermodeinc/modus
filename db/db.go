@@ -480,7 +480,16 @@ func GetTx(ctx context.Context) (pgx.Tx, error) {
 			logger.Warn(ctx).Msg("Database pool is not initialized. Inference history will not be saved")
 			hasWarnedAboutNoDB = true
 		}
-		return nil, nil
+		connStr, err := secrets.GetSecretValue(ctx, "HYPERMODE_METADATA_DB")
+		if err != nil {
+			return nil, err
+		}
+
+		pool, err := pgxpool.New(ctx, connStr)
+		if err != nil {
+			return nil, err
+		}
+		globalRuntimePostgresWriter.dbpool = pool
 	}
 	return globalRuntimePostgresWriter.dbpool.Begin(ctx)
 }
