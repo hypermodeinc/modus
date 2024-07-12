@@ -151,6 +151,7 @@ func (hf *CollectionFactory) ReadFromPostgres(ctx context.Context) {
 			logger.Err(ctx, err).
 				Str("collection_name", collection.GetCollectionName()).
 				Msg("Failed to load texts into collection.")
+			break
 		}
 
 		for _, vectorIndex := range collection.GetVectorIndexMap() {
@@ -160,6 +161,7 @@ func (hf *CollectionFactory) ReadFromPostgres(ctx context.Context) {
 					Str("collection_name", collection.GetCollectionName()).
 					Str("search_method", vectorIndex.GetSearchMethodName()).
 					Msg("Failed to load vectors into vector index.")
+				break
 			}
 
 			// catch up on any texts that weren't embedded
@@ -169,6 +171,7 @@ func (hf *CollectionFactory) ReadFromPostgres(ctx context.Context) {
 					Str("collection_name", collection.GetCollectionName()).
 					Str("search_method", vectorIndex.GetSearchMethodName()).
 					Msg("Failed to sync text with vector index.")
+				break
 			}
 
 		}
