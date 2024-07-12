@@ -10,6 +10,7 @@ import (
 	"hmruntime/config"
 	"hmruntime/logger"
 	"hmruntime/metrics"
+	"hmruntime/plugins"
 	"hmruntime/secrets"
 	"hmruntime/utils"
 
@@ -27,6 +28,8 @@ var globalRuntimePostgresWriter *runtimePostgresWriter = &runtimePostgresWriter{
 
 const batchSize = 100
 const chanSize = 10000
+
+const pluginsTable = "plugins"
 const inferencesTable = "inferences"
 const collectionTextsTable = "collection_texts"
 const collectionVectorsTable = "collection_vectors"
@@ -154,6 +157,79 @@ func Stop(ctx context.Context) {
 	close(globalRuntimePostgresWriter.quit)
 	<-globalRuntimePostgresWriter.done
 	pool.Close()
+}
+
+func WritePluginInfo(ctx context.Context, metadata *plugins.PluginMetadata) {
+	span := utils.NewSentrySpanForCurrentFunc(ctx)
+	defer span.Finish()
+
+	err := WithTx(ctx, func(tx pgx.Tx) error {
+
+		// Check if the plugin is already in the database
+		id, err := getPluginId(ctx, tx, metadata.BuildId)
+		if err != nil {
+			return err
+		}
+		if id != "" {
+			metadata.Id = id
+			return nil
+		}
+
+		// Insert the plugin info - still check for conflicts, in case another instance of the service is running
+		query := fmt.Sprintf(`INSERT INTO %s
+(id, name, version, language, sdk_version, build_id, build_time, git_repo, git_commit)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+ON CONFLICT (build_id) DO NOTHING`,
+			pluginsTable)
+
+		metadata.Id = utils.GenerateUUIDV7()
+		ct, err := tx.Exec(ctx, query,
+			metadata.Id,
+			metadata.Name(),
+			utils.NilIfEmpty(metadata.Version()),
+			metadata.Language(),
+			metadata.SdkVersion(),
+			metadata.BuildId,
+			metadata.BuildTime,
+			utils.NilIfEmpty(metadata.GitRepo),
+			utils.NilIfEmpty(metadata.GitCommit),
+		)
+		if err != nil {
+			return err
+		}
+
+		if ct.RowsAffected() == 0 {
+			// Edge case - the plugin is now in the database, but we didn't insert it
+			// It must have been inserted by another instance of the service
+			// Get the ID set by the other instance
+			id, err := getPluginId(ctx, tx, metadata.BuildId)
+			if err != nil {
+				return err
+			}
+			metadata.Id = id
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		logger.Err(ctx, err).Msg("Error writing plugin info to database")
+	}
+}
+
+func getPluginId(ctx context.Context, tx pgx.Tx, buildId string) (string, error) {
+	query := fmt.Sprintf("SELECT id FROM %s WHERE build_id = $1", pluginsTable)
+	rows, err := tx.Query(ctx, query, buildId)
+	if err != nil {
+		return "", err
+	}
+	defer rows.Close()
+	if rows.Next() {
+		var id string
+		err := rows.Scan(&id)
+		return id, err
+	}
+	return "", nil
 }
 
 func WriteInferenceHistory(ctx context.Context, model manifest.ModelInfo, input, output any, start, end time.Time) {

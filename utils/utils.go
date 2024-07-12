@@ -12,6 +12,17 @@ import (
 	"github.com/google/uuid"
 )
 
+func NilIf[T any](condition bool, val T) *T {
+	if condition {
+		return nil
+	}
+	return &val
+}
+
+func NilIfEmpty(val string) *string {
+	return NilIf(val == "", val)
+}
+
 func If[T any](condition bool, trueVal, falseVal T) T {
 	if condition {
 		return trueVal

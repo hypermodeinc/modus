@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"time"
 
+	"hmruntime/db"
 	"hmruntime/functions"
 	"hmruntime/logger"
 	"hmruntime/plugins"
@@ -77,6 +78,9 @@ func loadPlugin(ctx context.Context, filename string) error {
 	} else if err != nil {
 		return err
 	}
+
+	// Write the plugin info to the database.
+	db.WritePluginInfo(ctx, &metadata)
 
 	// Make the plugin object.
 	plugin := makePlugin(ctx, &cm, filename, metadata)
