@@ -27,14 +27,6 @@ func MapValues[M ~map[K]V, K comparable, V any](m M) []V {
 	return r
 }
 
-func ParseNameAndVersion(s string) (name string, version string) {
-	i := strings.LastIndex(s, "@")
-	if i == -1 {
-		return s, ""
-	}
-	return s[:i], s[i+1:]
-}
-
 func EnvVarFlagEnabled(envVarName string) bool {
 	v := os.Getenv(envVarName)
 	b, err := strconv.ParseBool(v)

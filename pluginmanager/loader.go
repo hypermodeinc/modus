@@ -129,9 +129,12 @@ func logPluginLoaded(ctx context.Context, plugin plugins.Plugin) {
 	metadata := plugin.Metadata
 
 	if metadata.Plugin != "" {
-		name, version := utils.ParseNameAndVersion(metadata.Plugin)
+		name, version := metadata.NameAndVersion()
 		evt.Str("plugin", name)
-		evt.Str("plugin_version", version)
+		if version != "" {
+			// The version is optional.
+			evt.Str("plugin_version", version)
+		}
 	}
 
 	lang := plugin.Language()
@@ -147,10 +150,10 @@ func logPluginLoaded(ctx context.Context, plugin plugins.Plugin) {
 		evt.Time("build_ts", metadata.BuildTime)
 	}
 
-	if metadata.Library != "" {
-		name, version := utils.ParseNameAndVersion(metadata.Library)
-		evt.Str("hypermode_library", name)
-		evt.Str("hypermode_library_version", version)
+	if metadata.SDK != "" {
+		name, version := metadata.SdkNameAndVersion()
+		evt.Str("sdk", name)
+		evt.Str("sdk_version", version)
 	}
 
 	if metadata.GitRepo != "" {
