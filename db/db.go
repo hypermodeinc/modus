@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sync"
 	"time"
 
 	"hmruntime/config"
@@ -37,6 +38,7 @@ type runtimePostgresWriter struct {
 	buffer chan inferenceHistory
 	quit   chan struct{}
 	done   chan struct{}
+	mu     sync.RWMutex
 }
 
 type inferenceHistory struct {
@@ -45,6 +47,70 @@ type inferenceHistory struct {
 	output any
 	start  time.Time
 	end    time.Time
+}
+
+func (w *runtimePostgresWriter) SetPool(ctx context.Context) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	connStr, err := secrets.GetSecretValue(ctx, "HYPERMODE_METADATA_DB")
+	if err != nil {
+		logger.Err(ctx, err).Msg("Error getting database connection string")
+		return
+	}
+
+	pool, err := pgxpool.New(ctx, connStr)
+	if err != nil {
+		logger.Warn(ctx).Err(err).Msg("Database pool initialization failed.")
+	}
+
+	w.dbpool = pool
+}
+
+func (w *runtimePostgresWriter) GetPool() *pgxpool.Pool {
+	w.mu.RLock()
+	defer w.mu.RUnlock()
+	return w.dbpool
+}
+
+func (w *runtimePostgresWriter) Write(data inferenceHistory) {
+	select {
+	case w.buffer <- data:
+	default:
+		metrics.DroppedInferencesNum.Inc()
+	}
+}
+
+func (w *runtimePostgresWriter) worker(ctx context.Context) {
+	var batchIndex int
+	var batch [batchSize]inferenceHistory
+	timer := time.NewTimer(inferenceRefresherInterval)
+	defer timer.Stop()
+
+	for {
+		select {
+		case data := <-w.buffer:
+			batch[batchIndex] = data
+			batchIndex++
+			if batchIndex == batchSize {
+				WriteInferenceHistoryToDB(ctx, batch[:batchSize])
+				batchIndex = 0
+
+				// we need to drain the timer channel to prevent the timer from firing
+				if !timer.Stop() {
+					<-timer.C
+				}
+				timer.Reset(inferenceRefresherInterval)
+			}
+		case <-timer.C:
+			WriteInferenceHistoryToDB(ctx, batch[:batchIndex])
+			batchIndex = 0
+			timer.Reset(inferenceRefresherInterval)
+		case <-w.quit:
+			WriteInferenceHistoryToDB(ctx, batch[:batchIndex])
+			close(w.done)
+			return
+		}
+	}
 }
 
 func (h *inferenceHistory) getJson() (input []byte, output []byte, err error) {
@@ -79,22 +145,14 @@ func getInferenceDataJson(val any) ([]byte, error) {
 	return bytes, nil
 }
 
-func (w *runtimePostgresWriter) Write(data inferenceHistory) {
-	select {
-	case w.buffer <- data:
-	default:
-		metrics.DroppedInferencesNum.Inc()
-	}
-}
-
 func Stop() {
-	if globalRuntimePostgresWriter.dbpool == nil {
+	if globalRuntimePostgresWriter.GetPool() == nil {
 		return
 	}
 
 	close(globalRuntimePostgresWriter.quit)
 	<-globalRuntimePostgresWriter.done
-	globalRuntimePostgresWriter.dbpool.Close()
+	globalRuntimePostgresWriter.GetPool().Close()
 }
 
 func WriteInferenceHistory(ctx context.Context, model manifest.ModelInfo, input, output any, start, end time.Time) {
@@ -384,39 +442,6 @@ func QueryCollectionVectorsFromCheckpoint(ctx context.Context, collectionName, s
 	return textIds, vectorIds, keys, vectors, nil
 }
 
-func (w *runtimePostgresWriter) worker(ctx context.Context) {
-	var batchIndex int
-	var batch [batchSize]inferenceHistory
-	timer := time.NewTimer(inferenceRefresherInterval)
-	defer timer.Stop()
-
-	for {
-		select {
-		case data := <-w.buffer:
-			batch[batchIndex] = data
-			batchIndex++
-			if batchIndex == batchSize {
-				WriteInferenceHistoryToDB(ctx, batch[:batchSize])
-				batchIndex = 0
-
-				// we need to drain the timer channel to prevent the timer from firing
-				if !timer.Stop() {
-					<-timer.C
-				}
-				timer.Reset(inferenceRefresherInterval)
-			}
-		case <-timer.C:
-			WriteInferenceHistoryToDB(ctx, batch[:batchIndex])
-			batchIndex = 0
-			timer.Reset(inferenceRefresherInterval)
-		case <-w.quit:
-			WriteInferenceHistoryToDB(ctx, batch[:batchIndex])
-			close(w.done)
-			return
-		}
-	}
-}
-
 func WriteInferenceHistoryToDB(ctx context.Context, batch []inferenceHistory) {
 	if len(batch) == 0 {
 		return
@@ -458,40 +483,21 @@ func WriteInferenceHistoryToDB(ctx context.Context, batch []inferenceHistory) {
 }
 
 func Initialize(ctx context.Context) {
-	connStr, err := secrets.GetSecretValue(ctx, "HYPERMODE_METADATA_DB")
-	if err != nil {
-		logger.Err(ctx, err).Msg("Error getting database connection string")
-		return
-	}
-
-	pool, err := pgxpool.New(ctx, connStr)
-	if err != nil {
-		logger.Warn(ctx).Err(err).Msg("Database pool initialization failed.")
-	}
-	globalRuntimePostgresWriter.dbpool = pool
+	globalRuntimePostgresWriter.SetPool(ctx)
 	go globalRuntimePostgresWriter.worker(ctx)
 }
 
 var hasWarnedAboutNoDB bool
 
 func GetTx(ctx context.Context) (pgx.Tx, error) {
-	if globalRuntimePostgresWriter.dbpool == nil {
+	if globalRuntimePostgresWriter.GetPool() == nil {
 		if !hasWarnedAboutNoDB {
 			logger.Warn(ctx).Msg("Database pool is not initialized. Inference history will not be saved")
 			hasWarnedAboutNoDB = true
 		}
-		connStr, err := secrets.GetSecretValue(ctx, "HYPERMODE_METADATA_DB")
-		if err != nil {
-			return nil, err
-		}
-
-		pool, err := pgxpool.New(ctx, connStr)
-		if err != nil {
-			return nil, err
-		}
-		globalRuntimePostgresWriter.dbpool = pool
+		globalRuntimePostgresWriter.SetPool(ctx)
 	}
-	return globalRuntimePostgresWriter.dbpool.Begin(ctx)
+	return globalRuntimePostgresWriter.GetPool().Begin(ctx)
 }
 
 func WithTx(ctx context.Context, fn func(pgx.Tx) error) error {
