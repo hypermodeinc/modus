@@ -8,8 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"hmruntime/utils"
-
 	"github.com/tetratelabs/wazero"
 )
 
@@ -22,7 +20,8 @@ type Plugin struct {
 
 type PluginMetadata struct {
 	Plugin    string              `json:"plugin"`
-	Library   string              `json:"library"`
+	SDK       string              `json:"sdk"`
+	Library   string              `json:"library"` // deprecated
 	BuildId   string              `json:"buildId"`
 	BuildTime time.Time           `json:"buildTs"`
 	GitRepo   string              `json:"gitRepo"`
@@ -114,9 +113,16 @@ func (lang PluginLanguage) String() string {
 	}
 }
 
+func (p *Plugin) NameAndVersion() (name string, version string) {
+	return p.Metadata.NameAndVersion()
+}
+
 func (p *Plugin) Name() string {
-	name, _ := utils.ParseNameAndVersion(p.Metadata.Plugin)
-	return name
+	return p.Metadata.Name()
+}
+
+func (p *Plugin) Version() string {
+	return p.Metadata.Version()
 }
 
 func (p *Plugin) BuildId() string {
@@ -128,13 +134,48 @@ func (p *Plugin) Language() PluginLanguage {
 }
 
 func (m *PluginMetadata) Language() PluginLanguage {
-	libName, _ := utils.ParseNameAndVersion(m.Library)
-	switch libName {
-	case "@hypermode/functions-as":
+	switch m.SdkName() {
+	case "functions-as":
 		return AssemblyScript
-	case "github.com/hypermodeAI/functions-go":
+	case "functions-go":
 		return GoLang
 	default:
 		return UnknownLanguage
 	}
+}
+
+func (m *PluginMetadata) NameAndVersion() (name string, version string) {
+	return parseNameAndVersion(m.Plugin)
+}
+
+func (m *PluginMetadata) Name() string {
+	name, _ := m.NameAndVersion()
+	return name
+}
+
+func (m *PluginMetadata) Version() string {
+	_, version := m.NameAndVersion()
+	return version
+}
+
+func (m *PluginMetadata) SdkNameAndVersion() (name string, version string) {
+	return parseNameAndVersion(m.SDK)
+}
+
+func (m *PluginMetadata) SdkName() string {
+	name, _ := m.SdkNameAndVersion()
+	return name
+}
+
+func (m *PluginMetadata) SdkVersion() string {
+	_, version := m.SdkNameAndVersion()
+	return version
+}
+
+func parseNameAndVersion(s string) (name string, version string) {
+	i := strings.LastIndex(s, "@")
+	if i == -1 {
+		return s, ""
+	}
+	return s[:i], s[i+1:]
 }

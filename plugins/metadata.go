@@ -36,6 +36,13 @@ func GetPluginMetadata(ctx context.Context, cm *wazero.CompiledModule) (PluginMe
 }
 
 func augmentMetadata(metadata *PluginMetadata) {
+
+	// legacy support for the deprecated "library" field
+	// (functions-as before v0.10.0)
+	if metadata.SDK == "" {
+		metadata.SDK = strings.TrimPrefix(metadata.Library, "@hypermode/")
+	}
+
 	// Copy the language from the metadata to the types and functions.
 	// Set the nullable flag along the way.
 	lang := metadata.Language()
