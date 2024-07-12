@@ -398,6 +398,11 @@ func (w *runtimePostgresWriter) worker(ctx context.Context) {
 			if batchIndex == batchSize {
 				WriteInferenceHistoryToDB(ctx, batch[:batchSize])
 				batchIndex = 0
+
+				// we need to drain the timer channel to prevent the timer from firing
+				if !timer.Stop() {
+					<-timer.C
+				}
 				timer.Reset(inferenceRefresherInterval)
 			}
 		case <-timer.C:
