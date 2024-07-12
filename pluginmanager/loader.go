@@ -131,7 +131,10 @@ func logPluginLoaded(ctx context.Context, plugin plugins.Plugin) {
 	if metadata.Plugin != "" {
 		name, version := metadata.NameAndVersion()
 		evt.Str("plugin", name)
-		evt.Str("plugin_version", version)
+		if version != "" {
+			// The version is optional.
+			evt.Str("plugin_version", version)
+		}
 	}
 
 	lang := plugin.Language()
