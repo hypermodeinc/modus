@@ -45,11 +45,13 @@ type runtimePostgresWriter struct {
 }
 
 type inferenceHistory struct {
-	model  manifest.ModelInfo
-	input  any
-	output any
-	start  time.Time
-	end    time.Time
+	model    manifest.ModelInfo
+	input    any
+	output   any
+	start    time.Time
+	end      time.Time
+	pluginId *string
+	function *string
 }
 
 func (w *runtimePostgresWriter) GetPool(ctx context.Context) *pgxpool.Pool {
@@ -235,12 +237,25 @@ func getPluginId(ctx context.Context, tx pgx.Tx, buildId string) (string, error)
 func WriteInferenceHistory(ctx context.Context, model manifest.ModelInfo, input, output any, start, end time.Time) {
 	span := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
+
+	var pluginId *string
+	if plugin, ok := ctx.Value(utils.PluginContextKey).(*plugins.Plugin); ok {
+		pluginId = &plugin.Metadata.Id
+	}
+
+	var function *string
+	if functionName, ok := ctx.Value(utils.FunctionNameContextKey).(string); ok {
+		function = &functionName
+	}
+
 	globalRuntimePostgresWriter.Write(inferenceHistory{
-		model:  model,
-		input:  input,
-		output: output,
-		start:  start,
-		end:    end,
+		model:    model,
+		input:    input,
+		output:   output,
+		start:    start,
+		end:      end,
+		pluginId: pluginId,
+		function: function,
 	})
 }
 
@@ -532,8 +547,20 @@ func WriteInferenceHistoryToDB(ctx context.Context, batch []inferenceHistory) {
 			if err != nil {
 				return err
 			}
-			query := fmt.Sprintf("INSERT INTO %s (id, model_hash, input, output, started_at, duration_ms) VALUES ($1, $2, $3, $4, $5, $6)", inferencesTable)
-			args := []any{utils.GenerateUUIDV7(), data.model.Hash(), input, output, data.start, data.end.Sub(data.start).Milliseconds()}
+			query := fmt.Sprintf(`INSERT INTO %s
+(id, model_hash, input, output, started_at, duration_ms, plugin_id, function)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+`, inferencesTable)
+			args := []any{
+				utils.GenerateUUIDV7(),
+				data.model.Hash(),
+				input,
+				output,
+				data.start,
+				data.end.Sub(data.start).Milliseconds(),
+				data.pluginId,
+				data.function,
+			}
 			b.Queue(query, args...)
 		}
 
