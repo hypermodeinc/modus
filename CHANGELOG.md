@@ -7,6 +7,7 @@
 - Add support for PostgreSQL host functions [#278](https://github.com/hypermodeAI/runtime/pull/278)
 - Fix dbpool reading after failed initialization [#281](https://github.com/hypermodeAI/runtime/pull/281)
 - Update for metadata changes [#282](https://github.com/hypermodeAI/runtime/pull/282)
+- Store function info with inference history [#283](https://github.com/hypermodeAI/runtime/pull/283)
 
 ## 2024-07-09 - Version 0.9.5
 
