@@ -1,6 +1,6 @@
 # Change Log
 
-## UNRELEASED
+## 2024-07-15 - Version 0.10.0
 
 - Update manifest library and usage [#275](https://github.com/hypermodeAI/runtime/pull/275)
 - Support pointers when marshalling objects [#277](https://github.com/hypermodeAI/runtime/pull/277)
@@ -8,6 +8,7 @@
 - Fix dbpool reading after failed initialization [#281](https://github.com/hypermodeAI/runtime/pull/281)
 - Update for metadata changes [#282](https://github.com/hypermodeAI/runtime/pull/282)
 - Store function info with inference history [#283](https://github.com/hypermodeAI/runtime/pull/283)
+- Fix issues with GraphQL block quotes [wundergraph/graphql-go-tools/843](https://github.com/wundergraph/graphql-go-tools/pull/843)
 
 ## 2024-07-09 - Version 0.9.5
 
