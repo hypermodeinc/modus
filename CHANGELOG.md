@@ -1,6 +1,6 @@
 # Change Log
 
-## UNRELEASED
+## 2024-07-15 - Version 0.10.0
 
 - Update manifest library and usage [#275](https://github.com/hypermodeAI/runtime/pull/275)
 - Support pointers when marshalling objects [#277](https://github.com/hypermodeAI/runtime/pull/277)
