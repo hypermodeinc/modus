@@ -10,6 +10,7 @@ import (
 	"hmruntime/config"
 	"hmruntime/logger"
 	"hmruntime/metrics"
+	"hmruntime/plugins"
 	"hmruntime/secrets"
 	"hmruntime/utils"
 
@@ -27,6 +28,8 @@ var globalRuntimePostgresWriter *runtimePostgresWriter = &runtimePostgresWriter{
 
 const batchSize = 100
 const chanSize = 10000
+
+const pluginsTable = "plugins"
 const inferencesTable = "inferences"
 const collectionTextsTable = "collection_texts"
 const collectionVectorsTable = "collection_vectors"
@@ -42,11 +45,13 @@ type runtimePostgresWriter struct {
 }
 
 type inferenceHistory struct {
-	model  manifest.ModelInfo
-	input  any
-	output any
-	start  time.Time
-	end    time.Time
+	model    manifest.ModelInfo
+	input    any
+	output   any
+	start    time.Time
+	end      time.Time
+	pluginId *string
+	function *string
 }
 
 func (w *runtimePostgresWriter) GetPool(ctx context.Context) *pgxpool.Pool {
@@ -156,15 +161,101 @@ func Stop(ctx context.Context) {
 	pool.Close()
 }
 
+func WritePluginInfo(ctx context.Context, metadata *plugins.PluginMetadata) {
+	span := utils.NewSentrySpanForCurrentFunc(ctx)
+	defer span.Finish()
+
+	err := WithTx(ctx, func(tx pgx.Tx) error {
+
+		// Check if the plugin is already in the database
+		id, err := getPluginId(ctx, tx, metadata.BuildId)
+		if err != nil {
+			return err
+		}
+		if id != "" {
+			metadata.Id = id
+			return nil
+		}
+
+		// Insert the plugin info - still check for conflicts, in case another instance of the service is running
+		query := fmt.Sprintf(`INSERT INTO %s
+(id, name, version, language, sdk_version, build_id, build_time, git_repo, git_commit)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+ON CONFLICT (build_id) DO NOTHING`,
+			pluginsTable)
+
+		metadata.Id = utils.GenerateUUIDV7()
+		ct, err := tx.Exec(ctx, query,
+			metadata.Id,
+			metadata.Name(),
+			utils.NilIfEmpty(metadata.Version()),
+			metadata.Language(),
+			metadata.SdkVersion(),
+			metadata.BuildId,
+			metadata.BuildTime,
+			utils.NilIfEmpty(metadata.GitRepo),
+			utils.NilIfEmpty(metadata.GitCommit),
+		)
+		if err != nil {
+			return err
+		}
+
+		if ct.RowsAffected() == 0 {
+			// Edge case - the plugin is now in the database, but we didn't insert it
+			// It must have been inserted by another instance of the service
+			// Get the ID set by the other instance
+			id, err := getPluginId(ctx, tx, metadata.BuildId)
+			if err != nil {
+				return err
+			}
+			metadata.Id = id
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		logger.Err(ctx, err).Msg("Error writing plugin info to database")
+	}
+}
+
+func getPluginId(ctx context.Context, tx pgx.Tx, buildId string) (string, error) {
+	query := fmt.Sprintf("SELECT id FROM %s WHERE build_id = $1", pluginsTable)
+	rows, err := tx.Query(ctx, query, buildId)
+	if err != nil {
+		return "", err
+	}
+	defer rows.Close()
+	if rows.Next() {
+		var id string
+		err := rows.Scan(&id)
+		return id, err
+	}
+	return "", nil
+}
+
 func WriteInferenceHistory(ctx context.Context, model manifest.ModelInfo, input, output any, start, end time.Time) {
 	span := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
+
+	var pluginId *string
+	if plugin, ok := ctx.Value(utils.PluginContextKey).(*plugins.Plugin); ok {
+		pluginId = &plugin.Metadata.Id
+	}
+
+	var function *string
+	if functionName, ok := ctx.Value(utils.FunctionNameContextKey).(string); ok {
+		function = &functionName
+	}
+
 	globalRuntimePostgresWriter.Write(inferenceHistory{
-		model:  model,
-		input:  input,
-		output: output,
-		start:  start,
-		end:    end,
+		model:    model,
+		input:    input,
+		output:   output,
+		start:    start,
+		end:      end,
+		pluginId: pluginId,
+		function: function,
 	})
 }
 
@@ -456,8 +547,20 @@ func WriteInferenceHistoryToDB(ctx context.Context, batch []inferenceHistory) {
 			if err != nil {
 				return err
 			}
-			query := fmt.Sprintf("INSERT INTO %s (id, model_hash, input, output, started_at, duration_ms) VALUES ($1, $2, $3, $4, $5, $6)", inferencesTable)
-			args := []any{utils.GenerateUUIDV7(), data.model.Hash(), input, output, data.start, data.end.Sub(data.start).Milliseconds()}
+			query := fmt.Sprintf(`INSERT INTO %s
+(id, model_hash, input, output, started_at, duration_ms, plugin_id, function)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+`, inferencesTable)
+			args := []any{
+				utils.GenerateUUIDV7(),
+				data.model.Hash(),
+				input,
+				output,
+				data.start,
+				data.end.Sub(data.start).Milliseconds(),
+				data.pluginId,
+				data.function,
+			}
 			b.Queue(query, args...)
 		}
 

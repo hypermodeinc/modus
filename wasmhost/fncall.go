@@ -60,6 +60,7 @@ func doCallFunction(ctx context.Context, fnInfo functions.FunctionInfo, paramete
 
 	ctx = context.WithValue(ctx, utils.ExecutionIdContextKey, execInfo.ExecutionId)
 	ctx = context.WithValue(ctx, utils.FunctionMessagesContextKey, &execInfo.Messages)
+	ctx = context.WithValue(ctx, utils.FunctionNameContextKey, fnInfo.Function.Name)
 	ctx = context.WithValue(ctx, utils.PluginContextKey, fnInfo.Plugin)
 
 	// Each request will get its own instance of the plugin module, so that we can run
