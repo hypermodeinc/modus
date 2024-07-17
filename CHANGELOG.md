@@ -1,5 +1,9 @@
 # Change Log
 
+## UNRELEASED
+
+- Add HNSW indexing for collection [#285](https://github.com/hypermodeAI/runtime/pull/285)
+
 ## 2024-07-15 - Version 0.10.0
 
 - Update manifest library and usage [#275](https://github.com/hypermodeAI/runtime/pull/275)
