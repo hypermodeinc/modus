@@ -140,57 +140,62 @@ func processManifestCollections(ctx context.Context, Manifest manifest.Hypermode
 			vi, err := collection.GetVectorIndex(ctx, searchMethodName)
 
 			// if the index does not exist, create it
-			if err == index.ErrVectorIndexNotFound || (vi != nil && vi.Type != searchMethod.Index.Type) {
-				if vi != nil && vi.Type != searchMethod.Index.Type {
-					err = collection.DeleteVectorIndex(ctx, searchMethodName)
-					if err != nil {
-						logger.Err(ctx, err).
-							Str("index_name", searchMethodName).
-							Msg("Failed to delete vector index.")
-					}
-				}
-				vectorIndex := &interfaces.VectorIndexWrapper{}
-				switch searchMethod.Index.Type {
-				case interfaces.SequentialManifestType:
-					vectorIndex.Type = sequential.SequentialVectorIndexType
-					vectorIndex.VectorIndex = sequential.NewSequentialVectorIndex(collectionName, searchMethodName, searchMethod.Embedder)
-				case interfaces.HnswManifestType:
-					// TODO: Implement hnsw
-					vectorIndex.Type = hnsw.HnswVectorIndexType
-					vectorIndex.VectorIndex = hnsw.NewHnswVectorIndex(collectionName, searchMethodName, searchMethod.Embedder)
-					// vectorIndex.Type = sequential.SequentialVectorIndexType
-					// vectorIndex.VectorIndex = sequential.NewSequentialVectorIndex(collectionName, searchMethodName, searchMethod.Embedder)
-				case "":
-					vectorIndex.Type = sequential.SequentialVectorIndexType
-					vectorIndex.VectorIndex = sequential.NewSequentialVectorIndex(collectionName, searchMethodName, searchMethod.Embedder)
-				default:
-					logger.Err(ctx, nil).
-						Str("index_type", searchMethod.Index.Type).
-						Msg("Unknown index type.")
-					continue
-				}
-
-				err = collection.SetVectorIndex(ctx, searchMethodName, vectorIndex)
-				if err != nil {
+			if err != nil {
+				if err != index.ErrVectorIndexNotFound {
 					logger.Err(ctx, err).
 						Str("index_name", searchMethodName).
-						Msg("Failed to create vector index.")
+						Msg("Failed to get vector index.")
+				} else {
+					createIndex(ctx, collection, searchMethod, collectionName, searchMethodName)
+				}
+			} else if vi != nil && vi.Type != searchMethod.Index.Type {
+				if err := collection.DeleteVectorIndex(ctx, searchMethodName); err != nil {
+					logger.Err(ctx, err).
+						Str("index_name", searchMethodName).
+						Msg("Failed to delete vector index.")
+				} else {
+					createIndex(ctx, collection, searchMethod, collectionName, searchMethodName)
 				}
 			} else if vi.GetEmbedderName() != searchMethod.Embedder {
 				//TODO: figure out what to actually do if the embedder is different, for now just updating the name
 				// what if the user changes the internals? -> they want us to reindex, model might have diff dimensions
 				// but what if they just chaned the name? -> they want us to just update the name. but we cant know that
 				// imo we should just update the name and let the user reindex if they want to
-				err := vi.SetEmbedderName(searchMethod.Embedder)
-				if err != nil {
+				if err := vi.SetEmbedderName(searchMethod.Embedder); err != nil {
 					logger.Err(ctx, err).
 						Str("index_name", searchMethodName).
 						Msg("Failed to update vector index.")
 				}
 			}
-
 		}
 	}
+}
+
+func createIndex(ctx context.Context, collection interfaces.Collection, searchMethod manifest.SearchMethodInfo, collectionName string, searchMethodName string) {
+	vectorIndex := &interfaces.VectorIndexWrapper{}
+	switch searchMethod.Index.Type {
+	case interfaces.SequentialManifestType:
+		vectorIndex.Type = sequential.SequentialVectorIndexType
+		vectorIndex.VectorIndex = sequential.NewSequentialVectorIndex(collectionName, searchMethodName, searchMethod.Embedder)
+	case interfaces.HnswManifestType:
+		vectorIndex.Type = hnsw.HnswVectorIndexType
+		vectorIndex.VectorIndex = hnsw.NewHnswVectorIndex(collectionName, searchMethodName, searchMethod.Embedder)
+	case "":
+		vectorIndex.Type = sequential.SequentialVectorIndexType
+		vectorIndex.VectorIndex = sequential.NewSequentialVectorIndex(collectionName, searchMethodName, searchMethod.Embedder)
+	default:
+		logger.Err(ctx, nil).
+			Str("index_type", searchMethod.Index.Type).
+			Msg("Unknown index type.")
+	}
+
+	err := collection.SetVectorIndex(ctx, searchMethodName, vectorIndex)
+	if err != nil {
+		logger.Err(ctx, err).
+			Str("index_name", searchMethodName).
+			Msg("Failed to create vector index.")
+	}
+
 }
 
 func deleteIndexesNotInManifest(ctx context.Context, Manifest manifest.HypermodeManifest) {
