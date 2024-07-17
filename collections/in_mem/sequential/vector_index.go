@@ -64,13 +64,13 @@ func (ims *SequentialVectorIndex) Search(ctx context.Context, query []float32, m
 		if filter != nil && !filter(query, vector, key) {
 			continue
 		}
-		similarity, err := utils.CosineSimilarity(query, vector)
+		similarity, err := utils.CosineDistance(query, vector)
 		if err != nil {
 			return nil, err
 		}
 		if results.Len() < maxResults {
 			heap.Push(&results, utils.InitHeapElement(similarity, key, false))
-		} else if utils.IsBetterScoreForSimilarity(similarity, results[0].GetValue()) {
+		} else if utils.IsBetterScoreForDistance(similarity, results[0].GetValue()) {
 			heap.Pop(&results)
 			heap.Push(&results, utils.InitHeapElement(similarity, key, false))
 		}

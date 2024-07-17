@@ -140,7 +140,15 @@ func processManifestCollections(ctx context.Context, Manifest manifest.Hypermode
 			vi, err := collection.GetVectorIndex(ctx, searchMethodName)
 
 			// if the index does not exist, create it
-			if err == index.ErrVectorIndexNotFound {
+			if err == index.ErrVectorIndexNotFound || (vi != nil && vi.Type != searchMethod.Index.Type) {
+				if vi != nil && vi.Type != searchMethod.Index.Type {
+					err = collection.DeleteVectorIndex(ctx, searchMethodName)
+					if err != nil {
+						logger.Err(ctx, err).
+							Str("index_name", searchMethodName).
+							Msg("Failed to delete vector index.")
+					}
+				}
 				vectorIndex := &interfaces.VectorIndexWrapper{}
 				switch searchMethod.Index.Type {
 				case interfaces.SequentialManifestType:

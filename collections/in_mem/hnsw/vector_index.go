@@ -64,7 +64,11 @@ func (ims *HnswVectorIndex) Search(ctx context.Context, query []float32, maxResu
 	if ims.HnswIndex == nil {
 		return nil, fmt.Errorf("vector index is not initialized")
 	}
-	neighbors := ims.HnswIndex.Search(query, maxResults)
+	fmt.Println(ims.HnswIndex.Len())
+	neighbors, err := ims.HnswIndex.Search(query, maxResults)
+	if err != nil {
+		return nil, err
+	}
 	keys, distances := make([]string, len(neighbors)), make([]float64, len(neighbors))
 	for i, neighbor := range neighbors {
 		keys[i] = string(neighbor.Key)
@@ -122,7 +126,14 @@ func (ims *HnswVectorIndex) InsertVector(ctx context.Context, textId int64, vec 
 }
 
 func (ims *HnswVectorIndex) InsertVectorsToMemory(ctx context.Context, textIds []int64, vectorIds []int64, keys []string, vecs [][]float32) error {
-	ims.HnswIndex.Add(hnsw.MakeNodes(keys, vecs)...)
+	nodes, err := hnsw.MakeNodes(keys, vecs)
+	if err != nil {
+		return err
+	}
+	err = ims.HnswIndex.Add(nodes...)
+	if err != nil {
+		return err
+	}
 	ims.lastInsertedID = vectorIds[len(vectorIds)-1]
 	ims.lastIndexedTextID = textIds[len(textIds)-1]
 	return nil

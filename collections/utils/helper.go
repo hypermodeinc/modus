@@ -33,8 +33,8 @@ const (
 	NsSeparator = "-"
 )
 
-func IsBetterScoreForSimilarity(a, b float64) bool {
-	return a > b
+func IsBetterScoreForDistance(a, b float64) bool {
+	return a < b
 }
 
 func Normalize(v []float32) ([]float32, error) {
@@ -59,13 +59,13 @@ func DotProduct(a, b []float32) (float32, error) {
 }
 
 // assume normalization for vectors
-func CosineSimilarity(a, b []float32) (float64, error) {
+func CosineDistance(a, b []float32) (float64, error) {
 	dotProd, err := DotProduct(a, b)
 	if err != nil {
 		return 0, err
 	}
 
-	return float64(dotProd), nil
+	return 1 - float64(dotProd), nil
 }
 
 func ConcatStrings(strs ...string) string {

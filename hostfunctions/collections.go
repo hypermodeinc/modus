@@ -62,9 +62,9 @@ func (r *collectionSearchResult) GetTypeInfo() plugins.TypeInfo {
 }
 
 type collectionSearchResultObject struct {
-	Key   string
-	Text  string
-	Score float64
+	Key      string
+	Text     string
+	Distance float64
 }
 
 func (r *collectionSearchResultObject) GetTypeInfo() plugins.TypeInfo {
@@ -115,11 +115,11 @@ func WriteCollectionSearchResultOffset(ctx context.Context, mod wasm.Module, col
 	return writeResult(ctx, mod, output)
 }
 
-func WriteCollectionSearchResultObjectOffset(ctx context.Context, mod wasm.Module, key, text string, score float64) (uint32, error) {
+func WriteCollectionSearchResultObjectOffset(ctx context.Context, mod wasm.Module, key, text string, distance float64) (uint32, error) {
 	output := collectionSearchResultObject{
-		Key:   key,
-		Text:  text,
-		Score: score,
+		Key:      key,
+		Text:     text,
+		Distance: distance,
 	}
 
 	return writeResult(ctx, mod, output)
@@ -463,14 +463,14 @@ func hostSearchCollection(ctx context.Context, mod wasm.Module, pCollectionName 
 				return offset
 			}
 			output.Objects[i] = collectionSearchResultObject{
-				Key:   object.GetIndex(),
-				Text:  text,
-				Score: object.GetValue(),
+				Key:      object.GetIndex(),
+				Text:     text,
+				Distance: object.GetValue(),
 			}
 		} else {
 			output.Objects[i] = collectionSearchResultObject{
-				Key:   object.GetIndex(),
-				Score: object.GetValue(),
+				Key:      object.GetIndex(),
+				Distance: object.GetValue(),
 			}
 		}
 	}
@@ -483,7 +483,7 @@ func hostSearchCollection(ctx context.Context, mod wasm.Module, pCollectionName 
 	return offset
 }
 
-func hostComputeSimilarity(ctx context.Context, mod wasm.Module, pCollectionName uint32, pSearchMethod uint32, pId1 uint32, pId2 uint32) uint32 {
+func hostComputeDistance(ctx context.Context, mod wasm.Module, pCollectionName uint32, pSearchMethod uint32, pId1 uint32, pId2 uint32) uint32 {
 	var collectionName string
 	var searchMethod string
 	var id1 string
@@ -519,7 +519,7 @@ func hostComputeSimilarity(ctx context.Context, mod wasm.Module, pCollectionName
 		return 0
 	}
 
-	similarity, err := collection_utils.CosineSimilarity(vec1, vec2)
+	similarity, err := collection_utils.CosineDistance(vec1, vec2)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error computing similarity.")
 		return 0
