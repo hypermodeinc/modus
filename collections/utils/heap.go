@@ -31,7 +31,7 @@ func (h MinTupleHeap) Len() int {
 }
 
 func (h MinTupleHeap) Less(i, j int) bool {
-	return h[i].value < h[j].value
+	return h[j].value < h[i].value
 }
 
 func (h MinTupleHeap) Swap(i, j int) {

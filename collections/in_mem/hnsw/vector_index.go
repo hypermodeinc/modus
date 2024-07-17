@@ -81,9 +81,19 @@ func (ims *HnswVectorIndex) Search(ctx context.Context, query []float32, maxResu
 		heap.Push(&results, utils.InitHeapElement(distances[i], key, false))
 	}
 
+	// Return top maxResults results
+	var finalResults utils.MinTupleHeap
+	for results.Len() > 0 {
+		finalResults = append(finalResults, heap.Pop(&results).(utils.MinHeapElement))
+	}
+	// Reverse the finalResults to get the highest similarity first
+	for i, j := 0, len(finalResults)-1; i < j; i, j = i+1, j-1 {
+		finalResults[i], finalResults[j] = finalResults[j], finalResults[i]
+	}
+
 	logger.Info(ctx).Msg(fmt.Sprintf("Search took %v", time.Since(start)))
 
-	return results, nil
+	return finalResults, nil
 }
 
 func (ims *HnswVectorIndex) SearchWithKey(ctx context.Context, queryKey string, maxResults int, filter index.SearchFilter) (utils.MinTupleHeap, error) {

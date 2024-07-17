@@ -30,8 +30,8 @@ func TestHeap(t *testing.T) {
 	}
 
 	// Test Pop
-	expectedValues := []float64{1.0, 2.0, 3.0}
-	expectedIndices := []string{"one", "two", "three"}
+	expectedValues := []float64{3.0, 2.0, 1.0}
+	expectedIndices := []string{"three", "two", "one"}
 	initialLen := h.Len() // Store initial length of heap
 
 	for i := 0; i < initialLen; i++ {

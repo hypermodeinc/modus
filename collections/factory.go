@@ -221,10 +221,6 @@ func LoadVectorsIntoVectorIndex(ctx context.Context, vectorIndex *interfaces.Vec
 
 	// Insert all vectors into vector index
 	for i := range vectorIds {
-		if i >= len(textIds) {
-			fmt.Println("Mismatch in keys and vectors")
-			break
-		}
 		err = vectorIndex.InsertVectorToMemory(ctx, textIds[i], vectorIds[i], keys[i], vectors[i])
 		if err != nil {
 			return err
