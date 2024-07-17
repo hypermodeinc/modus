@@ -152,7 +152,10 @@ func (ims *HnswVectorIndex) InsertVectorsToMemory(ctx context.Context, textIds [
 func (ims *HnswVectorIndex) InsertVectorToMemory(ctx context.Context, textId, vectorId int64, key string, vec []float32) error {
 	// ims.mu.Lock()
 	// defer ims.mu.Unlock()
-	ims.HnswIndex.Add(hnsw.MakeNode(key, vec))
+	err := ims.HnswIndex.Add(hnsw.MakeNode(key, vec))
+	if err != nil {
+		return err
+	}
 	ims.lastInsertedID = vectorId
 	ims.lastIndexedTextID = textId
 	return nil
