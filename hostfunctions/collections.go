@@ -65,6 +65,7 @@ type collectionSearchResultObject struct {
 	Key      string
 	Text     string
 	Distance float64
+	Score    float64
 }
 
 func (r *collectionSearchResultObject) GetTypeInfo() plugins.TypeInfo {
@@ -115,11 +116,12 @@ func WriteCollectionSearchResultOffset(ctx context.Context, mod wasm.Module, col
 	return writeResult(ctx, mod, output)
 }
 
-func WriteCollectionSearchResultObjectOffset(ctx context.Context, mod wasm.Module, key, text string, distance float64) (uint32, error) {
+func WriteCollectionSearchResultObjectOffset(ctx context.Context, mod wasm.Module, key, text string, distance, score float64) (uint32, error) {
 	output := collectionSearchResultObject{
 		Key:      key,
 		Text:     text,
 		Distance: distance,
+		Score:    score,
 	}
 
 	return writeResult(ctx, mod, output)
@@ -466,11 +468,13 @@ func hostSearchCollection(ctx context.Context, mod wasm.Module, pCollectionName 
 				Key:      object.GetIndex(),
 				Text:     text,
 				Distance: object.GetValue(),
+				Score:    1 - object.GetValue(),
 			}
 		} else {
 			output.Objects[i] = collectionSearchResultObject{
 				Key:      object.GetIndex(),
 				Distance: object.GetValue(),
+				Score:    1 - object.GetValue(),
 			}
 		}
 	}
@@ -525,7 +529,7 @@ func hostComputeDistance(ctx context.Context, mod wasm.Module, pCollectionName u
 		return 0
 	}
 
-	output, nil := WriteCollectionSearchResultObjectOffset(ctx, mod, "", "", similarity)
+	output, nil := WriteCollectionSearchResultObjectOffset(ctx, mod, "", "", similarity, 1-similarity)
 	offset, err := writeResult(ctx, mod, output)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error writing result.")
