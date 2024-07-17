@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"hmruntime/collections/in_mem"
+	"hmruntime/collections/in_mem/hnsw"
 	"hmruntime/collections/in_mem/sequential"
 	"hmruntime/collections/index"
 	"hmruntime/collections/index/interfaces"
@@ -147,8 +148,10 @@ func processManifestCollections(ctx context.Context, Manifest manifest.Hypermode
 					vectorIndex.VectorIndex = sequential.NewSequentialVectorIndex(collectionName, searchMethodName, searchMethod.Embedder)
 				case interfaces.HnswManifestType:
 					// TODO: Implement hnsw
-					vectorIndex.Type = sequential.SequentialVectorIndexType
-					vectorIndex.VectorIndex = sequential.NewSequentialVectorIndex(collectionName, searchMethodName, searchMethod.Embedder)
+					vectorIndex.Type = hnsw.HnswVectorIndexType
+					vectorIndex.VectorIndex = hnsw.NewHnswVectorIndex(collectionName, searchMethodName, searchMethod.Embedder)
+					// vectorIndex.Type = sequential.SequentialVectorIndexType
+					// vectorIndex.VectorIndex = sequential.NewSequentialVectorIndex(collectionName, searchMethodName, searchMethod.Embedder)
 				case "":
 					vectorIndex.Type = sequential.SequentialVectorIndexType
 					vectorIndex.VectorIndex = sequential.NewSequentialVectorIndex(collectionName, searchMethodName, searchMethod.Embedder)

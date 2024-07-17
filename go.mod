@@ -18,6 +18,7 @@ require (
 	github.com/getsentry/sentry-go v0.28.1
 	github.com/go-viper/mapstructure/v2 v2.0.0
 	github.com/google/uuid v1.6.0
+	github.com/hypermodeAI/hnsw v0.0.9
 	github.com/hypermodeAI/manifest v0.2.8
 	github.com/jackc/pgx/v5 v5.6.0
 	github.com/jensneuse/abstractlogger v0.0.4
@@ -29,6 +30,7 @@ require (
 	github.com/rs/zerolog v1.33.0
 	github.com/stretchr/testify v1.9.0
 	github.com/tetratelabs/wazero v1.7.3
+	github.com/viterin/vek v0.4.2
 	github.com/wundergraph/graphql-go-tools/execution v1.0.3
 	github.com/wundergraph/graphql-go-tools/v2 v2.0.0-rc.59.0.20240715074239-699eb8167c7c
 )
@@ -64,6 +66,7 @@ require (
 	github.com/go-sourcemap/sourcemap v2.1.4+incompatible // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/google/pprof v0.0.0-20240711041743-f6c9dda6c6da // indirect
+	github.com/google/renameio v1.0.1 // indirect
 	github.com/hashicorp/golang-lru v1.0.2 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
@@ -91,6 +94,7 @@ require (
 	github.com/tidwall/match v1.1.1 // indirect
 	github.com/tidwall/pretty v1.2.1 // indirect
 	github.com/tidwall/sjson v1.2.5 // indirect
+	github.com/viterin/partial v1.1.0 // indirect
 	github.com/wundergraph/cosmo/composition-go v0.0.0-20240715103643-efdd2b3959da // indirect
 	github.com/wundergraph/cosmo/router v0.0.0-20240715103643-efdd2b3959da // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.53.0 // indirect
@@ -101,6 +105,7 @@ require (
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.27.0 // indirect
 	golang.org/x/crypto v0.25.0 // indirect
+	golang.org/x/exp v0.0.0-20240613232115-7f521ea00fb8 // indirect
 	golang.org/x/net v0.27.0 // indirect
 	golang.org/x/sync v0.7.0 // indirect
 	golang.org/x/sys v0.22.0 // indirect

@@ -6,6 +6,7 @@ import (
 	"math"
 
 	"github.com/chewxy/math32"
+	"github.com/viterin/vek/vek32"
 )
 
 const (
@@ -41,9 +42,7 @@ func Normalize(v []float32) ([]float32, error) {
 	if norm == 0 {
 		return nil, errors.New("can not normalize vector with zero norm")
 	}
-	for i := range v {
-		v[i] /= norm
-	}
+	v = vek32.DivNumber(v, norm)
 	return v, nil
 }
 
@@ -56,11 +55,7 @@ func DotProduct(a, b []float32) (float32, error) {
 	if len(a) != len(b) {
 		return 0, errors.New("can not compute dot product on vectors of different lengths")
 	}
-	var dotProduct float32
-	for i := range a {
-		dotProduct += a[i] * b[i]
-	}
-	return dotProduct, nil
+	return vek32.Dot(a, b), nil
 }
 
 // assume normalization for vectors
