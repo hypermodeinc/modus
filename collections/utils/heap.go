@@ -31,7 +31,7 @@ func (h MaxTupleHeap) Len() int {
 }
 
 func (h MaxTupleHeap) Less(i, j int) bool {
-	return h[j].value < h[i].value
+	return h[i].value > h[j].value
 }
 
 func (h MaxTupleHeap) Swap(i, j int) {
