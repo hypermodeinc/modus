@@ -84,12 +84,13 @@ func TestGraph_AddSearch(t *testing.T) {
 	g := newTestGraph[int]()
 
 	for i := 0; i < 128; i++ {
-		g.Add(
+		err := g.Add(
 			Node[int]{
 				Key:   i,
 				Value: Vector{float32(i)},
 			},
 		)
+		require.NoError(t, err)
 	}
 
 	al := Analyzer[int]{Graph: g}
@@ -130,10 +131,11 @@ func TestGraph_AddDelete(t *testing.T) {
 
 	g := newTestGraph[int]()
 	for i := 0; i < 128; i++ {
-		g.Add(Node[int]{
+		err := g.Add(Node[int]{
 			Key:   i,
 			Value: Vector{float32(i)},
 		})
+		require.NoError(t, err)
 	}
 
 	require.Equal(t, 128, g.Len())
@@ -175,19 +177,23 @@ func Benchmark_HSNW(b *testing.B) {
 			g.Ml = 0.5
 			g.Distance = EuclideanDistance
 			for i := 0; i < size; i++ {
-				g.Add(Node[int]{
+				err := g.Add(Node[int]{
 					Key:   i,
 					Value: Vector{float32(i)},
 				})
+				require.NoError(b, err)
 			}
 			b.ResetTimer()
 
 			b.Run("Search", func(b *testing.B) {
 				for i := 0; i < b.N; i++ {
-					g.Search(
+					_, err := g.Search(
 						[]float32{float32(i % size)},
 						4,
 					)
+					if err != nil {
+						b.Fatal(err)
+					}
 				}
 			})
 		})
@@ -213,27 +219,32 @@ func Benchmark_HNSW_1536(b *testing.B) {
 			Key:   i,
 			Value: Vector(randFloats(1536)),
 		}
-		g.Add(points[i])
+		err := g.Add(points[i])
+		require.NoError(b, err)
 	}
 	b.ResetTimer()
 
 	b.Run("Search", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			g.Search(
+			_, err := g.Search(
 				points[i%size].Value,
 				4,
 			)
+			if err != nil {
+				b.Fatal(err)
+			}
 		}
 	})
 }
 
 func TestGraph_DefaultCosine(t *testing.T) {
 	g := NewGraph[int]()
-	g.Add(
+	err := g.Add(
 		Node[int]{Key: 1, Value: Vector{1, 1}},
 		Node[int]{Key: 2, Value: Vector{0, 1}},
 		Node[int]{Key: 3, Value: Vector{1, -1}},
 	)
+	require.NoError(t, err)
 
 	neighbors, _ := g.Search(
 		[]float32{0.5, 0.5},

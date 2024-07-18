@@ -81,7 +81,10 @@ func (n *layerNode[K]) addNeighbor(newNode *layerNode[K], m int, dist DistanceFu
 	delete(n.neighbors, worst.Key)
 	// Delete backlink from the worst neighbor.
 	delete(worst.neighbors, n.Key)
-	worst.replenish(m)
+	err := worst.replenish(m)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -178,9 +181,9 @@ func (n *layerNode[K]) search(
 	return result.Slice(), nil
 }
 
-func (n *layerNode[K]) replenish(m int) {
+func (n *layerNode[K]) replenish(m int) error {
 	if len(n.neighbors) >= m {
-		return
+		return nil
 	}
 
 	// Restore connectivity by adding new neighbors.
@@ -195,21 +198,31 @@ func (n *layerNode[K]) replenish(m int) {
 			if candidate == n {
 				continue
 			}
-			n.addNeighbor(candidate, m, CosineDistance)
+			err := n.addNeighbor(candidate, m, CosineDistance)
+			if err != nil {
+				return err
+			}
 			if len(n.neighbors) >= m {
-				return
+				return nil
 			}
 		}
 	}
+
+	return nil
 }
 
 // isolates remove the node from the graph by removing all connections
 // to neighbors.
-func (n *layerNode[K]) isolate(m int) {
+func (n *layerNode[K]) isolate(m int) error {
 	for _, neighbor := range n.neighbors {
 		delete(neighbor.neighbors, n.Key)
-		neighbor.replenish(m)
+		err := neighbor.replenish(m)
+		if err != nil {
+			return err
+		}
 	}
+
+	return nil
 }
 
 type layer[K cmp.Ordered] struct {
@@ -285,11 +298,11 @@ func defaultRand() *rand.Rand {
 // storing OpenAI embeddings.
 func NewGraph[K cmp.Ordered]() *Graph[K] {
 	return &Graph[K]{
-		M:              16,
+		M:              20,
 		Ml:             0.25,
 		Distance:       CosineDistance,
-		EfSearch:       20,
-		EfConstruction: 40,
+		EfSearch:       40,
+		EfConstruction: 80,
 		Rng:            defaultRand(),
 	}
 }
@@ -376,7 +389,11 @@ func (g *Graph[K]) Add(nodes ...Node[K]) error {
 		key := node.Key
 		vec := node.Value
 
-		g.assertDims(vec)
+		err := g.assertDims(vec)
+		if err != nil {
+			return err
+		}
+
 		insertLevel, err := g.randomLevel()
 		if err != nil {
 			return err
@@ -440,15 +457,24 @@ func (g *Graph[K]) Add(nodes ...Node[K]) error {
 			if insertLevel >= i {
 				if node, ok := layer.nodes[key]; ok {
 					delete(layer.nodes, key)
-					node.isolate(g.M)
+					err := node.isolate(g.M)
+					if err != nil {
+						return err
+					}
 					wasUpdated = true
 				}
 				// Insert the new node into the layer.
 				layer.nodes[key] = newNode
 				for _, node := range neighborhood {
 					// Create a bi-directional edge between the new node and the best node.
-					node.node.addNeighbor(newNode, g.M, g.Distance)
-					newNode.addNeighbor(node.node, g.M, g.Distance)
+					err := node.node.addNeighbor(newNode, g.M, g.Distance)
+					if err != nil {
+						return err
+					}
+					err = newNode.addNeighbor(node.node, g.M, g.Distance)
+					if err != nil {
+						return err
+					}
 				}
 			}
 		}
@@ -476,7 +502,10 @@ type SearchResultNode[K cmp.Ordered] struct {
 func (h *Graph[K]) Search(near Vector, k int) ([]SearchResultNode[K], error) {
 	h.mu.RLock()
 	defer h.mu.RUnlock()
-	h.assertDims(near)
+	err := h.assertDims(near)
+	if err != nil {
+		return nil, err
+	}
 	if len(h.layers) == 0 {
 		return nil, fmt.Errorf("graph is empty")
 	}
@@ -552,7 +581,10 @@ func (h *Graph[K]) DeleteWithLock(key K) bool {
 			continue
 		}
 		delete(layer.nodes, key)
-		node.isolate(h.M)
+		err := node.isolate(h.M)
+		if err != nil {
+			return false
+		}
 		deleted = true
 	}
 

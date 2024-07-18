@@ -124,11 +124,12 @@ func requireGraphApproxEquals[K cmp.Ordered](t *testing.T, g1, g2 *Graph[K]) {
 func TestGraph_ExportImport(t *testing.T) {
 	g1 := newTestGraph[int]()
 	for i := 0; i < 128; i++ {
-		g1.Add(
+		err := g1.Add(
 			Node[int]{
 				i, randFloats(1),
 			},
 		)
+		require.NoError(t, err)
 	}
 
 	buf := &bytes.Buffer{}
@@ -166,11 +167,12 @@ func TestSavedGraph(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, 0, g1.Len())
 	for i := 0; i < 128; i++ {
-		g1.Add(
+		err := g1.Add(
 			Node[int]{
 				i, randFloats(1),
 			},
 		)
+		require.NoError(t, err)
 	}
 
 	err = g1.Save()
@@ -188,11 +190,12 @@ func BenchmarkGraph_Import(b *testing.B) {
 	b.ReportAllocs()
 	g := newTestGraph[int]()
 	for i := 0; i < benchGraphSize; i++ {
-		g.Add(
+		err := g.Add(
 			Node[int]{
 				i, randFloats(256),
 			},
 		)
+		require.NoError(b, err)
 	}
 
 	buf := &bytes.Buffer{}
@@ -216,11 +219,12 @@ func BenchmarkGraph_Export(b *testing.B) {
 	b.ReportAllocs()
 	g := newTestGraph[int]()
 	for i := 0; i < benchGraphSize; i++ {
-		g.Add(
+		err := g.Add(
 			Node[int]{
 				i, randFloats(256),
 			},
 		)
+		require.NoError(b, err)
 	}
 
 	var buf bytes.Buffer

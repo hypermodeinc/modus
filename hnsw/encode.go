@@ -305,7 +305,11 @@ func (g *SavedGraph[K]) Save() error {
 	if err != nil {
 		return err
 	}
-	defer tmp.Cleanup()
+	defer func() {
+		if err := tmp.Cleanup(); err != nil {
+			fmt.Printf("Failed to clean up temp file: %v", err)
+		}
+	}()
 
 	wr := bufio.NewWriter(tmp)
 	err = g.Export(wr)

@@ -40,6 +40,9 @@ func BenchmarkCosineSimilarity(b *testing.B) {
 	v2 := randFloats(1536)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		CosineDistance(v1, v2)
+		_, err := CosineDistance(v1, v2)
+		if err != nil {
+			b.Fatal(err)
+		}
 	}
 }
