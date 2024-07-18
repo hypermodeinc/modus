@@ -26,7 +26,7 @@ func TestHeap(t *testing.T) {
 
 	// Test Less
 	if !h.Less(0, 1) {
-		t.Errorf("Expected h[0] < h[1], got h[0] = %v, h[1] = %v", (*h)[0], (*h)[1])
+		t.Errorf("Expected h[0] > h[1], got h[0] = %v, h[1] = %v", (*h)[0], (*h)[1])
 	}
 
 	// Test Pop
