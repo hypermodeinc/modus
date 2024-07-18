@@ -77,9 +77,9 @@ type TypeDefinition struct {
 }
 
 type Parameter struct {
-	Name     string   `json:"name"`
-	Type     TypeInfo `json:"type"`
-	Optional bool     `json:"optional"`
+	Name     string     `json:"name"`
+	Type     TypeInfo   `json:"type"`
+	DefaultValue string `json:"defaultValue"`
 }
 
 type Field struct {

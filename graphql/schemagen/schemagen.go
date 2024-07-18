@@ -73,7 +73,7 @@ func transformTypes(types []plugins.TypeDefinition, typeDefs *map[string]TypeDef
 
 type FunctionSignature struct {
 	Name       string
-	Parameters []NameTypePair
+	Parameters []ParameterSignature
 	ReturnType string
 }
 
@@ -85,6 +85,12 @@ type TypeDefinition struct {
 type NameTypePair struct {
 	Name string
 	Type string
+}
+
+type ParameterSignature struct {
+	Name         string
+	Type         string
+	DefaultValue string
 }
 
 func transformFunctions(functions []plugins.FunctionSignature, typeDefs *map[string]TypeDefinition) ([]FunctionSignature, []TransformError) {
@@ -239,6 +245,9 @@ func writeSchema(buf *bytes.Buffer, functions []FunctionSignature, typeDefs []Ty
 				buf.WriteString(p.Name)
 				buf.WriteString(": ")
 				buf.WriteString(p.Type)
+				if len(p.DefaultValue) > 0 {
+					buf.WriteString(" = " + p.DefaultValue)
+				}
 			}
 			buf.WriteByte(')')
 		}
@@ -287,28 +296,30 @@ func writeSchema(buf *bytes.Buffer, functions []FunctionSignature, typeDefs []Ty
 	buf.WriteByte('\n')
 }
 
-func convertParameters(parameters []plugins.Parameter, typeDefs *map[string]TypeDefinition, firstPass bool) ([]NameTypePair, error) {
+func convertParameters(parameters []plugins.Parameter, typeDefs *map[string]TypeDefinition, firstPass bool) ([]ParameterSignature, error) {
 	if len(parameters) == 0 {
 		return nil, nil
 	}
 
-	results := make([]NameTypePair, len(parameters))
+	results := make([]ParameterSignature, len(parameters))
 	for i, p := range parameters {
 
 		t, err := convertType(p.Type.Name, typeDefs, firstPass)
 		if err != nil {
 			return nil, err
 		}
-		if p.Optional {
-			t = strings.TrimSuffix(t, "!")
-			results[i] = NameTypePair{
-				Name: p.Name,
-				Type: t,
+		if len(p.DefaultValue) > 0 {
+			t = strings.TrimSuffix(t, "!") + "!"
+			results[i] = ParameterSignature{
+				Name:         p.Name,
+				Type:         t,
+				DefaultValue: p.DefaultValue,
 			}
 		} else {
-			results[i] = NameTypePair{
-				Name: p.Name,
-				Type: t,
+			results[i] = ParameterSignature{
+				Name:         p.Name,
+				Type:         t,
+				DefaultValue: p.DefaultValue,
 			}
 		}
 	}
