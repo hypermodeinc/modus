@@ -62,9 +62,9 @@ func Test_GetGraphQLSchema(t *testing.T) {
 			{
 				Name: "createVec",
 				Parameters: []plugins.Parameter{
-					{Name: "x", Type: plugins.TypeInfo{Name: "i32"}, Optional: true},
-					{Name: "y", Type: plugins.TypeInfo{Name: "i32"}, Optional: true},
-					{Name: "z", Type: plugins.TypeInfo{Name: "i32"}, Optional: true},
+					{Name: "x", Type: plugins.TypeInfo{Name: "i32"}, DefaultValue: "1"},
+					{Name: "y", Type: plugins.TypeInfo{Name: "i32"}, DefaultValue: "2"},
+					{Name: "z", Type: plugins.TypeInfo{Name: "i32"}, DefaultValue: "3"},
 				},
 				ReturnType: plugins.TypeInfo{Name: "string"},
 			},
@@ -153,7 +153,7 @@ func Test_GetGraphQLSchema(t *testing.T) {
 
 	expectedSchema := `type Query {
   add(a: Int!, b: Int!): Int!
-  createVec(x: Int, y: Int, z: Int): String!
+  createVec(x: Int! = 1, y: Int! = 2, z: Int! = 3): String!
   currentTime: Timestamp!
   doNothing: Void
   getPeople: [Person!]!
