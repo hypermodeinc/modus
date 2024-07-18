@@ -6,7 +6,7 @@ import (
 )
 
 func TestHeap(t *testing.T) {
-	h := &MinTupleHeap{}
+	h := &MaxTupleHeap{}
 	heap.Init(h)
 
 	// Test Len before pushing any elements
@@ -15,9 +15,9 @@ func TestHeap(t *testing.T) {
 	}
 
 	// Test Push
-	heap.Push(h, MinHeapElement{value: 3.0, index: "three"})
-	heap.Push(h, MinHeapElement{value: 1.0, index: "one"})
-	heap.Push(h, MinHeapElement{value: 2.0, index: "two"})
+	heap.Push(h, MaxHeapElement{value: 3.0, index: "three"})
+	heap.Push(h, MaxHeapElement{value: 1.0, index: "one"})
+	heap.Push(h, MaxHeapElement{value: 2.0, index: "two"})
 
 	// Test Len
 	if h.Len() != 3 {
@@ -26,16 +26,16 @@ func TestHeap(t *testing.T) {
 
 	// Test Less
 	if !h.Less(0, 1) {
-		t.Errorf("Expected h[0] < h[1], got h[0] = %v, h[1] = %v", (*h)[0], (*h)[1])
+		t.Errorf("Expected h[0] > h[1], got h[0] = %v, h[1] = %v", (*h)[0], (*h)[1])
 	}
 
 	// Test Pop
-	expectedValues := []float64{1.0, 2.0, 3.0}
-	expectedIndices := []string{"one", "two", "three"}
+	expectedValues := []float64{3.0, 2.0, 1.0}
+	expectedIndices := []string{"three", "two", "one"}
 	initialLen := h.Len() // Store initial length of heap
 
 	for i := 0; i < initialLen; i++ {
-		popped := heap.Pop(h).(MinHeapElement)
+		popped := heap.Pop(h).(MaxHeapElement)
 		if popped.value != expectedValues[i] || popped.index != expectedIndices[i] {
 			t.Errorf("Expected pop value of %v and index '%s', got %v and '%s'", expectedValues[i], expectedIndices[i], popped.value, popped.index)
 		}
@@ -48,9 +48,9 @@ func TestHeap(t *testing.T) {
 }
 
 func TestHeapSwap(t *testing.T) {
-	h := &MinTupleHeap{
-		MinHeapElement{value: 1.0, index: "one"},
-		MinHeapElement{value: 2.0, index: "two"},
+	h := &MaxTupleHeap{
+		MaxHeapElement{value: 1.0, index: "one"},
+		MaxHeapElement{value: 2.0, index: "two"},
 	}
 	h.Swap(0, 1)
 

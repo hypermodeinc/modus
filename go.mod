@@ -17,6 +17,7 @@ require (
 	github.com/docker/go-connections v0.5.0
 	github.com/getsentry/sentry-go v0.28.1
 	github.com/go-viper/mapstructure/v2 v2.0.0
+	github.com/google/renameio v1.0.1
 	github.com/google/uuid v1.6.0
 	github.com/hypermodeAI/manifest v0.2.8
 	github.com/jackc/pgx/v5 v5.6.0
@@ -29,8 +30,10 @@ require (
 	github.com/rs/zerolog v1.33.0
 	github.com/stretchr/testify v1.9.0
 	github.com/tetratelabs/wazero v1.7.3
+	github.com/viterin/vek v0.4.2
 	github.com/wundergraph/graphql-go-tools/execution v1.0.3
 	github.com/wundergraph/graphql-go-tools/v2 v2.0.0-rc.59.0.20240715074239-699eb8167c7c
+	golang.org/x/exp v0.0.0-20240613232115-7f521ea00fb8
 )
 
 require (
@@ -91,6 +94,7 @@ require (
 	github.com/tidwall/match v1.1.1 // indirect
 	github.com/tidwall/pretty v1.2.1 // indirect
 	github.com/tidwall/sjson v1.2.5 // indirect
+	github.com/viterin/partial v1.1.0 // indirect
 	github.com/wundergraph/cosmo/composition-go v0.0.0-20240715103643-efdd2b3959da // indirect
 	github.com/wundergraph/cosmo/router v0.0.0-20240715103643-efdd2b3959da // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.53.0 // indirect

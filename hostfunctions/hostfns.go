@@ -45,7 +45,8 @@ func instantiateHostFunctions(ctx context.Context) {
 	b.NewFunctionBuilder().WithFunc(hostDeleteFromCollection).Export("deleteFromCollection")
 	b.NewFunctionBuilder().WithFunc(hostSearchCollection).Export("searchCollection")
 	b.NewFunctionBuilder().WithFunc(hostRecomputeSearchMethod).Export("recomputeSearchMethod")
-	b.NewFunctionBuilder().WithFunc(hostComputeSimilarity).Export("computeSimilarity")
+	b.NewFunctionBuilder().WithFunc(hostComputeDistance).Export("computeSimilarity") // Deprecated
+	b.NewFunctionBuilder().WithFunc(hostComputeDistance).Export("computeDistance")
 	b.NewFunctionBuilder().WithFunc(hostGetTextFromCollection).Export("getTextFromCollection")
 	b.NewFunctionBuilder().WithFunc(hostGetTextsFromCollection).Export("getTextsFromCollection")
 	b.NewFunctionBuilder().WithFunc(hostInvokeTextGenerator).Export("invokeTextGenerator")

@@ -121,7 +121,7 @@ type VectorIndex interface {
 	// been filtered out.
 	Search(ctx context.Context, query []float32,
 		maxResults int,
-		filter index.SearchFilter) (utils.MinTupleHeap, error)
+		filter index.SearchFilter) (utils.MaxTupleHeap, error)
 
 	// SearchWithKey will find the keys for a given set of vectors based on the
 	// input queryKey, limiting to the specified maximum number of results.
@@ -131,7 +131,7 @@ type VectorIndex interface {
 	// been filtered out.
 	SearchWithKey(ctx context.Context, queryKey string,
 		maxResults int,
-		filter index.SearchFilter) (utils.MinTupleHeap, error)
+		filter index.SearchFilter) (utils.MaxTupleHeap, error)
 
 	// Insert Vectors will add vectors and keys into the existing VectorIndex
 	InsertVectors(ctx context.Context, textIds []int64, vecs [][]float32) error
