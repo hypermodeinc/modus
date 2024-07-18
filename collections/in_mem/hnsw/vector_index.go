@@ -53,7 +53,7 @@ func (ims *HnswVectorIndex) GetVectorNodesMap() map[string][]float32 {
 	return map[string][]float32{}
 }
 
-func (ims *HnswVectorIndex) Search(ctx context.Context, query []float32, maxResults int, filter index.SearchFilter) (utils.MinTupleHeap, error) {
+func (ims *HnswVectorIndex) Search(ctx context.Context, query []float32, maxResults int, filter index.SearchFilter) (utils.MaxTupleHeap, error) {
 	// calculate cosine similarity and return top maxResults results
 	ims.mu.RLock()
 	defer ims.mu.RUnlock()
@@ -69,7 +69,7 @@ func (ims *HnswVectorIndex) Search(ctx context.Context, query []float32, maxResu
 		keys[i] = string(neighbor.Key)
 		distances[i] = float64(neighbor.Distance)
 	}
-	var results utils.MinTupleHeap
+	var results utils.MaxTupleHeap
 	heap.Init(&results)
 
 	for i, key := range keys {
@@ -77,9 +77,9 @@ func (ims *HnswVectorIndex) Search(ctx context.Context, query []float32, maxResu
 	}
 
 	// Return top maxResults results
-	var finalResults utils.MinTupleHeap
+	var finalResults utils.MaxTupleHeap
 	for results.Len() > 0 {
-		finalResults = append(finalResults, heap.Pop(&results).(utils.MinHeapElement))
+		finalResults = append(finalResults, heap.Pop(&results).(utils.MaxHeapElement))
 	}
 	// Reverse the finalResults to get the highest similarity first
 	for i, j := 0, len(finalResults)-1; i < j; i, j = i+1, j-1 {
@@ -89,7 +89,7 @@ func (ims *HnswVectorIndex) Search(ctx context.Context, query []float32, maxResu
 	return finalResults, nil
 }
 
-func (ims *HnswVectorIndex) SearchWithKey(ctx context.Context, queryKey string, maxResults int, filter index.SearchFilter) (utils.MinTupleHeap, error) {
+func (ims *HnswVectorIndex) SearchWithKey(ctx context.Context, queryKey string, maxResults int, filter index.SearchFilter) (utils.MaxTupleHeap, error) {
 	ims.mu.RLock()
 	query, found := ims.HnswIndex.Lookup(queryKey)
 	if !found {

@@ -1,6 +1,6 @@
 package utils
 
-type MinHeapElement struct {
+type MaxHeapElement struct {
 	value float64
 	index string
 	// An element that is "filteredOut" is one that should be removed
@@ -9,40 +9,40 @@ type MinHeapElement struct {
 }
 
 func InitHeapElement(
-	val float64, i string, filteredOut bool) MinHeapElement {
-	return MinHeapElement{
+	val float64, i string, filteredOut bool) MaxHeapElement {
+	return MaxHeapElement{
 		value: val,
 		index: i,
 	}
 }
 
-func (e MinHeapElement) GetValue() float64 {
+func (e MaxHeapElement) GetValue() float64 {
 	return e.value
 }
 
-func (e MinHeapElement) GetIndex() string {
+func (e MaxHeapElement) GetIndex() string {
 	return e.index
 }
 
-type MinTupleHeap []MinHeapElement
+type MaxTupleHeap []MaxHeapElement
 
-func (h MinTupleHeap) Len() int {
+func (h MaxTupleHeap) Len() int {
 	return len(h)
 }
 
-func (h MinTupleHeap) Less(i, j int) bool {
+func (h MaxTupleHeap) Less(i, j int) bool {
 	return h[j].value < h[i].value
 }
 
-func (h MinTupleHeap) Swap(i, j int) {
+func (h MaxTupleHeap) Swap(i, j int) {
 	h[i], h[j] = h[j], h[i]
 }
 
-func (h *MinTupleHeap) Push(x interface{}) {
-	*h = append(*h, x.(MinHeapElement))
+func (h *MaxTupleHeap) Push(x interface{}) {
+	*h = append(*h, x.(MaxHeapElement))
 }
 
-func (h *MinTupleHeap) Pop() interface{} {
+func (h *MaxTupleHeap) Pop() interface{} {
 	old := *h
 	n := len(old)
 	x := old[n-1]
