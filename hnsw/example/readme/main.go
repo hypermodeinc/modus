@@ -18,9 +18,12 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	g.Add(
+	err = g.Add(
 		nodes...,
 	)
+	if err != nil {
+		panic(err)
+	}
 
 	neighbors, err := g.Search(
 		[]float32{0.5, 0.5, 0.5},
