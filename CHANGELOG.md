@@ -3,6 +3,7 @@
 ## UNRELEASED
 
 - Add HNSW indexing for collection [#285](https://github.com/hypermodeAI/runtime/pull/285)
+- Fix memory corruption issue with multiple input parameters [#288](https://github.com/hypermodeAI/runtime/pull/288)
 
 ## 2024-07-15 - Version 0.10.0
 
