@@ -41,9 +41,9 @@ func (m *MockModule) Close(ctx context.Context) error                           
 
 func Test_GetParameters(t *testing.T) {
 	paramInfo := []plugins.Parameter{
-		{Name: "x", Type: plugins.TypeInfo{Name: "Int", Path: "i32"}, Optional: true},
-		{Name: "y", Type: plugins.TypeInfo{Name: "Int", Path: "i32"}, Optional: true},
-		{Name: "z", Type: plugins.TypeInfo{Name: "Int", Path: "i32"}, Optional: true},
+		{Name: "x", Type: plugins.TypeInfo{Name: "Int", Path: "i32"}},
+		{Name: "y", Type: plugins.TypeInfo{Name: "Int", Path: "i32"}},
+		{Name: "z", Type: plugins.TypeInfo{Name: "Int", Path: "i32"}},
 	}
 
 	parameters := make(map[string]interface{})
