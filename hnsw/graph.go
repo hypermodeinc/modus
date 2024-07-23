@@ -10,8 +10,7 @@ import (
 	"time"
 
 	"hmruntime/hnsw/heap"
-
-	"golang.org/x/exp/maps"
+	"hmruntime/utils"
 )
 
 type Vector = []float32
@@ -142,7 +141,7 @@ func (n *layerNode[K]) search(
 
 		// We iterate the map in a sorted, deterministic fashion for
 		// tests.
-		neighborKeys := maps.Keys(current.neighbors)
+		neighborKeys := utils.MapKeys(current.neighbors)
 		slices.Sort(neighborKeys)
 		for _, neighborID := range neighborKeys {
 			neighbor := current.neighbors[neighborID]

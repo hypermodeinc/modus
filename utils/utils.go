@@ -30,6 +30,14 @@ func If[T any](condition bool, trueVal, falseVal T) T {
 	return falseVal
 }
 
+func MapKeys[M ~map[K]V, K comparable, V any](m M) []K {
+	r := make([]K, 0, len(m))
+	for k := range m {
+		r = append(r, k)
+	}
+	return r
+}
+
 func MapValues[M ~map[K]V, K comparable, V any](m M) []V {
 	r := make([]V, 0, len(m))
 	for _, v := range m {
