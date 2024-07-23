@@ -8,6 +8,9 @@ import (
 	"strings"
 	"time"
 
+	"hmruntime/utils"
+
+	"github.com/buger/jsonparser"
 	"github.com/tetratelabs/wazero"
 )
 
@@ -77,9 +80,57 @@ type TypeDefinition struct {
 }
 
 type Parameter struct {
-	Name     string     `json:"name"`
-	Type     TypeInfo   `json:"type"`
-	DefaultValue string `json:"defaultValue"`
+	Name    string   `json:"name"`
+	Type    TypeInfo `json:"type"`
+	Default *any     `json:"default"`
+}
+
+func (p *Parameter) UnmarshalJSON(data []byte) error {
+
+	// We need to manually unmarshal the JSON to distinguish between a null default
+	// value and the absence of a default value.
+
+	name, err := jsonparser.GetString(data, "name")
+	if err != nil {
+		return err
+	}
+	p.Name = name
+
+	typeData, _, _, err := jsonparser.Get(data, "type")
+	if err != nil {
+		return err
+	}
+	if err := utils.JsonDeserialize(typeData, &p.Type); err != nil {
+		return err
+	}
+
+	defaultData, dt, _, err := jsonparser.Get(data, "default")
+	switch dt {
+	case jsonparser.NotExist:
+		// no default value
+		p.Default = nil
+	case jsonparser.Null:
+		// an explicit null default value
+		p.Default = new(any)
+	case jsonparser.String:
+		// a default value that is a string
+		s, err := jsonparser.ParseString(defaultData)
+		if err != nil {
+			return err
+		}
+		def := any(s)
+		p.Default = &def
+	default:
+		// some other non-null default value
+		if err != nil {
+			return err
+		}
+		if err := utils.JsonDeserialize(defaultData, &p.Default); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 type Field struct {
