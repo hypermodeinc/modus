@@ -31,6 +31,10 @@ func Test_GetGraphQLSchema(t *testing.T) {
 		},
 	}
 
+	makeDefault := func(val any) *any {
+		return &val
+	}
+
 	metadata := plugins.PluginMetadata{
 		Functions: []plugins.FunctionSignature{
 			{
@@ -60,13 +64,39 @@ func Test_GetGraphQLSchema(t *testing.T) {
 				ReturnType: plugins.TypeInfo{Name: "Map<string, string>"},
 			},
 			{
-				Name: "createVec",
+				Name: "testDefaultIntParams",
 				Parameters: []plugins.Parameter{
-					{Name: "x", Type: plugins.TypeInfo{Name: "i32"}, DefaultValue: "1"},
-					{Name: "y", Type: plugins.TypeInfo{Name: "i32"}, DefaultValue: "2"},
-					{Name: "z", Type: plugins.TypeInfo{Name: "i32"}, DefaultValue: "3"},
+					{Name: "a", Type: plugins.TypeInfo{Name: "i32"}, Default: nil},
+					{Name: "b", Type: plugins.TypeInfo{Name: "i32"}, Default: makeDefault(0)},
+					{Name: "c", Type: plugins.TypeInfo{Name: "i32"}, Default: makeDefault(1)},
 				},
-				ReturnType: plugins.TypeInfo{Name: "string"},
+				ReturnType: plugins.TypeInfo{Name: "void"},
+			},
+			{
+				Name: "testDefaultStringParams",
+				Parameters: []plugins.Parameter{
+					{Name: "a", Type: plugins.TypeInfo{Name: "string"}, Default: nil},
+					{Name: "b", Type: plugins.TypeInfo{Name: "string"}, Default: makeDefault("")},
+					{Name: "c", Type: plugins.TypeInfo{Name: "string"}, Default: makeDefault(`a"b`)},
+					{Name: "d", Type: plugins.TypeInfo{Name: "string | null"}, Default: nil},
+					{Name: "e", Type: plugins.TypeInfo{Name: "string | null"}, Default: makeDefault(nil)},
+					{Name: "f", Type: plugins.TypeInfo{Name: "string | null"}, Default: makeDefault("")},
+					{Name: "g", Type: plugins.TypeInfo{Name: "string | null"}, Default: makeDefault("test")},
+				},
+				ReturnType: plugins.TypeInfo{Name: "void"},
+			},
+			{
+				Name: "testDefaultArrayParams",
+				Parameters: []plugins.Parameter{
+					{Name: "a", Type: plugins.TypeInfo{Name: "i32[]"}, Default: nil},
+					{Name: "b", Type: plugins.TypeInfo{Name: "i32[]"}, Default: makeDefault([]int32{})},
+					{Name: "c", Type: plugins.TypeInfo{Name: "i32[]"}, Default: makeDefault([]int32{1, 2, 3})},
+					{Name: "d", Type: plugins.TypeInfo{Name: "i32[] | null"}, Default: nil},
+					{Name: "e", Type: plugins.TypeInfo{Name: "i32[] | null"}, Default: makeDefault(nil)},
+					{Name: "f", Type: plugins.TypeInfo{Name: "i32[] | null"}, Default: makeDefault([]int32{})},
+					{Name: "g", Type: plugins.TypeInfo{Name: "i32[] | null"}, Default: makeDefault([]int32{1, 2, 3})},
+				},
+				ReturnType: plugins.TypeInfo{Name: "void"},
 			},
 			{
 				Name:       "getPerson",
@@ -153,13 +183,15 @@ func Test_GetGraphQLSchema(t *testing.T) {
 
 	expectedSchema := `type Query {
   add(a: Int!, b: Int!): Int!
-  createVec(x: Int! = 1, y: Int! = 2, z: Int! = 3): String!
   currentTime: Timestamp!
   doNothing: Void
   getPeople: [Person!]!
   getPerson: Person!
   getProductMap: [StringProductPair!]!
   sayHello(name: String!): String!
+  testDefaultArrayParams(a: [Int!]!, b: [Int!]! = [], c: [Int!]! = [1,2,3], d: [Int!], e: [Int!] = null, f: [Int!] = [], g: [Int!] = [1,2,3]): Void
+  testDefaultIntParams(a: Int!, b: Int! = 0, c: Int! = 1): Void
+  testDefaultStringParams(a: String!, b: String! = "", c: String! = "a\"b", d: String, e: String = null, f: String = "", g: String = "test"): Void
   transform(items: [StringStringPair!]!): [StringStringPair!]!
 }
 

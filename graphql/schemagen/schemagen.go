@@ -88,9 +88,9 @@ type NameTypePair struct {
 }
 
 type ParameterSignature struct {
-	Name         string
-	Type         string
-	DefaultValue string
+	Name    string
+	Type    string
+	Default *any
 }
 
 func transformFunctions(functions []plugins.FunctionSignature, typeDefs *map[string]TypeDefinition) ([]FunctionSignature, []TransformError) {
@@ -245,8 +245,12 @@ func writeSchema(buf *bytes.Buffer, functions []FunctionSignature, typeDefs []Ty
 				buf.WriteString(p.Name)
 				buf.WriteString(": ")
 				buf.WriteString(p.Type)
-				if len(p.DefaultValue) > 0 {
-					buf.WriteString(" = " + p.DefaultValue)
+				if p.Default != nil {
+					val, err := utils.JsonSerialize(*p.Default)
+					if err == nil {
+						buf.WriteString(" = ")
+						buf.Write(val)
+					}
 				}
 			}
 			buf.WriteByte(')')
@@ -308,19 +312,10 @@ func convertParameters(parameters []plugins.Parameter, typeDefs *map[string]Type
 		if err != nil {
 			return nil, err
 		}
-		if len(p.DefaultValue) > 0 {
-			t = strings.TrimSuffix(t, "!") + "!"
-			results[i] = ParameterSignature{
-				Name:         p.Name,
-				Type:         t,
-				DefaultValue: p.DefaultValue,
-			}
-		} else {
-			results[i] = ParameterSignature{
-				Name:         p.Name,
-				Type:         t,
-				DefaultValue: p.DefaultValue,
-			}
+		results[i] = ParameterSignature{
+			Name:    p.Name,
+			Type:    t,
+			Default: p.Default,
 		}
 	}
 	return results, nil
