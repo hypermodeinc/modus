@@ -73,7 +73,7 @@ func transformTypes(types []plugins.TypeDefinition, typeDefs *map[string]TypeDef
 
 type FunctionSignature struct {
 	Name       string
-	Parameters []NameTypePair
+	Parameters []ParameterSignature
 	ReturnType string
 }
 
@@ -85,6 +85,12 @@ type TypeDefinition struct {
 type NameTypePair struct {
 	Name string
 	Type string
+}
+
+type ParameterSignature struct {
+	Name    string
+	Type    string
+	Default *any
 }
 
 func transformFunctions(functions []plugins.FunctionSignature, typeDefs *map[string]TypeDefinition) ([]FunctionSignature, []TransformError) {
@@ -239,6 +245,13 @@ func writeSchema(buf *bytes.Buffer, functions []FunctionSignature, typeDefs []Ty
 				buf.WriteString(p.Name)
 				buf.WriteString(": ")
 				buf.WriteString(p.Type)
+				if p.Default != nil {
+					val, err := utils.JsonSerialize(*p.Default)
+					if err == nil {
+						buf.WriteString(" = ")
+						buf.Write(val)
+					}
+				}
 			}
 			buf.WriteByte(')')
 		}
@@ -287,29 +300,32 @@ func writeSchema(buf *bytes.Buffer, functions []FunctionSignature, typeDefs []Ty
 	buf.WriteByte('\n')
 }
 
-func convertParameters(parameters []plugins.Parameter, typeDefs *map[string]TypeDefinition, firstPass bool) ([]NameTypePair, error) {
+func convertParameters(parameters []plugins.Parameter, typeDefs *map[string]TypeDefinition, firstPass bool) ([]ParameterSignature, error) {
 	if len(parameters) == 0 {
 		return nil, nil
 	}
 
-	results := make([]NameTypePair, len(parameters))
+	results := make([]ParameterSignature, len(parameters))
 	for i, p := range parameters {
 
 		t, err := convertType(p.Type.Name, typeDefs, firstPass)
 		if err != nil {
 			return nil, err
 		}
+
+		// maintain compatibility with the deprecated "optional" field
 		if p.Optional {
-			t = strings.TrimSuffix(t, "!")
-			results[i] = NameTypePair{
+			results[i] = ParameterSignature{
 				Name: p.Name,
-				Type: t,
+				Type: strings.TrimSuffix(t, "!"),
 			}
-		} else {
-			results[i] = NameTypePair{
-				Name: p.Name,
-				Type: t,
-			}
+			continue
+		}
+
+		results[i] = ParameterSignature{
+			Name:    p.Name,
+			Type:    t,
+			Default: p.Default,
 		}
 	}
 	return results, nil

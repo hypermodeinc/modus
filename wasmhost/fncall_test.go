@@ -39,44 +39,75 @@ func (m *MockModule) CloseWithExitCode(ctx context.Context, exitCode uint32) err
 func (m *MockModule) IsClosed() bool                                                 { return false }
 func (m *MockModule) Close(ctx context.Context) error                                { return m.CloseWithExitCode(ctx, 0) }
 
-func Test_GetParameters(t *testing.T) {
+func Test_GetParameters_Old(t *testing.T) {
 	paramInfo := []plugins.Parameter{
 		{Name: "x", Type: plugins.TypeInfo{Name: "Int", Path: "i32"}, Optional: true},
 		{Name: "y", Type: plugins.TypeInfo{Name: "Int", Path: "i32"}, Optional: true},
 		{Name: "z", Type: plugins.TypeInfo{Name: "Int", Path: "i32"}, Optional: true},
 	}
 
-	parameters := make(map[string]interface{})
-	parameters["x"] = nil
-	parameters["y"] = nil
-	parameters["z"] = nil
-
+	// no parameters supplied
+	parameters := make(map[string]any)
 	mockModule := &MockModule{}
-	params, err := getParameters(context.Background(), mockModule, paramInfo, parameters)
+	params, _, err := getParameters(context.Background(), mockModule, paramInfo, parameters)
 	require.NoError(t, err)
 	require.Equal(t, uint64(0b000), params[len(params)-1])
 
-
+	// only first parameter supplied
+	parameters = make(map[string]any)
 	parameters["x"] = 1
-	parameters["y"] = nil
-	parameters["z"] = nil
-
 	mockModule = &MockModule{}
-	params, err = getParameters(context.Background(), mockModule, paramInfo, parameters)
-
-
+	params, _, err = getParameters(context.Background(), mockModule, paramInfo, parameters)
 	require.NoError(t, err)
 	require.Equal(t, uint64(0b001), params[len(params)-1])
 
-	
-	parameters["x"] = nil
+	// only second parameter supplied
+	parameters = make(map[string]any)
 	parameters["y"] = 1
-	parameters["z"] = nil
-
 	mockModule = &MockModule{}
-	params, err = getParameters(context.Background(), mockModule, paramInfo, parameters)
-
-
+	params, _, err = getParameters(context.Background(), mockModule, paramInfo, parameters)
 	require.NoError(t, err)
 	require.Equal(t, uint64(0b010), params[len(params)-1])
+}
+
+func Test_GetParameters_New(t *testing.T) {
+
+	makeDefault := func(val any) *any {
+		return &val
+	}
+
+	paramInfo := []plugins.Parameter{
+		{Name: "x", Type: plugins.TypeInfo{Name: "Int", Path: "i32"}, Default: makeDefault(0)},
+		{Name: "y", Type: plugins.TypeInfo{Name: "Int", Path: "i32"}, Default: makeDefault(1)},
+		{Name: "z", Type: plugins.TypeInfo{Name: "Int", Path: "i32"}, Default: makeDefault(2)},
+	}
+
+	// no parameters supplied
+	parameters := make(map[string]any)
+	mockModule := &MockModule{}
+	params, _, err := getParameters(context.Background(), mockModule, paramInfo, parameters)
+	require.NoError(t, err)
+	require.Equal(t, uint64(0), params[0])
+	require.Equal(t, uint64(1), params[1])
+	require.Equal(t, uint64(2), params[2])
+
+	// only first parameter supplied
+	parameters = make(map[string]any)
+	parameters["x"] = 100
+	mockModule = &MockModule{}
+	params, _, err = getParameters(context.Background(), mockModule, paramInfo, parameters)
+	require.NoError(t, err)
+	require.Equal(t, uint64(100), params[0])
+	require.Equal(t, uint64(1), params[1])
+	require.Equal(t, uint64(2), params[2])
+
+	// only second parameter supplied
+	parameters = make(map[string]any)
+	parameters["y"] = 100
+	mockModule = &MockModule{}
+	params, _, err = getParameters(context.Background(), mockModule, paramInfo, parameters)
+	require.NoError(t, err)
+	require.Equal(t, uint64(0), params[0])
+	require.Equal(t, uint64(100), params[1])
+	require.Equal(t, uint64(2), params[2])
 }
