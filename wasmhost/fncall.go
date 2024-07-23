@@ -113,11 +113,11 @@ func getParameters(ctx context.Context, mod wasm.Module, paramInfo []plugins.Par
 	has_def := false
 
 	for i, arg := range paramInfo {
-		val := parameters[arg.Name]
+		val, found := parameters[arg.Name]
 
 		if arg.Default != nil {
 			has_def = true
-			if val == nil {
+			if !found {
 				val = *arg.Default
 			}
 		}
@@ -131,7 +131,7 @@ func getParameters(ctx context.Context, mod wasm.Module, paramInfo []plugins.Par
 			if arg.Optional || arg.Type.Nullable {
 				continue
 			}
-			return nil, false, fmt.Errorf("parameter '%s' is missing", arg.Name)
+			return nil, false, fmt.Errorf("parameter '%s' cannot be null", arg.Name)
 		}
 
 		mask |= 1 << i
