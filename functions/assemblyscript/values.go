@@ -17,6 +17,19 @@ import (
 )
 
 func EncodeValue(ctx context.Context, mod wasm.Module, typ plugins.TypeInfo, data any) (val uint64, err error) {
+	// For most calls, we don't need to pin the memory.
+	// If it needs to be pinned, the caller will do it.
+	return doEncodeValue(ctx, mod, typ, data, false)
+}
+
+func EncodeValueForParameter(ctx context.Context, mod wasm.Module, typ plugins.TypeInfo, data any) (val uint64, err error) {
+	// For the inbound parameters, we need to pin the memory.
+	// Otherwise, just allocating more parameters could cause the GC to run and free the memory we just allocated.
+	// Note we don't bother tracking these to unpin later, because we discard the module instance and its memory after the call.
+	return doEncodeValue(ctx, mod, typ, data, true)
+}
+
+func doEncodeValue(ctx context.Context, mod wasm.Module, typ plugins.TypeInfo, data any, pin bool) (val uint64, err error) {
 
 	// Handle null values if the type is nullable
 	if isNullable(typ.Path) {
@@ -142,7 +155,19 @@ func EncodeValue(ctx context.Context, mod wasm.Module, typ plugins.TypeInfo, dat
 
 	// Managed types need to be written to wasm memory
 	offset, err := writeObject(ctx, mod, typ, data)
-	return uint64(offset), err
+	if err != nil {
+		return 0, err
+	}
+
+	// Pin the memory if requested
+	if pin {
+		err := pinWasmMemory(ctx, mod, offset)
+		if err != nil {
+			return 0, fmt.Errorf("failed to pin wasm memory: %w", err)
+		}
+	}
+
+	return uint64(offset), nil
 }
 
 func DecodeValueAs[T any](ctx context.Context, mod wasm.Module, typ plugins.TypeInfo, val uint64) (data T, err error) {

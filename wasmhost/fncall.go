@@ -116,7 +116,7 @@ func getParameters(ctx context.Context, mod wasm.Module, paramInfo []plugins.Par
 			return nil, fmt.Errorf("parameter '%s' is missing", arg.Name)
 		}
 
-		param, err := assemblyscript.EncodeValue(ctx, mod, arg.Type, val)
+		param, err := assemblyscript.EncodeValueForParameter(ctx, mod, arg.Type, val)
 		if err != nil {
 			return nil, fmt.Errorf("function parameter '%s' is invalid: %w", arg.Name, err)
 		}
