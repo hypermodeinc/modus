@@ -80,9 +80,10 @@ type TypeDefinition struct {
 }
 
 type Parameter struct {
-	Name    string   `json:"name"`
-	Type    TypeInfo `json:"type"`
-	Default *any     `json:"default"`
+	Name     string   `json:"name"`
+	Type     TypeInfo `json:"type"`
+	Default  *any     `json:"default"`
+	Optional bool     `json:"optional"` // deprecated
 }
 
 func (p *Parameter) UnmarshalJSON(data []byte) error {

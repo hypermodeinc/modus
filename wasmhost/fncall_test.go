@@ -41,9 +41,9 @@ func (m *MockModule) Close(ctx context.Context) error                           
 
 func Test_GetParameters(t *testing.T) {
 	paramInfo := []plugins.Parameter{
-		{Name: "x", Type: plugins.TypeInfo{Name: "Int", Path: "i32"}},
-		{Name: "y", Type: plugins.TypeInfo{Name: "Int", Path: "i32"}},
-		{Name: "z", Type: plugins.TypeInfo{Name: "Int", Path: "i32"}},
+		{Name: "x", Type: plugins.TypeInfo{Name: "Int", Path: "i32"}, Optional: true},
+		{Name: "y", Type: plugins.TypeInfo{Name: "Int", Path: "i32"}, Optional: true},
+		{Name: "z", Type: plugins.TypeInfo{Name: "Int", Path: "i32"}, Optional: true},
 	}
 
 	parameters := make(map[string]interface{})
@@ -56,7 +56,6 @@ func Test_GetParameters(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, uint64(0b000), params[len(params)-1])
 
-
 	parameters["x"] = 1
 	parameters["y"] = nil
 	parameters["z"] = nil
@@ -64,18 +63,15 @@ func Test_GetParameters(t *testing.T) {
 	mockModule = &MockModule{}
 	params, err = getParameters(context.Background(), mockModule, paramInfo, parameters)
 
-
 	require.NoError(t, err)
 	require.Equal(t, uint64(0b001), params[len(params)-1])
 
-	
 	parameters["x"] = nil
 	parameters["y"] = 1
 	parameters["z"] = nil
 
 	mockModule = &MockModule{}
 	params, err = getParameters(context.Background(), mockModule, paramInfo, parameters)
-
 
 	require.NoError(t, err)
 	require.Equal(t, uint64(0b010), params[len(params)-1])

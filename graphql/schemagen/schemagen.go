@@ -312,6 +312,16 @@ func convertParameters(parameters []plugins.Parameter, typeDefs *map[string]Type
 		if err != nil {
 			return nil, err
 		}
+
+		// maintain compatibility with the deprecated "optional" field
+		if p.Optional {
+			results[i] = ParameterSignature{
+				Name: p.Name,
+				Type: strings.TrimSuffix(t, "!"),
+			}
+			continue
+		}
+
 		results[i] = ParameterSignature{
 			Name:    p.Name,
 			Type:    t,

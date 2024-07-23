@@ -108,13 +108,25 @@ func doCallFunction(ctx context.Context, fnInfo functions.FunctionInfo, paramete
 
 func getParameters(ctx context.Context, mod wasm.Module, paramInfo []plugins.Parameter, parameters map[string]any) ([]uint64, error) {
 	params := make([]uint64, len(paramInfo))
+	mask := uint64(0)
+	has_opt := false
 
 	for i, arg := range paramInfo {
 		val := parameters[arg.Name]
 
+		// maintain compatibility with the deprecated "optional" field
+		if arg.Optional {
+			has_opt = true
+		}
+
 		if val == nil {
+			if arg.Optional || arg.Type.Nullable {
+				continue
+			}
 			return nil, fmt.Errorf("parameter '%s' is missing", arg.Name)
 		}
+
+		mask |= 1 << i
 
 		param, err := assemblyscript.EncodeValueForParameter(ctx, mod, arg.Type, val)
 		if err != nil {
@@ -122,6 +134,10 @@ func getParameters(ctx context.Context, mod wasm.Module, paramInfo []plugins.Par
 		}
 
 		params[i] = param
+	}
+
+	if has_opt {
+		params = append(params, mask)
 	}
 
 	return params, nil
