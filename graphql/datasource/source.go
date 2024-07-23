@@ -31,11 +31,6 @@ type Source struct{}
 
 func (s Source) Load(ctx context.Context, input []byte, out *bytes.Buffer) error {
 
-	// Handle newlines in the input - this should only happen in the case of
-	// a GraphQL query that uses triple quotes for a string literal.
-	// TODO: fix this upstream in graphql-go-tools
-	input = bytes.ReplaceAll(input, []byte("\n"), []byte("\\n"))
-
 	// Parse the input to get the function call info
 	var ci callInfo
 	err := utils.JsonDeserialize(input, &ci)
