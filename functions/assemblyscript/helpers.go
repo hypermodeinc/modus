@@ -62,6 +62,17 @@ func unpinWasmMemory(ctx context.Context, mod wasm.Module, ptr uint32) error {
 	return nil
 }
 
+// Sets that arguments length before calling a function that takes a variable number of arguments.
+// See https://www.assemblyscript.org/runtime.html#optional-arguments
+func SetArgumentsLength(ctx context.Context, mod wasm.Module, length int) error {
+	fn := mod.ExportedFunction("__setArgumentsLength")
+	_, err := fn.Call(ctx, uint64(length))
+	if err != nil {
+		return fmt.Errorf("failed to set arguments length: %w", err)
+	}
+	return nil
+}
+
 func isPrimitive(t string) bool {
 	switch t {
 	case "bool", "i8", "i16", "i32", "u8", "u16", "u32", "i64", "u64", "f32", "f64":

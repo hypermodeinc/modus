@@ -106,13 +106,21 @@ func doCallFunction(ctx context.Context, fnInfo functions.FunctionInfo, paramete
 	return &execInfo, err
 }
 
-func getParameters(ctx context.Context, mod wasm.Module, paramInfo []plugins.Parameter, parameters map[string]any) ([]uint64, error) {
+func getParameters(ctx context.Context, mod wasm.Module, paramInfo []plugins.Parameter, parameters map[string]any) ([]uint64, bool, error) {
 	params := make([]uint64, len(paramInfo))
 	mask := uint64(0)
 	has_opt := false
+	has_def := false
 
 	for i, arg := range paramInfo {
 		val := parameters[arg.Name]
+
+		if arg.Default != nil {
+			has_def = true
+			if val == nil {
+				val = *arg.Default
+			}
+		}
 
 		// maintain compatibility with the deprecated "optional" field
 		if arg.Optional {
@@ -123,14 +131,14 @@ func getParameters(ctx context.Context, mod wasm.Module, paramInfo []plugins.Par
 			if arg.Optional || arg.Type.Nullable {
 				continue
 			}
-			return nil, fmt.Errorf("parameter '%s' is missing", arg.Name)
+			return nil, false, fmt.Errorf("parameter '%s' is missing", arg.Name)
 		}
 
 		mask |= 1 << i
 
 		param, err := assemblyscript.EncodeValueForParameter(ctx, mod, arg.Type, val)
 		if err != nil {
-			return nil, fmt.Errorf("function parameter '%s' is invalid: %w", arg.Name, err)
+			return nil, false, fmt.Errorf("function parameter '%s' is invalid: %w", arg.Name, err)
 		}
 
 		params[i] = param
@@ -140,7 +148,7 @@ func getParameters(ctx context.Context, mod wasm.Module, paramInfo []plugins.Par
 		params = append(params, mask)
 	}
 
-	return params, nil
+	return params, has_def, nil
 }
 
 func invokeFunction(ctx context.Context, mod wasm.Module, info functions.FunctionInfo, parameters map[string]any) (any, error) {
@@ -152,11 +160,18 @@ func invokeFunction(ctx context.Context, mod wasm.Module, info functions.Functio
 	}
 
 	// Get parameters to pass as input to the plugin function
-	params, err := getParameters(ctx, mod, info.Function.Parameters, parameters)
+	params, has_defaults, err := getParameters(ctx, mod, info.Function.Parameters, parameters)
 	if err != nil {
 		return nil, err
 	}
 
+	// If the function has any parameters with default values, we need to set the arguments length.
+	// Since we pass all the arguments ourselves, we just need to set the total length of the arguments.
+	if has_defaults {
+		assemblyscript.SetArgumentsLength(ctx, mod, len(params))
+	}
+
+	// Call the function
 	res, err := fn.Call(ctx, params...)
 	if err != nil {
 		return nil, err
