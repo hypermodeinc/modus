@@ -82,8 +82,8 @@ type TypeDefinition struct {
 type Parameter struct {
 	Name     string   `json:"name"`
 	Type     TypeInfo `json:"type"`
-	Default  *any     `json:"default"`
 	Optional bool     `json:"optional"` // deprecated
+	Default  *any     `json:"default"`
 }
 
 func (p *Parameter) UnmarshalJSON(data []byte) error {
@@ -104,6 +104,12 @@ func (p *Parameter) UnmarshalJSON(data []byte) error {
 	if err := utils.JsonDeserialize(typeData, &p.Type); err != nil {
 		return err
 	}
+
+	optional, err := jsonparser.GetBoolean(data, "optional")
+	if err != nil && err != jsonparser.KeyPathNotFoundError {
+		return err
+	}
+	p.Optional = optional
 
 	defaultData, dt, _, err := jsonparser.Get(data, "default")
 	switch dt {

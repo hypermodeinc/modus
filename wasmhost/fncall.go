@@ -125,10 +125,13 @@ func getParameters(ctx context.Context, mod wasm.Module, paramInfo []plugins.Par
 		// maintain compatibility with the deprecated "optional" field
 		if arg.Optional {
 			has_opt = true
+			if !found {
+				continue
+			}
 		}
 
 		if val == nil {
-			if arg.Optional || arg.Type.Nullable {
+			if arg.Type.Nullable {
 				continue
 			}
 			return nil, false, fmt.Errorf("parameter '%s' cannot be null", arg.Name)
