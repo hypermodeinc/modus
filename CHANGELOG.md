@@ -1,6 +1,6 @@
 # Change Log
 
-## UNRELEASED
+## 2024-07-23 - Version 0.10.1
 
 - Add HNSW indexing for collection [#285](https://github.com/hypermodeAI/runtime/pull/285)
 - Use default parameter value in metadata if it exists [#286](https://github.com/hypermodeAI/runtime/pull/286)
