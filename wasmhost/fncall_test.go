@@ -46,33 +46,26 @@ func Test_GetParameters(t *testing.T) {
 		{Name: "z", Type: plugins.TypeInfo{Name: "Int", Path: "i32"}, Optional: true},
 	}
 
-	parameters := make(map[string]interface{})
-	parameters["x"] = nil
-	parameters["y"] = nil
-	parameters["z"] = nil
-
+	// no parameters supplied
+	parameters := make(map[string]any)
 	mockModule := &MockModule{}
 	params, _, err := getParameters(context.Background(), mockModule, paramInfo, parameters)
 	require.NoError(t, err)
 	require.Equal(t, uint64(0b000), params[len(params)-1])
 
+	// only first parameter supplied
+	parameters = make(map[string]any)
 	parameters["x"] = 1
-	parameters["y"] = nil
-	parameters["z"] = nil
-
 	mockModule = &MockModule{}
 	params, _, err = getParameters(context.Background(), mockModule, paramInfo, parameters)
-
 	require.NoError(t, err)
 	require.Equal(t, uint64(0b001), params[len(params)-1])
 
-	parameters["x"] = nil
+	// only second parameter supplied
+	parameters = make(map[string]any)
 	parameters["y"] = 1
-	parameters["z"] = nil
-
 	mockModule = &MockModule{}
 	params, _, err = getParameters(context.Background(), mockModule, paramInfo, parameters)
-
 	require.NoError(t, err)
 	require.Equal(t, uint64(0b010), params[len(params)-1])
 }
