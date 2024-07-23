@@ -171,7 +171,10 @@ func invokeFunction(ctx context.Context, mod wasm.Module, info functions.Functio
 	// If the function has any parameters with default values, we need to set the arguments length.
 	// Since we pass all the arguments ourselves, we just need to set the total length of the arguments.
 	if has_defaults {
-		assemblyscript.SetArgumentsLength(ctx, mod, len(params))
+		err := assemblyscript.SetArgumentsLength(ctx, mod, len(params))
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	// Call the function
