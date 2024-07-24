@@ -25,7 +25,7 @@ func (ds *postgresqlDS) query(ctx context.Context, stmt string, params []any) (*
 	}
 	defer func() {
 		if err := tx.Rollback(ctx); err != nil && err != pgx.ErrTxClosed {
-			logger.Err(ctx, err).Msg("Error rolling back transaction.")
+			logger.Warn(ctx).Err(err).Msg("Error rolling back transaction.")
 			return
 		}
 	}()
