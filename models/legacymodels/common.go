@@ -2,17 +2,23 @@
  * Copyright 2024 Hypermode, Inc.
  */
 
-package models
+package legacymodels
 
 import (
 	"context"
 	"fmt"
+
+	"hmruntime/models"
 	"hmruntime/utils"
 
 	"github.com/hypermodeAI/manifest"
 )
 
-func PostToModelEndpoint_Old[TResult any](ctx context.Context, sentenceMap map[string]string, model manifest.ModelInfo) (map[string]TResult, error) {
+type predictionResult[T any] struct {
+	Predictions []T `json:"predictions"`
+}
+
+func postToModelEndpoint[TResult any](ctx context.Context, model manifest.ModelInfo, sentenceMap map[string]string) (map[string]TResult, error) {
 	span := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
 
@@ -28,7 +34,7 @@ func PostToModelEndpoint_Old[TResult any](ctx context.Context, sentenceMap map[s
 	// create a map of sentences to send to the model
 	req := map[string][]string{"instances": sentences}
 
-	res, err := postToModelEndpoint[PredictionResult[TResult]](ctx, model, req)
+	res, err := models.PostToModelEndpoint[predictionResult[TResult]](ctx, model, req)
 	if err != nil {
 		return nil, err
 	}
@@ -44,36 +50,4 @@ func PostToModelEndpoint_Old[TResult any](ctx context.Context, sentenceMap map[s
 	}
 
 	return result, nil
-}
-
-type OutputFormat string
-
-const (
-	OutputFormatText OutputFormat = "text"
-	OutputFormatJson OutputFormat = "json_object"
-)
-
-type PredictionResult[T any] struct {
-	Predictions []T `json:"predictions"`
-}
-
-type ChatMessage struct {
-	Role    string `json:"role"`
-	Content string `json:"content"`
-}
-
-type ChatResponse struct {
-	Choices []MessageChoice `json:"choices"`
-	Error   InvokeError     `json:"error"`
-}
-
-type MessageChoice struct {
-	Message ChatMessage `json:"message"`
-}
-
-type InvokeError struct {
-	Message string `json:"message"`
-	Type    string `json:"type"`
-	Param   string `json:"param"`
-	Code    string `json:"code"`
 }
