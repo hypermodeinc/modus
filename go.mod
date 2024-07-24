@@ -13,7 +13,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/sts v1.30.3
 	github.com/buger/jsonparser v1.1.1
 	github.com/chewxy/math32 v1.10.1
-	github.com/docker/docker v27.1.0+incompatible
+	github.com/docker/docker v27.1.1+incompatible
 	github.com/docker/go-connections v0.5.0
 	github.com/getsentry/sentry-go v0.28.1
 	github.com/go-viper/mapstructure/v2 v2.0.0
