@@ -5,7 +5,6 @@ import (
 	"fmt"
 	collection_utils "hmruntime/collections/utils"
 	"hmruntime/functions"
-	"hmruntime/logger"
 	"hmruntime/manifestdata"
 	"hmruntime/utils"
 	"hmruntime/wasmhost"
@@ -63,7 +62,7 @@ func UpsertToCollection(ctx context.Context, collectionName string, keys []strin
 
 		textVecs, err := collection_utils.ConvertToFloat32_2DArray(result)
 		if err != nil {
-			logger.Err(ctx, err).Msg("Error converting to float32.")
+			return nil, err
 		}
 
 		if len(textVecs) != len(texts) {
@@ -164,7 +163,7 @@ func SearchCollection(ctx context.Context, collectionName string, searchMethod s
 
 	textVecs, err := collection_utils.ConvertToFloat32_2DArray(result)
 	if err != nil {
-		logger.Err(ctx, err).Msg("Error converting to float32.")
+		return nil, err
 	}
 
 	if len(textVecs) == 0 {
@@ -242,7 +241,7 @@ func ComputeDistance(ctx context.Context, collectionName string, searchMethod st
 	}, nil
 }
 
-func RecomputeSearchMethod(ctx context.Context, mod wasm.Module, collectionName string, searchMethod string) (*collectionMutationResult, error) {
+func RecomputeSearchMethod(ctx context.Context, mod wasm.Module, collectionName string, searchMethod string) (*searchMethodMutationResult, error) {
 
 	collection, err := GlobalCollectionFactory.Find(ctx, collectionName)
 	if err != nil {
@@ -271,11 +270,10 @@ func RecomputeSearchMethod(ctx context.Context, mod wasm.Module, collectionName 
 		return nil, err
 	}
 
-	return &collectionMutationResult{
+	return &searchMethodMutationResult{
 		Collection: collectionName,
 		Operation:  "recompute",
 		Status:     "success",
-		Keys:       nil,
 		Error:      "",
 	}, nil
 

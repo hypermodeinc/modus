@@ -101,9 +101,6 @@ func ProcessTextMapWithModule(ctx context.Context, mod wasm.Module, collection i
 
 	textMap, err := collection.GetTextMap(ctx)
 	if err != nil {
-		logger.Err(ctx, err).
-			Str("collection_name", collection.GetCollectionName()).
-			Msg("Failed to get text map.")
 		return err
 	}
 
@@ -221,17 +218,24 @@ func deleteIndexesNotInManifest(ctx context.Context, Manifest manifest.Hypermode
 			continue
 		}
 		for searchMethodName := range vectorIndexMap {
-			_, ok := Manifest.Collections[collectionName].SearchMethods[searchMethodName]
-			if !ok {
-				err = collection.DeleteVectorIndex(ctx, searchMethodName)
-				if err != nil {
-					logger.Err(ctx, err).
-						Str("collectionName", collectionName).
-						Str("search_method_name", searchMethodName).
-						Msg("Failed to remove vector index.")
-					continue
-				}
+			err := deleteVectorIndexesNotInManifest(ctx, Manifest, collection, collectionName, searchMethodName)
+			if err != nil {
+				logger.Err(ctx, err).
+					Str("index_name", searchMethodName).
+					Msg("Failed to delete vector index.")
+				continue
 			}
 		}
 	}
+}
+
+func deleteVectorIndexesNotInManifest(ctx context.Context, Manifest manifest.HypermodeManifest, collection interfaces.Collection, collectionName, searchMethodName string) error {
+	_, ok := Manifest.Collections[collectionName].SearchMethods[searchMethodName]
+	if !ok {
+		err := collection.DeleteVectorIndex(ctx, searchMethodName)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
