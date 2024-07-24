@@ -37,11 +37,22 @@ func instantiateHostFunctions(ctx context.Context) {
 
 	b := wasmhost.RuntimeInstance.NewHostModuleBuilder(hostModuleName)
 
-	// Each host function should get a line here:
+	// Misc host functions
 	b.NewFunctionBuilder().WithFunc(hostLog).Export("log")
+	b.NewFunctionBuilder().WithFunc(hostFetch).Export("httpFetch")
 	b.NewFunctionBuilder().WithFunc(hostExecuteGQL).Export("executeGQL")
+	b.NewFunctionBuilder().WithFunc(hostDatabaseQuery).Export("databaseQuery")
+
+	// Model host functions
+	b.NewFunctionBuilder().WithFunc(hostLookupModel).Export("lookupModel")
+	b.NewFunctionBuilder().WithFunc(hostInvokeModel).Export("invokeModel")
+
+	// Legacy model host functions
 	b.NewFunctionBuilder().WithFunc(hostInvokeClassifier).Export("invokeClassifier")
 	b.NewFunctionBuilder().WithFunc(hostComputeEmbedding).Export("computeEmbedding")
+	b.NewFunctionBuilder().WithFunc(hostInvokeTextGenerator).Export("invokeTextGenerator")
+
+	// Collection host functions
 	b.NewFunctionBuilder().WithFunc(hostUpsertToCollection).Export("upsertToCollection")
 	b.NewFunctionBuilder().WithFunc(hostDeleteFromCollection).Export("deleteFromCollection")
 	b.NewFunctionBuilder().WithFunc(hostSearchCollection).Export("searchCollection")
@@ -50,11 +61,6 @@ func instantiateHostFunctions(ctx context.Context) {
 	b.NewFunctionBuilder().WithFunc(hostComputeDistance).Export("computeDistance")
 	b.NewFunctionBuilder().WithFunc(hostGetTextFromCollection).Export("getTextFromCollection")
 	b.NewFunctionBuilder().WithFunc(hostGetTextsFromCollection).Export("getTextsFromCollection")
-	b.NewFunctionBuilder().WithFunc(hostInvokeTextGenerator).Export("invokeTextGenerator")
-	b.NewFunctionBuilder().WithFunc(hostFetch).Export("httpFetch")
-	b.NewFunctionBuilder().WithFunc(hostLookupModel).Export("lookupModel")
-	b.NewFunctionBuilder().WithFunc(hostInvokeModel).Export("invokeModel")
-	b.NewFunctionBuilder().WithFunc(hostDatabaseQuery).Export("databaseQuery")
 
 	if _, err := b.Instantiate(ctx); err != nil {
 		logger.Fatal(ctx).Err(err).

@@ -54,10 +54,10 @@ func InvokeModel(ctx context.Context, modelName string, input string) (string, e
 		return invokeAwsBedrockModel(ctx, model, input)
 	}
 
-	return postToModelEndpoint[string](ctx, model, input)
+	return PostToModelEndpoint[string](ctx, model, input)
 }
 
-func postToModelEndpoint[TResult any](ctx context.Context, model manifest.ModelInfo, payload any) (TResult, error) {
+func PostToModelEndpoint[TResult any](ctx context.Context, model manifest.ModelInfo, payload any) (TResult, error) {
 	span := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
 
