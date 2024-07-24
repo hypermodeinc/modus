@@ -9,6 +9,7 @@ import (
 
 	"hmruntime/logger"
 	"hmruntime/manifestdata"
+	"hmruntime/sqlclient"
 	"hmruntime/utils"
 	"hmruntime/wasmhost"
 
@@ -25,7 +26,7 @@ func RegisterHostFunctions(ctx context.Context) {
 	instantiateWasiFunctions(ctx)
 
 	manifestdata.RegisterManifestLoadedCallback(func(ctx context.Context) error {
-		ShutdownPGPools()
+		sqlclient.ShutdownPGPools()
 		return nil
 	})
 }

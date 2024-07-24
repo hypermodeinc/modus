@@ -16,6 +16,7 @@ import (
 	"hmruntime/manifestdata"
 	"hmruntime/pluginmanager"
 	"hmruntime/secrets"
+	"hmruntime/sqlclient"
 	"hmruntime/storage"
 	"hmruntime/utils"
 	"hmruntime/wasmhost"
@@ -53,7 +54,7 @@ func Stop(ctx context.Context) {
 	// Unlike start, these should each block until they are fully stopped.
 
 	collections.CloseIndexFactory(ctx)
-	hostfunctions.ShutdownPGPools()
+	sqlclient.ShutdownPGPools()
 	wasmhost.RuntimeInstance.Close(ctx)
 	logger.Close()
 	db.Stop(ctx)
