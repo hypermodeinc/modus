@@ -54,7 +54,7 @@ type layerNeighborNode[K cmp.Ordered] struct {
 
 // addNeighbor adds a o neighbor to the node, replacing the neighbor
 // with the worst distance if the neighbor set is full.
-func (n *layerNode[K]) addNeighbor(newNeighborNode *layerNeighborNode[K], m int) error {
+func (n *layerNode[K]) addNeighbor(newNeighborNode *layerNeighborNode[K], m int, dist DistanceFunc) error {
 	if n.neighbors == nil {
 		n.neighbors = make(map[K]*layerNeighborNode[K], m)
 	}
@@ -70,11 +70,10 @@ func (n *layerNode[K]) addNeighbor(newNeighborNode *layerNeighborNode[K], m int)
 		worstNeighbor *layerNeighborNode[K]
 	)
 	for _, neighbor := range n.neighbors {
-		d := neighbor.dist
-		// d, err := dist(neighbor.Value, n.Value)
-		// if err != nil {
-		// 	return err
-		// }
+		d, err := dist(neighbor.node.Value, n.Value)
+		if err != nil {
+			return err
+		}
 		// d > worstDist may always be false if the distance function
 		// returns NaN, e.g., when the embeddings are zero.
 		if d > worstDist || worstNeighbor == nil || worstNeighbor.node == nil {
@@ -198,7 +197,7 @@ func (n *layerNode[K]) replenish(m int) error {
 			if candidate.node == n {
 				continue
 			}
-			err := n.addNeighbor(candidate, m)
+			err := n.addNeighbor(candidate, m, CosineDistance)
 			if err != nil {
 				return err
 			}
@@ -471,11 +470,11 @@ func (g *Graph[K]) Add(nodes ...Node[K]) error {
 						node: newNode,
 						dist: node.dist,
 					}
-					err := node.node.addNeighbor(newNeighborNode, g.M)
+					err := node.node.addNeighbor(newNeighborNode, g.M, g.Distance)
 					if err != nil {
 						return err
 					}
-					err = newNode.addNeighbor(&node, g.M)
+					err = newNode.addNeighbor(&node, g.M, g.Distance)
 					if err != nil {
 						return err
 					}
