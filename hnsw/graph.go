@@ -60,6 +60,9 @@ func (n *layerNode[K]) addNeighbor(newNeighborNode *layerNeighborNode[K], m int)
 	}
 
 	n.neighbors[newNeighborNode.node.Key] = newNeighborNode
+	if len(n.neighbors) <= m {
+		return nil
+	}
 
 	// Find the neighbor with the worst distance.
 	var (
