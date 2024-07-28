@@ -54,7 +54,7 @@ type layerNeighborNode[K cmp.Ordered] struct {
 
 // addNeighbor adds a o neighbor to the node, replacing the neighbor
 // with the worst distance if the neighbor set is full.
-func (n *layerNode[K]) addNeighbor(newNeighborNode *layerNeighborNode[K], m int) error {
+func (n *layerNode[K]) addNeighbor(newNeighborNode *layerNeighborNode[K], m int, dist DistanceFunc) error {
 	if n.neighbors == nil {
 		n.neighbors = make(map[K]*layerNeighborNode[K], m)
 	}
@@ -70,11 +70,10 @@ func (n *layerNode[K]) addNeighbor(newNeighborNode *layerNeighborNode[K], m int)
 		worstNeighbor *layerNeighborNode[K]
 	)
 	for _, neighbor := range n.neighbors {
-		d := neighbor.distance
-		// d, err := dist(neighbor.node.Value, n.Value)
-		// if err != nil {
-		// 	return err
-		// }
+		d, err := dist(neighbor.node.Value, n.Value)
+		if err != nil {
+			return err
+		}
 		// d > worstDist may always be false if the distance function
 		// returns NaN, e.g., when the embeddings are zero.
 		if d > worstDist || worstNeighbor == nil || worstNeighbor.node == nil {
@@ -202,7 +201,7 @@ func (n *layerNode[K]) replenish(m int) error {
 			if err != nil {
 				return err
 			}
-			err = n.addNeighbor(&layerNeighborNode[K]{node: candidate.node, distance: neighborDist}, m)
+			err = n.addNeighbor(&layerNeighborNode[K]{node: candidate.node, distance: neighborDist}, m, CosineDistance)
 			if err != nil {
 				return err
 			}
@@ -470,18 +469,22 @@ func (g *Graph[K]) Add(nodes ...Node[K]) error {
 				// Insert the new node into the layer.
 				layer.nodes[key] = newNode
 				for _, node := range neighborhood {
+					d, err := g.Distance(newNode.Value, node.node.Value)
+					if err != nil {
+						return err
+					}
 					// Create a bi-directional edge between the new node and the best node.
-					err := node.node.addNeighbor(&layerNeighborNode[K]{
+					err = node.node.addNeighbor(&layerNeighborNode[K]{
 						node:     newNode,
-						distance: node.distance,
-					}, g.M)
+						distance: d,
+					}, g.M, g.Distance)
 					if err != nil {
 						return err
 					}
 					err = newNode.addNeighbor(&layerNeighborNode[K]{
 						node:     node.node,
-						distance: node.distance,
-					}, g.M)
+						distance: d,
+					}, g.M, g.Distance)
 					if err != nil {
 						return err
 					}
