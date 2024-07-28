@@ -44,43 +44,46 @@ type layerNode[K cmp.Ordered] struct {
 	// neighbors is map of neighbor keys to neighbor nodes.
 	// It is a map and not a slice to allow for efficient deletes, esp.
 	// when M is high.
-	neighbors map[K]*layerNode[K]
+	neighbors map[K]*layerNeighborNode[K]
+}
+
+type layerNeighborNode[K cmp.Ordered] struct {
+	node *layerNode[K]
+	dist float32
 }
 
 // addNeighbor adds a o neighbor to the node, replacing the neighbor
 // with the worst distance if the neighbor set is full.
-func (n *layerNode[K]) addNeighbor(newNode *layerNode[K], m int, dist DistanceFunc) error {
+func (n *layerNode[K]) addNeighbor(newNeighborNode *layerNeighborNode[K], m int) error {
 	if n.neighbors == nil {
-		n.neighbors = make(map[K]*layerNode[K], m)
+		n.neighbors = make(map[K]*layerNeighborNode[K], m)
 	}
 
-	n.neighbors[newNode.Key] = newNode
-	if len(n.neighbors) <= m {
-		return nil
-	}
+	n.neighbors[newNeighborNode.node.Key] = newNeighborNode
 
 	// Find the neighbor with the worst distance.
 	var (
-		worstDist = float32(math.Inf(-1))
-		worst     *layerNode[K]
+		worstDist     = float32(math.Inf(-1))
+		worstNeighbor *layerNeighborNode[K]
 	)
 	for _, neighbor := range n.neighbors {
-		d, err := dist(neighbor.Value, n.Value)
-		if err != nil {
-			return err
-		}
+		d := neighbor.dist
+		// d, err := dist(neighbor.Value, n.Value)
+		// if err != nil {
+		// 	return err
+		// }
 		// d > worstDist may always be false if the distance function
 		// returns NaN, e.g., when the embeddings are zero.
-		if d > worstDist || worst == nil {
+		if d > worstDist || worstNeighbor == nil || worstNeighbor.node == nil {
 			worstDist = d
-			worst = neighbor
+			worstNeighbor = neighbor
 		}
 	}
 
-	delete(n.neighbors, worst.Key)
+	delete(n.neighbors, worstNeighbor.node.Key)
 	// Delete backlink from the worst neighbor.
-	delete(worst.neighbors, n.Key)
-	err := worst.replenish(m)
+	delete(worstNeighbor.node.neighbors, n.Key)
+	err := worstNeighbor.node.replenish(m)
 	if err != nil {
 		return err
 	}
@@ -88,12 +91,7 @@ func (n *layerNode[K]) addNeighbor(newNode *layerNode[K], m int, dist DistanceFu
 	return nil
 }
 
-type searchCandidate[K cmp.Ordered] struct {
-	node *layerNode[K]
-	dist float32
-}
-
-func (s searchCandidate[K]) Less(o searchCandidate[K]) bool {
+func (s layerNeighborNode[K]) Less(o layerNeighborNode[K]) bool {
 	return s.dist < o.dist
 }
 
@@ -105,29 +103,29 @@ func (n *layerNode[K]) search(
 	efSearch int,
 	target Vector,
 	distance DistanceFunc,
-) ([]searchCandidate[K], error) {
+) ([]layerNeighborNode[K], error) {
 	// This is a basic greedy algorithm to find the entry point at the given level
 	// that is closest to the target node.
 	if n == nil {
 		return nil, fmt.Errorf("node is nil")
 	}
-	candidates := heap.Heap[searchCandidate[K]]{}
-	candidates.Init(make([]searchCandidate[K], 0, efSearch))
+	candidates := heap.Heap[layerNeighborNode[K]]{}
+	candidates.Init(make([]layerNeighborNode[K], 0, efSearch))
 	dist, err := distance(n.Value, target)
 	if err != nil {
 		return nil, err
 	}
 	candidates.Push(
-		searchCandidate[K]{
+		layerNeighborNode[K]{
 			node: n,
 			dist: dist,
 		},
 	)
 	var (
-		result  = heap.Heap[searchCandidate[K]]{}
+		result  = heap.Heap[layerNeighborNode[K]]{}
 		visited = make(map[K]bool)
 	)
-	result.Init(make([]searchCandidate[K], 0, k))
+	result.Init(make([]layerNeighborNode[K], 0, k))
 
 	// Begin with the entry node in the result set.
 	result.Push(candidates.Min())
@@ -150,20 +148,15 @@ func (n *layerNode[K]) search(
 			}
 			visited[neighborID] = true
 
-			dist, err := distance(neighbor.Value, target)
-			if err != nil {
-				return nil, err
-			}
-
-			improved = improved || dist < result.Min().dist
+			improved = improved || neighbor.dist < result.Min().dist
 			if result.Len() < k {
-				result.Push(searchCandidate[K]{node: neighbor, dist: dist})
-			} else if dist < result.Max().dist {
+				result.Push(*neighbor)
+			} else if neighbor.dist < result.Max().dist {
 				result.PopLast()
-				result.Push(searchCandidate[K]{node: neighbor, dist: dist})
+				result.Push(*neighbor)
 			}
 
-			candidates.Push(searchCandidate[K]{node: neighbor, dist: dist})
+			candidates.Push(*neighbor)
 			// Always store candidates if we haven't reached the limit.
 			if candidates.Len() > efSearch {
 				candidates.PopLast()
@@ -189,15 +182,15 @@ func (n *layerNode[K]) replenish(m int) error {
 	// This is a naive implementation that could be improved by
 	// using a priority queue to find the best candidates.
 	for _, neighbor := range n.neighbors {
-		for key, candidate := range neighbor.neighbors {
+		for key, candidate := range neighbor.node.neighbors {
 			if _, ok := n.neighbors[key]; ok {
 				// do not add duplicates
 				continue
 			}
-			if candidate == n {
+			if candidate.node == n {
 				continue
 			}
-			err := n.addNeighbor(candidate, m, CosineDistance)
+			err := n.addNeighbor(candidate, m)
 			if err != nil {
 				return err
 			}
@@ -214,8 +207,8 @@ func (n *layerNode[K]) replenish(m int) error {
 // to neighbors.
 func (n *layerNode[K]) isolate(m int) error {
 	for _, neighbor := range n.neighbors {
-		delete(neighbor.neighbors, n.Key)
-		err := neighbor.replenish(m)
+		delete(neighbor.node.neighbors, n.Key)
+		err := neighbor.node.replenish(m)
 		if err != nil {
 			return err
 		}
@@ -466,11 +459,15 @@ func (g *Graph[K]) Add(nodes ...Node[K]) error {
 				layer.nodes[key] = newNode
 				for _, node := range neighborhood {
 					// Create a bi-directional edge between the new node and the best node.
-					err := node.node.addNeighbor(newNode, g.M, g.Distance)
+					newNeighborNode := &layerNeighborNode[K]{
+						node: newNode,
+						dist: node.dist,
+					}
+					err := node.node.addNeighbor(newNeighborNode, g.M)
 					if err != nil {
 						return err
 					}
-					err = newNode.addNeighbor(node.node, g.M, g.Distance)
+					err = newNode.addNeighbor(&node, g.M)
 					if err != nil {
 						return err
 					}
