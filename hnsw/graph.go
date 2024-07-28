@@ -185,29 +185,29 @@ func (n *layerNode[K]) replenish(m int) error {
 		return nil
 	}
 
-	// Restore connectivity by adding new neighbors.
-	// This is a naive implementation that could be improved by
-	// using a priority queue to find the best candidates.
+	// Priority queue to find the best candidates efficiently.
+	candidates := heap.Heap[layerNeighborNode[K]]{}
+	candidates.Init(make([]layerNeighborNode[K], 0, len(n.neighbors)*m))
+
 	for _, neighbor := range n.neighbors {
-		for key, candidate := range neighbor.node.neighbors {
-			if _, ok := n.neighbors[key]; ok {
-				// do not add duplicates
+		for _, candidate := range neighbor.node.neighbors {
+			if _, exists := n.neighbors[candidate.node.Key]; exists || candidate.node == n {
 				continue
 			}
-			if candidate.node == n {
-				continue
-			}
-			neighborDist, err := CosineDistance(neighbor.node.Value, candidate.node.Value)
+			neighborDist, err := CosineDistance(n.Value, candidate.node.Value)
 			if err != nil {
 				return err
 			}
-			err = n.addNeighbor(&layerNeighborNode[K]{node: candidate.node, distance: neighborDist}, m, CosineDistance)
-			if err != nil {
-				return err
-			}
-			if len(n.neighbors) >= m {
-				return nil
-			}
+			candidates.Push(layerNeighborNode[K]{node: candidate.node, distance: neighborDist})
+		}
+	}
+
+	// Add the best candidates up to m.
+	for len(n.neighbors) < m && candidates.Len() > 0 {
+		bestCandidate := candidates.Pop()
+		err := n.addNeighbor(&bestCandidate, m, CosineDistance)
+		if err != nil {
+			return err
 		}
 	}
 
