@@ -466,11 +466,10 @@ func (g *Graph[K]) Add(nodes ...Node[K]) error {
 				layer.nodes[key] = newNode
 				for _, node := range neighborhood {
 					// Create a bi-directional edge between the new node and the best node.
-					newNeighborNode := &layerNeighborNode[K]{
+					err := node.node.addNeighbor(&layerNeighborNode[K]{
 						node: newNode,
 						dist: node.dist,
-					}
-					err := node.node.addNeighbor(newNeighborNode, g.M, g.Distance)
+					}, g.M, g.Distance)
 					if err != nil {
 						return err
 					}

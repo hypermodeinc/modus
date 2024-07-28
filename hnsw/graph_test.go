@@ -55,7 +55,7 @@ func Test_layerNode_search(t *testing.T) {
 							node: &layerNode[int]{
 								Node: Node[int]{
 									Value: Vector{4},
-									Key:   5,
+									Key:   4,
 								},
 							},
 							dist: 4.0,
@@ -78,7 +78,7 @@ func Test_layerNode_search(t *testing.T) {
 
 	best, _ := entry.search(2, 4, []float32{4}, EuclideanDistance)
 
-	require.Equal(t, 5, best[0].node.Key)
+	require.Equal(t, 4, best[0].node.Key)
 	require.Equal(t, 3, best[1].node.Key)
 	require.Len(t, best, 2)
 }
