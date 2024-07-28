@@ -151,15 +151,20 @@ func (n *layerNode[K]) search(
 			}
 			visited[neighborID] = true
 
-			improved = improved || neighbor.dist < result.Min().dist
-			if result.Len() < k {
-				result.Push(*neighbor)
-			} else if neighbor.dist < result.Max().dist {
-				result.PopLast()
-				result.Push(*neighbor)
+			neighborDist, err := distance(neighbor.node.Value, target)
+			if err != nil {
+				return nil, err
 			}
 
-			candidates.Push(*neighbor)
+			improved = improved || neighborDist < result.Min().dist
+			if result.Len() < k {
+				result.Push(layerNeighborNode[K]{node: neighbor.node, dist: neighborDist})
+			} else if neighborDist < result.Max().dist {
+				result.PopLast()
+				result.Push(layerNeighborNode[K]{node: neighbor.node, dist: neighborDist})
+			}
+
+			candidates.Push(layerNeighborNode[K]{node: neighbor.node, dist: neighborDist})
 			// Always store candidates if we haven't reached the limit.
 			if candidates.Len() > efSearch {
 				candidates.PopLast()
