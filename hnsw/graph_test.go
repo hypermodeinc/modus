@@ -33,7 +33,7 @@ func Test_layerNode_search(t *testing.T) {
 						Key:   1,
 					},
 				},
-				dist: 1.0,
+				distance: 1.0,
 			},
 			2: {
 				node: &layerNode[int]{
@@ -42,7 +42,7 @@ func Test_layerNode_search(t *testing.T) {
 						Key:   2,
 					},
 				},
-				dist: 2.0,
+				distance: 2.0,
 			},
 			3: {
 				node: &layerNode[int]{
@@ -58,7 +58,7 @@ func Test_layerNode_search(t *testing.T) {
 									Key:   4,
 								},
 							},
-							dist: 4.0,
+							distance: 4.0,
 						},
 						5: {
 							node: &layerNode[int]{
@@ -67,11 +67,11 @@ func Test_layerNode_search(t *testing.T) {
 									Key:   5,
 								},
 							},
-							dist: 5.0,
+							distance: 5.0,
 						},
 					},
 				},
-				dist: 3.0,
+				distance: 3.0,
 			},
 		},
 	}

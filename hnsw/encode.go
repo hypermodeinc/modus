@@ -256,7 +256,7 @@ func (h *Graph[K]) Import(r io.Reader) error {
 				if err != nil {
 					return fmt.Errorf("computing distance between %v and %v: %w", node.Key, key, err)
 				}
-				node.neighbors[key] = &layerNeighborNode[K]{node: nodes[key], dist: dist}
+				node.neighbors[key] = &layerNeighborNode[K]{node: nodes[key], distance: dist}
 			}
 		}
 		h.layers[i] = &layer[K]{nodes: nodes}
