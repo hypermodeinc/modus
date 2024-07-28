@@ -55,7 +55,7 @@ func Test_layerNode_search(t *testing.T) {
 							node: &layerNode[int]{
 								Node: Node[int]{
 									Value: Vector{4},
-									Key:   4,
+									Key:   5,
 								},
 							},
 							dist: 4.0,
