@@ -241,7 +241,7 @@ func (h *Graph[K]) Import(r io.Reader) error {
 					Key:   key,
 					Value: vec,
 				},
-				neighbors: make(map[K]*layerNode[K]),
+				neighbors: make(map[K]*layerNeighborNode[K]),
 			}
 
 			nodes[key] = node
@@ -252,7 +252,11 @@ func (h *Graph[K]) Import(r io.Reader) error {
 		// Fill in neighbor pointers
 		for _, node := range nodes {
 			for key := range node.neighbors {
-				node.neighbors[key] = nodes[key]
+				dist, err := h.Distance(node.Value, nodes[key].Value)
+				if err != nil {
+					return fmt.Errorf("computing distance between %v and %v: %w", node.Key, key, err)
+				}
+				node.neighbors[key] = &layerNeighborNode[K]{node: nodes[key], distance: dist}
 			}
 		}
 		h.layers[i] = &layer[K]{nodes: nodes}

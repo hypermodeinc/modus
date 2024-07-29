@@ -1,5 +1,9 @@
 # Change Log
 
+## UNRELEASED
+
+-  Perf improvements to internal storage of hnsw data in Collections [#299](https://github.com/hypermodeAI/runtime/pull/299)
+
 ## 2024-07-23 - Version 0.10.1
 
 - Add HNSW indexing for collection [#285](https://github.com/hypermodeAI/runtime/pull/285)

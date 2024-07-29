@@ -25,45 +25,60 @@ func Test_layerNode_search(t *testing.T) {
 			Value: Vector{0},
 			Key:   0,
 		},
-		neighbors: map[int]*layerNode[int]{
+		neighbors: map[int]*layerNeighborNode[int]{
 			1: {
-				Node: Node[int]{
-					Value: Vector{1},
-					Key:   1,
+				node: &layerNode[int]{
+					Node: Node[int]{
+						Value: Vector{1},
+						Key:   1,
+					},
 				},
+				distance: 1.0,
 			},
 			2: {
-				Node: Node[int]{
-					Value: Vector{2},
-					Key:   2,
+				node: &layerNode[int]{
+					Node: Node[int]{
+						Value: Vector{2},
+						Key:   2,
+					},
 				},
+				distance: 2.0,
 			},
 			3: {
-				Node: Node[int]{
-					Value: Vector{3},
-					Key:   3,
-				},
-				neighbors: map[int]*layerNode[int]{
-					4: {
-						Node: Node[int]{
-							Value: Vector{4},
-							Key:   5,
+				node: &layerNode[int]{
+					Node: Node[int]{
+						Value: Vector{3},
+						Key:   3,
+					},
+					neighbors: map[int]*layerNeighborNode[int]{
+						4: {
+							node: &layerNode[int]{
+								Node: Node[int]{
+									Value: Vector{4},
+									Key:   4,
+								},
+							},
+							distance: 4.0,
+						},
+						5: {
+							node: &layerNode[int]{
+								Node: Node[int]{
+									Value: Vector{5},
+									Key:   5,
+								},
+							},
+							distance: 5.0,
 						},
 					},
-					5: {
-						Node: Node[int]{
-							Value: Vector{5},
-							Key:   5,
-						},
-					},
 				},
+				distance: 3.0,
 			},
 		},
 	}
 
 	best, _ := entry.search(2, 4, []float32{4}, EuclideanDistance)
 
-	require.Equal(t, 5, best[0].node.Key)
+	require.Equal(t, 4, best[0].node.Key)
 	require.Equal(t, 3, best[1].node.Key)
 	require.Len(t, best, 2)
 }
