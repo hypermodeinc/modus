@@ -16,7 +16,7 @@ import (
 
 var ErrPluginMetadataNotFound = fmt.Errorf("no metadata found in plugin")
 
-func GetPluginMetadata(ctx context.Context, cm *wazero.CompiledModule) (PluginMetadata, error) {
+func GetPluginMetadata(ctx context.Context, cm wazero.CompiledModule) (PluginMetadata, error) {
 	span := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
 
@@ -75,8 +75,8 @@ func isNullable(t TypeInfo, lang PluginLanguage) bool {
 	}
 }
 
-func getCustomSectionData(cm *wazero.CompiledModule, name string) (data []byte, found bool) {
-	for _, sec := range (*cm).CustomSections() {
+func getCustomSectionData(cm wazero.CompiledModule, name string) (data []byte, found bool) {
+	for _, sec := range cm.CustomSections() {
 		if sec.Name() == name {
 			data = sec.Data()
 			found = true

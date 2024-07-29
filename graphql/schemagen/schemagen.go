@@ -24,8 +24,8 @@ func GetGraphQLSchema(ctx context.Context, metadata plugins.PluginMetadata, mani
 	defer span.Finish()
 
 	typeDefs := make(map[string]TypeDefinition, len(metadata.Types))
-	errors := transformTypes(metadata.Types, &typeDefs)
-	functions, errs := transformFunctions(metadata.Functions, &typeDefs)
+	errors := transformTypes(metadata.Types, typeDefs)
+	functions, errs := transformFunctions(metadata.Functions, typeDefs)
 	types := utils.MapValues(typeDefs)
 	errors = append(errors, errs...)
 
@@ -49,10 +49,10 @@ type TransformError struct {
 	Error  error
 }
 
-func transformTypes(types []plugins.TypeDefinition, typeDefs *map[string]TypeDefinition) []TransformError {
+func transformTypes(types []plugins.TypeDefinition, typeDefs map[string]TypeDefinition) []TransformError {
 	errors := make([]TransformError, 0)
 	for _, t := range types {
-		if _, ok := (*typeDefs)[t.Name]; ok {
+		if _, ok := typeDefs[t.Name]; ok {
 			errors = append(errors, TransformError{t, fmt.Errorf("type already exists: %s", t.Name)})
 			continue
 		}
@@ -63,7 +63,7 @@ func transformTypes(types []plugins.TypeDefinition, typeDefs *map[string]TypeDef
 			continue
 		}
 
-		(*typeDefs)[t.Name] = TypeDefinition{
+		typeDefs[t.Name] = TypeDefinition{
 			Name:   t.Name,
 			Fields: fields,
 		}
@@ -93,7 +93,7 @@ type ParameterSignature struct {
 	Default *any
 }
 
-func transformFunctions(functions []plugins.FunctionSignature, typeDefs *map[string]TypeDefinition) ([]FunctionSignature, []TransformError) {
+func transformFunctions(functions []plugins.FunctionSignature, typeDefs map[string]TypeDefinition) ([]FunctionSignature, []TransformError) {
 	results := make([]FunctionSignature, len(functions))
 	errors := make([]TransformError, 0)
 	for i, f := range functions {
@@ -154,9 +154,9 @@ func filterTypes(types []TypeDefinition, functions []FunctionSignature) []TypeDe
 	usedTypes := make(map[string]bool)
 	for _, f := range functions {
 		for _, p := range f.Parameters {
-			addUsedTypes(p.Type, typeMap, &usedTypes)
+			addUsedTypes(p.Type, typeMap, usedTypes)
 		}
-		addUsedTypes(f.ReturnType, typeMap, &usedTypes)
+		addUsedTypes(f.ReturnType, typeMap, usedTypes)
 	}
 
 	// Filter out types that are not used
@@ -171,12 +171,12 @@ func filterTypes(types []TypeDefinition, functions []FunctionSignature) []TypeDe
 	return results
 }
 
-func addUsedTypes(name string, types map[string]TypeDefinition, usedTypes *map[string]bool) {
+func addUsedTypes(name string, types map[string]TypeDefinition, usedTypes map[string]bool) {
 	name = getBaseType(name)
-	if (*usedTypes)[name] {
+	if usedTypes[name] {
 		return
 	}
-	(*usedTypes)[name] = true
+	usedTypes[name] = true
 	if t, ok := types[name]; ok {
 		for _, f := range t.Fields {
 			addUsedTypes(f.Type, types, usedTypes)
@@ -300,7 +300,7 @@ func writeSchema(buf *bytes.Buffer, functions []FunctionSignature, typeDefs []Ty
 	buf.WriteByte('\n')
 }
 
-func convertParameters(parameters []plugins.Parameter, typeDefs *map[string]TypeDefinition, firstPass bool) ([]ParameterSignature, error) {
+func convertParameters(parameters []plugins.Parameter, typeDefs map[string]TypeDefinition, firstPass bool) ([]ParameterSignature, error) {
 	if len(parameters) == 0 {
 		return nil, nil
 	}
@@ -331,7 +331,7 @@ func convertParameters(parameters []plugins.Parameter, typeDefs *map[string]Type
 	return results, nil
 }
 
-func convertFields(fields []plugins.Field, typeDefs *map[string]TypeDefinition, firstPass bool) ([]NameTypePair, error) {
+func convertFields(fields []plugins.Field, typeDefs map[string]TypeDefinition, firstPass bool) ([]NameTypePair, error) {
 	if len(fields) == 0 {
 		return nil, nil
 	}
@@ -352,7 +352,7 @@ func convertFields(fields []plugins.Field, typeDefs *map[string]TypeDefinition, 
 
 var mapRegex = regexp.MustCompile(`^Map<(\w+<.+>|.+?),\s*(\w+<.+>|.+?)>$`)
 
-func convertType(asType string, typeDefs *map[string]TypeDefinition, firstPass bool) (string, error) {
+func convertType(asType string, typeDefs map[string]TypeDefinition, firstPass bool) (string, error) {
 
 	// Unwrap parentheses if present
 	if strings.HasPrefix(asType, "(") && strings.HasSuffix(asType, ")") {
@@ -431,7 +431,7 @@ func convertType(asType string, typeDefs *map[string]TypeDefinition, firstPass b
 	case "u64":
 		return newScalar("UInt64", typeDefs) + n, nil
 	case "Date":
-		delete(*typeDefs, "Date") // remove the default Date type
+		delete(typeDefs, "Date") // remove the default Date type
 		return newScalar("Timestamp", typeDefs) + n, nil
 	case "void":
 		// note: void scalar is always nullable because we return null
@@ -444,20 +444,20 @@ func convertType(asType string, typeDefs *map[string]TypeDefinition, firstPass b
 	}
 
 	// going forward, convert custom types only if they have a type definition
-	if _, ok := (*typeDefs)[asType]; ok {
+	if _, ok := typeDefs[asType]; ok {
 		return asType + n, nil
 	}
 
 	return "", fmt.Errorf("unsupported type or missing type definition: %s", asType)
 }
 
-func newScalar(name string, typeDefs *map[string]TypeDefinition) string {
+func newScalar(name string, typeDefs map[string]TypeDefinition) string {
 	return newType(name, nil, typeDefs)
 }
 
-func newType(name string, fields []NameTypePair, typeDefs *map[string]TypeDefinition) string {
-	if _, ok := (*typeDefs)[name]; !ok {
-		(*typeDefs)[name] = TypeDefinition{
+func newType(name string, fields []NameTypePair, typeDefs map[string]TypeDefinition) string {
+	if _, ok := typeDefs[name]; !ok {
+		typeDefs[name] = TypeDefinition{
 			Name:   name,
 			Fields: fields,
 		}
