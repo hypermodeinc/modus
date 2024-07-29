@@ -2,7 +2,7 @@
 
 ## UNRELEASED
 
--  store scores of neighbors at each layerNode, implement priority queue to pick best candidate [#299](https://github.com/hypermodeAI/runtime/pull/299)
+-  Perf improvements to internal storage of hnsw data in Collections [#299](https://github.com/hypermodeAI/runtime/pull/299)
 
 ## 2024-07-23 - Version 0.10.1
 
