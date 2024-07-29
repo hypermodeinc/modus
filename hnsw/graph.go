@@ -291,6 +291,9 @@ type Graph[K cmp.Ordered] struct {
 
 	// layers is a slice of layers in the graph.
 	layers []*layer[K]
+
+	// clusters is a slice of clusters in the graph.
+	clusters []cluster[K]
 }
 
 func defaultRand() *rand.Rand {
