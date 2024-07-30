@@ -48,7 +48,7 @@ func GetModuleInstance(ctx context.Context, plugin *plugins.Plugin, buffers *uti
 	// Instantiate the plugin as a module.
 	// NOTE: This will also invoke the plugin's `_start` function,
 	// which will call any top-level code in the plugin.
-	mod, err := RuntimeInstance.InstantiateModule(ctx, *plugin.Module, cfg)
+	mod, err := RuntimeInstance.InstantiateModule(ctx, plugin.Module, cfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to instantiate the plugin module: %w", err)
 	}
