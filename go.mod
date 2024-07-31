@@ -31,7 +31,7 @@ require (
 	github.com/stretchr/testify v1.9.0
 	github.com/tetratelabs/wazero v1.7.3
 	github.com/viterin/vek v0.4.2
-	github.com/wundergraph/graphql-go-tools/execution v1.0.4-0.20240723104837-8b3266e8dd60
+	github.com/wundergraph/graphql-go-tools/execution v1.0.4
 	github.com/wundergraph/graphql-go-tools/v2 v2.0.0-rc.66
 )
 
@@ -96,8 +96,8 @@ require (
 	github.com/tidwall/sjson v1.2.5 // indirect
 	github.com/valyala/fastjson v1.6.4 // indirect
 	github.com/viterin/partial v1.1.0 // indirect
-	github.com/wundergraph/cosmo/composition-go v0.0.0-20240723160531-0119c2d65667 // indirect
-	github.com/wundergraph/cosmo/router v0.0.0-20240723160531-0119c2d65667 // indirect
+	github.com/wundergraph/cosmo/composition-go v0.0.0-20240729154441-b20b00e892c6 // indirect
+	github.com/wundergraph/cosmo/router v0.0.0-20240729154441-b20b00e892c6 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.53.0 // indirect
 	go.opentelemetry.io/otel v1.28.0 // indirect
 	go.opentelemetry.io/otel/metric v1.28.0 // indirect
