@@ -32,7 +32,7 @@ require (
 	github.com/tetratelabs/wazero v1.7.3
 	github.com/viterin/vek v0.4.2
 	github.com/wundergraph/graphql-go-tools/execution v1.0.4
-	github.com/wundergraph/graphql-go-tools/v2 v2.0.0-rc.66
+	github.com/wundergraph/graphql-go-tools/v2 v2.0.0-rc.68
 )
 
 require (
