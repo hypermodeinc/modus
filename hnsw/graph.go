@@ -511,6 +511,40 @@ type SearchResultNode[K cmp.Ordered] struct {
 	Distance float32
 }
 
+// SearchWithKey finds the k nearest neighbors from the target node.
+func (h *Graph[K]) SearchWithKey(key K, k int) ([]SearchResultNode[K], error) {
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+	if len(h.layers) == 0 {
+		return nil, fmt.Errorf("graph is empty")
+	}
+
+	// return neighbors on 0th layer
+	node, ok := h.layers[0].nodes[key]
+	if !ok {
+		return nil, fmt.Errorf("node not found")
+	}
+
+	out := make([]SearchResultNode[K], 0, k)
+	out = append(out, SearchResultNode[K]{
+		Node:     node.Node,
+		Distance: 0,
+	})
+	i := 1
+	for _, neighbor := range node.neighbors {
+		if i >= k {
+			break
+		}
+		out = append(out, SearchResultNode[K]{
+			Node:     neighbor.node.Node,
+			Distance: neighbor.distance,
+		})
+		i++
+	}
+
+	return out, nil
+}
+
 // Search finds the k nearest neighbors from the target node.
 func (h *Graph[K]) Search(near Vector, k int) ([]SearchResultNode[K], error) {
 	h.mu.RLock()
