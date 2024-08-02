@@ -27,7 +27,7 @@ func hostLookupModel(ctx context.Context, mod wasm.Module, pModelName uint32) (p
 		return 0
 	}
 
-	offset, err := writeResult(ctx, mod, info)
+	offset, err := writeResult(ctx, mod, *info)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error writing result to wasm memory.")
 		return 0

@@ -112,7 +112,7 @@ func hostZSClassifyCollection(ctx context.Context, mod wasm.Module, pCollectionN
 		return 0
 	}
 
-	offset, err := writeResult(ctx, mod, classification)
+	offset, err := writeResult(ctx, mod, *classification)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error writing result.")
 		return 0
