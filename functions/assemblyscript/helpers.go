@@ -174,10 +174,6 @@ type HasTypeInfo interface {
 func GetTypeInfo[T any]() (plugins.TypeInfo, error) {
 	var v T
 
-	if t, ok := any(&v).(HasTypeInfo); ok {
-		return t.GetTypeInfo(), nil
-	}
-
 	switch any(v).(type) {
 	case bool:
 		return getTypeInfo("bool"), nil
@@ -203,8 +199,16 @@ func GetTypeInfo[T any]() (plugins.TypeInfo, error) {
 		return getTypeInfo("f64"), nil
 	case []byte:
 		return ArrayBufferType, nil
-	case string:
+	case string, *string:
 		return StringType, nil
+	}
+
+	if t, ok := any(v).(HasTypeInfo); ok {
+		return t.GetTypeInfo(), nil
+	}
+
+	if t, ok := any(&v).(HasTypeInfo); ok {
+		return t.GetTypeInfo(), nil
 	}
 
 	t := reflect.TypeFor[T]()
@@ -268,7 +272,37 @@ func getTypeInfoForReflectedType(t reflect.Type) (plugins.TypeInfo, error) {
 			Name: "Map<" + keyType.Name + ", " + valueType.Name + ">",
 			Path: "~lib/map/Map<" + keyType.Path + "," + valueType.Path + ">",
 		}, nil
+	case reflect.Ptr:
+		if t.Elem().Kind() == reflect.String {
+			return StringType, nil
+		}
+
+		info := tryCallGetTypeInfoMethod(t)
+		if info != nil {
+			return *info, nil
+		}
+
+		return getTypeInfoForReflectedType(t.Elem())
+	case reflect.Struct:
+		info := tryCallGetTypeInfoMethod(t)
+		if info != nil {
+			return *info, nil
+		}
+
+		return plugins.TypeInfo{}, fmt.Errorf("struct %s does not have a GetTypeInfo method", t.Name())
 	}
 
 	return plugins.TypeInfo{}, fmt.Errorf("unsupported type kind %s", t.Kind())
+}
+
+func tryCallGetTypeInfoMethod(t reflect.Type) *plugins.TypeInfo {
+	if m, ok := t.MethodByName("GetTypeInfo"); ok {
+		if m.Type.NumIn() == 1 && m.Type.NumOut() == 1 {
+			v := reflect.New(t.Elem())
+			if info, ok := m.Func.Call([]reflect.Value{v})[0].Interface().(plugins.TypeInfo); ok {
+				return &info
+			}
+		}
+	}
+	return nil
 }
