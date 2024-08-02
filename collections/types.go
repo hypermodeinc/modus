@@ -38,7 +38,7 @@ type collectionClassificationResult struct {
 	Status       string
 	Label        string
 	LabelsResult []string
-	Objects      []collectionClassificationResultObject
+	Cluster      []collectionClassificationResultObject
 	Error        string
 }
 

@@ -290,18 +290,18 @@ func ZSClassify(ctx context.Context, collectionName string, searchMethod string,
 		LabelsResult: make([]string, 0),
 		SearchMethod: searchMethod,
 		Status:       "success",
-		Objects:      make([]collectionClassificationResultObject, 0),
+		Cluster:      make([]collectionClassificationResultObject, 0),
 	}
 
 	for _, nn := range nns {
-		if math.Abs(nn.GetValue()-mean) <= stdDev {
+		if math.Abs(nn.GetValue()-mean) <= 2*stdDev {
 			label, err := collection.GetLabel(ctx, nn.GetIndex())
 			if err != nil {
 				return nil, err
 			}
 			labelCounts[label]++
 
-			res.Objects = append(res.Objects, collectionClassificationResultObject{
+			res.Cluster = append(res.Cluster, collectionClassificationResultObject{
 				Key:      nn.GetIndex(),
 				Label:    label,
 				Score:    1 - nn.GetValue(),

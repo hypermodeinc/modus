@@ -30,7 +30,7 @@ func hostUpsertToCollection(ctx context.Context, mod wasm.Module, pCollectionNam
 		return 0
 	}
 
-	offset, err := writeResult(ctx, mod, *mutationRes)
+	offset, err := writeResult(ctx, mod, mutationRes)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error writing result.")
 		return 0
@@ -56,7 +56,7 @@ func hostDeleteFromCollection(ctx context.Context, mod wasm.Module, pCollectionN
 		return 0
 	}
 
-	offset, err := writeResult(ctx, mod, *mutationRes)
+	offset, err := writeResult(ctx, mod, mutationRes)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error writing result.")
 		return 0
@@ -86,7 +86,7 @@ func hostSearchCollection(ctx context.Context, mod wasm.Module, pCollectionName 
 		return 0
 	}
 
-	offset, err := writeResult(ctx, mod, *searchRes)
+	offset, err := writeResult(ctx, mod, searchRes)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error writing result.")
 		return 0
@@ -112,7 +112,7 @@ func hostZSClassifyCollection(ctx context.Context, mod wasm.Module, pCollectionN
 		return 0
 	}
 
-	offset, err := writeResult(ctx, mod, *classification)
+	offset, err := writeResult(ctx, mod, classification)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error writing result.")
 		return 0
@@ -165,7 +165,7 @@ func hostRecomputeSearchMethod(ctx context.Context, mod wasm.Module, pCollection
 		return 0
 	}
 
-	offset, err := writeResult(ctx, mod, *mutationRes)
+	offset, err := writeResult(ctx, mod, mutationRes)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error writing result.")
 		return 0
