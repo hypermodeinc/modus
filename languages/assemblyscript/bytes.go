@@ -12,7 +12,7 @@ import (
 	wasm "github.com/tetratelabs/wazero/api"
 )
 
-func readBytes(mem wasm.Memory, offset uint32) (data []byte, err error) {
+func (wa *wasmAdapter) readBytes(mem wasm.Memory, offset uint32) (data []byte, err error) {
 
 	// The length of AssemblyScript managed objects is stored 4 bytes before the offset.
 	// See https://www.assemblyscript.org/runtime.html#memory-layout
@@ -37,14 +37,14 @@ func readBytes(mem wasm.Memory, offset uint32) (data []byte, err error) {
 	return buf, nil
 }
 
-func writeBytes(ctx context.Context, mod wasm.Module, bytes []byte) (offset uint32, err error) {
+func (wa *wasmAdapter) writeBytes(ctx context.Context, mod wasm.Module, bytes []byte) (offset uint32, err error) {
 	const classId = 1 // The fixed class id for an ArrayBuffer in AssemblyScript.
-	return writeRawBytes(ctx, mod, bytes, classId)
+	return wa.writeRawBytes(ctx, mod, bytes, classId)
 }
 
-func writeRawBytes(ctx context.Context, mod wasm.Module, bytes []byte, classId uint32) (offset uint32, err error) {
+func (wa *wasmAdapter) writeRawBytes(ctx context.Context, mod wasm.Module, bytes []byte, classId uint32) (offset uint32, err error) {
 	size := uint32(len(bytes))
-	offset, err = allocateWasmMemory(ctx, mod, size, classId)
+	offset, err = wa.allocateWasmMemory(ctx, mod, size, classId)
 	if err != nil {
 		return 0, err
 	}

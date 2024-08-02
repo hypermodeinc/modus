@@ -15,9 +15,7 @@ import (
 
 func hostDatabaseQuery(ctx context.Context, mod wasm.Module, pHostName, pDbType, pStatement, pParamsJson uint32) uint32 {
 	var hostName, dbType, statement, paramsJson string
-	if err := readParams4(ctx, mod,
-		pHostName, pDbType, pStatement, pParamsJson,
-		&hostName, &dbType, &statement, &paramsJson); err != nil {
+	if err := readParams(ctx, mod, param{pHostName, &hostName}, param{pDbType, &dbType}, param{pStatement, &statement}, param{pParamsJson, &paramsJson}); err != nil {
 		logger.Err(ctx, err).Msg("Error reading input parameters.")
 		return 0
 	}

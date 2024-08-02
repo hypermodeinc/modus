@@ -17,7 +17,7 @@ import (
 
 // Reference: https://github.com/AssemblyScript/assemblyscript/blob/main/std/assembly/array.ts
 
-func readArray(ctx context.Context, mem wasm.Memory, def *metadata.TypeDefinition, offset uint32) (data any, err error) {
+func (wa *wasmAdapter) readArray(ctx context.Context, mem wasm.Memory, typ *metadata.TypeDefinition, offset uint32) (data any, err error) {
 
 	// buffer, ok := mem.ReadUint32Le(offset)
 	// if !ok {
@@ -39,17 +39,17 @@ func readArray(ctx context.Context, mem wasm.Memory, def *metadata.TypeDefinitio
 		return nil, fmt.Errorf("failed to read array length")
 	}
 
-	itemType := getArraySubtypeInfo(def.Path)
-	itemSize := getItemSize(itemType)
+	itemType := wa.typeInfo.GetArraySubtype(typ.Name)
+	itemSize := wa.typeInfo.SizeOfType(itemType)
 
-	goItemType, err := getGoType(itemType.Path)
+	goItemType, err := wa.typeInfo.getGoType(itemType)
 	if err != nil {
 		return nil, err
 	}
 
 	arr := reflect.MakeSlice(reflect.SliceOf(goItemType), int(arrLen), int(arrLen))
 	for i := uint32(0); i < arrLen; i++ {
-		val, err := readField(ctx, mem, itemType, dataStart+(i*itemSize))
+		val, err := wa.readField(ctx, mem, itemType, dataStart+(i*itemSize))
 		if err != nil {
 			return nil, err
 		}
@@ -59,7 +59,7 @@ func readArray(ctx context.Context, mem wasm.Memory, def *metadata.TypeDefinitio
 	return arr.Interface(), nil
 }
 
-func writeArray(ctx context.Context, mod wasm.Module, def *metadata.TypeDefinition, data any) (offset uint32, err error) {
+func (wa *wasmAdapter) writeArray(ctx context.Context, mod wasm.Module, typ *metadata.TypeDefinition, data any) (offset uint32, err error) {
 	var arr []any
 	arr, err = utils.ConvertToArray(data)
 	if err != nil {
@@ -74,7 +74,7 @@ func writeArray(ctx context.Context, mod wasm.Module, def *metadata.TypeDefiniti
 	var pins = make([]uint32, 0, arrLen+1)
 	defer func() {
 		for _, ptr := range pins {
-			err = unpinWasmMemory(ctx, mod, ptr)
+			err = wa.unpinWasmMemory(ctx, mod, ptr)
 			if err != nil {
 				break
 			}
@@ -84,17 +84,17 @@ func writeArray(ctx context.Context, mod wasm.Module, def *metadata.TypeDefiniti
 	// write array buffer
 	// note: empty array has no array buffer
 	if arrLen > 0 {
-		itemType := getArraySubtypeInfo(def.Path)
-		itemSize := getItemSize(itemType)
+		itemType := wa.typeInfo.GetArraySubtype(typ.Name)
+		itemSize := wa.typeInfo.SizeOfType(itemType)
 		bufferSize = itemSize * arrLen
-		bufferOffset, err = allocateWasmMemory(ctx, mod, bufferSize, 1)
+		bufferOffset, err = wa.allocateWasmMemory(ctx, mod, bufferSize, 1)
 		if err != nil {
 			return 0, fmt.Errorf("failed to allocate memory for array buffer: %w", err)
 		}
 
 		// pin the array buffer so it can't get garbage collected
 		// when we allocate the array object
-		err = pinWasmMemory(ctx, mod, bufferOffset)
+		err = wa.pinWasmMemory(ctx, mod, bufferOffset)
 		if err != nil {
 			return 0, fmt.Errorf("failed to pin array buffer: %w", err)
 		}
@@ -102,14 +102,14 @@ func writeArray(ctx context.Context, mod wasm.Module, def *metadata.TypeDefiniti
 
 		for i, v := range arr {
 			itemOffset := bufferOffset + (itemSize * uint32(i))
-			ptr, err := writeField(ctx, mod, itemType, itemOffset, v)
+			ptr, err := wa.writeField(ctx, mod, itemType, itemOffset, v)
 			if err != nil {
 				return 0, fmt.Errorf("failed to write array item: %w", err)
 			}
 
 			// If we allocated memory for the item, we need to pin it too.
 			if ptr != 0 {
-				err = pinWasmMemory(ctx, mod, ptr)
+				err = wa.pinWasmMemory(ctx, mod, ptr)
 				if err != nil {
 					return 0, err
 				}
@@ -120,7 +120,7 @@ func writeArray(ctx context.Context, mod wasm.Module, def *metadata.TypeDefiniti
 
 	// write array object
 	const size = 16
-	offset, err = allocateWasmMemory(ctx, mod, size, def.Id)
+	offset, err = wa.allocateWasmMemory(ctx, mod, size, typ.Id)
 	if err != nil {
 		return 0, err
 	}

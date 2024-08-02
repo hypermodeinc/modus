@@ -15,20 +15,20 @@ import (
 	wasm "github.com/tetratelabs/wazero/api"
 )
 
-func readClass(ctx context.Context, mem wasm.Memory, def *metadata.TypeDefinition, offset uint32) (data map[string]any, err error) {
+func (wa *wasmAdapter) readClass(ctx context.Context, mem wasm.Memory, typ *metadata.TypeDefinition, offset uint32) (data map[string]any, err error) {
 	data = make(map[string]any)
 	fieldOffset := uint32(0)
-	for _, field := range def.Fields {
+	for _, field := range typ.Fields {
 
 		// align the field offset to the size of the field
-		size := getItemSize(field.Type)
+		size := wa.typeInfo.SizeOfType(field.Type)
 		mask := size - 1
 		if fieldOffset&mask != 0 {
 			fieldOffset = (fieldOffset | mask) + 1
 		}
 
 		// read the field value
-		val, err := readField(ctx, mem, field.Type, offset+fieldOffset)
+		val, err := wa.readField(ctx, mem, field.Type, offset+fieldOffset)
 		if err != nil {
 			return nil, err
 		}
@@ -40,10 +40,10 @@ func readClass(ctx context.Context, mem wasm.Memory, def *metadata.TypeDefinitio
 	return data, nil
 }
 
-func readField(ctx context.Context, mem wasm.Memory, typ *metadata.TypeInfo, offset uint32) (data any, err error) {
+func (wa *wasmAdapter) readField(ctx context.Context, mem wasm.Memory, typ string, offset uint32) (data any, err error) {
 	var result any
 	var ok bool
-	switch typ.Path {
+	switch typ {
 	case "bool":
 		var val byte
 		val, ok = mem.ReadByte(offset)
@@ -91,40 +91,37 @@ func readField(ctx context.Context, mem wasm.Memory, typ *metadata.TypeInfo, off
 		// Managed types have pointers to the actual data.
 		p, ok := mem.ReadUint32Le(offset)
 		if !ok {
-			return nil, fmt.Errorf("error reading %s pointer from wasm memory", typ.Name)
+			return nil, fmt.Errorf("error reading %s pointer from wasm memory", typ)
 		}
 
 		// Handle null values if the type is nullable
-		if isNullable(typ.Path) {
+		if wa.typeInfo.IsNullable(typ) {
 			if p == 0 {
 				return nil, nil
 			}
-			typ = &metadata.TypeInfo{
-				Name: typ.Name[:len(typ.Name)-7], // remove " | null"
-				Path: typ.Path[:len(typ.Path)-5], // remove "|null"
-			}
+			typ = wa.typeInfo.GetUnderlyingType(typ)
 		} else if p == 0 {
-			return nil, fmt.Errorf("null pointer encountered for non-nullable type %s", typ.Name)
+			return nil, fmt.Errorf("null pointer encountered for non-nullable type %s", typ)
 		}
 
 		// Read the actual data.
-		return readObject(ctx, mem, typ, p)
+		return wa.readObject(ctx, mem, typ, p)
 	}
 
 	if !ok {
-		return nil, fmt.Errorf("error reading %s from wasm memory", typ.Name)
+		return nil, fmt.Errorf("error reading %s from wasm memory", typ)
 	}
 
 	return result, nil
 }
 
-func writeClass(ctx context.Context, mod wasm.Module, def *metadata.TypeDefinition, data any) (offset uint32, err error) {
+func (wa *wasmAdapter) writeClass(ctx context.Context, mod wasm.Module, typ *metadata.TypeDefinition, data any) (offset uint32, err error) {
 
 	// unpin everything when done
-	pins := make([]uint32, 0, len(def.Fields)+1)
+	pins := make([]uint32, 0, len(typ.Fields)+1)
 	defer func() {
 		for _, ptr := range pins {
-			err = unpinWasmMemory(ctx, mod, ptr)
+			err = wa.unpinWasmMemory(ctx, mod, ptr)
 			if err != nil {
 				break
 			}
@@ -133,8 +130,8 @@ func writeClass(ctx context.Context, mod wasm.Module, def *metadata.TypeDefiniti
 
 	// calculate total size of all fields
 	totalSize := uint32(0)
-	for _, field := range def.Fields {
-		size := getItemSize(field.Type)
+	for _, field := range typ.Fields {
+		size := wa.typeInfo.SizeOfType(field.Type)
 		mask := size - 1
 		if totalSize&mask != 0 {
 			totalSize = (totalSize | mask) + 1
@@ -143,14 +140,14 @@ func writeClass(ctx context.Context, mod wasm.Module, def *metadata.TypeDefiniti
 	}
 
 	// Allocate memory for the object
-	offset, err = allocateWasmMemory(ctx, mod, totalSize, def.Id)
+	offset, err = wa.allocateWasmMemory(ctx, mod, totalSize, typ.Id)
 	if err != nil {
 		return 0, err
 	}
 
 	// we need to pin the object in memory so it doesn't get garbage collected
 	// if we allocate more memory when writing a field before returning the object
-	err = pinWasmMemory(ctx, mod, offset)
+	err = wa.pinWasmMemory(ctx, mod, offset)
 	if err != nil {
 		return 0, err
 	}
@@ -165,7 +162,7 @@ func writeClass(ctx context.Context, mod wasm.Module, def *metadata.TypeDefiniti
 
 	// Loop over all fields in the class definition.
 	fieldOffset := uint32(0)
-	for _, field := range def.Fields {
+	for _, field := range typ.Fields {
 
 		// Read the field value from the data object.
 		var val any
@@ -184,21 +181,21 @@ func writeClass(ctx context.Context, mod wasm.Module, def *metadata.TypeDefiniti
 		}
 
 		// align the field offset to the size of the field
-		size := getItemSize(field.Type)
+		size := wa.typeInfo.SizeOfType(field.Type)
 		mask := size - 1
 		if fieldOffset&mask != 0 {
 			fieldOffset = (fieldOffset | mask) + 1
 		}
 
 		// Write the field value to WASM memory.
-		ptr, err := writeField(ctx, mod, field.Type, offset+fieldOffset, val)
+		ptr, err := wa.writeField(ctx, mod, field.Type, offset+fieldOffset, val)
 		if err != nil {
 			return 0, err
 		}
 
 		// If we allocated memory for the field, we need to pin it too.
 		if ptr != 0 {
-			err = pinWasmMemory(ctx, mod, ptr)
+			err = wa.pinWasmMemory(ctx, mod, ptr)
 			if err != nil {
 				return 0, err
 			}
@@ -212,8 +209,8 @@ func writeClass(ctx context.Context, mod wasm.Module, def *metadata.TypeDefiniti
 	return offset, nil
 }
 
-func writeField(ctx context.Context, mod wasm.Module, typ *metadata.TypeInfo, offset uint32, val any) (ptr uint32, err error) {
-	enc, err := encodeValue(ctx, mod, typ, val)
+func (wa *wasmAdapter) writeField(ctx context.Context, mod wasm.Module, typ string, offset uint32, val any) (ptr uint32, err error) {
+	enc, err := wa.encodeValue(ctx, mod, typ, val)
 	if err != nil {
 		return 0, err
 	}
@@ -221,7 +218,7 @@ func writeField(ctx context.Context, mod wasm.Module, typ *metadata.TypeInfo, of
 	mem := mod.Memory()
 
 	var ok bool
-	switch typ.Path {
+	switch typ {
 	case "bool", "i8", "u8":
 		ok = mem.WriteByte(offset, byte(enc))
 	case "i16", "u16":
@@ -236,7 +233,7 @@ func writeField(ctx context.Context, mod wasm.Module, typ *metadata.TypeInfo, of
 	}
 
 	if !ok {
-		return ptr, fmt.Errorf("error writing %s to wasm memory", typ.Name)
+		return ptr, fmt.Errorf("error writing %s to wasm memory", typ)
 	}
 
 	return ptr, nil

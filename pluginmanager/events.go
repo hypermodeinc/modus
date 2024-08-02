@@ -6,8 +6,9 @@ package pluginmanager
 
 import (
 	"context"
-	"hmruntime/plugins/metadata"
 	"sync"
+
+	"hmruntime/plugins/metadata"
 )
 
 type PluginLoadedCallback = func(ctx context.Context, md *metadata.Metadata) error

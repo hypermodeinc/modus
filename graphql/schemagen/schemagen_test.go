@@ -8,6 +8,8 @@ import (
 	"context"
 	"testing"
 
+	"hmruntime/languages"
+	"hmruntime/manifestdata"
 	"hmruntime/plugins/metadata"
 	"hmruntime/utils"
 
@@ -15,7 +17,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func Test_GetGraphQLSchema(t *testing.T) {
+func Test_GetGraphQLSchema_AssemblyScript(t *testing.T) {
 
 	manifest := &manifest.HypermodeManifest{
 		Models: map[string]manifest.ModelInfo{},
@@ -30,158 +32,105 @@ func Test_GetGraphQLSchema(t *testing.T) {
 			},
 		},
 	}
+	manifestdata.SetManifest(manifest)
 
-	makeDefault := func(val any) *any {
-		return &val
-	}
+	md := metadata.NewPluginMetadata()
+	md.SDK = "functions-as" // AssemblyScript
 
-	md := &metadata.Metadata{
-		Functions: []*metadata.Function{
-			{
-				Name: "add",
-				Parameters: []*metadata.Parameter{
-					{Name: "a", Type: &metadata.TypeInfo{Name: "i32"}},
-					{Name: "b", Type: &metadata.TypeInfo{Name: "i32"}},
-				},
-				ReturnType: &metadata.TypeInfo{Name: "i32"},
-			},
-			{
-				Name: "sayHello",
-				Parameters: []*metadata.Parameter{
-					{Name: "name", Type: &metadata.TypeInfo{Name: "string"}},
-				},
-				ReturnType: &metadata.TypeInfo{Name: "string"},
-			},
-			{
-				Name:       "currentTime",
-				ReturnType: &metadata.TypeInfo{Name: "Date"},
-			},
-			{
-				Name: "transform",
-				Parameters: []*metadata.Parameter{
-					{Name: "items", Type: &metadata.TypeInfo{Name: "Map<string,string>"}},
-				},
-				ReturnType: &metadata.TypeInfo{Name: "Map<string, string>"},
-			},
-			{
-				Name: "testDefaultIntParams",
-				Parameters: []*metadata.Parameter{
-					{Name: "a", Type: &metadata.TypeInfo{Name: "i32"}, Default: nil},
-					{Name: "b", Type: &metadata.TypeInfo{Name: "i32"}, Default: makeDefault(0)},
-					{Name: "c", Type: &metadata.TypeInfo{Name: "i32"}, Default: makeDefault(1)},
-				},
-				ReturnType: &metadata.TypeInfo{Name: "void"},
-			},
-			{
-				Name: "testDefaultStringParams",
-				Parameters: []*metadata.Parameter{
-					{Name: "a", Type: &metadata.TypeInfo{Name: "string"}, Default: nil},
-					{Name: "b", Type: &metadata.TypeInfo{Name: "string"}, Default: makeDefault("")},
-					{Name: "c", Type: &metadata.TypeInfo{Name: "string"}, Default: makeDefault(`a"b`)},
-					{Name: "d", Type: &metadata.TypeInfo{Name: "string | null"}, Default: nil},
-					{Name: "e", Type: &metadata.TypeInfo{Name: "string | null"}, Default: makeDefault(nil)},
-					{Name: "f", Type: &metadata.TypeInfo{Name: "string | null"}, Default: makeDefault("")},
-					{Name: "g", Type: &metadata.TypeInfo{Name: "string | null"}, Default: makeDefault("test")},
-				},
-				ReturnType: &metadata.TypeInfo{Name: "void"},
-			},
-			{
-				Name: "testDefaultArrayParams",
-				Parameters: []*metadata.Parameter{
-					{Name: "a", Type: &metadata.TypeInfo{Name: "i32[]"}, Default: nil},
-					{Name: "b", Type: &metadata.TypeInfo{Name: "i32[]"}, Default: makeDefault([]int32{})},
-					{Name: "c", Type: &metadata.TypeInfo{Name: "i32[]"}, Default: makeDefault([]int32{1, 2, 3})},
-					{Name: "d", Type: &metadata.TypeInfo{Name: "i32[] | null"}, Default: nil},
-					{Name: "e", Type: &metadata.TypeInfo{Name: "i32[] | null"}, Default: makeDefault(nil)},
-					{Name: "f", Type: &metadata.TypeInfo{Name: "i32[] | null"}, Default: makeDefault([]int32{})},
-					{Name: "g", Type: &metadata.TypeInfo{Name: "i32[] | null"}, Default: makeDefault([]int32{1, 2, 3})},
-				},
-				ReturnType: &metadata.TypeInfo{Name: "void"},
-			},
-			{
-				Name:       "getPerson",
-				ReturnType: &metadata.TypeInfo{Name: "Person"},
-			},
-			{
-				Name:       "getPeople",
-				ReturnType: &metadata.TypeInfo{Name: "Person[]"},
-			},
-			{
-				Name:       "getProductMap",
-				ReturnType: &metadata.TypeInfo{Name: "Map<string, Product>"},
-			},
-			{
-				Name:       "doNothing",
-				ReturnType: &metadata.TypeInfo{Name: "void"},
-			},
-			// This should be excluded from the final schema
-			{
-				Name: "myEmbedder",
-				Parameters: []*metadata.Parameter{
-					{Name: "text", Type: &metadata.TypeInfo{Name: "string"}},
-				},
-				ReturnType: &metadata.TypeInfo{Name: "f64[]"},
-			},
-		},
-		Types: []*metadata.TypeDefinition{
-			{
-				Name: "Company",
-				Fields: []*metadata.Field{
-					{Name: "name", Type: &metadata.TypeInfo{Name: "string"}},
-				},
-			},
-			{
-				Name: "Product",
-				Fields: []*metadata.Field{
-					{Name: "name", Type: &metadata.TypeInfo{Name: "string"}},
-					{Name: "price", Type: &metadata.TypeInfo{Name: "f64"}},
-					{Name: "manufacturer", Type: &metadata.TypeInfo{Name: "Company"}},
-					{Name: "components", Type: &metadata.TypeInfo{Name: "Product[]"}},
-				},
-			},
-			{
-				Name: "Person",
-				Fields: []*metadata.Field{
-					{Name: "name", Type: &metadata.TypeInfo{Name: "string"}},
-					{Name: "age", Type: &metadata.TypeInfo{Name: "i32"}},
-					{Name: "addresses", Type: &metadata.TypeInfo{Name: "Address[]"}},
-				},
-			},
-			{
-				Name: "Person[]",
-			},
-			{
-				Name: "Address",
-				Fields: []*metadata.Field{
-					{Name: "street", Type: &metadata.TypeInfo{Name: "string"}},
-					{Name: "city", Type: &metadata.TypeInfo{Name: "string"}},
-					{Name: "state", Type: &metadata.TypeInfo{Name: "string"}},
-					{Name: "country", Type: &metadata.TypeInfo{Name: "string"}},
-					{Name: "postalCode", Type: &metadata.TypeInfo{Name: "string"}},
-					{Name: "location", Type: &metadata.TypeInfo{Name: "Coordinates"}},
-				},
-			},
-			{
-				Name: "Coordinates",
-				Fields: []*metadata.Field{
-					{Name: "lat", Type: &metadata.TypeInfo{Name: "f64"}},
-					{Name: "lon", Type: &metadata.TypeInfo{Name: "f64"}},
-				},
-			},
-			// This should be excluded from the final schema
-			{
-				Name: "Header",
-				Fields: []*metadata.Field{
-					{Name: "name", Type: &metadata.TypeInfo{Name: "string"}},
-					{Name: "values", Type: &metadata.TypeInfo{Name: "string[]"}},
-				},
-			},
-		},
-	}
+	md.FnExports.AddFunction("add").
+		WithParameter("a", "i32").
+		WithParameter("b", "i32").
+		WithResult("i32")
 
-	result, err := GetGraphQLSchema(context.Background(), md, manifest, false)
+	md.FnExports.AddFunction("sayHello").
+		WithParameter("name", "string").
+		WithResult("string")
 
-	expectedSchema := `type Query {
+	md.FnExports.AddFunction("currentTime").
+		WithResult("Date")
+
+	md.FnExports.AddFunction("transform").
+		WithParameter("items", "Map<string,string>").
+		WithResult("Map<string,string>")
+
+	md.FnExports.AddFunction("testDefaultIntParams").
+		WithParameter("a", "i32").
+		WithParameter("b", "i32", 0).
+		WithParameter("c", "i32", 1)
+
+	md.FnExports.AddFunction("testDefaultStringParams").
+		WithParameter("a", "string").
+		WithParameter("b", "string", "").
+		WithParameter("c", "string", `a"b`).
+		WithParameter("d", "string|null").
+		WithParameter("e", "string|null", nil).
+		WithParameter("f", "string|null", "").
+		WithParameter("g", "string|null", "test")
+
+	md.FnExports.AddFunction("testDefaultArrayParams").
+		WithParameter("a", "i32[]").
+		WithParameter("b", "i32[]", []int32{}).
+		WithParameter("c", "i32[]", []int32{1, 2, 3}).
+		WithParameter("d", "i32[]|null").
+		WithParameter("e", "i32[]|null", nil).
+		WithParameter("f", "i32[]|null", []int32{}).
+		WithParameter("g", "i32[]|null", []int32{1, 2, 3})
+
+	md.FnExports.AddFunction("getPerson").
+		WithResult("Person")
+
+	md.FnExports.AddFunction("getPeople").
+		WithResult("Person[]")
+
+	md.FnExports.AddFunction("getProductMap").
+		WithResult("Map<string,Product>")
+
+	md.FnExports.AddFunction("doNothing")
+
+	// This should be excluded from the final schema
+	md.FnExports.AddFunction("myEmbedder").
+		WithParameter("text", "string").
+		WithResult("f64[]")
+
+	md.Types.AddType("Company").
+		WithField("name", "string")
+
+	md.Types.AddType("Product").
+		WithField("name", "string").
+		WithField("price", "f64").
+		WithField("manufacturer", "Company").
+		WithField("components", "Product[]")
+
+	md.Types.AddType("Person").
+		WithField("name", "string").
+		WithField("age", "i32").
+		WithField("addresses", "Address[]")
+
+	md.Types.AddType("Person[]")
+
+	md.Types.AddType("Address").
+		WithField("street", "string").
+		WithField("city", "string").
+		WithField("state", "string").
+		WithField("country", "string").
+		WithField("postalCode", "string").
+		WithField("location", "Coordinates")
+
+	md.Types.AddType("Coordinates").
+		WithField("lat", "f64").
+		WithField("lon", "f64")
+
+	// This should be excluded from the final schema
+	md.Types.AddType("Header").
+		WithField("name", "string").
+		WithField("values", "string[]")
+
+	result, err := GetGraphQLSchema(context.Background(), md)
+
+	expectedSchema := `
+# Hypermode GraphQL Schema (auto-generated)
+
+type Query {
   add(a: Int!, b: Int!): Int!
   currentTime: Timestamp!
   doNothing: Void
@@ -238,12 +187,16 @@ type StringStringPair {
   key: String!
   value: String!
 }
-`
+`[1:]
+
 	require.Nil(t, err)
 	require.Equal(t, expectedSchema, result.Schema)
 }
 
-func Test_ConvertType(t *testing.T) {
+func Test_ConvertType_AssemblyScript(t *testing.T) {
+
+	lti := languages.AssemblyScript().TypeInfo()
+
 	testCases := []struct {
 		inputType          string
 		expectedOutputType string
@@ -264,7 +217,7 @@ func Test_ConvertType(t *testing.T) {
 		// Array types
 		{"string[]", "[String!]!", nil, nil},
 		{"string[][]", "[[String!]!]!", nil, nil},
-		{"(string | null)[]", "[String]!", nil, nil},
+		{"(string|null)[]", "[String]!", nil, nil},
 
 		// Custom scalar types
 		{"Date", "Timestamp!", nil, []*TypeDefinition{{Name: "Timestamp"}}},
@@ -277,9 +230,9 @@ func Test_ConvertType(t *testing.T) {
 			[]*metadata.TypeDefinition{{
 				Name: "User",
 				Fields: []*metadata.Field{
-					{Name: "firstName", Type: &metadata.TypeInfo{Name: "string"}},
-					{Name: "lastName", Type: &metadata.TypeInfo{Name: "string"}},
-					{Name: "age", Type: &metadata.TypeInfo{Name: "u8"}},
+					{Name: "firstName", Type: "string"},
+					{Name: "lastName", Type: "string"},
+					{Name: "age", Type: "u8"},
 				},
 			}},
 			[]*TypeDefinition{{
@@ -293,13 +246,13 @@ func Test_ConvertType(t *testing.T) {
 
 		// bool and numeric types can't be nullable in AssemblyScript
 		// but string and custom types can
-		{"string | null", "String", nil, nil},
-		{"Foo | null", "Foo",
+		{"string|null", "String", nil, nil},
+		{"Foo|null", "Foo",
 			[]*metadata.TypeDefinition{{Name: "Foo"}},
 			[]*TypeDefinition{{Name: "Foo"}}},
 
 		// Map types
-		{"Map<string, string>", "[StringStringPair!]!", nil, []*TypeDefinition{{
+		{"Map<string,string>", "[StringStringPair!]!", nil, []*TypeDefinition{{
 			Name: "StringStringPair",
 			Fields: []*NameTypePair{
 				{"key", "String!"},
@@ -307,7 +260,7 @@ func Test_ConvertType(t *testing.T) {
 			},
 			IsMapType: true,
 		}}},
-		{"Map<string, string | null>", "[StringNullableStringPair!]!", nil, []*TypeDefinition{{
+		{"Map<string,string|null>", "[StringNullableStringPair!]!", nil, []*TypeDefinition{{
 			Name: "StringNullableStringPair",
 			Fields: []*NameTypePair{
 				{"key", "String!"},
@@ -315,7 +268,7 @@ func Test_ConvertType(t *testing.T) {
 			},
 			IsMapType: true,
 		}}},
-		{"Map<i32, string>", "[IntStringPair!]!", nil, []*TypeDefinition{{
+		{"Map<i32,string>", "[IntStringPair!]!", nil, []*TypeDefinition{{
 			Name: "IntStringPair",
 			Fields: []*NameTypePair{
 				{"key", "Int!"},
@@ -323,7 +276,7 @@ func Test_ConvertType(t *testing.T) {
 			},
 			IsMapType: true,
 		}}},
-		{"Map<string, Map<string, f32>>", "[StringStringFloatPairListPair!]!", nil, []*TypeDefinition{
+		{"Map<string,Map<string,f32>>", "[StringStringFloatPairListPair!]!", nil, []*TypeDefinition{
 			{
 				Name: "StringStringFloatPairListPair",
 				Fields: []*NameTypePair{
@@ -346,11 +299,16 @@ func Test_ConvertType(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.inputType, func(t *testing.T) {
 
+			inputTypes := make(metadata.TypeMap, len(tc.inputTypeDefs))
+			for _, td := range tc.inputTypeDefs {
+				inputTypes[td.Name] = td
+			}
+
 			typeDefs := make(map[string]*TypeDefinition, len(tc.inputTypeDefs))
-			errors := transformTypes(tc.inputTypeDefs, typeDefs)
+			errors := transformTypes(inputTypes, typeDefs, lti)
 			require.Empty(t, errors)
 
-			result, err := convertType(tc.inputType, typeDefs, false)
+			result, err := convertType(tc.inputType, lti, typeDefs, false)
 
 			require.Nil(t, err)
 			require.Equal(t, tc.expectedOutputType, result)

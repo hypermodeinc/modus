@@ -5,6 +5,7 @@
 package plugins
 
 import (
+	"hmruntime/languages"
 	"hmruntime/plugins/metadata"
 
 	"github.com/tetratelabs/wazero"
@@ -15,7 +16,7 @@ type Plugin struct {
 	Module   wazero.CompiledModule
 	Metadata *metadata.Metadata
 	FileName string
-	Types    map[string]*metadata.TypeDefinition
+	Language languages.Language
 }
 
 func (p *Plugin) NameAndVersion() (name string, version string) {
@@ -32,8 +33,4 @@ func (p *Plugin) Version() string {
 
 func (p *Plugin) BuildId() string {
 	return p.Metadata.BuildId
-}
-
-func (p *Plugin) Language() metadata.PluginLanguage {
-	return p.Metadata.Language()
 }

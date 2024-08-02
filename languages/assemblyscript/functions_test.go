@@ -2,13 +2,12 @@
  * Copyright 2024 Hypermode, Inc.
  */
 
-package wasmhost
+package assemblyscript
 
 import (
 	"context"
-	"testing"
-
 	"hmruntime/plugins/metadata"
+	"testing"
 
 	"github.com/stretchr/testify/require"
 	"github.com/tetratelabs/wazero/api"
@@ -39,53 +38,24 @@ func (m *MockModule) CloseWithExitCode(ctx context.Context, exitCode uint32) err
 func (m *MockModule) IsClosed() bool                                                 { return false }
 func (m *MockModule) Close(ctx context.Context) error                                { return m.CloseWithExitCode(ctx, 0) }
 
-func Test_GetParameters_Old(t *testing.T) {
-	paramInfo := []*metadata.Parameter{
-		{Name: "x", Type: &metadata.TypeInfo{Name: "Int", Path: "i32"}, Optional: true},
-		{Name: "y", Type: &metadata.TypeInfo{Name: "Int", Path: "i32"}, Optional: true},
-		{Name: "z", Type: &metadata.TypeInfo{Name: "Int", Path: "i32"}, Optional: true},
-	}
+func Test_GetParameters(t *testing.T) {
 
-	// no parameters supplied
-	parameters := make(map[string]any)
-	mockModule := &MockModule{}
-	params, _, err := getParameters(context.Background(), mockModule, paramInfo, parameters)
-	require.NoError(t, err)
-	require.Equal(t, uint64(0b000), params[len(params)-1])
-
-	// only first parameter supplied
-	parameters = make(map[string]any)
-	parameters["x"] = 1
-	mockModule = &MockModule{}
-	params, _, err = getParameters(context.Background(), mockModule, paramInfo, parameters)
-	require.NoError(t, err)
-	require.Equal(t, uint64(0b001), params[len(params)-1])
-
-	// only second parameter supplied
-	parameters = make(map[string]any)
-	parameters["y"] = 1
-	mockModule = &MockModule{}
-	params, _, err = getParameters(context.Background(), mockModule, paramInfo, parameters)
-	require.NoError(t, err)
-	require.Equal(t, uint64(0b010), params[len(params)-1])
-}
-
-func Test_GetParameters_New(t *testing.T) {
+	adapter := &wasmAdapter{}
 
 	makeDefault := func(val any) *any {
 		return &val
 	}
 
 	paramInfo := []*metadata.Parameter{
-		{Name: "x", Type: &metadata.TypeInfo{Name: "Int", Path: "i32"}, Default: makeDefault(0)},
-		{Name: "y", Type: &metadata.TypeInfo{Name: "Int", Path: "i32"}, Default: makeDefault(1)},
-		{Name: "z", Type: &metadata.TypeInfo{Name: "Int", Path: "i32"}, Default: makeDefault(2)},
+		{Name: "x", Type: "i32", Default: makeDefault(0)},
+		{Name: "y", Type: "i32", Default: makeDefault(1)},
+		{Name: "z", Type: "i32", Default: makeDefault(2)},
 	}
 
 	// no parameters supplied
 	parameters := make(map[string]any)
 	mockModule := &MockModule{}
-	params, _, err := getParameters(context.Background(), mockModule, paramInfo, parameters)
+	params, _, err := adapter.getParameters(context.Background(), mockModule, paramInfo, parameters)
 	require.NoError(t, err)
 	require.Equal(t, uint64(0), params[0])
 	require.Equal(t, uint64(1), params[1])
@@ -95,7 +65,7 @@ func Test_GetParameters_New(t *testing.T) {
 	parameters = make(map[string]any)
 	parameters["x"] = 100
 	mockModule = &MockModule{}
-	params, _, err = getParameters(context.Background(), mockModule, paramInfo, parameters)
+	params, _, err = adapter.getParameters(context.Background(), mockModule, paramInfo, parameters)
 	require.NoError(t, err)
 	require.Equal(t, uint64(100), params[0])
 	require.Equal(t, uint64(1), params[1])
@@ -105,7 +75,7 @@ func Test_GetParameters_New(t *testing.T) {
 	parameters = make(map[string]any)
 	parameters["y"] = 100
 	mockModule = &MockModule{}
-	params, _, err = getParameters(context.Background(), mockModule, paramInfo, parameters)
+	params, _, err = adapter.getParameters(context.Background(), mockModule, paramInfo, parameters)
 	require.NoError(t, err)
 	require.Equal(t, uint64(0), params[0])
 	require.Equal(t, uint64(100), params[1])

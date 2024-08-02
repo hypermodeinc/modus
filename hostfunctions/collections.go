@@ -19,13 +19,10 @@ func hostUpsertToCollectionV2(ctx context.Context, mod wasm.Module, pCollectionN
 	var texts []string
 	var labels [][]string
 
-	err := readParams4(ctx, mod, pCollectionName, pKeys, pTexts, pLabels, &collectionName, &keys, &texts, &labels)
-
+	err := readParams(ctx, mod, param{pCollectionName, &collectionName}, param{pKeys, &keys}, param{pTexts, &texts}, param{pLabels, &labels})
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error reading input parameters.")
-
 		return 0
-
 	}
 
 	mutationRes, err := collections.UpsertToCollection(ctx, collectionName, keys, texts, labels)
@@ -48,7 +45,7 @@ func hostDeleteFromCollection(ctx context.Context, mod wasm.Module, pCollectionN
 	var collectionName string
 	var key string
 
-	err := readParams2(ctx, mod, pCollectionName, pKey, &collectionName, &key)
+	err := readParams(ctx, mod, param{pCollectionName, &collectionName}, param{pKey, &key})
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error reading input parameters.")
 		return 0
@@ -77,8 +74,7 @@ func hostSearchCollection(ctx context.Context, mod wasm.Module, pCollectionName 
 	var limit int32
 	var returnText bool
 
-	err := readParams5(ctx, mod, pCollectionName, pSearchMethod, pText, pLimit, pReturnText,
-		&collectionName, &searchMethod, &text, &limit, &returnText)
+	err := readParams(ctx, mod, param{pCollectionName, &collectionName}, param{pSearchMethod, &searchMethod}, param{pText, &text}, param{pLimit, &limit}, param{pReturnText, &returnText})
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error reading input parameters.")
 		return 0
@@ -131,7 +127,7 @@ func hostComputeDistance(ctx context.Context, mod wasm.Module, pCollectionName u
 	var id1 string
 	var id2 string
 
-	err := readParams4(ctx, mod, pCollectionName, pSearchMethod, pId1, pId2, &collectionName, &searchMethod, &id1, &id2)
+	err := readParams(ctx, mod, param{pCollectionName, &collectionName}, param{pSearchMethod, &searchMethod}, param{pId1, &id1}, param{pId2, &id2})
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error reading input parameters.")
 		return 0
@@ -157,7 +153,7 @@ func hostRecomputeSearchMethod(ctx context.Context, mod wasm.Module, pCollection
 	var collectionName string
 	var searchMethod string
 
-	err := readParams2(ctx, mod, pCollectionName, pSearchMethod, &collectionName, &searchMethod)
+	err := readParams(ctx, mod, param{pCollectionName, &collectionName}, param{pSearchMethod, &searchMethod})
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error reading input parameters.")
 		return 0
@@ -182,7 +178,7 @@ func hostGetTextFromCollection(ctx context.Context, mod wasm.Module, pCollection
 	var collectionName string
 	var key string
 
-	err := readParams2(ctx, mod, pCollectionName, pKey, &collectionName, &key)
+	err := readParams(ctx, mod, param{pCollectionName, &collectionName}, param{pKey, &key})
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error reading input parameters.")
 		return 0
@@ -206,7 +202,7 @@ func hostGetTextFromCollection(ctx context.Context, mod wasm.Module, pCollection
 func hostGetTextsFromCollection(ctx context.Context, mod wasm.Module, pCollectionName uint32) uint32 {
 	var collectionName string
 
-	err := readParam(ctx, mod, pCollectionName, &collectionName)
+	err := readParams(ctx, mod, param{pCollectionName, &collectionName})
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error reading input parameters.")
 		return 0

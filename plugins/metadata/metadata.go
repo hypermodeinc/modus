@@ -6,74 +6,57 @@ package metadata
 
 import (
 	"strings"
-	"time"
 
 	"hmruntime/utils"
 
 	"github.com/buger/jsonparser"
 )
 
+const MetadataVersion = 2
+
+type TypeMap map[string]*TypeDefinition
+type FunctionMap map[string]*Function
+
 type Metadata struct {
-	Plugin    string            `json:"plugin"`
-	SDK       string            `json:"sdk"`
-	Library   string            `json:"library"` // deprecated
-	BuildId   string            `json:"buildId"`
-	BuildTime time.Time         `json:"buildTs"`
-	GitRepo   string            `json:"gitRepo"`
-	GitCommit string            `json:"gitCommit"`
-	Functions []*Function       `json:"functions"`
-	Types     []*TypeDefinition `json:"types"`
+	Plugin    string      `json:"plugin"`
+	Module    string      `json:"module"`
+	SDK       string      `json:"sdk"`
+	BuildId   string      `json:"buildId"`
+	BuildTime string      `json:"buildTs"`
+	GitRepo   string      `json:"gitRepo,omitempty"`
+	GitCommit string      `json:"gitCommit,omitempty"`
+	FnExports FunctionMap `json:"fnExports,omitempty"`
+	FnImports FunctionMap `json:"fnImports,omitempty"`
+	Types     TypeMap     `json:"types,omitempty"`
 }
 
 type Function struct {
-	Name       string       `json:"name"`
-	Parameters []*Parameter `json:"parameters"`
-	ReturnType *TypeInfo    `json:"returnType"`
-}
-
-func (f *Function) String() string {
-	b := strings.Builder{}
-	b.WriteString(f.Name)
-	b.WriteString("(")
-	for i, p := range f.Parameters {
-		if i > 0 {
-			b.WriteString(", ")
-		}
-		b.WriteString(p.Name)
-		b.WriteString(": ")
-		b.WriteString(p.Type.Name)
-	}
-	b.WriteString("): ")
-	b.WriteString(f.ReturnType.Name)
-	return b.String()
-}
-
-func (f *Function) Signature() string {
-	b := strings.Builder{}
-	b.WriteString("(")
-	for i, p := range f.Parameters {
-		if i > 0 {
-			b.WriteString(",")
-		}
-		b.WriteString(p.Type.Name)
-	}
-	b.WriteString("):")
-	b.WriteString(f.ReturnType.Name)
-	return b.String()
+	Name       string       `json:"-"`
+	Parameters []*Parameter `json:"parameters,omitempty"`
+	Results    []*Result    `json:"results,omitempty"`
 }
 
 type TypeDefinition struct {
-	Id     uint32   `json:"id"`
-	Path   string   `json:"path"`
-	Name   string   `json:"name"`
-	Fields []*Field `json:"fields"`
+	Name   string   `json:"-"`
+	Id     uint32   `json:"id,omitempty"` // used in AssemblyScript only
+	Fields []*Field `json:"fields,omitempty"`
 }
 
 type Parameter struct {
-	Name     string    `json:"name"`
-	Type     *TypeInfo `json:"type"`
-	Optional bool      `json:"optional"` // deprecated
-	Default  *any      `json:"default"`
+	Name     string `json:"name"`
+	Type     string `json:"type"`
+	Default  *any   `json:"default,omitempty"`
+	Optional bool   `json:"-"` // deprecated
+}
+
+type Result struct {
+	Name string `json:"name,omitempty"`
+	Type string `json:"type"`
+}
+
+type Field struct {
+	Name string `json:"name"`
+	Type string `json:"type"`
 }
 
 func (p *Parameter) UnmarshalJSON(data []byte) error {
@@ -94,12 +77,6 @@ func (p *Parameter) UnmarshalJSON(data []byte) error {
 	if err := utils.JsonDeserialize(typeData, &p.Type); err != nil {
 		return err
 	}
-
-	optional, err := jsonparser.GetBoolean(data, "optional")
-	if err != nil && err != jsonparser.KeyPathNotFoundError {
-		return err
-	}
-	p.Optional = optional
 
 	defaultData, dt, _, err := jsonparser.Get(data, "default")
 	switch dt {
@@ -128,48 +105,6 @@ func (p *Parameter) UnmarshalJSON(data []byte) error {
 	}
 
 	return nil
-}
-
-type Field struct {
-	Name string    `json:"name"`
-	Type *TypeInfo `json:"type"`
-}
-
-type TypeInfo struct {
-	Name     string         `json:"name"`
-	Path     string         `json:"path"`
-	Language PluginLanguage `json:"-"`
-	Nullable bool           `json:"-"`
-}
-
-type PluginLanguage int
-
-const (
-	UnknownLanguage PluginLanguage = iota
-	AssemblyScript
-	GoLang
-)
-
-func (lang PluginLanguage) String() string {
-	switch lang {
-	case AssemblyScript:
-		return "AssemblyScript"
-	case GoLang:
-		return "Go"
-	default:
-		return "Unknown"
-	}
-}
-
-func (m *Metadata) Language() PluginLanguage {
-	switch m.SdkName() {
-	case "functions-as":
-		return AssemblyScript
-	case "functions-go":
-		return GoLang
-	default:
-		return UnknownLanguage
-	}
 }
 
 func (m *Metadata) NameAndVersion() (name string, version string) {
@@ -206,4 +141,68 @@ func parseNameAndVersion(s string) (name string, version string) {
 		return s, ""
 	}
 	return s[:i], s[i+1:]
+}
+
+func NewPluginMetadata() *Metadata {
+	return &Metadata{
+		FnExports: make(FunctionMap),
+		FnImports: make(FunctionMap),
+		Types:     make(TypeMap),
+	}
+}
+
+func (m *FunctionMap) AddFunction(name string) *Function {
+	f := &Function{
+		Name:       name,
+		Parameters: make([]*Parameter, 0),
+		Results:    make([]*Result, 0),
+	}
+
+	(*m)[name] = f
+	return f
+}
+
+func (m *TypeMap) AddType(name string) *TypeDefinition {
+	t := &TypeDefinition{
+		Name:   name,
+		Fields: make([]*Field, 0),
+	}
+
+	(*m)[name] = t
+	return t
+}
+
+func (f *Function) WithParameter(name string, typ string, dflt ...any) *Function {
+	p := &Parameter{Name: name, Type: typ}
+	if len(dflt) > 0 {
+		p.Default = &dflt[0]
+	}
+	f.Parameters = append(f.Parameters, p)
+	return f
+}
+
+func (f *Function) WithResult(typ string) *Function {
+	r := &Result{Type: typ}
+	f.Results = append(f.Results, r)
+	return f
+}
+
+func (f *Function) WithNamedResult(name string, typ string) *Function {
+	r := &Result{
+		Name: name,
+		Type: typ,
+	}
+	f.Results = append(f.Results, r)
+	return f
+}
+
+func (t *TypeDefinition) WithId(id uint32) *TypeDefinition {
+	t.Id = id
+	return t
+}
+
+func (t *TypeDefinition) WithField(name string, typ string) *TypeDefinition {
+	f := &Field{Name: name, Type: typ}
+	t.Fields = append(t.Fields, f)
+	return t
 }

@@ -15,13 +15,15 @@ func Test_ReadWriteBuffer(t *testing.T) {
 	f := testutils.NewWasmTestFixture()
 	defer f.Close()
 
+	wa := _wasmAdapter
+
 	buf := []byte{0x01, 0x02, 0x03, 0x04}
-	ptr, err := writeBytes(f.Context, f.Module, buf)
+	ptr, err := wa.writeBytes(f.Context, f.Module, buf)
 	if err != nil {
 		t.Error(err)
 	}
 
-	b, err := readBytes(f.Memory, ptr)
+	b, err := wa.readBytes(f.Memory, ptr)
 	if err != nil {
 		t.Error(err)
 	}

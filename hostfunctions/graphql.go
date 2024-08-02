@@ -16,7 +16,7 @@ import (
 func hostExecuteGQL(ctx context.Context, mod wasm.Module, pHostName uint32, pStmt uint32, pVarsJson uint32) uint32 {
 
 	var hostName, stmt, varsJson string
-	err := readParams3(ctx, mod, pHostName, pStmt, pVarsJson, &hostName, &stmt, &varsJson)
+	err := readParams(ctx, mod, param{pHostName, &hostName}, param{pStmt, &stmt}, param{pVarsJson, &varsJson})
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error reading input parameters.")
 		return 0

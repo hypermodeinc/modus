@@ -2,17 +2,19 @@ package collections
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math"
 	"sort"
 
-	wasm "github.com/tetratelabs/wazero/api"
-
 	collection_utils "hmruntime/collections/utils"
 	"hmruntime/functions"
 	"hmruntime/manifestdata"
+	"hmruntime/plugins"
 	"hmruntime/utils"
 	"hmruntime/wasmhost"
+
+	wasm "github.com/tetratelabs/wazero/api"
 )
 
 func UpsertToCollection(ctx context.Context, collectionName string, keys []string, texts []string, labels [][]string) (*collectionMutationResult, error) {
@@ -49,14 +51,7 @@ func UpsertToCollection(ctx context.Context, collectionName string, keys []strin
 		}
 
 		embedder := searchMethod.Embedder
-
-		info, err := functions.GetFunctionInfo(embedder)
-		if err != nil {
-			return nil, err
-		}
-
-		err = functions.VerifyFunctionSignature(info, "string[]", "f32[][]")
-		if err != nil {
+		if err := validateEmbedder(ctx, embedder); err != nil {
 			return nil, err
 		}
 
@@ -102,6 +97,43 @@ func UpsertToCollection(ctx context.Context, collectionName string, keys []strin
 	}, nil
 }
 
+var errInvalidEmbedderSignature = errors.New("invalid embedder function signature")
+
+func validateEmbedder(ctx context.Context, embedder string) error {
+
+	fn, err := functions.GetFunction(embedder)
+	if err != nil {
+		return err
+	}
+
+	// Embedder functions must take a single string[] parameter and return a single f32[][] or f64[][] array.
+	// The types are language-specific, so we use the plugin language's type info.
+
+	if len(fn.Parameters) != 1 || len(fn.Results) != 1 {
+		return errInvalidEmbedderSignature
+	}
+
+	plugin := ctx.Value(utils.PluginContextKey).(*plugins.Plugin)
+	lti := plugin.Language.TypeInfo()
+
+	p := fn.Parameters[0]
+	if !lti.IsArrayType(p.Type) || !lti.IsStringType(lti.GetArraySubtype(p.Type)) {
+		return errInvalidEmbedderSignature
+	}
+
+	r := fn.Results[0]
+	if !lti.IsArrayType(r.Type) {
+		return errInvalidEmbedderSignature
+	}
+
+	a := lti.GetArraySubtype(r.Type)
+	if !lti.IsArrayType(a) || !lti.IsFloatType(lti.GetArraySubtype(a)) {
+		return errInvalidEmbedderSignature
+	}
+
+	return nil
+}
+
 func DeleteFromCollection(ctx context.Context, collectionName string, key string) (*collectionMutationResult, error) {
 	collection, err := GlobalCollectionFactory.Find(ctx, collectionName)
 	if err != nil {
@@ -139,14 +171,21 @@ func getEmbedder(ctx context.Context, collectionName string, searchMethod string
 	if !ok {
 		return "", fmt.Errorf("collection %s not found in manifest", collectionName)
 	}
+
 	manifestSearchMethod, ok := manifestColl.SearchMethods[searchMethod]
 	if !ok {
 		return "", fmt.Errorf("search method %s not found in collection %s", searchMethod, collectionName)
 	}
+
 	embedder := manifestSearchMethod.Embedder
 	if embedder == "" {
 		return "", fmt.Errorf("embedder not found in search method %s of collection %s", searchMethod, collectionName)
 	}
+
+	if err := validateEmbedder(ctx, embedder); err != nil {
+		return "", err
+	}
+
 	return embedder, nil
 }
 
@@ -164,16 +203,6 @@ func SearchCollection(ctx context.Context, collectionName string, searchMethod s
 	}
 
 	embedder, err := getEmbedder(ctx, collectionName, searchMethod)
-	if err != nil {
-		return nil, err
-	}
-
-	info, err := functions.GetFunctionInfo(embedder)
-	if err != nil {
-		return nil, err
-	}
-
-	err = functions.VerifyFunctionSignature(info, "string[]", "f32[][]")
 	if err != nil {
 		return nil, err
 	}
@@ -403,16 +432,6 @@ func RecomputeSearchMethod(ctx context.Context, mod wasm.Module, collectionName 
 	}
 
 	embedder, err := getEmbedder(ctx, collectionName, searchMethod)
-	if err != nil {
-		return nil, err
-	}
-
-	info, err := functions.GetFunctionInfo(embedder)
-	if err != nil {
-		return nil, err
-	}
-
-	err = functions.VerifyFunctionSignature(info, "string[]", "f32[][]")
 	if err != nil {
 		return nil, err
 	}

@@ -15,7 +15,7 @@ import (
 
 func hostFetch(ctx context.Context, mod wasm.Module, pRequest uint32) (pResponse uint32) {
 	var request httpclient.HttpRequest
-	if err := readParam(ctx, mod, pRequest, &request); err != nil {
+	if err := readParams(ctx, mod, param{pRequest, &request}); err != nil {
 		logger.Err(ctx, err).Msg("Error reading input parameters.")
 		return 0
 	}

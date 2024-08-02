@@ -9,36 +9,37 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"hmruntime/plugins/metadata"
 	"reflect"
 
 	"github.com/go-viper/mapstructure/v2"
 	wasm "github.com/tetratelabs/wazero/api"
 )
 
-func EncodeValue[T any](ctx context.Context, mod wasm.Module, data T) (uint64, error) {
-	typ, err := getTypeInfoForType[T]()
+func (wa *wasmAdapter) EncodeValue(ctx context.Context, mod wasm.Module, data any) (uint64, error) {
+
+	rt := reflect.TypeOf(data)
+	typ, err := wa.typeInfo.getAssemblyScriptType(rt)
 	if err != nil {
 		return 0, err
 	}
 
-	return encodeValue(ctx, mod, typ, data)
+	return wa.encodeValue(ctx, mod, typ, data)
 }
 
-func encodeValue(ctx context.Context, mod wasm.Module, typ *metadata.TypeInfo, data any) (uint64, error) {
+func (wa *wasmAdapter) encodeValue(ctx context.Context, mod wasm.Module, typ string, data any) (uint64, error) {
 	// For most calls, we don't need to pin the memory.
 	// If it needs to be pinned, the caller will do it.
-	return doEncodeValue(ctx, mod, typ, data, false)
+	return wa.doEncodeValue(ctx, mod, typ, data, false)
 }
 
-func EncodeValueForParameter(ctx context.Context, mod wasm.Module, typ *metadata.TypeInfo, data any) (uint64, error) {
+func (wa *wasmAdapter) encodeValueForParameter(ctx context.Context, mod wasm.Module, typ string, data any) (uint64, error) {
 	// For the inbound parameters, we need to pin the memory.
 	// Otherwise, just allocating more parameters could cause the GC to run and free the memory we just allocated.
 	// Note we don't bother tracking these to unpin later, because we discard the module instance and its memory after the call.
-	return doEncodeValue(ctx, mod, typ, data, true)
+	return wa.doEncodeValue(ctx, mod, typ, data, true)
 }
 
-func doEncodeValue(ctx context.Context, mod wasm.Module, typ *metadata.TypeInfo, data any, pin bool) (val uint64, err error) {
+func (wa *wasmAdapter) doEncodeValue(ctx context.Context, mod wasm.Module, typ string, data any, pin bool) (val uint64, err error) {
 
 	// Recover from panics and convert them to errors
 	defer func() {
@@ -52,7 +53,7 @@ func doEncodeValue(ctx context.Context, mod wasm.Module, typ *metadata.TypeInfo,
 	}()
 
 	// Handle null values if the type is nullable
-	if isNullable(typ.Path) {
+	if wa.typeInfo.IsNullable(typ) {
 		if data == nil {
 			return 0, nil
 		}
@@ -64,11 +65,11 @@ func doEncodeValue(ctx context.Context, mod wasm.Module, typ *metadata.TypeInfo,
 			}
 		}
 
-		typ = removeNull(typ)
+		typ = wa.typeInfo.GetUnderlyingType(typ)
 	}
 
 	// Primitive types
-	switch typ.Path {
+	switch typ {
 	case "bool":
 		b, ok := data.(bool)
 		if !ok {
@@ -182,14 +183,14 @@ func doEncodeValue(ctx context.Context, mod wasm.Module, typ *metadata.TypeInfo,
 	}
 
 	// Managed types need to be written to wasm memory
-	offset, err := writeObject(ctx, mod, typ, data)
+	offset, err := wa.writeObject(ctx, mod, typ, data)
 	if err != nil {
 		return 0, err
 	}
 
 	// Pin the memory if requested
 	if pin {
-		err := pinWasmMemory(ctx, mod, offset)
+		err := wa.pinWasmMemory(ctx, mod, offset)
 		if err != nil {
 			return 0, fmt.Errorf("failed to pin wasm memory: %w", err)
 		}
@@ -198,61 +199,51 @@ func doEncodeValue(ctx context.Context, mod wasm.Module, typ *metadata.TypeInfo,
 	return uint64(offset), nil
 }
 
-func DecodeValueAs[T any](ctx context.Context, mod wasm.Module, val uint64) (data T, err error) {
+func (wa *wasmAdapter) DecodeValue(ctx context.Context, mod wasm.Module, val uint64, data any) error {
+	if val == 0 {
+		return nil
+	}
 
-	// Recover from panics and convert them to errors
-	defer func() {
-		if r := recover(); r != nil {
-			if e, ok := r.(error); ok {
-				err = e
-			} else if e, ok := r.(string); ok {
-				err = errors.New(e)
+	rv := reflect.ValueOf(data)
+	if rv.Kind() != reflect.Ptr {
+		return fmt.Errorf("expected pointer, got %T", data)
+	}
+
+	rvElem := rv.Elem()
+
+	typ, err := wa.typeInfo.getAssemblyScriptType(rvElem.Type())
+	if err != nil {
+		return err
+	}
+
+	d, err := wa.decodeValue(ctx, mod, typ, val)
+	if err != nil {
+		return err
+	}
+
+	if rvElem.Kind() == reflect.Struct {
+		if m, ok := d.(map[string]any); ok {
+			if err := mapToStruct(m, rv.Interface()); err != nil {
+				return err
 			}
+			return nil
 		}
-	}()
-
-	var result T
-
-	typ, err := getTypeInfoForType[T]()
-	if err != nil {
-		return result, err
 	}
 
-	r, err := DecodeValue(ctx, mod, typ, val)
-	if err != nil {
-		return result, err
+	rd := reflect.ValueOf(d)
+	if rd.Type() == rvElem.Type() {
+		rvElem.Set(rd)
+		return nil
 	}
 
-	switch v := r.(type) {
-	case T:
-		// If the type is already the expected type, return it.
-		return v, nil
-	case map[string]any:
-		// If the type is a map, convert it to the expected type.
-		// This is expected in the case of a host function that takes a struct as a parameter.
-		return mapToStruct[T](v)
-	}
-
-	return result, fmt.Errorf("unexpected type %T, expected %T", r, result)
+	return fmt.Errorf("expected %s, got %s", rvElem.Type(), rd.Type())
 }
 
-func mapToStruct[T any](m map[string]any) (T, error) {
-	var result T
-
-	config := &mapstructure.DecoderConfig{
-		Result: &result,
-	}
-
-	decoder, err := mapstructure.NewDecoder(config)
-	if err != nil {
-		return result, err
-	}
-
-	err = decoder.Decode(m)
-	return result, err
+func (wa *wasmAdapter) decodeValueForResult(ctx context.Context, mod wasm.Module, typ string, val uint64) (data any, err error) {
+	return wa.decodeValue(ctx, mod, typ, val)
 }
 
-func DecodeValue(ctx context.Context, mod wasm.Module, typ *metadata.TypeInfo, val uint64) (data any, err error) {
+func (wa *wasmAdapter) decodeValue(ctx context.Context, mod wasm.Module, typ string, val uint64) (data any, err error) {
 
 	// Recover from panics and convert them to errors
 	defer func() {
@@ -266,15 +257,15 @@ func DecodeValue(ctx context.Context, mod wasm.Module, typ *metadata.TypeInfo, v
 	}()
 
 	// Handle null values if the type is nullable
-	if isNullable(typ.Path) {
+	if wa.typeInfo.IsNullable(typ) {
 		if val == 0 {
 			return nil, nil
 		}
-		typ = removeNull(typ)
+		typ = wa.typeInfo.GetUnderlyingType(typ)
 	}
 
 	// Primitive types
-	switch typ.Path {
+	switch typ {
 	case "void":
 		return 0, nil
 
@@ -299,12 +290,19 @@ func DecodeValue(ctx context.Context, mod wasm.Module, typ *metadata.TypeInfo, v
 
 	// Managed types are read from wasm memory
 	mem := mod.Memory()
-	return readObject(ctx, mem, typ, uint32(val))
+	return wa.readObject(ctx, mem, typ, uint32(val))
 }
 
-func removeNull(typ *metadata.TypeInfo) *metadata.TypeInfo {
-	return &metadata.TypeInfo{
-		Name: typ.Name[:len(typ.Name)-7], // remove " | null"
-		Path: typ.Path[:len(typ.Path)-5], // remove "|null"
+func mapToStruct(m map[string]any, result any) error {
+
+	config := &mapstructure.DecoderConfig{
+		Result: result,
 	}
+
+	decoder, err := mapstructure.NewDecoder(config)
+	if err != nil {
+		return err
+	}
+
+	return decoder.Decode(m)
 }
