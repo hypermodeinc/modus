@@ -174,10 +174,6 @@ type HasTypeInfo interface {
 func GetTypeInfo[T any]() (plugins.TypeInfo, error) {
 	var v T
 
-	if t, ok := any(&v).(HasTypeInfo); ok {
-		return t.GetTypeInfo(), nil
-	}
-
 	switch any(v).(type) {
 	case bool:
 		return getTypeInfo("bool"), nil
@@ -203,8 +199,16 @@ func GetTypeInfo[T any]() (plugins.TypeInfo, error) {
 		return getTypeInfo("f64"), nil
 	case []byte:
 		return ArrayBufferType, nil
-	case string:
+	case string, *string:
 		return StringType, nil
+	}
+
+	if t, ok := any(v).(HasTypeInfo); ok {
+		return t.GetTypeInfo(), nil
+	}
+
+	if t, ok := any(&v).(HasTypeInfo); ok {
+		return t.GetTypeInfo(), nil
 	}
 
 	t := reflect.TypeFor[T]()
