@@ -32,6 +32,37 @@ func (r *searchMethodMutationResult) GetTypeInfo() plugins.TypeInfo {
 	}
 }
 
+type collectionClassificationResult struct {
+	Collection   string
+	SearchMethod string
+	Status       string
+	Label        string
+	LabelsResult []string
+	Objects      []collectionClassificationResultObject
+	Error        string
+}
+
+func (r *collectionClassificationResult) GetTypeInfo() plugins.TypeInfo {
+	return plugins.TypeInfo{
+		Name: "CollectionClassificationResult",
+		Path: "~lib/@hypermode/functions-as/assembly/collections/CollectionClassificationResult",
+	}
+}
+
+type collectionClassificationResultObject struct {
+	Key      string
+	Label    string
+	Distance float64
+	Score    float64
+}
+
+func (r *collectionClassificationResultObject) GetTypeInfo() plugins.TypeInfo {
+	return plugins.TypeInfo{
+		Name: "CollectionClassificationResultObject",
+		Path: "~lib/@hypermode/functions-as/assembly/collections/CollectionClassificationResultObject",
+	}
+}
+
 type collectionSearchResult struct {
 	Collection   string
 	SearchMethod string

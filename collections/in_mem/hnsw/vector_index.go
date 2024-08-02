@@ -89,6 +89,10 @@ func (ims *HnswVectorIndex) Search(ctx context.Context, query []float32, maxResu
 	return finalResults, nil
 }
 
+func (ims *HnswVectorIndex) ZSClassify(ctx context.Context, query []float32) (string, error) {
+	return "", fmt.Errorf("not implemented")
+}
+
 func (ims *HnswVectorIndex) SearchWithKey(ctx context.Context, queryKey string, maxResults int, filter index.SearchFilter) (utils.MaxTupleHeap, error) {
 	ims.mu.RLock()
 	query, found := ims.HnswIndex.Lookup(queryKey)

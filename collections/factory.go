@@ -186,7 +186,7 @@ func LoadTextsIntoCollection(ctx context.Context, collection interfaces.Collecti
 	}
 
 	// Query all texts from checkpoint
-	textIds, keys, texts, err := db.QueryCollectionTextsFromCheckpoint(ctx, collection.GetCollectionName(), textCheckpointId)
+	textIds, keys, texts, labels, err := db.QueryCollectionTextsFromCheckpoint(ctx, collection.GetCollectionName(), textCheckpointId)
 	if err != nil {
 		return err
 	}
@@ -195,7 +195,7 @@ func LoadTextsIntoCollection(ctx context.Context, collection interfaces.Collecti
 	}
 
 	// Insert all texts into collection
-	err = collection.InsertTextsToMemory(ctx, textIds, keys, texts)
+	err = collection.InsertTextsToMemory(ctx, textIds, keys, texts, labels)
 	if err != nil {
 		return err
 	}
@@ -235,7 +235,7 @@ func syncTextsWithVectorIndex(ctx context.Context, collection interfaces.Collect
 	if err != nil {
 		return err
 	}
-	textIds, keys, texts, err := db.QueryCollectionTextsFromCheckpoint(ctx, collection.GetCollectionName(), lastIndexedTextId)
+	textIds, keys, texts, _, err := db.QueryCollectionTextsFromCheckpoint(ctx, collection.GetCollectionName(), lastIndexedTextId)
 	if err != nil {
 		return err
 	}

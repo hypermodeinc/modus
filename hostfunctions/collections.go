@@ -9,12 +9,13 @@ import (
 	wasm "github.com/tetratelabs/wazero/api"
 )
 
-func hostUpsertToCollection(ctx context.Context, mod wasm.Module, pCollectionName uint32, pKeys uint32, pTexts uint32) uint32 {
+func hostUpsertToCollection(ctx context.Context, mod wasm.Module, pCollectionName uint32, pKeys uint32, pTexts uint32, pLabels uint32) uint32 {
 	var collectionName string
 	var keys []string
 	var texts []string
+	var labels []string
 
-	err := readParams3(ctx, mod, pCollectionName, pKeys, pTexts, &collectionName, &keys, &texts)
+	err := readParams4(ctx, mod, pCollectionName, pKeys, pTexts, pLabels, &collectionName, &keys, &texts, &labels)
 
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error reading input parameters.")
@@ -23,7 +24,7 @@ func hostUpsertToCollection(ctx context.Context, mod wasm.Module, pCollectionNam
 
 	}
 
-	mutationRes, err := collections.UpsertToCollection(ctx, collectionName, keys, texts)
+	mutationRes, err := collections.UpsertToCollection(ctx, collectionName, keys, texts, labels)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error upserting to collection.")
 		return 0
@@ -86,6 +87,32 @@ func hostSearchCollection(ctx context.Context, mod wasm.Module, pCollectionName 
 	}
 
 	offset, err := writeResult(ctx, mod, *searchRes)
+	if err != nil {
+		logger.Err(ctx, err).Msg("Error writing result.")
+		return 0
+	}
+
+	return offset
+}
+
+func hostZSClassifyCollection(ctx context.Context, mod wasm.Module, pCollectionName uint32, pSearchMethod uint32, pText uint32) uint32 {
+	var collectionName string
+	var searchMethod string
+	var text string
+
+	err := readParams3(ctx, mod, pCollectionName, pSearchMethod, pText, &collectionName, &searchMethod, &text)
+	if err != nil {
+		logger.Err(ctx, err).Msg("Error reading input parameters.")
+		return 0
+	}
+
+	classification, err := collections.ZSClassify(ctx, collectionName, searchMethod, text)
+	if err != nil {
+		logger.Err(ctx, err).Msg("Error classifying.")
+		return 0
+	}
+
+	offset, err := writeResult(ctx, mod, classification)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error writing result.")
 		return 0
