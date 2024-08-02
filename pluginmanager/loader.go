@@ -69,7 +69,7 @@ func loadPlugin(ctx context.Context, filename string) error {
 	}
 
 	// Get the metadata for the plugin.
-	metadata, err := plugins.GetPluginMetadata(ctx, &cm)
+	metadata, err := plugins.GetPluginMetadata(ctx, cm)
 	if err == plugins.ErrPluginMetadataNotFound {
 		logger.Error(ctx).
 			Bool("user_visible", true).
@@ -83,7 +83,7 @@ func loadPlugin(ctx context.Context, filename string) error {
 	db.WritePluginInfo(ctx, &metadata)
 
 	// Make the plugin object.
-	plugin := makePlugin(ctx, &cm, filename, metadata)
+	plugin := makePlugin(ctx, cm, filename, metadata)
 
 	// Log the details of the loaded plugin.
 	logPluginLoaded(ctx, plugin)
@@ -106,7 +106,7 @@ func compileModule(ctx context.Context, bytes []byte) (wazero.CompiledModule, er
 	return cm, nil
 }
 
-func makePlugin(ctx context.Context, cm *wazero.CompiledModule, filename string, metadata plugins.PluginMetadata) plugins.Plugin {
+func makePlugin(ctx context.Context, cm wazero.CompiledModule, filename string, metadata plugins.PluginMetadata) plugins.Plugin {
 	span := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
 
@@ -185,5 +185,5 @@ func unloadPlugin(ctx context.Context, filename string) error {
 		Msg("Unloading plugin.")
 
 	registry.Remove(p)
-	return (*p.Module).Close(ctx)
+	return p.Module.Close(ctx)
 }

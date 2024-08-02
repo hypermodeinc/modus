@@ -15,7 +15,7 @@ import (
 )
 
 type Plugin struct {
-	Module   *wazero.CompiledModule
+	Module   wazero.CompiledModule
 	Metadata PluginMetadata
 	FileName string
 	Types    map[string]TypeDefinition
