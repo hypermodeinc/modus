@@ -61,16 +61,17 @@ func TestMultipleSequentialVectorIndexes(t *testing.T) {
 
 			// Verify the vectors were inserted correctly
 			for _, key := range keys {
+				numResults := 15
 				expectedVec, err := index.GetVector(ctx, key)
 				if err != nil {
 					t.Errorf("index %d: Failed to get expected vector from index: %v", i, err)
 				}
-				objs, err := index.SearchWithKey(ctx, key, 1, nil)
+				objs, err := index.SearchWithKey(ctx, key, numResults, nil)
 				if err != nil {
 					t.Errorf("index %d: Failed to search vector in index: %v", i, err)
 				}
-				if len(objs) == 0 {
-					t.Errorf("index %d: Expected obj with length 1, got %v", i, len(objs))
+				if len(objs) != 3 {
+					t.Errorf("index %d: Expected objs with length 3, got %v", i, len(objs))
 				}
 				resVec, err := index.GetVector(ctx, objs[0].GetIndex())
 				if err != nil {

@@ -526,6 +526,11 @@ func (h *Graph[K]) SearchWithKey(key K, k int) ([]SearchResultNode[K], error) {
 	}
 
 	out := make([]SearchResultNode[K], 0, k)
+
+	if len(node.neighbors)+1 < k {
+		return h.Search(node.Value, k)
+	}
+
 	out = append(out, SearchResultNode[K]{
 		Node:     node.Node,
 		Distance: 0,
