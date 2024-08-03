@@ -216,25 +216,9 @@ func DecodeValueAs[T any](ctx context.Context, mod wasm.Module, typ plugins.Type
 		return mapToStruct[T](v)
 	case []kvp:
 		return kvpsToMap[T](v)
-	case []any:
-		return anySliceToTypedSlice[T](v)
 	}
 
 	return result, fmt.Errorf("unexpected type %T, expected %T", r, result)
-}
-
-func anySliceToTypedSlice[T any](v []any) (T, error) {
-	var result T
-	if reflect.TypeOf(result).Kind() != reflect.Slice {
-		return result, fmt.Errorf("unexpected type %T, expected a slice type", result)
-	}
-
-	sliceType := reflect.TypeOf(result)
-	slice := reflect.MakeSlice(sliceType, len(v), len(v))
-	for i, item := range v {
-		slice.Index(i).Set(reflect.ValueOf(item))
-	}
-	return slice.Interface().(T), nil
 }
 
 var kvpsType = reflect.TypeOf([]kvp{})

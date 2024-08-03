@@ -7,6 +7,8 @@ package assemblyscript
 import (
 	"context"
 	"fmt"
+	"reflect"
+
 	"hmruntime/plugins"
 	"hmruntime/utils"
 
@@ -15,7 +17,7 @@ import (
 
 // Reference: https://github.com/AssemblyScript/assemblyscript/blob/main/std/assembly/array.ts
 
-func readArray(ctx context.Context, mem wasm.Memory, def plugins.TypeDefinition, offset uint32) (data []any, err error) {
+func readArray(ctx context.Context, mem wasm.Memory, def plugins.TypeDefinition, offset uint32) (data any, err error) {
 
 	// buffer, ok := mem.ReadUint32Le(offset)
 	// if !ok {
@@ -37,24 +39,24 @@ func readArray(ctx context.Context, mem wasm.Memory, def plugins.TypeDefinition,
 		return nil, fmt.Errorf("failed to read array length")
 	}
 
-	// Handle empty array
-	if arrLen == 0 {
-		return []any{}, nil
-	}
-
 	itemType := getArraySubtypeInfo(def.Path)
 	itemSize := getItemSize(itemType)
 
-	result := make([]any, arrLen)
+	goItemType, err := getGoType(itemType.Path)
+	if err != nil {
+		return nil, err
+	}
+
+	arr := reflect.MakeSlice(reflect.SliceOf(goItemType), int(arrLen), int(arrLen))
 	for i := uint32(0); i < arrLen; i++ {
-		o, err := readField(ctx, mem, itemType, dataStart+(i*itemSize))
+		val, err := readField(ctx, mem, itemType, dataStart+(i*itemSize))
 		if err != nil {
 			return nil, err
 		}
-		result[i] = o
+		arr.Index(int(i)).Set(reflect.ValueOf(val))
 	}
 
-	return result, nil
+	return arr.Interface(), nil
 }
 
 func writeArray(ctx context.Context, mod wasm.Module, def plugins.TypeDefinition, data any) (offset uint32, err error) {
