@@ -1,5 +1,5 @@
 BEGIN;
 
-ALTER TABLE collection_texts DROP COLUMN label;
+ALTER TABLE collection_texts DROP COLUMN labels;
 
 COMMIT;

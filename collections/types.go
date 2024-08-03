@@ -35,15 +35,19 @@ type collectionClassificationResult struct {
 	Collection   string
 	SearchMethod string
 	Status       string
-	Label        string
-	LabelsResult []string
+	LabelsResult []collectionClassificationLabelObject
 	Cluster      []collectionClassificationResultObject
 	Error        string
 }
 
+type collectionClassificationLabelObject struct {
+	Label      string
+	Confidence float64
+}
+
 type collectionClassificationResultObject struct {
 	Key      string
-	Label    string
+	Labels   []string
 	Distance float64
 	Score    float64
 }

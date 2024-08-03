@@ -81,14 +81,14 @@ type Collection interface {
 	DeleteVectorIndex(ctx context.Context, searchMethod string) error
 
 	// InsertTexts will add texts and keys into the existing VectorIndex
-	InsertTexts(ctx context.Context, keys []string, texts []string, labels []string) error
+	InsertTexts(ctx context.Context, keys []string, texts []string, labelsArr [][]string) error
 
 	// InsertText will add a text and key into the existing VectorIndex
-	InsertText(ctx context.Context, key string, text string, label string) error
+	InsertText(ctx context.Context, key string, text string, labels []string) error
 
-	InsertTextsToMemory(ctx context.Context, ids []int64, keys []string, texts []string, labels []string) error
+	InsertTextsToMemory(ctx context.Context, ids []int64, keys []string, texts []string, labelsArr [][]string) error
 
-	InsertTextToMemory(ctx context.Context, id int64, key string, text string, label string) error
+	InsertTextToMemory(ctx context.Context, id int64, key string, text string, labels []string) error
 
 	// DeleteText will remove a text and key from the existing VectorIndex
 	DeleteText(ctx context.Context, key string) error
@@ -97,13 +97,13 @@ type Collection interface {
 	GetText(ctx context.Context, key string) (string, error)
 
 	// GetLabel will return the label for a given key
-	GetLabel(ctx context.Context, key string) (string, error)
+	GetLabels(ctx context.Context, key string) ([]string, error)
 
 	// GetTextMap returns the map of key to text
 	GetTextMap(ctx context.Context) (map[string]string, error)
 
 	// GetLabelMap returns the map of key to label
-	GetLabelMap(ctx context.Context) (map[string]string, error)
+	GetLabelsMap(ctx context.Context) (map[string][]string, error)
 
 	//Len returns the number of texts in the collection
 	Len(ctx context.Context) (int, error)

@@ -27,7 +27,11 @@ func TestMultipleInMemCollections(t *testing.T) {
 			ids := []int64{int64(i*3 + 1), int64(i*3 + 2), int64(i*3 + 3)}
 			keys := []string{fmt.Sprintf("key%d_1", i), fmt.Sprintf("key%d_2", i), fmt.Sprintf("key%d_3", i)}
 			texts := []string{fmt.Sprintf("text%d_1", i), fmt.Sprintf("text%d_2", i), fmt.Sprintf("text%d_3", i)}
-			labels := []string{fmt.Sprintf("label%d_1", i), fmt.Sprintf("label%d_2", i), fmt.Sprintf("label%d_3", i)}
+			labels := [][]string{
+				{fmt.Sprintf("label%d_1", i)},
+				{fmt.Sprintf("label%d_2", i)},
+				{fmt.Sprintf("label%d_3", i)},
+			}
 
 			// Create a new InMemCollection
 			collection := NewCollection("collection" + fmt.Sprint(i))

@@ -54,9 +54,10 @@ func instantiateHostFunctions(ctx context.Context) {
 
 	// Collection host functions
 	b.NewFunctionBuilder().WithFunc(hostUpsertToCollection).Export("upsertToCollection")
+	b.NewFunctionBuilder().WithFunc(hostUpsertToCollectionV2).Export("upsertToCollection_v2")
 	b.NewFunctionBuilder().WithFunc(hostDeleteFromCollection).Export("deleteFromCollection")
 	b.NewFunctionBuilder().WithFunc(hostSearchCollection).Export("searchCollection")
-	b.NewFunctionBuilder().WithFunc(hostZSClassifyCollection).Export("zsClassifyCollection")
+	b.NewFunctionBuilder().WithFunc(hostNnClassifyCollection).Export("nnClassifyCollection")
 	b.NewFunctionBuilder().WithFunc(hostRecomputeSearchMethod).Export("recomputeSearchMethod")
 	b.NewFunctionBuilder().WithFunc(hostComputeDistance).Export("computeSimilarity") // Deprecated
 	b.NewFunctionBuilder().WithFunc(hostComputeDistance).Export("computeDistance")

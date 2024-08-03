@@ -9,11 +9,15 @@ import (
 	wasm "github.com/tetratelabs/wazero/api"
 )
 
-func hostUpsertToCollection(ctx context.Context, mod wasm.Module, pCollectionName uint32, pKeys uint32, pTexts uint32, pLabels uint32) uint32 {
+func hostUpsertToCollection(ctx context.Context, mod wasm.Module, pCollectionName uint32, pKey uint32, pText uint32) uint32 {
+	return hostUpsertToCollectionV2(ctx, mod, pCollectionName, pKey, pText, 0)
+}
+
+func hostUpsertToCollectionV2(ctx context.Context, mod wasm.Module, pCollectionName uint32, pKeys uint32, pTexts uint32, pLabels uint32) uint32 {
 	var collectionName string
 	var keys []string
 	var texts []string
-	var labels []string
+	var labels [][]string
 
 	err := readParams4(ctx, mod, pCollectionName, pKeys, pTexts, pLabels, &collectionName, &keys, &texts, &labels)
 
@@ -95,7 +99,7 @@ func hostSearchCollection(ctx context.Context, mod wasm.Module, pCollectionName 
 	return offset
 }
 
-func hostZSClassifyCollection(ctx context.Context, mod wasm.Module, pCollectionName uint32, pSearchMethod uint32, pText uint32) uint32 {
+func hostNnClassifyCollection(ctx context.Context, mod wasm.Module, pCollectionName uint32, pSearchMethod uint32, pText uint32) uint32 {
 	var collectionName string
 	var searchMethod string
 	var text string
@@ -106,7 +110,7 @@ func hostZSClassifyCollection(ctx context.Context, mod wasm.Module, pCollectionN
 		return 0
 	}
 
-	classification, err := collections.ZSClassify(ctx, collectionName, searchMethod, text)
+	classification, err := collections.NnClassify(ctx, collectionName, searchMethod, text)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error classifying.")
 		return 0

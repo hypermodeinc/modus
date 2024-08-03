@@ -14,7 +14,7 @@ import (
 	wasm "github.com/tetratelabs/wazero/api"
 )
 
-func UpsertToCollection(ctx context.Context, collectionName string, keys []string, texts []string, labels []string) (*collectionMutationResult, error) {
+func UpsertToCollection(ctx context.Context, collectionName string, keys []string, texts []string, labels [][]string) (*collectionMutationResult, error) {
 
 	// Get the collectionName data from the manifest
 	collectionData := manifestdata.Manifest.Collections[collectionName]
@@ -212,7 +212,7 @@ func SearchCollection(ctx context.Context, collectionName string, searchMethod s
 	return output, nil
 }
 
-func ZSClassify(ctx context.Context, collectionName string, searchMethod string, text string) (*collectionClassificationResult, error) {
+func NnClassify(ctx context.Context, collectionName string, searchMethod string, text string) (*collectionClassificationResult, error) {
 
 	collection, err := GlobalCollectionFactory.Find(ctx, collectionName)
 	if err != nil {
@@ -287,60 +287,52 @@ func ZSClassify(ctx context.Context, collectionName string, searchMethod string,
 
 	// remove elements with score out of first standard deviation and return the most frequent label
 	labelCounts := make(map[string]int)
-	var maxCount int
 
 	res := &collectionClassificationResult{
 		Collection:   collectionName,
-		Label:        "",
-		LabelsResult: make([]string, 0),
+		LabelsResult: make([]collectionClassificationLabelObject, 0),
 		SearchMethod: searchMethod,
 		Status:       "success",
 		Cluster:      make([]collectionClassificationResultObject, 0),
 	}
 
+	totalLabels := 0
+
 	for _, nn := range nns {
 		if math.Abs(nn.GetValue()-mean) <= 2*stdDev {
-			label, err := collection.GetLabel(ctx, nn.GetIndex())
+			labels, err := collection.GetLabels(ctx, nn.GetIndex())
 			if err != nil {
 				return nil, err
 			}
-			labelCounts[label]++
+			for _, label := range labels {
+				labelCounts[label]++
+				totalLabels++
+			}
 
 			res.Cluster = append(res.Cluster, collectionClassificationResultObject{
 				Key:      nn.GetIndex(),
-				Label:    label,
+				Labels:   labels,
 				Score:    1 - nn.GetValue(),
 				Distance: nn.GetValue(),
 			})
-
-			if labelCounts[label] > maxCount {
-				maxCount = labelCounts[label]
-				res.Label = label
-			}
 		}
 	}
 
-	type Pair struct {
-		Label string
-		Count int
-	}
-
 	// Create a slice of pairs
-	pairs := make([]Pair, 0, len(labelCounts))
+	labelsResult := make([]collectionClassificationLabelObject, 0, len(labelCounts))
 	for label, count := range labelCounts {
-		pairs = append(pairs, Pair{label, count})
+		labelsResult = append(labelsResult, collectionClassificationLabelObject{
+			Label:      label,
+			Confidence: float64(count) / float64(totalLabels),
+		})
 	}
 
 	// Sort the pairs by count in descending order
-	sort.Slice(pairs, func(i, j int) bool {
-		return pairs[i].Count > pairs[j].Count
+	sort.Slice(labelsResult, func(i, j int) bool {
+		return labelsResult[i].Confidence > labelsResult[j].Confidence
 	})
 
-	// Extract the labels
-	res.LabelsResult = make([]string, len(pairs))
-	for i, pair := range pairs {
-		res.LabelsResult[i] = pair.Label
-	}
+	res.LabelsResult = labelsResult
 
 	return res, nil
 }

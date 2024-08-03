@@ -260,8 +260,8 @@ func WriteInferenceHistory(ctx context.Context, model manifest.ModelInfo, input,
 	})
 }
 
-func WriteCollectionTexts(ctx context.Context, collectionName string, keys, texts []string, labels []string) ([]int64, error) {
-	if len(labels) != 0 && len(keys) != len(labels) {
+func WriteCollectionTexts(ctx context.Context, collectionName string, keys, texts []string, labelsArr [][]string) ([]int64, error) {
+	if len(labelsArr) != 0 && len(keys) != len(labelsArr) {
 		return nil, errors.New("if labels is not empty, it must have the same length as keys")
 	}
 
@@ -280,27 +280,32 @@ func WriteCollectionTexts(ctx context.Context, collectionName string, keys, text
 
 		// Insert the new rows
 		var rows pgx.Rows
-		if len(labels) == 0 {
+		if len(labelsArr) == 0 {
 			query := fmt.Sprintf("INSERT INTO %s (collection, key, text) VALUES ($1, unnest($2::text[]), unnest($3::text[])) RETURNING id", collectionTextsTable)
 			rows, err = tx.Query(ctx, query, collectionName, keys, texts)
-		} else {
-			query := fmt.Sprintf("INSERT INTO %s (collection, key, text, label) VALUES ($1, unnest($2::text[]), unnest($3::text[]), unnest($4::text[])) RETURNING id", collectionTextsTable)
-			rows, err = tx.Query(ctx, query, collectionName, keys, texts, labels)
-		}
-		if err != nil {
-			return err
-		}
-		defer rows.Close()
-
-		i := 0
-		for rows.Next() {
-			if err := rows.Scan(&ids[i]); err != nil {
+			if err != nil {
 				return err
 			}
-			i++
-		}
-		if err := rows.Err(); err != nil {
-			return err
+			defer rows.Close()
+
+			i := 0
+			for rows.Next() {
+				if err := rows.Scan(&ids[i]); err != nil {
+					return err
+				}
+				i++
+			}
+			if err := rows.Err(); err != nil {
+				return err
+			}
+		} else {
+			for i := range keys {
+				query := fmt.Sprintf("INSERT INTO %s (collection, key, text, labels) VALUES ($1, $2, $3, $4) RETURNING id", collectionTextsTable)
+				err := tx.QueryRow(ctx, query, collectionName, keys[i], texts[i], labelsArr[i]).Scan(&ids[i])
+				if err != nil {
+					return err
+				}
+			}
 		}
 		return nil
 	})
@@ -311,7 +316,7 @@ func WriteCollectionTexts(ctx context.Context, collectionName string, keys, text
 	return ids, nil
 }
 
-func WriteCollectionText(ctx context.Context, collectionName, key, text, label string) (id int64, err error) {
+func WriteCollectionText(ctx context.Context, collectionName, key, text string, labels []string) (id int64, err error) {
 	err = WithTx(ctx, func(tx pgx.Tx) error {
 		// Delete any existing rows that match the collectionName and key
 		deleteQuery := fmt.Sprintf("DELETE FROM %s WHERE collection = $1 AND key = $2", collectionTextsTable)
@@ -322,12 +327,12 @@ func WriteCollectionText(ctx context.Context, collectionName, key, text, label s
 
 		// Insert the new row
 		var row pgx.Row
-		if label == "" {
+		if len(labels) == 0 {
 			query := fmt.Sprintf("INSERT INTO %s (collection, key, text) VALUES ($1, $2, $3) RETURNING id", collectionTextsTable)
 			row = tx.QueryRow(ctx, query, collectionName, key, text)
 		} else {
-			query := fmt.Sprintf("INSERT INTO %s (collection, key, text, label) VALUES ($1, $2, $3, $4) RETURNING id", collectionTextsTable)
-			row = tx.QueryRow(ctx, query, collectionName, key, text, label)
+			query := fmt.Sprintf("INSERT INTO %s (collection, key, text, labels) VALUES ($1, $2, $3, $4) RETURNING id", collectionTextsTable)
+			row = tx.QueryRow(ctx, query, collectionName, key, text, labels)
 		}
 		return row.Scan(&id)
 	})
@@ -471,13 +476,13 @@ func DeleteCollectionVector(ctx context.Context, searchMethodName string, textId
 	})
 }
 
-func QueryCollectionTextsFromCheckpoint(ctx context.Context, collection string, textCheckpointId int64) ([]int64, []string, []string, []string, error) {
+func QueryCollectionTextsFromCheckpoint(ctx context.Context, collection string, textCheckpointId int64) ([]int64, []string, []string, [][]string, error) {
 	var textIds []int64
 	var keys []string
 	var texts []string
-	var labels []string
+	var labelsArr [][]string
 	err := WithTx(ctx, func(tx pgx.Tx) error {
-		query := fmt.Sprintf("SELECT id, key, text, label FROM %s WHERE id > $1 AND collection = $2", collectionTextsTable)
+		query := fmt.Sprintf("SELECT id, key, text, labels FROM %s WHERE id > $1 AND collection = $2", collectionTextsTable)
 		rows, err := tx.Query(ctx, query, textCheckpointId, collection)
 		if err != nil {
 			return err
@@ -488,18 +493,31 @@ func QueryCollectionTextsFromCheckpoint(ctx context.Context, collection string, 
 			var id int64
 			var key string
 			var text string
-			var label sql.NullString
-			if err := rows.Scan(&id, &key, &text, &label); err != nil {
+			var labels []sql.NullString
+			if err := rows.Scan(&id, &key, &text, &labels); err != nil {
 				return err
 			}
 			textIds = append(textIds, id)
 			keys = append(keys, key)
 			texts = append(texts, text)
-			if label.Valid {
-				labels = append(labels, label.String)
-			} else {
-				labels = append(labels, "")
+
+			stringLabels := make([]string, len(labels))
+			numEmptyLabels := 0
+			for i, label := range labels {
+				if label.Valid {
+					stringLabels[i] = label.String
+				} else {
+					stringLabels[i] = ""
+					numEmptyLabels++
+				}
 			}
+
+			if numEmptyLabels == len(labels) {
+				labelsArr = append(labelsArr, nil)
+			} else {
+				labelsArr = append(labelsArr, stringLabels)
+			}
+
 		}
 
 		if err := rows.Err(); err != nil {
@@ -512,7 +530,7 @@ func QueryCollectionTextsFromCheckpoint(ctx context.Context, collection string, 
 		return nil, nil, nil, nil, err
 	}
 
-	return textIds, keys, texts, labels, nil
+	return textIds, keys, texts, labelsArr, nil
 }
 
 func QueryCollectionVectorsFromCheckpoint(ctx context.Context, collectionName, searchMethodName string, vecCheckpointId int64) ([]int64, []int64, []string, [][]float32, error) {
