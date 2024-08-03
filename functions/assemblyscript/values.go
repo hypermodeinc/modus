@@ -7,6 +7,7 @@ package assemblyscript
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"reflect"
 
@@ -30,6 +31,17 @@ func EncodeValueForParameter(ctx context.Context, mod wasm.Module, typ plugins.T
 }
 
 func doEncodeValue(ctx context.Context, mod wasm.Module, typ plugins.TypeInfo, data any, pin bool) (val uint64, err error) {
+
+	// Recover from panics and convert them to errors
+	defer func() {
+		if r := recover(); r != nil {
+			if e, ok := r.(error); ok {
+				err = e
+			} else if e, ok := r.(string); ok {
+				err = errors.New(e)
+			}
+		}
+	}()
 
 	// Handle null values if the type is nullable
 	if isNullable(typ.Path) {
@@ -179,6 +191,18 @@ func doEncodeValue(ctx context.Context, mod wasm.Module, typ plugins.TypeInfo, d
 }
 
 func DecodeValueAs[T any](ctx context.Context, mod wasm.Module, typ plugins.TypeInfo, val uint64) (data T, err error) {
+
+	// Recover from panics and convert them to errors
+	defer func() {
+		if r := recover(); r != nil {
+			if e, ok := r.(error); ok {
+				err = e
+			} else if e, ok := r.(string); ok {
+				err = errors.New(e)
+			}
+		}
+	}()
+
 	var result T
 	r, err := DecodeValue(ctx, mod, typ, val)
 	if err != nil {
@@ -294,6 +318,17 @@ func kvpsToMap[T any](v []kvp) (T, error) {
 }
 
 func DecodeValue(ctx context.Context, mod wasm.Module, typ plugins.TypeInfo, val uint64) (data any, err error) {
+
+	// Recover from panics and convert them to errors
+	defer func() {
+		if r := recover(); r != nil {
+			if e, ok := r.(error); ok {
+				err = e
+			} else if e, ok := r.(string); ok {
+				err = errors.New(e)
+			}
+		}
+	}()
 
 	// Handle null values if the type is nullable
 	if isNullable(typ.Path) {
