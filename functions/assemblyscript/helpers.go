@@ -10,7 +10,6 @@ import (
 	"hmruntime/plugins"
 	"hmruntime/utils"
 	"reflect"
-	"regexp"
 	"strings"
 
 	wasm "github.com/tetratelabs/wazero/api"
@@ -113,11 +112,41 @@ func getArraySubtypeInfo(path string) plugins.TypeInfo {
 	return getTypeInfo(path[17 : len(path)-1])
 }
 
-var mapRegex = regexp.MustCompile(`^~lib/map/Map<(\w+<.+>|.+?),\s*(\w+<.+>|.+?)>$`)
-
 func getMapSubtypeInfo(path string) (plugins.TypeInfo, plugins.TypeInfo) {
-	matches := mapRegex.FindStringSubmatch(path)
-	return getTypeInfo(matches[1]), getTypeInfo(matches[2])
+	k, v := GetMapParts(path)
+	return getTypeInfo(k), getTypeInfo(v)
+}
+
+func GetMapParts(t string) (string, string) {
+	prefix := "~lib/map/Map<"
+	if !strings.HasPrefix(t, prefix) {
+		prefix = "Map<"
+		if !strings.HasPrefix(t, prefix) {
+			return "", ""
+		}
+	}
+
+	n := 1
+	c := 0
+	for i := len(prefix); i < len(t); i++ {
+		switch t[i] {
+		case '<':
+			n++
+		case ',':
+			if n == 1 {
+				c = i
+			}
+		case '>':
+			n--
+			if n == 0 {
+				k := strings.TrimSpace(t[len(prefix):c])
+				v := strings.TrimSpace(t[c+1 : i])
+				return k, v
+			}
+		}
+	}
+
+	return "", ""
 }
 
 func getTypeInfo(path string) plugins.TypeInfo {

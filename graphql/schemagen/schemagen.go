@@ -9,10 +9,10 @@ import (
 	"cmp"
 	"context"
 	"fmt"
-	"regexp"
 	"slices"
 	"strings"
 
+	"hmruntime/functions/assemblyscript"
 	"hmruntime/plugins"
 	"hmruntime/utils"
 
@@ -350,8 +350,6 @@ func convertFields(fields []plugins.Field, typeDefs map[string]TypeDefinition, f
 	return results, nil
 }
 
-var mapRegex = regexp.MustCompile(`^Map<(\w+<.+>|.+?),\s*(\w+<.+>|.+?)>$`)
-
 func convertType(asType string, typeDefs map[string]TypeDefinition, firstPass bool) (string, error) {
 
 	// Unwrap parentheses if present
@@ -380,13 +378,13 @@ func convertType(asType string, typeDefs map[string]TypeDefinition, firstPass bo
 	}
 
 	// check for map types
-	matches := mapRegex.FindStringSubmatch(asType)
-	if len(matches) == 3 {
-		kt, err := convertType(matches[1], typeDefs, firstPass)
+	k, v := assemblyscript.GetMapParts(asType)
+	if k != "" && v != "" {
+		kt, err := convertType(k, typeDefs, firstPass)
 		if err != nil {
 			return "", err
 		}
-		vt, err := convertType(matches[2], typeDefs, firstPass)
+		vt, err := convertType(v, typeDefs, firstPass)
 		if err != nil {
 			return "", err
 		}
