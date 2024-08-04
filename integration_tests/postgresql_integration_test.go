@@ -42,7 +42,7 @@ const (
 
 	// Note: most DB query failures will fail with this error message in the graphql response.
 	// The log messages will be more detailed, but those are intentionally not exposed to the client.
-	expectedDbError = "Error performing database query."
+	expectedError = "error calling function"
 )
 
 type graphQLRequest struct {
@@ -147,7 +147,7 @@ func TestPostgresqlNoConnection(t *testing.T) {
 	response, err := runGraphqlQuery(graphQLRequest{Query: query})
 	assert.Nil(t, response)
 	assert.NotNil(t, err)
-	assert.Contains(t, err.Error(), expectedDbError)
+	assert.Contains(t, err.Error(), expectedError)
 }
 
 func TestPostgresqlNoHost(t *testing.T) {
@@ -171,7 +171,7 @@ func TestPostgresqlNoHost(t *testing.T) {
 	response, err := runGraphqlQuery(graphQLRequest{Query: query})
 	assert.Nil(t, response)
 	assert.NotNil(t, err)
-	assert.Contains(t, err.Error(), expectedDbError)
+	assert.Contains(t, err.Error(), expectedError)
 }
 
 func TestPostgresqlNoPostgresqlHost(t *testing.T) {
@@ -195,7 +195,7 @@ func TestPostgresqlNoPostgresqlHost(t *testing.T) {
 	response, err := runGraphqlQuery(graphQLRequest{Query: query})
 	assert.Nil(t, response)
 	assert.NotNil(t, err)
-	assert.Contains(t, err.Error(), expectedDbError)
+	assert.Contains(t, err.Error(), expectedError)
 }
 
 func TestPostgresqlWrongConnString(t *testing.T) {
@@ -219,7 +219,7 @@ func TestPostgresqlWrongConnString(t *testing.T) {
 	response, err := runGraphqlQuery(graphQLRequest{Query: query})
 	assert.Nil(t, response)
 	assert.NotNil(t, err)
-	assert.Contains(t, err.Error(), expectedDbError)
+	assert.Contains(t, err.Error(), expectedError)
 }
 
 func TestPostgresqlNoConnString(t *testing.T) {
@@ -242,7 +242,7 @@ func TestPostgresqlNoConnString(t *testing.T) {
 	response, err := runGraphqlQuery(graphQLRequest{Query: query})
 	assert.Nil(t, response)
 	assert.NotNil(t, err)
-	assert.Contains(t, err.Error(), expectedDbError)
+	assert.Contains(t, err.Error(), expectedError)
 }
 
 type postgresqlSuite struct {
@@ -383,7 +383,7 @@ query AddPerson {
 }`
 	_, err := runGraphqlQuery(graphQLRequest{Query: query})
 	ps.Assert().NotNil(err)
-	ps.Assert().Contains(err.Error(), "input value is not an signed integer")
+	ps.Assert().Contains(err.Error(), expectedError)
 }
 
 func TestPostgresqlSuite(t *testing.T) {

@@ -7,6 +7,7 @@ package datasource
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 
@@ -58,7 +59,10 @@ func (Source) LoadWithFiles(ctx context.Context, input []byte, files []httpclien
 func (s Source) callFunction(ctx context.Context, callInfo callInfo) (any, []resolve.GraphQLError, error) {
 	// Call the function
 	info, err := wasmhost.CallFunctionWithParametersMap(ctx, callInfo.Function.Name, callInfo.Parameters)
-	// NOTE: don't return the error here, as we want to capture function errors in the response.
+	if err != nil {
+		// The full error message has already been logged.  Return a generic error to the caller, which will be included in the response.
+		return nil, nil, errors.New("error calling function")
+	}
 
 	// Store the execution info into the function output map.
 	outputMap := ctx.Value(utils.FunctionOutputContextKey).(map[string]*wasmhost.ExecutionInfo)
