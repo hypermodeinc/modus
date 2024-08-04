@@ -45,12 +45,12 @@ func Activate(ctx context.Context, metadata plugins.PluginMetadata) error {
 	span := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
 
-	schema, err := generateSchema(ctx, metadata)
+	schema, cfg, err := generateSchema(ctx, metadata)
 	if err != nil {
 		return err
 	}
 
-	datasourceConfig, err := getDatasourceConfig(ctx, schema)
+	datasourceConfig, err := getDatasourceConfig(ctx, schema, cfg)
 	if err != nil {
 		return err
 	}
@@ -64,32 +64,36 @@ func Activate(ctx context.Context, metadata plugins.PluginMetadata) error {
 	return nil
 }
 
-func generateSchema(ctx context.Context, metadata plugins.PluginMetadata) (*gql.Schema, error) {
+func generateSchema(ctx context.Context, metadata plugins.PluginMetadata) (*gql.Schema, *datasource.Configuration, error) {
 	span := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
 
-	schemaContent, err := schemagen.GetGraphQLSchema(ctx, metadata, manifestdata.Manifest, true)
+	generated, err := schemagen.GetGraphQLSchema(ctx, metadata, manifestdata.Manifest, true)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	if utils.HypermodeDebugEnabled() {
 		if config.UseJsonLogging {
-			logger.Debug(ctx).Str("schema", schemaContent).Msg("Generated schema")
+			logger.Debug(ctx).Str("schema", generated.Schema).Msg("Generated schema")
 		} else {
-			fmt.Printf("\n%s\n", schemaContent)
+			fmt.Printf("\n%s\n", generated.Schema)
 		}
 	}
 
-	schema, err := gql.NewSchemaFromString(schemaContent)
+	schema, err := gql.NewSchemaFromString(generated.Schema)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	return schema, nil
+	cfg := &datasource.Configuration{
+		MapTypes: generated.MapTypes,
+	}
+
+	return schema, cfg, nil
 }
 
-func getDatasourceConfig(ctx context.Context, schema *gql.Schema) (plan.DataSourceConfiguration[datasource.Configuration], error) {
+func getDatasourceConfig(ctx context.Context, schema *gql.Schema, cfg *datasource.Configuration) (plan.DataSourceConfiguration[datasource.Configuration], error) {
 	span := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
 
@@ -117,7 +121,7 @@ func getDatasourceConfig(ctx context.Context, schema *gql.Schema) (plan.DataSour
 		datasource.DataSourceName,
 		&datasource.Factory[datasource.Configuration]{Ctx: ctx},
 		&plan.DataSourceMetadata{RootNodes: rootNodes, ChildNodes: childNodes},
-		datasource.Configuration{},
+		*cfg,
 	)
 }
 

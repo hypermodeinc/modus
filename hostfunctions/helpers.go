@@ -13,68 +13,22 @@ import (
 	wasm "github.com/tetratelabs/wazero/api"
 )
 
-func writeResult[T any](ctx context.Context, mod wasm.Module, val T) (uint32, error) {
-	switch t := any(val).(type) {
-	case string:
-		// fast path for strings
-		return assemblyscript.WriteString(ctx, mod, t)
-	case *string:
-		// fast path for nullable strings
-		if any(val) == nil {
-			return 0, nil
-		} else {
-			return assemblyscript.WriteString(ctx, mod, *t)
-		}
-	default:
-		typ, err := assemblyscript.GetTypeInfo[T]()
-		if err != nil {
-			return 0, err
-		}
-
-		p, err := assemblyscript.EncodeValue(ctx, mod, typ, val)
-		return uint32(p), err
-	}
+func writeResult[T any](ctx context.Context, mod wasm.Module, data T) (uint32, error) {
+	p, err := assemblyscript.EncodeValue(ctx, mod, data)
+	return uint32(p), err
 }
 
 func readParam[T any](ctx context.Context, mod wasm.Module, p uint32, v *T) error {
 	if p == 0 {
 		return nil
 	}
-	switch any(*v).(type) {
-	case string:
-		// fast path for strings
-		mem := mod.Memory()
-		s, err := assemblyscript.ReadString(mem, p)
-		if err != nil {
-			return err
-		}
-		*v = any(s).(T)
-	case *string:
-		// fast path for nullable strings
-		if p == 0 {
-			var s *string
-			*v = any(s).(T)
-		} else {
-			mem := mod.Memory()
-			s, err := assemblyscript.ReadString(mem, p)
-			if err != nil {
-				return err
-			}
-			*v = any(&s).(T)
-		}
-	default:
-		typ, err := assemblyscript.GetTypeInfo[T]()
-		if err != nil {
-			return err
-		}
 
-		data, err := assemblyscript.DecodeValueAs[T](ctx, mod, typ, uint64(p))
-		if err != nil {
-			return err
-		}
-		*v = any(data).(T)
+	data, err := assemblyscript.DecodeValueAs[T](ctx, mod, uint64(p))
+	if err != nil {
+		return err
 	}
 
+	*v = any(data).(T)
 	return nil
 }
 

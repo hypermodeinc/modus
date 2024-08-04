@@ -10,17 +10,10 @@ import (
 	"unicode/utf16"
 	"unsafe"
 
-	"hmruntime/plugins"
-
 	wasm "github.com/tetratelabs/wazero/api"
 )
 
-var StringType = plugins.TypeInfo{
-	Name: "string",
-	Path: "~lib/string/String",
-}
-
-func ReadString(mem wasm.Memory, offset uint32) (data string, err error) {
+func readString(mem wasm.Memory, offset uint32) (data string, err error) {
 	if offset == 0 {
 		return "", nil
 	}
@@ -47,7 +40,7 @@ func ReadString(mem wasm.Memory, offset uint32) (data string, err error) {
 	return decodeUTF16(buf), nil
 }
 
-func WriteString(ctx context.Context, mod wasm.Module, s string) (offset uint32, err error) {
+func writeString(ctx context.Context, mod wasm.Module, s string) (offset uint32, err error) {
 	const classId = 2 // The fixed class id for a string in AssemblyScript.
 	bytes := encodeUTF16(s)
 	return writeRawBytes(ctx, mod, bytes, classId)

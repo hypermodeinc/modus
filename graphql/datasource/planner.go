@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"slices"
 
 	"hmruntime/logger"
 	"hmruntime/utils"
@@ -35,6 +36,7 @@ type fieldInfo struct {
 	Alias     string       `json:"alias,omitempty"`
 	TypeName  string       `json:"type,omitempty"`
 	Fields    []*fieldInfo `json:"fields,omitempty"`
+	IsMapType bool         `json:"isMapType,omitempty"`
 	fieldRefs []int        `json:"-"`
 }
 
@@ -146,6 +148,7 @@ func (p *Planner[T]) captureField(ref int) *fieldInfo {
 	def, ok := walker.FieldDefinition(ref)
 	if ok {
 		f.TypeName = definition.FieldDefinitionTypeNameString(def)
+		f.IsMapType = slices.Contains(p.config.MapTypes, f.TypeName)
 	}
 
 	if operation.FieldHasSelections(ref) {
