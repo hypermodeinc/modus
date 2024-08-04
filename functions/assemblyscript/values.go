@@ -214,8 +214,6 @@ func DecodeValueAs[T any](ctx context.Context, mod wasm.Module, typ plugins.Type
 		return v, nil
 	case map[string]any:
 		return mapToStruct[T](v)
-	case []kvp:
-		return kvpsToMap[T](v)
 	}
 
 	return result, fmt.Errorf("unexpected type %T, expected %T", r, result)
@@ -280,25 +278,6 @@ func mapToStruct[T any](m map[string]any) (T, error) {
 
 	err = decoder.Decode(m)
 	return result, err
-}
-
-func kvpsToMap[T any](v []kvp) (T, error) {
-	var result T
-	switch any(result).(type) {
-	case []kvp:
-		return any(v).(T), nil
-	}
-
-	// convert to map type specified by T
-	mapType := reflect.TypeOf(result)
-	if mapType.Kind() != reflect.Map {
-		return result, fmt.Errorf("unexpected type %T, expected a map type", result)
-	}
-	m := reflect.MakeMapWithSize(mapType, len(v))
-	for _, kv := range v {
-		m.SetMapIndex(reflect.ValueOf(kv.Key), reflect.ValueOf(kv.Value))
-	}
-	return m.Interface().(T), nil
 }
 
 func DecodeValue(ctx context.Context, mod wasm.Module, typ plugins.TypeInfo, val uint64) (data any, err error) {

@@ -22,7 +22,7 @@ type kvp struct {
 	Value any `json:"value"`
 }
 
-func readMap(ctx context.Context, mem wasm.Memory, def plugins.TypeDefinition, offset uint32) (data []kvp, err error) {
+func readMap(ctx context.Context, mem wasm.Memory, def plugins.TypeDefinition, offset uint32) (data any, err error) {
 
 	// buckets, ok := mem.ReadUint32Le(offset)
 	// if !ok {
@@ -54,11 +54,6 @@ func readMap(ctx context.Context, mem wasm.Memory, def plugins.TypeDefinition, o
 		return nil, fmt.Errorf("failed to read map entries count")
 	}
 
-	// Handle empty map
-	if entriesCount == 0 {
-		return []kvp{}, nil
-	}
-
 	// the length of array buffer is stored 4 bytes before the offset
 	byteLength, ok := mem.ReadUint32Le(entries - 4)
 	if !ok {
@@ -69,7 +64,16 @@ func readMap(ctx context.Context, mem wasm.Memory, def plugins.TypeDefinition, o
 	keyType, valueType := getMapSubtypeInfo(def.Path)
 	valueOffset := getSizeForOffset(keyType.Path)
 
-	result := make([]kvp, entriesCount)
+	goKeyType, err := getGoType(keyType.Path)
+	if err != nil {
+		return nil, err
+	}
+	goValueType, err := getGoType(valueType.Path)
+	if err != nil {
+		return nil, err
+	}
+
+	m := reflect.MakeMapWithSize(reflect.MapOf(goKeyType, goValueType), int(entriesCount))
 	for i := uint32(0); i < entriesCount; i++ {
 		p := entries + (i * entrySize)
 		k, err := readField(ctx, mem, keyType, p)
@@ -80,11 +84,10 @@ func readMap(ctx context.Context, mem wasm.Memory, def plugins.TypeDefinition, o
 		if err != nil {
 			return nil, err
 		}
-
-		result[i] = kvp{Key: k, Value: v}
+		m.SetMapIndex(reflect.ValueOf(k), reflect.ValueOf(v))
 	}
 
-	return result, nil
+	return m.Interface(), nil
 }
 
 func writeMap(ctx context.Context, mod wasm.Module, def plugins.TypeDefinition, data any) (offset uint32, err error) {
