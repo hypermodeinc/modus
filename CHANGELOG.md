@@ -5,6 +5,7 @@
 - Perf improvements to internal storage of hnsw data in Collections [#299](https://github.com/hypermodeAI/runtime/pull/299)
 - Fix type resolution issues [#304](https://github.com/hypermodeAI/runtime/pull/304) [#306](https://github.com/hypermodeAI/runtime/pull/306)
 - Fix certain errors reporting incorrectly [#307](https://github.com/hypermodeAI/runtime/pull/307)
+- Improve encoding and decoding of arrays and maps [#308](https://github.com/hypermodeAI/runtime/pull/308)
 
 ## 2024-07-23 - Version 0.10.1
 
