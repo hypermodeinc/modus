@@ -383,7 +383,7 @@ query AddPerson {
 }`
 	_, err := runGraphqlQuery(graphQLRequest{Query: query})
 	ps.Assert().NotNil(err)
-	ps.Assert().Contains(err.Error(), "input value is not an signed integer")
+	ps.Assert().Contains(err.Error(), expectedError)
 }
 
 func TestPostgresqlSuite(t *testing.T) {
