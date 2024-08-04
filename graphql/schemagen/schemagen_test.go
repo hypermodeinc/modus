@@ -240,7 +240,7 @@ type StringStringPair {
 }
 `
 	require.Nil(t, err)
-	require.Equal(t, expectedSchema, result)
+	require.Equal(t, expectedSchema, result.Schema)
 }
 
 func Test_ConvertType(t *testing.T) {
@@ -305,6 +305,7 @@ func Test_ConvertType(t *testing.T) {
 				{"key", "String!"},
 				{"value", "String!"},
 			},
+			IsMapType: true,
 		}}},
 		{"Map<string, string | null>", "[StringNullableStringPair!]!", nil, []TypeDefinition{{
 			Name: "StringNullableStringPair",
@@ -312,6 +313,7 @@ func Test_ConvertType(t *testing.T) {
 				{"key", "String!"},
 				{"value", "String"},
 			},
+			IsMapType: true,
 		}}},
 		{"Map<i32, string>", "[IntStringPair!]!", nil, []TypeDefinition{{
 			Name: "IntStringPair",
@@ -319,6 +321,7 @@ func Test_ConvertType(t *testing.T) {
 				{"key", "Int!"},
 				{"value", "String!"},
 			},
+			IsMapType: true,
 		}}},
 		{"Map<string, Map<string, f32>>", "[StringStringFloatPairListPair!]!", nil, []TypeDefinition{
 			{
@@ -327,6 +330,7 @@ func Test_ConvertType(t *testing.T) {
 					{"key", "String!"},
 					{"value", "[StringFloatPair!]!"},
 				},
+				IsMapType: true,
 			},
 			{
 				Name: "StringFloatPair",
@@ -334,6 +338,7 @@ func Test_ConvertType(t *testing.T) {
 					{"key", "String!"},
 					{"value", "Float!"},
 				},
+				IsMapType: true,
 			},
 		}},
 	}

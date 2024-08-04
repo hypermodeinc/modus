@@ -105,13 +105,13 @@ func writeGraphQLResponse(writer io.Writer, result any, gqlErrors []resolve.Grap
 	}
 
 	// Get the data as json from the result
-	jsonData, err := utils.JsonSerialize(result)
+	jsonResult, err := utils.JsonSerialize(result)
 	if err != nil {
 		return err
 	}
 
 	// Transform the data
-	jsonData, err = transformData(jsonData, &ci.Function)
+	jsonData, err := transformData(jsonResult, &ci.Function)
 	if err != nil {
 		return err
 	}
@@ -139,79 +139,120 @@ func transformData(data []byte, tf *fieldInfo) ([]byte, error) {
 var nullWord = []byte("null")
 
 func transformValue(data []byte, tf *fieldInfo) (result []byte, err error) {
-
-	// Recover from panics and return them as errors
-	defer func() {
-		if r := recover(); r != nil {
-			e, ok := r.(error)
-			if ok {
-				err = e
-			}
-		}
-	}()
-
 	if len(tf.Fields) == 0 || len(data) == 0 || bytes.Equal(data, nullWord) {
 		return data, nil
 	}
 
-	buf := bytes.Buffer{}
+	if tf.IsMapType {
+		return transformMap(data, tf)
+	}
 
 	switch data[0] {
-	case '{': // object
-		buf.WriteByte('{')
-		for i, f := range tf.Fields {
-			var val []byte
-			if f.Name == "__typename" {
-				val = []byte(`"` + tf.TypeName + `"`)
-			} else {
-				v, dataType, _, err := jsonparser.Get(data, f.Name)
-				if err != nil {
-					return nil, err
-				}
-				if dataType == jsonparser.String {
-					// Note, string values here will be escaped for internal quotes, newlines, etc.,
-					// but will be missing outer quotes.  So we need to add them back.
-					v = []byte(`"` + string(v) + `"`)
-				}
-				val, err = transformValue(v, f)
-				if err != nil {
-					return nil, err
-				}
-			}
-			if i > 0 {
-				buf.WriteByte(',')
-			}
-			buf.WriteByte('"')
-			buf.WriteString(f.AliasOrName())
-			buf.WriteString(`":`)
-			buf.Write(val)
-		}
-		buf.WriteByte('}')
-
-	case '[': // array
-		buf.WriteByte('[')
-		_, err := jsonparser.ArrayEach(data, func(val []byte, _ jsonparser.ValueType, _ int, _ error) {
-			if buf.Len() > 1 {
-				buf.WriteByte(',')
-			}
-			val, err := transformValue(val, tf)
-			if err != nil {
-				// no error mechanism in jsonparser.ArrayEach, so we panic
-				// and recover before returning from transformValue
-				panic(err)
-			}
-			buf.Write(val)
-		})
-		if err != nil {
-			return nil, err
-		}
-
-		buf.WriteByte(']')
-
+	case '{':
+		return transformObject(data, tf)
+	case '[':
+		return transformArray(data, tf)
 	default:
 		return nil, fmt.Errorf("expected object or array")
 	}
+}
 
+func transformArray(data []byte, tf *fieldInfo) ([]byte, error) {
+	buf := bytes.Buffer{}
+	buf.WriteByte('[')
+
+	var loopErr error
+	_, err := jsonparser.ArrayEach(data, func(val []byte, _ jsonparser.ValueType, _ int, _ error) {
+		if loopErr != nil {
+			return
+		}
+		val, err := transformValue(val, tf)
+		if err != nil {
+			loopErr = err
+			return
+		}
+		if buf.Len() > 1 {
+			buf.WriteByte(',')
+		}
+		buf.Write(val)
+	})
+	if err != nil {
+		return nil, err
+	}
+	if loopErr != nil {
+		return nil, loopErr
+	}
+
+	buf.WriteByte(']')
+	return buf.Bytes(), nil
+}
+
+func transformObject(data []byte, tf *fieldInfo) ([]byte, error) {
+	buf := bytes.Buffer{}
+	buf.WriteByte('{')
+	for i, f := range tf.Fields {
+		var val []byte
+		if f.Name == "__typename" {
+			val = []byte(`"` + tf.TypeName + `"`)
+		} else {
+			v, dataType, _, err := jsonparser.Get(data, f.Name)
+			if err != nil {
+				return nil, err
+			}
+			if dataType == jsonparser.String {
+				// Note, string values here will be escaped for internal quotes, newlines, etc.,
+				// but will be missing outer quotes.  So we need to add them back.
+				v = []byte(`"` + string(v) + `"`)
+			}
+			val, err = transformValue(v, f)
+			if err != nil {
+				return nil, err
+			}
+		}
+		if i > 0 {
+			buf.WriteByte(',')
+		}
+		buf.WriteByte('"')
+		buf.WriteString(f.AliasOrName())
+		buf.WriteString(`":`)
+		buf.Write(val)
+	}
+	buf.WriteByte('}')
+	return buf.Bytes(), nil
+}
+
+func transformMap(data []byte, tf *fieldInfo) ([]byte, error) {
+	buf := bytes.Buffer{}
+	buf.WriteByte('[')
+	jsonparser.ObjectEach(data, func(key []byte, value []byte, dataType jsonparser.ValueType, offset int) error {
+		if buf.Len() > 1 {
+			buf.WriteByte(',')
+		}
+
+		b := bytes.Buffer{}
+		b.WriteByte('{')
+		b.WriteString(`"key":"`)
+		b.Write(key)
+		b.WriteString(`","value":`)
+		if dataType == jsonparser.String {
+			b.WriteString(`"`)
+			b.Write(value)
+			b.WriteString(`"`)
+		} else {
+			b.Write(value)
+		}
+		b.WriteByte('}')
+
+		val, err := transformObject(b.Bytes(), tf)
+		if err != nil {
+			return err
+		}
+		buf.Write(val)
+
+		return nil
+	})
+
+	buf.WriteByte(']')
 	return buf.Bytes(), nil
 }
 

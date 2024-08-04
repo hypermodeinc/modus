@@ -19,7 +19,12 @@ import (
 	"github.com/hypermodeAI/manifest"
 )
 
-func GetGraphQLSchema(ctx context.Context, metadata plugins.PluginMetadata, manifest manifest.HypermodeManifest, includeHeader bool) (string, error) {
+type GraphQLSchema struct {
+	Schema   string
+	MapTypes []string
+}
+
+func GetGraphQLSchema(ctx context.Context, metadata plugins.PluginMetadata, manifest manifest.HypermodeManifest, includeHeader bool) (*GraphQLSchema, error) {
 	span := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
 
@@ -30,7 +35,7 @@ func GetGraphQLSchema(ctx context.Context, metadata plugins.PluginMetadata, mani
 	errors = append(errors, errs...)
 
 	if len(errors) > 0 {
-		return "", fmt.Errorf("failed to generate schema: %+v", errors)
+		return nil, fmt.Errorf("failed to generate schema: %+v", errors)
 	}
 
 	functions = filterFunctions(functions, manifest)
@@ -41,7 +46,18 @@ func GetGraphQLSchema(ctx context.Context, metadata plugins.PluginMetadata, mani
 		writeSchemaHeader(&buf, metadata)
 	}
 	writeSchema(&buf, functions, types)
-	return buf.String(), nil
+
+	mapTypes := make([]string, 0, len(typeDefs))
+	for _, t := range typeDefs {
+		if t.IsMapType {
+			mapTypes = append(mapTypes, t.Name)
+		}
+	}
+
+	return &GraphQLSchema{
+		Schema:   buf.String(),
+		MapTypes: mapTypes,
+	}, nil
 }
 
 type TransformError struct {
@@ -78,8 +94,9 @@ type FunctionSignature struct {
 }
 
 type TypeDefinition struct {
-	Name   string
-	Fields []NameTypePair
+	Name      string
+	Fields    []NameTypePair
+	IsMapType bool
 }
 
 type NameTypePair struct {
@@ -401,7 +418,7 @@ func convertType(asType string, typeDefs map[string]TypeDefinition, firstPass bo
 		}
 		typeName := ktn + vtn + "Pair"
 
-		newType(typeName, []NameTypePair{{"key", kt}, {"value", vt}}, typeDefs)
+		newMapType(typeName, []NameTypePair{{"key", kt}, {"value", vt}}, typeDefs)
 
 		// The map is represented as a list of the pair type.
 		// The list might be nullable, but the pair type within the list is always non-nullable.
@@ -458,6 +475,17 @@ func newType(name string, fields []NameTypePair, typeDefs map[string]TypeDefinit
 		typeDefs[name] = TypeDefinition{
 			Name:   name,
 			Fields: fields,
+		}
+	}
+	return name
+}
+
+func newMapType(name string, fields []NameTypePair, typeDefs map[string]TypeDefinition) string {
+	if _, ok := typeDefs[name]; !ok {
+		typeDefs[name] = TypeDefinition{
+			Name:      name,
+			Fields:    fields,
+			IsMapType: true,
 		}
 	}
 	return name
