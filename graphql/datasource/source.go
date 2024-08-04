@@ -224,7 +224,7 @@ func transformObject(data []byte, tf *fieldInfo) ([]byte, error) {
 func transformMap(data []byte, tf *fieldInfo) ([]byte, error) {
 	buf := bytes.Buffer{}
 	buf.WriteByte('[')
-	jsonparser.ObjectEach(data, func(key []byte, value []byte, dataType jsonparser.ValueType, offset int) error {
+	err := jsonparser.ObjectEach(data, func(key []byte, value []byte, dataType jsonparser.ValueType, offset int) error {
 		if buf.Len() > 1 {
 			buf.WriteByte(',')
 		}
@@ -251,6 +251,9 @@ func transformMap(data []byte, tf *fieldInfo) ([]byte, error) {
 
 		return nil
 	})
+	if err != nil {
+		return nil, err
+	}
 
 	buf.WriteByte(']')
 	return buf.Bytes(), nil
