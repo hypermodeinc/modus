@@ -180,7 +180,7 @@ func writeClass(ctx context.Context, mod wasm.Module, def plugins.TypeDefinition
 }
 
 func writeField(ctx context.Context, mod wasm.Module, typ plugins.TypeInfo, offset uint32, val any) (ptr uint32, err error) {
-	enc, err := EncodeValue(ctx, mod, typ, val)
+	enc, err := encodeValue(ctx, mod, typ, val)
 	if err != nil {
 		return 0, err
 	}

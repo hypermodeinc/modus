@@ -17,13 +17,22 @@ import (
 	wasm "github.com/tetratelabs/wazero/api"
 )
 
-func EncodeValue(ctx context.Context, mod wasm.Module, typ plugins.TypeInfo, data any) (val uint64, err error) {
+func EncodeValue[T any](ctx context.Context, mod wasm.Module, data T) (uint64, error) {
+	typ, err := getTypeInfoForType[T]()
+	if err != nil {
+		return 0, err
+	}
+
+	return encodeValue(ctx, mod, typ, data)
+}
+
+func encodeValue(ctx context.Context, mod wasm.Module, typ plugins.TypeInfo, data any) (uint64, error) {
 	// For most calls, we don't need to pin the memory.
 	// If it needs to be pinned, the caller will do it.
 	return doEncodeValue(ctx, mod, typ, data, false)
 }
 
-func EncodeValueForParameter(ctx context.Context, mod wasm.Module, typ plugins.TypeInfo, data any) (val uint64, err error) {
+func EncodeValueForParameter(ctx context.Context, mod wasm.Module, typ plugins.TypeInfo, data any) (uint64, error) {
 	// For the inbound parameters, we need to pin the memory.
 	// Otherwise, just allocating more parameters could cause the GC to run and free the memory we just allocated.
 	// Note we don't bother tracking these to unpin later, because we discard the module instance and its memory after the call.
@@ -190,7 +199,7 @@ func doEncodeValue(ctx context.Context, mod wasm.Module, typ plugins.TypeInfo, d
 	return uint64(offset), nil
 }
 
-func DecodeValueAs[T any](ctx context.Context, mod wasm.Module, typ plugins.TypeInfo, val uint64) (data T, err error) {
+func DecodeValueAs[T any](ctx context.Context, mod wasm.Module, val uint64) (data T, err error) {
 
 	// Recover from panics and convert them to errors
 	defer func() {
@@ -204,6 +213,12 @@ func DecodeValueAs[T any](ctx context.Context, mod wasm.Module, typ plugins.Type
 	}()
 
 	var result T
+
+	typ, err := getTypeInfoForType[T]()
+	if err != nil {
+		return result, err
+	}
+
 	r, err := DecodeValue(ctx, mod, typ, val)
 	if err != nil {
 		return result, err
@@ -211,8 +226,11 @@ func DecodeValueAs[T any](ctx context.Context, mod wasm.Module, typ plugins.Type
 
 	switch v := r.(type) {
 	case T:
+		// If the type is already the expected type, return it.
 		return v, nil
 	case map[string]any:
+		// If the type is a map, convert it to the expected type.
+		// This is expected in the case of a host function that takes a struct as a parameter.
 		return mapToStruct[T](v)
 	}
 
