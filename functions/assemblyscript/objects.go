@@ -22,7 +22,7 @@ func readObject(ctx context.Context, mem wasm.Memory, typ plugins.TypeInfo, offs
 	case "ArrayBuffer":
 		return readBytes(mem, offset)
 	case "string":
-		return ReadString(mem, offset)
+		return readString(mem, offset)
 	case "Date":
 		return readDate(mem, offset)
 	}
@@ -64,12 +64,12 @@ func writeObject(ctx context.Context, mod wasm.Module, typ plugins.TypeInfo, val
 	case "string":
 		switch v := val.(type) {
 		case string:
-			return WriteString(ctx, mod, v)
+			return writeString(ctx, mod, v)
 		case *string:
 			if v == nil {
 				return 0, nil
 			}
-			return WriteString(ctx, mod, *v)
+			return writeString(ctx, mod, *v)
 		default:
 			return 0, fmt.Errorf("input value is not a string")
 		}

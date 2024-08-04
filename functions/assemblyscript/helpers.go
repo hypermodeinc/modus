@@ -7,11 +7,11 @@ package assemblyscript
 import (
 	"context"
 	"fmt"
+	"reflect"
+	"strings"
+
 	"hmruntime/plugins"
 	"hmruntime/utils"
-	"reflect"
-	"regexp"
-	"strings"
 
 	wasm "github.com/tetratelabs/wazero/api"
 )
@@ -24,6 +24,16 @@ var typeMap = map[string]string{
 	"~lib/map/Map":                 "Map",
 	"~lib/date/Date":               "Date",
 	"~lib/wasi_date/wasi_Date":     "Date",
+}
+
+var arrayBufferType = plugins.TypeInfo{
+	Name: "ArrayBuffer",
+	Path: "~lib/arraybuffer/ArrayBuffer",
+}
+
+var stringType = plugins.TypeInfo{
+	Name: "string",
+	Path: "~lib/string/String",
 }
 
 // Allocate memory within the AssemblyScript module.
@@ -113,11 +123,41 @@ func getArraySubtypeInfo(path string) plugins.TypeInfo {
 	return getTypeInfo(path[17 : len(path)-1])
 }
 
-var mapRegex = regexp.MustCompile(`^~lib/map/Map<(\w+<.+>|.+?),\s*(\w+<.+>|.+?)>$`)
-
 func getMapSubtypeInfo(path string) (plugins.TypeInfo, plugins.TypeInfo) {
-	matches := mapRegex.FindStringSubmatch(path)
-	return getTypeInfo(matches[1]), getTypeInfo(matches[2])
+	k, v := GetMapParts(path)
+	return getTypeInfo(k), getTypeInfo(v)
+}
+
+func GetMapParts(t string) (string, string) {
+	prefix := "~lib/map/Map<"
+	if !strings.HasPrefix(t, prefix) {
+		prefix = "Map<"
+		if !strings.HasPrefix(t, prefix) {
+			return "", ""
+		}
+	}
+
+	n := 1
+	c := 0
+	for i := len(prefix); i < len(t); i++ {
+		switch t[i] {
+		case '<':
+			n++
+		case ',':
+			if n == 1 {
+				c = i
+			}
+		case '>':
+			n--
+			if n == 0 {
+				k := strings.TrimSpace(t[len(prefix):c])
+				v := strings.TrimSpace(t[c+1 : i])
+				return k, v
+			}
+		}
+	}
+
+	return "", ""
 }
 
 func getTypeInfo(path string) plugins.TypeInfo {
@@ -167,7 +207,7 @@ func getTypeDefinition(ctx context.Context, typePath string) (plugins.TypeDefini
 	return info, nil
 }
 
-func GetTypeInfo[T any]() (plugins.TypeInfo, error) {
+func getTypeInfoForType[T any]() (plugins.TypeInfo, error) {
 	var v T
 
 	switch any(v).(type) {
@@ -194,9 +234,9 @@ func GetTypeInfo[T any]() (plugins.TypeInfo, error) {
 	case float64:
 		return getTypeInfo("f64"), nil
 	case []byte:
-		return ArrayBufferType, nil
+		return arrayBufferType, nil
 	case string, *string:
-		return StringType, nil
+		return stringType, nil
 	}
 
 	t := reflect.TypeFor[T]()
@@ -228,11 +268,11 @@ func getTypeInfoForReflectedType(t reflect.Type) (plugins.TypeInfo, error) {
 	case reflect.Float64:
 		return getTypeInfo("f64"), nil
 	case reflect.String:
-		return StringType, nil
+		return stringType, nil
 
 	case reflect.Slice:
 		if t.Elem().Kind() == reflect.Uint8 {
-			return ArrayBufferType, nil
+			return arrayBufferType, nil
 		}
 
 		elemType, err := getTypeInfoForReflectedType(t.Elem())
@@ -263,22 +303,14 @@ func getTypeInfoForReflectedType(t reflect.Type) (plugins.TypeInfo, error) {
 	case reflect.Ptr:
 		return getTypeInfoForReflectedType(t.Elem())
 	case reflect.Struct:
-		info := tryGetTypeInfoForStruct(t)
-		if info != nil {
-			return *info, nil
+		id := t.PkgPath() + "." + t.Name()
+		info, ok := hostTypes[id]
+		if ok {
+			return info, nil
 		}
-		return plugins.TypeInfo{}, fmt.Errorf("struct %s does not have a GetTypeInfo method", t.Name())
+
+		return plugins.TypeInfo{}, fmt.Errorf("struct missing from host types map: %s", id)
 	}
 
 	return plugins.TypeInfo{}, fmt.Errorf("unsupported type kind %s", t.Kind())
-}
-
-func tryGetTypeInfoForStruct(t reflect.Type) *plugins.TypeInfo {
-	id := t.PkgPath() + "." + t.Name()
-	info, ok := mappedStructs[id]
-	if ok {
-		return &info
-	}
-
-	return nil
 }

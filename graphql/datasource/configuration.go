@@ -5,4 +5,5 @@
 package datasource
 
 type Configuration struct {
+	MapTypes []string
 }

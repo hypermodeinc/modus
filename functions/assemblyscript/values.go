@@ -7,6 +7,7 @@ package assemblyscript
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"reflect"
 
@@ -16,13 +17,22 @@ import (
 	wasm "github.com/tetratelabs/wazero/api"
 )
 
-func EncodeValue(ctx context.Context, mod wasm.Module, typ plugins.TypeInfo, data any) (val uint64, err error) {
+func EncodeValue[T any](ctx context.Context, mod wasm.Module, data T) (uint64, error) {
+	typ, err := getTypeInfoForType[T]()
+	if err != nil {
+		return 0, err
+	}
+
+	return encodeValue(ctx, mod, typ, data)
+}
+
+func encodeValue(ctx context.Context, mod wasm.Module, typ plugins.TypeInfo, data any) (uint64, error) {
 	// For most calls, we don't need to pin the memory.
 	// If it needs to be pinned, the caller will do it.
 	return doEncodeValue(ctx, mod, typ, data, false)
 }
 
-func EncodeValueForParameter(ctx context.Context, mod wasm.Module, typ plugins.TypeInfo, data any) (val uint64, err error) {
+func EncodeValueForParameter(ctx context.Context, mod wasm.Module, typ plugins.TypeInfo, data any) (uint64, error) {
 	// For the inbound parameters, we need to pin the memory.
 	// Otherwise, just allocating more parameters could cause the GC to run and free the memory we just allocated.
 	// Note we don't bother tracking these to unpin later, because we discard the module instance and its memory after the call.
@@ -30,6 +40,17 @@ func EncodeValueForParameter(ctx context.Context, mod wasm.Module, typ plugins.T
 }
 
 func doEncodeValue(ctx context.Context, mod wasm.Module, typ plugins.TypeInfo, data any, pin bool) (val uint64, err error) {
+
+	// Recover from panics and convert them to errors
+	defer func() {
+		if r := recover(); r != nil {
+			if e, ok := r.(error); ok {
+				err = e
+			} else if e, ok := r.(string); ok {
+				err = errors.New(e)
+			}
+		}
+	}()
 
 	// Handle null values if the type is nullable
 	if isNullable(typ.Path) {
@@ -178,8 +199,26 @@ func doEncodeValue(ctx context.Context, mod wasm.Module, typ plugins.TypeInfo, d
 	return uint64(offset), nil
 }
 
-func DecodeValueAs[T any](ctx context.Context, mod wasm.Module, typ plugins.TypeInfo, val uint64) (data T, err error) {
+func DecodeValueAs[T any](ctx context.Context, mod wasm.Module, val uint64) (data T, err error) {
+
+	// Recover from panics and convert them to errors
+	defer func() {
+		if r := recover(); r != nil {
+			if e, ok := r.(error); ok {
+				err = e
+			} else if e, ok := r.(string); ok {
+				err = errors.New(e)
+			}
+		}
+	}()
+
 	var result T
+
+	typ, err := getTypeInfoForType[T]()
+	if err != nil {
+		return result, err
+	}
+
 	r, err := DecodeValue(ctx, mod, typ, val)
 	if err != nil {
 		return result, err
@@ -187,82 +226,22 @@ func DecodeValueAs[T any](ctx context.Context, mod wasm.Module, typ plugins.Type
 
 	switch v := r.(type) {
 	case T:
+		// If the type is already the expected type, return it.
 		return v, nil
 	case map[string]any:
+		// If the type is a map, convert it to the expected type.
+		// This is expected in the case of a host function that takes a struct as a parameter.
 		return mapToStruct[T](v)
-	case []kvp:
-		return kvpsToMap[T](v)
-	case []any:
-		return anySliceToTypedSlice[T](v)
 	}
 
 	return result, fmt.Errorf("unexpected type %T, expected %T", r, result)
-}
-
-func anySliceToTypedSlice[T any](v []any) (T, error) {
-	var result T
-	if reflect.TypeOf(result).Kind() != reflect.Slice {
-		return result, fmt.Errorf("unexpected type %T, expected a slice type", result)
-	}
-
-	sliceType := reflect.TypeOf(result)
-	slice := reflect.MakeSlice(sliceType, len(v), len(v))
-	for i, item := range v {
-		slice.Index(i).Set(reflect.ValueOf(item))
-	}
-	return slice.Interface().(T), nil
-}
-
-var kvpsType = reflect.TypeOf([]kvp{})
-
-func mapToStructDecodeHook(f reflect.Type, t reflect.Type, data any) (any, error) {
-	if t.Kind() == reflect.Map && f.Kind() == reflect.Slice && f == kvpsType {
-		// convert from kvp[] to map
-		val := data.([]kvp)
-		mapType := reflect.MapOf(t.Key(), t.Elem())
-		m := reflect.MakeMapWithSize(mapType, len(val))
-		for _, kv := range val {
-			rk := reflect.ValueOf(kv.Key)
-			rv := reflect.ValueOf(kv.Value)
-			if rv.Kind() == reflect.Map && t.Elem().Kind() == reflect.Struct {
-				ps, err := mapToStructReflected(kv.Value.(map[string]any), t.Elem())
-				if err != nil {
-					return nil, err
-				}
-				// s is a wrapped pointer to the struct value
-				rv = reflect.ValueOf(ps).Elem()
-			}
-
-			m.SetMapIndex(rk, rv)
-		}
-		return m.Interface(), nil
-	}
-	return data, nil
-}
-
-func mapToStructReflected(m map[string]any, t reflect.Type) (any, error) {
-
-	result := reflect.New(t).Interface()
-	config := &mapstructure.DecoderConfig{
-		Result:     &result,
-		DecodeHook: mapToStructDecodeHook,
-	}
-
-	decoder, err := mapstructure.NewDecoder(config)
-	if err != nil {
-		return result, err
-	}
-
-	err = decoder.Decode(m)
-	return result, err
 }
 
 func mapToStruct[T any](m map[string]any) (T, error) {
 	var result T
 
 	config := &mapstructure.DecoderConfig{
-		Result:     &result,
-		DecodeHook: mapToStructDecodeHook,
+		Result: &result,
 	}
 
 	decoder, err := mapstructure.NewDecoder(config)
@@ -274,26 +253,18 @@ func mapToStruct[T any](m map[string]any) (T, error) {
 	return result, err
 }
 
-func kvpsToMap[T any](v []kvp) (T, error) {
-	var result T
-	switch any(result).(type) {
-	case []kvp:
-		return any(v).(T), nil
-	}
-
-	// convert to map type specified by T
-	mapType := reflect.TypeOf(result)
-	if mapType.Kind() != reflect.Map {
-		return result, fmt.Errorf("unexpected type %T, expected a map type", result)
-	}
-	m := reflect.MakeMapWithSize(mapType, len(v))
-	for _, kv := range v {
-		m.SetMapIndex(reflect.ValueOf(kv.Key), reflect.ValueOf(kv.Value))
-	}
-	return m.Interface().(T), nil
-}
-
 func DecodeValue(ctx context.Context, mod wasm.Module, typ plugins.TypeInfo, val uint64) (data any, err error) {
+
+	// Recover from panics and convert them to errors
+	defer func() {
+		if r := recover(); r != nil {
+			if e, ok := r.(error); ok {
+				err = e
+			} else if e, ok := r.(string); ok {
+				err = errors.New(e)
+			}
+		}
+	}()
 
 	// Handle null values if the type is nullable
 	if isNullable(typ.Path) {

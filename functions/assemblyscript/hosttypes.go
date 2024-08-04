@@ -6,7 +6,7 @@ package assemblyscript
 
 import "hmruntime/plugins"
 
-var mappedStructs = map[string]plugins.TypeInfo{
+var hostTypes = map[string]plugins.TypeInfo{
 	"hmruntime/collections.collectionMutationResult": {
 		Name: "CollectionMutationResult",
 		Path: "~lib/@hypermode/functions-as/assembly/collections/CollectionMutationResult",

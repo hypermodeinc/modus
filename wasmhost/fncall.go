@@ -70,6 +70,7 @@ func doCallFunction(ctx context.Context, fnInfo functions.FunctionInfo, paramete
 
 	mod, err := GetModuleInstance(ctx, fnInfo.Plugin, execInfo.Buffers)
 	if err != nil {
+		logger.Err(ctx, err).Msg("Error getting module instance.")
 		return nil, err
 	}
 	defer mod.Close(ctx)
