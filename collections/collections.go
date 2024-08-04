@@ -259,12 +259,7 @@ func NnClassify(ctx context.Context, collectionName string, searchMethod string,
 		return nil, err
 	}
 
-	closestNode, err := vectorIndex.Search(ctx, textVecs[0], 1, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	nns, err := vectorIndex.SearchWithKey(ctx, closestNode[0].GetIndex(), int(math.Log10(float64(lenTexts)))*int(math.Log10(float64(lenTexts))), nil)
+	nns, err := vectorIndex.Search(ctx, textVecs[0], int(math.Log10(float64(lenTexts)))*int(math.Log10(float64(lenTexts))), nil)
 	if err != nil {
 		return nil, err
 	}

@@ -91,35 +91,12 @@ func (ims *HnswVectorIndex) Search(ctx context.Context, query []float32, maxResu
 
 func (ims *HnswVectorIndex) SearchWithKey(ctx context.Context, queryKey string, maxResults int, filter index.SearchFilter) (utils.MaxTupleHeap, error) {
 	ims.mu.RLock()
-	defer ims.mu.RUnlock()
-	neighbors, err := ims.HnswIndex.SearchWithKey(queryKey, maxResults)
-	if err != nil {
-		return nil, err
+	vec, ok := ims.HnswIndex.Lookup(queryKey)
+	ims.mu.RUnlock()
+	if !ok {
+		return nil, fmt.Errorf("key not found in index")
 	}
-
-	keys, distances := make([]string, len(neighbors)), make([]float64, len(neighbors))
-	for i, neighbor := range neighbors {
-		keys[i] = string(neighbor.Key)
-		distances[i] = float64(neighbor.Distance)
-	}
-	var results utils.MaxTupleHeap
-	heap.Init(&results)
-
-	for i, key := range keys {
-		heap.Push(&results, utils.InitHeapElement(distances[i], key, false))
-	}
-
-	// Return top maxResults results
-	var finalResults utils.MaxTupleHeap
-	for results.Len() > 0 {
-		finalResults = append(finalResults, heap.Pop(&results).(utils.MaxHeapElement))
-	}
-	// Reverse the finalResults to get the highest similarity first
-	for i, j := 0, len(finalResults)-1; i < j; i, j = i+1, j-1 {
-		finalResults[i], finalResults[j] = finalResults[j], finalResults[i]
-	}
-
-	return finalResults, nil
+	return ims.Search(ctx, vec, maxResults, filter)
 }
 
 func (ims *HnswVectorIndex) InsertVectors(ctx context.Context, textIds []int64, vecs [][]float32) error {

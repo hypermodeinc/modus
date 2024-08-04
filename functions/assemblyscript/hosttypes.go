@@ -27,6 +27,10 @@ var hostTypes = map[string]plugins.TypeInfo{
 		Name: "CollectionClassificationResult",
 		Path: "~lib/@hypermode/functions-as/assembly/collections/CollectionClassificationResult",
 	},
+	"hmruntime/collections.collectionClassificationLabelObject": {
+		Name: "CollectionClassificationLabelObject",
+		Path: "~lib/@hypermode/functions-as/assembly/collections/CollectionClassificationLabelObject",
+	},
 	"hmruntime/collections.collectionClassificationResultObject": {
 		Name: "CollectionClassificationResultObject",
 		Path: "~lib/@hypermode/functions-as/assembly/collections/CollectionClassificationResultObject",

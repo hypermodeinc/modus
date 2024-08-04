@@ -77,27 +77,17 @@ func ConcatStrings(strs ...string) string {
 }
 
 func ConvertToFloat32_2DArray(result any) ([][]float32, error) {
-	resultArr, ok := result.([]interface{})
+	textVecs, ok := result.([][]float32)
 	if !ok {
-		return nil, fmt.Errorf("error converting type to float32: %v", result)
-	}
-
-	textVecs := make([][]float32, len(resultArr))
-	for i, res := range resultArr {
-
-		subArr, ok := res.([]interface{})
+		textVecsF64, ok := result.([][]float64)
 		if !ok {
-			return nil, fmt.Errorf("error converting type to float32: %v", res)
+			return nil, fmt.Errorf("expected a slice of float32 or float64 slices, got: %T", result)
 		}
-
-		textVecs[i] = make([]float32, len(subArr))
-		for j, val := range subArr {
-			if v, ok := val.(float64); ok {
-				textVecs[i][j] = float32(v)
-			} else if v, ok := val.(float32); ok {
-				textVecs[i][j] = v
-			} else {
-				return nil, fmt.Errorf("error converting type to float32: %v", val)
+		textVecs = make([][]float32, len(textVecsF64))
+		for i, vec := range textVecsF64 {
+			textVecs[i] = make([]float32, len(vec))
+			for j, val := range vec {
+				textVecs[i][j] = float32(val)
 			}
 		}
 	}
