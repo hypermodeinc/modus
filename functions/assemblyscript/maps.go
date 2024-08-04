@@ -17,11 +17,6 @@ import (
 
 // Reference: https://github.com/AssemblyScript/assemblyscript/blob/main/std/assembly/map.ts
 
-type kvp struct {
-	Key   any `json:"key"`
-	Value any `json:"value"`
-}
-
 func readMap(ctx context.Context, mem wasm.Memory, def plugins.TypeDefinition, offset uint32) (data any, err error) {
 
 	// buckets, ok := mem.ReadUint32Le(offset)
