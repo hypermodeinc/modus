@@ -46,8 +46,11 @@ func getGoType(asType string) (reflect.Type, error) {
 		return reflect.MapOf(keyType, valType), nil
 	}
 
-	return nil, fmt.Errorf("unsupported AssemblyScript type: %s", asType)
+	// All other types are custom classes, which are represented as a map[string]any
+	return goMapStringAnyType, nil
 }
+
+var goMapStringAnyType = reflect.TypeOf(map[string]any{})
 
 // map all AssemblyScript types to Go types
 var asToGoTypeMap = map[string]reflect.Type{
