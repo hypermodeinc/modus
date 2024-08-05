@@ -64,7 +64,6 @@ func (f *Function) Signature() string {
 
 type TypeDefinition struct {
 	Id     uint32   `json:"id"`
-	Size   uint32   `json:"size"`
 	Path   string   `json:"path"`
 	Name   string   `json:"name"`
 	Fields []*Field `json:"fields"`
@@ -132,9 +131,8 @@ func (p *Parameter) UnmarshalJSON(data []byte) error {
 }
 
 type Field struct {
-	Offset uint32    `json:"offset"`
-	Name   string    `json:"name"`
-	Type   *TypeInfo `json:"type"`
+	Name string    `json:"name"`
+	Type *TypeInfo `json:"type"`
 }
 
 type TypeInfo struct {
