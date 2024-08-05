@@ -7,6 +7,7 @@
 - Fix certain errors reporting incorrectly [#307](https://github.com/hypermodeAI/runtime/pull/307)
 - Improve encoding and decoding of arrays and maps [#308](https://github.com/hypermodeAI/runtime/pull/308)
 - Listen on both IPv4 and IPv6 for localhost [#309](https://github.com/hypermodeAI/runtime/pull/309)
+- Warn instead of error on some db connection failures [#310](https://github.com/hypermodeAI/runtime/pull/310)
 
 ## 2024-07-23 - Version 0.10.1
 

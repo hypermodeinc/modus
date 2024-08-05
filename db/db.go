@@ -7,7 +7,6 @@ import (
 	"sync"
 	"time"
 
-	"hmruntime/config"
 	"hmruntime/logger"
 	"hmruntime/metrics"
 	"hmruntime/plugins"
@@ -16,6 +15,7 @@ import (
 
 	"github.com/hypermodeAI/manifest"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -25,6 +25,8 @@ var globalRuntimePostgresWriter *runtimePostgresWriter = &runtimePostgresWriter{
 	quit:   make(chan struct{}),
 	done:   make(chan struct{}),
 }
+
+var errDbNotConfigured = errors.New("database not configured")
 
 const batchSize = 100
 const chanSize = 10000
@@ -54,27 +56,33 @@ type inferenceHistory struct {
 	function *string
 }
 
-func (w *runtimePostgresWriter) GetPool(ctx context.Context) *pgxpool.Pool {
+func (w *runtimePostgresWriter) GetPool(ctx context.Context) (*pgxpool.Pool, error) {
 	w.mu.RLock()
 	if w.dbpool != nil {
 		defer w.mu.RUnlock()
-		return w.dbpool
+		return w.dbpool, nil
 	}
 	w.mu.RUnlock()
 
 	w.mu.Lock()
 	defer w.mu.Unlock()
 	connStr, err := secrets.GetSecretValue(ctx, "HYPERMODE_METADATA_DB")
-	if err != nil {
-		return nil
+	if connStr == "" {
+		if err != nil {
+			return nil, fmt.Errorf("%w: %w", errDbNotConfigured, err)
+		} else {
+			return nil, errDbNotConfigured
+		}
+	} else if err != nil {
+		return nil, err
 	}
 
 	pool, err := pgxpool.New(ctx, connStr)
 	if err != nil {
-		return nil
+		return nil, err
 	}
 	w.dbpool = pool
-	return pool
+	return pool, nil
 }
 
 func (w *runtimePostgresWriter) Write(data inferenceHistory) {
@@ -151,7 +159,7 @@ func getInferenceDataJson(val any) ([]byte, error) {
 }
 
 func Stop(ctx context.Context) {
-	pool := globalRuntimePostgresWriter.GetPool(ctx)
+	pool, _ := globalRuntimePostgresWriter.GetPool(ctx)
 	if pool == nil {
 		return
 	}
@@ -215,7 +223,17 @@ ON CONFLICT (build_id) DO NOTHING`,
 	})
 
 	if err != nil {
-		logger.Err(ctx, err).Msg("Error writing plugin info to database")
+		logDbWarningOrError(ctx, err, "Plugin info not written to database.")
+	}
+}
+
+func logDbWarningOrError(ctx context.Context, err error, msg string) {
+	if _, ok := err.(*pgconn.ConnectError); ok {
+		logger.Warn(ctx).Err(err).Msgf("Database connection error. %s", msg)
+	} else if errors.Is(err, errDbNotConfigured) {
+		logger.Warn(ctx).Msgf("Database has not been configured. %s", msg)
+	} else {
+		logger.Err(ctx, err).Msg(msg)
 	}
 }
 
@@ -578,30 +596,26 @@ VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 	})
 
 	if err != nil {
-		// Handle error
-		if !config.IsDevEnvironment() {
-			logger.Err(ctx, err).Msg("Error writing to inference history database")
-		}
+		logDbWarningOrError(ctx, err, "Inference history not written to database.")
 	}
-
 }
 
 func Initialize(ctx context.Context) {
 	// this will initialize the pool and start the worker
-	pool := globalRuntimePostgresWriter.GetPool(ctx)
-	if pool == nil {
-		logger.Warn(ctx).Msg("Database pool is not initialized")
+	_, err := globalRuntimePostgresWriter.GetPool(ctx)
+	if err != nil {
+		logger.Warn(ctx).Err(err).Msg("Metadata database is not available.")
 	}
 	go globalRuntimePostgresWriter.worker(ctx)
 }
 
 func GetTx(ctx context.Context) (pgx.Tx, error) {
-	pool := globalRuntimePostgresWriter.GetPool(ctx)
-	if pool == nil {
-		return nil, errors.New("database pool is not initialized")
-	} else {
-		return pool.Begin(ctx)
+	pool, err := globalRuntimePostgresWriter.GetPool(ctx)
+	if err != nil {
+		return nil, err
 	}
+
+	return pool.Begin(ctx)
 }
 
 func WithTx(ctx context.Context, fn func(pgx.Tx) error) error {
