@@ -16,7 +16,7 @@ import (
 	"hmruntime/graphql/schemagen"
 	"hmruntime/logger"
 	"hmruntime/manifestdata"
-	"hmruntime/plugins"
+	"hmruntime/plugins/metadata"
 	"hmruntime/utils"
 
 	"github.com/wundergraph/graphql-go-tools/execution/engine"
@@ -41,11 +41,11 @@ func setEngine(engine *engine.ExecutionEngine) {
 	instance = engine
 }
 
-func Activate(ctx context.Context, metadata plugins.PluginMetadata) error {
+func Activate(ctx context.Context, md *metadata.Metadata) error {
 	span := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
 
-	schema, cfg, err := generateSchema(ctx, metadata)
+	schema, cfg, err := generateSchema(ctx, md)
 	if err != nil {
 		return err
 	}
@@ -64,11 +64,11 @@ func Activate(ctx context.Context, metadata plugins.PluginMetadata) error {
 	return nil
 }
 
-func generateSchema(ctx context.Context, metadata plugins.PluginMetadata) (*gql.Schema, *datasource.Configuration, error) {
+func generateSchema(ctx context.Context, md *metadata.Metadata) (*gql.Schema, *datasource.Configuration, error) {
 	span := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
 
-	generated, err := schemagen.GetGraphQLSchema(ctx, metadata, manifestdata.Manifest, true)
+	generated, err := schemagen.GetGraphQLSchema(ctx, md, manifestdata.GetManifest(), true)
 	if err != nil {
 		return nil, nil, err
 	}

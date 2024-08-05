@@ -2,7 +2,7 @@
  * Copyright 2024 Hypermode, Inc.
  */
 
-package plugins
+package metadata
 
 import (
 	"context"
@@ -16,26 +16,26 @@ import (
 
 var ErrPluginMetadataNotFound = fmt.Errorf("no metadata found in plugin")
 
-func GetPluginMetadata(ctx context.Context, cm wazero.CompiledModule) (PluginMetadata, error) {
+func GetPluginMetadata(ctx context.Context, cm wazero.CompiledModule) (*Metadata, error) {
 	span := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
 
 	metadataJson, found := getCustomSectionData(cm, "hypermode_meta")
 	if !found {
-		return PluginMetadata{}, ErrPluginMetadataNotFound
+		return nil, ErrPluginMetadataNotFound
 	}
 
-	metadata := PluginMetadata{}
-	err := utils.JsonDeserialize(metadataJson, &metadata)
+	md := &Metadata{}
+	err := utils.JsonDeserialize(metadataJson, &md)
 	if err != nil {
-		return PluginMetadata{}, fmt.Errorf("failed to parse plugin metadata: %w", err)
+		return nil, fmt.Errorf("failed to parse plugin metadata: %w", err)
 	}
 
-	augmentMetadata(&metadata)
-	return metadata, nil
+	augmentMetadata(md)
+	return md, nil
 }
 
-func augmentMetadata(metadata *PluginMetadata) {
+func augmentMetadata(metadata *Metadata) {
 
 	// legacy support for the deprecated "library" field
 	// (functions-as before v0.10.0)

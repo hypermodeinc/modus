@@ -27,7 +27,7 @@ func callOpenAIChatCompletion(ctx context.Context, model manifest.ModelInfo, hos
 	authHeaderValue, ok := host.Headers["Authorization"]
 	if !ok {
 		// Handle how the key was passed in the old V1 manifest format
-		if manifestdata.Manifest.Version == 1 && len(host.Headers) == 1 {
+		if manifestdata.GetManifest().Version == 1 && len(host.Headers) == 1 {
 			for k, v := range host.Headers {
 				apiKey := v
 				delete(host.Headers, k)

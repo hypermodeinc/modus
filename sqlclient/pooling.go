@@ -45,7 +45,7 @@ func (r *dsRegistry) getPGPool(ctx context.Context, dsname string) (*postgresqlD
 		return ds, nil
 	}
 
-	for name, info := range manifestdata.Manifest.Hosts {
+	for name, info := range manifestdata.GetManifest().Hosts {
 		if name != dsname {
 			continue
 		}

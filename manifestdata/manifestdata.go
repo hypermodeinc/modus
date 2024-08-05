@@ -6,6 +6,7 @@ package manifestdata
 
 import (
 	"context"
+	"sync"
 
 	"hmruntime/logger"
 	"hmruntime/storage"
@@ -16,7 +17,20 @@ import (
 
 const manifestFileName = "hypermode.json"
 
-var Manifest manifest.HypermodeManifest = manifest.HypermodeManifest{}
+var mu sync.RWMutex
+var man = &manifest.HypermodeManifest{}
+
+func GetManifest() *manifest.HypermodeManifest {
+	mu.RLock()
+	defer mu.RUnlock()
+	return man
+}
+
+func SetManifest(m *manifest.HypermodeManifest) {
+	mu.Lock()
+	defer mu.Unlock()
+	man = m
+}
 
 func MonitorManifestFile(ctx context.Context) {
 	loadFile := func(file storage.FileInfo) error {
@@ -54,20 +68,20 @@ func loadManifest(ctx context.Context) error {
 		return err
 	}
 
-	man, err := manifest.ReadManifest(bytes)
+	m, err := manifest.ReadManifest(bytes)
 	if err != nil {
 		return err
 	}
 
-	if !man.IsCurrentVersion() {
+	if !m.IsCurrentVersion() {
 		logger.Warn(ctx).
 			Str("filename", manifestFileName).
-			Int("manifest_version", man.Version).
+			Int("manifest_version", m.Version).
 			Msg("The manifest file is in a deprecated format.  Please update it to the current format.")
 	}
 
 	// Only update the Manifest global when we have successfully read the manifest.
-	Manifest = man
+	SetManifest(&m)
 
 	// Trigger the manifest loaded event.
 	err = triggerManifestLoaded(ctx)

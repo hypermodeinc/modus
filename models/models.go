@@ -21,7 +21,7 @@ import (
 )
 
 func GetModel(modelName string) (manifest.ModelInfo, error) {
-	model, ok := manifestdata.Manifest.Models[modelName]
+	model, ok := manifestdata.GetManifest().Models[modelName]
 	if !ok {
 		return manifest.ModelInfo{}, fmt.Errorf("model %s was not found", modelName)
 	}

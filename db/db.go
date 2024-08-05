@@ -169,19 +169,20 @@ func Stop(ctx context.Context) {
 	pool.Close()
 }
 
-func WritePluginInfo(ctx context.Context, metadata *plugins.PluginMetadata) {
+func WritePluginInfo(ctx context.Context, plugin *plugins.Plugin) {
 	span := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
 
 	err := WithTx(ctx, func(tx pgx.Tx) error {
 
 		// Check if the plugin is already in the database
-		id, err := getPluginId(ctx, tx, metadata.BuildId)
+		// If so, update the ID to match
+		id, err := getPluginId(ctx, tx, plugin.Metadata.BuildId)
 		if err != nil {
 			return err
 		}
 		if id != "" {
-			metadata.Id = id
+			plugin.Id = id
 			return nil
 		}
 
@@ -192,17 +193,16 @@ VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 ON CONFLICT (build_id) DO NOTHING`,
 			pluginsTable)
 
-		metadata.Id = utils.GenerateUUIDV7()
 		ct, err := tx.Exec(ctx, query,
-			metadata.Id,
-			metadata.Name(),
-			utils.NilIfEmpty(metadata.Version()),
-			metadata.Language(),
-			metadata.SdkVersion(),
-			metadata.BuildId,
-			metadata.BuildTime,
-			utils.NilIfEmpty(metadata.GitRepo),
-			utils.NilIfEmpty(metadata.GitCommit),
+			plugin.Id,
+			plugin.Metadata.Name(),
+			utils.NilIfEmpty(plugin.Metadata.Version()),
+			plugin.Metadata.Language(),
+			plugin.Metadata.SdkVersion(),
+			plugin.Metadata.BuildId,
+			plugin.Metadata.BuildTime,
+			utils.NilIfEmpty(plugin.Metadata.GitRepo),
+			utils.NilIfEmpty(plugin.Metadata.GitCommit),
 		)
 		if err != nil {
 			return err
@@ -212,11 +212,11 @@ ON CONFLICT (build_id) DO NOTHING`,
 			// Edge case - the plugin is now in the database, but we didn't insert it
 			// It must have been inserted by another instance of the service
 			// Get the ID set by the other instance
-			id, err := getPluginId(ctx, tx, metadata.BuildId)
+			id, err := getPluginId(ctx, tx, plugin.Metadata.BuildId)
 			if err != nil {
 				return err
 			}
-			metadata.Id = id
+			plugin.Id = id
 		}
 
 		return nil
@@ -258,7 +258,7 @@ func WriteInferenceHistory(ctx context.Context, model manifest.ModelInfo, input,
 
 	var pluginId *string
 	if plugin, ok := ctx.Value(utils.PluginContextKey).(*plugins.Plugin); ok {
-		pluginId = &plugin.Metadata.Id
+		pluginId = &plugin.Id
 	}
 
 	var function *string
