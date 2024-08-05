@@ -15,7 +15,7 @@ type Plugin struct {
 	Module   wazero.CompiledModule
 	Metadata *metadata.Metadata
 	FileName string
-	Types    map[string]metadata.TypeDefinition
+	Types    map[string]*metadata.TypeDefinition
 }
 
 func (p *Plugin) NameAndVersion() (name string, version string) {

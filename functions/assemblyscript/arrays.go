@@ -17,7 +17,7 @@ import (
 
 // Reference: https://github.com/AssemblyScript/assemblyscript/blob/main/std/assembly/array.ts
 
-func readArray(ctx context.Context, mem wasm.Memory, def metadata.TypeDefinition, offset uint32) (data any, err error) {
+func readArray(ctx context.Context, mem wasm.Memory, def *metadata.TypeDefinition, offset uint32) (data any, err error) {
 
 	// buffer, ok := mem.ReadUint32Le(offset)
 	// if !ok {
@@ -59,7 +59,7 @@ func readArray(ctx context.Context, mem wasm.Memory, def metadata.TypeDefinition
 	return arr.Interface(), nil
 }
 
-func writeArray(ctx context.Context, mod wasm.Module, def metadata.TypeDefinition, data any) (offset uint32, err error) {
+func writeArray(ctx context.Context, mod wasm.Module, def *metadata.TypeDefinition, data any) (offset uint32, err error) {
 	var arr []any
 	arr, err = utils.ConvertToArray(data)
 	if err != nil {

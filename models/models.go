@@ -20,13 +20,13 @@ import (
 	"github.com/hypermodeAI/manifest"
 )
 
-func GetModel(modelName string) (manifest.ModelInfo, error) {
+func GetModel(modelName string) (*manifest.ModelInfo, error) {
 	model, ok := manifestdata.GetManifest().Models[modelName]
 	if !ok {
-		return manifest.ModelInfo{}, fmt.Errorf("model %s was not found", modelName)
+		return nil, fmt.Errorf("model %s was not found", modelName)
 	}
 
-	return model, nil
+	return &model, nil
 }
 
 func GetModelInfo(modelName string) (*ModelInfo, error) {
@@ -57,7 +57,7 @@ func InvokeModel(ctx context.Context, modelName string, input string) (string, e
 	return PostToModelEndpoint[string](ctx, model, input)
 }
 
-func PostToModelEndpoint[TResult any](ctx context.Context, model manifest.ModelInfo, payload any) (TResult, error) {
+func PostToModelEndpoint[TResult any](ctx context.Context, model *manifest.ModelInfo, payload any) (TResult, error) {
 	span := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
 
@@ -87,11 +87,11 @@ func PostToModelEndpoint[TResult any](ctx context.Context, model manifest.ModelI
 	return res.Data, nil
 }
 
-func getModelEndpointAndHost(model manifest.ModelInfo) (string, manifest.HTTPHostInfo, error) {
+func getModelEndpointAndHost(model *manifest.ModelInfo) (string, *manifest.HTTPHostInfo, error) {
 
 	host, err := hosts.GetHttpHost(model.Host)
 	if err != nil {
-		return "", manifest.HTTPHostInfo{}, err
+		return "", nil, err
 	}
 
 	if host.Name == hosts.HypermodeHost {

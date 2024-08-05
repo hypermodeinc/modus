@@ -17,7 +17,7 @@ import (
 	wasm "github.com/tetratelabs/wazero/api"
 )
 
-func readObject(ctx context.Context, mem wasm.Memory, typ metadata.TypeInfo, offset uint32) (data any, err error) {
+func readObject(ctx context.Context, mem wasm.Memory, typ *metadata.TypeInfo, offset uint32) (data any, err error) {
 	switch typ.Name {
 	case "ArrayBuffer":
 		return readBytes(mem, offset)
@@ -46,7 +46,7 @@ func readObject(ctx context.Context, mem wasm.Memory, typ metadata.TypeInfo, off
 	return readClass(ctx, mem, def, offset)
 }
 
-func writeObject(ctx context.Context, mod wasm.Module, typ metadata.TypeInfo, val any) (offset uint32, err error) {
+func writeObject(ctx context.Context, mod wasm.Module, typ *metadata.TypeInfo, val any) (offset uint32, err error) {
 	switch typ.Name {
 	case "ArrayBuffer":
 		switch v := val.(type) {

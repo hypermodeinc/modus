@@ -18,7 +18,7 @@ import (
 
 var authHeaderRegex = regexp.MustCompile(`^Bearer {{\s*\w+?\s*}}$`)
 
-func callOpenAIChatCompletion(ctx context.Context, model manifest.ModelInfo, host manifest.HTTPHostInfo, instruction string, sentence string, outputFormat outputFormat) (*chatResponse, error) {
+func callOpenAIChatCompletion(ctx context.Context, model *manifest.ModelInfo, host *manifest.HTTPHostInfo, instruction string, sentence string, outputFormat outputFormat) (*chatResponse, error) {
 
 	// We ignore the model endpoint and use the OpenAI chat completion endpoint
 	host.Endpoint = "https://api.openai.com/v1/chat/completions"

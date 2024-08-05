@@ -47,7 +47,7 @@ type runtimePostgresWriter struct {
 }
 
 type inferenceHistory struct {
-	model    manifest.ModelInfo
+	model    *manifest.ModelInfo
 	input    any
 	output   any
 	start    time.Time
@@ -252,7 +252,7 @@ func getPluginId(ctx context.Context, tx pgx.Tx, buildId string) (string, error)
 	return "", nil
 }
 
-func WriteInferenceHistory(ctx context.Context, model manifest.ModelInfo, input, output any, start, end time.Time) {
+func WriteInferenceHistory(ctx context.Context, model *manifest.ModelInfo, input, output any, start, end time.Time) {
 	span := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
 

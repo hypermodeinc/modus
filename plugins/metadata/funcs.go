@@ -66,7 +66,7 @@ func augmentMetadata(metadata *Metadata) {
 	}
 }
 
-func isNullable(t TypeInfo, lang PluginLanguage) bool {
+func isNullable(t *TypeInfo, lang PluginLanguage) bool {
 	switch lang {
 	case AssemblyScript:
 		return strings.HasSuffix(t.Path, "|null")
