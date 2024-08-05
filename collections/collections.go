@@ -15,7 +15,7 @@ import (
 func UpsertToCollection(ctx context.Context, collectionName string, keys []string, texts []string) (*collectionMutationResult, error) {
 
 	// Get the collectionName data from the manifest
-	collectionData := manifestdata.Manifest.Collections[collectionName]
+	collectionData := manifestdata.GetManifest().Collections[collectionName]
 
 	collection, err := GlobalCollectionFactory.Find(ctx, collectionName)
 	if err != nil {
@@ -140,7 +140,7 @@ func SearchCollection(ctx context.Context, collectionName string, searchMethod s
 		return nil, err
 	}
 
-	embedder := manifestdata.Manifest.Collections[collectionName].SearchMethods[searchMethod].Embedder
+	embedder := manifestdata.GetManifest().Collections[collectionName].SearchMethods[searchMethod].Embedder
 
 	info, err := functions.GetFunctionInfo(embedder)
 	if err != nil {
@@ -253,7 +253,7 @@ func RecomputeSearchMethod(ctx context.Context, mod wasm.Module, collectionName 
 		return nil, err
 	}
 
-	embedder := manifestdata.Manifest.Collections[collectionName].SearchMethods[searchMethod].Embedder
+	embedder := manifestdata.GetManifest().Collections[collectionName].SearchMethods[searchMethod].Embedder
 
 	info, err := functions.GetFunctionInfo(embedder)
 	if err != nil {

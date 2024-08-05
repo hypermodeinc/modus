@@ -24,7 +24,7 @@ type GraphQLSchema struct {
 	MapTypes []string
 }
 
-func GetGraphQLSchema(ctx context.Context, metadata plugins.PluginMetadata, manifest manifest.HypermodeManifest, includeHeader bool) (*GraphQLSchema, error) {
+func GetGraphQLSchema(ctx context.Context, metadata plugins.PluginMetadata, manifest *manifest.HypermodeManifest, includeHeader bool) (*GraphQLSchema, error) {
 	span := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
 
@@ -136,7 +136,7 @@ func transformFunctions(functions []plugins.FunctionSignature, typeDefs map[stri
 	return results, errors
 }
 
-func filterFunctions(functions []FunctionSignature, manifest manifest.HypermodeManifest) []FunctionSignature {
+func filterFunctions(functions []FunctionSignature, manifest *manifest.HypermodeManifest) []FunctionSignature {
 	// Get all embedders from the manifest.
 	embedders := make(map[string]bool)
 	for _, collection := range manifest.Collections {

@@ -26,7 +26,7 @@ func GetHost(hostName string) (manifest.HostInfo, error) {
 		return manifest.HTTPHostInfo{Name: HypermodeHost}, nil
 	}
 
-	if host, ok := manifestdata.Manifest.Hosts[hostName]; ok {
+	if host, ok := manifestdata.GetManifest().Hosts[hostName]; ok {
 		return host, nil
 	}
 
@@ -63,7 +63,7 @@ func GetHttpHostForUrl(url string) (manifest.HTTPHostInfo, error) {
 	// Find the HTTP host that matches the url
 	// Either endpoint must match completely, or baseUrl must be a prefix of the url
 	// (case insensitive comparison, either way)
-	for _, host := range manifestdata.Manifest.Hosts {
+	for _, host := range manifestdata.GetManifest().Hosts {
 		if httpHost, ok := host.(manifest.HTTPHostInfo); ok {
 			if httpHost.Endpoint != "" && strings.EqualFold(httpHost.Endpoint, url) {
 				return httpHost, nil

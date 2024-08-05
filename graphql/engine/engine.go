@@ -68,7 +68,7 @@ func generateSchema(ctx context.Context, metadata plugins.PluginMetadata) (*gql.
 	span := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
 
-	generated, err := schemagen.GetGraphQLSchema(ctx, metadata, manifestdata.Manifest, true)
+	generated, err := schemagen.GetGraphQLSchema(ctx, metadata, manifestdata.GetManifest(), true)
 	if err != nil {
 		return nil, nil, err
 	}

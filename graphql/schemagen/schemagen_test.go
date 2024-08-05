@@ -17,7 +17,7 @@ import (
 
 func Test_GetGraphQLSchema(t *testing.T) {
 
-	manifest := manifest.HypermodeManifest{
+	manifest := &manifest.HypermodeManifest{
 		Models: map[string]manifest.ModelInfo{},
 		Hosts:  map[string]manifest.HostInfo{},
 		Collections: map[string]manifest.CollectionInfo{

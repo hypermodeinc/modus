@@ -115,13 +115,13 @@ func ProcessTextMapWithModule(ctx context.Context, mod wasm.Module, collection i
 }
 
 func CleanAndProcessManifest(ctx context.Context) error {
-	deleteIndexesNotInManifest(ctx, manifestdata.Manifest)
-	processManifestCollections(ctx, manifestdata.Manifest)
+	deleteIndexesNotInManifest(ctx, manifestdata.GetManifest())
+	processManifestCollections(ctx, manifestdata.GetManifest())
 	return nil
 }
 
-func processManifestCollections(ctx context.Context, Manifest manifest.HypermodeManifest) {
-	for collectionName, collectionInfo := range Manifest.Collections {
+func processManifestCollections(ctx context.Context, man *manifest.HypermodeManifest) {
+	for collectionName, collectionInfo := range man.Collections {
 		collection, err := GlobalCollectionFactory.Find(ctx, collectionName)
 		if err == ErrCollectionNotFound {
 			// forces all users to use in-memory index for now
@@ -192,12 +192,11 @@ func createIndex(ctx context.Context, collection interfaces.Collection, searchMe
 			Str("index_name", searchMethodName).
 			Msg("Failed to create vector index.")
 	}
-
 }
 
-func deleteIndexesNotInManifest(ctx context.Context, Manifest manifest.HypermodeManifest) {
+func deleteIndexesNotInManifest(ctx context.Context, man *manifest.HypermodeManifest) {
 	for collectionName := range GlobalCollectionFactory.GetCollectionMap() {
-		if _, ok := Manifest.Collections[collectionName]; !ok {
+		if _, ok := man.Collections[collectionName]; !ok {
 			err := GlobalCollectionFactory.Remove(ctx, collectionName)
 			if err != nil {
 				logger.Err(ctx, err).
@@ -218,7 +217,7 @@ func deleteIndexesNotInManifest(ctx context.Context, Manifest manifest.Hypermode
 			continue
 		}
 		for searchMethodName := range vectorIndexMap {
-			err := deleteVectorIndexesNotInManifest(ctx, Manifest, collection, collectionName, searchMethodName)
+			err := deleteVectorIndexesNotInManifest(ctx, man, collection, collectionName, searchMethodName)
 			if err != nil {
 				logger.Err(ctx, err).
 					Str("index_name", searchMethodName).
@@ -229,8 +228,8 @@ func deleteIndexesNotInManifest(ctx context.Context, Manifest manifest.Hypermode
 	}
 }
 
-func deleteVectorIndexesNotInManifest(ctx context.Context, Manifest manifest.HypermodeManifest, collection interfaces.Collection, collectionName, searchMethodName string) error {
-	_, ok := Manifest.Collections[collectionName].SearchMethods[searchMethodName]
+func deleteVectorIndexesNotInManifest(ctx context.Context, man *manifest.HypermodeManifest, collection interfaces.Collection, collectionName, searchMethodName string) error {
+	_, ok := man.Collections[collectionName].SearchMethods[searchMethodName]
 	if !ok {
 		err := collection.DeleteVectorIndex(ctx, searchMethodName)
 		if err != nil {
