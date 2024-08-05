@@ -10,6 +10,7 @@ import (
 	"hmruntime/logger"
 	"hmruntime/metrics"
 	"hmruntime/plugins"
+	"hmruntime/plugins/metadata"
 	"hmruntime/secrets"
 	"hmruntime/utils"
 
@@ -169,7 +170,7 @@ func Stop(ctx context.Context) {
 	pool.Close()
 }
 
-func WritePluginInfo(ctx context.Context, metadata *plugins.PluginMetadata) {
+func WritePluginInfo(ctx context.Context, metadata *metadata.Metadata) {
 	span := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
 

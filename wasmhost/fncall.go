@@ -13,7 +13,7 @@ import (
 	"hmruntime/functions/assemblyscript"
 	"hmruntime/logger"
 	"hmruntime/metrics"
-	"hmruntime/plugins"
+	"hmruntime/plugins/metadata"
 	"hmruntime/utils"
 
 	"github.com/rs/xid"
@@ -107,7 +107,7 @@ func doCallFunction(ctx context.Context, fnInfo functions.FunctionInfo, paramete
 	return &execInfo, err
 }
 
-func getParameters(ctx context.Context, mod wasm.Module, paramInfo []plugins.Parameter, parameters map[string]any) ([]uint64, bool, error) {
+func getParameters(ctx context.Context, mod wasm.Module, paramInfo []metadata.Parameter, parameters map[string]any) ([]uint64, bool, error) {
 	params := make([]uint64, len(paramInfo))
 	mask := uint64(0)
 	has_opt := false

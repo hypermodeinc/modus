@@ -13,6 +13,7 @@ import (
 	"hmruntime/functions"
 	"hmruntime/logger"
 	"hmruntime/plugins"
+	"hmruntime/plugins/metadata"
 	"hmruntime/storage"
 	"hmruntime/utils"
 	"hmruntime/wasmhost"
@@ -68,9 +69,9 @@ func loadPlugin(ctx context.Context, filename string) error {
 		return err
 	}
 
-	// Get the metadata for the plugin.
-	metadata, err := plugins.GetPluginMetadata(ctx, cm)
-	if err == plugins.ErrPluginMetadataNotFound {
+	// Get the md for the plugin.
+	md, err := metadata.GetPluginMetadata(ctx, cm)
+	if err == metadata.ErrPluginMetadataNotFound {
 		logger.Error(ctx).
 			Bool("user_visible", true).
 			Msg("Metadata not found.  Please recompile your plugin using the latest version of the Hypermode Functions library.")
@@ -80,16 +81,16 @@ func loadPlugin(ctx context.Context, filename string) error {
 	}
 
 	// Write the plugin info to the database.
-	db.WritePluginInfo(ctx, &metadata)
+	db.WritePluginInfo(ctx, &md)
 
 	// Make the plugin object.
-	plugin := makePlugin(ctx, cm, filename, metadata)
+	plugin := makePlugin(ctx, cm, filename, md)
 
 	// Log the details of the loaded plugin.
 	logPluginLoaded(ctx, plugin)
 
 	// Trigger the plugin loaded event.
-	err = triggerPluginLoaded(ctx, metadata)
+	err = triggerPluginLoaded(ctx, md)
 
 	return err
 }
@@ -106,18 +107,18 @@ func compileModule(ctx context.Context, bytes []byte) (wazero.CompiledModule, er
 	return cm, nil
 }
 
-func makePlugin(ctx context.Context, cm wazero.CompiledModule, filename string, metadata plugins.PluginMetadata) plugins.Plugin {
+func makePlugin(ctx context.Context, cm wazero.CompiledModule, filename string, md metadata.Metadata) plugins.Plugin {
 	span := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
 
 	// Store the types in a map for easy access.
-	types := make(map[string]plugins.TypeDefinition, len(metadata.Types))
-	for _, t := range metadata.Types {
+	types := make(map[string]metadata.TypeDefinition, len(md.Types))
+	for _, t := range md.Types {
 		types[t.Path] = t
 	}
 
 	// Create and store the plugin.
-	plugin := plugins.Plugin{Module: cm, Metadata: metadata, FileName: filename, Types: types}
+	plugin := plugins.Plugin{Module: cm, Metadata: md, FileName: filename, Types: types}
 	registry.AddOrUpdate(plugin)
 
 	return plugin
@@ -130,10 +131,10 @@ func logPluginLoaded(ctx context.Context, plugin plugins.Plugin) {
 	evt := logger.Info(ctx)
 	evt.Str("filename", plugin.FileName)
 
-	metadata := plugin.Metadata
+	md := plugin.Metadata
 
-	if metadata.Plugin != "" {
-		name, version := metadata.NameAndVersion()
+	if md.Plugin != "" {
+		name, version := md.NameAndVersion()
 		evt.Str("plugin", name)
 		if version != "" {
 			// The version is optional.
@@ -142,30 +143,30 @@ func logPluginLoaded(ctx context.Context, plugin plugins.Plugin) {
 	}
 
 	lang := plugin.Language()
-	if lang != plugins.UnknownLanguage {
+	if lang != metadata.UnknownLanguage {
 		evt.Str("language", lang.String())
 	}
 
-	if metadata.BuildId != "" {
-		evt.Str("build_id", metadata.BuildId)
+	if md.BuildId != "" {
+		evt.Str("build_id", md.BuildId)
 	}
 
-	if metadata.BuildTime != (time.Time{}) {
-		evt.Time("build_ts", metadata.BuildTime)
+	if md.BuildTime != (time.Time{}) {
+		evt.Time("build_ts", md.BuildTime)
 	}
 
-	if metadata.SDK != "" {
-		name, version := metadata.SdkNameAndVersion()
+	if md.SDK != "" {
+		name, version := md.SdkNameAndVersion()
 		evt.Str("sdk", name)
 		evt.Str("sdk_version", version)
 	}
 
-	if metadata.GitRepo != "" {
-		evt.Str("git_repo", metadata.GitRepo)
+	if md.GitRepo != "" {
+		evt.Str("git_repo", md.GitRepo)
 	}
 
-	if metadata.GitCommit != "" {
-		evt.Str("git_commit", metadata.GitCommit)
+	if md.GitCommit != "" {
+		evt.Str("git_commit", md.GitCommit)
 	}
 
 	evt.Msg("Loaded plugin.")

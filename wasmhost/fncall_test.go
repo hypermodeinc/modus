@@ -8,7 +8,7 @@ import (
 	"context"
 	"testing"
 
-	"hmruntime/plugins"
+	"hmruntime/plugins/metadata"
 
 	"github.com/stretchr/testify/require"
 	"github.com/tetratelabs/wazero/api"
@@ -40,10 +40,10 @@ func (m *MockModule) IsClosed() bool                                            
 func (m *MockModule) Close(ctx context.Context) error                                { return m.CloseWithExitCode(ctx, 0) }
 
 func Test_GetParameters_Old(t *testing.T) {
-	paramInfo := []plugins.Parameter{
-		{Name: "x", Type: plugins.TypeInfo{Name: "Int", Path: "i32"}, Optional: true},
-		{Name: "y", Type: plugins.TypeInfo{Name: "Int", Path: "i32"}, Optional: true},
-		{Name: "z", Type: plugins.TypeInfo{Name: "Int", Path: "i32"}, Optional: true},
+	paramInfo := []metadata.Parameter{
+		{Name: "x", Type: metadata.TypeInfo{Name: "Int", Path: "i32"}, Optional: true},
+		{Name: "y", Type: metadata.TypeInfo{Name: "Int", Path: "i32"}, Optional: true},
+		{Name: "z", Type: metadata.TypeInfo{Name: "Int", Path: "i32"}, Optional: true},
 	}
 
 	// no parameters supplied
@@ -76,10 +76,10 @@ func Test_GetParameters_New(t *testing.T) {
 		return &val
 	}
 
-	paramInfo := []plugins.Parameter{
-		{Name: "x", Type: plugins.TypeInfo{Name: "Int", Path: "i32"}, Default: makeDefault(0)},
-		{Name: "y", Type: plugins.TypeInfo{Name: "Int", Path: "i32"}, Default: makeDefault(1)},
-		{Name: "z", Type: plugins.TypeInfo{Name: "Int", Path: "i32"}, Default: makeDefault(2)},
+	paramInfo := []metadata.Parameter{
+		{Name: "x", Type: metadata.TypeInfo{Name: "Int", Path: "i32"}, Default: makeDefault(0)},
+		{Name: "y", Type: metadata.TypeInfo{Name: "Int", Path: "i32"}, Default: makeDefault(1)},
+		{Name: "z", Type: metadata.TypeInfo{Name: "Int", Path: "i32"}, Default: makeDefault(2)},
 	}
 
 	// no parameters supplied

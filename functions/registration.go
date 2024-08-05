@@ -10,6 +10,7 @@ import (
 
 	"hmruntime/logger"
 	"hmruntime/plugins"
+	"hmruntime/plugins/metadata"
 )
 
 var functions = make(map[string]FunctionInfo)
@@ -23,7 +24,7 @@ func GetFunctionInfo(fnName string) (FunctionInfo, error) {
 }
 
 type FunctionInfo struct {
-	Function plugins.FunctionSignature
+	Function metadata.Function
 	Plugin   *plugins.Plugin
 }
 

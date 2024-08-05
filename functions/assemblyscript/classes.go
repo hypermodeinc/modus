@@ -10,12 +10,12 @@ import (
 	"reflect"
 	"strings"
 
-	"hmruntime/plugins"
+	"hmruntime/plugins/metadata"
 
 	wasm "github.com/tetratelabs/wazero/api"
 )
 
-func readClass(ctx context.Context, mem wasm.Memory, def plugins.TypeDefinition, offset uint32) (data map[string]any, err error) {
+func readClass(ctx context.Context, mem wasm.Memory, def metadata.TypeDefinition, offset uint32) (data map[string]any, err error) {
 	data = make(map[string]any)
 	for _, field := range def.Fields {
 		fieldOffset := offset + field.Offset
@@ -28,7 +28,7 @@ func readClass(ctx context.Context, mem wasm.Memory, def plugins.TypeDefinition,
 	return data, nil
 }
 
-func readField(ctx context.Context, mem wasm.Memory, typ plugins.TypeInfo, offset uint32) (data any, err error) {
+func readField(ctx context.Context, mem wasm.Memory, typ metadata.TypeInfo, offset uint32) (data any, err error) {
 	var result any
 	var ok bool
 	switch typ.Path {
@@ -87,7 +87,7 @@ func readField(ctx context.Context, mem wasm.Memory, typ plugins.TypeInfo, offse
 			if p == 0 {
 				return nil, nil
 			}
-			typ = plugins.TypeInfo{
+			typ = metadata.TypeInfo{
 				Name: typ.Name[:len(typ.Name)-7], // remove " | null"
 				Path: typ.Path[:len(typ.Path)-5], // remove "|null"
 			}
@@ -106,7 +106,7 @@ func readField(ctx context.Context, mem wasm.Memory, typ plugins.TypeInfo, offse
 	return result, nil
 }
 
-func writeClass(ctx context.Context, mod wasm.Module, def plugins.TypeDefinition, data any) (offset uint32, err error) {
+func writeClass(ctx context.Context, mod wasm.Module, def metadata.TypeDefinition, data any) (offset uint32, err error) {
 
 	// unpin everything when done
 	pins := make([]uint32, 0, len(def.Fields)+1)
@@ -179,7 +179,7 @@ func writeClass(ctx context.Context, mod wasm.Module, def plugins.TypeDefinition
 	return offset, nil
 }
 
-func writeField(ctx context.Context, mod wasm.Module, typ plugins.TypeInfo, offset uint32, val any) (ptr uint32, err error) {
+func writeField(ctx context.Context, mod wasm.Module, typ metadata.TypeInfo, offset uint32, val any) (ptr uint32, err error) {
 	enc, err := encodeValue(ctx, mod, typ, val)
 	if err != nil {
 		return 0, err

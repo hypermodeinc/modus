@@ -13,7 +13,7 @@ import (
 	"strings"
 
 	"hmruntime/functions/assemblyscript"
-	"hmruntime/plugins"
+	"hmruntime/plugins/metadata"
 	"hmruntime/utils"
 
 	"github.com/hypermodeAI/manifest"
@@ -24,13 +24,13 @@ type GraphQLSchema struct {
 	MapTypes []string
 }
 
-func GetGraphQLSchema(ctx context.Context, metadata plugins.PluginMetadata, manifest *manifest.HypermodeManifest, includeHeader bool) (*GraphQLSchema, error) {
+func GetGraphQLSchema(ctx context.Context, md metadata.Metadata, manifest *manifest.HypermodeManifest, includeHeader bool) (*GraphQLSchema, error) {
 	span := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
 
-	typeDefs := make(map[string]TypeDefinition, len(metadata.Types))
-	errors := transformTypes(metadata.Types, typeDefs)
-	functions, errs := transformFunctions(metadata.Functions, typeDefs)
+	typeDefs := make(map[string]TypeDefinition, len(md.Types))
+	errors := transformTypes(md.Types, typeDefs)
+	functions, errs := transformFunctions(md.Functions, typeDefs)
 	types := utils.MapValues(typeDefs)
 	errors = append(errors, errs...)
 
@@ -43,7 +43,7 @@ func GetGraphQLSchema(ctx context.Context, metadata plugins.PluginMetadata, mani
 
 	buf := bytes.Buffer{}
 	if includeHeader {
-		writeSchemaHeader(&buf, metadata)
+		writeSchemaHeader(&buf, md)
 	}
 	writeSchema(&buf, functions, types)
 
@@ -65,7 +65,7 @@ type TransformError struct {
 	Error  error
 }
 
-func transformTypes(types []plugins.TypeDefinition, typeDefs map[string]TypeDefinition) []TransformError {
+func transformTypes(types []metadata.TypeDefinition, typeDefs map[string]TypeDefinition) []TransformError {
 	errors := make([]TransformError, 0)
 	for _, t := range types {
 		if _, ok := typeDefs[t.Name]; ok {
@@ -110,7 +110,7 @@ type ParameterSignature struct {
 	Default *any
 }
 
-func transformFunctions(functions []plugins.FunctionSignature, typeDefs map[string]TypeDefinition) ([]FunctionSignature, []TransformError) {
+func transformFunctions(functions []metadata.Function, typeDefs map[string]TypeDefinition) ([]FunctionSignature, []TransformError) {
 	results := make([]FunctionSignature, len(functions))
 	errors := make([]TransformError, 0)
 	for i, f := range functions {
@@ -210,29 +210,29 @@ func getBaseType(name string) string {
 	return name
 }
 
-func writeSchemaHeader(buf *bytes.Buffer, metadata plugins.PluginMetadata) {
+func writeSchemaHeader(buf *bytes.Buffer, md metadata.Metadata) {
 	buf.WriteString("# Hypermode Functions GraphQL Schema (auto-generated)\n")
 	buf.WriteString("# \n")
 	buf.WriteString("# Plugin: ")
-	buf.WriteString(metadata.Plugin)
+	buf.WriteString(md.Plugin)
 	buf.WriteByte('\n')
 	buf.WriteString("# SDK: ")
-	buf.WriteString(metadata.SDK)
+	buf.WriteString(md.SDK)
 	buf.WriteByte('\n')
 	buf.WriteString("# Build ID: ")
-	buf.WriteString(metadata.BuildId)
+	buf.WriteString(md.BuildId)
 	buf.WriteByte('\n')
 	buf.WriteString("# Build Time: ")
-	buf.WriteString(metadata.BuildTime.Format(utils.TimeFormat))
+	buf.WriteString(md.BuildTime.Format(utils.TimeFormat))
 	buf.WriteByte('\n')
-	if metadata.GitRepo != "" {
+	if md.GitRepo != "" {
 		buf.WriteString("# Git Repo: ")
-		buf.WriteString(metadata.GitRepo)
+		buf.WriteString(md.GitRepo)
 		buf.WriteByte('\n')
 	}
-	if metadata.GitCommit != "" {
+	if md.GitCommit != "" {
 		buf.WriteString("# Git Commit: ")
-		buf.WriteString(metadata.GitCommit)
+		buf.WriteString(md.GitCommit)
 		buf.WriteByte('\n')
 	}
 	buf.WriteByte('\n')
@@ -317,7 +317,7 @@ func writeSchema(buf *bytes.Buffer, functions []FunctionSignature, typeDefs []Ty
 	buf.WriteByte('\n')
 }
 
-func convertParameters(parameters []plugins.Parameter, typeDefs map[string]TypeDefinition, firstPass bool) ([]ParameterSignature, error) {
+func convertParameters(parameters []metadata.Parameter, typeDefs map[string]TypeDefinition, firstPass bool) ([]ParameterSignature, error) {
 	if len(parameters) == 0 {
 		return nil, nil
 	}
@@ -348,7 +348,7 @@ func convertParameters(parameters []plugins.Parameter, typeDefs map[string]TypeD
 	return results, nil
 }
 
-func convertFields(fields []plugins.Field, typeDefs map[string]TypeDefinition, firstPass bool) ([]NameTypePair, error) {
+func convertFields(fields []metadata.Field, typeDefs map[string]TypeDefinition, firstPass bool) ([]NameTypePair, error) {
 	if len(fields) == 0 {
 		return nil, nil
 	}

@@ -6,11 +6,11 @@ package pluginmanager
 
 import (
 	"context"
-	"hmruntime/plugins"
+	"hmruntime/plugins/metadata"
 	"sync"
 )
 
-type PluginLoadedCallback = func(ctx context.Context, metadata plugins.PluginMetadata) error
+type PluginLoadedCallback = func(ctx context.Context, md metadata.Metadata) error
 
 var pluginLoadedCallbacks []PluginLoadedCallback
 var eventsMutex = sync.RWMutex{}
@@ -21,11 +21,11 @@ func RegisterPluginLoadedCallback(callback PluginLoadedCallback) {
 	pluginLoadedCallbacks = append(pluginLoadedCallbacks, callback)
 }
 
-func triggerPluginLoaded(ctx context.Context, metadata plugins.PluginMetadata) error {
+func triggerPluginLoaded(ctx context.Context, md metadata.Metadata) error {
 	eventsMutex.RLock()
 	defer eventsMutex.RUnlock()
 	for _, callback := range pluginLoadedCallbacks {
-		err := callback(ctx, metadata)
+		err := callback(ctx, md)
 		if err != nil {
 			return err
 		}
