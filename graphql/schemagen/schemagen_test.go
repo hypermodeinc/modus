@@ -35,7 +35,7 @@ func Test_GetGraphQLSchema(t *testing.T) {
 		return &val
 	}
 
-	md := metadata.Metadata{
+	md := &metadata.Metadata{
 		Functions: []metadata.Function{
 			{
 				Name: "add",

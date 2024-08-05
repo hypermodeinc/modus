@@ -41,7 +41,7 @@ func setEngine(engine *engine.ExecutionEngine) {
 	instance = engine
 }
 
-func Activate(ctx context.Context, md metadata.Metadata) error {
+func Activate(ctx context.Context, md *metadata.Metadata) error {
 	span := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
 
@@ -64,7 +64,7 @@ func Activate(ctx context.Context, md metadata.Metadata) error {
 	return nil
 }
 
-func generateSchema(ctx context.Context, md metadata.Metadata) (*gql.Schema, *datasource.Configuration, error) {
+func generateSchema(ctx context.Context, md *metadata.Metadata) (*gql.Schema, *datasource.Configuration, error) {
 	span := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
 

@@ -81,7 +81,7 @@ func loadPlugin(ctx context.Context, filename string) error {
 	}
 
 	// Write the plugin info to the database.
-	db.WritePluginInfo(ctx, &md)
+	db.WritePluginInfo(ctx, md)
 
 	// Make the plugin object.
 	plugin := makePlugin(ctx, cm, filename, md)
@@ -107,7 +107,7 @@ func compileModule(ctx context.Context, bytes []byte) (wazero.CompiledModule, er
 	return cm, nil
 }
 
-func makePlugin(ctx context.Context, cm wazero.CompiledModule, filename string, md metadata.Metadata) plugins.Plugin {
+func makePlugin(ctx context.Context, cm wazero.CompiledModule, filename string, md *metadata.Metadata) plugins.Plugin {
 	span := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
 

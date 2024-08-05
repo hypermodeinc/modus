@@ -24,7 +24,7 @@ type GraphQLSchema struct {
 	MapTypes []string
 }
 
-func GetGraphQLSchema(ctx context.Context, md metadata.Metadata, manifest *manifest.HypermodeManifest, includeHeader bool) (*GraphQLSchema, error) {
+func GetGraphQLSchema(ctx context.Context, md *metadata.Metadata, manifest *manifest.HypermodeManifest, includeHeader bool) (*GraphQLSchema, error) {
 	span := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
 
@@ -210,7 +210,7 @@ func getBaseType(name string) string {
 	return name
 }
 
-func writeSchemaHeader(buf *bytes.Buffer, md metadata.Metadata) {
+func writeSchemaHeader(buf *bytes.Buffer, md *metadata.Metadata) {
 	buf.WriteString("# Hypermode Functions GraphQL Schema (auto-generated)\n")
 	buf.WriteString("# \n")
 	buf.WriteString("# Plugin: ")

@@ -12,7 +12,7 @@ import (
 
 type Plugin struct {
 	Module   wazero.CompiledModule
-	Metadata metadata.Metadata
+	Metadata *metadata.Metadata
 	FileName string
 	Types    map[string]metadata.TypeDefinition
 }

@@ -16,22 +16,22 @@ import (
 
 var ErrPluginMetadataNotFound = fmt.Errorf("no metadata found in plugin")
 
-func GetPluginMetadata(ctx context.Context, cm wazero.CompiledModule) (Metadata, error) {
+func GetPluginMetadata(ctx context.Context, cm wazero.CompiledModule) (*Metadata, error) {
 	span := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
 
 	metadataJson, found := getCustomSectionData(cm, "hypermode_meta")
 	if !found {
-		return Metadata{}, ErrPluginMetadataNotFound
+		return nil, ErrPluginMetadataNotFound
 	}
 
-	md := Metadata{}
+	md := &Metadata{}
 	err := utils.JsonDeserialize(metadataJson, &md)
 	if err != nil {
-		return Metadata{}, fmt.Errorf("failed to parse plugin metadata: %w", err)
+		return nil, fmt.Errorf("failed to parse plugin metadata: %w", err)
 	}
 
-	augmentMetadata(&md)
+	augmentMetadata(md)
 	return md, nil
 }
 
