@@ -119,7 +119,8 @@ func writeArray(ctx context.Context, mod wasm.Module, def *metadata.TypeDefiniti
 	}
 
 	// write array object
-	offset, err = allocateWasmMemory(ctx, mod, def.Size, def.Id)
+	const size = 16
+	offset, err = allocateWasmMemory(ctx, mod, size, def.Id)
 	if err != nil {
 		return 0, err
 	}

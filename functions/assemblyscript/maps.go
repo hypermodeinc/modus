@@ -234,7 +234,8 @@ func writeMap(ctx context.Context, mod wasm.Module, def *metadata.TypeDefinition
 	}
 
 	// write map object
-	offset, err = allocateWasmMemory(ctx, mod, def.Size, def.Id)
+	const size = 24
+	offset, err = allocateWasmMemory(ctx, mod, size, def.Id)
 	if err != nil {
 		return 0, err
 	}
