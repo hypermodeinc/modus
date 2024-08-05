@@ -28,14 +28,14 @@ type FunctionInfo struct {
 	Plugin   *plugins.Plugin
 }
 
-func RegisterFunctions(ctx context.Context, plugins []plugins.Plugin) {
+func RegisterFunctions(ctx context.Context, plugins []*plugins.Plugin) {
 	r := &registration{
 		functions: make(map[string]bool),
 		types:     make(map[string]bool),
 	}
 
 	for _, plugin := range plugins {
-		r.registerPlugin(ctx, &plugin)
+		r.registerPlugin(ctx, plugin)
 	}
 
 	r.cleanup(ctx)

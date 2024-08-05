@@ -14,7 +14,6 @@ import (
 )
 
 type Metadata struct {
-	Id        string           `json:"-"` // from db when inserted
 	Plugin    string           `json:"plugin"`
 	SDK       string           `json:"sdk"`
 	Library   string           `json:"library"` // deprecated

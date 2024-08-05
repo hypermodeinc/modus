@@ -80,11 +80,11 @@ func loadPlugin(ctx context.Context, filename string) error {
 		return err
 	}
 
-	// Write the plugin info to the database.
-	db.WritePluginInfo(ctx, md)
-
 	// Make the plugin object.
 	plugin := makePlugin(ctx, cm, filename, md)
+
+	// Write the plugin info to the database.
+	db.WritePluginInfo(ctx, plugin)
 
 	// Log the details of the loaded plugin.
 	logPluginLoaded(ctx, plugin)
@@ -107,7 +107,7 @@ func compileModule(ctx context.Context, bytes []byte) (wazero.CompiledModule, er
 	return cm, nil
 }
 
-func makePlugin(ctx context.Context, cm wazero.CompiledModule, filename string, md *metadata.Metadata) plugins.Plugin {
+func makePlugin(ctx context.Context, cm wazero.CompiledModule, filename string, md *metadata.Metadata) *plugins.Plugin {
 	span := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
 
@@ -118,13 +118,20 @@ func makePlugin(ctx context.Context, cm wazero.CompiledModule, filename string, 
 	}
 
 	// Create and store the plugin.
-	plugin := plugins.Plugin{Module: cm, Metadata: md, FileName: filename, Types: types}
+	plugin := &plugins.Plugin{
+		Id:       utils.GenerateUUIDV7(),
+		Module:   cm,
+		Metadata: md,
+		FileName: filename,
+		Types:    types,
+	}
+
 	registry.AddOrUpdate(plugin)
 
 	return plugin
 }
 
-func logPluginLoaded(ctx context.Context, plugin plugins.Plugin) {
+func logPluginLoaded(ctx context.Context, plugin *plugins.Plugin) {
 	span := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
 
@@ -176,10 +183,11 @@ func unloadPlugin(ctx context.Context, filename string) error {
 	transaction, ctx := utils.NewSentryTransactionForCurrentFunc(ctx)
 	defer transaction.Finish()
 
-	p, ok := registry.GetByFile(filename)
-	if !ok {
+	p := registry.GetByFile(filename)
+	if p == nil {
 		return fmt.Errorf("plugin not found: %s", filename)
 	}
+
 	logger.Info(ctx).
 		Str("plugin", p.Name()).
 		Str("build_id", p.BuildId()).

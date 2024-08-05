@@ -11,6 +11,7 @@ import (
 )
 
 type Plugin struct {
+	Id       string
 	Module   wazero.CompiledModule
 	Metadata *metadata.Metadata
 	FileName string
