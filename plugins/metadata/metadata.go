@@ -14,21 +14,21 @@ import (
 )
 
 type Metadata struct {
-	Plugin    string           `json:"plugin"`
-	SDK       string           `json:"sdk"`
-	Library   string           `json:"library"` // deprecated
-	BuildId   string           `json:"buildId"`
-	BuildTime time.Time        `json:"buildTs"`
-	GitRepo   string           `json:"gitRepo"`
-	GitCommit string           `json:"gitCommit"`
-	Functions []Function       `json:"functions"`
-	Types     []TypeDefinition `json:"types"`
+	Plugin    string            `json:"plugin"`
+	SDK       string            `json:"sdk"`
+	Library   string            `json:"library"` // deprecated
+	BuildId   string            `json:"buildId"`
+	BuildTime time.Time         `json:"buildTs"`
+	GitRepo   string            `json:"gitRepo"`
+	GitCommit string            `json:"gitCommit"`
+	Functions []*Function       `json:"functions"`
+	Types     []*TypeDefinition `json:"types"`
 }
 
 type Function struct {
-	Name       string      `json:"name"`
-	Parameters []Parameter `json:"parameters"`
-	ReturnType TypeInfo    `json:"returnType"`
+	Name       string       `json:"name"`
+	Parameters []*Parameter `json:"parameters"`
+	ReturnType *TypeInfo    `json:"returnType"`
 }
 
 func (f *Function) String() string {
@@ -63,18 +63,18 @@ func (f *Function) Signature() string {
 }
 
 type TypeDefinition struct {
-	Id     uint32  `json:"id"`
-	Size   uint32  `json:"size"`
-	Path   string  `json:"path"`
-	Name   string  `json:"name"`
-	Fields []Field `json:"fields"`
+	Id     uint32   `json:"id"`
+	Size   uint32   `json:"size"`
+	Path   string   `json:"path"`
+	Name   string   `json:"name"`
+	Fields []*Field `json:"fields"`
 }
 
 type Parameter struct {
-	Name     string   `json:"name"`
-	Type     TypeInfo `json:"type"`
-	Optional bool     `json:"optional"` // deprecated
-	Default  *any     `json:"default"`
+	Name     string    `json:"name"`
+	Type     *TypeInfo `json:"type"`
+	Optional bool      `json:"optional"` // deprecated
+	Default  *any      `json:"default"`
 }
 
 func (p *Parameter) UnmarshalJSON(data []byte) error {
@@ -132,9 +132,9 @@ func (p *Parameter) UnmarshalJSON(data []byte) error {
 }
 
 type Field struct {
-	Offset uint32   `json:"offset"`
-	Name   string   `json:"name"`
-	Type   TypeInfo `json:"type"`
+	Offset uint32    `json:"offset"`
+	Name   string    `json:"name"`
+	Type   *TypeInfo `json:"type"`
 }
 
 type TypeInfo struct {

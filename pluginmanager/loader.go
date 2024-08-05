@@ -112,7 +112,7 @@ func makePlugin(ctx context.Context, cm wazero.CompiledModule, filename string, 
 	defer span.Finish()
 
 	// Store the types in a map for easy access.
-	types := make(map[string]metadata.TypeDefinition, len(md.Types))
+	types := make(map[string]*metadata.TypeDefinition, len(md.Types))
 	for _, t := range md.Types {
 		types[t.Path] = t
 	}

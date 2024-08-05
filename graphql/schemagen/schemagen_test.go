@@ -36,115 +36,115 @@ func Test_GetGraphQLSchema(t *testing.T) {
 	}
 
 	md := &metadata.Metadata{
-		Functions: []metadata.Function{
+		Functions: []*metadata.Function{
 			{
 				Name: "add",
-				Parameters: []metadata.Parameter{
-					{Name: "a", Type: metadata.TypeInfo{Name: "i32"}},
-					{Name: "b", Type: metadata.TypeInfo{Name: "i32"}},
+				Parameters: []*metadata.Parameter{
+					{Name: "a", Type: &metadata.TypeInfo{Name: "i32"}},
+					{Name: "b", Type: &metadata.TypeInfo{Name: "i32"}},
 				},
-				ReturnType: metadata.TypeInfo{Name: "i32"},
+				ReturnType: &metadata.TypeInfo{Name: "i32"},
 			},
 			{
 				Name: "sayHello",
-				Parameters: []metadata.Parameter{
-					{Name: "name", Type: metadata.TypeInfo{Name: "string"}},
+				Parameters: []*metadata.Parameter{
+					{Name: "name", Type: &metadata.TypeInfo{Name: "string"}},
 				},
-				ReturnType: metadata.TypeInfo{Name: "string"},
+				ReturnType: &metadata.TypeInfo{Name: "string"},
 			},
 			{
 				Name:       "currentTime",
-				ReturnType: metadata.TypeInfo{Name: "Date"},
+				ReturnType: &metadata.TypeInfo{Name: "Date"},
 			},
 			{
 				Name: "transform",
-				Parameters: []metadata.Parameter{
-					{Name: "items", Type: metadata.TypeInfo{Name: "Map<string,string>"}},
+				Parameters: []*metadata.Parameter{
+					{Name: "items", Type: &metadata.TypeInfo{Name: "Map<string,string>"}},
 				},
-				ReturnType: metadata.TypeInfo{Name: "Map<string, string>"},
+				ReturnType: &metadata.TypeInfo{Name: "Map<string, string>"},
 			},
 			{
 				Name: "testDefaultIntParams",
-				Parameters: []metadata.Parameter{
-					{Name: "a", Type: metadata.TypeInfo{Name: "i32"}, Default: nil},
-					{Name: "b", Type: metadata.TypeInfo{Name: "i32"}, Default: makeDefault(0)},
-					{Name: "c", Type: metadata.TypeInfo{Name: "i32"}, Default: makeDefault(1)},
+				Parameters: []*metadata.Parameter{
+					{Name: "a", Type: &metadata.TypeInfo{Name: "i32"}, Default: nil},
+					{Name: "b", Type: &metadata.TypeInfo{Name: "i32"}, Default: makeDefault(0)},
+					{Name: "c", Type: &metadata.TypeInfo{Name: "i32"}, Default: makeDefault(1)},
 				},
-				ReturnType: metadata.TypeInfo{Name: "void"},
+				ReturnType: &metadata.TypeInfo{Name: "void"},
 			},
 			{
 				Name: "testDefaultStringParams",
-				Parameters: []metadata.Parameter{
-					{Name: "a", Type: metadata.TypeInfo{Name: "string"}, Default: nil},
-					{Name: "b", Type: metadata.TypeInfo{Name: "string"}, Default: makeDefault("")},
-					{Name: "c", Type: metadata.TypeInfo{Name: "string"}, Default: makeDefault(`a"b`)},
-					{Name: "d", Type: metadata.TypeInfo{Name: "string | null"}, Default: nil},
-					{Name: "e", Type: metadata.TypeInfo{Name: "string | null"}, Default: makeDefault(nil)},
-					{Name: "f", Type: metadata.TypeInfo{Name: "string | null"}, Default: makeDefault("")},
-					{Name: "g", Type: metadata.TypeInfo{Name: "string | null"}, Default: makeDefault("test")},
+				Parameters: []*metadata.Parameter{
+					{Name: "a", Type: &metadata.TypeInfo{Name: "string"}, Default: nil},
+					{Name: "b", Type: &metadata.TypeInfo{Name: "string"}, Default: makeDefault("")},
+					{Name: "c", Type: &metadata.TypeInfo{Name: "string"}, Default: makeDefault(`a"b`)},
+					{Name: "d", Type: &metadata.TypeInfo{Name: "string | null"}, Default: nil},
+					{Name: "e", Type: &metadata.TypeInfo{Name: "string | null"}, Default: makeDefault(nil)},
+					{Name: "f", Type: &metadata.TypeInfo{Name: "string | null"}, Default: makeDefault("")},
+					{Name: "g", Type: &metadata.TypeInfo{Name: "string | null"}, Default: makeDefault("test")},
 				},
-				ReturnType: metadata.TypeInfo{Name: "void"},
+				ReturnType: &metadata.TypeInfo{Name: "void"},
 			},
 			{
 				Name: "testDefaultArrayParams",
-				Parameters: []metadata.Parameter{
-					{Name: "a", Type: metadata.TypeInfo{Name: "i32[]"}, Default: nil},
-					{Name: "b", Type: metadata.TypeInfo{Name: "i32[]"}, Default: makeDefault([]int32{})},
-					{Name: "c", Type: metadata.TypeInfo{Name: "i32[]"}, Default: makeDefault([]int32{1, 2, 3})},
-					{Name: "d", Type: metadata.TypeInfo{Name: "i32[] | null"}, Default: nil},
-					{Name: "e", Type: metadata.TypeInfo{Name: "i32[] | null"}, Default: makeDefault(nil)},
-					{Name: "f", Type: metadata.TypeInfo{Name: "i32[] | null"}, Default: makeDefault([]int32{})},
-					{Name: "g", Type: metadata.TypeInfo{Name: "i32[] | null"}, Default: makeDefault([]int32{1, 2, 3})},
+				Parameters: []*metadata.Parameter{
+					{Name: "a", Type: &metadata.TypeInfo{Name: "i32[]"}, Default: nil},
+					{Name: "b", Type: &metadata.TypeInfo{Name: "i32[]"}, Default: makeDefault([]int32{})},
+					{Name: "c", Type: &metadata.TypeInfo{Name: "i32[]"}, Default: makeDefault([]int32{1, 2, 3})},
+					{Name: "d", Type: &metadata.TypeInfo{Name: "i32[] | null"}, Default: nil},
+					{Name: "e", Type: &metadata.TypeInfo{Name: "i32[] | null"}, Default: makeDefault(nil)},
+					{Name: "f", Type: &metadata.TypeInfo{Name: "i32[] | null"}, Default: makeDefault([]int32{})},
+					{Name: "g", Type: &metadata.TypeInfo{Name: "i32[] | null"}, Default: makeDefault([]int32{1, 2, 3})},
 				},
-				ReturnType: metadata.TypeInfo{Name: "void"},
+				ReturnType: &metadata.TypeInfo{Name: "void"},
 			},
 			{
 				Name:       "getPerson",
-				ReturnType: metadata.TypeInfo{Name: "Person"},
+				ReturnType: &metadata.TypeInfo{Name: "Person"},
 			},
 			{
 				Name:       "getPeople",
-				ReturnType: metadata.TypeInfo{Name: "Person[]"},
+				ReturnType: &metadata.TypeInfo{Name: "Person[]"},
 			},
 			{
 				Name:       "getProductMap",
-				ReturnType: metadata.TypeInfo{Name: "Map<string, Product>"},
+				ReturnType: &metadata.TypeInfo{Name: "Map<string, Product>"},
 			},
 			{
 				Name:       "doNothing",
-				ReturnType: metadata.TypeInfo{Name: "void"},
+				ReturnType: &metadata.TypeInfo{Name: "void"},
 			},
 			// This should be excluded from the final schema
 			{
 				Name: "myEmbedder",
-				Parameters: []metadata.Parameter{
-					{Name: "text", Type: metadata.TypeInfo{Name: "string"}},
+				Parameters: []*metadata.Parameter{
+					{Name: "text", Type: &metadata.TypeInfo{Name: "string"}},
 				},
-				ReturnType: metadata.TypeInfo{Name: "f64[]"},
+				ReturnType: &metadata.TypeInfo{Name: "f64[]"},
 			},
 		},
-		Types: []metadata.TypeDefinition{
+		Types: []*metadata.TypeDefinition{
 			{
 				Name: "Company",
-				Fields: []metadata.Field{
-					{Name: "name", Type: metadata.TypeInfo{Name: "string"}},
+				Fields: []*metadata.Field{
+					{Name: "name", Type: &metadata.TypeInfo{Name: "string"}},
 				},
 			},
 			{
 				Name: "Product",
-				Fields: []metadata.Field{
-					{Name: "name", Type: metadata.TypeInfo{Name: "string"}},
-					{Name: "price", Type: metadata.TypeInfo{Name: "f64"}},
-					{Name: "manufacturer", Type: metadata.TypeInfo{Name: "Company"}},
-					{Name: "components", Type: metadata.TypeInfo{Name: "Product[]"}},
+				Fields: []*metadata.Field{
+					{Name: "name", Type: &metadata.TypeInfo{Name: "string"}},
+					{Name: "price", Type: &metadata.TypeInfo{Name: "f64"}},
+					{Name: "manufacturer", Type: &metadata.TypeInfo{Name: "Company"}},
+					{Name: "components", Type: &metadata.TypeInfo{Name: "Product[]"}},
 				},
 			},
 			{
 				Name: "Person",
-				Fields: []metadata.Field{
-					{Name: "name", Type: metadata.TypeInfo{Name: "string"}},
-					{Name: "age", Type: metadata.TypeInfo{Name: "i32"}},
-					{Name: "addresses", Type: metadata.TypeInfo{Name: "Address[]"}},
+				Fields: []*metadata.Field{
+					{Name: "name", Type: &metadata.TypeInfo{Name: "string"}},
+					{Name: "age", Type: &metadata.TypeInfo{Name: "i32"}},
+					{Name: "addresses", Type: &metadata.TypeInfo{Name: "Address[]"}},
 				},
 			},
 			{
@@ -152,28 +152,28 @@ func Test_GetGraphQLSchema(t *testing.T) {
 			},
 			{
 				Name: "Address",
-				Fields: []metadata.Field{
-					{Name: "street", Type: metadata.TypeInfo{Name: "string"}},
-					{Name: "city", Type: metadata.TypeInfo{Name: "string"}},
-					{Name: "state", Type: metadata.TypeInfo{Name: "string"}},
-					{Name: "country", Type: metadata.TypeInfo{Name: "string"}},
-					{Name: "postalCode", Type: metadata.TypeInfo{Name: "string"}},
-					{Name: "location", Type: metadata.TypeInfo{Name: "Coordinates"}},
+				Fields: []*metadata.Field{
+					{Name: "street", Type: &metadata.TypeInfo{Name: "string"}},
+					{Name: "city", Type: &metadata.TypeInfo{Name: "string"}},
+					{Name: "state", Type: &metadata.TypeInfo{Name: "string"}},
+					{Name: "country", Type: &metadata.TypeInfo{Name: "string"}},
+					{Name: "postalCode", Type: &metadata.TypeInfo{Name: "string"}},
+					{Name: "location", Type: &metadata.TypeInfo{Name: "Coordinates"}},
 				},
 			},
 			{
 				Name: "Coordinates",
-				Fields: []metadata.Field{
-					{Name: "lat", Type: metadata.TypeInfo{Name: "f64"}},
-					{Name: "lon", Type: metadata.TypeInfo{Name: "f64"}},
+				Fields: []*metadata.Field{
+					{Name: "lat", Type: &metadata.TypeInfo{Name: "f64"}},
+					{Name: "lon", Type: &metadata.TypeInfo{Name: "f64"}},
 				},
 			},
 			// This should be excluded from the final schema
 			{
 				Name: "Header",
-				Fields: []metadata.Field{
-					{Name: "name", Type: metadata.TypeInfo{Name: "string"}},
-					{Name: "values", Type: metadata.TypeInfo{Name: "string[]"}},
+				Fields: []*metadata.Field{
+					{Name: "name", Type: &metadata.TypeInfo{Name: "string"}},
+					{Name: "values", Type: &metadata.TypeInfo{Name: "string[]"}},
 				},
 			},
 		},
@@ -247,8 +247,8 @@ func Test_ConvertType(t *testing.T) {
 	testCases := []struct {
 		inputType          string
 		expectedOutputType string
-		inputTypeDefs      []metadata.TypeDefinition
-		expectedTypeDefs   []TypeDefinition
+		inputTypeDefs      []*metadata.TypeDefinition
+		expectedTypeDefs   []*TypeDefinition
 	}{
 		// Plain non-nullable types
 		{"string", "String!", nil, nil},
@@ -267,24 +267,24 @@ func Test_ConvertType(t *testing.T) {
 		{"(string | null)[]", "[String]!", nil, nil},
 
 		// Custom scalar types
-		{"Date", "Timestamp!", nil, []TypeDefinition{{Name: "Timestamp"}}},
-		{"i64", "Int64!", nil, []TypeDefinition{{Name: "Int64"}}},
-		{"u32", "UInt!", nil, []TypeDefinition{{Name: "UInt"}}},
-		{"u64", "UInt64!", nil, []TypeDefinition{{Name: "UInt64"}}},
+		{"Date", "Timestamp!", nil, []*TypeDefinition{{Name: "Timestamp"}}},
+		{"i64", "Int64!", nil, []*TypeDefinition{{Name: "Int64"}}},
+		{"u32", "UInt!", nil, []*TypeDefinition{{Name: "UInt"}}},
+		{"u64", "UInt64!", nil, []*TypeDefinition{{Name: "UInt64"}}},
 
 		// Custom types
 		{"User", "User!",
-			[]metadata.TypeDefinition{{
+			[]*metadata.TypeDefinition{{
 				Name: "User",
-				Fields: []metadata.Field{
-					{Name: "firstName", Type: metadata.TypeInfo{Name: "string"}},
-					{Name: "lastName", Type: metadata.TypeInfo{Name: "string"}},
-					{Name: "age", Type: metadata.TypeInfo{Name: "u8"}},
+				Fields: []*metadata.Field{
+					{Name: "firstName", Type: &metadata.TypeInfo{Name: "string"}},
+					{Name: "lastName", Type: &metadata.TypeInfo{Name: "string"}},
+					{Name: "age", Type: &metadata.TypeInfo{Name: "u8"}},
 				},
 			}},
-			[]TypeDefinition{{
+			[]*TypeDefinition{{
 				Name: "User",
-				Fields: []NameTypePair{
+				Fields: []*NameTypePair{
 					{"firstName", "String!"},
 					{"lastName", "String!"},
 					{"age", "Int!"},
@@ -295,38 +295,38 @@ func Test_ConvertType(t *testing.T) {
 		// but string and custom types can
 		{"string | null", "String", nil, nil},
 		{"Foo | null", "Foo",
-			[]metadata.TypeDefinition{{Name: "Foo"}},
-			[]TypeDefinition{{Name: "Foo"}}},
+			[]*metadata.TypeDefinition{{Name: "Foo"}},
+			[]*TypeDefinition{{Name: "Foo"}}},
 
 		// Map types
-		{"Map<string, string>", "[StringStringPair!]!", nil, []TypeDefinition{{
+		{"Map<string, string>", "[StringStringPair!]!", nil, []*TypeDefinition{{
 			Name: "StringStringPair",
-			Fields: []NameTypePair{
+			Fields: []*NameTypePair{
 				{"key", "String!"},
 				{"value", "String!"},
 			},
 			IsMapType: true,
 		}}},
-		{"Map<string, string | null>", "[StringNullableStringPair!]!", nil, []TypeDefinition{{
+		{"Map<string, string | null>", "[StringNullableStringPair!]!", nil, []*TypeDefinition{{
 			Name: "StringNullableStringPair",
-			Fields: []NameTypePair{
+			Fields: []*NameTypePair{
 				{"key", "String!"},
 				{"value", "String"},
 			},
 			IsMapType: true,
 		}}},
-		{"Map<i32, string>", "[IntStringPair!]!", nil, []TypeDefinition{{
+		{"Map<i32, string>", "[IntStringPair!]!", nil, []*TypeDefinition{{
 			Name: "IntStringPair",
-			Fields: []NameTypePair{
+			Fields: []*NameTypePair{
 				{"key", "Int!"},
 				{"value", "String!"},
 			},
 			IsMapType: true,
 		}}},
-		{"Map<string, Map<string, f32>>", "[StringStringFloatPairListPair!]!", nil, []TypeDefinition{
+		{"Map<string, Map<string, f32>>", "[StringStringFloatPairListPair!]!", nil, []*TypeDefinition{
 			{
 				Name: "StringStringFloatPairListPair",
-				Fields: []NameTypePair{
+				Fields: []*NameTypePair{
 					{"key", "String!"},
 					{"value", "[StringFloatPair!]!"},
 				},
@@ -334,7 +334,7 @@ func Test_ConvertType(t *testing.T) {
 			},
 			{
 				Name: "StringFloatPair",
-				Fields: []NameTypePair{
+				Fields: []*NameTypePair{
 					{"key", "String!"},
 					{"value", "Float!"},
 				},
@@ -346,7 +346,7 @@ func Test_ConvertType(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.inputType, func(t *testing.T) {
 
-			typeDefs := make(map[string]TypeDefinition, len(tc.inputTypeDefs))
+			typeDefs := make(map[string]*TypeDefinition, len(tc.inputTypeDefs))
 			errors := transformTypes(tc.inputTypeDefs, typeDefs)
 			require.Empty(t, errors)
 

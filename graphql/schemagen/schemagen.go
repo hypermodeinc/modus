@@ -28,7 +28,7 @@ func GetGraphQLSchema(ctx context.Context, md *metadata.Metadata, manifest *mani
 	span := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
 
-	typeDefs := make(map[string]TypeDefinition, len(md.Types))
+	typeDefs := make(map[string]*TypeDefinition, len(md.Types))
 	errors := transformTypes(md.Types, typeDefs)
 	functions, errs := transformFunctions(md.Functions, typeDefs)
 	types := utils.MapValues(typeDefs)
@@ -65,21 +65,21 @@ type TransformError struct {
 	Error  error
 }
 
-func transformTypes(types []metadata.TypeDefinition, typeDefs map[string]TypeDefinition) []TransformError {
-	errors := make([]TransformError, 0)
+func transformTypes(types []*metadata.TypeDefinition, typeDefs map[string]*TypeDefinition) []*TransformError {
+	errors := make([]*TransformError, 0)
 	for _, t := range types {
 		if _, ok := typeDefs[t.Name]; ok {
-			errors = append(errors, TransformError{t, fmt.Errorf("type already exists: %s", t.Name)})
+			errors = append(errors, &TransformError{t, fmt.Errorf("type already exists: %s", t.Name)})
 			continue
 		}
 
 		fields, err := convertFields(t.Fields, typeDefs, true)
 		if err != nil {
-			errors = append(errors, TransformError{t, err})
+			errors = append(errors, &TransformError{t, err})
 			continue
 		}
 
-		typeDefs[t.Name] = TypeDefinition{
+		typeDefs[t.Name] = &TypeDefinition{
 			Name:   t.Name,
 			Fields: fields,
 		}
@@ -89,13 +89,13 @@ func transformTypes(types []metadata.TypeDefinition, typeDefs map[string]TypeDef
 
 type FunctionSignature struct {
 	Name       string
-	Parameters []ParameterSignature
+	Parameters []*ParameterSignature
 	ReturnType string
 }
 
 type TypeDefinition struct {
 	Name      string
-	Fields    []NameTypePair
+	Fields    []*NameTypePair
 	IsMapType bool
 }
 
@@ -110,23 +110,23 @@ type ParameterSignature struct {
 	Default *any
 }
 
-func transformFunctions(functions []metadata.Function, typeDefs map[string]TypeDefinition) ([]FunctionSignature, []TransformError) {
-	results := make([]FunctionSignature, len(functions))
-	errors := make([]TransformError, 0)
+func transformFunctions(functions []*metadata.Function, typeDefs map[string]*TypeDefinition) ([]*FunctionSignature, []*TransformError) {
+	results := make([]*FunctionSignature, len(functions))
+	errors := make([]*TransformError, 0)
 	for i, f := range functions {
 		params, err := convertParameters(f.Parameters, typeDefs, false)
 		if err != nil {
-			errors = append(errors, TransformError{f, err})
+			errors = append(errors, &TransformError{f, err})
 			continue
 		}
 
 		returnType, err := convertType(f.ReturnType.Name, typeDefs, false)
 		if err != nil {
-			errors = append(errors, TransformError{f, err})
+			errors = append(errors, &TransformError{f, err})
 			continue
 		}
 
-		results[i] = FunctionSignature{
+		results[i] = &FunctionSignature{
 			Name:       f.Name,
 			Parameters: params,
 			ReturnType: returnType,
@@ -136,7 +136,7 @@ func transformFunctions(functions []metadata.Function, typeDefs map[string]TypeD
 	return results, errors
 }
 
-func filterFunctions(functions []FunctionSignature, manifest *manifest.HypermodeManifest) []FunctionSignature {
+func filterFunctions(functions []*FunctionSignature, manifest *manifest.HypermodeManifest) []*FunctionSignature {
 	// Get all embedders from the manifest.
 	embedders := make(map[string]bool)
 	for _, collection := range manifest.Collections {
@@ -146,7 +146,7 @@ func filterFunctions(functions []FunctionSignature, manifest *manifest.Hypermode
 	}
 
 	// Filter out functions that are embedders.
-	results := make([]FunctionSignature, 0, len(functions))
+	results := make([]*FunctionSignature, 0, len(functions))
 	for _, f := range functions {
 		if !embedders[f.Name] {
 			results = append(results, f)
@@ -156,12 +156,12 @@ func filterFunctions(functions []FunctionSignature, manifest *manifest.Hypermode
 	return results
 }
 
-func filterTypes(types []TypeDefinition, functions []FunctionSignature) []TypeDefinition {
+func filterTypes(types []*TypeDefinition, functions []*FunctionSignature) []*TypeDefinition {
 	// Filter out types that are not used by any function.
 	// Also then recursively filter out types that are not used by any type.
 
 	// Make a map of all types
-	typeMap := make(map[string]TypeDefinition, len(types))
+	typeMap := make(map[string]*TypeDefinition, len(types))
 	for _, t := range types {
 		name := getBaseType(t.Name)
 		typeMap[name] = t
@@ -177,7 +177,7 @@ func filterTypes(types []TypeDefinition, functions []FunctionSignature) []TypeDe
 	}
 
 	// Filter out types that are not used
-	results := make([]TypeDefinition, 0, len(types))
+	results := make([]*TypeDefinition, 0, len(types))
 	for _, t := range types {
 		name := getBaseType(t.Name)
 		if usedTypes[name] {
@@ -188,7 +188,7 @@ func filterTypes(types []TypeDefinition, functions []FunctionSignature) []TypeDe
 	return results
 }
 
-func addUsedTypes(name string, types map[string]TypeDefinition, usedTypes map[string]bool) {
+func addUsedTypes(name string, types map[string]*TypeDefinition, usedTypes map[string]bool) {
 	name = getBaseType(name)
 	if usedTypes[name] {
 		return
@@ -238,13 +238,13 @@ func writeSchemaHeader(buf *bytes.Buffer, md *metadata.Metadata) {
 	buf.WriteByte('\n')
 }
 
-func writeSchema(buf *bytes.Buffer, functions []FunctionSignature, typeDefs []TypeDefinition) {
+func writeSchema(buf *bytes.Buffer, functions []*FunctionSignature, typeDefs []*TypeDefinition) {
 
 	// sort functions and type definitions
-	slices.SortFunc(functions, func(a, b FunctionSignature) int {
+	slices.SortFunc(functions, func(a, b *FunctionSignature) int {
 		return cmp.Compare(a.Name, b.Name)
 	})
-	slices.SortFunc(typeDefs, func(a, b TypeDefinition) int {
+	slices.SortFunc(typeDefs, func(a, b *TypeDefinition) int {
 		return cmp.Compare(a.Name, b.Name)
 	})
 
@@ -317,12 +317,12 @@ func writeSchema(buf *bytes.Buffer, functions []FunctionSignature, typeDefs []Ty
 	buf.WriteByte('\n')
 }
 
-func convertParameters(parameters []metadata.Parameter, typeDefs map[string]TypeDefinition, firstPass bool) ([]ParameterSignature, error) {
+func convertParameters(parameters []*metadata.Parameter, typeDefs map[string]*TypeDefinition, firstPass bool) ([]*ParameterSignature, error) {
 	if len(parameters) == 0 {
 		return nil, nil
 	}
 
-	results := make([]ParameterSignature, len(parameters))
+	results := make([]*ParameterSignature, len(parameters))
 	for i, p := range parameters {
 
 		t, err := convertType(p.Type.Name, typeDefs, firstPass)
@@ -332,14 +332,14 @@ func convertParameters(parameters []metadata.Parameter, typeDefs map[string]Type
 
 		// maintain compatibility with the deprecated "optional" field
 		if p.Optional {
-			results[i] = ParameterSignature{
+			results[i] = &ParameterSignature{
 				Name: p.Name,
 				Type: strings.TrimSuffix(t, "!"),
 			}
 			continue
 		}
 
-		results[i] = ParameterSignature{
+		results[i] = &ParameterSignature{
 			Name:    p.Name,
 			Type:    t,
 			Default: p.Default,
@@ -348,18 +348,18 @@ func convertParameters(parameters []metadata.Parameter, typeDefs map[string]Type
 	return results, nil
 }
 
-func convertFields(fields []metadata.Field, typeDefs map[string]TypeDefinition, firstPass bool) ([]NameTypePair, error) {
+func convertFields(fields []*metadata.Field, typeDefs map[string]*TypeDefinition, firstPass bool) ([]*NameTypePair, error) {
 	if len(fields) == 0 {
 		return nil, nil
 	}
 
-	results := make([]NameTypePair, len(fields))
+	results := make([]*NameTypePair, len(fields))
 	for i, f := range fields {
 		t, err := convertType(f.Type.Name, typeDefs, firstPass)
 		if err != nil {
 			return nil, err
 		}
-		results[i] = NameTypePair{
+		results[i] = &NameTypePair{
 			Name: f.Name,
 			Type: t,
 		}
@@ -367,7 +367,7 @@ func convertFields(fields []metadata.Field, typeDefs map[string]TypeDefinition, 
 	return results, nil
 }
 
-func convertType(asType string, typeDefs map[string]TypeDefinition, firstPass bool) (string, error) {
+func convertType(asType string, typeDefs map[string]*TypeDefinition, firstPass bool) (string, error) {
 
 	// Unwrap parentheses if present
 	if strings.HasPrefix(asType, "(") && strings.HasSuffix(asType, ")") {
@@ -418,7 +418,7 @@ func convertType(asType string, typeDefs map[string]TypeDefinition, firstPass bo
 		}
 		typeName := ktn + vtn + "Pair"
 
-		newMapType(typeName, []NameTypePair{{"key", kt}, {"value", vt}}, typeDefs)
+		newMapType(typeName, []*NameTypePair{{"key", kt}, {"value", vt}}, typeDefs)
 
 		// The map is represented as a list of the pair type.
 		// The list might be nullable, but the pair type within the list is always non-nullable.
@@ -466,13 +466,13 @@ func convertType(asType string, typeDefs map[string]TypeDefinition, firstPass bo
 	return "", fmt.Errorf("unsupported type or missing type definition: %s", asType)
 }
 
-func newScalar(name string, typeDefs map[string]TypeDefinition) string {
+func newScalar(name string, typeDefs map[string]*TypeDefinition) string {
 	return newType(name, nil, typeDefs)
 }
 
-func newType(name string, fields []NameTypePair, typeDefs map[string]TypeDefinition) string {
+func newType(name string, fields []*NameTypePair, typeDefs map[string]*TypeDefinition) string {
 	if _, ok := typeDefs[name]; !ok {
-		typeDefs[name] = TypeDefinition{
+		typeDefs[name] = &TypeDefinition{
 			Name:   name,
 			Fields: fields,
 		}
@@ -480,9 +480,9 @@ func newType(name string, fields []NameTypePair, typeDefs map[string]TypeDefinit
 	return name
 }
 
-func newMapType(name string, fields []NameTypePair, typeDefs map[string]TypeDefinition) string {
+func newMapType(name string, fields []*NameTypePair, typeDefs map[string]*TypeDefinition) string {
 	if _, ok := typeDefs[name]; !ok {
-		typeDefs[name] = TypeDefinition{
+		typeDefs[name] = &TypeDefinition{
 			Name:      name,
 			Fields:    fields,
 			IsMapType: true,
