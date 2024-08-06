@@ -134,6 +134,22 @@ func DeleteFromCollection(ctx context.Context, collectionName string, key string
 
 }
 
+func getEmbedder(ctx context.Context, collectionName string, searchMethod string) (string, error) {
+	manifestColl, ok := manifestdata.GetManifest().Collections[collectionName]
+	if !ok {
+		return "", fmt.Errorf("collection %s not found in manifest", collectionName)
+	}
+	manifestSearchMethod, ok := manifestColl.SearchMethods[searchMethod]
+	if !ok {
+		return "", fmt.Errorf("search method %s not found in collection %s", searchMethod, collectionName)
+	}
+	embedder := manifestSearchMethod.Embedder
+	if embedder == "" {
+		return "", fmt.Errorf("embedder not found in search method %s of collection %s", searchMethod, collectionName)
+	}
+	return embedder, nil
+}
+
 func SearchCollection(ctx context.Context, collectionName string, searchMethod string,
 	text string, limit int32, returnText bool) (*collectionSearchResult, error) {
 
@@ -147,17 +163,9 @@ func SearchCollection(ctx context.Context, collectionName string, searchMethod s
 		return nil, err
 	}
 
-	manifestColl, ok := manifestdata.GetManifest().Collections[collectionName]
-	if !ok {
-		return nil, fmt.Errorf("collection %s not found in manifest", collectionName)
-	}
-	manifestSearchMethod, ok := manifestColl.SearchMethods[searchMethod]
-	if !ok {
-		return nil, fmt.Errorf("search method %s not found in collection %s", searchMethod, collectionName)
-	}
-	embedder := manifestSearchMethod.Embedder
-	if embedder == "" {
-		return nil, fmt.Errorf("embedder not found in search method %s of collection %s", searchMethod, collectionName)
+	embedder, err := getEmbedder(ctx, collectionName, searchMethod)
+	if err != nil {
+		return nil, err
 	}
 
 	info, err := functions.GetFunctionInfo(embedder)
@@ -236,17 +244,9 @@ func NnClassify(ctx context.Context, collectionName string, searchMethod string,
 		return nil, err
 	}
 
-	manifestColl, ok := manifestdata.GetManifest().Collections[collectionName]
-	if !ok {
-		return nil, fmt.Errorf("collection %s not found in manifest", collectionName)
-	}
-	manifestSearchMethod, ok := manifestColl.SearchMethods[searchMethod]
-	if !ok {
-		return nil, fmt.Errorf("search method %s not found in collection %s", searchMethod, collectionName)
-	}
-	embedder := manifestSearchMethod.Embedder
-	if embedder == "" {
-		return nil, fmt.Errorf("embedder not found in search method %s of collection %s", searchMethod, collectionName)
+	embedder, err := getEmbedder(ctx, collectionName, searchMethod)
+	if err != nil {
+		return nil, err
 	}
 
 	info, err := functions.GetFunctionInfo(embedder)
@@ -402,17 +402,9 @@ func RecomputeSearchMethod(ctx context.Context, mod wasm.Module, collectionName 
 		return nil, err
 	}
 
-	manifestColl, ok := manifestdata.GetManifest().Collections[collectionName]
-	if !ok {
-		return nil, fmt.Errorf("collection %s not found in manifest", collectionName)
-	}
-	manifestSearchMethod, ok := manifestColl.SearchMethods[searchMethod]
-	if !ok {
-		return nil, fmt.Errorf("search method %s not found in collection %s", searchMethod, collectionName)
-	}
-	embedder := manifestSearchMethod.Embedder
-	if embedder == "" {
-		return nil, fmt.Errorf("embedder not found in search method %s of collection %s", searchMethod, collectionName)
+	embedder, err := getEmbedder(ctx, collectionName, searchMethod)
+	if err != nil {
+		return nil, err
 	}
 
 	info, err := functions.GetFunctionInfo(embedder)
