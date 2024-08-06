@@ -6,7 +6,6 @@ import (
 	"fmt"
 
 	"hmruntime/collections/in_mem"
-	"hmruntime/collections/in_mem/hnsw"
 	"hmruntime/collections/in_mem/sequential"
 	"hmruntime/collections/index"
 	"hmruntime/collections/index/interfaces"
@@ -198,8 +197,11 @@ func createIndex(ctx context.Context, collection interfaces.Collection, searchMe
 		vectorIndex.Type = sequential.SequentialVectorIndexType
 		vectorIndex.VectorIndex = sequential.NewSequentialVectorIndex(collectionName, searchMethodName, searchMethod.Embedder)
 	case interfaces.HnswManifestType:
-		vectorIndex.Type = hnsw.HnswVectorIndexType
-		vectorIndex.VectorIndex = hnsw.NewHnswVectorIndex(collectionName, searchMethodName, searchMethod.Embedder)
+		vectorIndex.Type = sequential.SequentialVectorIndexType
+		vectorIndex.VectorIndex = sequential.NewSequentialVectorIndex(collectionName, searchMethodName, searchMethod.Embedder)
+		// // TODO: hnsw currently broken ,autosync is not working, it keeps embedding forever, even though it has correctly indexed. for now, set it to sequential. fix in future PR
+		// vectorIndex.Type = hnsw.HnswVectorIndexType
+		// vectorIndex.VectorIndex = hnsw.NewHnswVectorIndex(collectionName, searchMethodName, searchMethod.Embedder)
 	case "":
 		vectorIndex.Type = sequential.SequentialVectorIndexType
 		vectorIndex.VectorIndex = sequential.NewSequentialVectorIndex(collectionName, searchMethodName, searchMethod.Embedder)
