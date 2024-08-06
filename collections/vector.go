@@ -2,6 +2,7 @@ package collections
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"hmruntime/collections/in_mem"
@@ -61,6 +62,28 @@ func ProcessTexts(ctx context.Context, collection interfaces.Collection, vectorI
 		}
 
 		err = vectorIndex.InsertVectors(ctx, textIds, textVecs)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func batchInsertVectorsToMemory(ctx context.Context, vectorIndex interfaces.VectorIndex, textIds, vectorIds []int64, keys []string, vecs [][]float32) error {
+	if len(vectorIds) != len(vecs) || len(keys) != len(vecs) || len(textIds) != len(vecs) {
+		return errors.New("mismatch in vectors, keys, and textIds")
+	}
+	for i := 0; i < len(textIds); i += batchSize {
+		end := i + batchSize
+		if end > len(textIds) {
+			end = len(textIds)
+		}
+		textIdsBatch := textIds[i:end]
+		vectorIdsBatch := vectorIds[i:end]
+		keysBatch := keys[i:end]
+		vecsBatch := vecs[i:end]
+
+		err := vectorIndex.InsertVectorsToMemory(ctx, textIdsBatch, vectorIdsBatch, keysBatch, vecsBatch)
 		if err != nil {
 			return err
 		}

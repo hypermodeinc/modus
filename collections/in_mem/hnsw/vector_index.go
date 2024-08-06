@@ -91,12 +91,15 @@ func (ims *HnswVectorIndex) Search(ctx context.Context, query []float32, maxResu
 
 func (ims *HnswVectorIndex) SearchWithKey(ctx context.Context, queryKey string, maxResults int, filter index.SearchFilter) (utils.MaxTupleHeap, error) {
 	ims.mu.RLock()
-	vec, ok := ims.HnswIndex.Lookup(queryKey)
-	ims.mu.RUnlock()
-	if !ok {
-		return nil, fmt.Errorf("key not found in index")
+	query, found := ims.HnswIndex.Lookup(queryKey)
+	if !found {
+		return nil, fmt.Errorf("key not found")
 	}
-	return ims.Search(ctx, vec, maxResults, filter)
+	ims.mu.RUnlock()
+	if query == nil {
+		return nil, nil
+	}
+	return ims.Search(ctx, query, maxResults, filter)
 }
 
 func (ims *HnswVectorIndex) InsertVectors(ctx context.Context, textIds []int64, vecs [][]float32) error {

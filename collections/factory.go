@@ -203,7 +203,7 @@ func LoadTextsIntoCollection(ctx context.Context, collection interfaces.Collecti
 	return nil
 }
 
-func LoadVectorsIntoVectorIndex(ctx context.Context, vectorIndex *interfaces.VectorIndexWrapper, collection interfaces.Collection) error {
+func LoadVectorsIntoVectorIndex(ctx context.Context, vectorIndex interfaces.VectorIndex, collection interfaces.Collection) error {
 	// Get checkpoint id for vector index
 	vecCheckpointId, err := vectorIndex.GetCheckpointId(ctx)
 	if err != nil {
@@ -220,12 +220,11 @@ func LoadVectorsIntoVectorIndex(ctx context.Context, vectorIndex *interfaces.Vec
 	}
 
 	// Insert all vectors into vector index
-	for i := range vectorIds {
-		err = vectorIndex.InsertVectorToMemory(ctx, textIds[i], vectorIds[i], keys[i], vectors[i])
-		if err != nil {
-			return err
-		}
+	err = batchInsertVectorsToMemory(ctx, vectorIndex, textIds, vectorIds, keys, vectors)
+	if err != nil {
+		return err
 	}
+
 	return nil
 }
 

@@ -149,6 +149,9 @@ type VectorIndex interface {
 	// key already exists, it should throw an error to not insert duplicate keys
 	InsertVector(ctx context.Context, textId int64, vec []float32) error
 
+	// InsertVectorsToMemory will add vectors and keys into the existing VectorIndex
+	InsertVectorsToMemory(ctx context.Context, textIds []int64, vectorIds []int64, keys []string, vecs [][]float32) error
+
 	// InsertVectorToMemory will add a vector and key into the existing VectorIndex. If
 	// key already exists, it should throw an error to not insert duplicate keys
 	InsertVectorToMemory(ctx context.Context, textId, vectorId int64, key string, vec []float32) error
