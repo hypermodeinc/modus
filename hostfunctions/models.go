@@ -32,6 +32,7 @@ func hostLookupModel(ctx context.Context, mod wasm.Module, pModelName uint32) (p
 		logger.Err(ctx, err).Msg("Error writing result to wasm memory.")
 		return 0
 	}
+
 	return offset
 }
 
