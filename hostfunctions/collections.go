@@ -27,7 +27,9 @@ func hostUpsertToCollectionV2(ctx context.Context, mod wasm.Module, pCollectionN
 
 	mutationRes, err := collections.UpsertToCollection(ctx, collectionName, keys, texts, labels)
 	if err != nil {
-		logger.Err(ctx, err).Msg("Error upserting to collection.")
+		logger.Err(ctx, err).
+			Bool("user_visible", true).
+			Msg("Error upserting to collection.")
 		return 0
 	}
 
@@ -53,7 +55,9 @@ func hostDeleteFromCollection(ctx context.Context, mod wasm.Module, pCollectionN
 
 	mutationRes, err := collections.DeleteFromCollection(ctx, collectionName, key)
 	if err != nil {
-		logger.Err(ctx, err).Msg("Error deleting from collection.")
+		logger.Err(ctx, err).
+			Bool("user_visible", true).
+			Msg("Error deleting from collection.")
 		return 0
 	}
 
@@ -82,7 +86,9 @@ func hostSearchCollection(ctx context.Context, mod wasm.Module, pCollectionName 
 
 	searchRes, err := collections.SearchCollection(ctx, collectionName, searchMethod, text, limit, returnText)
 	if err != nil {
-		logger.Err(ctx, err).Msg("Error searching collection.")
+		logger.Err(ctx, err).
+			Bool("user_visible", true).
+			Msg("Error searching collection.")
 		return 0
 	}
 
@@ -108,7 +114,9 @@ func hostNnClassifyCollection(ctx context.Context, mod wasm.Module, pCollectionN
 
 	classification, err := collections.NnClassify(ctx, collectionName, searchMethod, text)
 	if err != nil {
-		logger.Err(ctx, err).Msg("Error classifying.")
+		logger.Err(ctx, err).
+			Bool("user_visible", true).
+			Msg("Error classifying.")
 		return 0
 	}
 
@@ -135,7 +143,9 @@ func hostComputeDistance(ctx context.Context, mod wasm.Module, pCollectionName u
 
 	resObj, err := collections.ComputeDistance(ctx, collectionName, searchMethod, id1, id2)
 	if err != nil {
-		logger.Err(ctx, err).Msg("Error computing distance.")
+		logger.Err(ctx, err).
+			Bool("user_visible", true).
+			Msg("Error computing distance.")
 		return 0
 	}
 
@@ -161,7 +171,9 @@ func hostRecomputeSearchMethod(ctx context.Context, mod wasm.Module, pCollection
 
 	mutationRes, err := collections.RecomputeSearchMethod(ctx, mod, collectionName, searchMethod)
 	if err != nil {
-		logger.Err(ctx, err).Msg("Error recompute search method.")
+		logger.Err(ctx, err).
+			Bool("user_visible", true).
+			Msg("Error recompute search method.")
 		return 0
 	}
 
@@ -186,7 +198,9 @@ func hostGetTextFromCollection(ctx context.Context, mod wasm.Module, pCollection
 
 	text, err := collections.GetTextFromCollection(ctx, collectionName, key)
 	if err != nil {
-		logger.Err(ctx, err).Msg("Error getting text from collection.")
+		logger.Err(ctx, err).
+			Bool("user_visible", true).
+			Msg("Error getting text from collection.")
 		return 0
 	}
 
@@ -210,7 +224,9 @@ func hostGetTextsFromCollection(ctx context.Context, mod wasm.Module, pCollectio
 
 	texts, err := collections.GetTextsFromCollection(ctx, collectionName)
 	if err != nil {
-		logger.Err(ctx, err).Msg("Error getting texts from collection.")
+		logger.Err(ctx, err).
+			Bool("user_visible", true).
+			Msg("Error getting texts from collection.")
 		return 0
 	}
 

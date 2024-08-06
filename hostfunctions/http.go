@@ -22,7 +22,9 @@ func hostFetch(ctx context.Context, mod wasm.Module, pRequest uint32) (pResponse
 
 	response, err := httpclient.HttpFetch(ctx, request)
 	if err != nil {
-		logger.Err(ctx, err).Msg("Error performing HTTP request.")
+		logger.Err(ctx, err).
+			Bool("user_visible", true).
+			Msg("Error performing HTTP request.")
 		return 0
 	}
 

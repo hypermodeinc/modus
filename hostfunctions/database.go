@@ -22,7 +22,9 @@ func hostDatabaseQuery(ctx context.Context, mod wasm.Module, pHostName, pDbType,
 
 	response, err := sqlclient.ExecuteQuery(ctx, hostName, dbType, statement, paramsJson)
 	if err != nil {
-		logger.Err(ctx, err).Msg("Error executing database query.")
+		logger.Err(ctx, err).
+			Bool("user_visible", true).
+			Msg("Error executing database query.")
 		return 0
 	}
 

@@ -23,7 +23,9 @@ func hostLookupModel(ctx context.Context, mod wasm.Module, pModelName uint32) (p
 
 	info, err := models.GetModelInfo(modelName)
 	if err != nil {
-		logger.Err(ctx, err).Msg("Error getting model info.")
+		logger.Err(ctx, err).
+			Bool("user_visible", true).
+			Msg("Error getting model info.")
 		return 0
 	}
 
@@ -46,7 +48,9 @@ func hostInvokeModel(ctx context.Context, mod wasm.Module, pModelName uint32, pI
 
 	output, err := models.InvokeModel(ctx, modelName, input)
 	if err != nil {
-		logger.Err(ctx, err).Msg("Error invoking model.")
+		logger.Err(ctx, err).
+			Bool("user_visible", true).
+			Msg("Error invoking model.")
 		return 0
 	}
 
