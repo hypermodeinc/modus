@@ -195,7 +195,7 @@ func (ti *typeInfoProvider) getAssemblyScriptType(t reflect.Type) (string, error
 	case reflect.Float64:
 		return "f64", nil
 	case reflect.String:
-		return "string", nil
+		return "~lib/string/String", nil
 
 	case reflect.Slice:
 		if t.Elem().Kind() == reflect.Uint8 {
@@ -205,7 +205,7 @@ func (ti *typeInfoProvider) getAssemblyScriptType(t reflect.Type) (string, error
 		// TODO: should we use Uint8Array and other typed array buffers?
 
 		elemType, err := ti.getAssemblyScriptType(t.Elem())
-		if err == nil {
+		if err != nil {
 			return "", err
 		}
 
