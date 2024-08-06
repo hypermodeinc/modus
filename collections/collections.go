@@ -224,7 +224,7 @@ func NnClassify(ctx context.Context, collectionName string, searchMethod string,
 		return nil, err
 	}
 
-	embedder := manifestdata.Manifest.Collections[collectionName].SearchMethods[searchMethod].Embedder
+	embedder := manifestdata.GetManifest().Collections[collectionName].SearchMethods[searchMethod].Embedder
 
 	info, err := functions.GetFunctionInfo(embedder)
 	if err != nil {
