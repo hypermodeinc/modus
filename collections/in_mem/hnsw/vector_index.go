@@ -8,6 +8,7 @@ import (
 	"hmruntime/collections/utils"
 	"hmruntime/db"
 	"hmruntime/hnsw"
+	"slices"
 	"sync"
 )
 
@@ -137,8 +138,8 @@ func (ims *HnswVectorIndex) InsertVectorsToMemory(ctx context.Context, textIds [
 	if err != nil {
 		return err
 	}
-	ims.lastInsertedID = vectorIds[len(vectorIds)-1]
-	ims.lastIndexedTextID = textIds[len(textIds)-1]
+	ims.lastInsertedID = slices.Max(vectorIds)
+	ims.lastIndexedTextID = slices.Max(textIds)
 	return nil
 }
 

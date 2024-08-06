@@ -76,22 +76,26 @@ func ConcatStrings(strs ...string) string {
 	return total
 }
 
-func ConvertToFloat32_2DArray(result any) ([][]float32, error) {
-	textVecs, ok := result.([][]float32)
-	if !ok {
-		textVecsF64, ok := result.([][]float64)
-		if !ok {
-			return nil, fmt.Errorf("expected a slice of float32 or float64 slices, got: %T", result)
-		}
-		textVecs = make([][]float32, len(textVecsF64))
-		for i, vec := range textVecsF64 {
-			textVecs[i] = make([]float32, len(vec))
+func ConvertToFloat32_2DArray(vecs any) ([][]float32, error) {
+
+	// return if already a slice of float32 slices
+	if vec32s, ok := vecs.([][]float32); ok {
+		return vec32s, nil
+	}
+
+	// convert [][]float64 to [][]float32
+	if vec64s, ok := vecs.([][]float64); ok {
+		vec32s := make([][]float32, len(vec64s))
+		for i, vec := range vec64s {
+			vec32s[i] = make([]float32, len(vec))
 			for j, val := range vec {
-				textVecs[i][j] = float32(val)
+				vec32s[i][j] = float32(val)
 			}
 		}
+		return vec32s, nil
 	}
-	return textVecs, nil
+
+	return nil, fmt.Errorf("expected a slice of float32 or float64 slices, got: %T", vecs)
 }
 
 func EqualFloat32Slices(a, b []float32) bool {

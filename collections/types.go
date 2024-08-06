@@ -20,7 +20,7 @@ type collectionSearchResult struct {
 	Collection   string
 	SearchMethod string
 	Status       string
-	Objects      []collectionSearchResultObject
+	Objects      []*collectionSearchResultObject
 	Error        string
 }
 
@@ -35,8 +35,8 @@ type collectionClassificationResult struct {
 	Collection   string
 	SearchMethod string
 	Status       string
-	LabelsResult []collectionClassificationLabelObject
-	Cluster      []collectionClassificationResultObject
+	LabelsResult []*collectionClassificationLabelObject
+	Cluster      []*collectionClassificationResultObject
 	Error        string
 }
 

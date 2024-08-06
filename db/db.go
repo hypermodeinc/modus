@@ -2,7 +2,6 @@ package db
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"fmt"
 	"sync"
@@ -297,10 +296,9 @@ func WriteCollectionTexts(ctx context.Context, collectionName string, keys, text
 		}
 
 		// Insert the new rows
-		var rows pgx.Rows
 		if len(labelsArr) == 0 {
 			query := fmt.Sprintf("INSERT INTO %s (collection, key, text) VALUES ($1, unnest($2::text[]), unnest($3::text[])) RETURNING id", collectionTextsTable)
-			rows, err = tx.Query(ctx, query, collectionName, keys, texts)
+			rows, err := tx.Query(ctx, query, collectionName, keys, texts)
 			if err != nil {
 				return err
 			}
@@ -344,14 +342,11 @@ func WriteCollectionText(ctx context.Context, collectionName, key, text string, 
 		}
 
 		// Insert the new row
-		var row pgx.Row
 		if len(labels) == 0 {
-			query := fmt.Sprintf("INSERT INTO %s (collection, key, text) VALUES ($1, $2, $3) RETURNING id", collectionTextsTable)
-			row = tx.QueryRow(ctx, query, collectionName, key, text)
-		} else {
-			query := fmt.Sprintf("INSERT INTO %s (collection, key, text, labels) VALUES ($1, $2, $3, $4) RETURNING id", collectionTextsTable)
-			row = tx.QueryRow(ctx, query, collectionName, key, text, labels)
+			labels = nil
 		}
+		query := fmt.Sprintf("INSERT INTO %s (collection, key, text, labels) VALUES ($1, $2, $3, $4) RETURNING id", collectionTextsTable)
+		row := tx.QueryRow(ctx, query, collectionName, key, text, labels)
 		return row.Scan(&id)
 	})
 
@@ -511,30 +506,14 @@ func QueryCollectionTextsFromCheckpoint(ctx context.Context, collection string, 
 			var id int64
 			var key string
 			var text string
-			var labels []sql.NullString
+			var labels []string
 			if err := rows.Scan(&id, &key, &text, &labels); err != nil {
 				return err
 			}
 			textIds = append(textIds, id)
 			keys = append(keys, key)
 			texts = append(texts, text)
-
-			stringLabels := make([]string, len(labels))
-			numEmptyLabels := 0
-			for i, label := range labels {
-				if label.Valid {
-					stringLabels[i] = label.String
-				} else {
-					stringLabels[i] = ""
-					numEmptyLabels++
-				}
-			}
-
-			if numEmptyLabels == len(labels) {
-				labelsArr = append(labelsArr, nil)
-			} else {
-				labelsArr = append(labelsArr, stringLabels)
-			}
+			labelsArr = append(labelsArr, labels)
 
 		}
 

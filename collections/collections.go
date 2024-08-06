@@ -3,15 +3,16 @@ package collections
 import (
 	"context"
 	"fmt"
+	"math"
+	"sort"
+
+	wasm "github.com/tetratelabs/wazero/api"
+
 	collection_utils "hmruntime/collections/utils"
 	"hmruntime/functions"
 	"hmruntime/manifestdata"
 	"hmruntime/utils"
 	"hmruntime/wasmhost"
-	"math"
-	"sort"
-
-	wasm "github.com/tetratelabs/wazero/api"
 )
 
 func UpsertToCollection(ctx context.Context, collectionName string, keys []string, texts []string, labels [][]string) (*collectionMutationResult, error) {
@@ -146,7 +147,18 @@ func SearchCollection(ctx context.Context, collectionName string, searchMethod s
 		return nil, err
 	}
 
-	embedder := manifestdata.GetManifest().Collections[collectionName].SearchMethods[searchMethod].Embedder
+	manifestColl, ok := manifestdata.GetManifest().Collections[collectionName]
+	if !ok {
+		return nil, fmt.Errorf("collection %s not found in manifest", collectionName)
+	}
+	manifestSearchMethod, ok := manifestColl.SearchMethods[searchMethod]
+	if !ok {
+		return nil, fmt.Errorf("search method %s not found in collection %s", searchMethod, collectionName)
+	}
+	embedder := manifestSearchMethod.Embedder
+	if embedder == "" {
+		return nil, fmt.Errorf("embedder not found in search method %s of collection %s", searchMethod, collectionName)
+	}
 
 	info, err := functions.GetFunctionInfo(embedder)
 	if err != nil {
@@ -185,7 +197,7 @@ func SearchCollection(ctx context.Context, collectionName string, searchMethod s
 		Collection:   collectionName,
 		SearchMethod: searchMethod,
 		Status:       "success",
-		Objects:      make([]collectionSearchResultObject, len(objects)),
+		Objects:      make([]*collectionSearchResultObject, len(objects)),
 	}
 
 	for i, object := range objects {
@@ -194,14 +206,14 @@ func SearchCollection(ctx context.Context, collectionName string, searchMethod s
 			if err != nil {
 				return nil, err
 			}
-			output.Objects[i] = collectionSearchResultObject{
+			output.Objects[i] = &collectionSearchResultObject{
 				Key:      object.GetIndex(),
 				Text:     text,
 				Distance: object.GetValue(),
 				Score:    1 - object.GetValue(),
 			}
 		} else {
-			output.Objects[i] = collectionSearchResultObject{
+			output.Objects[i] = &collectionSearchResultObject{
 				Key:      object.GetIndex(),
 				Distance: object.GetValue(),
 				Score:    1 - object.GetValue(),
@@ -224,7 +236,18 @@ func NnClassify(ctx context.Context, collectionName string, searchMethod string,
 		return nil, err
 	}
 
-	embedder := manifestdata.GetManifest().Collections[collectionName].SearchMethods[searchMethod].Embedder
+	manifestColl, ok := manifestdata.GetManifest().Collections[collectionName]
+	if !ok {
+		return nil, fmt.Errorf("collection %s not found in manifest", collectionName)
+	}
+	manifestSearchMethod, ok := manifestColl.SearchMethods[searchMethod]
+	if !ok {
+		return nil, fmt.Errorf("search method %s not found in collection %s", searchMethod, collectionName)
+	}
+	embedder := manifestSearchMethod.Embedder
+	if embedder == "" {
+		return nil, fmt.Errorf("embedder not found in search method %s of collection %s", searchMethod, collectionName)
+	}
 
 	info, err := functions.GetFunctionInfo(embedder)
 	if err != nil {
@@ -285,10 +308,10 @@ func NnClassify(ctx context.Context, collectionName string, searchMethod string,
 
 	res := &collectionClassificationResult{
 		Collection:   collectionName,
-		LabelsResult: make([]collectionClassificationLabelObject, 0),
+		LabelsResult: make([]*collectionClassificationLabelObject, 0),
 		SearchMethod: searchMethod,
 		Status:       "success",
-		Cluster:      make([]collectionClassificationResultObject, 0),
+		Cluster:      make([]*collectionClassificationResultObject, 0),
 	}
 
 	totalLabels := 0
@@ -304,7 +327,7 @@ func NnClassify(ctx context.Context, collectionName string, searchMethod string,
 				totalLabels++
 			}
 
-			res.Cluster = append(res.Cluster, collectionClassificationResultObject{
+			res.Cluster = append(res.Cluster, &collectionClassificationResultObject{
 				Key:      nn.GetIndex(),
 				Labels:   labels,
 				Score:    1 - nn.GetValue(),
@@ -314,9 +337,9 @@ func NnClassify(ctx context.Context, collectionName string, searchMethod string,
 	}
 
 	// Create a slice of pairs
-	labelsResult := make([]collectionClassificationLabelObject, 0, len(labelCounts))
+	labelsResult := make([]*collectionClassificationLabelObject, 0, len(labelCounts))
 	for label, count := range labelCounts {
-		labelsResult = append(labelsResult, collectionClassificationLabelObject{
+		labelsResult = append(labelsResult, &collectionClassificationLabelObject{
 			Label:      label,
 			Confidence: float64(count) / float64(totalLabels),
 		})
@@ -379,7 +402,18 @@ func RecomputeSearchMethod(ctx context.Context, mod wasm.Module, collectionName 
 		return nil, err
 	}
 
-	embedder := manifestdata.GetManifest().Collections[collectionName].SearchMethods[searchMethod].Embedder
+	manifestColl, ok := manifestdata.GetManifest().Collections[collectionName]
+	if !ok {
+		return nil, fmt.Errorf("collection %s not found in manifest", collectionName)
+	}
+	manifestSearchMethod, ok := manifestColl.SearchMethods[searchMethod]
+	if !ok {
+		return nil, fmt.Errorf("search method %s not found in collection %s", searchMethod, collectionName)
+	}
+	embedder := manifestSearchMethod.Embedder
+	if embedder == "" {
+		return nil, fmt.Errorf("embedder not found in search method %s of collection %s", searchMethod, collectionName)
+	}
 
 	info, err := functions.GetFunctionInfo(embedder)
 	if err != nil {
