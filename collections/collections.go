@@ -278,16 +278,6 @@ func NnClassify(ctx context.Context, collectionName string, searchMethod string,
 		return nil, err
 	}
 
-	info, err := functions.GetFunctionInfo(embedder)
-	if err != nil {
-		return nil, err
-	}
-
-	err = functions.VerifyFunctionSignature(info, "string[]", "f32[][]")
-	if err != nil {
-		return nil, err
-	}
-
 	texts := []string{text}
 
 	executionInfo, err := wasmhost.CallFunction(ctx, embedder, texts)

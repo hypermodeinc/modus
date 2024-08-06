@@ -100,7 +100,7 @@ func hostNnClassifyCollection(ctx context.Context, mod wasm.Module, pCollectionN
 	var searchMethod string
 	var text string
 
-	err := readParams3(ctx, mod, pCollectionName, pSearchMethod, pText, &collectionName, &searchMethod, &text)
+	err := readParams(ctx, mod, param{pCollectionName, &collectionName}, param{pSearchMethod, &searchMethod}, param{pText, &text})
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error reading input parameters.")
 		return 0
