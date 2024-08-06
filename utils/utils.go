@@ -68,6 +68,6 @@ func TrimStringBefore(s string, sep string) string {
 	return s
 }
 
-func GenerateUUIDV7() string {
+func GenerateUUIDv7() string {
 	return uuid.Must(uuid.NewV7()).String()
 }

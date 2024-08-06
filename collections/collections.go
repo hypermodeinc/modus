@@ -25,7 +25,7 @@ func UpsertToCollection(ctx context.Context, collectionName string, keys []strin
 	if len(keys) == 0 {
 		keys = make([]string, len(texts))
 		for i := range keys {
-			keys[i] = utils.GenerateUUIDV7()
+			keys[i] = utils.GenerateUUIDv7()
 		}
 	}
 

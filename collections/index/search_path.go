@@ -4,7 +4,7 @@ package index
 // SearchWithPath function for a VectorIndex
 // (by way of extending OptionalIndexSupport).
 type SearchPathResult struct {
-	// The collection of nearest-neighbors in sorted order after filtlering
+	// The collection of nearest-neighbors in sorted order after filtering
 	// out neighbors that fail any Filter criteria.
 	Neighbors []uint64
 	// The path from the start of search to the closest neighbor collections.
