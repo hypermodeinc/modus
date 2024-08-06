@@ -29,7 +29,7 @@ const (
 func setupRuntime() {
 	// configure a wasm plugin
 	_, thisFilePath, _, _ := runtime.Caller(0)
-	config.StoragePath = path.Join(thisFilePath, "..", "testutil", "data", "test-as")
+	config.StoragePath = path.Join(thisFilePath, "..", "testutils", "data", "test-as")
 }
 
 func httpGet(t *testing.T, s *httptest.Server, endpoint string) []byte {

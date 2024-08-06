@@ -570,7 +570,7 @@ func WriteInferenceHistoryToDB(ctx context.Context, batch []inferenceHistory) {
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 `, inferencesTable)
 			args := []any{
-				utils.GenerateUUIDV7(),
+				utils.GenerateUUIDv7(),
 				data.model.Hash(),
 				input,
 				output,

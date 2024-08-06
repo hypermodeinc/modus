@@ -74,7 +74,7 @@ func runGraphqlQuery(greq graphQLRequest) ([]byte, error) {
 		} `json:"errors,omitempty"`
 	}
 	if err := json.Unmarshal(respBody, &graphQLResponse); err != nil {
-		return nil, fmt.Errorf("error unmarshaling response: %w", err)
+		return nil, fmt.Errorf("error unmarshalling response: %w", err)
 	}
 
 	if len(graphQLResponse.Errors) > 0 {

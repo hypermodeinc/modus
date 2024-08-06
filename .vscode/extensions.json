@@ -1,6 +1,8 @@
 {
-    "recommendations": [
-        "amazonwebservices.aws-toolkit-vscode",
-        "golang.go"
-    ]
+  "recommendations": [
+    "amazonwebservices.aws-toolkit-vscode",
+    "esbenp.prettier-vscode",
+    "golang.go",
+    "streetsidesoftware.code-spell-checker"
+  ]
 }
