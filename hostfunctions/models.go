@@ -15,7 +15,7 @@ import (
 
 func hostLookupModel(ctx context.Context, mod wasm.Module, pModelName uint32) (pModelInfo uint32) {
 	var modelName string
-	err := readParam(ctx, mod, pModelName, &modelName)
+	err := readParams(ctx, mod, param{pModelName, &modelName})
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error reading input parameters.")
 		return 0
@@ -37,7 +37,7 @@ func hostLookupModel(ctx context.Context, mod wasm.Module, pModelName uint32) (p
 
 func hostInvokeModel(ctx context.Context, mod wasm.Module, pModelName uint32, pInput uint32) (pOutput uint32) {
 	var modelName, input string
-	err := readParams2(ctx, mod, pModelName, pInput, &modelName, &input)
+	err := readParams(ctx, mod, param{pModelName, &modelName}, param{pInput, &input})
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error reading input parameters.")
 		return 0

@@ -13,7 +13,7 @@ import (
 	wasm "github.com/tetratelabs/wazero/api"
 )
 
-func readString(mem wasm.Memory, offset uint32) (data string, err error) {
+func (wa *wasmAdapter) readString(mem wasm.Memory, offset uint32) (data string, err error) {
 	if offset == 0 {
 		return "", nil
 	}
@@ -32,7 +32,7 @@ func readString(mem wasm.Memory, offset uint32) (data string, err error) {
 	}
 
 	// Read from the buffer and decode it as a string.
-	buf, err := readBytes(mem, offset)
+	buf, err := wa.readBytes(mem, offset)
 	if err != nil {
 		return "", err
 	}
@@ -40,10 +40,10 @@ func readString(mem wasm.Memory, offset uint32) (data string, err error) {
 	return decodeUTF16(buf), nil
 }
 
-func writeString(ctx context.Context, mod wasm.Module, s string) (offset uint32, err error) {
+func (wa *wasmAdapter) writeString(ctx context.Context, mod wasm.Module, s string) (offset uint32, err error) {
 	const classId = 2 // The fixed class id for a string in AssemblyScript.
 	bytes := encodeUTF16(s)
-	return writeRawBytes(ctx, mod, bytes, classId)
+	return wa.writeRawBytes(ctx, mod, bytes, classId)
 }
 
 func decodeUTF16(bytes []byte) string {

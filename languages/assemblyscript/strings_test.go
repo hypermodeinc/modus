@@ -43,12 +43,14 @@ func Test_ReadWriteString(t *testing.T) {
 	f := testutils.NewWasmTestFixture()
 	defer f.Close()
 
-	ptr, err := writeString(f.Context, f.Module, testString)
+	wa := _wasmAdapter
+
+	ptr, err := wa.writeString(f.Context, f.Module, testString)
 	if err != nil {
 		t.Error(err)
 	}
 
-	str, err := readString(f.Memory, ptr)
+	str, err := wa.readString(f.Memory, ptr)
 	if err != nil {
 		t.Error(err)
 	}

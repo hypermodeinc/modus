@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"reflect"
 
-	"hmruntime/functions/assemblyscript/hash"
+	"hmruntime/languages/assemblyscript/hash"
 	"hmruntime/plugins/metadata"
 
 	wasm "github.com/tetratelabs/wazero/api"
@@ -17,7 +17,7 @@ import (
 
 // Reference: https://github.com/AssemblyScript/assemblyscript/blob/main/std/assembly/map.ts
 
-func readMap(ctx context.Context, mem wasm.Memory, def *metadata.TypeDefinition, offset uint32) (data any, err error) {
+func (wa *wasmAdapter) readMap(ctx context.Context, mem wasm.Memory, typ *metadata.TypeDefinition, offset uint32) (data any, err error) {
 
 	// buckets, ok := mem.ReadUint32Le(offset)
 	// if !ok {
@@ -56,14 +56,14 @@ func readMap(ctx context.Context, mem wasm.Memory, def *metadata.TypeDefinition,
 	}
 
 	entrySize := byteLength / entriesCapacity
-	keyType, valueType := getMapSubtypeInfo(def.Path)
-	valueOffset := getSizeForOffset(keyType.Path)
+	keyType, valueType := wa.typeInfo.GetMapSubtypes(typ.Name)
+	valueOffset := getSizeForOffset(keyType)
 
-	goKeyType, err := getGoType(keyType.Path)
+	goKeyType, err := wa.typeInfo.getGoType(keyType)
 	if err != nil {
 		return nil, err
 	}
-	goValueType, err := getGoType(valueType.Path)
+	goValueType, err := wa.typeInfo.getGoType(valueType)
 	if err != nil {
 		return nil, err
 	}
@@ -71,11 +71,11 @@ func readMap(ctx context.Context, mem wasm.Memory, def *metadata.TypeDefinition,
 	m := reflect.MakeMapWithSize(reflect.MapOf(goKeyType, goValueType), int(entriesCount))
 	for i := uint32(0); i < entriesCount; i++ {
 		p := entries + (i * entrySize)
-		k, err := readField(ctx, mem, keyType, p)
+		k, err := wa.readField(ctx, mem, keyType, p)
 		if err != nil {
 			return nil, err
 		}
-		v, err := readField(ctx, mem, valueType, p+valueOffset)
+		v, err := wa.readField(ctx, mem, valueType, p+valueOffset)
 		if err != nil {
 			return nil, err
 		}
@@ -85,7 +85,7 @@ func readMap(ctx context.Context, mem wasm.Memory, def *metadata.TypeDefinition,
 	return m.Interface(), nil
 }
 
-func writeMap(ctx context.Context, mod wasm.Module, def *metadata.TypeDefinition, data any) (offset uint32, err error) {
+func (wa *wasmAdapter) writeMap(ctx context.Context, mod wasm.Module, typ *metadata.TypeDefinition, data any) (offset uint32, err error) {
 
 	// Unfortunately, there's no way to do this without reflection.
 	rv := reflect.ValueOf(data)
@@ -99,7 +99,7 @@ func writeMap(ctx context.Context, mod wasm.Module, def *metadata.TypeDefinition
 	var pins = make([]uint32, 0, (mapLen*2)+2)
 	defer func() {
 		for _, ptr := range pins {
-			err = unpinWasmMemory(ctx, mod, ptr)
+			err = wa.unpinWasmMemory(ctx, mod, ptr)
 			if err != nil {
 				break
 			}
@@ -119,14 +119,14 @@ func writeMap(ctx context.Context, mod wasm.Module, def *metadata.TypeDefinition
 	// create buckets array buffer
 	const bucketSize = 4
 	bucketsBufferSize := bucketSize * bucketsCapacity
-	bucketsBufferOffset, err := allocateWasmMemory(ctx, mod, bucketsBufferSize, 1)
+	bucketsBufferOffset, err := wa.allocateWasmMemory(ctx, mod, bucketsBufferSize, 1)
 	if err != nil {
 		return 0, fmt.Errorf("failed to allocate memory for array buffer: %w", err)
 	}
 
 	// pin the array buffer so it can't get garbage collected
 	// when we allocate the array object
-	err = pinWasmMemory(ctx, mod, bucketsBufferOffset)
+	err = wa.pinWasmMemory(ctx, mod, bucketsBufferOffset)
 	if err != nil {
 		return 0, fmt.Errorf("failed to pin array buffer: %w", err)
 	}
@@ -134,28 +134,28 @@ func writeMap(ctx context.Context, mod wasm.Module, def *metadata.TypeDefinition
 
 	// write entries array buffer
 	// note: unlike arrays, an empty map DOES have array buffers
-	keyType, valueType := getMapSubtypeInfo(def.Path)
-	keySize := getItemSize(keyType)
-	valueSize := getItemSize(valueType)
+	keyType, valueType := wa.typeInfo.GetMapSubtypes(typ.Name)
+	keySize := wa.typeInfo.SizeOfType(keyType)
+	valueSize := wa.typeInfo.SizeOfType(valueType)
 	const taggedNextSize = 4
 	entryAlign := max(keySize, valueSize, 4) - 1
 	entrySize := (keySize + valueSize + taggedNextSize + entryAlign) & ^entryAlign
 	entriesBufferSize := entrySize * entriesCapacity
-	entriesBufferOffset, err := allocateWasmMemory(ctx, mod, entriesBufferSize, 1)
+	entriesBufferOffset, err := wa.allocateWasmMemory(ctx, mod, entriesBufferSize, 1)
 	if err != nil {
 		return 0, fmt.Errorf("failed to allocate memory for array buffer: %w", err)
 	}
 
 	// pin the array buffer so it can't get garbage collected
 	// when we allocate the array object
-	err = pinWasmMemory(ctx, mod, entriesBufferOffset)
+	err = wa.pinWasmMemory(ctx, mod, entriesBufferOffset)
 	if err != nil {
 		return 0, fmt.Errorf("failed to pin array buffer: %w", err)
 	}
 	pins = append(pins, entriesBufferOffset)
 
-	valueOffset := getSizeForOffset(keyType.Path)
-	taggedNextOffset := getSizeForOffset(valueType.Path) + valueOffset
+	valueOffset := getSizeForOffset(keyType)
+	taggedNextOffset := getSizeForOffset(valueType) + valueOffset
 
 	mem := mod.Memory()
 	mapKeys := rv.MapKeys()
@@ -173,7 +173,7 @@ func writeMap(ctx context.Context, mod wasm.Module, def *metadata.TypeDefinition
 			// normal writeField/writeString functions and do it manually.
 			bytes := encodeUTF16(t)
 			hashCode = hash.GetHashCode(bytes)
-			ptr, err = writeRawBytes(ctx, mod, bytes, 2)
+			ptr, err = wa.writeRawBytes(ctx, mod, bytes, 2)
 			if err != nil {
 				return 0, fmt.Errorf("failed to write map entry key: %w", err)
 			}
@@ -184,7 +184,7 @@ func writeMap(ctx context.Context, mod wasm.Module, def *metadata.TypeDefinition
 
 		default:
 			hashCode = hash.GetHashCode(key)
-			ptr, err = writeField(ctx, mod, keyType, entryOffset, key)
+			ptr, err = wa.writeField(ctx, mod, keyType, entryOffset, key)
 			if err != nil {
 				return 0, fmt.Errorf("failed to write map entry key: %w", err)
 			}
@@ -192,7 +192,7 @@ func writeMap(ctx context.Context, mod wasm.Module, def *metadata.TypeDefinition
 
 		// If we allocated memory for the key, we need to pin it too.
 		if ptr != 0 {
-			err = pinWasmMemory(ctx, mod, ptr)
+			err = wa.pinWasmMemory(ctx, mod, ptr)
 			if err != nil {
 				return 0, err
 			}
@@ -203,14 +203,14 @@ func writeMap(ctx context.Context, mod wasm.Module, def *metadata.TypeDefinition
 		mapValue := rv.MapIndex(mapKey)
 		value := mapValue.Interface()
 		entryValueOffset := entryOffset + valueOffset
-		ptr, err = writeField(ctx, mod, valueType, entryValueOffset, value)
+		ptr, err = wa.writeField(ctx, mod, valueType, entryValueOffset, value)
 		if err != nil {
 			return 0, fmt.Errorf("failed to write map entry value: %w", err)
 		}
 
 		// If we allocated memory for the value, we need to pin it too.
 		if ptr != 0 {
-			err = pinWasmMemory(ctx, mod, ptr)
+			err = wa.pinWasmMemory(ctx, mod, ptr)
 			if err != nil {
 				return 0, err
 			}
@@ -235,7 +235,7 @@ func writeMap(ctx context.Context, mod wasm.Module, def *metadata.TypeDefinition
 
 	// write map object
 	const size = 24
-	offset, err = allocateWasmMemory(ctx, mod, size, def.Id)
+	offset, err = wa.allocateWasmMemory(ctx, mod, size, typ.Id)
 	if err != nil {
 		return 0, err
 	}

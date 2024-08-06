@@ -7,10 +7,10 @@ package pluginmanager
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"hmruntime/db"
 	"hmruntime/functions"
+	"hmruntime/languages"
 	"hmruntime/logger"
 	"hmruntime/plugins"
 	"hmruntime/plugins/metadata"
@@ -69,9 +69,9 @@ func loadPlugin(ctx context.Context, filename string) error {
 		return err
 	}
 
-	// Get the md for the plugin.
-	md, err := metadata.GetPluginMetadata(ctx, cm)
-	if err == metadata.ErrPluginMetadataNotFound {
+	// Get the metadata for the plugin.
+	md, err := metadata.GetMetadata(ctx, cm)
+	if err == metadata.ErrMetadataNotFound {
 		logger.Error(ctx).
 			Bool("user_visible", true).
 			Msg("Metadata not found.  Please recompile your plugin using the latest version of the Hypermode Functions library.")
@@ -84,7 +84,11 @@ func loadPlugin(ctx context.Context, filename string) error {
 	plugin := makePlugin(ctx, cm, filename, md)
 
 	// Write the plugin info to the database.
+	// Note, this may update the ID if a plugin with the same BuildID is in the db already.
 	db.WritePluginInfo(ctx, plugin)
+
+	// Register the plugin.
+	registry.AddOrUpdate(plugin)
 
 	// Log the details of the loaded plugin.
 	logPluginLoaded(ctx, plugin)
@@ -111,24 +115,13 @@ func makePlugin(ctx context.Context, cm wazero.CompiledModule, filename string, 
 	span := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
 
-	// Store the types in a map for easy access.
-	types := make(map[string]*metadata.TypeDefinition, len(md.Types))
-	for _, t := range md.Types {
-		types[t.Path] = t
-	}
-
-	// Create and store the plugin.
-	plugin := &plugins.Plugin{
+	return &plugins.Plugin{
 		Id:       utils.GenerateUUIDv7(),
 		Module:   cm,
 		Metadata: md,
 		FileName: filename,
-		Types:    types,
+		Language: languages.GetLanguageForSDK(md.SDK),
 	}
-
-	registry.AddOrUpdate(plugin)
-
-	return plugin
 }
 
 func logPluginLoaded(ctx context.Context, plugin *plugins.Plugin) {
@@ -149,17 +142,16 @@ func logPluginLoaded(ctx context.Context, plugin *plugins.Plugin) {
 		}
 	}
 
-	lang := plugin.Language()
-	if lang != metadata.UnknownLanguage {
-		evt.Str("language", lang.String())
+	if plugin.Language != nil {
+		evt.Str("language", plugin.Language.Name())
 	}
 
 	if md.BuildId != "" {
 		evt.Str("build_id", md.BuildId)
 	}
 
-	if md.BuildTime != (time.Time{}) {
-		evt.Time("build_ts", md.BuildTime)
+	if md.BuildTime != "" {
+		evt.Str("build_ts", md.BuildTime)
 	}
 
 	if md.SDK != "" {

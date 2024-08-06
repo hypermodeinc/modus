@@ -13,19 +13,24 @@ import (
 	"hmruntime/plugins/metadata"
 )
 
-var functions = make(map[string]*FunctionInfo)
+var functions = make(map[string]*functionInfo)
 
-func GetFunctionInfo(fnName string) (*FunctionInfo, error) {
-	info, ok := functions[fnName]
-	if !ok {
-		return nil, fmt.Errorf("no function registered named %s", fnName)
-	}
-	return info, nil
-}
-
-type FunctionInfo struct {
+type functionInfo struct {
 	Function *metadata.Function
 	Plugin   *plugins.Plugin
+}
+
+func GetFunction(fnName string) (*metadata.Function, error) {
+	f, _, err := GetFunctionAndPlugin(fnName)
+	return f, err
+}
+
+func GetFunctionAndPlugin(fnName string) (*metadata.Function, *plugins.Plugin, error) {
+	info, ok := functions[fnName]
+	if !ok {
+		return nil, nil, fmt.Errorf("no function registered named %s", fnName)
+	}
+	return info.Function, info.Plugin, nil
 }
 
 func RegisterFunctions(ctx context.Context, plugins []*plugins.Plugin) {
@@ -50,9 +55,9 @@ type registration struct {
 
 func (r *registration) registerPlugin(ctx context.Context, plugin *plugins.Plugin) {
 
-	// Save functions from the metadata to the functions map
-	for _, fn := range plugin.Metadata.Functions {
-		functions[fn.Name] = &FunctionInfo{
+	// Save exported functions from the metadata to the functions map
+	for _, fn := range plugin.Metadata.FnExports {
+		functions[fn.Name] = &functionInfo{
 			Function: fn,
 			Plugin:   plugin,
 		}

@@ -7,22 +7,74 @@ package metadata
 import (
 	"context"
 	"fmt"
-	"strings"
+	"strconv"
 
+	v1 "hmruntime/plugins/metadata/legacy/v1"
 	"hmruntime/utils"
 
 	"github.com/tetratelabs/wazero"
 )
 
-var ErrPluginMetadataNotFound = fmt.Errorf("no metadata found in plugin")
+var ErrMetadataNotFound = fmt.Errorf("no metadata found in plugin")
 
-func GetPluginMetadata(ctx context.Context, cm wazero.CompiledModule) (*Metadata, error) {
+func GetMetadata(ctx context.Context, cm wazero.CompiledModule) (*Metadata, error) {
+	span := utils.NewSentrySpanForCurrentFunc(ctx)
+	defer span.Finish()
+
+	ver, err := getPluginMetadataVersion(cm)
+	if err != nil {
+		return nil, err
+	}
+
+	switch ver {
+	case 1:
+		return getPluginMetadata_v1(ctx, cm)
+	case 2:
+		return getPluginMetadata_v2(ctx, cm)
+	default:
+		return nil, fmt.Errorf("unsupported plugin metadata version: %d", ver)
+	}
+}
+
+func getPluginMetadataVersion(cm wazero.CompiledModule) (int, error) {
+	verData, found := getCustomSectionData(cm, "hypermode_version")
+	if !found {
+		return 1, nil
+	}
+
+	ver, err := strconv.Atoi(string(verData))
+	if err != nil {
+		return 0, fmt.Errorf("failed to parse plugin metadata version: %w", err)
+	}
+
+	return ver, nil
+}
+
+func getPluginMetadata_v1(ctx context.Context, cm wazero.CompiledModule) (*Metadata, error) {
 	span := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
 
 	metadataJson, found := getCustomSectionData(cm, "hypermode_meta")
 	if !found {
-		return nil, ErrPluginMetadataNotFound
+		return nil, ErrMetadataNotFound
+	}
+
+	md := v1.Metadata{}
+	err := utils.JsonDeserialize(metadataJson, &md)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse plugin metadata: %w", err)
+	}
+
+	return metadataV1toV2(&md), nil
+}
+
+func getPluginMetadata_v2(ctx context.Context, cm wazero.CompiledModule) (*Metadata, error) {
+	span := utils.NewSentrySpanForCurrentFunc(ctx)
+	defer span.Finish()
+
+	metadataJson, found := getCustomSectionData(cm, "hypermode_meta")
+	if !found {
+		return nil, ErrMetadataNotFound
 	}
 
 	md := &Metadata{}
@@ -31,48 +83,22 @@ func GetPluginMetadata(ctx context.Context, cm wazero.CompiledModule) (*Metadata
 		return nil, fmt.Errorf("failed to parse plugin metadata: %w", err)
 	}
 
-	augmentMetadata(md)
+	for name, fn := range md.FnExports {
+		fn.Name = name
+		md.FnExports[name] = fn
+	}
+
+	for name, fn := range md.FnImports {
+		fn.Name = name
+		md.FnImports[name] = fn
+	}
+
+	for name, typ := range md.Types {
+		typ.Name = name
+		md.Types[name] = typ
+	}
+
 	return md, nil
-}
-
-func augmentMetadata(metadata *Metadata) {
-
-	// legacy support for the deprecated "library" field
-	// (functions-as before v0.10.0)
-	if metadata.SDK == "" {
-		metadata.SDK = strings.TrimPrefix(metadata.Library, "@hypermode/")
-	}
-
-	// Copy the language from the metadata to the types and functions.
-	// Set the nullable flag along the way.
-	lang := metadata.Language()
-	for i, t := range metadata.Types {
-		for j, field := range t.Fields {
-			field.Type.Language = lang
-			field.Type.Nullable = isNullable(field.Type, lang)
-			t.Fields[j] = field
-		}
-		metadata.Types[i] = t
-	}
-	for i, fn := range metadata.Functions {
-		for j, param := range fn.Parameters {
-			param.Type.Language = lang
-			param.Type.Nullable = isNullable(param.Type, lang)
-			fn.Parameters[j] = param
-		}
-		fn.ReturnType.Language = lang
-		fn.ReturnType.Nullable = isNullable(fn.ReturnType, lang)
-		metadata.Functions[i] = fn
-	}
-}
-
-func isNullable(t *TypeInfo, lang PluginLanguage) bool {
-	switch lang {
-	case AssemblyScript:
-		return strings.HasSuffix(t.Path, "|null")
-	default:
-		panic(fmt.Sprintf("unsupported language: %v", lang))
-	}
 }
 
 func getCustomSectionData(cm wazero.CompiledModule, name string) (data []byte, found bool) {

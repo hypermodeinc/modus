@@ -12,11 +12,9 @@ import (
 	"slices"
 	"strings"
 
-	"hmruntime/functions/assemblyscript"
+	"hmruntime/languages"
 	"hmruntime/plugins/metadata"
 	"hmruntime/utils"
-
-	"github.com/hypermodeAI/manifest"
 )
 
 type GraphQLSchema struct {
@@ -24,13 +22,14 @@ type GraphQLSchema struct {
 	MapTypes []string
 }
 
-func GetGraphQLSchema(ctx context.Context, md *metadata.Metadata, manifest *manifest.HypermodeManifest, includeHeader bool) (*GraphQLSchema, error) {
+func GetGraphQLSchema(ctx context.Context, md *metadata.Metadata) (*GraphQLSchema, error) {
 	span := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
 
+	lti := languages.GetLanguageForSDK(md.SDK).TypeInfo()
 	typeDefs := make(map[string]*TypeDefinition, len(md.Types))
-	errors := transformTypes(md.Types, typeDefs)
-	functions, errs := transformFunctions(md.Functions, typeDefs)
+	errors := transformTypes(md.Types, typeDefs, lti)
+	functions, errs := transformFunctions(md.FnExports, typeDefs, lti)
 	types := utils.MapValues(typeDefs)
 	errors = append(errors, errs...)
 
@@ -38,13 +37,10 @@ func GetGraphQLSchema(ctx context.Context, md *metadata.Metadata, manifest *mani
 		return nil, fmt.Errorf("failed to generate schema: %+v", errors)
 	}
 
-	functions = filterFunctions(functions, manifest)
+	functions = filterFunctions(functions)
 	types = filterTypes(types, functions)
 
 	buf := bytes.Buffer{}
-	if includeHeader {
-		writeSchemaHeader(&buf, md)
-	}
 	writeSchema(&buf, functions, types)
 
 	mapTypes := make([]string, 0, len(typeDefs))
@@ -65,22 +61,24 @@ type TransformError struct {
 	Error  error
 }
 
-func transformTypes(types []*metadata.TypeDefinition, typeDefs map[string]*TypeDefinition) []*TransformError {
+func transformTypes(types metadata.TypeMap, typeDefs map[string]*TypeDefinition, lti languages.TypeInfo) []*TransformError {
 	errors := make([]*TransformError, 0)
 	for _, t := range types {
-		if _, ok := typeDefs[t.Name]; ok {
-			errors = append(errors, &TransformError{t, fmt.Errorf("type already exists: %s", t.Name)})
+		name := lti.GetNameForType(t.Name)
+
+		if _, ok := typeDefs[name]; ok {
+			errors = append(errors, &TransformError{t, fmt.Errorf("type already exists: %s", name)})
 			continue
 		}
 
-		fields, err := convertFields(t.Fields, typeDefs, true)
+		fields, err := convertFields(t.Fields, lti, typeDefs)
 		if err != nil {
 			errors = append(errors, &TransformError{t, err})
 			continue
 		}
 
-		typeDefs[t.Name] = &TypeDefinition{
-			Name:   t.Name,
+		typeDefs[name] = &TypeDefinition{
+			Name:   name,
 			Fields: fields,
 		}
 	}
@@ -110,45 +108,41 @@ type ParameterSignature struct {
 	Default *any
 }
 
-func transformFunctions(functions []*metadata.Function, typeDefs map[string]*TypeDefinition) ([]*FunctionSignature, []*TransformError) {
-	results := make([]*FunctionSignature, len(functions))
+func transformFunctions(functions metadata.FunctionMap, typeDefs map[string]*TypeDefinition, lti languages.TypeInfo) ([]*FunctionSignature, []*TransformError) {
+	output := make([]*FunctionSignature, len(functions))
 	errors := make([]*TransformError, 0)
-	for i, f := range functions {
-		params, err := convertParameters(f.Parameters, typeDefs, false)
+
+	i := 0
+	for _, f := range functions {
+		params, err := convertParameters(f.Parameters, lti, typeDefs)
 		if err != nil {
 			errors = append(errors, &TransformError{f, err})
 			continue
 		}
 
-		returnType, err := convertType(f.ReturnType.Name, typeDefs, false)
+		returnType, err := convertResults(f.Results, lti, typeDefs)
 		if err != nil {
 			errors = append(errors, &TransformError{f, err})
 			continue
 		}
 
-		results[i] = &FunctionSignature{
+		output[i] = &FunctionSignature{
 			Name:       f.Name,
 			Parameters: params,
 			ReturnType: returnType,
 		}
+
+		i++
 	}
 
-	return results, errors
+	return output, errors
 }
 
-func filterFunctions(functions []*FunctionSignature, manifest *manifest.HypermodeManifest) []*FunctionSignature {
-	// Get all embedders from the manifest.
-	embedders := make(map[string]bool)
-	for _, collection := range manifest.Collections {
-		for _, searchMethod := range collection.SearchMethods {
-			embedders[searchMethod.Embedder] = true
-		}
-	}
-
-	// Filter out functions that are embedders.
+func filterFunctions(functions []*FunctionSignature) []*FunctionSignature {
+	fnFilter := getFnFilter()
 	results := make([]*FunctionSignature, 0, len(functions))
 	for _, f := range functions {
-		if !embedders[f.Name] {
+		if fnFilter(f) {
 			results = append(results, f)
 		}
 	}
@@ -210,35 +204,10 @@ func getBaseType(name string) string {
 	return name
 }
 
-func writeSchemaHeader(buf *bytes.Buffer, md *metadata.Metadata) {
-	buf.WriteString("# Hypermode Functions GraphQL Schema (auto-generated)\n")
-	buf.WriteString("# \n")
-	buf.WriteString("# Plugin: ")
-	buf.WriteString(md.Plugin)
-	buf.WriteByte('\n')
-	buf.WriteString("# SDK: ")
-	buf.WriteString(md.SDK)
-	buf.WriteByte('\n')
-	buf.WriteString("# Build ID: ")
-	buf.WriteString(md.BuildId)
-	buf.WriteByte('\n')
-	buf.WriteString("# Build Time: ")
-	buf.WriteString(md.BuildTime.Format(utils.TimeFormat))
-	buf.WriteByte('\n')
-	if md.GitRepo != "" {
-		buf.WriteString("# Git Repo: ")
-		buf.WriteString(md.GitRepo)
-		buf.WriteByte('\n')
-	}
-	if md.GitCommit != "" {
-		buf.WriteString("# Git Commit: ")
-		buf.WriteString(md.GitCommit)
-		buf.WriteByte('\n')
-	}
-	buf.WriteByte('\n')
-}
-
 func writeSchema(buf *bytes.Buffer, functions []*FunctionSignature, typeDefs []*TypeDefinition) {
+
+	// write header
+	buf.WriteString("# Hypermode GraphQL Schema (auto-generated)\n\n")
 
 	// sort functions and type definitions
 	slices.SortFunc(functions, func(a, b *FunctionSignature) int {
@@ -317,45 +286,106 @@ func writeSchema(buf *bytes.Buffer, functions []*FunctionSignature, typeDefs []*
 	buf.WriteByte('\n')
 }
 
-func convertParameters(parameters []*metadata.Parameter, typeDefs map[string]*TypeDefinition, firstPass bool) ([]*ParameterSignature, error) {
+func convertParameters(parameters []*metadata.Parameter, lti languages.TypeInfo, typeDefs map[string]*TypeDefinition) ([]*ParameterSignature, error) {
 	if len(parameters) == 0 {
 		return nil, nil
 	}
 
-	results := make([]*ParameterSignature, len(parameters))
+	output := make([]*ParameterSignature, len(parameters))
 	for i, p := range parameters {
 
-		t, err := convertType(p.Type.Name, typeDefs, firstPass)
+		t, err := convertType(p.Type, lti, typeDefs, false)
 		if err != nil {
 			return nil, err
 		}
 
 		// maintain compatibility with the deprecated "optional" field
 		if p.Optional {
-			results[i] = &ParameterSignature{
+			output[i] = &ParameterSignature{
 				Name: p.Name,
 				Type: strings.TrimSuffix(t, "!"),
 			}
 			continue
 		}
 
-		results[i] = &ParameterSignature{
+		output[i] = &ParameterSignature{
 			Name:    p.Name,
 			Type:    t,
 			Default: p.Default,
 		}
 	}
-	return results, nil
+	return output, nil
 }
 
-func convertFields(fields []*metadata.Field, typeDefs map[string]*TypeDefinition, firstPass bool) ([]*NameTypePair, error) {
+func convertResults(results []*metadata.Result, lti languages.TypeInfo, typeDefs map[string]*TypeDefinition) (string, error) {
+	switch len(results) {
+	case 0:
+		return newScalar("Void", typeDefs), nil
+	case 1:
+		// Note: Single result doesn't use the name, even if it's present.
+		return convertType(results[0].Type, lti, typeDefs, false)
+	default:
+		fields := getFieldsFromResults(results)
+		t := getTypeForFields(fields, typeDefs)
+		return t, nil
+	}
+}
+
+func getFieldsFromResults(results []*metadata.Result) []*NameTypePair {
+	fields := make([]*NameTypePair, len(results))
+	for i, r := range results {
+		name := r.Name
+		if name == "" {
+			name = fmt.Sprintf("field_%d", i+1)
+		}
+		fields[i] = &NameTypePair{
+			Name: name,
+			Type: r.Type,
+		}
+	}
+	return fields
+}
+
+func getTypeForFields(fields []*NameTypePair, typeDefs map[string]*TypeDefinition) string {
+	// see if an existing type already matches
+	for _, t := range typeDefs {
+		if len(t.Fields) != len(fields) {
+			continue
+		}
+
+		found := true
+		for i, f := range fields {
+			if t.Fields[i].Name != f.Name || t.Fields[i].Type != f.Type {
+				found = false
+				break
+			}
+		}
+
+		if found {
+			return t.Name
+		}
+	}
+
+	// there's no existing type that matches, so create a new one
+	var name string
+	for i := 1; ; i++ {
+		name = fmt.Sprintf("type_%d", i)
+		if _, ok := typeDefs[name]; !ok {
+			break
+		}
+	}
+
+	return newType(name, fields, typeDefs)
+}
+
+func convertFields(fields []*metadata.Field, lti languages.TypeInfo, typeDefs map[string]*TypeDefinition) ([]*NameTypePair, error) {
 	if len(fields) == 0 {
 		return nil, nil
 	}
 
 	results := make([]*NameTypePair, len(fields))
 	for i, f := range fields {
-		t, err := convertType(f.Type.Name, typeDefs, firstPass)
+		t, err := convertType(f.Type, lti, typeDefs, true)
 		if err != nil {
 			return nil, err
 		}
@@ -367,27 +397,28 @@ func convertFields(fields []*metadata.Field, typeDefs map[string]*TypeDefinition
 	return results, nil
 }
 
-func convertType(asType string, typeDefs map[string]*TypeDefinition, firstPass bool) (string, error) {
+func convertType(typ string, lti languages.TypeInfo, typeDefs map[string]*TypeDefinition, firstPass bool) (string, error) {
 
 	// Unwrap parentheses if present
-	if strings.HasPrefix(asType, "(") && strings.HasSuffix(asType, ")") {
-		return convertType(asType[1:len(asType)-1], typeDefs, firstPass)
+	if strings.HasPrefix(typ, "(") && strings.HasSuffix(typ, ")") {
+		return convertType(typ[1:len(typ)-1], lti, typeDefs, firstPass)
 	}
 
 	// Set the nullable flag.
 	// In GraphQL, types are nullable by default,
 	// and non-nullable types are indicated by a "!" suffix
 	var n string
-	if strings.HasSuffix(asType, " | null") {
+	if lti.IsNullable(typ) {
 		n = ""
-		asType = asType[:len(asType)-7]
+		typ = lti.GetUnderlyingType(typ)
 	} else {
 		n = "!"
 	}
 
 	// check for array types
-	if strings.HasSuffix(asType, "[]") {
-		t, err := convertType(asType[:len(asType)-2], typeDefs, firstPass)
+	if lti.IsArrayType(typ) {
+		elem := lti.GetArraySubtype(typ)
+		t, err := convertType(elem, lti, typeDefs, firstPass)
 		if err != nil {
 			return "", err
 		}
@@ -395,13 +426,13 @@ func convertType(asType string, typeDefs map[string]*TypeDefinition, firstPass b
 	}
 
 	// check for map types
-	k, v := assemblyscript.GetMapParts(asType)
-	if k != "" && v != "" {
-		kt, err := convertType(k, typeDefs, firstPass)
+	if lti.IsMapType(typ) {
+		k, v := lti.GetMapSubtypes(typ)
+		kt, err := convertType(k, lti, typeDefs, firstPass)
 		if err != nil {
 			return "", err
 		}
-		vt, err := convertType(v, typeDefs, firstPass)
+		vt, err := convertType(v, lti, typeDefs, firstPass)
 		if err != nil {
 			return "", err
 		}
@@ -426,44 +457,65 @@ func convertType(asType string, typeDefs map[string]*TypeDefinition, firstPass b
 		return "[" + typeName + "!]" + n, nil
 	}
 
-	// convert scalar types
-	// TODO: How do we want to provide GraphQL ID scalar types? Maybe they're annotated? or maybe by naming convention?
-	switch asType {
-	case "string", "ArrayBuffer":
-		// NOTE: ArrayBuffers are converted to []byte.  If the bytes represent valid UTF-8 strings,
-		// Go will serialize them as actual strings.  Otherwise, the data will be base64 encoded.
+	// convert basic types
+	// TODO: How do we want to provide GraphQL "ID" scalar types? Maybe they're annotated? or maybe by naming convention?
+
+	if lti.IsStringType(typ) {
 		return "String" + n, nil
-	case "bool":
-		return "Boolean" + n, nil
-	case "i32", "i16", "i8", "u16", "u8":
-		return "Int" + n, nil
-	case "f64", "f32":
-		return "Float" + n, nil
-	case "i64":
-		return newScalar("Int64", typeDefs) + n, nil
-	case "u32":
-		return newScalar("UInt", typeDefs) + n, nil
-	case "u64":
-		return newScalar("UInt64", typeDefs) + n, nil
-	case "Date":
-		delete(typeDefs, "Date") // remove the default Date type
-		return newScalar("Timestamp", typeDefs) + n, nil
-	case "void":
-		// note: void scalar is always nullable because we return null
-		return newScalar("Void", typeDefs), nil
 	}
+
+	if lti.IsByteSequenceType(typ) {
+		// Note: If the bytes represent valid UTF-8 strings, Go will serialize them as actual strings.
+		// Otherwise, the data will be base64 encoded.
+		// TODO: We may want to ensure that the results are _always_ base64 encoded.
+		return "String" + n, nil
+	}
+
+	if lti.IsBooleanType(typ) {
+		return "Boolean" + n, nil
+	}
+
+	if lti.IsFloatType(typ) {
+		return "Float" + n, nil
+	}
+
+	if lti.IsIntegerType(typ) {
+		size := lti.SizeOfType(typ)
+		signed := lti.IsSignedIntegerType(typ)
+
+		switch size {
+		case 8:
+			if signed {
+				return newScalar("Int64", typeDefs) + n, nil
+			} else {
+				return newScalar("UInt64", typeDefs) + n, nil
+			}
+		case 4:
+			if !signed {
+				return newScalar("UInt", typeDefs) + n, nil
+			}
+		}
+
+		return "Int" + n, nil
+	}
+
+	if lti.IsTimestampType(typ) {
+		return newScalar("Timestamp", typeDefs) + n, nil
+	}
+
+	name := lti.GetNameForType(typ)
 
 	// in the first pass, we convert input custom type definitions
 	if firstPass {
-		return asType + n, nil
+		return name + n, nil
 	}
 
 	// going forward, convert custom types only if they have a type definition
-	if _, ok := typeDefs[asType]; ok {
-		return asType + n, nil
+	if _, ok := typeDefs[name]; ok {
+		return name + n, nil
 	}
 
-	return "", fmt.Errorf("unsupported type or missing type definition: %s", asType)
+	return "", fmt.Errorf("unsupported type or missing type definition: %s", typ)
 }
 
 func newScalar(name string, typeDefs map[string]*TypeDefinition) string {
