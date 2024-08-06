@@ -186,7 +186,7 @@ func LoadTextsIntoCollection(ctx context.Context, collection interfaces.Collecti
 	}
 
 	// Query all texts from checkpoint
-	textIds, keys, texts, err := db.QueryCollectionTextsFromCheckpoint(ctx, collection.GetCollectionName(), textCheckpointId)
+	textIds, keys, texts, labels, err := db.QueryCollectionTextsFromCheckpoint(ctx, collection.GetCollectionName(), textCheckpointId)
 	if err != nil {
 		return err
 	}
@@ -195,7 +195,7 @@ func LoadTextsIntoCollection(ctx context.Context, collection interfaces.Collecti
 	}
 
 	// Insert all texts into collection
-	err = collection.InsertTextsToMemory(ctx, textIds, keys, texts)
+	err = collection.InsertTextsToMemory(ctx, textIds, keys, texts, labels)
 	if err != nil {
 		return err
 	}
@@ -203,7 +203,7 @@ func LoadTextsIntoCollection(ctx context.Context, collection interfaces.Collecti
 	return nil
 }
 
-func LoadVectorsIntoVectorIndex(ctx context.Context, vectorIndex *interfaces.VectorIndexWrapper, collection interfaces.Collection) error {
+func LoadVectorsIntoVectorIndex(ctx context.Context, vectorIndex interfaces.VectorIndex, collection interfaces.Collection) error {
 	// Get checkpoint id for vector index
 	vecCheckpointId, err := vectorIndex.GetCheckpointId(ctx)
 	if err != nil {
@@ -220,12 +220,11 @@ func LoadVectorsIntoVectorIndex(ctx context.Context, vectorIndex *interfaces.Vec
 	}
 
 	// Insert all vectors into vector index
-	for i := range vectorIds {
-		err = vectorIndex.InsertVectorToMemory(ctx, textIds[i], vectorIds[i], keys[i], vectors[i])
-		if err != nil {
-			return err
-		}
+	err = batchInsertVectorsToMemory(ctx, vectorIndex, textIds, vectorIds, keys, vectors)
+	if err != nil {
+		return err
 	}
+
 	return nil
 }
 
@@ -235,7 +234,7 @@ func syncTextsWithVectorIndex(ctx context.Context, collection interfaces.Collect
 	if err != nil {
 		return err
 	}
-	textIds, keys, texts, err := db.QueryCollectionTextsFromCheckpoint(ctx, collection.GetCollectionName(), lastIndexedTextId)
+	textIds, keys, texts, _, err := db.QueryCollectionTextsFromCheckpoint(ctx, collection.GetCollectionName(), lastIndexedTextId)
 	if err != nil {
 		return err
 	}

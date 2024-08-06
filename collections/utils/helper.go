@@ -76,32 +76,26 @@ func ConcatStrings(strs ...string) string {
 	return total
 }
 
-func ConvertToFloat32_2DArray(result any) ([][]float32, error) {
-	resultArr, ok := result.([]interface{})
-	if !ok {
-		return nil, fmt.Errorf("error converting type to float32: %v", result)
+func ConvertToFloat32_2DArray(vecs any) ([][]float32, error) {
+
+	// return if already a slice of float32 slices
+	if vec32s, ok := vecs.([][]float32); ok {
+		return vec32s, nil
 	}
 
-	textVecs := make([][]float32, len(resultArr))
-	for i, res := range resultArr {
-
-		subArr, ok := res.([]interface{})
-		if !ok {
-			return nil, fmt.Errorf("error converting type to float32: %v", res)
-		}
-
-		textVecs[i] = make([]float32, len(subArr))
-		for j, val := range subArr {
-			if v, ok := val.(float64); ok {
-				textVecs[i][j] = float32(v)
-			} else if v, ok := val.(float32); ok {
-				textVecs[i][j] = v
-			} else {
-				return nil, fmt.Errorf("error converting type to float32: %v", val)
+	// convert [][]float64 to [][]float32
+	if vec64s, ok := vecs.([][]float64); ok {
+		vec32s := make([][]float32, len(vec64s))
+		for i, vec := range vec64s {
+			vec32s[i] = make([]float32, len(vec))
+			for j, val := range vec {
+				vec32s[i][j] = float32(val)
 			}
 		}
+		return vec32s, nil
 	}
-	return textVecs, nil
+
+	return nil, fmt.Errorf("expected a slice of float32 or float64 slices, got: %T", vecs)
 }
 
 func EqualFloat32Slices(a, b []float32) bool {

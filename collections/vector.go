@@ -2,10 +2,10 @@ package collections
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"hmruntime/collections/in_mem"
-	"hmruntime/collections/in_mem/hnsw"
 	"hmruntime/collections/in_mem/sequential"
 	"hmruntime/collections/index"
 	"hmruntime/collections/index/interfaces"
@@ -61,6 +61,28 @@ func ProcessTexts(ctx context.Context, collection interfaces.Collection, vectorI
 		}
 
 		err = vectorIndex.InsertVectors(ctx, textIds, textVecs)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func batchInsertVectorsToMemory(ctx context.Context, vectorIndex interfaces.VectorIndex, textIds, vectorIds []int64, keys []string, vecs [][]float32) error {
+	if len(vectorIds) != len(vecs) || len(keys) != len(vecs) || len(textIds) != len(vecs) {
+		return errors.New("mismatch in vectors, keys, and textIds")
+	}
+	for i := 0; i < len(textIds); i += batchSize {
+		end := i + batchSize
+		if end > len(textIds) {
+			end = len(textIds)
+		}
+		textIdsBatch := textIds[i:end]
+		vectorIdsBatch := vectorIds[i:end]
+		keysBatch := keys[i:end]
+		vecsBatch := vecs[i:end]
+
+		err := vectorIndex.InsertVectorsToMemory(ctx, textIdsBatch, vectorIdsBatch, keysBatch, vecsBatch)
 		if err != nil {
 			return err
 		}
@@ -175,8 +197,11 @@ func createIndex(ctx context.Context, collection interfaces.Collection, searchMe
 		vectorIndex.Type = sequential.SequentialVectorIndexType
 		vectorIndex.VectorIndex = sequential.NewSequentialVectorIndex(collectionName, searchMethodName, searchMethod.Embedder)
 	case interfaces.HnswManifestType:
-		vectorIndex.Type = hnsw.HnswVectorIndexType
-		vectorIndex.VectorIndex = hnsw.NewHnswVectorIndex(collectionName, searchMethodName, searchMethod.Embedder)
+		vectorIndex.Type = sequential.SequentialVectorIndexType
+		vectorIndex.VectorIndex = sequential.NewSequentialVectorIndex(collectionName, searchMethodName, searchMethod.Embedder)
+		// // TODO: hnsw currently broken ,autosync is not working, it keeps embedding forever, even though it has correctly indexed. for now, set it to sequential. fix in future PR
+		// vectorIndex.Type = hnsw.HnswVectorIndexType
+		// vectorIndex.VectorIndex = hnsw.NewHnswVectorIndex(collectionName, searchMethodName, searchMethod.Embedder)
 	case "":
 		vectorIndex.Type = sequential.SequentialVectorIndexType
 		vectorIndex.VectorIndex = sequential.NewSequentialVectorIndex(collectionName, searchMethodName, searchMethod.Embedder)

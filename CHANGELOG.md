@@ -4,6 +4,7 @@
 
 - Perf improvements to internal storage of hnsw data in Collections [#299](https://github.com/hypermodeAI/runtime/pull/299)
 - Fix type resolution issues [#304](https://github.com/hypermodeAI/runtime/pull/304) [#306](https://github.com/hypermodeAI/runtime/pull/306)
+- Implement nearest neighbor classification in Collections [#305](https://github.com/hypermodeAI/runtime/pull/305)
 - Fix certain errors reporting incorrectly [#307](https://github.com/hypermodeAI/runtime/pull/307)
 - Improve encoding and decoding of arrays and maps [#308](https://github.com/hypermodeAI/runtime/pull/308)
 - Listen on both IPv4 and IPv6 for localhost [#309](https://github.com/hypermodeAI/runtime/pull/309)

@@ -81,14 +81,14 @@ type Collection interface {
 	DeleteVectorIndex(ctx context.Context, searchMethod string) error
 
 	// InsertTexts will add texts and keys into the existing VectorIndex
-	InsertTexts(ctx context.Context, keys []string, texts []string) error
+	InsertTexts(ctx context.Context, keys []string, texts []string, labelsArr [][]string) error
 
 	// InsertText will add a text and key into the existing VectorIndex
-	InsertText(ctx context.Context, key string, text string) error
+	InsertText(ctx context.Context, key string, text string, labels []string) error
 
-	InsertTextsToMemory(ctx context.Context, ids []int64, keys []string, texts []string) error
+	InsertTextsToMemory(ctx context.Context, ids []int64, keys []string, texts []string, labelsArr [][]string) error
 
-	InsertTextToMemory(ctx context.Context, id int64, key string, text string) error
+	InsertTextToMemory(ctx context.Context, id int64, key string, text string, labels []string) error
 
 	// DeleteText will remove a text and key from the existing VectorIndex
 	DeleteText(ctx context.Context, key string) error
@@ -96,8 +96,17 @@ type Collection interface {
 	// GetText will return the text for a given key
 	GetText(ctx context.Context, key string) (string, error)
 
+	// GetLabel will return the label for a given key
+	GetLabels(ctx context.Context, key string) ([]string, error)
+
 	// GetTextMap returns the map of key to text
 	GetTextMap(ctx context.Context) (map[string]string, error)
+
+	// GetLabelMap returns the map of key to label
+	GetLabelsMap(ctx context.Context) (map[string][]string, error)
+
+	//Len returns the number of texts in the collection
+	Len(ctx context.Context) (int, error)
 
 	// GetExternalId returns the external id for a given key
 	GetExternalId(ctx context.Context, key string) (int64, error)
@@ -139,6 +148,9 @@ type VectorIndex interface {
 	// Insert will add a vector and key into the existing VectorIndex. If
 	// key already exists, it should throw an error to not insert duplicate keys
 	InsertVector(ctx context.Context, textId int64, vec []float32) error
+
+	// InsertVectorsToMemory will add vectors and keys into the existing VectorIndex
+	InsertVectorsToMemory(ctx context.Context, textIds []int64, vectorIds []int64, keys []string, vecs [][]float32) error
 
 	// InsertVectorToMemory will add a vector and key into the existing VectorIndex. If
 	// key already exists, it should throw an error to not insert duplicate keys

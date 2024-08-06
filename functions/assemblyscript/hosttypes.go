@@ -23,6 +23,18 @@ var hostTypes = map[string]*metadata.TypeInfo{
 		Name: "CollectionSearchResultObject",
 		Path: "~lib/@hypermode/functions-as/assembly/collections/CollectionSearchResultObject",
 	},
+	"hmruntime/collections.collectionClassificationResult": {
+		Name: "CollectionClassificationResult",
+		Path: "~lib/@hypermode/functions-as/assembly/collections/CollectionClassificationResult",
+	},
+	"hmruntime/collections.collectionClassificationLabelObject": {
+		Name: "CollectionClassificationLabelObject",
+		Path: "~lib/@hypermode/functions-as/assembly/collections/CollectionClassificationLabelObject",
+	},
+	"hmruntime/collections.collectionClassificationResultObject": {
+		Name: "CollectionClassificationResultObject",
+		Path: "~lib/@hypermode/functions-as/assembly/collections/CollectionClassificationResultObject",
+	},
 	"hmruntime/httpclient.HttpRequest": {
 		Name: "Request",
 		Path: "~lib/@hypermode/functions-as/assembly/http/Request",
