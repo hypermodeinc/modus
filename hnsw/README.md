@@ -5,7 +5,7 @@ can read up about how they work [here](https://www.pinecone.io/learn/series/fais
 they allow for fast approximate nearest neighbor searches with high-dimensional
 vector data.
 
-This package can be thought of as an in-memory alternative to your favorite 
+This package can be thought of as an in-memory alternative to your favorite
 vector database (e.g. Pinecone, Weaviate). It implements just the essential
 operations:
 
@@ -53,8 +53,6 @@ if err != nil {
 fmt.Printf("best friend: %v\n", neighbors[0].Value)
 ```
 
-
-
 ## Persistence
 
 While all graph operations are in-memory, `hnsw` provides facilities for loading/saving from persistent storage.
@@ -89,9 +87,10 @@ if err != nil {
 ```
 
 See more:
-* [Export](https://pkg.go.dev/github.com/coder/hnsw#Graph.Export)
-* [Import](https://pkg.go.dev/github.com/coder/hnsw#Graph.Import)
-* [SavedGraph](https://pkg.go.dev/github.com/coder/hnsw#SavedGraph)
+
+- [Export](https://pkg.go.dev/github.com/coder/hnsw#Graph.Export)
+- [Import](https://pkg.go.dev/github.com/coder/hnsw#Graph.Import)
+- [SavedGraph](https://pkg.go.dev/github.com/coder/hnsw#SavedGraph)
 
 We use a fast binary encoding for the graph, so you can expect to save/load
 nearly at disk speed. On my M3 Macbook I get these benchmark results:
@@ -115,12 +114,14 @@ is reducing the dimensionality of your data. At 1536 dimensions (OpenAI default)
 70% of the query process under default parameters is spent in the distance function.
 
 If you're struggling with slowness / latency, consider:
-* Reducing dimensionality
-* Increasing $M$
+
+- Reducing dimensionality
+- Increasing $M$
 
 And, if you're struggling with excess memory usage, consider:
-* Reducing $M$ a.k.a `Graph.M` (the maximum number of neighbors each node can have)
-* Reducing $m_L$ a.k.a `Graph.Ml` (the level generation parameter)
+
+- Reducing $M$ a.k.a `Graph.M` (the maximum number of neighbors each node can have)
+- Reducing $m_L$ a.k.a `Graph.Ml` (the level generation parameter)
 
 ## Memory Overhead
 
@@ -135,21 +136,23 @@ mem_{total} = mem_{graph} + mem_{base}
 $$
 
 where:
-* $n$ is the number of vectors in the graph
-* $\text{size(key)}$ is the average size of the key in bytes
-* $M$ is the maximum number of neighbors each node can have
-* $d$ is the dimensionality of the vectors
-* $mem_{graph}$ is the memory used by the graph structure across all layers
-* $mem_{base}$ is the memory used by the vectors themselves in the base or 0th layer
+
+- $n$ is the number of vectors in the graph
+- $\text{size(key)}$ is the average size of the key in bytes
+- $M$ is the maximum number of neighbors each node can have
+- $d$ is the dimensionality of the vectors
+- $mem_{graph}$ is the memory used by the graph structure across all layers
+- $mem_{base}$ is the memory used by the vectors themselves in the base or 0th layer
 
 You can infer that:
-* Connectivity ($M$) is very expensive if keys are large
-* If $d \cdot 4$ is far larger than $M \cdot \text{size(key)}$, you should expect linear memory usage spent on representing vector data
-* If $d \cdot 4$ is far smaller than $M \cdot \text{size(key)}$, you should expect $n \cdot \log(n)$ memory usage spent on representing graph structure
+
+- Connectivity ($M$) is very expensive if keys are large
+- If $d \cdot 4$ is far larger than $M \cdot \text{size(key)}$, you should expect linear memory usage spent on representing vector data
+- If $d \cdot 4$ is far smaller than $M \cdot \text{size(key)}$, you should expect $n \cdot \log(n)$ memory usage spent on representing graph structure
 
 In the example of a graph with 256 dimensions, and $M = 16$, with 8 byte keys, you would see that each vector takes:
 
-* $256 \cdot 4 = 1024$ data bytes 
-* $16 \cdot 8 = 128$ metadata bytes
+- $256 \cdot 4 = 1024$ data bytes
+- $16 \cdot 8 = 128$ metadata bytes
 
 and memory growth is mostly linear.

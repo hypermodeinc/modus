@@ -119,7 +119,7 @@ func makePlugin(ctx context.Context, cm wazero.CompiledModule, filename string, 
 
 	// Create and store the plugin.
 	plugin := &plugins.Plugin{
-		Id:       utils.GenerateUUIDV7(),
+		Id:       utils.GenerateUUIDv7(),
 		Module:   cm,
 		Metadata: md,
 		FileName: filename,

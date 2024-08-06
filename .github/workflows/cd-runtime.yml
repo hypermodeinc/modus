@@ -3,15 +3,15 @@ on:
   workflow_dispatch:
     inputs:
       environment:
-        description: 'environment'
+        description: "environment"
         required: true
-        default: 'stage'
+        default: "stage"
         type: choice
         options:
           - stage
           - prod
       releasetag:
-        description: 'releasetag'
+        description: "releasetag"
         required: true
         type: string
   push:
@@ -20,8 +20,8 @@ on:
 env:
   GOPRIVATE: "github.com/dgraph-io/*,github.com/gohypermode/*,github.com/hypermodeAI/*"
 permissions:
-  id-token: write   # This is required for requesting the JWT
-  contents: read    # This is required for actions/checkout
+  id-token: write # This is required for requesting the JWT
+  contents: read # This is required for actions/checkout
 jobs:
   runtime-build-push:
     if: ${{ github.event_name == 'push' }}
@@ -36,7 +36,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version-file: 'go.mod'
+          go-version-file: "go.mod"
           check-latest: true
       - name: Runtime Git SHA
         run: |
@@ -46,9 +46,9 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: '${{ vars.AWS_ROLE }}'
+          role-to-assume: "${{ vars.AWS_ROLE }}"
           role-session-name: CD_RUNTIME
-          aws-region: '${{ vars.AWS_REGION }}'
+          aws-region: "${{ vars.AWS_REGION }}"
       - name: Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v2
       - name: Set up Docker Buildx
@@ -68,7 +68,7 @@ jobs:
             ${{ vars.AWS_ACCOUNT_ID }}.dkr.ecr.${{ vars.AWS_REGION }}.amazonaws.com/hypermode/runtime:latest
   runtime-build-workflow-dispatch:
     if: ${{ github.event_name == 'workflow_dispatch' }}
-    environment: '${{ github.event.inputs.environment }}'
+    environment: "${{ github.event.inputs.environment }}"
     runs-on: warp-ubuntu-latest-x64-16x
     steps:
       - name: Configure git for private modules
@@ -77,11 +77,11 @@ jobs:
         run: git config --global url."https://admin-hypermode:${TOKEN}@github.com".insteadOf "https://github.com"
       - uses: actions/checkout@v4
         with:
-          ref: '${{ github.event.inputs.releasetag }}'
+          ref: "${{ github.event.inputs.releasetag }}"
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version-file: 'go.mod'
+          go-version-file: "go.mod"
           check-latest: true
       - name: Set Runtime Release Version
         run: |
@@ -105,9 +105,9 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: '${{ vars.AWS_ROLE }}'
+          role-to-assume: "${{ vars.AWS_ROLE }}"
           role-session-name: CD_RUNTIME
-          aws-region: '${{ vars.AWS_REGION }}'
+          aws-region: "${{ vars.AWS_REGION }}"
       - name: Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v2
       - name: Set up Docker Buildx

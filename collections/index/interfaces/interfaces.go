@@ -25,7 +25,7 @@ type VectorIndexWrapper struct {
 	VectorIndex
 }
 
-type UnmarshallSequentialVectorIndex struct {
+type UnmarshalSequentialVectorIndex struct {
 	VectorIndex sequential.SequentialVectorIndex `json:"VectorIndex"`
 }
 

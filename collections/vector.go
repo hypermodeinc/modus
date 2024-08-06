@@ -179,7 +179,7 @@ func processManifestCollections(ctx context.Context, man *manifest.HypermodeMani
 			} else if vi.GetEmbedderName() != searchMethod.Embedder {
 				//TODO: figure out what to actually do if the embedder is different, for now just updating the name
 				// what if the user changes the internals? -> they want us to reindex, model might have diff dimensions
-				// but what if they just chaned the name? -> they want us to just update the name. but we cant know that
+				// but what if they just changed the name? -> they want us to just update the name. but we cant know that
 				// imo we should just update the name and let the user reindex if they want to
 				if err := vi.SetEmbedderName(searchMethod.Embedder); err != nil {
 					logger.Err(ctx, err).

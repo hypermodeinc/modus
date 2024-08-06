@@ -7,7 +7,7 @@
       "command": "go",
       "args": ["generate", "./..."],
       "presentation": {
-        "reveal": "silent",
+        "reveal": "silent"
       }
     }
   ]

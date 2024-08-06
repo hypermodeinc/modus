@@ -180,7 +180,7 @@ func TestGraph_AddDelete(t *testing.T) {
 	})
 }
 
-func Benchmark_HSNW(b *testing.B) {
+func Benchmark_HNSW(b *testing.B) {
 	b.ReportAllocs()
 
 	sizes := []int{100, 1000, 10000}

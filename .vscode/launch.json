@@ -12,9 +12,7 @@
         "HYPERMODE_DEBUG": "true",
         "HYPERMODE_METADATA_DB": "postgresql://postgres:postgres@localhost:5433/my-runtime-db?sslmode=disable"
       },
-      "args": [
-        "--refresh=1s",
-      ]
+      "args": ["--refresh=1s"]
     },
     {
       "name": "Hypermode Runtime (AWS)",
@@ -35,9 +33,9 @@
         "--useAwsStorage",
         "--s3bucket=${input:s3bucket}",
         "--s3path=${input:s3folder}",
-        "--refresh=1s",
+        "--refresh=1s"
       ]
-    },
+    }
   ],
   "inputs": [
     {
@@ -51,6 +49,6 @@
       "type": "promptString",
       "description": "Enter the S3 storage folder name",
       "default": "shared"
-    },
+    }
   ]
 }
