@@ -32,7 +32,8 @@ func writeDate(ctx context.Context, mod wasm.Module, t time.Time) (offset uint32
 		}
 	}
 
-	offset, err = allocateWasmMemory(ctx, mod, def.Size, def.Id)
+	const size = 24
+	offset, err = allocateWasmMemory(ctx, mod, size, def.Id)
 	if err != nil {
 		return 0, err
 	}

@@ -17,13 +17,25 @@ import (
 
 func readClass(ctx context.Context, mem wasm.Memory, def *metadata.TypeDefinition, offset uint32) (data map[string]any, err error) {
 	data = make(map[string]any)
+	fieldOffset := uint32(0)
 	for _, field := range def.Fields {
-		fieldOffset := offset + field.Offset
-		val, err := readField(ctx, mem, field.Type, fieldOffset)
+
+		// align the field offset to the size of the field
+		size := getItemSize(field.Type)
+		mask := size - 1
+		if fieldOffset&mask != 0 {
+			fieldOffset = (fieldOffset | mask) + 1
+		}
+
+		// read the field value
+		val, err := readField(ctx, mem, field.Type, offset+fieldOffset)
 		if err != nil {
 			return nil, err
 		}
 		data[field.Name] = val
+
+		// move to the next field
+		fieldOffset += size
 	}
 	return data, nil
 }
@@ -119,8 +131,19 @@ func writeClass(ctx context.Context, mod wasm.Module, def *metadata.TypeDefiniti
 		}
 	}()
 
+	// calculate total size of all fields
+	totalSize := uint32(0)
+	for _, field := range def.Fields {
+		size := getItemSize(field.Type)
+		mask := size - 1
+		if totalSize&mask != 0 {
+			totalSize = (totalSize | mask) + 1
+		}
+		totalSize += size
+	}
+
 	// Allocate memory for the object
-	offset, err = allocateWasmMemory(ctx, mod, def.Size, def.Id)
+	offset, err = allocateWasmMemory(ctx, mod, totalSize, def.Id)
 	if err != nil {
 		return 0, err
 	}
@@ -141,6 +164,7 @@ func writeClass(ctx context.Context, mod wasm.Module, def *metadata.TypeDefiniti
 	}
 
 	// Loop over all fields in the class definition.
+	fieldOffset := uint32(0)
 	for _, field := range def.Fields {
 
 		// Read the field value from the data object.
@@ -159,9 +183,15 @@ func writeClass(ctx context.Context, mod wasm.Module, def *metadata.TypeDefiniti
 			val = f.Interface()
 		}
 
+		// align the field offset to the size of the field
+		size := getItemSize(field.Type)
+		mask := size - 1
+		if fieldOffset&mask != 0 {
+			fieldOffset = (fieldOffset | mask) + 1
+		}
+
 		// Write the field value to WASM memory.
-		fieldOffset := offset + field.Offset
-		ptr, err := writeField(ctx, mod, field.Type, fieldOffset, val)
+		ptr, err := writeField(ctx, mod, field.Type, offset+fieldOffset, val)
 		if err != nil {
 			return 0, err
 		}
@@ -174,6 +204,9 @@ func writeClass(ctx context.Context, mod wasm.Module, def *metadata.TypeDefiniti
 			}
 			pins = append(pins, ptr)
 		}
+
+		// move to the next field
+		fieldOffset += size
 	}
 
 	return offset, nil
