@@ -5,20 +5,20 @@
 package functions
 
 import (
-	"hmruntime/plugins"
+	"hmruntime/plugins/metadata"
 	"testing"
 )
 
 func Test_VerifyFunctionSignature(t *testing.T) {
 
-	info := FunctionInfo{
-		Function: plugins.FunctionSignature{
+	info := &FunctionInfo{
+		Function: &metadata.Function{
 			Name: "myFunction",
-			Parameters: []plugins.Parameter{
-				{Name: "param1", Type: plugins.TypeInfo{Name: "int"}},
-				{Name: "param2", Type: plugins.TypeInfo{Name: "string"}},
+			Parameters: []*metadata.Parameter{
+				{Name: "param1", Type: &metadata.TypeInfo{Name: "int"}},
+				{Name: "param2", Type: &metadata.TypeInfo{Name: "string"}},
 			},
-			ReturnType: plugins.TypeInfo{Name: "bool"},
+			ReturnType: &metadata.TypeInfo{Name: "bool"},
 		}}
 
 	err := VerifyFunctionSignature(info, "int", "string", "bool")
@@ -26,10 +26,10 @@ func Test_VerifyFunctionSignature(t *testing.T) {
 		t.Errorf("verifyFunctionSignature failed: %v", err)
 	}
 
-	info = FunctionInfo{
-		Function: plugins.FunctionSignature{
+	info = &FunctionInfo{
+		Function: &metadata.Function{
 			Name:       "anotherFunction",
-			ReturnType: plugins.TypeInfo{Name: "bool"},
+			ReturnType: &metadata.TypeInfo{Name: "bool"},
 		},
 	}
 

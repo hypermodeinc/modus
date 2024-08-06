@@ -8,6 +8,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -28,57 +29,77 @@ const shutdownTimeout = 5 * time.Second
 
 func Start(ctx context.Context, local bool) {
 
-	// Create the configuration for the server.
-	mux := GetHandlerMux()
-	server := &http.Server{Handler: mux}
+	logger.Info(ctx).
+		Str("url", fmt.Sprintf("http://localhost:%d/graphql", config.Port)).
+		Msg("Listening for incoming requests.")
+
 	if local {
 		// If we are running locally, only listen on localhost.
 		// This prevents getting nagged for firewall permissions each launch.
-		server.Addr = fmt.Sprintf("localhost:%d", config.Port)
+		// Listen on IPv4, and also on IPv6 if available.
+		addresses := []string{fmt.Sprintf("127.0.0.1:%d", config.Port)}
+		if isIPv6Available() {
+			addresses = append(addresses, fmt.Sprintf("[::1]:%d", config.Port))
+		}
+		startHttpServer(ctx, addresses...)
 	} else {
 		// Otherwise, listen on all interfaces.
-		server.Addr = fmt.Sprintf(":%d", config.Port)
+		addr := fmt.Sprintf(":%d", config.Port)
+		startHttpServer(ctx, addr)
+	}
+}
+
+func startHttpServer(ctx context.Context, addresses ...string) {
+
+	// Setup a server for each address.
+	mux := GetHandlerMux()
+	servers := make([]*http.Server, len(addresses))
+	for i, addr := range addresses {
+		servers[i] = &http.Server{Handler: mux, Addr: addr}
 	}
 
-	// Start the server in a goroutine so we can listen for signals to shutdown.
-	shutdownChan := make(chan bool, 1)
-	go func() {
-		logger.Info(ctx).
-			Str("url", fmt.Sprintf("http://localhost:%d/graphql", config.Port)).
-			Msg("Listening for incoming requests.")
+	// Start a goroutine for each server.
+	shutdownChan := make(chan bool, len(addresses))
+	for _, server := range servers {
+		go func() {
+			if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+				logger.Fatal(ctx).Err(err).Msg("HTTP server error.  Exiting.")
+			}
+			shutdownChan <- true
+		}()
+	}
 
-		if err := server.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
-			logger.Fatal(ctx).Err(err).Msg("HTTP server error.  Exiting.")
-		}
-
-		logger.Info(ctx).Msg("Shutdown requested.  Stopping HTTP server...")
-
-		// TODO: If we have other goroutines we want to stop gracefully, we can do so here.
-
-		// Signal shutdown is complete.
-		shutdownChan <- true
-	}()
-
-	// Wait for a signal to shutdown the server.
+	// Wait for a signal to shutdown the servers.
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 
 	select {
 	case <-ctx.Done():
 		logger.Info(ctx).Msg("Context canceled.  Stopping HTTP server...")
-	case <-sigChan:
-		logger.Info(ctx).Msg("Signal received.  Stopping HTTP server...")
+	case sig := <-sigChan:
+		switch sig {
+		case syscall.SIGINT:
+			fmt.Print("\b\b") // erase the ^C
+			logger.Info(ctx).Msg("Interrupt signal received.  Stopping HTTP server...")
+		case syscall.SIGTERM:
+			logger.Info(ctx).Msg("Terminate signal received.  Stopping HTTP server...")
+		}
 	}
 
-	// Shutdown the server gracefully.
-	shutdownCtx, shutdownRelease := context.WithTimeout(ctx, shutdownTimeout)
-	defer shutdownRelease()
-	if err := server.Shutdown(shutdownCtx); err != nil {
-		logger.Fatal(ctx).Err(err).Msg("HTTP server shutdown error.")
+	// Shutdown all servers gracefully.
+	for _, server := range servers {
+		shutdownCtx, shutdownRelease := context.WithTimeout(ctx, shutdownTimeout)
+		defer shutdownRelease()
+		if err := server.Shutdown(shutdownCtx); err != nil {
+			logger.Fatal(ctx).Err(err).Msg("HTTP server shutdown error.")
+		}
 	}
 
-	// Wait for the server to shutdown completely.
-	<-shutdownChan
+	// Wait for the servers to shutdown completely.
+	for range servers {
+		<-shutdownChan
+	}
+
 	logger.Info(ctx).Msg("Shutdown complete.")
 }
 
@@ -125,4 +146,14 @@ func healthHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	utils.WriteJsonContentHeader(w)
 	_, _ = w.Write([]byte(`{"status":"ok","environment":"` + env + `","version":"` + ver + `"}`))
+}
+
+func isIPv6Available() bool {
+	addr := &net.UDPAddr{IP: net.ParseIP("::1")}
+	conn, err := net.ListenUDP("udp6", addr)
+	if err != nil {
+		return false
+	}
+	defer conn.Close()
+	return true
 }

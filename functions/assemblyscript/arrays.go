@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"reflect"
 
-	"hmruntime/plugins"
+	"hmruntime/plugins/metadata"
 	"hmruntime/utils"
 
 	wasm "github.com/tetratelabs/wazero/api"
@@ -17,7 +17,7 @@ import (
 
 // Reference: https://github.com/AssemblyScript/assemblyscript/blob/main/std/assembly/array.ts
 
-func readArray(ctx context.Context, mem wasm.Memory, def plugins.TypeDefinition, offset uint32) (data any, err error) {
+func readArray(ctx context.Context, mem wasm.Memory, def *metadata.TypeDefinition, offset uint32) (data any, err error) {
 
 	// buffer, ok := mem.ReadUint32Le(offset)
 	// if !ok {
@@ -59,7 +59,7 @@ func readArray(ctx context.Context, mem wasm.Memory, def plugins.TypeDefinition,
 	return arr.Interface(), nil
 }
 
-func writeArray(ctx context.Context, mod wasm.Module, def plugins.TypeDefinition, data any) (offset uint32, err error) {
+func writeArray(ctx context.Context, mod wasm.Module, def *metadata.TypeDefinition, data any) (offset uint32, err error) {
 	var arr []any
 	arr, err = utils.ConvertToArray(data)
 	if err != nil {
@@ -119,7 +119,8 @@ func writeArray(ctx context.Context, mod wasm.Module, def plugins.TypeDefinition
 	}
 
 	// write array object
-	offset, err = allocateWasmMemory(ctx, mod, def.Size, def.Id)
+	const size = 16
+	offset, err = allocateWasmMemory(ctx, mod, size, def.Id)
 	if err != nil {
 		return 0, err
 	}

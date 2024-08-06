@@ -10,25 +10,37 @@ import (
 	"reflect"
 	"strings"
 
-	"hmruntime/plugins"
+	"hmruntime/plugins/metadata"
 
 	wasm "github.com/tetratelabs/wazero/api"
 )
 
-func readClass(ctx context.Context, mem wasm.Memory, def plugins.TypeDefinition, offset uint32) (data map[string]any, err error) {
+func readClass(ctx context.Context, mem wasm.Memory, def *metadata.TypeDefinition, offset uint32) (data map[string]any, err error) {
 	data = make(map[string]any)
+	fieldOffset := uint32(0)
 	for _, field := range def.Fields {
-		fieldOffset := offset + field.Offset
-		val, err := readField(ctx, mem, field.Type, fieldOffset)
+
+		// align the field offset to the size of the field
+		size := getItemSize(field.Type)
+		mask := size - 1
+		if fieldOffset&mask != 0 {
+			fieldOffset = (fieldOffset | mask) + 1
+		}
+
+		// read the field value
+		val, err := readField(ctx, mem, field.Type, offset+fieldOffset)
 		if err != nil {
 			return nil, err
 		}
 		data[field.Name] = val
+
+		// move to the next field
+		fieldOffset += size
 	}
 	return data, nil
 }
 
-func readField(ctx context.Context, mem wasm.Memory, typ plugins.TypeInfo, offset uint32) (data any, err error) {
+func readField(ctx context.Context, mem wasm.Memory, typ *metadata.TypeInfo, offset uint32) (data any, err error) {
 	var result any
 	var ok bool
 	switch typ.Path {
@@ -87,7 +99,7 @@ func readField(ctx context.Context, mem wasm.Memory, typ plugins.TypeInfo, offse
 			if p == 0 {
 				return nil, nil
 			}
-			typ = plugins.TypeInfo{
+			typ = &metadata.TypeInfo{
 				Name: typ.Name[:len(typ.Name)-7], // remove " | null"
 				Path: typ.Path[:len(typ.Path)-5], // remove "|null"
 			}
@@ -106,7 +118,7 @@ func readField(ctx context.Context, mem wasm.Memory, typ plugins.TypeInfo, offse
 	return result, nil
 }
 
-func writeClass(ctx context.Context, mod wasm.Module, def plugins.TypeDefinition, data any) (offset uint32, err error) {
+func writeClass(ctx context.Context, mod wasm.Module, def *metadata.TypeDefinition, data any) (offset uint32, err error) {
 
 	// unpin everything when done
 	pins := make([]uint32, 0, len(def.Fields)+1)
@@ -119,8 +131,19 @@ func writeClass(ctx context.Context, mod wasm.Module, def plugins.TypeDefinition
 		}
 	}()
 
+	// calculate total size of all fields
+	totalSize := uint32(0)
+	for _, field := range def.Fields {
+		size := getItemSize(field.Type)
+		mask := size - 1
+		if totalSize&mask != 0 {
+			totalSize = (totalSize | mask) + 1
+		}
+		totalSize += size
+	}
+
 	// Allocate memory for the object
-	offset, err = allocateWasmMemory(ctx, mod, def.Size, def.Id)
+	offset, err = allocateWasmMemory(ctx, mod, totalSize, def.Id)
 	if err != nil {
 		return 0, err
 	}
@@ -141,6 +164,7 @@ func writeClass(ctx context.Context, mod wasm.Module, def plugins.TypeDefinition
 	}
 
 	// Loop over all fields in the class definition.
+	fieldOffset := uint32(0)
 	for _, field := range def.Fields {
 
 		// Read the field value from the data object.
@@ -159,9 +183,15 @@ func writeClass(ctx context.Context, mod wasm.Module, def plugins.TypeDefinition
 			val = f.Interface()
 		}
 
+		// align the field offset to the size of the field
+		size := getItemSize(field.Type)
+		mask := size - 1
+		if fieldOffset&mask != 0 {
+			fieldOffset = (fieldOffset | mask) + 1
+		}
+
 		// Write the field value to WASM memory.
-		fieldOffset := offset + field.Offset
-		ptr, err := writeField(ctx, mod, field.Type, fieldOffset, val)
+		ptr, err := writeField(ctx, mod, field.Type, offset+fieldOffset, val)
 		if err != nil {
 			return 0, err
 		}
@@ -174,12 +204,15 @@ func writeClass(ctx context.Context, mod wasm.Module, def plugins.TypeDefinition
 			}
 			pins = append(pins, ptr)
 		}
+
+		// move to the next field
+		fieldOffset += size
 	}
 
 	return offset, nil
 }
 
-func writeField(ctx context.Context, mod wasm.Module, typ plugins.TypeInfo, offset uint32, val any) (ptr uint32, err error) {
+func writeField(ctx context.Context, mod wasm.Module, typ *metadata.TypeInfo, offset uint32, val any) (ptr uint32, err error) {
 	enc, err := encodeValue(ctx, mod, typ, val)
 	if err != nil {
 		return 0, err

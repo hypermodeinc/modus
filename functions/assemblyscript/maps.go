@@ -10,14 +10,14 @@ import (
 	"reflect"
 
 	"hmruntime/functions/assemblyscript/hash"
-	"hmruntime/plugins"
+	"hmruntime/plugins/metadata"
 
 	wasm "github.com/tetratelabs/wazero/api"
 )
 
 // Reference: https://github.com/AssemblyScript/assemblyscript/blob/main/std/assembly/map.ts
 
-func readMap(ctx context.Context, mem wasm.Memory, def plugins.TypeDefinition, offset uint32) (data any, err error) {
+func readMap(ctx context.Context, mem wasm.Memory, def *metadata.TypeDefinition, offset uint32) (data any, err error) {
 
 	// buckets, ok := mem.ReadUint32Le(offset)
 	// if !ok {
@@ -85,7 +85,7 @@ func readMap(ctx context.Context, mem wasm.Memory, def plugins.TypeDefinition, o
 	return m.Interface(), nil
 }
 
-func writeMap(ctx context.Context, mod wasm.Module, def plugins.TypeDefinition, data any) (offset uint32, err error) {
+func writeMap(ctx context.Context, mod wasm.Module, def *metadata.TypeDefinition, data any) (offset uint32, err error) {
 
 	// Unfortunately, there's no way to do this without reflection.
 	rv := reflect.ValueOf(data)
@@ -234,7 +234,8 @@ func writeMap(ctx context.Context, mod wasm.Module, def plugins.TypeDefinition, 
 	}
 
 	// write map object
-	offset, err = allocateWasmMemory(ctx, mod, def.Size, def.Id)
+	const size = 24
+	offset, err = allocateWasmMemory(ctx, mod, size, def.Id)
 	if err != nil {
 		return 0, err
 	}

@@ -8,7 +8,6 @@ import (
 	"sync"
 	"time"
 
-	"hmruntime/config"
 	"hmruntime/logger"
 	"hmruntime/metrics"
 	"hmruntime/plugins"
@@ -17,6 +16,7 @@ import (
 
 	"github.com/hypermodeAI/manifest"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -26,6 +26,8 @@ var globalRuntimePostgresWriter *runtimePostgresWriter = &runtimePostgresWriter{
 	quit:   make(chan struct{}),
 	done:   make(chan struct{}),
 }
+
+var errDbNotConfigured = errors.New("database not configured")
 
 const batchSize = 100
 const chanSize = 10000
@@ -46,7 +48,7 @@ type runtimePostgresWriter struct {
 }
 
 type inferenceHistory struct {
-	model    manifest.ModelInfo
+	model    *manifest.ModelInfo
 	input    any
 	output   any
 	start    time.Time
@@ -55,27 +57,33 @@ type inferenceHistory struct {
 	function *string
 }
 
-func (w *runtimePostgresWriter) GetPool(ctx context.Context) *pgxpool.Pool {
+func (w *runtimePostgresWriter) GetPool(ctx context.Context) (*pgxpool.Pool, error) {
 	w.mu.RLock()
 	if w.dbpool != nil {
 		defer w.mu.RUnlock()
-		return w.dbpool
+		return w.dbpool, nil
 	}
 	w.mu.RUnlock()
 
 	w.mu.Lock()
 	defer w.mu.Unlock()
 	connStr, err := secrets.GetSecretValue(ctx, "HYPERMODE_METADATA_DB")
-	if err != nil {
-		return nil
+	if connStr == "" {
+		if err != nil {
+			return nil, fmt.Errorf("%w: %w", errDbNotConfigured, err)
+		} else {
+			return nil, errDbNotConfigured
+		}
+	} else if err != nil {
+		return nil, err
 	}
 
 	pool, err := pgxpool.New(ctx, connStr)
 	if err != nil {
-		return nil
+		return nil, err
 	}
 	w.dbpool = pool
-	return pool
+	return pool, nil
 }
 
 func (w *runtimePostgresWriter) Write(data inferenceHistory) {
@@ -152,7 +160,7 @@ func getInferenceDataJson(val any) ([]byte, error) {
 }
 
 func Stop(ctx context.Context) {
-	pool := globalRuntimePostgresWriter.GetPool(ctx)
+	pool, _ := globalRuntimePostgresWriter.GetPool(ctx)
 	if pool == nil {
 		return
 	}
@@ -162,19 +170,20 @@ func Stop(ctx context.Context) {
 	pool.Close()
 }
 
-func WritePluginInfo(ctx context.Context, metadata *plugins.PluginMetadata) {
+func WritePluginInfo(ctx context.Context, plugin *plugins.Plugin) {
 	span := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
 
 	err := WithTx(ctx, func(tx pgx.Tx) error {
 
 		// Check if the plugin is already in the database
-		id, err := getPluginId(ctx, tx, metadata.BuildId)
+		// If so, update the ID to match
+		id, err := getPluginId(ctx, tx, plugin.Metadata.BuildId)
 		if err != nil {
 			return err
 		}
 		if id != "" {
-			metadata.Id = id
+			plugin.Id = id
 			return nil
 		}
 
@@ -185,17 +194,16 @@ VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 ON CONFLICT (build_id) DO NOTHING`,
 			pluginsTable)
 
-		metadata.Id = utils.GenerateUUIDV7()
 		ct, err := tx.Exec(ctx, query,
-			metadata.Id,
-			metadata.Name(),
-			utils.NilIfEmpty(metadata.Version()),
-			metadata.Language(),
-			metadata.SdkVersion(),
-			metadata.BuildId,
-			metadata.BuildTime,
-			utils.NilIfEmpty(metadata.GitRepo),
-			utils.NilIfEmpty(metadata.GitCommit),
+			plugin.Id,
+			plugin.Metadata.Name(),
+			utils.NilIfEmpty(plugin.Metadata.Version()),
+			plugin.Metadata.Language(),
+			plugin.Metadata.SdkVersion(),
+			plugin.Metadata.BuildId,
+			plugin.Metadata.BuildTime,
+			utils.NilIfEmpty(plugin.Metadata.GitRepo),
+			utils.NilIfEmpty(plugin.Metadata.GitCommit),
 		)
 		if err != nil {
 			return err
@@ -205,18 +213,28 @@ ON CONFLICT (build_id) DO NOTHING`,
 			// Edge case - the plugin is now in the database, but we didn't insert it
 			// It must have been inserted by another instance of the service
 			// Get the ID set by the other instance
-			id, err := getPluginId(ctx, tx, metadata.BuildId)
+			id, err := getPluginId(ctx, tx, plugin.Metadata.BuildId)
 			if err != nil {
 				return err
 			}
-			metadata.Id = id
+			plugin.Id = id
 		}
 
 		return nil
 	})
 
 	if err != nil {
-		logger.Err(ctx, err).Msg("Error writing plugin info to database")
+		logDbWarningOrError(ctx, err, "Plugin info not written to database.")
+	}
+}
+
+func logDbWarningOrError(ctx context.Context, err error, msg string) {
+	if _, ok := err.(*pgconn.ConnectError); ok {
+		logger.Warn(ctx).Err(err).Msgf("Database connection error. %s", msg)
+	} else if errors.Is(err, errDbNotConfigured) {
+		logger.Warn(ctx).Msgf("Database has not been configured. %s", msg)
+	} else {
+		logger.Err(ctx, err).Msg(msg)
 	}
 }
 
@@ -235,13 +253,13 @@ func getPluginId(ctx context.Context, tx pgx.Tx, buildId string) (string, error)
 	return "", nil
 }
 
-func WriteInferenceHistory(ctx context.Context, model manifest.ModelInfo, input, output any, start, end time.Time) {
+func WriteInferenceHistory(ctx context.Context, model *manifest.ModelInfo, input, output any, start, end time.Time) {
 	span := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
 
 	var pluginId *string
 	if plugin, ok := ctx.Value(utils.PluginContextKey).(*plugins.Plugin); ok {
-		pluginId = &plugin.Metadata.Id
+		pluginId = &plugin.Id
 	}
 
 	var function *string
@@ -620,30 +638,26 @@ VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 	})
 
 	if err != nil {
-		// Handle error
-		if !config.IsDevEnvironment() {
-			logger.Err(ctx, err).Msg("Error writing to inference history database")
-		}
+		logDbWarningOrError(ctx, err, "Inference history not written to database.")
 	}
-
 }
 
 func Initialize(ctx context.Context) {
 	// this will initialize the pool and start the worker
-	pool := globalRuntimePostgresWriter.GetPool(ctx)
-	if pool == nil {
-		logger.Warn(ctx).Msg("Database pool is not initialized")
+	_, err := globalRuntimePostgresWriter.GetPool(ctx)
+	if err != nil {
+		logger.Warn(ctx).Err(err).Msg("Metadata database is not available.")
 	}
 	go globalRuntimePostgresWriter.worker(ctx)
 }
 
 func GetTx(ctx context.Context) (pgx.Tx, error) {
-	pool := globalRuntimePostgresWriter.GetPool(ctx)
-	if pool == nil {
-		return nil, errors.New("database pool is not initialized")
-	} else {
-		return pool.Begin(ctx)
+	pool, err := globalRuntimePostgresWriter.GetPool(ctx)
+	if err != nil {
+		return nil, err
 	}
+
+	return pool.Begin(ctx)
 }
 
 func WithTx(ctx context.Context, fn func(pgx.Tx) error) error {

@@ -18,7 +18,7 @@ type predictionResult[T any] struct {
 	Predictions []T `json:"predictions"`
 }
 
-func postToModelEndpoint[TResult any](ctx context.Context, model manifest.ModelInfo, sentenceMap map[string]string) (map[string]TResult, error) {
+func postToModelEndpoint[TResult any](ctx context.Context, model *manifest.ModelInfo, sentenceMap map[string]string) (map[string]TResult, error) {
 	span := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
 

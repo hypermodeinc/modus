@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"hmruntime/plugins"
+	"hmruntime/plugins/metadata"
 	"hmruntime/utils"
 
 	wasm "github.com/tetratelabs/wazero/api"
@@ -26,12 +27,12 @@ var typeMap = map[string]string{
 	"~lib/wasi_date/wasi_Date":     "Date",
 }
 
-var arrayBufferType = plugins.TypeInfo{
+var arrayBufferType = &metadata.TypeInfo{
 	Name: "ArrayBuffer",
 	Path: "~lib/arraybuffer/ArrayBuffer",
 }
 
-var stringType = plugins.TypeInfo{
+var stringType = &metadata.TypeInfo{
 	Name: "string",
 	Path: "~lib/string/String",
 }
@@ -92,7 +93,7 @@ func isPrimitive(t string) bool {
 	}
 }
 
-func getItemSize(typ plugins.TypeInfo) uint32 {
+func getItemSize(typ *metadata.TypeInfo) uint32 {
 	switch typ.Path {
 	case "u64", "i64", "f64":
 		return 8
@@ -119,11 +120,11 @@ func isNullable(t string) bool {
 	return strings.HasSuffix(t, "|null") || strings.HasSuffix(t, " | null")
 }
 
-func getArraySubtypeInfo(path string) plugins.TypeInfo {
+func getArraySubtypeInfo(path string) *metadata.TypeInfo {
 	return getTypeInfo(path[17 : len(path)-1])
 }
 
-func getMapSubtypeInfo(path string) (plugins.TypeInfo, plugins.TypeInfo) {
+func getMapSubtypeInfo(path string) (*metadata.TypeInfo, *metadata.TypeInfo) {
 	k, v := GetMapParts(path)
 	return getTypeInfo(k), getTypeInfo(v)
 }
@@ -160,7 +161,7 @@ func GetMapParts(t string) (string, string) {
 	return "", ""
 }
 
-func getTypeInfo(path string) plugins.TypeInfo {
+func getTypeInfo(path string) *metadata.TypeInfo {
 	var name string
 	if isPrimitive(path) {
 		name = path
@@ -182,15 +183,15 @@ func getTypeInfo(path string) plugins.TypeInfo {
 		name = path[strings.LastIndex(path, "/")+1:]
 	}
 
-	return plugins.TypeInfo{
+	return &metadata.TypeInfo{
 		Name: name,
 		Path: path,
 	}
 }
 
-func getTypeDefinition(ctx context.Context, typePath string) (plugins.TypeDefinition, error) {
+func getTypeDefinition(ctx context.Context, typePath string) (*metadata.TypeDefinition, error) {
 	if isPrimitive(typePath) {
-		return plugins.TypeDefinition{
+		return &metadata.TypeDefinition{
 			Name: typePath,
 			Path: typePath,
 		}, nil
@@ -201,13 +202,13 @@ func getTypeDefinition(ctx context.Context, typePath string) (plugins.TypeDefini
 	types := plugin.Types
 	info, ok := types[typePath]
 	if !ok {
-		return plugins.TypeDefinition{}, fmt.Errorf("info for type %s not found in plugin %s", typePath, plugin.Name())
+		return nil, fmt.Errorf("info for type %s not found in plugin %s", typePath, plugin.Name())
 	}
 
 	return info, nil
 }
 
-func getTypeInfoForType[T any]() (plugins.TypeInfo, error) {
+func getTypeInfoForType[T any]() (*metadata.TypeInfo, error) {
 	var v T
 
 	switch any(v).(type) {
@@ -243,7 +244,7 @@ func getTypeInfoForType[T any]() (plugins.TypeInfo, error) {
 	return getTypeInfoForReflectedType(t)
 }
 
-func getTypeInfoForReflectedType(t reflect.Type) (plugins.TypeInfo, error) {
+func getTypeInfoForReflectedType(t reflect.Type) (*metadata.TypeInfo, error) {
 	switch t.Kind() {
 	case reflect.Bool:
 		return getTypeInfo("bool"), nil
@@ -277,10 +278,10 @@ func getTypeInfoForReflectedType(t reflect.Type) (plugins.TypeInfo, error) {
 
 		elemType, err := getTypeInfoForReflectedType(t.Elem())
 		if err != nil {
-			return plugins.TypeInfo{}, err
+			return nil, err
 		}
 
-		return plugins.TypeInfo{
+		return &metadata.TypeInfo{
 			Name: elemType.Name + "[]",
 			Path: "~lib/array/Array<" + elemType.Path + ">",
 		}, nil
@@ -288,15 +289,15 @@ func getTypeInfoForReflectedType(t reflect.Type) (plugins.TypeInfo, error) {
 	case reflect.Map:
 		keyType, err := getTypeInfoForReflectedType(t.Key())
 		if err != nil {
-			return plugins.TypeInfo{}, err
+			return nil, err
 		}
 
 		valueType, err := getTypeInfoForReflectedType(t.Elem())
 		if err != nil {
-			return plugins.TypeInfo{}, err
+			return nil, err
 		}
 
-		return plugins.TypeInfo{
+		return &metadata.TypeInfo{
 			Name: "Map<" + keyType.Name + ", " + valueType.Name + ">",
 			Path: "~lib/map/Map<" + keyType.Path + "," + valueType.Path + ">",
 		}, nil
@@ -309,8 +310,8 @@ func getTypeInfoForReflectedType(t reflect.Type) (plugins.TypeInfo, error) {
 			return info, nil
 		}
 
-		return plugins.TypeInfo{}, fmt.Errorf("struct missing from host types map: %s", id)
+		return nil, fmt.Errorf("struct missing from host types map: %s", id)
 	}
 
-	return plugins.TypeInfo{}, fmt.Errorf("unsupported type kind %s", t.Kind())
+	return nil, fmt.Errorf("unsupported type kind %s", t.Kind())
 }

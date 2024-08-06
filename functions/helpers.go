@@ -10,7 +10,7 @@ import (
 	"strings"
 )
 
-func CreateParametersMap(info FunctionInfo, paramValues ...any) (map[string]any, error) {
+func CreateParametersMap(info *FunctionInfo, paramValues ...any) (map[string]any, error) {
 	if len(paramValues) != len(info.Function.Parameters) {
 		return nil, fmt.Errorf("function %s expects %d parameters, got %d",
 			info.Function.Name,
@@ -27,7 +27,7 @@ func CreateParametersMap(info FunctionInfo, paramValues ...any) (map[string]any,
 	return parameters, nil
 }
 
-func VerifyFunctionSignature(info FunctionInfo, expectedTypes ...string) error {
+func VerifyFunctionSignature(info *FunctionInfo, expectedTypes ...string) error {
 	if len(expectedTypes) == 0 {
 		return errors.New("expectedTypes must not be empty")
 	}

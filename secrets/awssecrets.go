@@ -59,7 +59,7 @@ func (sp *awsSecretsProvider) getHostSecrets(ctx context.Context, host manifest.
 	// TODO: Remove this when we no longer need to support the old manifest format
 	oldAuthHeaderSecret, ok := sp.cache[hostName]
 	if ok {
-		if manifestdata.Manifest.Version == 1 {
+		if manifestdata.GetManifest().Version == 1 {
 			secrets[manifest.V1AuthHeaderVariableName] = *oldAuthHeaderSecret.SecretString
 			logger.Warn(ctx).Msg("Used deprecated auth header secret.  Please update the manifest to use a template such as {{SECRET_NAME}} and migrate the old secret in Secrets Manager.")
 		} else {

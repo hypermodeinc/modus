@@ -9,9 +9,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"hmruntime/plugins/metadata"
 	"reflect"
-
-	"hmruntime/plugins"
 
 	"github.com/go-viper/mapstructure/v2"
 	wasm "github.com/tetratelabs/wazero/api"
@@ -26,20 +25,20 @@ func EncodeValue[T any](ctx context.Context, mod wasm.Module, data T) (uint64, e
 	return encodeValue(ctx, mod, typ, data)
 }
 
-func encodeValue(ctx context.Context, mod wasm.Module, typ plugins.TypeInfo, data any) (uint64, error) {
+func encodeValue(ctx context.Context, mod wasm.Module, typ *metadata.TypeInfo, data any) (uint64, error) {
 	// For most calls, we don't need to pin the memory.
 	// If it needs to be pinned, the caller will do it.
 	return doEncodeValue(ctx, mod, typ, data, false)
 }
 
-func EncodeValueForParameter(ctx context.Context, mod wasm.Module, typ plugins.TypeInfo, data any) (uint64, error) {
+func EncodeValueForParameter(ctx context.Context, mod wasm.Module, typ *metadata.TypeInfo, data any) (uint64, error) {
 	// For the inbound parameters, we need to pin the memory.
 	// Otherwise, just allocating more parameters could cause the GC to run and free the memory we just allocated.
 	// Note we don't bother tracking these to unpin later, because we discard the module instance and its memory after the call.
 	return doEncodeValue(ctx, mod, typ, data, true)
 }
 
-func doEncodeValue(ctx context.Context, mod wasm.Module, typ plugins.TypeInfo, data any, pin bool) (val uint64, err error) {
+func doEncodeValue(ctx context.Context, mod wasm.Module, typ *metadata.TypeInfo, data any, pin bool) (val uint64, err error) {
 
 	// Recover from panics and convert them to errors
 	defer func() {
@@ -253,7 +252,7 @@ func mapToStruct[T any](m map[string]any) (T, error) {
 	return result, err
 }
 
-func DecodeValue(ctx context.Context, mod wasm.Module, typ plugins.TypeInfo, val uint64) (data any, err error) {
+func DecodeValue(ctx context.Context, mod wasm.Module, typ *metadata.TypeInfo, val uint64) (data any, err error) {
 
 	// Recover from panics and convert them to errors
 	defer func() {
@@ -303,8 +302,8 @@ func DecodeValue(ctx context.Context, mod wasm.Module, typ plugins.TypeInfo, val
 	return readObject(ctx, mem, typ, uint32(val))
 }
 
-func removeNull(typ plugins.TypeInfo) plugins.TypeInfo {
-	return plugins.TypeInfo{
+func removeNull(typ *metadata.TypeInfo) *metadata.TypeInfo {
+	return &metadata.TypeInfo{
 		Name: typ.Name[:len(typ.Name)-7], // remove " | null"
 		Path: typ.Path[:len(typ.Path)-5], // remove "|null"
 	}

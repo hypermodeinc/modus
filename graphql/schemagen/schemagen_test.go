@@ -8,7 +8,7 @@ import (
 	"context"
 	"testing"
 
-	"hmruntime/plugins"
+	"hmruntime/plugins/metadata"
 	"hmruntime/utils"
 
 	"github.com/hypermodeAI/manifest"
@@ -17,7 +17,7 @@ import (
 
 func Test_GetGraphQLSchema(t *testing.T) {
 
-	manifest := manifest.HypermodeManifest{
+	manifest := &manifest.HypermodeManifest{
 		Models: map[string]manifest.ModelInfo{},
 		Hosts:  map[string]manifest.HostInfo{},
 		Collections: map[string]manifest.CollectionInfo{
@@ -35,116 +35,116 @@ func Test_GetGraphQLSchema(t *testing.T) {
 		return &val
 	}
 
-	metadata := plugins.PluginMetadata{
-		Functions: []plugins.FunctionSignature{
+	md := &metadata.Metadata{
+		Functions: []*metadata.Function{
 			{
 				Name: "add",
-				Parameters: []plugins.Parameter{
-					{Name: "a", Type: plugins.TypeInfo{Name: "i32"}},
-					{Name: "b", Type: plugins.TypeInfo{Name: "i32"}},
+				Parameters: []*metadata.Parameter{
+					{Name: "a", Type: &metadata.TypeInfo{Name: "i32"}},
+					{Name: "b", Type: &metadata.TypeInfo{Name: "i32"}},
 				},
-				ReturnType: plugins.TypeInfo{Name: "i32"},
+				ReturnType: &metadata.TypeInfo{Name: "i32"},
 			},
 			{
 				Name: "sayHello",
-				Parameters: []plugins.Parameter{
-					{Name: "name", Type: plugins.TypeInfo{Name: "string"}},
+				Parameters: []*metadata.Parameter{
+					{Name: "name", Type: &metadata.TypeInfo{Name: "string"}},
 				},
-				ReturnType: plugins.TypeInfo{Name: "string"},
+				ReturnType: &metadata.TypeInfo{Name: "string"},
 			},
 			{
 				Name:       "currentTime",
-				ReturnType: plugins.TypeInfo{Name: "Date"},
+				ReturnType: &metadata.TypeInfo{Name: "Date"},
 			},
 			{
 				Name: "transform",
-				Parameters: []plugins.Parameter{
-					{Name: "items", Type: plugins.TypeInfo{Name: "Map<string,string>"}},
+				Parameters: []*metadata.Parameter{
+					{Name: "items", Type: &metadata.TypeInfo{Name: "Map<string,string>"}},
 				},
-				ReturnType: plugins.TypeInfo{Name: "Map<string, string>"},
+				ReturnType: &metadata.TypeInfo{Name: "Map<string, string>"},
 			},
 			{
 				Name: "testDefaultIntParams",
-				Parameters: []plugins.Parameter{
-					{Name: "a", Type: plugins.TypeInfo{Name: "i32"}, Default: nil},
-					{Name: "b", Type: plugins.TypeInfo{Name: "i32"}, Default: makeDefault(0)},
-					{Name: "c", Type: plugins.TypeInfo{Name: "i32"}, Default: makeDefault(1)},
+				Parameters: []*metadata.Parameter{
+					{Name: "a", Type: &metadata.TypeInfo{Name: "i32"}, Default: nil},
+					{Name: "b", Type: &metadata.TypeInfo{Name: "i32"}, Default: makeDefault(0)},
+					{Name: "c", Type: &metadata.TypeInfo{Name: "i32"}, Default: makeDefault(1)},
 				},
-				ReturnType: plugins.TypeInfo{Name: "void"},
+				ReturnType: &metadata.TypeInfo{Name: "void"},
 			},
 			{
 				Name: "testDefaultStringParams",
-				Parameters: []plugins.Parameter{
-					{Name: "a", Type: plugins.TypeInfo{Name: "string"}, Default: nil},
-					{Name: "b", Type: plugins.TypeInfo{Name: "string"}, Default: makeDefault("")},
-					{Name: "c", Type: plugins.TypeInfo{Name: "string"}, Default: makeDefault(`a"b`)},
-					{Name: "d", Type: plugins.TypeInfo{Name: "string | null"}, Default: nil},
-					{Name: "e", Type: plugins.TypeInfo{Name: "string | null"}, Default: makeDefault(nil)},
-					{Name: "f", Type: plugins.TypeInfo{Name: "string | null"}, Default: makeDefault("")},
-					{Name: "g", Type: plugins.TypeInfo{Name: "string | null"}, Default: makeDefault("test")},
+				Parameters: []*metadata.Parameter{
+					{Name: "a", Type: &metadata.TypeInfo{Name: "string"}, Default: nil},
+					{Name: "b", Type: &metadata.TypeInfo{Name: "string"}, Default: makeDefault("")},
+					{Name: "c", Type: &metadata.TypeInfo{Name: "string"}, Default: makeDefault(`a"b`)},
+					{Name: "d", Type: &metadata.TypeInfo{Name: "string | null"}, Default: nil},
+					{Name: "e", Type: &metadata.TypeInfo{Name: "string | null"}, Default: makeDefault(nil)},
+					{Name: "f", Type: &metadata.TypeInfo{Name: "string | null"}, Default: makeDefault("")},
+					{Name: "g", Type: &metadata.TypeInfo{Name: "string | null"}, Default: makeDefault("test")},
 				},
-				ReturnType: plugins.TypeInfo{Name: "void"},
+				ReturnType: &metadata.TypeInfo{Name: "void"},
 			},
 			{
 				Name: "testDefaultArrayParams",
-				Parameters: []plugins.Parameter{
-					{Name: "a", Type: plugins.TypeInfo{Name: "i32[]"}, Default: nil},
-					{Name: "b", Type: plugins.TypeInfo{Name: "i32[]"}, Default: makeDefault([]int32{})},
-					{Name: "c", Type: plugins.TypeInfo{Name: "i32[]"}, Default: makeDefault([]int32{1, 2, 3})},
-					{Name: "d", Type: plugins.TypeInfo{Name: "i32[] | null"}, Default: nil},
-					{Name: "e", Type: plugins.TypeInfo{Name: "i32[] | null"}, Default: makeDefault(nil)},
-					{Name: "f", Type: plugins.TypeInfo{Name: "i32[] | null"}, Default: makeDefault([]int32{})},
-					{Name: "g", Type: plugins.TypeInfo{Name: "i32[] | null"}, Default: makeDefault([]int32{1, 2, 3})},
+				Parameters: []*metadata.Parameter{
+					{Name: "a", Type: &metadata.TypeInfo{Name: "i32[]"}, Default: nil},
+					{Name: "b", Type: &metadata.TypeInfo{Name: "i32[]"}, Default: makeDefault([]int32{})},
+					{Name: "c", Type: &metadata.TypeInfo{Name: "i32[]"}, Default: makeDefault([]int32{1, 2, 3})},
+					{Name: "d", Type: &metadata.TypeInfo{Name: "i32[] | null"}, Default: nil},
+					{Name: "e", Type: &metadata.TypeInfo{Name: "i32[] | null"}, Default: makeDefault(nil)},
+					{Name: "f", Type: &metadata.TypeInfo{Name: "i32[] | null"}, Default: makeDefault([]int32{})},
+					{Name: "g", Type: &metadata.TypeInfo{Name: "i32[] | null"}, Default: makeDefault([]int32{1, 2, 3})},
 				},
-				ReturnType: plugins.TypeInfo{Name: "void"},
+				ReturnType: &metadata.TypeInfo{Name: "void"},
 			},
 			{
 				Name:       "getPerson",
-				ReturnType: plugins.TypeInfo{Name: "Person"},
+				ReturnType: &metadata.TypeInfo{Name: "Person"},
 			},
 			{
 				Name:       "getPeople",
-				ReturnType: plugins.TypeInfo{Name: "Person[]"},
+				ReturnType: &metadata.TypeInfo{Name: "Person[]"},
 			},
 			{
 				Name:       "getProductMap",
-				ReturnType: plugins.TypeInfo{Name: "Map<string, Product>"},
+				ReturnType: &metadata.TypeInfo{Name: "Map<string, Product>"},
 			},
 			{
 				Name:       "doNothing",
-				ReturnType: plugins.TypeInfo{Name: "void"},
+				ReturnType: &metadata.TypeInfo{Name: "void"},
 			},
 			// This should be excluded from the final schema
 			{
 				Name: "myEmbedder",
-				Parameters: []plugins.Parameter{
-					{Name: "text", Type: plugins.TypeInfo{Name: "string"}},
+				Parameters: []*metadata.Parameter{
+					{Name: "text", Type: &metadata.TypeInfo{Name: "string"}},
 				},
-				ReturnType: plugins.TypeInfo{Name: "f64[]"},
+				ReturnType: &metadata.TypeInfo{Name: "f64[]"},
 			},
 		},
-		Types: []plugins.TypeDefinition{
+		Types: []*metadata.TypeDefinition{
 			{
 				Name: "Company",
-				Fields: []plugins.Field{
-					{Name: "name", Type: plugins.TypeInfo{Name: "string"}},
+				Fields: []*metadata.Field{
+					{Name: "name", Type: &metadata.TypeInfo{Name: "string"}},
 				},
 			},
 			{
 				Name: "Product",
-				Fields: []plugins.Field{
-					{Name: "name", Type: plugins.TypeInfo{Name: "string"}},
-					{Name: "price", Type: plugins.TypeInfo{Name: "f64"}},
-					{Name: "manufacturer", Type: plugins.TypeInfo{Name: "Company"}},
-					{Name: "components", Type: plugins.TypeInfo{Name: "Product[]"}},
+				Fields: []*metadata.Field{
+					{Name: "name", Type: &metadata.TypeInfo{Name: "string"}},
+					{Name: "price", Type: &metadata.TypeInfo{Name: "f64"}},
+					{Name: "manufacturer", Type: &metadata.TypeInfo{Name: "Company"}},
+					{Name: "components", Type: &metadata.TypeInfo{Name: "Product[]"}},
 				},
 			},
 			{
 				Name: "Person",
-				Fields: []plugins.Field{
-					{Name: "name", Type: plugins.TypeInfo{Name: "string"}},
-					{Name: "age", Type: plugins.TypeInfo{Name: "i32"}},
-					{Name: "addresses", Type: plugins.TypeInfo{Name: "Address[]"}},
+				Fields: []*metadata.Field{
+					{Name: "name", Type: &metadata.TypeInfo{Name: "string"}},
+					{Name: "age", Type: &metadata.TypeInfo{Name: "i32"}},
+					{Name: "addresses", Type: &metadata.TypeInfo{Name: "Address[]"}},
 				},
 			},
 			{
@@ -152,34 +152,34 @@ func Test_GetGraphQLSchema(t *testing.T) {
 			},
 			{
 				Name: "Address",
-				Fields: []plugins.Field{
-					{Name: "street", Type: plugins.TypeInfo{Name: "string"}},
-					{Name: "city", Type: plugins.TypeInfo{Name: "string"}},
-					{Name: "state", Type: plugins.TypeInfo{Name: "string"}},
-					{Name: "country", Type: plugins.TypeInfo{Name: "string"}},
-					{Name: "postalCode", Type: plugins.TypeInfo{Name: "string"}},
-					{Name: "location", Type: plugins.TypeInfo{Name: "Coordinates"}},
+				Fields: []*metadata.Field{
+					{Name: "street", Type: &metadata.TypeInfo{Name: "string"}},
+					{Name: "city", Type: &metadata.TypeInfo{Name: "string"}},
+					{Name: "state", Type: &metadata.TypeInfo{Name: "string"}},
+					{Name: "country", Type: &metadata.TypeInfo{Name: "string"}},
+					{Name: "postalCode", Type: &metadata.TypeInfo{Name: "string"}},
+					{Name: "location", Type: &metadata.TypeInfo{Name: "Coordinates"}},
 				},
 			},
 			{
 				Name: "Coordinates",
-				Fields: []plugins.Field{
-					{Name: "lat", Type: plugins.TypeInfo{Name: "f64"}},
-					{Name: "lon", Type: plugins.TypeInfo{Name: "f64"}},
+				Fields: []*metadata.Field{
+					{Name: "lat", Type: &metadata.TypeInfo{Name: "f64"}},
+					{Name: "lon", Type: &metadata.TypeInfo{Name: "f64"}},
 				},
 			},
 			// This should be excluded from the final schema
 			{
 				Name: "Header",
-				Fields: []plugins.Field{
-					{Name: "name", Type: plugins.TypeInfo{Name: "string"}},
-					{Name: "values", Type: plugins.TypeInfo{Name: "string[]"}},
+				Fields: []*metadata.Field{
+					{Name: "name", Type: &metadata.TypeInfo{Name: "string"}},
+					{Name: "values", Type: &metadata.TypeInfo{Name: "string[]"}},
 				},
 			},
 		},
 	}
 
-	result, err := GetGraphQLSchema(context.Background(), metadata, manifest, false)
+	result, err := GetGraphQLSchema(context.Background(), md, manifest, false)
 
 	expectedSchema := `type Query {
   add(a: Int!, b: Int!): Int!
@@ -247,8 +247,8 @@ func Test_ConvertType(t *testing.T) {
 	testCases := []struct {
 		inputType          string
 		expectedOutputType string
-		inputTypeDefs      []plugins.TypeDefinition
-		expectedTypeDefs   []TypeDefinition
+		inputTypeDefs      []*metadata.TypeDefinition
+		expectedTypeDefs   []*TypeDefinition
 	}{
 		// Plain non-nullable types
 		{"string", "String!", nil, nil},
@@ -267,24 +267,24 @@ func Test_ConvertType(t *testing.T) {
 		{"(string | null)[]", "[String]!", nil, nil},
 
 		// Custom scalar types
-		{"Date", "Timestamp!", nil, []TypeDefinition{{Name: "Timestamp"}}},
-		{"i64", "Int64!", nil, []TypeDefinition{{Name: "Int64"}}},
-		{"u32", "UInt!", nil, []TypeDefinition{{Name: "UInt"}}},
-		{"u64", "UInt64!", nil, []TypeDefinition{{Name: "UInt64"}}},
+		{"Date", "Timestamp!", nil, []*TypeDefinition{{Name: "Timestamp"}}},
+		{"i64", "Int64!", nil, []*TypeDefinition{{Name: "Int64"}}},
+		{"u32", "UInt!", nil, []*TypeDefinition{{Name: "UInt"}}},
+		{"u64", "UInt64!", nil, []*TypeDefinition{{Name: "UInt64"}}},
 
 		// Custom types
 		{"User", "User!",
-			[]plugins.TypeDefinition{{
+			[]*metadata.TypeDefinition{{
 				Name: "User",
-				Fields: []plugins.Field{
-					{Name: "firstName", Type: plugins.TypeInfo{Name: "string"}},
-					{Name: "lastName", Type: plugins.TypeInfo{Name: "string"}},
-					{Name: "age", Type: plugins.TypeInfo{Name: "u8"}},
+				Fields: []*metadata.Field{
+					{Name: "firstName", Type: &metadata.TypeInfo{Name: "string"}},
+					{Name: "lastName", Type: &metadata.TypeInfo{Name: "string"}},
+					{Name: "age", Type: &metadata.TypeInfo{Name: "u8"}},
 				},
 			}},
-			[]TypeDefinition{{
+			[]*TypeDefinition{{
 				Name: "User",
-				Fields: []NameTypePair{
+				Fields: []*NameTypePair{
 					{"firstName", "String!"},
 					{"lastName", "String!"},
 					{"age", "Int!"},
@@ -295,38 +295,38 @@ func Test_ConvertType(t *testing.T) {
 		// but string and custom types can
 		{"string | null", "String", nil, nil},
 		{"Foo | null", "Foo",
-			[]plugins.TypeDefinition{{Name: "Foo"}},
-			[]TypeDefinition{{Name: "Foo"}}},
+			[]*metadata.TypeDefinition{{Name: "Foo"}},
+			[]*TypeDefinition{{Name: "Foo"}}},
 
 		// Map types
-		{"Map<string, string>", "[StringStringPair!]!", nil, []TypeDefinition{{
+		{"Map<string, string>", "[StringStringPair!]!", nil, []*TypeDefinition{{
 			Name: "StringStringPair",
-			Fields: []NameTypePair{
+			Fields: []*NameTypePair{
 				{"key", "String!"},
 				{"value", "String!"},
 			},
 			IsMapType: true,
 		}}},
-		{"Map<string, string | null>", "[StringNullableStringPair!]!", nil, []TypeDefinition{{
+		{"Map<string, string | null>", "[StringNullableStringPair!]!", nil, []*TypeDefinition{{
 			Name: "StringNullableStringPair",
-			Fields: []NameTypePair{
+			Fields: []*NameTypePair{
 				{"key", "String!"},
 				{"value", "String"},
 			},
 			IsMapType: true,
 		}}},
-		{"Map<i32, string>", "[IntStringPair!]!", nil, []TypeDefinition{{
+		{"Map<i32, string>", "[IntStringPair!]!", nil, []*TypeDefinition{{
 			Name: "IntStringPair",
-			Fields: []NameTypePair{
+			Fields: []*NameTypePair{
 				{"key", "Int!"},
 				{"value", "String!"},
 			},
 			IsMapType: true,
 		}}},
-		{"Map<string, Map<string, f32>>", "[StringStringFloatPairListPair!]!", nil, []TypeDefinition{
+		{"Map<string, Map<string, f32>>", "[StringStringFloatPairListPair!]!", nil, []*TypeDefinition{
 			{
 				Name: "StringStringFloatPairListPair",
-				Fields: []NameTypePair{
+				Fields: []*NameTypePair{
 					{"key", "String!"},
 					{"value", "[StringFloatPair!]!"},
 				},
@@ -334,7 +334,7 @@ func Test_ConvertType(t *testing.T) {
 			},
 			{
 				Name: "StringFloatPair",
-				Fields: []NameTypePair{
+				Fields: []*NameTypePair{
 					{"key", "String!"},
 					{"value", "Float!"},
 				},
@@ -346,7 +346,7 @@ func Test_ConvertType(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.inputType, func(t *testing.T) {
 
-			typeDefs := make(map[string]TypeDefinition, len(tc.inputTypeDefs))
+			typeDefs := make(map[string]*TypeDefinition, len(tc.inputTypeDefs))
 			errors := transformTypes(tc.inputTypeDefs, typeDefs)
 			require.Empty(t, errors)
 

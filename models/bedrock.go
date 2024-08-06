@@ -17,7 +17,7 @@ import (
 	"github.com/hypermodeAI/manifest"
 )
 
-func invokeAwsBedrockModel(ctx context.Context, model manifest.ModelInfo, input string) (output string, err error) {
+func invokeAwsBedrockModel(ctx context.Context, model *manifest.ModelInfo, input string) (output string, err error) {
 
 	// NOTE: Bedrock support is experimental, and not advertised to users.
 	// It currently uses the same AWS credentials as the Runtime.
