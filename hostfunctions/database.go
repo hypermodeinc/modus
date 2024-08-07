@@ -14,13 +14,22 @@ import (
 	wasm "github.com/tetratelabs/wazero/api"
 )
 
-func hostDatabaseQuery(ctx context.Context, mod wasm.Module, pHostName, pDbType, pStatement, pParamsJson uint32) uint32 {
+func init() {
+	addHostFunction(&hostFunctionDefinition{
+		name:     "databaseQuery",
+		function: wasm.GoModuleFunc(hostDatabaseQuery),
+		params:   []wasm.ValueType{wasm.ValueTypeI32, wasm.ValueTypeI32, wasm.ValueTypeI32, wasm.ValueTypeI32},
+		results:  []wasm.ValueType{wasm.ValueTypeI32},
+	})
+}
+
+func hostDatabaseQuery(ctx context.Context, mod wasm.Module, stack []uint64) {
 
 	// Read input parameters
 	var hostName, dbType, statement, paramsJson string
-	if err := readParams(ctx, mod, param{pHostName, &hostName}, param{pDbType, &dbType}, param{pStatement, &statement}, param{pParamsJson, &paramsJson}); err != nil {
+	if err := readParams(ctx, mod, stack, &hostName, &dbType, &statement, &paramsJson); err != nil {
 		logger.Err(ctx, err).Msg("Error reading input parameters.")
-		return 0
+		return
 	}
 
 	// Prepare log messages
@@ -41,15 +50,11 @@ func hostDatabaseQuery(ctx context.Context, mod wasm.Module, pHostName, pDbType,
 
 	// Call the host function
 	if ok := callHostFunction(ctx, fn, msgs); !ok {
-		return 0
+		return
 	}
 
 	// Write the results
-	offset, err := writeResult(ctx, mod, *response)
-	if err != nil {
-		logger.Err(ctx, err).Msg("Error writing result to wasm memory.")
-		return 0
+	if err := writeResults(ctx, mod, stack, response); err != nil {
+		logger.Err(ctx, err).Msg("Error writing results to wasm memory.")
 	}
-
-	return offset
 }

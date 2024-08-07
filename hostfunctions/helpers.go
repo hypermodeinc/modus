@@ -7,6 +7,7 @@ package hostfunctions
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"hmruntime/languages"
@@ -16,22 +17,22 @@ import (
 	wasm "github.com/tetratelabs/wazero/api"
 )
 
-type param struct {
-	ptr uint32
-	val any
-}
+func readParams(ctx context.Context, mod wasm.Module, stack []uint64, params ...any) error {
+	if len(params) != len(stack) {
+		return fmt.Errorf("expected %d arguments, got %d", len(params), len(stack))
+	}
 
-func readParams(ctx context.Context, mod wasm.Module, params ...param) error {
 	adapter, err := getWasmAdapter(ctx)
 	if err != nil {
 		return err
 	}
 
 	errs := make([]error, 0, len(params))
-	for _, p := range params {
-		if err := adapter.DecodeValue(ctx, mod, uint64(p.ptr), p.val); err != nil {
+	for i, p := range params {
+		if err := adapter.DecodeValue(ctx, mod, stack[i], p); err != nil {
 			errs = append(errs, err)
 		}
+		stack[i] = 0 // clear the value from the stack
 	}
 
 	if len(errs) > 0 {
@@ -41,14 +42,31 @@ func readParams(ctx context.Context, mod wasm.Module, params ...param) error {
 	return nil
 }
 
-func writeResult(ctx context.Context, mod wasm.Module, val any) (uint32, error) {
-	adapter, err := getWasmAdapter(ctx)
-	if err != nil {
-		return 0, err
+func writeResults(ctx context.Context, mod wasm.Module, stack []uint64, results ...any) error {
+	if len(results) != len(stack) {
+		return fmt.Errorf("expected %d results, got %d", len(results), len(stack))
 	}
 
-	p, err := adapter.EncodeValue(ctx, mod, val)
-	return uint32(p), err
+	adapter, err := getWasmAdapter(ctx)
+	if err != nil {
+		return err
+	}
+
+	errs := make([]error, 0, len(results))
+	for i, r := range results {
+		val, err := adapter.EncodeValue(ctx, mod, r)
+		if err != nil {
+			errs = append(errs, err)
+		}
+		stack[i] = val
+	}
+
+	if len(errs) > 0 {
+		return errors.Join(errs...)
+	}
+
+	return nil
+
 }
 
 func getWasmAdapter(ctx context.Context) (languages.WasmAdapter, error) {
@@ -63,6 +81,13 @@ func getWasmAdapter(ctx context.Context) (languages.WasmAdapter, error) {
 	}
 
 	return wa, nil
+}
+
+type hostFunctionDefinition struct {
+	name     string
+	function wasm.GoModuleFunction
+	params   []wasm.ValueType
+	results  []wasm.ValueType
 }
 
 // Each message is optional, but if provided, it will be logged at the appropriate time.

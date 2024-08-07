@@ -16,14 +16,20 @@ import (
 	wasi "github.com/tetratelabs/wazero/imports/wasi_snapshot_preview1"
 )
 
-const hostModuleName string = "hypermode"
+const hypermodeHostModuleName string = "hypermode"
+
+var hostFunctions []*hostFunctionDefinition
+
+func addHostFunction(f *hostFunctionDefinition) {
+	hostFunctions = append(hostFunctions, f)
+}
 
 func RegisterHostFunctions(ctx context.Context) {
 	span := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
 
-	instantiateHostFunctions(ctx)
-	instantiateWasiFunctions(ctx)
+	instantiateHypermodeHostFunctions(ctx)
+	instantiateWasiHostFunctions(ctx)
 
 	manifestdata.RegisterManifestLoadedCallback(func(ctx context.Context) error {
 		sqlclient.ShutdownPGPools()
@@ -31,47 +37,25 @@ func RegisterHostFunctions(ctx context.Context) {
 	})
 }
 
-func instantiateHostFunctions(ctx context.Context) {
+func instantiateHypermodeHostFunctions(ctx context.Context) {
 	span := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
 
-	b := wasmhost.RuntimeInstance.NewHostModuleBuilder(hostModuleName)
-
-	// Misc host functions
-	b.NewFunctionBuilder().WithFunc(hostLog).Export("log")
-	b.NewFunctionBuilder().WithFunc(hostFetch).Export("httpFetch")
-	b.NewFunctionBuilder().WithFunc(hostExecuteGQL).Export("executeGQL")
-	b.NewFunctionBuilder().WithFunc(hostDatabaseQuery).Export("databaseQuery")
-
-	// Model host functions
-	b.NewFunctionBuilder().WithFunc(hostLookupModel).Export("lookupModel")
-	b.NewFunctionBuilder().WithFunc(hostInvokeModel).Export("invokeModel")
-
-	// Legacy model host functions
-	b.NewFunctionBuilder().WithFunc(hostInvokeClassifier).Export("invokeClassifier")
-	b.NewFunctionBuilder().WithFunc(hostComputeEmbedding).Export("computeEmbedding")
-	b.NewFunctionBuilder().WithFunc(hostInvokeTextGenerator).Export("invokeTextGenerator")
-
-	// Collection host functions
-	b.NewFunctionBuilder().WithFunc(hostUpsertToCollection).Export("upsertToCollection")
-	b.NewFunctionBuilder().WithFunc(hostUpsertToCollectionV2).Export("upsertToCollection_v2")
-	b.NewFunctionBuilder().WithFunc(hostDeleteFromCollection).Export("deleteFromCollection")
-	b.NewFunctionBuilder().WithFunc(hostSearchCollection).Export("searchCollection")
-	b.NewFunctionBuilder().WithFunc(hostNnClassifyCollection).Export("nnClassifyCollection")
-	b.NewFunctionBuilder().WithFunc(hostRecomputeSearchMethod).Export("recomputeSearchMethod")
-	b.NewFunctionBuilder().WithFunc(hostComputeDistance).Export("computeSimilarity") // Deprecated
-	b.NewFunctionBuilder().WithFunc(hostComputeDistance).Export("computeDistance")
-	b.NewFunctionBuilder().WithFunc(hostGetTextFromCollection).Export("getTextFromCollection")
-	b.NewFunctionBuilder().WithFunc(hostGetTextsFromCollection).Export("getTextsFromCollection")
+	b := wasmhost.RuntimeInstance.NewHostModuleBuilder(hypermodeHostModuleName)
+	for _, hf := range hostFunctions {
+		b.NewFunctionBuilder().
+			WithGoModuleFunction(hf.function, hf.params, hf.results).
+			Export(hf.name)
+	}
 
 	if _, err := b.Instantiate(ctx); err != nil {
 		logger.Fatal(ctx).Err(err).
-			Str("module", hostModuleName).
+			Str("module", hypermodeHostModuleName).
 			Msg("Failed to instantiate the host module.  Exiting.")
 	}
 }
 
-func instantiateWasiFunctions(ctx context.Context) {
+func instantiateWasiHostFunctions(ctx context.Context) {
 	span := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
 

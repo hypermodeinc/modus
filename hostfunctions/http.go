@@ -14,13 +14,22 @@ import (
 	wasm "github.com/tetratelabs/wazero/api"
 )
 
-func hostFetch(ctx context.Context, mod wasm.Module, pRequest uint32) uint32 {
+func init() {
+	addHostFunction(&hostFunctionDefinition{
+		name:     "httpFetch",
+		function: wasm.GoModuleFunc(hostHttpFetch),
+		params:   []wasm.ValueType{wasm.ValueTypeI32},
+		results:  []wasm.ValueType{wasm.ValueTypeI32},
+	})
+}
+
+func hostHttpFetch(ctx context.Context, mod wasm.Module, stack []uint64) {
 
 	// Read input parameters
 	var request httpclient.HttpRequest
-	if err := readParams(ctx, mod, param{pRequest, &request}); err != nil {
+	if err := readParams(ctx, mod, stack, &request); err != nil {
 		logger.Err(ctx, err).Msg("Error reading input parameters.")
-		return 0
+		return
 	}
 
 	// Prepare log messages
@@ -41,15 +50,11 @@ func hostFetch(ctx context.Context, mod wasm.Module, pRequest uint32) uint32 {
 
 	// Call the host function
 	if ok := callHostFunction(ctx, fn, msgs); !ok {
-		return 0
+		return
 	}
 
 	// Write the results
-	offset, err := writeResult(ctx, mod, *response)
-	if err != nil {
-		logger.Err(ctx, err).Msg("Error writing result to wasm memory.")
-		return 0
+	if err := writeResults(ctx, mod, stack, response); err != nil {
+		logger.Err(ctx, err).Msg("Error writing results to wasm memory.")
 	}
-
-	return offset
 }

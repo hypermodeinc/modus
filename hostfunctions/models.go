@@ -14,14 +14,29 @@ import (
 	wasm "github.com/tetratelabs/wazero/api"
 )
 
-func hostLookupModel(ctx context.Context, mod wasm.Module, pModelName uint32) (pModelInfo uint32) {
+func init() {
+	addHostFunction(&hostFunctionDefinition{
+		name:     "lookupModel",
+		function: wasm.GoModuleFunc(hostLookupModel),
+		params:   []wasm.ValueType{wasm.ValueTypeI32},
+		results:  []wasm.ValueType{wasm.ValueTypeI32},
+	})
+
+	addHostFunction(&hostFunctionDefinition{
+		name:     "invokeModel",
+		function: wasm.GoModuleFunc(hostInvokeModel),
+		params:   []wasm.ValueType{wasm.ValueTypeI32, wasm.ValueTypeI32},
+		results:  []wasm.ValueType{wasm.ValueTypeI32},
+	})
+}
+
+func hostLookupModel(ctx context.Context, mod wasm.Module, stack []uint64) {
 
 	// Read input parameters
 	var modelName string
-	err := readParams(ctx, mod, param{pModelName, &modelName})
-	if err != nil {
+	if err := readParams(ctx, mod, stack, &modelName); err != nil {
 		logger.Err(ctx, err).Msg("Error reading input parameters.")
-		return 0
+		return
 	}
 
 	// Prepare log messages
@@ -40,27 +55,22 @@ func hostLookupModel(ctx context.Context, mod wasm.Module, pModelName uint32) (p
 
 	// Call the host function
 	if ok := callHostFunction(ctx, fn, msgs); !ok {
-		return 0
+		return
 	}
 
 	// Write the results
-	offset, err := writeResult(ctx, mod, info)
-	if err != nil {
-		logger.Err(ctx, err).Msg("Error writing result to wasm memory.")
-		return 0
+	if err := writeResults(ctx, mod, stack, info); err != nil {
+		logger.Err(ctx, err).Msg("Error writing results to wasm memory.")
 	}
-
-	return offset
 }
 
-func hostInvokeModel(ctx context.Context, mod wasm.Module, pModelName, pInput uint32) (pOutput uint32) {
+func hostInvokeModel(ctx context.Context, mod wasm.Module, stack []uint64) {
 
 	// Read input parameters
 	var modelName, input string
-	err := readParams(ctx, mod, param{pModelName, &modelName}, param{pInput, &input})
-	if err != nil {
+	if err := readParams(ctx, mod, stack, &modelName, &input); err != nil {
 		logger.Err(ctx, err).Msg("Error reading input parameters.")
-		return 0
+		return
 	}
 
 	// Prepare log messages
@@ -81,15 +91,11 @@ func hostInvokeModel(ctx context.Context, mod wasm.Module, pModelName, pInput ui
 
 	// Call the host function
 	if ok := callHostFunction(ctx, fn, msgs); !ok {
-		return 0
+		return
 	}
 
 	// Write the results
-	offset, err := writeResult(ctx, mod, output)
-	if err != nil {
-		logger.Err(ctx, err).Msg("Error writing result to wasm memory.")
-		return 0
+	if err := writeResults(ctx, mod, stack, output); err != nil {
+		logger.Err(ctx, err).Msg("Error writing results to wasm memory.")
 	}
-
-	return offset
 }

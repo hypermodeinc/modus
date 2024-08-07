@@ -14,14 +14,22 @@ import (
 	wasm "github.com/tetratelabs/wazero/api"
 )
 
-func hostExecuteGQL(ctx context.Context, mod wasm.Module, pHostName, pStmt, pVarsJson uint32) uint32 {
+func init() {
+	addHostFunction(&hostFunctionDefinition{
+		name:     "executeGQL",
+		function: wasm.GoModuleFunc(hostExecuteGQL),
+		params:   []wasm.ValueType{wasm.ValueTypeI32, wasm.ValueTypeI32, wasm.ValueTypeI32},
+		results:  []wasm.ValueType{wasm.ValueTypeI32},
+	})
+}
+
+func hostExecuteGQL(ctx context.Context, mod wasm.Module, stack []uint64) {
 
 	// Read input parameters
 	var hostName, stmt, varsJson string
-	err := readParams(ctx, mod, param{pHostName, &hostName}, param{pStmt, &stmt}, param{pVarsJson, &varsJson})
-	if err != nil {
+	if err := readParams(ctx, mod, stack, &hostName, &stmt, &varsJson); err != nil {
 		logger.Err(ctx, err).Msg("Error reading input parameters.")
-		return 0
+		return
 	}
 
 	// Prepare log messages
@@ -42,15 +50,11 @@ func hostExecuteGQL(ctx context.Context, mod wasm.Module, pHostName, pStmt, pVar
 
 	// Call the host function
 	if ok := callHostFunction(ctx, fn, msgs); !ok {
-		return 0
+		return
 	}
 
 	// Write the results
-	offset, err := writeResult(ctx, mod, result)
-	if err != nil {
-		logger.Err(ctx, err).Msg("Error writing result to wasm memory.")
-		return 0
+	if err := writeResults(ctx, mod, stack, result); err != nil {
+		logger.Err(ctx, err).Msg("Error writing results to wasm memory.")
 	}
-
-	return offset
 }
