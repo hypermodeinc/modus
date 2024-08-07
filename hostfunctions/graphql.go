@@ -24,7 +24,9 @@ func hostExecuteGQL(ctx context.Context, mod wasm.Module, pHostName uint32, pStm
 
 	result, err := graphqlclient.Execute(ctx, hostName, stmt, varsJson)
 	if err != nil {
-		logger.Err(ctx, err).Msg("Error executing GraphQL operation.")
+		logger.Err(ctx, err).
+			Bool("user_visible", true).
+			Msg("Error executing GraphQL operation.")
 		return 0
 	}
 

@@ -24,7 +24,9 @@ func hostInvokeClassifier(ctx context.Context, mod wasm.Module, pModelName uint3
 
 	resultMap, err := legacymodels.InvokeClassifier(ctx, modelName, sentenceMap)
 	if err != nil {
-		logger.Err(ctx, err).Msg("Error invoking classifier.")
+		logger.Err(ctx, err).
+			Bool("user_visible", true).
+			Msg("Error invoking classifier.")
 		return 0
 	}
 
@@ -49,7 +51,9 @@ func hostComputeEmbedding(ctx context.Context, mod wasm.Module, pModelName uint3
 
 	result, err := legacymodels.ComputeEmbedding(ctx, modelName, sentenceMap)
 	if err != nil {
-		logger.Err(ctx, err).Msg("Error invoking classifier.")
+		logger.Err(ctx, err).
+			Bool("user_visible", true).
+			Msg("Error invoking classifier.")
 		return 0
 	}
 
@@ -73,7 +77,9 @@ func hostInvokeTextGenerator(ctx context.Context, mod wasm.Module, pModelName ui
 
 	content, err := legacymodels.InvokeTextGenerator(ctx, modelName, format, instruction, sentence)
 	if err != nil {
-		logger.Error(ctx).Msg("Error invoking text generator.")
+		logger.Error(ctx).
+			Bool("user_visible", true).
+			Msg("Error invoking text generator.")
 		return 0
 	}
 
