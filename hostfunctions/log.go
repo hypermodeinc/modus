@@ -15,6 +15,7 @@ import (
 
 func hostLog(ctx context.Context, mod wasm.Module, pLevel uint32, pMessage uint32) {
 
+	// read input parameters
 	var level, message string
 	err := readParams(ctx, mod, param{pLevel, &level}, param{pMessage, &message})
 	if err != nil {

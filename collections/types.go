@@ -1,6 +1,6 @@
 package collections
 
-type collectionMutationResult struct {
+type CollectionMutationResult struct {
 	Collection string
 	Operation  string
 	Status     string
@@ -8,7 +8,7 @@ type collectionMutationResult struct {
 	Error      string
 }
 
-type searchMethodMutationResult struct {
+type SearchMethodMutationResult struct {
 	Collection   string
 	SearchMethod string
 	Operation    string
@@ -16,36 +16,36 @@ type searchMethodMutationResult struct {
 	Error        string
 }
 
-type collectionSearchResult struct {
+type CollectionSearchResult struct {
 	Collection   string
 	SearchMethod string
 	Status       string
-	Objects      []*collectionSearchResultObject
+	Objects      []*CollectionSearchResultObject
 	Error        string
 }
 
-type collectionSearchResultObject struct {
+type CollectionSearchResultObject struct {
 	Key      string
 	Text     string
 	Distance float64
 	Score    float64
 }
 
-type collectionClassificationResult struct {
+type CollectionClassificationResult struct {
 	Collection   string
 	SearchMethod string
 	Status       string
-	LabelsResult []*collectionClassificationLabelObject
-	Cluster      []*collectionClassificationResultObject
+	LabelsResult []*CollectionClassificationLabelObject
+	Cluster      []*CollectionClassificationResultObject
 	Error        string
 }
 
-type collectionClassificationLabelObject struct {
+type CollectionClassificationLabelObject struct {
 	Label      string
 	Confidence float64
 }
 
-type collectionClassificationResultObject struct {
+type CollectionClassificationResultObject struct {
 	Key      string
 	Labels   []string
 	Distance float64

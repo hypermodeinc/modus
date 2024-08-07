@@ -7,8 +7,10 @@ package hostfunctions
 import (
 	"context"
 	"errors"
+	"time"
 
 	"hmruntime/languages"
+	"hmruntime/logger"
 	"hmruntime/plugins"
 
 	wasm "github.com/tetratelabs/wazero/api"
@@ -61,4 +63,57 @@ func getWasmAdapter(ctx context.Context) (languages.WasmAdapter, error) {
 	}
 
 	return wa, nil
+}
+
+// Each message is optional, but if provided, it will be logged at the appropriate time.
+type hostFunctionMessages struct {
+	Starting  string
+	Completed string
+	Cancelled string
+	Error     string
+	Detail    string
+}
+
+func callHostFunction(ctx context.Context, fn func() error, msgs *hostFunctionMessages) bool {
+
+	if msgs != nil && msgs.Starting != "" {
+		l := logger.Info(ctx).Bool("user_visible", true)
+		if msgs.Detail != "" {
+			l.Str("detail", msgs.Detail)
+		}
+		l.Msg(msgs.Starting)
+	}
+
+	start := time.Now()
+	err := fn()
+	duration := time.Since(start)
+
+	if errors.Is(err, context.Canceled) {
+		if msgs != nil && msgs.Cancelled != "" {
+			l := logger.Warn(ctx).Bool("user_visible", true).Dur("duration_ms", duration)
+			if msgs.Detail != "" {
+				l.Str("detail", msgs.Detail)
+			}
+			l.Msg(msgs.Cancelled)
+		}
+		return false
+	} else if err != nil {
+		if msgs != nil && msgs.Error != "" {
+			l := logger.Err(ctx, err).Bool("user_visible", true).Dur("duration_ms", duration)
+			if msgs.Detail != "" {
+				l.Str("detail", msgs.Detail)
+			}
+			l.Msg(msgs.Error)
+		}
+		return false
+	} else {
+		if msgs != nil && msgs.Completed != "" {
+			l := logger.Info(ctx).Bool("user_visible", true).Dur("duration_ms", duration)
+			if msgs.Detail != "" {
+				l.Str("detail", msgs.Detail)
+			}
+			l.Msg(msgs.Completed)
+		}
+		return true
+	}
 }
