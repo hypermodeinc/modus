@@ -5,8 +5,10 @@
 package plugins
 
 import (
+	"context"
 	"hmruntime/languages"
 	"hmruntime/plugins/metadata"
+	"hmruntime/utils"
 
 	"github.com/tetratelabs/wazero"
 )
@@ -33,4 +35,12 @@ func (p *Plugin) Version() string {
 
 func (p *Plugin) BuildId() string {
 	return p.Metadata.BuildId
+}
+
+func GetPlugin(ctx context.Context) *Plugin {
+	if p, ok := ctx.Value(utils.PluginContextKey).(*Plugin); ok {
+		return p
+	}
+
+	return nil
 }

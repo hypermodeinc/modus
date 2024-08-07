@@ -113,8 +113,7 @@ func validateEmbedder(ctx context.Context, embedder string) error {
 		return errInvalidEmbedderSignature
 	}
 
-	plugin := ctx.Value(utils.PluginContextKey).(*plugins.Plugin)
-	lti := plugin.Language.TypeInfo()
+	lti := plugins.GetPlugin(ctx).Language.TypeInfo()
 
 	p := fn.Parameters[0]
 	if !lti.IsArrayType(p.Type) || !lti.IsStringType(lti.GetArraySubtype(p.Type)) {
