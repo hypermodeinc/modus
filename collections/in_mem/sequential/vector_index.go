@@ -23,7 +23,7 @@ type SequentialVectorIndex struct {
 	VectorMap         map[string][]float32 // key: vector
 }
 
-func NewSequentialVectorIndex(collection, searchMethod, embedder string) *SequentialVectorIndex {
+func NewSequentialVectorIndex(searchMethod, embedder string) *SequentialVectorIndex {
 	return &SequentialVectorIndex{
 		searchMethodName: searchMethod,
 		embedderName:     embedder,
@@ -58,6 +58,9 @@ func (ims *SequentialVectorIndex) Search(ctx context.Context, query []float32, m
 	// calculate cosine similarity and return top maxResults results
 	ims.mu.RLock()
 	defer ims.mu.RUnlock()
+	if maxResults <= 0 {
+		maxResults = 1
+	}
 	var results utils.MaxTupleHeap
 	heap.Init(&results)
 	for key, vector := range ims.VectorMap {

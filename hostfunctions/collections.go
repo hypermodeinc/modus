@@ -27,30 +27,58 @@ func init() {
 	})
 
 	addHostFunction(&hostFunctionDefinition{
-		name:     "deleteFromCollection",
+		name:     "deleteFromCollection", // deprecated
 		function: wasm.GoModuleFunc(hostDeleteFromCollection),
 		params:   []wasm.ValueType{wasm.ValueTypeI32, wasm.ValueTypeI32},
 		results:  []wasm.ValueType{wasm.ValueTypeI32},
 	})
 
 	addHostFunction(&hostFunctionDefinition{
-		name:     "searchCollection",
+		name:     "deleteFromCollection_v2",
+		function: wasm.GoModuleFunc(hostDeleteFromCollection),
+		params:   []wasm.ValueType{wasm.ValueTypeI32, wasm.ValueTypeI32, wasm.ValueTypeI32},
+		results:  []wasm.ValueType{wasm.ValueTypeI32},
+	})
+
+	addHostFunction(&hostFunctionDefinition{
+		name:     "searchCollection", // deprecated
 		function: wasm.GoModuleFunc(hostSearchCollection),
 		params:   []wasm.ValueType{wasm.ValueTypeI32, wasm.ValueTypeI32, wasm.ValueTypeI32, wasm.ValueTypeI32, wasm.ValueTypeI32},
 		results:  []wasm.ValueType{wasm.ValueTypeI32},
 	})
 
 	addHostFunction(&hostFunctionDefinition{
-		name:     "nnClassifyCollection",
+		name:     "searchCollection_v2",
+		function: wasm.GoModuleFunc(hostSearchCollection),
+		params:   []wasm.ValueType{wasm.ValueTypeI32, wasm.ValueTypeI32, wasm.ValueTypeI32, wasm.ValueTypeI32, wasm.ValueTypeI32, wasm.ValueTypeI32},
+		results:  []wasm.ValueType{wasm.ValueTypeI32},
+	})
+
+	addHostFunction(&hostFunctionDefinition{
+		name:     "nnClassifyCollection", // deprecated
 		function: wasm.GoModuleFunc(hostNnClassifyCollection),
 		params:   []wasm.ValueType{wasm.ValueTypeI32, wasm.ValueTypeI32, wasm.ValueTypeI32},
 		results:  []wasm.ValueType{wasm.ValueTypeI32},
 	})
 
 	addHostFunction(&hostFunctionDefinition{
-		name:     "recomputeSearchMethod",
+		name:     "nnClassifyCollection_v2",
+		function: wasm.GoModuleFunc(hostNnClassifyCollection),
+		params:   []wasm.ValueType{wasm.ValueTypeI32, wasm.ValueTypeI32, wasm.ValueTypeI32, wasm.ValueTypeI32},
+		results:  []wasm.ValueType{wasm.ValueTypeI32},
+	})
+
+	addHostFunction(&hostFunctionDefinition{
+		name:     "recomputeSearchMethod", // deprecated
 		function: wasm.GoModuleFunc(hostRecomputeSearchMethod),
 		params:   []wasm.ValueType{wasm.ValueTypeI32, wasm.ValueTypeI32, wasm.ValueTypeI32, wasm.ValueTypeI32},
+		results:  []wasm.ValueType{wasm.ValueTypeI32},
+	})
+
+	addHostFunction(&hostFunctionDefinition{
+		name:     "recomputeSearchMethod_v2",
+		function: wasm.GoModuleFunc(hostRecomputeSearchMethod),
+		params:   []wasm.ValueType{wasm.ValueTypeI32, wasm.ValueTypeI32, wasm.ValueTypeI32, wasm.ValueTypeI32, wasm.ValueTypeI32},
 		results:  []wasm.ValueType{wasm.ValueTypeI32},
 	})
 
@@ -62,30 +90,52 @@ func init() {
 	})
 
 	addHostFunction(&hostFunctionDefinition{
-		name:     "computeDistance",
+		name:     "computeDistance", // deprecated
 		function: wasm.GoModuleFunc(hostComputeDistance),
 		params:   []wasm.ValueType{wasm.ValueTypeI32, wasm.ValueTypeI32, wasm.ValueTypeI32, wasm.ValueTypeI32},
 		results:  []wasm.ValueType{wasm.ValueTypeI32},
 	})
 
 	addHostFunction(&hostFunctionDefinition{
-		name:     "getTextFromCollection",
+		name:     "computeDistance_v2",
+		function: wasm.GoModuleFunc(hostComputeDistance),
+		params:   []wasm.ValueType{wasm.ValueTypeI32, wasm.ValueTypeI32, wasm.ValueTypeI32, wasm.ValueTypeI32, wasm.ValueTypeI32},
+		results:  []wasm.ValueType{wasm.ValueTypeI32},
+	})
+
+	addHostFunction(&hostFunctionDefinition{
+		name:     "getTextFromCollection", // deprecated
 		function: wasm.GoModuleFunc(hostGetTextFromCollection),
 		params:   []wasm.ValueType{wasm.ValueTypeI32, wasm.ValueTypeI32},
 		results:  []wasm.ValueType{wasm.ValueTypeI32},
 	})
 
 	addHostFunction(&hostFunctionDefinition{
-		name:     "getTextsFromCollection",
+		name:     "getTextFromCollection_v2",
+		function: wasm.GoModuleFunc(hostGetTextFromCollection),
+		params:   []wasm.ValueType{wasm.ValueTypeI32, wasm.ValueTypeI32, wasm.ValueTypeI32},
+		results:  []wasm.ValueType{wasm.ValueTypeI32},
+	})
+
+	addHostFunction(&hostFunctionDefinition{
+		name:     "getTextsFromCollection", // deprecated
 		function: wasm.GoModuleFunc(hostGetTextsFromCollection),
 		params:   []wasm.ValueType{wasm.ValueTypeI32},
+		results:  []wasm.ValueType{wasm.ValueTypeI32},
+	})
+
+	addHostFunction(&hostFunctionDefinition{
+		name:     "getTextsFromCollection_v2",
+		function: wasm.GoModuleFunc(hostGetTextsFromCollection),
+		params:   []wasm.ValueType{wasm.ValueTypeI32, wasm.ValueTypeI32},
 		results:  []wasm.ValueType{wasm.ValueTypeI32},
 	})
 }
 
 func hostUpsertToCollection(ctx context.Context, mod wasm.Module, stack []uint64) {
+
 	// Read input parameters
-	var collectionName string
+	var collectionName, namespace string
 	var keys, texts []string
 	var labels [][]string
 	if len(stack) == 3 {
@@ -118,7 +168,7 @@ func hostUpsertToCollection(ctx context.Context, mod wasm.Module, stack []uint64
 	// Prepare the host function
 	var mutationRes *collections.CollectionMutationResult
 	fn := func() (err error) {
-		mutationRes, err = collections.UpsertToCollection(ctx, collectionName, keys, texts, labels)
+		mutationRes, err = collections.UpsertToCollection(ctx, collectionName, namespace, keys, texts, labels)
 		return err
 	}
 
@@ -136,10 +186,19 @@ func hostUpsertToCollection(ctx context.Context, mod wasm.Module, stack []uint64
 func hostDeleteFromCollection(ctx context.Context, mod wasm.Module, stack []uint64) {
 
 	// Read input parameters
-	var collectionName, key string
-	if err := readParams(ctx, mod, stack, &collectionName, &key); err != nil {
-		logger.Err(ctx, err).Msg("Error reading input parameters.")
-		return
+	var collectionName, namespace, key string
+	if len(stack) == 2 {
+		// v1
+		if err := readParams(ctx, mod, stack, &collectionName, &key); err != nil {
+			logger.Err(ctx, err).Msg("Error reading input parameters.")
+			return
+		}
+	} else {
+		// v2 (with namespace)
+		if err := readParams(ctx, mod, stack, &collectionName, &namespace, &key); err != nil {
+			logger.Err(ctx, err).Msg("Error reading input parameters.")
+			return
+		}
 	}
 
 	// Prepare log messages
@@ -158,7 +217,7 @@ func hostDeleteFromCollection(ctx context.Context, mod wasm.Module, stack []uint
 	// Prepare the host function
 	var mutationRes *collections.CollectionMutationResult
 	fn := func() (err error) {
-		mutationRes, err = collections.DeleteFromCollection(ctx, collectionName, key)
+		mutationRes, err = collections.DeleteFromCollection(ctx, collectionName, namespace, key)
 		return err
 	}
 
@@ -176,12 +235,21 @@ func hostDeleteFromCollection(ctx context.Context, mod wasm.Module, stack []uint
 func hostSearchCollection(ctx context.Context, mod wasm.Module, stack []uint64) {
 
 	// Read input parameters
-	var collectionName, searchMethod, text string
+	var collectionName, namespace, searchMethod, text string
 	var limit int32
 	var returnText bool
-	if err := readParams(ctx, mod, stack, &collectionName, &collectionName, &searchMethod, &text, &limit, &returnText); err != nil {
-		logger.Err(ctx, err).Msg("Error reading input parameters.")
-		return
+	if len(stack) == 5 {
+		// v1
+		if err := readParams(ctx, mod, stack, &collectionName, &searchMethod, &text, &limit, &returnText); err != nil {
+			logger.Err(ctx, err).Msg("Error reading input parameters.")
+			return
+		}
+	} else {
+		// v2 (with namespace)
+		if err := readParams(ctx, mod, stack, &collectionName, &namespace, &searchMethod, &text, &limit, &returnText); err != nil {
+			logger.Err(ctx, err).Msg("Error reading input parameters.")
+			return
+		}
 	}
 
 	// Prepare log messages
@@ -200,7 +268,7 @@ func hostSearchCollection(ctx context.Context, mod wasm.Module, stack []uint64) 
 	// Prepare the host function
 	var searchRes *collections.CollectionSearchResult
 	fn := func() (err error) {
-		searchRes, err = collections.SearchCollection(ctx, collectionName, searchMethod, text, limit, returnText)
+		searchRes, err = collections.SearchCollection(ctx, collectionName, namespace, searchMethod, text, limit, returnText)
 		return err
 	}
 
@@ -218,10 +286,19 @@ func hostSearchCollection(ctx context.Context, mod wasm.Module, stack []uint64) 
 func hostNnClassifyCollection(ctx context.Context, mod wasm.Module, stack []uint64) {
 
 	// Read input parameters
-	var collectionName, searchMethod, text string
-	if err := readParams(ctx, mod, stack, &collectionName, &searchMethod, &text); err != nil {
-		logger.Err(ctx, err).Msg("Error reading input parameters.")
-		return
+	var collectionName, namespace, searchMethod, text string
+	if len(stack) == 3 {
+		// v1
+		if err := readParams(ctx, mod, stack, &collectionName, &searchMethod, &text); err != nil {
+			logger.Err(ctx, err).Msg("Error reading input parameters.")
+			return
+		}
+	} else {
+		// v2 (with namespace)
+		if err := readParams(ctx, mod, stack, &collectionName, &namespace, &searchMethod, &text); err != nil {
+			logger.Err(ctx, err).Msg("Error reading input parameters.")
+			return
+		}
 	}
 
 	// Prepare log messages
@@ -240,7 +317,7 @@ func hostNnClassifyCollection(ctx context.Context, mod wasm.Module, stack []uint
 	// Prepare the host function
 	var classification *collections.CollectionClassificationResult
 	fn := func() (err error) {
-		classification, err = collections.NnClassify(ctx, collectionName, searchMethod, text)
+		classification, err = collections.NnClassify(ctx, collectionName, namespace, searchMethod, text)
 		return err
 	}
 
@@ -258,10 +335,19 @@ func hostNnClassifyCollection(ctx context.Context, mod wasm.Module, stack []uint
 func hostComputeDistance(ctx context.Context, mod wasm.Module, stack []uint64) {
 
 	// Read input parameters
-	var collectionName, searchMethod, id1, id2 string
-	if err := readParams(ctx, mod, stack, &collectionName, &searchMethod, &id1, &id2); err != nil {
-		logger.Err(ctx, err).Msg("Error reading input parameters.")
-		return
+	var collectionName, namespace, searchMethod, id1, id2 string
+	if len(stack) == 4 {
+		// v1
+		if err := readParams(ctx, mod, stack, &collectionName, &searchMethod, &id1, &id2); err != nil {
+			logger.Err(ctx, err).Msg("Error reading input parameters.")
+			return
+		}
+	} else {
+		// v2 (with namespace)
+		if err := readParams(ctx, mod, stack, &collectionName, &namespace, &searchMethod, &id1, &id2); err != nil {
+			logger.Err(ctx, err).Msg("Error reading input parameters.")
+			return
+		}
 	}
 
 	// Prepare log messages
@@ -280,7 +366,7 @@ func hostComputeDistance(ctx context.Context, mod wasm.Module, stack []uint64) {
 	// Prepare the host function
 	var resObj *collections.CollectionSearchResultObject
 	fn := func() (err error) {
-		resObj, err = collections.ComputeDistance(ctx, collectionName, searchMethod, id1, id2)
+		resObj, err = collections.ComputeDistance(ctx, collectionName, namespace, searchMethod, id1, id2)
 		return err
 	}
 
@@ -298,10 +384,19 @@ func hostComputeDistance(ctx context.Context, mod wasm.Module, stack []uint64) {
 func hostRecomputeSearchMethod(ctx context.Context, mod wasm.Module, stack []uint64) {
 
 	// Read input parameters
-	var collectionName, searchMethod string
-	if err := readParams(ctx, mod, stack, &collectionName, &searchMethod); err != nil {
-		logger.Err(ctx, err).Msg("Error reading input parameters.")
-		return
+	var collectionName, namespace, searchMethod string
+	if len(stack) == 2 {
+		// v1
+		if err := readParams(ctx, mod, stack, &collectionName, &searchMethod); err != nil {
+			logger.Err(ctx, err).Msg("Error reading input parameters.")
+			return
+		}
+	} else {
+		// v2 (with namespace)
+		if err := readParams(ctx, mod, stack, &collectionName, &namespace, &searchMethod); err != nil {
+			logger.Err(ctx, err).Msg("Error reading input parameters.")
+			return
+		}
 	}
 
 	// Prepare log messages
@@ -316,7 +411,7 @@ func hostRecomputeSearchMethod(ctx context.Context, mod wasm.Module, stack []uin
 	// Prepare the host function
 	var mutationRes *collections.SearchMethodMutationResult
 	fn := func() (err error) {
-		mutationRes, err = collections.RecomputeSearchMethod(ctx, mod, collectionName, searchMethod)
+		mutationRes, err = collections.RecomputeSearchMethod(ctx, mod, collectionName, namespace, searchMethod)
 		return err
 	}
 
@@ -334,10 +429,19 @@ func hostRecomputeSearchMethod(ctx context.Context, mod wasm.Module, stack []uin
 func hostGetTextFromCollection(ctx context.Context, mod wasm.Module, stack []uint64) {
 
 	// Read input parameters
-	var collectionName, key string
-	if err := readParams(ctx, mod, stack, &collectionName, &key); err != nil {
-		logger.Err(ctx, err).Msg("Error reading input parameters.")
-		return
+	var collectionName, namespace, key string
+	if len(stack) == 2 {
+		// v1
+		if err := readParams(ctx, mod, stack, &collectionName, &key); err != nil {
+			logger.Err(ctx, err).Msg("Error reading input parameters.")
+			return
+		}
+	} else {
+		// v2 (with namespace)
+		if err := readParams(ctx, mod, stack, &collectionName, &namespace, &key); err != nil {
+			logger.Err(ctx, err).Msg("Error reading input parameters.")
+			return
+		}
 	}
 
 	// Prepare log messages
@@ -356,7 +460,7 @@ func hostGetTextFromCollection(ctx context.Context, mod wasm.Module, stack []uin
 	// Prepare the host function
 	var text string
 	fn := func() (err error) {
-		text, err = collections.GetTextFromCollection(ctx, collectionName, key)
+		text, err = collections.GetTextFromCollection(ctx, collectionName, namespace, key)
 		return err
 	}
 
@@ -374,10 +478,19 @@ func hostGetTextFromCollection(ctx context.Context, mod wasm.Module, stack []uin
 func hostGetTextsFromCollection(ctx context.Context, mod wasm.Module, stack []uint64) {
 
 	// Read input parameters
-	var collectionName string
-	if err := readParams(ctx, mod, stack, &collectionName); err != nil {
-		logger.Err(ctx, err).Msg("Error reading input parameters.")
-		return
+	var collectionName, namespace string
+	if len(stack) == 1 {
+		// v1
+		if err := readParams(ctx, mod, stack, &collectionName); err != nil {
+			logger.Err(ctx, err).Msg("Error reading input parameters.")
+			return
+		}
+	} else {
+		// v2 (with namespace)
+		if err := readParams(ctx, mod, stack, &collectionName, &namespace); err != nil {
+			logger.Err(ctx, err).Msg("Error reading input parameters.")
+			return
+		}
 	}
 
 	// Prepare log messages
@@ -396,7 +509,7 @@ func hostGetTextsFromCollection(ctx context.Context, mod wasm.Module, stack []ui
 	// Prepare the host function
 	var texts map[string]string
 	fn := func() (err error) {
-		texts, err = collections.GetTextsFromCollection(ctx, collectionName)
+		texts, err = collections.GetTextsFromCollection(ctx, collectionName, namespace)
 		return err
 	}
 

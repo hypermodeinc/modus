@@ -65,8 +65,10 @@ func (v *VectorIndexWrapper) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-type Collection interface {
+type CollectionNamespace interface {
 	GetCollectionName() string
+
+	GetNamespace() string
 
 	// GetVectorIndexMap returns the map of searchMethod to VectorIndex
 	GetVectorIndexMap() map[string]*VectorIndexWrapper

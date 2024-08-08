@@ -34,7 +34,7 @@ func TestMultipleSequentialVectorIndexes(t *testing.T) {
 			defer wg.Done()
 
 			// Create a new HnswVectorIndex
-			index := NewHnswVectorIndex("collection"+fmt.Sprint(i), "searchMethod"+fmt.Sprint(i), "embedder"+fmt.Sprint(i))
+			index := NewHnswVectorIndex("searchMethod"+fmt.Sprint(i), "embedder"+fmt.Sprint(i))
 
 			// Generate unique data for this index
 			textIds := make([]int64, len(baseTextIds))
