@@ -120,8 +120,6 @@ type CollectionNamespace interface {
 type VectorIndex interface {
 	GetSearchMethodName() string
 
-	GetNamespace() string
-
 	SetEmbedderName(embedderName string) error
 
 	GetEmbedderName() string

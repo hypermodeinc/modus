@@ -408,7 +408,7 @@ func DeleteCollectionText(ctx context.Context, collectionName, namespace, key st
 	})
 }
 
-func WriteCollectionVectors(ctx context.Context, searchMethodName, namespace string, textIds []int64, vectors [][]float32) ([]int64, []string, error) {
+func WriteCollectionVectors(ctx context.Context, searchMethodName string, textIds []int64, vectors [][]float32) ([]int64, []string, error) {
 	if len(textIds) != len(vectors) {
 		return nil, nil, errors.New("textIds and vectors must have the same length")
 	}
@@ -417,17 +417,17 @@ func WriteCollectionVectors(ctx context.Context, searchMethodName, namespace str
 	keys := make([]string, len(textIds))
 	err := WithTx(ctx, func(tx pgx.Tx) error {
 		// Delete any existing rows that match the searchMethodName and textIds
-		deleteQuery := fmt.Sprintf("DELETE FROM %s WHERE search_method = $1 AND namespace = $2 AND text_id = ANY($3)", collectionVectorsTable)
-		_, err := tx.Exec(ctx, deleteQuery, searchMethodName, namespace, textIds)
+		deleteQuery := fmt.Sprintf("DELETE FROM %s WHERE search_method = $1 AND text_id = ANY($2)", collectionVectorsTable)
+		_, err := tx.Exec(ctx, deleteQuery, searchMethodName, textIds)
 		if err != nil {
 			return err
 		}
 
 		// Insert the new rows
-		query := fmt.Sprintf("INSERT INTO %s (search_method, namespace, text_id, vector) VALUES ($1, $2, $3, $4::real[]) RETURNING id", collectionVectorsTable)
+		query := fmt.Sprintf("INSERT INTO %s (search_method, text_id, vector) VALUES ($1, $2, $3::real[]) RETURNING id", collectionVectorsTable)
 		for i, textId := range textIds {
 			vector := vectors[i]
-			row := tx.QueryRow(ctx, query, searchMethodName, namespace, textId, vector)
+			row := tx.QueryRow(ctx, query, searchMethodName, textId, vector)
 			var id int64
 			if err := row.Scan(&id); err != nil {
 				return err
@@ -435,8 +435,8 @@ func WriteCollectionVectors(ctx context.Context, searchMethodName, namespace str
 			vectorIds[i] = id
 		}
 
-		query = "SELECT key FROM collection_texts WHERE namespace = $1 AND id = ANY($2)"
-		rows, err := tx.Query(ctx, query, namespace, textIds)
+		query = "SELECT key FROM collection_texts WHERE id = ANY($1)"
+		rows, err := tx.Query(ctx, query, textIds)
 		if err != nil {
 			return err
 		}
@@ -462,25 +462,25 @@ func WriteCollectionVectors(ctx context.Context, searchMethodName, namespace str
 	return vectorIds, keys, nil
 }
 
-func WriteCollectionVector(ctx context.Context, searchMethodName, namespace string, textId int64, vector []float32) (vectorId int64, key string, err error) {
+func WriteCollectionVector(ctx context.Context, searchMethodName string, textId int64, vector []float32) (vectorId int64, key string, err error) {
 	err = WithTx(ctx, func(tx pgx.Tx) error {
 		// Delete any existing rows that match the searchMethodName and textId
-		deleteQuery := fmt.Sprintf("DELETE FROM %s WHERE search_method = $1 AND namespace = $2 AND text_id = $3", collectionVectorsTable)
-		_, err := tx.Exec(ctx, deleteQuery, searchMethodName, namespace, textId)
+		deleteQuery := fmt.Sprintf("DELETE FROM %s WHERE search_method = $1 AND text_id = $2", collectionVectorsTable)
+		_, err := tx.Exec(ctx, deleteQuery, searchMethodName, textId)
 		if err != nil {
 			return err
 		}
 
 		// Insert the new row
-		query := fmt.Sprintf("INSERT INTO %s (search_method, namespace, text_id, vector) VALUES ($1, $2, $3, $4) RETURNING id", collectionVectorsTable)
-		row := tx.QueryRow(ctx, query, searchMethodName, namespace, textId, vector)
+		query := fmt.Sprintf("INSERT INTO %s (search_method, text_id, vector) VALUES ($1, $2, $3) RETURNING id", collectionVectorsTable)
+		row := tx.QueryRow(ctx, query, searchMethodName, textId, vector)
 		err = row.Scan(&vectorId)
 		if err != nil {
 			return err
 		}
 
-		query = "SELECT key FROM collection_texts WHERE namespace = $1 AND id = $2"
-		row = tx.QueryRow(ctx, query, namespace, textId)
+		query = "SELECT key FROM collection_texts WHERE id = $1"
+		row = tx.QueryRow(ctx, query, textId)
 		return row.Scan(&key)
 
 	})
@@ -499,7 +499,7 @@ func DeleteCollectionVectors(ctx context.Context, collectionName, searchMethodNa
 		WHERE ct.id = cv.text_id 
 		AND ct.collection = $1 
 		AND cv.search_method = $2
-		AND cv.namespace = $3`,
+		AND ct.namespace = $3`,
 			collectionVectorsTable, collectionTextsTable)
 		_, err := tx.Exec(ctx, query, collectionName, searchMethodName, namespace)
 		if err != nil {
@@ -509,10 +509,10 @@ func DeleteCollectionVectors(ctx context.Context, collectionName, searchMethodNa
 	})
 }
 
-func DeleteCollectionVector(ctx context.Context, searchMethodName, namespace string, textId int64) error {
+func DeleteCollectionVector(ctx context.Context, searchMethodName string, textId int64) error {
 	return WithTx(ctx, func(tx pgx.Tx) error {
-		query := fmt.Sprintf("DELETE FROM %s WHERE search_method = $1 AND namespace = $2 AND text_id = $3", collectionVectorsTable)
-		_, err := tx.Exec(ctx, query, searchMethodName, namespace, textId)
+		query := fmt.Sprintf("DELETE FROM %s WHERE search_method = $1 AND text_id = $2", collectionVectorsTable)
+		_, err := tx.Exec(ctx, query, searchMethodName, textId)
 		if err != nil {
 			return err
 		}
@@ -570,7 +570,7 @@ func QueryCollectionVectorsFromCheckpoint(ctx context.Context, collectionName, s
 		query := fmt.Sprintf(`SELECT ct.id, cv.id, ct.key, cv.vector 
                   FROM %s cv 
                   JOIN %s ct ON cv.text_id = ct.id 
-                  WHERE cv.id > $1 AND ct.collection = $2 AND cv.search_method = $3 AND cv.namespace = $4`, collectionVectorsTable, collectionTextsTable)
+                  WHERE cv.id > $1 AND ct.collection = $2 AND cv.search_method = $3 AND ct.namespace = $4`, collectionVectorsTable, collectionTextsTable)
 		rows, err := tx.Query(ctx, query, vecCheckpointId, collectionName, searchMethodName, namespace)
 		if err != nil {
 			return err

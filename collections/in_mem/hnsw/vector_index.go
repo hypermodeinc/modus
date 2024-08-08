@@ -19,17 +19,15 @@ const (
 type HnswVectorIndex struct {
 	mu                sync.RWMutex
 	searchMethodName  string
-	namespace         string
 	embedderName      string
 	lastInsertedID    int64
 	lastIndexedTextID int64
 	HnswIndex         *hnsw.Graph[string]
 }
 
-func NewHnswVectorIndex(searchMethod, namespace, embedder string) *HnswVectorIndex {
+func NewHnswVectorIndex(searchMethod, embedder string) *HnswVectorIndex {
 	return &HnswVectorIndex{
 		searchMethodName: searchMethod,
-		namespace:        namespace,
 		embedderName:     embedder,
 		HnswIndex:        hnsw.NewGraph[string](),
 	}
@@ -37,10 +35,6 @@ func NewHnswVectorIndex(searchMethod, namespace, embedder string) *HnswVectorInd
 
 func (ims *HnswVectorIndex) GetSearchMethodName() string {
 	return ims.searchMethodName
-}
-
-func (ims *HnswVectorIndex) GetNamespace() string {
-	return ims.namespace
 }
 
 func (ims *HnswVectorIndex) SetEmbedderName(embedderName string) error {
@@ -115,7 +109,7 @@ func (ims *HnswVectorIndex) InsertVectors(ctx context.Context, textIds []int64, 
 	if len(textIds) != len(vecs) {
 		return fmt.Errorf("textIds and vecs must have the same length")
 	}
-	vectorIds, keys, err := db.WriteCollectionVectors(ctx, ims.searchMethodName, ims.namespace, textIds, vecs)
+	vectorIds, keys, err := db.WriteCollectionVectors(ctx, ims.searchMethodName, textIds, vecs)
 	if err != nil {
 		return err
 	}
@@ -126,7 +120,7 @@ func (ims *HnswVectorIndex) InsertVectors(ctx context.Context, textIds []int64, 
 func (ims *HnswVectorIndex) InsertVector(ctx context.Context, textId int64, vec []float32) error {
 
 	// Write vector to database, this textId is now the last inserted textId
-	vectorId, key, err := db.WriteCollectionVector(ctx, ims.searchMethodName, ims.namespace, textId, vec)
+	vectorId, key, err := db.WriteCollectionVector(ctx, ims.searchMethodName, textId, vec)
 	if err != nil {
 		return err
 	}
@@ -164,7 +158,7 @@ func (ims *HnswVectorIndex) InsertVectorToMemory(ctx context.Context, textId, ve
 func (ims *HnswVectorIndex) DeleteVector(ctx context.Context, textId int64, key string) error {
 	ims.mu.Lock()
 	defer ims.mu.Unlock()
-	err := db.DeleteCollectionVector(ctx, ims.searchMethodName, ims.namespace, textId)
+	err := db.DeleteCollectionVector(ctx, ims.searchMethodName, textId)
 	if err != nil {
 		return err
 	}

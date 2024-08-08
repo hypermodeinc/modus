@@ -58,7 +58,7 @@ func UpsertToCollection(ctx context.Context, collectionName, namespace string, k
 	for searchMethodName, searchMethod := range collectionData.SearchMethods {
 		vectorIndex, err := collNs.GetVectorIndex(ctx, searchMethodName)
 		if err == index.ErrVectorIndexNotFound {
-			vectorIndex, err = createIndexObject(searchMethod, namespace, searchMethodName)
+			vectorIndex, err = createIndexObject(searchMethod, searchMethodName)
 			if err != nil {
 				return nil, err
 			}

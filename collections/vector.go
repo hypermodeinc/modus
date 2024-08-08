@@ -224,21 +224,21 @@ func processManifestCollections(ctx context.Context, man *manifest.HypermodeMani
 	}
 }
 
-func createIndexObject(searchMethod manifest.SearchMethodInfo, namespace, searchMethodName string) (*interfaces.VectorIndexWrapper, error) {
+func createIndexObject(searchMethod manifest.SearchMethodInfo, searchMethodName string) (*interfaces.VectorIndexWrapper, error) {
 	vectorIndex := &interfaces.VectorIndexWrapper{}
 	switch searchMethod.Index.Type {
 	case interfaces.SequentialManifestType:
 		vectorIndex.Type = sequential.SequentialVectorIndexType
-		vectorIndex.VectorIndex = sequential.NewSequentialVectorIndex(searchMethodName, namespace, searchMethod.Embedder)
+		vectorIndex.VectorIndex = sequential.NewSequentialVectorIndex(searchMethodName, searchMethod.Embedder)
 	case interfaces.HnswManifestType:
 		vectorIndex.Type = sequential.SequentialVectorIndexType
-		vectorIndex.VectorIndex = sequential.NewSequentialVectorIndex(searchMethodName, namespace, searchMethod.Embedder)
+		vectorIndex.VectorIndex = sequential.NewSequentialVectorIndex(searchMethodName, searchMethod.Embedder)
 		// // TODO: hnsw currently broken ,autosync is not working, it keeps embedding forever, even though it has correctly indexed. for now, set it to sequential. fix in future PR
 		// vectorIndex.Type = hnsw.HnswVectorIndexType
 		// vectorIndex.VectorIndex = hnsw.NewHnswVectorIndex(collectionName, searchMethodName, searchMethod.Embedder)
 	case "":
 		vectorIndex.Type = sequential.SequentialVectorIndexType
-		vectorIndex.VectorIndex = sequential.NewSequentialVectorIndex(searchMethodName, namespace, searchMethod.Embedder)
+		vectorIndex.VectorIndex = sequential.NewSequentialVectorIndex(searchMethodName, searchMethod.Embedder)
 	default:
 		return nil, fmt.Errorf("Unknown index type: %s", searchMethod.Index.Type)
 	}
@@ -247,7 +247,7 @@ func createIndexObject(searchMethod manifest.SearchMethodInfo, namespace, search
 }
 
 func setIndex(ctx context.Context, collNs interfaces.CollectionNamespace, searchMethod manifest.SearchMethodInfo, searchMethodName string) error {
-	vectorIndex, err := createIndexObject(searchMethod, collNs.GetNamespace(), searchMethodName)
+	vectorIndex, err := createIndexObject(searchMethod, searchMethodName)
 	if err != nil {
 		return err
 	}

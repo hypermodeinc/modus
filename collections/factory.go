@@ -310,7 +310,7 @@ func LoadVectorsIntoVectorIndex(ctx context.Context, vectorIndex interfaces.Vect
 	}
 
 	// Query all vectors from checkpoint
-	textIds, vectorIds, keys, vectors, err := db.QueryCollectionVectorsFromCheckpoint(ctx, collection.GetCollectionName(), vectorIndex.GetSearchMethodName(), vectorIndex.GetNamespace(), vecCheckpointId)
+	textIds, vectorIds, keys, vectors, err := db.QueryCollectionVectorsFromCheckpoint(ctx, collection.GetCollectionName(), vectorIndex.GetSearchMethodName(), collection.GetNamespace(), vecCheckpointId)
 	if err != nil {
 		return err
 	}
