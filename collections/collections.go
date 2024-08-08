@@ -19,7 +19,7 @@ import (
 	wasm "github.com/tetratelabs/wazero/api"
 )
 
-func UpsertToCollection(ctx context.Context, collectionName, namespace string, keys, texts []string, labels [][]string) (*collectionMutationResult, error) {
+func UpsertToCollection(ctx context.Context, collectionName, namespace string, keys, texts []string, labels [][]string) (*CollectionMutationResult, error) {
 
 	// Get the collectionName data from the manifest
 	collectionData := manifestdata.GetManifest().Collections[collectionName]
@@ -108,7 +108,7 @@ func UpsertToCollection(ctx context.Context, collectionName, namespace string, k
 		}
 	}
 
-	return &collectionMutationResult{
+	return &CollectionMutationResult{
 		Collection: collectionName,
 		Operation:  "upsert",
 		Status:     "success",
@@ -133,8 +133,7 @@ func validateEmbedder(ctx context.Context, embedder string) error {
 		return errInvalidEmbedderSignature
 	}
 
-	plugin := ctx.Value(utils.PluginContextKey).(*plugins.Plugin)
-	lti := plugin.Language.TypeInfo()
+	lti := plugins.GetPlugin(ctx).Language.TypeInfo()
 
 	p := fn.Parameters[0]
 	if !lti.IsArrayType(p.Type) || !lti.IsStringType(lti.GetArraySubtype(p.Type)) {
@@ -154,7 +153,7 @@ func validateEmbedder(ctx context.Context, embedder string) error {
 	return nil
 }
 
-func DeleteFromCollection(ctx context.Context, collectionName, namespace, key string) (*collectionMutationResult, error) {
+func DeleteFromCollection(ctx context.Context, collectionName, namespace, key string) (*CollectionMutationResult, error) {
 	collection, err := GlobalNamespaceManager.FindCollection(ctx, collectionName)
 	if err != nil {
 		return nil, err
@@ -186,7 +185,7 @@ func DeleteFromCollection(ctx context.Context, collectionName, namespace, key st
 
 	keys := []string{key}
 
-	return &collectionMutationResult{
+	return &CollectionMutationResult{
 		Collection: collectionName,
 		Operation:  "delete",
 		Status:     "success",
@@ -219,7 +218,7 @@ func getEmbedder(ctx context.Context, collectionName string, searchMethod string
 	return embedder, nil
 }
 
-func SearchCollection(ctx context.Context, collectionName, namespace, searchMethod, text string, limit int32, returnText bool) (*collectionSearchResult, error) {
+func SearchCollection(ctx context.Context, collectionName, namespace, searchMethod, text string, limit int32, returnText bool) (*CollectionSearchResult, error) {
 
 	collection, err := GlobalNamespaceManager.FindCollection(ctx, collectionName)
 	if err != nil {
@@ -268,11 +267,11 @@ func SearchCollection(ctx context.Context, collectionName, namespace, searchMeth
 		return nil, err
 	}
 
-	output := &collectionSearchResult{
+	output := &CollectionSearchResult{
 		Collection:   collectionName,
 		SearchMethod: searchMethod,
 		Status:       "success",
-		Objects:      make([]*collectionSearchResultObject, len(objects)),
+		Objects:      make([]*CollectionSearchResultObject, len(objects)),
 	}
 
 	for i, object := range objects {
@@ -281,14 +280,14 @@ func SearchCollection(ctx context.Context, collectionName, namespace, searchMeth
 			if err != nil {
 				return nil, err
 			}
-			output.Objects[i] = &collectionSearchResultObject{
+			output.Objects[i] = &CollectionSearchResultObject{
 				Key:      object.GetIndex(),
 				Text:     text,
 				Distance: object.GetValue(),
 				Score:    1 - object.GetValue(),
 			}
 		} else {
-			output.Objects[i] = &collectionSearchResultObject{
+			output.Objects[i] = &CollectionSearchResultObject{
 				Key:      object.GetIndex(),
 				Distance: object.GetValue(),
 				Score:    1 - object.GetValue(),
@@ -299,7 +298,7 @@ func SearchCollection(ctx context.Context, collectionName, namespace, searchMeth
 	return output, nil
 }
 
-func NnClassify(ctx context.Context, collectionName, namespace, searchMethod, text string) (*collectionClassificationResult, error) {
+func NnClassify(ctx context.Context, collectionName, namespace, searchMethod, text string) (*CollectionClassificationResult, error) {
 
 	collection, err := GlobalNamespaceManager.FindCollection(ctx, collectionName)
 	if err != nil {
@@ -372,12 +371,12 @@ func NnClassify(ctx context.Context, collectionName, namespace, searchMethod, te
 	// remove elements with score out of first standard deviation and return the most frequent label
 	labelCounts := make(map[string]int)
 
-	res := &collectionClassificationResult{
+	res := &CollectionClassificationResult{
 		Collection:   collectionName,
-		LabelsResult: make([]*collectionClassificationLabelObject, 0),
+		LabelsResult: make([]*CollectionClassificationLabelObject, 0),
 		SearchMethod: searchMethod,
 		Status:       "success",
-		Cluster:      make([]*collectionClassificationResultObject, 0),
+		Cluster:      make([]*CollectionClassificationResultObject, 0),
 	}
 
 	totalLabels := 0
@@ -393,7 +392,7 @@ func NnClassify(ctx context.Context, collectionName, namespace, searchMethod, te
 				totalLabels++
 			}
 
-			res.Cluster = append(res.Cluster, &collectionClassificationResultObject{
+			res.Cluster = append(res.Cluster, &CollectionClassificationResultObject{
 				Key:      nn.GetIndex(),
 				Labels:   labels,
 				Score:    1 - nn.GetValue(),
@@ -403,9 +402,9 @@ func NnClassify(ctx context.Context, collectionName, namespace, searchMethod, te
 	}
 
 	// Create a slice of pairs
-	labelsResult := make([]*collectionClassificationLabelObject, 0, len(labelCounts))
+	labelsResult := make([]*CollectionClassificationLabelObject, 0, len(labelCounts))
 	for label, count := range labelCounts {
-		labelsResult = append(labelsResult, &collectionClassificationLabelObject{
+		labelsResult = append(labelsResult, &CollectionClassificationLabelObject{
 			Label:      label,
 			Confidence: float64(count) / float64(totalLabels),
 		})
@@ -421,7 +420,7 @@ func NnClassify(ctx context.Context, collectionName, namespace, searchMethod, te
 	return res, nil
 }
 
-func ComputeDistance(ctx context.Context, collectionName, namespace, searchMethod, id1, id2 string) (*collectionSearchResultObject, error) {
+func ComputeDistance(ctx context.Context, collectionName, namespace, searchMethod, id1, id2 string) (*CollectionSearchResultObject, error) {
 
 	collection, err := GlobalNamespaceManager.FindCollection(ctx, collectionName)
 	if err != nil {
@@ -457,7 +456,7 @@ func ComputeDistance(ctx context.Context, collectionName, namespace, searchMetho
 		return nil, err
 	}
 
-	return &collectionSearchResultObject{
+	return &CollectionSearchResultObject{
 		Key:      "",
 		Text:     "",
 		Distance: distance,
@@ -465,7 +464,7 @@ func ComputeDistance(ctx context.Context, collectionName, namespace, searchMetho
 	}, nil
 }
 
-func RecomputeSearchMethod(ctx context.Context, mod wasm.Module, collectionName, namespace, searchMethod string) (*searchMethodMutationResult, error) {
+func RecomputeSearchMethod(ctx context.Context, mod wasm.Module, collectionName, namespace, searchMethod string) (*SearchMethodMutationResult, error) {
 
 	collection, err := GlobalNamespaceManager.FindCollection(ctx, collectionName)
 	if err != nil {
@@ -496,7 +495,7 @@ func RecomputeSearchMethod(ctx context.Context, mod wasm.Module, collectionName,
 		return nil, err
 	}
 
-	return &searchMethodMutationResult{
+	return &SearchMethodMutationResult{
 		Collection: collectionName,
 		Operation:  "recompute",
 		Status:     "success",

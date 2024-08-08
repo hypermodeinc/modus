@@ -2,9 +2,11 @@ package hostfunctions
 
 import (
 	"context"
+	"fmt"
 
 	"hmruntime/collections"
 	"hmruntime/logger"
+	"hmruntime/utils"
 
 	wasm "github.com/tetratelabs/wazero/api"
 )
@@ -26,14 +28,32 @@ func hostUpsertToCollectionV2(ctx context.Context, mod wasm.Module, pCollectionN
 		return 0
 	}
 
-	mutationRes, err := collections.UpsertToCollection(ctx, collectionName, namespace, keys, texts, labels)
-	if err != nil {
-		logger.Err(ctx, err).
-			Bool("user_visible", true).
-			Msg("Error upserting to collection.")
+	// Prepare log messages
+	msgs := &hostFunctionMessages{
+		Cancelled: "Cancelled collection upsert.",
+		Error:     "Error upserting to collection.",
+		Detail:    fmt.Sprintf("Collection: %s, Keys: %v", collectionName, keys),
+	}
+
+	// Track start/complete messages only if debug is enabled, to reduce log noise
+	if utils.HypermodeDebugEnabled() {
+		msgs.Starting = "Starting collection upsert."
+		msgs.Completed = "Completed collection upsert."
+	}
+
+	// Prepare the host function
+	var mutationRes *collections.CollectionMutationResult
+	fn := func() (err error) {
+		mutationRes, err = collections.UpsertToCollection(ctx, collectionName, namespace, keys, texts, labels)
+		return err
+	}
+
+	// Call the host function
+	if ok := callHostFunction(ctx, fn, msgs); !ok {
 		return 0
 	}
 
+	// Write the results
 	offset, err := writeResult(ctx, mod, mutationRes)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error writing result.")
@@ -41,7 +61,6 @@ func hostUpsertToCollectionV2(ctx context.Context, mod wasm.Module, pCollectionN
 	}
 
 	return offset
-
 }
 
 func hostDeleteFromCollection(ctx context.Context, mod wasm.Module, pCollectionName uint32, pKey uint32) uint32 {
@@ -59,14 +78,32 @@ func hostDeleteFromCollectionV2(ctx context.Context, mod wasm.Module, pCollectio
 		return 0
 	}
 
-	mutationRes, err := collections.DeleteFromCollection(ctx, collectionName, namespace, key)
-	if err != nil {
-		logger.Err(ctx, err).
-			Bool("user_visible", true).
-			Msg("Error deleting from collection.")
+	// Prepare log messages
+	msgs := &hostFunctionMessages{
+		Cancelled: "Cancelled deleting from collection.",
+		Error:     "Error deleting from collection.",
+		Detail:    fmt.Sprintf("Collection: %s, Key: %s", collectionName, key),
+	}
+
+	// Track start/complete messages only if debug is enabled, to reduce log noise
+	if utils.HypermodeDebugEnabled() {
+		msgs.Starting = "Starting deleting from collection."
+		msgs.Completed = "Completed deleting from collection."
+	}
+
+	// Prepare the host function
+	var mutationRes *collections.CollectionMutationResult
+	fn := func() (err error) {
+		mutationRes, err = collections.DeleteFromCollection(ctx, collectionName, namespace, key)
+		return err
+	}
+
+	// Call the host function
+	if ok := callHostFunction(ctx, fn, msgs); !ok {
 		return 0
 	}
 
+	// Write the results
 	offset, err := writeResult(ctx, mod, mutationRes)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error writing result.")
@@ -96,14 +133,32 @@ func hostSearchCollectionV2(ctx context.Context, mod wasm.Module, pCollectionNam
 		return 0
 	}
 
-	searchRes, err := collections.SearchCollection(ctx, collectionName, namespace, searchMethod, text, limit, returnText)
-	if err != nil {
-		logger.Err(ctx, err).
-			Bool("user_visible", true).
-			Msg("Error searching collection.")
+	// Prepare log messages
+	msgs := &hostFunctionMessages{
+		Cancelled: "Cancelled searching collection.",
+		Error:     "Error searching collection.",
+		Detail:    fmt.Sprintf("Collection: %s, Method: %s", collectionName, searchMethod),
+	}
+
+	// Track start/complete messages only if debug is enabled, to reduce log noise
+	if utils.HypermodeDebugEnabled() {
+		msgs.Starting = "Starting searching collection."
+		msgs.Completed = "Completed searching collection."
+	}
+
+	// Prepare the host function
+	var searchRes *collections.CollectionSearchResult
+	fn := func() (err error) {
+		searchRes, err = collections.SearchCollection(ctx, collectionName, namespace, searchMethod, text, limit, returnText)
+		return err
+	}
+
+	// Call the host function
+	if ok := callHostFunction(ctx, fn, msgs); !ok {
 		return 0
 	}
 
+	// Write the results
 	offset, err := writeResult(ctx, mod, searchRes)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error writing result.")
@@ -129,14 +184,32 @@ func hostNnClassifyCollectionV2(ctx context.Context, mod wasm.Module, pCollectio
 		return 0
 	}
 
-	classification, err := collections.NnClassify(ctx, collectionName, namespace, searchMethod, text)
-	if err != nil {
-		logger.Err(ctx, err).
-			Bool("user_visible", true).
-			Msg("Error classifying.")
+	// Prepare log messages
+	msgs := &hostFunctionMessages{
+		Cancelled: "Cancelled classification.",
+		Error:     "Error during classification.",
+		Detail:    fmt.Sprintf("Collection: %s, Method: %s", collectionName, searchMethod),
+	}
+
+	// Track start/complete messages only if debug is enabled, to reduce log noise
+	if utils.HypermodeDebugEnabled() {
+		msgs.Starting = "Starting classification."
+		msgs.Completed = "Completed classification."
+	}
+
+	// Prepare the host function
+	var classification *collections.CollectionClassificationResult
+	fn := func() (err error) {
+		classification, err = collections.NnClassify(ctx, collectionName, namespace, searchMethod, text)
+		return err
+	}
+
+	// Call the host function
+	if ok := callHostFunction(ctx, fn, msgs); !ok {
 		return 0
 	}
 
+	// Write the results
 	offset, err := writeResult(ctx, mod, classification)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error writing result.")
@@ -163,14 +236,32 @@ func hostComputeDistanceV2(ctx context.Context, mod wasm.Module, pCollectionName
 		return 0
 	}
 
-	resObj, err := collections.ComputeDistance(ctx, collectionName, namespace, searchMethod, id1, id2)
-	if err != nil {
-		logger.Err(ctx, err).
-			Bool("user_visible", true).
-			Msg("Error computing distance.")
+	// Prepare log messages
+	msgs := &hostFunctionMessages{
+		Cancelled: "Cancelled computing distance.",
+		Error:     "Error computing distance.",
+		Detail:    fmt.Sprintf("Collection: %s, Method: %s", collectionName, searchMethod),
+	}
+
+	// Track start/complete messages only if debug is enabled, to reduce log noise
+	if utils.HypermodeDebugEnabled() {
+		msgs.Starting = "Starting computing distance."
+		msgs.Completed = "Completed computing distance."
+	}
+
+	// Prepare the host function
+	var resObj *collections.CollectionSearchResultObject
+	fn := func() (err error) {
+		resObj, err = collections.ComputeDistance(ctx, collectionName, namespace, searchMethod, id1, id2)
+		return err
+	}
+
+	// Call the host function
+	if ok := callHostFunction(ctx, fn, msgs); !ok {
 		return 0
 	}
 
+	// Write the results
 	offset, err := writeResult(ctx, mod, resObj)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error writing result.")
@@ -178,7 +269,6 @@ func hostComputeDistanceV2(ctx context.Context, mod wasm.Module, pCollectionName
 	}
 
 	return offset
-
 }
 
 func hostRecomputeSearchMethod(ctx context.Context, mod wasm.Module, pCollectionName uint32, pSearchMethod uint32) uint32 {
@@ -196,14 +286,28 @@ func hostRecomputeSearchMethodV2(ctx context.Context, mod wasm.Module, pCollecti
 		return 0
 	}
 
-	mutationRes, err := collections.RecomputeSearchMethod(ctx, mod, collectionName, namespace, searchMethod)
-	if err != nil {
-		logger.Err(ctx, err).
-			Bool("user_visible", true).
-			Msg("Error recompute search method.")
+	// Prepare log messages
+	msgs := &hostFunctionMessages{
+		Starting:  "Starting recomputing search method.",
+		Completed: "Completed recomputing search method.",
+		Cancelled: "Cancelled recomputing search method for collection.",
+		Error:     "Error recomputing search method for collection.",
+		Detail:    fmt.Sprintf("Collection: %s, Method: %s", collectionName, searchMethod),
+	}
+
+	// Prepare the host function
+	var mutationRes *collections.SearchMethodMutationResult
+	fn := func() (err error) {
+		mutationRes, err = collections.RecomputeSearchMethod(ctx, mod, collectionName, namespace, searchMethod)
+		return err
+	}
+
+	// Call the host function
+	if ok := callHostFunction(ctx, fn, msgs); !ok {
 		return 0
 	}
 
+	// Write the results
 	offset, err := writeResult(ctx, mod, mutationRes)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error writing result.")
@@ -228,14 +332,32 @@ func hostGetTextFromCollectionV2(ctx context.Context, mod wasm.Module, pCollecti
 		return 0
 	}
 
-	text, err := collections.GetTextFromCollection(ctx, collectionName, namespace, key)
-	if err != nil {
-		logger.Err(ctx, err).
-			Bool("user_visible", true).
-			Msg("Error getting text from collection.")
+	// Prepare log messages
+	msgs := &hostFunctionMessages{
+		Cancelled: "Cancelled getting text from collection.",
+		Error:     "Error getting text from collection.",
+		Detail:    fmt.Sprintf("Collection: %s, Key: %s", collectionName, key),
+	}
+
+	// Track start/complete messages only if debug is enabled, to reduce log noise
+	if utils.HypermodeDebugEnabled() {
+		msgs.Starting = "Starting getting text from collection."
+		msgs.Completed = "Completed getting text from collection."
+	}
+
+	// Prepare the host function
+	var text string
+	fn := func() (err error) {
+		text, err = collections.GetTextFromCollection(ctx, collectionName, namespace, key)
+		return err
+	}
+
+	// Call the host function
+	if ok := callHostFunction(ctx, fn, msgs); !ok {
 		return 0
 	}
 
+	// Write the results
 	offset, err := writeResult(ctx, mod, text)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error writing result.")
@@ -259,14 +381,32 @@ func hostGetTextsFromCollectionV2(ctx context.Context, mod wasm.Module, pCollect
 		return 0
 	}
 
-	texts, err := collections.GetTextsFromCollection(ctx, collectionName, namespace)
-	if err != nil {
-		logger.Err(ctx, err).
-			Bool("user_visible", true).
-			Msg("Error getting texts from collection.")
+	// Prepare log messages
+	msgs := &hostFunctionMessages{
+		Cancelled: "Cancelled getting texts from collection.",
+		Error:     "Error getting texts from collection.",
+		Detail:    fmt.Sprintf("Collection: %s", collectionName),
+	}
+
+	// Track start/complete messages only if debug is enabled, to reduce log noise
+	if utils.HypermodeDebugEnabled() {
+		msgs.Starting = "Starting getting texts from collection."
+		msgs.Completed = "Completed getting texts from collection."
+	}
+
+	// Prepare the host function
+	var texts map[string]string
+	fn := func() (err error) {
+		texts, err = collections.GetTextsFromCollection(ctx, collectionName, namespace)
+		return err
+	}
+
+	// Call the host function
+	if ok := callHostFunction(ctx, fn, msgs); !ok {
 		return 0
 	}
 
+	// Write the results
 	offset, err := writeResult(ctx, mod, texts)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error writing result.")

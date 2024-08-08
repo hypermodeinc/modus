@@ -6,6 +6,7 @@ package wasmhost
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"hmruntime/functions"
@@ -83,7 +84,13 @@ func doCallFunction(ctx context.Context, plugin *plugins.Plugin, function *metad
 	result, err := plugin.Language.WasmAdapter().InvokeFunction(ctx, mod, function, parameters)
 	duration := time.Since(start)
 
-	if err != nil {
+	if errors.Is(err, context.Canceled) {
+		logger.Warn(ctx).
+			Str("function", function.Name).
+			Dur("duration_ms", duration).
+			Bool("user_visible", true).
+			Msg("Function execution was canceled.")
+	} else if err != nil {
 		err = functions.TransformError(err)
 		logger.Err(ctx, err).
 			Str("function", function.Name).

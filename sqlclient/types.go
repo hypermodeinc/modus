@@ -10,7 +10,7 @@ type dbResponse struct {
 	RowsAffected uint32
 }
 
-type hostQueryResponse struct {
+type HostQueryResponse struct {
 	Error        *string
 	ResultJson   *string
 	RowsAffected uint32
