@@ -14,12 +14,7 @@ import (
 )
 
 func init() {
-	addHostFunction(&hostFunctionDefinition{
-		name:     "log",
-		function: wasm.GoModuleFunc(hostLog),
-		params:   []wasm.ValueType{wasm.ValueTypeI32, wasm.ValueTypeI32},
-		results:  []wasm.ValueType{},
-	})
+	addHostFunction("log", hostLog, withI32Params(2))
 }
 
 func hostLog(ctx context.Context, mod wasm.Module, stack []uint64) {

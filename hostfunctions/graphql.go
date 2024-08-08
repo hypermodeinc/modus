@@ -15,12 +15,7 @@ import (
 )
 
 func init() {
-	addHostFunction(&hostFunctionDefinition{
-		name:     "executeGQL",
-		function: wasm.GoModuleFunc(hostExecuteGQL),
-		params:   []wasm.ValueType{wasm.ValueTypeI32, wasm.ValueTypeI32, wasm.ValueTypeI32},
-		results:  []wasm.ValueType{wasm.ValueTypeI32},
-	})
+	addHostFunction("executeGQL", hostExecuteGQL, withI32Params(3), withI32Result())
 }
 
 func hostExecuteGQL(ctx context.Context, mod wasm.Module, stack []uint64) {

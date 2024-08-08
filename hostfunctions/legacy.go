@@ -15,26 +15,9 @@ import (
 )
 
 func init() {
-	addHostFunction(&hostFunctionDefinition{
-		name:     "invokeClassifier",
-		function: wasm.GoModuleFunc(hostInvokeClassifier),
-		params:   []wasm.ValueType{wasm.ValueTypeI32, wasm.ValueTypeI32},
-		results:  []wasm.ValueType{wasm.ValueTypeI32},
-	})
-
-	addHostFunction(&hostFunctionDefinition{
-		name:     "computeEmbedding",
-		function: wasm.GoModuleFunc(hostComputeEmbedding),
-		params:   []wasm.ValueType{wasm.ValueTypeI32, wasm.ValueTypeI32},
-		results:  []wasm.ValueType{wasm.ValueTypeI32},
-	})
-
-	addHostFunction(&hostFunctionDefinition{
-		name:     "invokeTextGenerator",
-		function: wasm.GoModuleFunc(hostInvokeTextGenerator),
-		params:   []wasm.ValueType{wasm.ValueTypeI32, wasm.ValueTypeI32, wasm.ValueTypeI32, wasm.ValueTypeI32},
-		results:  []wasm.ValueType{wasm.ValueTypeI32},
-	})
+	addHostFunction("invokeClassifier", hostInvokeClassifier, withI32Params(2), withI32Result())
+	addHostFunction("computeEmbedding", hostComputeEmbedding, withI32Params(2), withI32Result())
+	addHostFunction("invokeTextGenerator", hostInvokeTextGenerator, withI32Params(4), withI32Result())
 }
 
 func hostInvokeClassifier(ctx context.Context, mod wasm.Module, stack []uint64) {

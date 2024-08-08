@@ -13,6 +13,7 @@ import (
 	"hmruntime/utils"
 	"hmruntime/wasmhost"
 
+	wasm "github.com/tetratelabs/wazero/api"
 	wasi "github.com/tetratelabs/wazero/imports/wasi_snapshot_preview1"
 )
 
@@ -20,8 +21,96 @@ const hypermodeHostModuleName string = "hypermode"
 
 var hostFunctions []*hostFunctionDefinition
 
-func addHostFunction(f *hostFunctionDefinition) {
+func addHostFunction(name string, function wasm.GoModuleFunc, options ...func(*hostFunctionDefinition)) {
+	f := &hostFunctionDefinition{name: name, function: function}
+	for _, option := range options {
+		option(f)
+	}
 	hostFunctions = append(hostFunctions, f)
+}
+
+func withParams(qty int, vt wasm.ValueType) func(*hostFunctionDefinition) {
+	return func(f *hostFunctionDefinition) {
+		a := make([]wasm.ValueType, qty)
+		for i := 0; i < qty; i++ {
+			a[i] = vt
+		}
+		f.params = append(f.params, a...)
+	}
+}
+
+func withResults(qty int, vt wasm.ValueType) func(*hostFunctionDefinition) {
+	return func(f *hostFunctionDefinition) {
+		a := make([]wasm.ValueType, qty)
+		for i := 0; i < qty; i++ {
+			a[i] = vt
+		}
+		f.results = append(f.results, a...)
+	}
+}
+
+func withI32Param() func(*hostFunctionDefinition) {
+	return withParams(1, wasm.ValueTypeI32)
+}
+
+func withI32Params(qty int) func(*hostFunctionDefinition) {
+	return withParams(qty, wasm.ValueTypeI32)
+}
+
+func withI64Param() func(*hostFunctionDefinition) {
+	return withParams(1, wasm.ValueTypeI64)
+}
+
+func withI64Params(qty int) func(*hostFunctionDefinition) {
+	return withParams(qty, wasm.ValueTypeI64)
+}
+
+func withF32Param() func(*hostFunctionDefinition) {
+	return withParams(1, wasm.ValueTypeF32)
+}
+
+func withF32Params(qty int) func(*hostFunctionDefinition) {
+	return withParams(qty, wasm.ValueTypeF32)
+}
+
+func withF64Param() func(*hostFunctionDefinition) {
+	return withParams(1, wasm.ValueTypeF64)
+}
+
+func withF64Params(qty int) func(*hostFunctionDefinition) {
+	return withParams(qty, wasm.ValueTypeF64)
+}
+
+func withI32Result() func(*hostFunctionDefinition) {
+	return withResults(1, wasm.ValueTypeI32)
+}
+
+func withI32Results(qty int) func(*hostFunctionDefinition) {
+	return withResults(qty, wasm.ValueTypeI32)
+}
+
+func withI64Result() func(*hostFunctionDefinition) {
+	return withResults(1, wasm.ValueTypeI64)
+}
+
+func withI64Results(qty int) func(*hostFunctionDefinition) {
+	return withResults(qty, wasm.ValueTypeI64)
+}
+
+func withF32Result() func(*hostFunctionDefinition) {
+	return withResults(1, wasm.ValueTypeF32)
+}
+
+func withF32Results(qty int) func(*hostFunctionDefinition) {
+	return withResults(qty, wasm.ValueTypeF32)
+}
+
+func withF64Result() func(*hostFunctionDefinition) {
+	return withResults(1, wasm.ValueTypeF64)
+}
+
+func withF64Results(qty int) func(*hostFunctionDefinition) {
+	return withResults(qty, wasm.ValueTypeF64)
 }
 
 func RegisterHostFunctions(ctx context.Context) {

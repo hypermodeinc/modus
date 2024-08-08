@@ -12,124 +12,26 @@ import (
 )
 
 func init() {
-	addHostFunction(&hostFunctionDefinition{
-		name:     "upsertToCollection", // deprecated
-		function: wasm.GoModuleFunc(hostUpsertToCollection),
-		params:   []wasm.ValueType{wasm.ValueTypeI32, wasm.ValueTypeI32, wasm.ValueTypeI32},
-		results:  []wasm.ValueType{wasm.ValueTypeI32},
-	})
+	// Current host functions for collections
+	addHostFunction("upsertToCollection_v2", hostUpsertToCollection, withI32Params(4), withI32Result())
+	addHostFunction("deleteFromCollection_v2", hostDeleteFromCollection, withI32Params(3), withI32Result())
+	addHostFunction("searchCollection_v2", hostSearchCollection, withI32Params(6), withI32Result())
+	addHostFunction("nnClassifyCollection_v2", hostNnClassifyCollection, withI32Params(4), withI32Result())
+	addHostFunction("recomputeSearchMethod_v2", hostRecomputeSearchMethod, withI32Params(5), withI32Result())
+	addHostFunction("computeDistance_v2", hostComputeDistance, withI32Params(5), withI32Result())
+	addHostFunction("getTextFromCollection_v2", hostGetTextFromCollection, withI32Params(3), withI32Result())
+	addHostFunction("getTextsFromCollection_v2", hostGetTextsFromCollection, withI32Params(2), withI32Result())
 
-	addHostFunction(&hostFunctionDefinition{
-		name:     "upsertToCollection_v2",
-		function: wasm.GoModuleFunc(hostUpsertToCollection),
-		params:   []wasm.ValueType{wasm.ValueTypeI32, wasm.ValueTypeI32, wasm.ValueTypeI32, wasm.ValueTypeI32},
-		results:  []wasm.ValueType{wasm.ValueTypeI32},
-	})
-
-	addHostFunction(&hostFunctionDefinition{
-		name:     "deleteFromCollection", // deprecated
-		function: wasm.GoModuleFunc(hostDeleteFromCollection),
-		params:   []wasm.ValueType{wasm.ValueTypeI32, wasm.ValueTypeI32},
-		results:  []wasm.ValueType{wasm.ValueTypeI32},
-	})
-
-	addHostFunction(&hostFunctionDefinition{
-		name:     "deleteFromCollection_v2",
-		function: wasm.GoModuleFunc(hostDeleteFromCollection),
-		params:   []wasm.ValueType{wasm.ValueTypeI32, wasm.ValueTypeI32, wasm.ValueTypeI32},
-		results:  []wasm.ValueType{wasm.ValueTypeI32},
-	})
-
-	addHostFunction(&hostFunctionDefinition{
-		name:     "searchCollection", // deprecated
-		function: wasm.GoModuleFunc(hostSearchCollection),
-		params:   []wasm.ValueType{wasm.ValueTypeI32, wasm.ValueTypeI32, wasm.ValueTypeI32, wasm.ValueTypeI32, wasm.ValueTypeI32},
-		results:  []wasm.ValueType{wasm.ValueTypeI32},
-	})
-
-	addHostFunction(&hostFunctionDefinition{
-		name:     "searchCollection_v2",
-		function: wasm.GoModuleFunc(hostSearchCollection),
-		params:   []wasm.ValueType{wasm.ValueTypeI32, wasm.ValueTypeI32, wasm.ValueTypeI32, wasm.ValueTypeI32, wasm.ValueTypeI32, wasm.ValueTypeI32},
-		results:  []wasm.ValueType{wasm.ValueTypeI32},
-	})
-
-	addHostFunction(&hostFunctionDefinition{
-		name:     "nnClassifyCollection", // deprecated
-		function: wasm.GoModuleFunc(hostNnClassifyCollection),
-		params:   []wasm.ValueType{wasm.ValueTypeI32, wasm.ValueTypeI32, wasm.ValueTypeI32},
-		results:  []wasm.ValueType{wasm.ValueTypeI32},
-	})
-
-	addHostFunction(&hostFunctionDefinition{
-		name:     "nnClassifyCollection_v2",
-		function: wasm.GoModuleFunc(hostNnClassifyCollection),
-		params:   []wasm.ValueType{wasm.ValueTypeI32, wasm.ValueTypeI32, wasm.ValueTypeI32, wasm.ValueTypeI32},
-		results:  []wasm.ValueType{wasm.ValueTypeI32},
-	})
-
-	addHostFunction(&hostFunctionDefinition{
-		name:     "recomputeSearchMethod", // deprecated
-		function: wasm.GoModuleFunc(hostRecomputeSearchMethod),
-		params:   []wasm.ValueType{wasm.ValueTypeI32, wasm.ValueTypeI32, wasm.ValueTypeI32, wasm.ValueTypeI32},
-		results:  []wasm.ValueType{wasm.ValueTypeI32},
-	})
-
-	addHostFunction(&hostFunctionDefinition{
-		name:     "recomputeSearchMethod_v2",
-		function: wasm.GoModuleFunc(hostRecomputeSearchMethod),
-		params:   []wasm.ValueType{wasm.ValueTypeI32, wasm.ValueTypeI32, wasm.ValueTypeI32, wasm.ValueTypeI32, wasm.ValueTypeI32},
-		results:  []wasm.ValueType{wasm.ValueTypeI32},
-	})
-
-	addHostFunction(&hostFunctionDefinition{
-		name:     "computeSimilarity", // deprecated
-		function: wasm.GoModuleFunc(hostComputeDistance),
-		params:   []wasm.ValueType{wasm.ValueTypeI32, wasm.ValueTypeI32, wasm.ValueTypeI32, wasm.ValueTypeI32},
-		results:  []wasm.ValueType{wasm.ValueTypeI32},
-	})
-
-	addHostFunction(&hostFunctionDefinition{
-		name:     "computeDistance", // deprecated
-		function: wasm.GoModuleFunc(hostComputeDistance),
-		params:   []wasm.ValueType{wasm.ValueTypeI32, wasm.ValueTypeI32, wasm.ValueTypeI32, wasm.ValueTypeI32},
-		results:  []wasm.ValueType{wasm.ValueTypeI32},
-	})
-
-	addHostFunction(&hostFunctionDefinition{
-		name:     "computeDistance_v2",
-		function: wasm.GoModuleFunc(hostComputeDistance),
-		params:   []wasm.ValueType{wasm.ValueTypeI32, wasm.ValueTypeI32, wasm.ValueTypeI32, wasm.ValueTypeI32, wasm.ValueTypeI32},
-		results:  []wasm.ValueType{wasm.ValueTypeI32},
-	})
-
-	addHostFunction(&hostFunctionDefinition{
-		name:     "getTextFromCollection", // deprecated
-		function: wasm.GoModuleFunc(hostGetTextFromCollection),
-		params:   []wasm.ValueType{wasm.ValueTypeI32, wasm.ValueTypeI32},
-		results:  []wasm.ValueType{wasm.ValueTypeI32},
-	})
-
-	addHostFunction(&hostFunctionDefinition{
-		name:     "getTextFromCollection_v2",
-		function: wasm.GoModuleFunc(hostGetTextFromCollection),
-		params:   []wasm.ValueType{wasm.ValueTypeI32, wasm.ValueTypeI32, wasm.ValueTypeI32},
-		results:  []wasm.ValueType{wasm.ValueTypeI32},
-	})
-
-	addHostFunction(&hostFunctionDefinition{
-		name:     "getTextsFromCollection", // deprecated
-		function: wasm.GoModuleFunc(hostGetTextsFromCollection),
-		params:   []wasm.ValueType{wasm.ValueTypeI32},
-		results:  []wasm.ValueType{wasm.ValueTypeI32},
-	})
-
-	addHostFunction(&hostFunctionDefinition{
-		name:     "getTextsFromCollection_v2",
-		function: wasm.GoModuleFunc(hostGetTextsFromCollection),
-		params:   []wasm.ValueType{wasm.ValueTypeI32, wasm.ValueTypeI32},
-		results:  []wasm.ValueType{wasm.ValueTypeI32},
-	})
+	// Support functions from older SDK versions
+	addHostFunction("upsertToCollection", hostUpsertToCollection, withI32Params(3), withI32Result())
+	addHostFunction("deleteFromCollection", hostDeleteFromCollection, withI32Params(2), withI32Result())
+	addHostFunction("searchCollection", hostSearchCollection, withI32Params(5), withI32Result())
+	addHostFunction("nnClassifyCollection", hostNnClassifyCollection, withI32Params(3), withI32Result())
+	addHostFunction("recomputeSearchMethod", hostRecomputeSearchMethod, withI32Params(4), withI32Result())
+	addHostFunction("computeSimilarity", hostComputeDistance, withI32Params(4), withI32Result())
+	addHostFunction("computeDistance", hostComputeDistance, withI32Params(4), withI32Result())
+	addHostFunction("getTextFromCollection", hostGetTextFromCollection, withI32Params(2), withI32Result())
+	addHostFunction("getTextsFromCollection", hostGetTextsFromCollection, withI32Param(), withI32Result())
 }
 
 func hostUpsertToCollection(ctx context.Context, mod wasm.Module, stack []uint64) {

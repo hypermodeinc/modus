@@ -15,19 +15,8 @@ import (
 )
 
 func init() {
-	addHostFunction(&hostFunctionDefinition{
-		name:     "lookupModel",
-		function: wasm.GoModuleFunc(hostLookupModel),
-		params:   []wasm.ValueType{wasm.ValueTypeI32},
-		results:  []wasm.ValueType{wasm.ValueTypeI32},
-	})
-
-	addHostFunction(&hostFunctionDefinition{
-		name:     "invokeModel",
-		function: wasm.GoModuleFunc(hostInvokeModel),
-		params:   []wasm.ValueType{wasm.ValueTypeI32, wasm.ValueTypeI32},
-		results:  []wasm.ValueType{wasm.ValueTypeI32},
-	})
+	addHostFunction("lookupModel", hostLookupModel, withI32Param(), withI32Result())
+	addHostFunction("invokeModel", hostInvokeModel, withI32Params(2), withI32Result())
 }
 
 func hostLookupModel(ctx context.Context, mod wasm.Module, stack []uint64) {

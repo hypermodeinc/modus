@@ -15,12 +15,7 @@ import (
 )
 
 func init() {
-	addHostFunction(&hostFunctionDefinition{
-		name:     "databaseQuery",
-		function: wasm.GoModuleFunc(hostDatabaseQuery),
-		params:   []wasm.ValueType{wasm.ValueTypeI32, wasm.ValueTypeI32, wasm.ValueTypeI32, wasm.ValueTypeI32},
-		results:  []wasm.ValueType{wasm.ValueTypeI32},
-	})
+	addHostFunction("databaseQuery", hostDatabaseQuery, withI32Params(4), withI32Result())
 }
 
 func hostDatabaseQuery(ctx context.Context, mod wasm.Module, stack []uint64) {

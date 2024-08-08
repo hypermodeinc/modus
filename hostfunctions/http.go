@@ -15,12 +15,7 @@ import (
 )
 
 func init() {
-	addHostFunction(&hostFunctionDefinition{
-		name:     "httpFetch",
-		function: wasm.GoModuleFunc(hostHttpFetch),
-		params:   []wasm.ValueType{wasm.ValueTypeI32},
-		results:  []wasm.ValueType{wasm.ValueTypeI32},
-	})
+	addHostFunction("httpFetch", hostHttpFetch, withI32Param(), withI32Result())
 }
 
 func hostHttpFetch(ctx context.Context, mod wasm.Module, stack []uint64) {
