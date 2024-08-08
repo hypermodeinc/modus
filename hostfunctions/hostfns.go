@@ -49,66 +49,82 @@ func withResults(qty int, vt wasm.ValueType) func(*hostFunctionDefinition) {
 	}
 }
 
+//nolint:unused
 func withI32Param() func(*hostFunctionDefinition) {
 	return withParams(1, wasm.ValueTypeI32)
 }
 
+//nolint:unused
 func withI32Params(qty int) func(*hostFunctionDefinition) {
 	return withParams(qty, wasm.ValueTypeI32)
 }
 
+//nolint:unused
 func withI64Param() func(*hostFunctionDefinition) {
 	return withParams(1, wasm.ValueTypeI64)
 }
 
+//nolint:unused
 func withI64Params(qty int) func(*hostFunctionDefinition) {
 	return withParams(qty, wasm.ValueTypeI64)
 }
 
+//nolint:unused
 func withF32Param() func(*hostFunctionDefinition) {
 	return withParams(1, wasm.ValueTypeF32)
 }
 
+//nolint:unused
 func withF32Params(qty int) func(*hostFunctionDefinition) {
 	return withParams(qty, wasm.ValueTypeF32)
 }
 
+//nolint:unused
 func withF64Param() func(*hostFunctionDefinition) {
 	return withParams(1, wasm.ValueTypeF64)
 }
 
+//nolint:unused
 func withF64Params(qty int) func(*hostFunctionDefinition) {
 	return withParams(qty, wasm.ValueTypeF64)
 }
 
+//nolint:unused
 func withI32Result() func(*hostFunctionDefinition) {
 	return withResults(1, wasm.ValueTypeI32)
 }
 
+//nolint:unused
 func withI32Results(qty int) func(*hostFunctionDefinition) {
 	return withResults(qty, wasm.ValueTypeI32)
 }
 
+//nolint:unused
 func withI64Result() func(*hostFunctionDefinition) {
 	return withResults(1, wasm.ValueTypeI64)
 }
 
+//nolint:unused
 func withI64Results(qty int) func(*hostFunctionDefinition) {
 	return withResults(qty, wasm.ValueTypeI64)
 }
 
+//nolint:unused
 func withF32Result() func(*hostFunctionDefinition) {
 	return withResults(1, wasm.ValueTypeF32)
 }
 
+//nolint:unused
 func withF32Results(qty int) func(*hostFunctionDefinition) {
 	return withResults(qty, wasm.ValueTypeF32)
 }
 
+//nolint:unused
 func withF64Result() func(*hostFunctionDefinition) {
 	return withResults(1, wasm.ValueTypeF64)
 }
 
+//nolint:unused
 func withF64Results(qty int) func(*hostFunctionDefinition) {
 	return withResults(qty, wasm.ValueTypeF64)
 }
