@@ -104,7 +104,7 @@ func (cf *CollectionFactory) createCollectionWithLock(
 	name string,
 	coll *Collection) (*Collection, error) {
 	if !cf.isCollectionNameAvailableWithLock(name) {
-		return nil, errors.New(fmt.Sprintf("collection with name %s already exists", name))
+		return nil, fmt.Errorf("collection with name %s already exists", name)
 	}
 	cf.collectionMap[name] = coll
 	return coll, nil
@@ -176,7 +176,7 @@ func (c *Collection) createNamespaceWithLock(
 	namespace string,
 	index interfaces.CollectionNamespace) (interfaces.CollectionNamespace, error) {
 	if !c.isNamespaceAvailableWithLock(namespace) {
-		return nil, errors.New(fmt.Sprintf("namespace with name %s already exists", namespace))
+		return nil, fmt.Errorf("namespace with name %s already exists", namespace)
 	}
 	c.collectionNamespaceMap[namespace] = index
 	return index, nil

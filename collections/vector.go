@@ -188,7 +188,12 @@ func processManifestCollections(ctx context.Context, man *manifest.HypermodeMani
 							Str("index_name", searchMethodName).
 							Msg("Failed to get vector index.")
 					} else {
-						setIndex(ctx, collNs, searchMethod, searchMethodName)
+						err := setIndex(ctx, collNs, searchMethod, searchMethodName)
+						if err != nil {
+							logger.Err(ctx, err).
+								Str("index_name", searchMethodName).
+								Msg("Failed to set vector index.")
+						}
 					}
 				} else if vi != nil && vi.Type != searchMethod.Index.Type {
 					if err := collNs.DeleteVectorIndex(ctx, searchMethodName); err != nil {
@@ -196,7 +201,12 @@ func processManifestCollections(ctx context.Context, man *manifest.HypermodeMani
 							Str("index_name", searchMethodName).
 							Msg("Failed to delete vector index.")
 					} else {
-						setIndex(ctx, collNs, searchMethod, searchMethodName)
+						err := setIndex(ctx, collNs, searchMethod, searchMethodName)
+						if err != nil {
+							logger.Err(ctx, err).
+								Str("index_name", searchMethodName).
+								Msg("Failed to set vector index.")
+						}
 					}
 				} else if vi.GetEmbedderName() != searchMethod.Embedder {
 					//TODO: figure out what to actually do if the embedder is different, for now just updating the name
@@ -236,15 +246,17 @@ func createIndexObject(searchMethod manifest.SearchMethodInfo, namespace, search
 	return vectorIndex, nil
 }
 
-func setIndex(ctx context.Context, collNs interfaces.CollectionNamespace, searchMethod manifest.SearchMethodInfo, searchMethodName string) {
+func setIndex(ctx context.Context, collNs interfaces.CollectionNamespace, searchMethod manifest.SearchMethodInfo, searchMethodName string) error {
 	vectorIndex, err := createIndexObject(searchMethod, collNs.GetNamespace(), searchMethodName)
+	if err != nil {
+		return err
+	}
 
 	err = collNs.SetVectorIndex(ctx, searchMethodName, vectorIndex)
 	if err != nil {
-		logger.Err(ctx, err).
-			Str("index_name", searchMethodName).
-			Msg("Failed to create vector index.")
+		return err
 	}
+	return nil
 }
 
 func deleteIndexesNotInManifest(ctx context.Context, man *manifest.HypermodeManifest) {
