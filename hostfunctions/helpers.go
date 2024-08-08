@@ -19,7 +19,7 @@ import (
 
 func readParams(ctx context.Context, mod wasm.Module, stack []uint64, params ...any) error {
 	if len(params) != len(stack) {
-		return fmt.Errorf("expected %d arguments, got %d", len(params), len(stack))
+		return fmt.Errorf("expected a stack of size %d, but got %d", len(params), len(stack))
 	}
 
 	adapter, err := getWasmAdapter(ctx)
@@ -32,7 +32,6 @@ func readParams(ctx context.Context, mod wasm.Module, stack []uint64, params ...
 		if err := adapter.DecodeValue(ctx, mod, stack[i], p); err != nil {
 			errs = append(errs, err)
 		}
-		stack[i] = 0 // clear the value from the stack
 	}
 
 	if len(errs) > 0 {
@@ -43,8 +42,8 @@ func readParams(ctx context.Context, mod wasm.Module, stack []uint64, params ...
 }
 
 func writeResults(ctx context.Context, mod wasm.Module, stack []uint64, results ...any) error {
-	if len(results) != len(stack) {
-		return fmt.Errorf("expected %d results, got %d", len(results), len(stack))
+	if len(results) > len(stack) {
+		return fmt.Errorf("not enough stack space to write %d results", len(results))
 	}
 
 	adapter, err := getWasmAdapter(ctx)
@@ -56,9 +55,16 @@ func writeResults(ctx context.Context, mod wasm.Module, stack []uint64, results 
 	for i, r := range results {
 		val, err := adapter.EncodeValue(ctx, mod, r)
 		if err != nil {
+			stack[i] = 0
 			errs = append(errs, err)
+		} else {
+			stack[i] = val
 		}
-		stack[i] = val
+	}
+
+	// clear the rest of the stack
+	for i := len(results); i < len(stack); i++ {
+		stack[i] = 0
 	}
 
 	if len(errs) > 0 {
