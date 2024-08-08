@@ -56,13 +56,20 @@ func instantiateHostFunctions(ctx context.Context) {
 	b.NewFunctionBuilder().WithFunc(hostUpsertToCollection).Export("upsertToCollection")
 	b.NewFunctionBuilder().WithFunc(hostUpsertToCollectionV2).Export("upsertToCollection_v2")
 	b.NewFunctionBuilder().WithFunc(hostDeleteFromCollection).Export("deleteFromCollection")
+	b.NewFunctionBuilder().WithFunc(hostDeleteFromCollectionV2).Export("deleteFromCollection_v2")
 	b.NewFunctionBuilder().WithFunc(hostSearchCollection).Export("searchCollection")
+	b.NewFunctionBuilder().WithFunc(hostSearchCollectionV2).Export("searchCollection_v2")
 	b.NewFunctionBuilder().WithFunc(hostNnClassifyCollection).Export("nnClassifyCollection")
+	b.NewFunctionBuilder().WithFunc(hostNnClassifyCollectionV2).Export("nnClassifyCollection_v2")
 	b.NewFunctionBuilder().WithFunc(hostRecomputeSearchMethod).Export("recomputeSearchMethod")
+	b.NewFunctionBuilder().WithFunc(hostRecomputeSearchMethodV2).Export("recomputeSearchMethod_v2")
 	b.NewFunctionBuilder().WithFunc(hostComputeDistance).Export("computeSimilarity") // Deprecated
 	b.NewFunctionBuilder().WithFunc(hostComputeDistance).Export("computeDistance")
+	b.NewFunctionBuilder().WithFunc(hostComputeDistanceV2).Export("computeDistance_v2")
 	b.NewFunctionBuilder().WithFunc(hostGetTextFromCollection).Export("getTextFromCollection")
+	b.NewFunctionBuilder().WithFunc(hostGetTextFromCollectionV2).Export("getTextFromCollection_v2")
 	b.NewFunctionBuilder().WithFunc(hostGetTextsFromCollection).Export("getTextsFromCollection")
+	b.NewFunctionBuilder().WithFunc(hostGetTextsFromCollectionV2).Export("getTextsFromCollection_v2")
 
 	if _, err := b.Instantiate(ctx); err != nil {
 		logger.Fatal(ctx).Err(err).

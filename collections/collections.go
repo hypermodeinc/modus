@@ -7,6 +7,8 @@ import (
 	"math"
 	"sort"
 
+	"hmruntime/collections/in_mem"
+	"hmruntime/collections/index"
 	collection_utils "hmruntime/collections/utils"
 	"hmruntime/functions"
 	"hmruntime/manifestdata"
@@ -17,12 +19,21 @@ import (
 	wasm "github.com/tetratelabs/wazero/api"
 )
 
-func UpsertToCollection(ctx context.Context, collectionName string, keys []string, texts []string, labels [][]string) (*collectionMutationResult, error) {
+func UpsertToCollection(ctx context.Context, collectionName, namespace string, keys, texts []string, labels [][]string) (*collectionMutationResult, error) {
 
 	// Get the collectionName data from the manifest
 	collectionData := manifestdata.GetManifest().Collections[collectionName]
 
-	collection, err := GlobalCollectionFactory.Find(ctx, collectionName)
+	collection, err := GlobalNamespaceManager.FindCollection(ctx, collectionName)
+	if err != nil {
+		return nil, err
+	}
+
+	if namespace == "" {
+		namespace = in_mem.DefaultNamespace
+	}
+
+	collNs, err := collection.FindOrCreateNamespace(ctx, namespace, in_mem.NewCollectionNamespace(collectionName, namespace))
 	if err != nil {
 		return nil, err
 	}
@@ -38,15 +49,24 @@ func UpsertToCollection(ctx context.Context, collectionName string, keys []strin
 		return nil, fmt.Errorf("mismatch in number of labels and texts: %d != %d", len(labels), len(texts))
 	}
 
-	err = collection.InsertTexts(ctx, keys, texts, labels)
+	err = collNs.InsertTexts(ctx, keys, texts, labels)
 	if err != nil {
 		return nil, err
 	}
 
 	// compute embeddings for each search method, and insert into vector index
 	for searchMethodName, searchMethod := range collectionData.SearchMethods {
-		vectorIndex, err := collection.GetVectorIndex(ctx, searchMethodName)
-		if err != nil {
+		vectorIndex, err := collNs.GetVectorIndex(ctx, searchMethodName)
+		if err == index.ErrVectorIndexNotFound {
+			vectorIndex, err = createIndexObject(searchMethod, namespace, searchMethodName)
+			if err != nil {
+				return nil, err
+			}
+			err = collNs.SetVectorIndex(ctx, searchMethodName, vectorIndex)
+			if err != nil {
+				return nil, err
+			}
+		} else if err != nil {
 			return nil, err
 		}
 
@@ -75,7 +95,7 @@ func UpsertToCollection(ctx context.Context, collectionName string, keys []strin
 		for i := range textVecs {
 			key := keys[i]
 
-			id, err := collection.GetExternalId(ctx, key)
+			id, err := collNs.GetExternalId(ctx, key)
 			if err != nil {
 				return nil, err
 			}
@@ -134,22 +154,32 @@ func validateEmbedder(ctx context.Context, embedder string) error {
 	return nil
 }
 
-func DeleteFromCollection(ctx context.Context, collectionName string, key string) (*collectionMutationResult, error) {
-	collection, err := GlobalCollectionFactory.Find(ctx, collectionName)
+func DeleteFromCollection(ctx context.Context, collectionName, namespace, key string) (*collectionMutationResult, error) {
+	collection, err := GlobalNamespaceManager.FindCollection(ctx, collectionName)
 	if err != nil {
 		return nil, err
 	}
-	textId, err := collection.GetExternalId(ctx, key)
+
+	if namespace == "" {
+		namespace = in_mem.DefaultNamespace
+	}
+
+	collNs, err := collection.FindNamespace(ctx, namespace)
 	if err != nil {
 		return nil, err
 	}
-	for _, vectorIndex := range collection.GetVectorIndexMap() {
+
+	textId, err := collNs.GetExternalId(ctx, key)
+	if err != nil {
+		return nil, err
+	}
+	for _, vectorIndex := range collNs.GetVectorIndexMap() {
 		err = vectorIndex.DeleteVector(ctx, textId, key)
 		if err != nil {
 			return nil, err
 		}
 	}
-	err = collection.DeleteText(ctx, key)
+	err = collNs.DeleteText(ctx, key)
 	if err != nil {
 		return nil, err
 	}
@@ -189,15 +219,23 @@ func getEmbedder(ctx context.Context, collectionName string, searchMethod string
 	return embedder, nil
 }
 
-func SearchCollection(ctx context.Context, collectionName string, searchMethod string,
-	text string, limit int32, returnText bool) (*collectionSearchResult, error) {
+func SearchCollection(ctx context.Context, collectionName, namespace, searchMethod, text string, limit int32, returnText bool) (*collectionSearchResult, error) {
 
-	collection, err := GlobalCollectionFactory.Find(ctx, collectionName)
+	collection, err := GlobalNamespaceManager.FindCollection(ctx, collectionName)
 	if err != nil {
 		return nil, err
 	}
 
-	vectorIndex, err := collection.GetVectorIndex(ctx, searchMethod)
+	if namespace == "" {
+		namespace = in_mem.DefaultNamespace
+	}
+
+	collNs, err := collection.FindNamespace(ctx, namespace)
+	if err != nil {
+		return nil, err
+	}
+
+	vectorIndex, err := collNs.GetVectorIndex(ctx, searchMethod)
 	if err != nil {
 		return nil, err
 	}
@@ -239,7 +277,7 @@ func SearchCollection(ctx context.Context, collectionName string, searchMethod s
 
 	for i, object := range objects {
 		if returnText {
-			text, err := collection.GetText(ctx, object.GetIndex())
+			text, err := collNs.GetText(ctx, object.GetIndex())
 			if err != nil {
 				return nil, err
 			}
@@ -261,14 +299,23 @@ func SearchCollection(ctx context.Context, collectionName string, searchMethod s
 	return output, nil
 }
 
-func NnClassify(ctx context.Context, collectionName string, searchMethod string, text string) (*collectionClassificationResult, error) {
+func NnClassify(ctx context.Context, collectionName, namespace, searchMethod, text string) (*collectionClassificationResult, error) {
 
-	collection, err := GlobalCollectionFactory.Find(ctx, collectionName)
+	collection, err := GlobalNamespaceManager.FindCollection(ctx, collectionName)
 	if err != nil {
 		return nil, err
 	}
 
-	vectorIndex, err := collection.GetVectorIndex(ctx, searchMethod)
+	if namespace == "" {
+		namespace = in_mem.DefaultNamespace
+	}
+
+	collNs, err := collection.FindNamespace(ctx, namespace)
+	if err != nil {
+		return nil, err
+	}
+
+	vectorIndex, err := collNs.GetVectorIndex(ctx, searchMethod)
 	if err != nil {
 		return nil, err
 	}
@@ -296,7 +343,7 @@ func NnClassify(ctx context.Context, collectionName string, searchMethod string,
 		return nil, fmt.Errorf("no embeddings generated by embedder %s", embedder)
 	}
 
-	lenTexts, err := collection.Len(ctx)
+	lenTexts, err := collNs.Len(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -337,7 +384,7 @@ func NnClassify(ctx context.Context, collectionName string, searchMethod string,
 
 	for _, nn := range nns {
 		if math.Abs(nn.GetValue()-mean) <= 2*stdDev {
-			labels, err := collection.GetLabels(ctx, nn.GetIndex())
+			labels, err := collNs.GetLabels(ctx, nn.GetIndex())
 			if err != nil {
 				return nil, err
 			}
@@ -374,14 +421,23 @@ func NnClassify(ctx context.Context, collectionName string, searchMethod string,
 	return res, nil
 }
 
-func ComputeDistance(ctx context.Context, collectionName string, searchMethod string, id1 string, id2 string) (*collectionSearchResultObject, error) {
+func ComputeDistance(ctx context.Context, collectionName, namespace, searchMethod, id1, id2 string) (*collectionSearchResultObject, error) {
 
-	collection, err := GlobalCollectionFactory.Find(ctx, collectionName)
+	collection, err := GlobalNamespaceManager.FindCollection(ctx, collectionName)
 	if err != nil {
 		return nil, err
 	}
 
-	vectorIndex, err := collection.GetVectorIndex(ctx, searchMethod)
+	if namespace == "" {
+		namespace = in_mem.DefaultNamespace
+	}
+
+	collNs, err := collection.FindNamespace(ctx, namespace)
+	if err != nil {
+		return nil, err
+	}
+
+	vectorIndex, err := collNs.GetVectorIndex(ctx, searchMethod)
 	if err != nil {
 		return nil, err
 	}
@@ -409,14 +465,23 @@ func ComputeDistance(ctx context.Context, collectionName string, searchMethod st
 	}, nil
 }
 
-func RecomputeSearchMethod(ctx context.Context, mod wasm.Module, collectionName string, searchMethod string) (*searchMethodMutationResult, error) {
+func RecomputeSearchMethod(ctx context.Context, mod wasm.Module, collectionName, namespace, searchMethod string) (*searchMethodMutationResult, error) {
 
-	collection, err := GlobalCollectionFactory.Find(ctx, collectionName)
+	collection, err := GlobalNamespaceManager.FindCollection(ctx, collectionName)
 	if err != nil {
 		return nil, err
 	}
 
-	vectorIndex, err := collection.GetVectorIndex(ctx, searchMethod)
+	if namespace == "" {
+		namespace = in_mem.DefaultNamespace
+	}
+
+	collNs, err := collection.FindNamespace(ctx, namespace)
+	if err != nil {
+		return nil, err
+	}
+
+	vectorIndex, err := collNs.GetVectorIndex(ctx, searchMethod)
 	if err != nil {
 		return nil, err
 	}
@@ -426,7 +491,7 @@ func RecomputeSearchMethod(ctx context.Context, mod wasm.Module, collectionName 
 		return nil, err
 	}
 
-	err = ProcessTextMapWithModule(ctx, mod, collection, embedder, vectorIndex)
+	err = ProcessTextMapWithModule(ctx, mod, collNs, embedder, vectorIndex)
 	if err != nil {
 		return nil, err
 	}
@@ -440,13 +505,18 @@ func RecomputeSearchMethod(ctx context.Context, mod wasm.Module, collectionName 
 
 }
 
-func GetTextFromCollection(ctx context.Context, collectionName string, key string) (string, error) {
-	collection, err := GlobalCollectionFactory.Find(ctx, collectionName)
+func GetTextFromCollection(ctx context.Context, collectionName, namespace, key string) (string, error) {
+	collection, err := GlobalNamespaceManager.FindCollection(ctx, collectionName)
 	if err != nil {
 		return "", err
 	}
 
-	text, err := collection.GetText(ctx, key)
+	collNs, err := collection.FindNamespace(ctx, namespace)
+	if err != nil {
+		return "", err
+	}
+
+	text, err := collNs.GetText(ctx, key)
 	if err != nil {
 		return "", err
 	}
@@ -454,14 +524,23 @@ func GetTextFromCollection(ctx context.Context, collectionName string, key strin
 	return text, nil
 }
 
-func GetTextsFromCollection(ctx context.Context, collectionName string) (map[string]string, error) {
+func GetTextsFromCollection(ctx context.Context, collectionName, namespace string) (map[string]string, error) {
 
-	collection, err := GlobalCollectionFactory.Find(ctx, collectionName)
+	collection, err := GlobalNamespaceManager.FindCollection(ctx, collectionName)
 	if err != nil {
 		return nil, err
 	}
 
-	textMap, err := collection.GetTextMap(ctx)
+	if namespace == "" {
+		namespace = in_mem.DefaultNamespace
+	}
+
+	collNs, err := collection.FindNamespace(ctx, namespace)
+	if err != nil {
+		return nil, err
+	}
+
+	textMap, err := collNs.GetTextMap(ctx)
 	if err != nil {
 		return nil, err
 	}

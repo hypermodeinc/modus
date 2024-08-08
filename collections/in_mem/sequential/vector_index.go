@@ -17,15 +17,17 @@ const (
 type SequentialVectorIndex struct {
 	mu                sync.RWMutex
 	searchMethodName  string
+	namespace         string
 	embedderName      string
 	lastInsertedID    int64
 	lastIndexedTextID int64
 	VectorMap         map[string][]float32 // key: vector
 }
 
-func NewSequentialVectorIndex(collection, searchMethod, embedder string) *SequentialVectorIndex {
+func NewSequentialVectorIndex(searchMethod, namespace, embedder string) *SequentialVectorIndex {
 	return &SequentialVectorIndex{
 		searchMethodName: searchMethod,
+		namespace:        namespace,
 		embedderName:     embedder,
 		VectorMap:        make(map[string][]float32),
 	}
@@ -33,6 +35,10 @@ func NewSequentialVectorIndex(collection, searchMethod, embedder string) *Sequen
 
 func (ims *SequentialVectorIndex) GetSearchMethodName() string {
 	return ims.searchMethodName
+}
+
+func (ims *SequentialVectorIndex) GetNamespace() string {
+	return ims.namespace
 }
 
 func (ims *SequentialVectorIndex) SetEmbedderName(embedderName string) error {
@@ -58,6 +64,9 @@ func (ims *SequentialVectorIndex) Search(ctx context.Context, query []float32, m
 	// calculate cosine similarity and return top maxResults results
 	ims.mu.RLock()
 	defer ims.mu.RUnlock()
+	if maxResults <= 0 {
+		maxResults = 1
+	}
 	var results utils.MaxTupleHeap
 	heap.Init(&results)
 	for key, vector := range ims.VectorMap {
@@ -102,7 +111,7 @@ func (ims *SequentialVectorIndex) InsertVectors(ctx context.Context, textIds []i
 	if len(textIds) != len(vecs) {
 		return fmt.Errorf("textIds and vecs must have the same length")
 	}
-	vectorIds, keys, err := db.WriteCollectionVectors(ctx, ims.searchMethodName, textIds, vecs)
+	vectorIds, keys, err := db.WriteCollectionVectors(ctx, ims.searchMethodName, ims.namespace, textIds, vecs)
 	if err != nil {
 		return err
 	}
@@ -113,7 +122,7 @@ func (ims *SequentialVectorIndex) InsertVectors(ctx context.Context, textIds []i
 func (ims *SequentialVectorIndex) InsertVector(ctx context.Context, textId int64, vec []float32) error {
 
 	// Write vector to database, this textId is now the last inserted textId
-	vectorId, key, err := db.WriteCollectionVector(ctx, ims.searchMethodName, textId, vec)
+	vectorId, key, err := db.WriteCollectionVector(ctx, ims.searchMethodName, ims.namespace, textId, vec)
 	if err != nil {
 		return err
 	}
@@ -145,7 +154,7 @@ func (ims *SequentialVectorIndex) InsertVectorToMemory(ctx context.Context, text
 func (ims *SequentialVectorIndex) DeleteVector(ctx context.Context, textId int64, key string) error {
 	ims.mu.Lock()
 	defer ims.mu.Unlock()
-	err := db.DeleteCollectionVector(ctx, ims.searchMethodName, textId)
+	err := db.DeleteCollectionVector(ctx, ims.searchMethodName, ims.namespace, textId)
 	if err != nil {
 		return err
 	}
