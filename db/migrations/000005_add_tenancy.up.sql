@@ -1,0 +1,5 @@
+BEGIN;
+
+ALTER TABLE collection_texts ADD COLUMN namespace TEXT DEFAULT '' NOT NULL;
+
+COMMIT;

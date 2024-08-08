@@ -10,9 +10,12 @@ import (
 	"sync"
 )
 
-type InMemCollection struct {
+const DefaultNamespace = ""
+
+type InMemCollectionNamespace struct {
 	mu             sync.RWMutex
 	collectionName string
+	namespace      string
 	lastInsertedID int64
 	TextMap        map[string]string // key: text
 	LabelsMap      map[string][]string
@@ -20,9 +23,10 @@ type InMemCollection struct {
 	VectorIndexMap map[string]*interfaces.VectorIndexWrapper // searchMethod: vectorIndex
 }
 
-func NewCollection(name string) *InMemCollection {
-	return &InMemCollection{
+func NewCollectionNamespace(name, namespace string) *InMemCollectionNamespace {
+	return &InMemCollectionNamespace{
 		collectionName: name,
+		namespace:      namespace,
 		TextMap:        map[string]string{},
 		LabelsMap:      map[string][]string{},
 		IdMap:          map[string]int64{},
@@ -30,17 +34,21 @@ func NewCollection(name string) *InMemCollection {
 	}
 }
 
-func (ti *InMemCollection) GetCollectionName() string {
+func (ti *InMemCollectionNamespace) GetCollectionName() string {
 	return ti.collectionName
 }
 
-func (ti *InMemCollection) GetVectorIndexMap() map[string]*interfaces.VectorIndexWrapper {
+func (ti *InMemCollectionNamespace) GetNamespace() string {
+	return ti.namespace
+}
+
+func (ti *InMemCollectionNamespace) GetVectorIndexMap() map[string]*interfaces.VectorIndexWrapper {
 	ti.mu.RLock()
 	defer ti.mu.RUnlock()
 	return ti.VectorIndexMap
 }
 
-func (ti *InMemCollection) GetVectorIndex(ctx context.Context, searchMethod string) (*interfaces.VectorIndexWrapper, error) {
+func (ti *InMemCollectionNamespace) GetVectorIndex(ctx context.Context, searchMethod string) (*interfaces.VectorIndexWrapper, error) {
 	ti.mu.RLock()
 	defer ti.mu.RUnlock()
 	if ind, ok := ti.VectorIndexMap[searchMethod]; !ok {
@@ -50,7 +58,7 @@ func (ti *InMemCollection) GetVectorIndex(ctx context.Context, searchMethod stri
 	}
 }
 
-func (ti *InMemCollection) SetVectorIndex(ctx context.Context, searchMethod string, vectorIndex *interfaces.VectorIndexWrapper) error {
+func (ti *InMemCollectionNamespace) SetVectorIndex(ctx context.Context, searchMethod string, vectorIndex *interfaces.VectorIndexWrapper) error {
 	ti.mu.Lock()
 	defer ti.mu.Unlock()
 	if ti.VectorIndexMap == nil {
@@ -63,14 +71,14 @@ func (ti *InMemCollection) SetVectorIndex(ctx context.Context, searchMethod stri
 	return nil
 }
 
-func (ti *InMemCollection) DeleteVectorIndex(ctx context.Context, searchMethod string) error {
+func (ti *InMemCollectionNamespace) DeleteVectorIndex(ctx context.Context, searchMethod string) error {
 	ti.mu.Lock()
 	defer ti.mu.Unlock()
 	delete(ti.VectorIndexMap, searchMethod)
 	return nil
 }
 
-func (ti *InMemCollection) InsertTexts(ctx context.Context, keys []string, texts []string, labelsArr [][]string) error {
+func (ti *InMemCollectionNamespace) InsertTexts(ctx context.Context, keys []string, texts []string, labelsArr [][]string) error {
 	if len(keys) != len(texts) {
 		return fmt.Errorf("keys and texts must have the same length")
 	}
@@ -79,7 +87,7 @@ func (ti *InMemCollection) InsertTexts(ctx context.Context, keys []string, texts
 		return fmt.Errorf("labels must have the same length as keys or be empty")
 	}
 
-	ids, err := db.WriteCollectionTexts(ctx, ti.collectionName, keys, texts, labelsArr)
+	ids, err := db.WriteCollectionTexts(ctx, ti.collectionName, ti.namespace, keys, texts, labelsArr)
 	if err != nil {
 		return err
 	}
@@ -87,8 +95,8 @@ func (ti *InMemCollection) InsertTexts(ctx context.Context, keys []string, texts
 	return ti.InsertTextsToMemory(ctx, ids, keys, texts, labelsArr)
 }
 
-func (ti *InMemCollection) InsertText(ctx context.Context, key string, text string, labels []string) error {
-	id, err := db.WriteCollectionText(ctx, ti.collectionName, key, text, labels)
+func (ti *InMemCollectionNamespace) InsertText(ctx context.Context, key string, text string, labels []string) error {
+	id, err := db.WriteCollectionText(ctx, ti.collectionName, ti.namespace, key, text, labels)
 	if err != nil {
 		return err
 	}
@@ -96,7 +104,7 @@ func (ti *InMemCollection) InsertText(ctx context.Context, key string, text stri
 	return ti.InsertTextToMemory(ctx, id, key, text, labels)
 }
 
-func (ti *InMemCollection) InsertTextsToMemory(ctx context.Context, ids []int64, keys []string, texts []string, labelsArr [][]string) error {
+func (ti *InMemCollectionNamespace) InsertTextsToMemory(ctx context.Context, ids []int64, keys []string, texts []string, labelsArr [][]string) error {
 
 	if len(labelsArr) != 0 && len(labelsArr) != len(keys) {
 		return fmt.Errorf("labels must have the same length as keys or be empty")
@@ -118,7 +126,7 @@ func (ti *InMemCollection) InsertTextsToMemory(ctx context.Context, ids []int64,
 	return nil
 }
 
-func (ti *InMemCollection) InsertTextToMemory(ctx context.Context, id int64, key string, text string, labels []string) error {
+func (ti *InMemCollectionNamespace) InsertTextToMemory(ctx context.Context, id int64, key string, text string, labels []string) error {
 	ti.mu.Lock()
 	defer ti.mu.Unlock()
 	ti.TextMap[key] = text
@@ -130,10 +138,10 @@ func (ti *InMemCollection) InsertTextToMemory(ctx context.Context, id int64, key
 	return nil
 }
 
-func (ti *InMemCollection) DeleteText(ctx context.Context, key string) error {
+func (ti *InMemCollectionNamespace) DeleteText(ctx context.Context, key string) error {
 	ti.mu.Lock()
 	defer ti.mu.Unlock()
-	err := db.DeleteCollectionText(ctx, ti.collectionName, key)
+	err := db.DeleteCollectionText(ctx, ti.collectionName, ti.namespace, key)
 	if err != nil {
 		return err
 	}
@@ -141,43 +149,43 @@ func (ti *InMemCollection) DeleteText(ctx context.Context, key string) error {
 	return nil
 }
 
-func (ti *InMemCollection) GetText(ctx context.Context, key string) (string, error) {
+func (ti *InMemCollectionNamespace) GetText(ctx context.Context, key string) (string, error) {
 	ti.mu.RLock()
 	defer ti.mu.RUnlock()
 	return ti.TextMap[key], nil
 }
 
-func (ti *InMemCollection) GetTextMap(ctx context.Context) (map[string]string, error) {
+func (ti *InMemCollectionNamespace) GetTextMap(ctx context.Context) (map[string]string, error) {
 	ti.mu.RLock()
 	defer ti.mu.RUnlock()
 	return ti.TextMap, nil
 }
 
-func (ti *InMemCollection) GetLabels(ctx context.Context, key string) ([]string, error) {
+func (ti *InMemCollectionNamespace) GetLabels(ctx context.Context, key string) ([]string, error) {
 	ti.mu.RLock()
 	defer ti.mu.RUnlock()
 	return ti.LabelsMap[key], nil
 }
 
-func (ti *InMemCollection) GetLabelsMap(ctx context.Context) (map[string][]string, error) {
+func (ti *InMemCollectionNamespace) GetLabelsMap(ctx context.Context) (map[string][]string, error) {
 	ti.mu.RLock()
 	defer ti.mu.RUnlock()
 	return ti.LabelsMap, nil
 }
 
-func (ti *InMemCollection) Len(ctx context.Context) (int, error) {
+func (ti *InMemCollectionNamespace) Len(ctx context.Context) (int, error) {
 	ti.mu.RLock()
 	defer ti.mu.RUnlock()
 	return len(ti.TextMap), nil
 }
 
-func (ti *InMemCollection) GetExternalId(ctx context.Context, key string) (int64, error) {
+func (ti *InMemCollectionNamespace) GetExternalId(ctx context.Context, key string) (int64, error) {
 	ti.mu.RLock()
 	defer ti.mu.RUnlock()
 	return ti.IdMap[key], nil
 }
 
-func (ti *InMemCollection) GetCheckpointId(ctx context.Context) (int64, error) {
+func (ti *InMemCollectionNamespace) GetCheckpointId(ctx context.Context) (int64, error) {
 	ti.mu.RLock()
 	defer ti.mu.RUnlock()
 	return ti.lastInsertedID, nil

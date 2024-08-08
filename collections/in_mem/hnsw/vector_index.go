@@ -25,7 +25,7 @@ type HnswVectorIndex struct {
 	HnswIndex         *hnsw.Graph[string]
 }
 
-func NewHnswVectorIndex(collection, searchMethod, embedder string) *HnswVectorIndex {
+func NewHnswVectorIndex(searchMethod, embedder string) *HnswVectorIndex {
 	return &HnswVectorIndex{
 		searchMethodName: searchMethod,
 		embedderName:     embedder,

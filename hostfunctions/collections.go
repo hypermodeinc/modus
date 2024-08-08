@@ -11,17 +11,18 @@ import (
 	wasm "github.com/tetratelabs/wazero/api"
 )
 
-func hostUpsertToCollection(ctx context.Context, mod wasm.Module, pCollectionName, pKey, pText uint32) uint32 {
-	return hostUpsertToCollectionV2(ctx, mod, pCollectionName, pKey, pText, 0)
+func hostUpsertToCollection(ctx context.Context, mod wasm.Module, pCollectionName uint32, pKey uint32, pText uint32) uint32 {
+	return hostUpsertToCollectionV2(ctx, mod, pCollectionName, 0, pKey, pText, 0)
 }
 
-func hostUpsertToCollectionV2(ctx context.Context, mod wasm.Module, pCollectionName, pKeys, pTexts, pLabels uint32) uint32 {
-
-	// Read input parameters
+func hostUpsertToCollectionV2(ctx context.Context, mod wasm.Module, pCollectionName uint32, pNamespace uint32, pKeys uint32, pTexts uint32, pLabels uint32) uint32 {
 	var collectionName string
-	var keys, texts []string
+	var namespace string
+	var keys []string
+	var texts []string
 	var labels [][]string
-	err := readParams(ctx, mod, param{pCollectionName, &collectionName}, param{pKeys, &keys}, param{pTexts, &texts}, param{pLabels, &labels})
+
+	err := readParams(ctx, mod, param{pCollectionName, &collectionName}, param{pNamespace, &namespace}, param{pKeys, &keys}, param{pTexts, &texts}, param{pLabels, &labels})
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error reading input parameters.")
 		return 0
@@ -43,7 +44,7 @@ func hostUpsertToCollectionV2(ctx context.Context, mod wasm.Module, pCollectionN
 	// Prepare the host function
 	var mutationRes *collections.CollectionMutationResult
 	fn := func() (err error) {
-		mutationRes, err = collections.UpsertToCollection(ctx, collectionName, keys, texts, labels)
+		mutationRes, err = collections.UpsertToCollection(ctx, collectionName, namespace, keys, texts, labels)
 		return err
 	}
 
@@ -62,11 +63,16 @@ func hostUpsertToCollectionV2(ctx context.Context, mod wasm.Module, pCollectionN
 	return offset
 }
 
-func hostDeleteFromCollection(ctx context.Context, mod wasm.Module, pCollectionName, pKey uint32) uint32 {
+func hostDeleteFromCollection(ctx context.Context, mod wasm.Module, pCollectionName uint32, pKey uint32) uint32 {
+	return hostDeleteFromCollectionV2(ctx, mod, pCollectionName, 0, pKey)
+}
 
-	// Read input parameters
-	var collectionName, key string
-	err := readParams(ctx, mod, param{pCollectionName, &collectionName}, param{pKey, &key})
+func hostDeleteFromCollectionV2(ctx context.Context, mod wasm.Module, pCollectionName uint32, pNamespace uint32, pKey uint32) uint32 {
+	var collectionName string
+	var namespace string
+	var key string
+
+	err := readParams(ctx, mod, param{pCollectionName, &collectionName}, param{pNamespace, &namespace}, param{pKey, &key})
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error reading input parameters.")
 		return 0
@@ -88,7 +94,7 @@ func hostDeleteFromCollection(ctx context.Context, mod wasm.Module, pCollectionN
 	// Prepare the host function
 	var mutationRes *collections.CollectionMutationResult
 	fn := func() (err error) {
-		mutationRes, err = collections.DeleteFromCollection(ctx, collectionName, key)
+		mutationRes, err = collections.DeleteFromCollection(ctx, collectionName, namespace, key)
 		return err
 	}
 
@@ -107,13 +113,21 @@ func hostDeleteFromCollection(ctx context.Context, mod wasm.Module, pCollectionN
 	return offset
 }
 
-func hostSearchCollection(ctx context.Context, mod wasm.Module, pCollectionName, pSearchMethod, pText, pLimit, pReturnText uint32) uint32 {
+func hostSearchCollection(ctx context.Context, mod wasm.Module, pCollectionName uint32, pSearchMethod uint32,
+	pText uint32, pLimit uint32, pReturnText uint32) uint32 {
+	return hostSearchCollectionV2(ctx, mod, pCollectionName, 0, pSearchMethod, pText, pLimit, pReturnText)
+}
 
-	// Read input parameters
-	var collectionName, searchMethod, text string
+func hostSearchCollectionV2(ctx context.Context, mod wasm.Module, pCollectionName uint32, pNamespace uint32, pSearchMethod uint32,
+	pText uint32, pLimit uint32, pReturnText uint32) uint32 {
+	var collectionName string
+	var namespace string
+	var searchMethod string
+	var text string
 	var limit int32
 	var returnText bool
-	err := readParams(ctx, mod, param{pCollectionName, &collectionName}, param{pSearchMethod, &searchMethod}, param{pText, &text}, param{pLimit, &limit}, param{pReturnText, &returnText})
+
+	err := readParams(ctx, mod, param{pCollectionName, &collectionName}, param{pNamespace, &namespace}, param{pSearchMethod, &searchMethod}, param{pText, &text}, param{pLimit, &limit}, param{pReturnText, &returnText})
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error reading input parameters.")
 		return 0
@@ -135,7 +149,7 @@ func hostSearchCollection(ctx context.Context, mod wasm.Module, pCollectionName,
 	// Prepare the host function
 	var searchRes *collections.CollectionSearchResult
 	fn := func() (err error) {
-		searchRes, err = collections.SearchCollection(ctx, collectionName, searchMethod, text, limit, returnText)
+		searchRes, err = collections.SearchCollection(ctx, collectionName, namespace, searchMethod, text, limit, returnText)
 		return err
 	}
 
@@ -154,11 +168,17 @@ func hostSearchCollection(ctx context.Context, mod wasm.Module, pCollectionName,
 	return offset
 }
 
-func hostNnClassifyCollection(ctx context.Context, mod wasm.Module, pCollectionName, pSearchMethod, pText uint32) uint32 {
+func hostNnClassifyCollection(ctx context.Context, mod wasm.Module, pCollectionName uint32, pSearchMethod uint32, pText uint32) uint32 {
+	return hostNnClassifyCollectionV2(ctx, mod, pCollectionName, 0, pSearchMethod, pText)
+}
 
-	// Read input parameters
-	var collectionName, searchMethod, text string
-	err := readParams(ctx, mod, param{pCollectionName, &collectionName}, param{pSearchMethod, &searchMethod}, param{pText, &text})
+func hostNnClassifyCollectionV2(ctx context.Context, mod wasm.Module, pCollectionName uint32, pNamespace uint32, pSearchMethod uint32, pText uint32) uint32 {
+	var collectionName string
+	var namespace string
+	var searchMethod string
+	var text string
+
+	err := readParams(ctx, mod, param{pCollectionName, &collectionName}, param{pNamespace, &namespace}, param{pSearchMethod, &searchMethod}, param{pText, &text})
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error reading input parameters.")
 		return 0
@@ -180,7 +200,7 @@ func hostNnClassifyCollection(ctx context.Context, mod wasm.Module, pCollectionN
 	// Prepare the host function
 	var classification *collections.CollectionClassificationResult
 	fn := func() (err error) {
-		classification, err = collections.NnClassify(ctx, collectionName, searchMethod, text)
+		classification, err = collections.NnClassify(ctx, collectionName, namespace, searchMethod, text)
 		return err
 	}
 
@@ -199,11 +219,18 @@ func hostNnClassifyCollection(ctx context.Context, mod wasm.Module, pCollectionN
 	return offset
 }
 
-func hostComputeDistance(ctx context.Context, mod wasm.Module, pCollectionName uint32, pSearchMethod, pId1, pId2 uint32) uint32 {
+func hostComputeDistance(ctx context.Context, mod wasm.Module, pCollectionName uint32, pSearchMethod uint32, pId1 uint32, pId2 uint32) uint32 {
+	return hostComputeDistanceV2(ctx, mod, pCollectionName, 0, pSearchMethod, pId1, pId2)
+}
 
-	// Read input parameters
-	var collectionName, searchMethod, id1, id2 string
-	err := readParams(ctx, mod, param{pCollectionName, &collectionName}, param{pSearchMethod, &searchMethod}, param{pId1, &id1}, param{pId2, &id2})
+func hostComputeDistanceV2(ctx context.Context, mod wasm.Module, pCollectionName uint32, pNamespace uint32, pSearchMethod uint32, pId1 uint32, pId2 uint32) uint32 {
+	var collectionName string
+	var namespace string
+	var searchMethod string
+	var id1 string
+	var id2 string
+
+	err := readParams(ctx, mod, param{pCollectionName, &collectionName}, param{pNamespace, &namespace}, param{pSearchMethod, &searchMethod}, param{pId1, &id1}, param{pId2, &id2})
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error reading input parameters.")
 		return 0
@@ -225,7 +252,7 @@ func hostComputeDistance(ctx context.Context, mod wasm.Module, pCollectionName u
 	// Prepare the host function
 	var resObj *collections.CollectionSearchResultObject
 	fn := func() (err error) {
-		resObj, err = collections.ComputeDistance(ctx, collectionName, searchMethod, id1, id2)
+		resObj, err = collections.ComputeDistance(ctx, collectionName, namespace, searchMethod, id1, id2)
 		return err
 	}
 
@@ -244,11 +271,16 @@ func hostComputeDistance(ctx context.Context, mod wasm.Module, pCollectionName u
 	return offset
 }
 
-func hostRecomputeSearchMethod(ctx context.Context, mod wasm.Module, pCollectionName, pSearchMethod uint32) uint32 {
+func hostRecomputeSearchMethod(ctx context.Context, mod wasm.Module, pCollectionName uint32, pSearchMethod uint32) uint32 {
+	return hostRecomputeSearchMethodV2(ctx, mod, pCollectionName, 0, pSearchMethod)
+}
 
-	// Read input parameters
-	var collectionName, searchMethod string
-	err := readParams(ctx, mod, param{pCollectionName, &collectionName}, param{pSearchMethod, &searchMethod})
+func hostRecomputeSearchMethodV2(ctx context.Context, mod wasm.Module, pCollectionName uint32, pNamespace uint32, pSearchMethod uint32) uint32 {
+	var collectionName string
+	var namespace string
+	var searchMethod string
+
+	err := readParams(ctx, mod, param{pCollectionName, &collectionName}, param{pNamespace, &namespace}, param{pSearchMethod, &searchMethod})
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error reading input parameters.")
 		return 0
@@ -266,7 +298,7 @@ func hostRecomputeSearchMethod(ctx context.Context, mod wasm.Module, pCollection
 	// Prepare the host function
 	var mutationRes *collections.SearchMethodMutationResult
 	fn := func() (err error) {
-		mutationRes, err = collections.RecomputeSearchMethod(ctx, mod, collectionName, searchMethod)
+		mutationRes, err = collections.RecomputeSearchMethod(ctx, mod, collectionName, namespace, searchMethod)
 		return err
 	}
 
@@ -285,11 +317,16 @@ func hostRecomputeSearchMethod(ctx context.Context, mod wasm.Module, pCollection
 	return offset
 }
 
-func hostGetTextFromCollection(ctx context.Context, mod wasm.Module, pCollectionName, pKey uint32) uint32 {
+func hostGetTextFromCollection(ctx context.Context, mod wasm.Module, pCollectionName uint32, pKey uint32) uint32 {
+	return hostGetTextFromCollectionV2(ctx, mod, pCollectionName, 0, pKey)
+}
 
-	// Read input parameters
-	var collectionName, key string
-	err := readParams(ctx, mod, param{pCollectionName, &collectionName}, param{pKey, &key})
+func hostGetTextFromCollectionV2(ctx context.Context, mod wasm.Module, pCollectionName uint32, pNamespace uint32, pKey uint32) uint32 {
+	var collectionName string
+	var namespace string
+	var key string
+
+	err := readParams(ctx, mod, param{pCollectionName, &collectionName}, param{pNamespace, &namespace}, param{pKey, &key})
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error reading input parameters.")
 		return 0
@@ -311,7 +348,7 @@ func hostGetTextFromCollection(ctx context.Context, mod wasm.Module, pCollection
 	// Prepare the host function
 	var text string
 	fn := func() (err error) {
-		text, err = collections.GetTextFromCollection(ctx, collectionName, key)
+		text, err = collections.GetTextFromCollection(ctx, collectionName, namespace, key)
 		return err
 	}
 
@@ -331,10 +368,14 @@ func hostGetTextFromCollection(ctx context.Context, mod wasm.Module, pCollection
 }
 
 func hostGetTextsFromCollection(ctx context.Context, mod wasm.Module, pCollectionName uint32) uint32 {
+	return hostGetTextsFromCollectionV2(ctx, mod, pCollectionName, 0)
+}
 
-	// Read input parameters
+func hostGetTextsFromCollectionV2(ctx context.Context, mod wasm.Module, pCollectionName uint32, pNamespace uint32) uint32 {
 	var collectionName string
-	err := readParams(ctx, mod, param{pCollectionName, &collectionName})
+	var namespace string
+
+	err := readParams(ctx, mod, param{pCollectionName, &collectionName}, param{pNamespace, &namespace})
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error reading input parameters.")
 		return 0
@@ -356,7 +397,7 @@ func hostGetTextsFromCollection(ctx context.Context, mod wasm.Module, pCollectio
 	// Prepare the host function
 	var texts map[string]string
 	fn := func() (err error) {
-		texts, err = collections.GetTextsFromCollection(ctx, collectionName)
+		texts, err = collections.GetTextsFromCollection(ctx, collectionName, namespace)
 		return err
 	}
 

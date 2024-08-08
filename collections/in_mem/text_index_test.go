@@ -34,7 +34,7 @@ func TestMultipleInMemCollections(t *testing.T) {
 			}
 
 			// Create a new InMemCollection
-			collection := NewCollection("collection" + fmt.Sprint(i))
+			collection := NewCollectionNamespace("collection"+fmt.Sprint(i), "")
 
 			// Insert the texts into the collection
 			err := collection.InsertTextsToMemory(ctx, ids, keys, texts, labels)
