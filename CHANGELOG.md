@@ -11,6 +11,7 @@
 - Warn instead of error on some db connection failures [#310](https://github.com/hypermodeAI/runtime/pull/310)
 - Modularize language-specific features [#314](https://github.com/hypermodeAI/runtime/pull/314)
 - Fix error reporting with host functions [#318](https://github.com/hypermodeAI/runtime/pull/318)
+- Add namespaces to collections to isolate storage [#321](https://github.com/hypermodeAI/runtime/pull/321)
 
 ## 2024-07-23 - Version 0.10.1
 
