@@ -13,7 +13,7 @@ import (
 	"github.com/hypermodeAI/manifest"
 )
 
-func ExecuteQuery(ctx context.Context, hostName, dbType, statement, paramsJson string) (*hostQueryResponse, error) {
+func ExecuteQuery(ctx context.Context, hostName, dbType, statement, paramsJson string) (*HostQueryResponse, error) {
 	var params []any
 	if err := utils.JsonDeserialize([]byte(paramsJson), &params); err != nil {
 		return nil, fmt.Errorf("error deserializing database query parameters: %w", err)
@@ -33,7 +33,7 @@ func ExecuteQuery(ctx context.Context, hostName, dbType, statement, paramsJson s
 		}
 	}
 
-	response := &hostQueryResponse{
+	response := &HostQueryResponse{
 		Error:        dbResponse.Error,
 		RowsAffected: dbResponse.RowsAffected,
 	}

@@ -74,10 +74,10 @@ func Close() {
 
 func Get(ctx context.Context) *zerolog.Logger {
 	executionId, eidFound := ctx.Value(utils.ExecutionIdContextKey).(string)
-	plugin, pluginFound := ctx.Value(utils.PluginContextKey).(*plugins.Plugin)
+	plugin := plugins.GetPlugin(ctx)
 
 	// If no context values, just return the global logger.
-	if !eidFound && !pluginFound {
+	if !eidFound && plugin != nil {
 		return &log.Logger
 	}
 
@@ -90,7 +90,7 @@ func Get(ctx context.Context) *zerolog.Logger {
 
 	var buildId string
 	var pluginName string
-	if pluginFound {
+	if plugin != nil {
 		buildId = plugin.BuildId()
 		pluginName = plugin.Name()
 	}
