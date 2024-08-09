@@ -277,11 +277,11 @@ func WriteInferenceHistory(ctx context.Context, model *manifest.ModelInfo, input
 	})
 }
 
-func GetUniqueNamespaces(ctx context.Context) ([]string, error) {
+func GetUniqueNamespaces(ctx context.Context, collectionName string) ([]string, error) {
 	var namespaces []string
 	err := WithTx(ctx, func(tx pgx.Tx) error {
-		query := fmt.Sprintf("SELECT DISTINCT namespace FROM %s", collectionTextsTable)
-		rows, err := tx.Query(ctx, query)
+		query := fmt.Sprintf("SELECT DISTINCT namespace FROM %s WHERE collection = $1", collectionTextsTable)
+		rows, err := tx.Query(ctx, query, collectionName)
 		if err != nil {
 			return err
 		}

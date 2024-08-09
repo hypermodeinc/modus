@@ -70,6 +70,7 @@ func instantiateHostFunctions(ctx context.Context) {
 	b.NewFunctionBuilder().WithFunc(hostGetTextFromCollectionV2).Export("getTextFromCollection_v2")
 	b.NewFunctionBuilder().WithFunc(hostGetTextsFromCollection).Export("getTextsFromCollection")
 	b.NewFunctionBuilder().WithFunc(hostGetTextsFromCollectionV2).Export("getTextsFromCollection_v2")
+	b.NewFunctionBuilder().WithFunc(hostGetNamespacesFromCollection).Export("getNamespacesFromCollection")
 
 	if _, err := b.Instantiate(ctx); err != nil {
 		logger.Fatal(ctx).Err(err).
