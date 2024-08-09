@@ -31,11 +31,6 @@ var errDbNotConfigured = errors.New("database not configured")
 const batchSize = 100
 const chanSize = 10000
 
-const pluginsTable = "plugins"
-const inferencesTable = "inferences"
-const collectionTextsTable = "collection_texts"
-const collectionVectorsTable = "collection_vectors"
-
 const inferenceRefresherInterval = 5 * time.Second
 
 type runtimePostgresWriter struct {
@@ -187,11 +182,10 @@ func WritePluginInfo(ctx context.Context, plugin *plugins.Plugin) {
 		}
 
 		// Insert the plugin info - still check for conflicts, in case another instance of the service is running
-		query := fmt.Sprintf(`INSERT INTO %s
+		const query = `INSERT INTO plugins
 (id, name, version, language, sdk_version, build_id, build_time, git_repo, git_commit)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-ON CONFLICT (build_id) DO NOTHING`,
-			pluginsTable)
+ON CONFLICT (build_id) DO NOTHING`
 
 		ct, err := tx.Exec(ctx, query,
 			plugin.Id,
@@ -238,7 +232,7 @@ func logDbWarningOrError(ctx context.Context, err error, msg string) {
 }
 
 func getPluginId(ctx context.Context, tx pgx.Tx, buildId string) (string, error) {
-	query := fmt.Sprintf("SELECT id FROM %s WHERE build_id = $1", pluginsTable)
+	const query = "SELECT id FROM plugins WHERE build_id = $1"
 	rows, err := tx.Query(ctx, query, buildId)
 	if err != nil {
 		return "", err
@@ -280,7 +274,7 @@ func WriteInferenceHistory(ctx context.Context, model *manifest.ModelInfo, input
 func GetUniqueNamespaces(ctx context.Context, collectionName string) ([]string, error) {
 	var namespaces []string
 	err := WithTx(ctx, func(tx pgx.Tx) error {
-		query := fmt.Sprintf("SELECT DISTINCT namespace FROM %s WHERE collection = $1", collectionTextsTable)
+		const query = "SELECT DISTINCT namespace FROM collection_texts WHERE collection = $1"
 		rows, err := tx.Query(ctx, query, collectionName)
 		if err != nil {
 			return err
@@ -319,7 +313,7 @@ func WriteCollectionTexts(ctx context.Context, collectionName, namespace string,
 	ids := make([]int64, len(keys))
 	err := WithTx(ctx, func(tx pgx.Tx) error {
 		// Delete any existing rows that match the collectionName and keys
-		deleteQuery := fmt.Sprintf("DELETE FROM %s WHERE collection = $1 AND namespace = $2 AND key = ANY($3)", collectionTextsTable)
+		const deleteQuery = "DELETE FROM collection_texts WHERE collection = $1 AND namespace = $2 AND key = ANY($3)"
 		_, err := tx.Exec(ctx, deleteQuery, collectionName, namespace, keys)
 		if err != nil {
 			return err
@@ -327,7 +321,7 @@ func WriteCollectionTexts(ctx context.Context, collectionName, namespace string,
 
 		// Insert the new rows
 		if len(labelsArr) == 0 {
-			query := fmt.Sprintf("INSERT INTO %s (collection, namespace, key, text) VALUES ($1, $2, unnest($3::text[]), unnest($4::text[])) RETURNING id", collectionTextsTable)
+			const query = "INSERT INTO collection_texts (collection, namespace, key, text) VALUES ($1, $2, unnest($3::text[]), unnest($4::text[])) RETURNING id"
 			rows, err := tx.Query(ctx, query, collectionName, namespace, keys, texts)
 			if err != nil {
 				return err
@@ -345,8 +339,8 @@ func WriteCollectionTexts(ctx context.Context, collectionName, namespace string,
 				return err
 			}
 		} else {
+			const query = "INSERT INTO collection_texts (collection, namespace, key, text, labels) VALUES ($1, $2, $3, $4, $5) RETURNING id"
 			for i := range keys {
-				query := fmt.Sprintf("INSERT INTO %s (collection, namespace, key, text, labels) VALUES ($1, $2, $3, $4, $5) RETURNING id", collectionTextsTable)
 				err := tx.QueryRow(ctx, query, collectionName, namespace, keys[i], texts[i], labelsArr[i]).Scan(&ids[i])
 				if err != nil {
 					return err
@@ -365,7 +359,7 @@ func WriteCollectionTexts(ctx context.Context, collectionName, namespace string,
 func WriteCollectionText(ctx context.Context, collectionName, namespace, key, text string, labels []string) (id int64, err error) {
 	err = WithTx(ctx, func(tx pgx.Tx) error {
 		// Delete any existing rows that match the collectionName and key
-		deleteQuery := fmt.Sprintf("DELETE FROM %s WHERE collection = $1 AND namespace = $2 AND key = $3", collectionTextsTable)
+		const deleteQuery = "DELETE FROM collection_texts WHERE collection = $1 AND namespace = $2 AND key = $3"
 		_, err := tx.Exec(ctx, deleteQuery, collectionName, namespace, key)
 		if err != nil {
 			return err
@@ -375,7 +369,7 @@ func WriteCollectionText(ctx context.Context, collectionName, namespace, key, te
 		if len(labels) == 0 {
 			labels = nil
 		}
-		query := fmt.Sprintf("INSERT INTO %s (collection, namespace, key, text, labels) VALUES ($1, $2, $3, $4, unnest($5::text[])) RETURNING id", collectionTextsTable)
+		const query = "INSERT INTO collection_texts (collection, namespace, key, text, labels) VALUES ($1, $2, $3, $4, unnest($5::text[])) RETURNING id"
 		row := tx.QueryRow(ctx, query, collectionName, namespace, key, text, labels)
 		return row.Scan(&id)
 	})
@@ -388,7 +382,7 @@ func WriteCollectionText(ctx context.Context, collectionName, namespace, key, te
 
 func DeleteCollectionTexts(ctx context.Context, collectionName string) error {
 	return WithTx(ctx, func(tx pgx.Tx) error {
-		query := fmt.Sprintf("DELETE FROM %s WHERE collection = $1", collectionTextsTable)
+		const query = "DELETE FROM collection_texts WHERE collection = $1"
 		_, err := tx.Exec(ctx, query, collectionName)
 		if err != nil {
 			return err
@@ -399,7 +393,7 @@ func DeleteCollectionTexts(ctx context.Context, collectionName string) error {
 
 func DeleteCollectionText(ctx context.Context, collectionName, namespace, key string) error {
 	return WithTx(ctx, func(tx pgx.Tx) error {
-		query := fmt.Sprintf("DELETE FROM %s WHERE collection = $1 AND namespace = $2 AND key = $3", collectionTextsTable)
+		const query = "DELETE FROM collection_texts WHERE collection = $1 AND namespace = $2 AND key = $3"
 		_, err := tx.Exec(ctx, query, collectionName, namespace, key)
 		if err != nil {
 			return err
@@ -417,17 +411,17 @@ func WriteCollectionVectors(ctx context.Context, searchMethodName string, textId
 	keys := make([]string, len(textIds))
 	err := WithTx(ctx, func(tx pgx.Tx) error {
 		// Delete any existing rows that match the searchMethodName and textIds
-		deleteQuery := fmt.Sprintf("DELETE FROM %s WHERE search_method = $1 AND text_id = ANY($2)", collectionVectorsTable)
+		const deleteQuery = "DELETE FROM collection_vectors WHERE search_method = $1 AND text_id = ANY($2)"
 		_, err := tx.Exec(ctx, deleteQuery, searchMethodName, textIds)
 		if err != nil {
 			return err
 		}
 
 		// Insert the new rows
-		query := fmt.Sprintf("INSERT INTO %s (search_method, text_id, vector) VALUES ($1, $2, $3::real[]) RETURNING id", collectionVectorsTable)
+		const insertQuery = "INSERT INTO collection_vectors (search_method, text_id, vector) VALUES ($1, $2, $3::real[]) RETURNING id"
 		for i, textId := range textIds {
 			vector := vectors[i]
-			row := tx.QueryRow(ctx, query, searchMethodName, textId, vector)
+			row := tx.QueryRow(ctx, insertQuery, searchMethodName, textId, vector)
 			var id int64
 			if err := row.Scan(&id); err != nil {
 				return err
@@ -435,7 +429,7 @@ func WriteCollectionVectors(ctx context.Context, searchMethodName string, textId
 			vectorIds[i] = id
 		}
 
-		query = "SELECT key FROM collection_texts WHERE id = ANY($1)"
+		const query = "SELECT key FROM collection_texts WHERE id = ANY($1)"
 		rows, err := tx.Query(ctx, query, textIds)
 		if err != nil {
 			return err
@@ -465,21 +459,21 @@ func WriteCollectionVectors(ctx context.Context, searchMethodName string, textId
 func WriteCollectionVector(ctx context.Context, searchMethodName string, textId int64, vector []float32) (vectorId int64, key string, err error) {
 	err = WithTx(ctx, func(tx pgx.Tx) error {
 		// Delete any existing rows that match the searchMethodName and textId
-		deleteQuery := fmt.Sprintf("DELETE FROM %s WHERE search_method = $1 AND text_id = $2", collectionVectorsTable)
+		const deleteQuery = "DELETE FROM collection_vectors WHERE search_method = $1 AND text_id = $2"
 		_, err := tx.Exec(ctx, deleteQuery, searchMethodName, textId)
 		if err != nil {
 			return err
 		}
 
 		// Insert the new row
-		query := fmt.Sprintf("INSERT INTO %s (search_method, text_id, vector) VALUES ($1, $2, $3) RETURNING id", collectionVectorsTable)
-		row := tx.QueryRow(ctx, query, searchMethodName, textId, vector)
+		const insertQuery = "INSERT INTO collection_vectors (search_method, text_id, vector) VALUES ($1, $2, $3) RETURNING id"
+		row := tx.QueryRow(ctx, insertQuery, searchMethodName, textId, vector)
 		err = row.Scan(&vectorId)
 		if err != nil {
 			return err
 		}
 
-		query = "SELECT key FROM collection_texts WHERE id = $1"
+		const query = "SELECT key FROM collection_texts WHERE id = $1"
 		row = tx.QueryRow(ctx, query, textId)
 		return row.Scan(&key)
 
@@ -493,14 +487,13 @@ func WriteCollectionVector(ctx context.Context, searchMethodName string, textId 
 
 func DeleteCollectionVectors(ctx context.Context, collectionName, searchMethodName, namespace string) error {
 	return WithTx(ctx, func(tx pgx.Tx) error {
-		query := fmt.Sprintf(`
-		DELETE FROM %s cv 
-		USING %s ct 
+		const query = `
+		DELETE FROM collection_vectors cv 
+		USING collection_texts ct 
 		WHERE ct.id = cv.text_id 
 		AND ct.collection = $1 
 		AND cv.search_method = $2
-		AND ct.namespace = $3`,
-			collectionVectorsTable, collectionTextsTable)
+		AND ct.namespace = $3`
 		_, err := tx.Exec(ctx, query, collectionName, searchMethodName, namespace)
 		if err != nil {
 			return err
@@ -511,7 +504,7 @@ func DeleteCollectionVectors(ctx context.Context, collectionName, searchMethodNa
 
 func DeleteCollectionVector(ctx context.Context, searchMethodName string, textId int64) error {
 	return WithTx(ctx, func(tx pgx.Tx) error {
-		query := fmt.Sprintf("DELETE FROM %s WHERE search_method = $1 AND text_id = $2", collectionVectorsTable)
+		const query = "DELETE FROM collection_vectors WHERE search_method = $1 AND text_id = $2"
 		_, err := tx.Exec(ctx, query, searchMethodName, textId)
 		if err != nil {
 			return err
@@ -526,7 +519,7 @@ func QueryCollectionTextsFromCheckpoint(ctx context.Context, collection, namespa
 	var texts []string
 	var labelsArr [][]string
 	err := WithTx(ctx, func(tx pgx.Tx) error {
-		query := fmt.Sprintf("SELECT id, key, text, labels FROM %s WHERE id > $1 AND collection = $2 AND namespace = $3", collectionTextsTable)
+		const query = "SELECT id, key, text, labels FROM collection_texts WHERE id > $1 AND collection = $2 AND namespace = $3"
 		rows, err := tx.Query(ctx, query, textCheckpointId, collection, namespace)
 		if err != nil {
 			return err
@@ -567,10 +560,10 @@ func QueryCollectionVectorsFromCheckpoint(ctx context.Context, collectionName, s
 	var keys []string
 	var vectors [][]float32
 	err := WithTx(ctx, func(tx pgx.Tx) error {
-		query := fmt.Sprintf(`SELECT ct.id, cv.id, ct.key, cv.vector 
-                  FROM %s cv 
-                  JOIN %s ct ON cv.text_id = ct.id 
-                  WHERE cv.id > $1 AND ct.collection = $2 AND cv.search_method = $3 AND ct.namespace = $4`, collectionVectorsTable, collectionTextsTable)
+		const query = `SELECT ct.id, cv.id, ct.key, cv.vector 
+                  FROM collection_vectors cv 
+                  JOIN collection_texts ct ON cv.text_id = ct.id 
+                  WHERE cv.id > $1 AND ct.collection = $2 AND cv.search_method = $3 AND ct.namespace = $4`
 		rows, err := tx.Query(ctx, query, vecCheckpointId, collectionName, searchMethodName, namespace)
 		if err != nil {
 			return err
@@ -610,6 +603,11 @@ func WriteInferenceHistoryToDB(ctx context.Context, batch []inferenceHistory) {
 	}
 	transaction, ctx := utils.NewSentryTransactionForCurrentFunc(ctx)
 	defer transaction.Finish()
+
+	const query = `INSERT INTO inferences
+	(id, model_hash, input, output, started_at, duration_ms, plugin_id, function)
+	VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`
+
 	err := WithTx(ctx, func(tx pgx.Tx) error {
 		b := &pgx.Batch{}
 		for _, data := range batch {
@@ -617,10 +615,7 @@ func WriteInferenceHistoryToDB(ctx context.Context, batch []inferenceHistory) {
 			if err != nil {
 				return err
 			}
-			query := fmt.Sprintf(`INSERT INTO %s
-(id, model_hash, input, output, started_at, duration_ms, plugin_id, function)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-`, inferencesTable)
+
 			args := []any{
 				utils.GenerateUUIDv7(),
 				data.model.Hash(),
