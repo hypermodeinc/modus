@@ -56,7 +56,24 @@ ALTER TABLE collection_texts
     DROP COLUMN "namespace";
 
 -- create the unique index for the namespace_id and key
-CREATE UNIQUE INDEX collection_texts_namespace_id_key_idx
+CREATE UNIQUE INDEX IF NOT EXISTS collection_texts_namespace_id_key_idx
     ON collection_texts (namespace_id, key);
+
+-- also create some indexes we'll use in the queries
+CREATE INDEX IF NOT EXISTS collection_texts_namespace_id_id_idx ON collection_texts (namespace_id, id);
+CREATE INDEX IF NOT EXISTS collection_vectors_search_method_id_idx ON collection_vectors (search_method, id);
+
+-- add a helper function we'll use in the queries
+-- from: https://stackoverflow.com/a/8142998
+CREATE OR REPLACE FUNCTION unnest_nd_1d(a ANYARRAY, OUT a_1d ANYARRAY)
+  RETURNS SETOF ANYARRAY
+  LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE STRICT AS
+$func$
+BEGIN
+   FOREACH a_1d SLICE 1 IN ARRAY a LOOP
+      RETURN NEXT;
+   END LOOP;
+END
+$func$;
 
 COMMIT;

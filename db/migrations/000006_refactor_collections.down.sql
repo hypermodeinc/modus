@@ -22,4 +22,7 @@ ALTER TABLE collection_texts DROP COLUMN "namespace_id";
 DROP TABLE collection_namespaces;
 DROP TABLE collections;
 
+-- drop helper function
+DROP FUNCTION unnest_nd_1d;
+
 COMMIT;
