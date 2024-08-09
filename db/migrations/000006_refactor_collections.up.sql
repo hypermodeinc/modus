@@ -23,8 +23,6 @@ CREATE TABLE "collection_namespaces" (
     "name" TEXT NOT NULL
     );
 
-CREATE UNIQUE INDEX collection_namespaces_collection_id_name_idx ON collection_namespaces (collection_id, name);
-
 -- copy existing collection namespaces
 INSERT INTO collection_namespaces (collection_id, name)
     SELECT DISTINCT c.id, t.namespace
@@ -35,8 +33,7 @@ INSERT INTO collection_namespaces (collection_id, name)
     ORDER BY c.id, t.namespace;
 
 -- add namespace_id to collection_texts
-ALTER TABLE collection_texts
-    ADD COLUMN "namespace_id" INTEGER REFERENCES collection_namespaces(id) ON DELETE CASCADE;
+ALTER TABLE collection_texts ADD COLUMN "namespace_id" INTEGER REFERENCES collection_namespaces(id) ON DELETE CASCADE;
 
 -- populate namespace_id
 UPDATE collection_texts t
@@ -46,8 +43,7 @@ UPDATE collection_texts t
     WHERE t.namespace_id is null AND t.collection = c.name AND t.namespace = n.name;
 
 -- set namespace_id not null
-ALTER TABLE collection_texts
-    ALTER COLUMN "namespace_id" SET NOT NULL;
+ALTER TABLE collection_texts ALTER COLUMN "namespace_id" SET NOT NULL;
 
 -- drop collection and namespace columns
 DROP INDEX collection_texts_collection_key_idx;
@@ -55,9 +51,9 @@ ALTER TABLE collection_texts
     DROP COLUMN "collection",
     DROP COLUMN "namespace";
 
--- create the unique index for the namespace_id and key
-CREATE UNIQUE INDEX IF NOT EXISTS collection_texts_namespace_id_key_idx
-    ON collection_texts (namespace_id, key);
+-- create unique indexes where appropriate
+CREATE UNIQUE INDEX IF NOT EXISTS collection_namespaces_collection_id_name_idx ON collection_namespaces (collection_id, name);
+CREATE UNIQUE INDEX IF NOT EXISTS collection_texts_namespace_id_key_idx ON collection_texts (namespace_id, key);
 
 -- also create some indexes we'll use in the queries
 CREATE INDEX IF NOT EXISTS collection_texts_namespace_id_id_idx ON collection_texts (namespace_id, id);
