@@ -182,6 +182,10 @@ func (c *Collection) createNamespaceWithLock(
 	return index, nil
 }
 
+func (c *Collection) GetCollectionNamespaceMap() map[string]interfaces.CollectionNamespace {
+	return c.collectionNamespaceMap
+}
+
 func (c *Collection) FindNamespace(ctx context.Context, namespace string) (interfaces.CollectionNamespace, error) {
 	c.mu.RLock()
 	defer c.mu.RUnlock()

@@ -415,3 +415,47 @@ func hostGetTextsFromCollectionV2(ctx context.Context, mod wasm.Module, pCollect
 
 	return offset
 }
+
+func hostGetNamespacesFromCollection(ctx context.Context, mod wasm.Module, pCollectionName uint32) uint32 {
+	var collectionName string
+
+	err := readParams(ctx, mod, param{pCollectionName, &collectionName})
+	if err != nil {
+		logger.Err(ctx, err).Msg("Error reading input parameters.")
+		return 0
+	}
+
+	// Prepare log messages
+	msgs := &hostFunctionMessages{
+		Cancelled: "Cancelled getting namespaces from collection.",
+		Error:     "Error getting namespaces from collection.",
+		Detail:    fmt.Sprintf("Collection: %s", collectionName),
+	}
+
+	// Track start/complete messages only if debug is enabled, to reduce log noise
+	if utils.HypermodeDebugEnabled() {
+		msgs.Starting = "Starting getting namespaces from collection."
+		msgs.Completed = "Completed getting namespaces from collection."
+	}
+
+	// Prepare the host function
+	var namespaces []string
+	fn := func() (err error) {
+		namespaces, err = collections.GetNamespacesFromCollection(ctx, collectionName)
+		return err
+	}
+
+	// Call the host function
+	if ok := callHostFunction(ctx, fn, msgs); !ok {
+		return 0
+	}
+
+	// Write the results
+	offset, err := writeResult(ctx, mod, namespaces)
+	if err != nil {
+		logger.Err(ctx, err).Msg("Error writing result.")
+		return 0
+	}
+
+	return offset
+}
