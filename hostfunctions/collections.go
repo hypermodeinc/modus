@@ -21,6 +21,7 @@ func init() {
 	addHostFunction("computeDistance_v2", hostComputeDistance, withI32Params(5), withI32Result())
 	addHostFunction("getTextFromCollection_v2", hostGetTextFromCollection, withI32Params(3), withI32Result())
 	addHostFunction("getTextsFromCollection_v2", hostGetTextsFromCollection, withI32Params(2), withI32Result())
+	addHostFunction("getNamespacesFromCollection", hostGetNamespacesFromCollection, withI32Param(), withI32Result())
 
 	// Support functions from older SDK versions
 	addHostFunction("upsertToCollection", hostUpsertToCollection, withI32Params(3), withI32Result())
@@ -422,6 +423,46 @@ func hostGetTextsFromCollection(ctx context.Context, mod wasm.Module, stack []ui
 
 	// Write the results
 	if err := writeResults(ctx, mod, stack, texts); err != nil {
+		logger.Err(ctx, err).Msg("Error writing results to wasm memory.")
+	}
+}
+
+func hostGetNamespacesFromCollection(ctx context.Context, mod wasm.Module, stack []uint64) {
+
+	// Read input parameters
+	var collectionName string
+	if err := readParams(ctx, mod, stack, &collectionName); err != nil {
+		logger.Err(ctx, err).Msg("Error reading input parameters.")
+		return
+	}
+
+	// Prepare log messages
+	msgs := &hostFunctionMessages{
+		Cancelled: "Cancelled getting namespaces from collection.",
+		Error:     "Error getting namespaces from collection.",
+		Detail:    fmt.Sprintf("Collection: %s", collectionName),
+	}
+
+	// Track start/complete messages only if debug is enabled, to reduce log noise
+	if utils.HypermodeDebugEnabled() {
+		msgs.Starting = "Starting getting namespaces from collection."
+		msgs.Completed = "Completed getting namespaces from collection."
+	}
+
+	// Prepare the host function
+	var namespaces []string
+	fn := func() (err error) {
+		namespaces, err = collections.GetNamespacesFromCollection(ctx, collectionName)
+		return err
+	}
+
+	// Call the host function
+	if ok := callHostFunction(ctx, fn, msgs); !ok {
+		return
+	}
+
+	// Write the results
+	if err := writeResults(ctx, mod, stack, namespaces); err != nil {
 		logger.Err(ctx, err).Msg("Error writing results to wasm memory.")
 	}
 }

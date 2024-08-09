@@ -546,3 +546,19 @@ func GetTextsFromCollection(ctx context.Context, collectionName, namespace strin
 
 	return textMap, nil
 }
+
+func GetNamespacesFromCollection(ctx context.Context, collectionName string) ([]string, error) {
+	collection, err := GlobalNamespaceManager.FindCollection(ctx, collectionName)
+	if err != nil {
+		return nil, err
+	}
+
+	namespaceMap := collection.GetCollectionNamespaceMap()
+
+	namespaces := make([]string, 0, len(namespaceMap))
+	for namespace := range namespaceMap {
+		namespaces = append(namespaces, namespace)
+	}
+
+	return namespaces, nil
+}
