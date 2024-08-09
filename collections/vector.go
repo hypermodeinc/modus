@@ -157,11 +157,11 @@ func processManifestCollections(ctx context.Context, man *manifest.HypermodeMani
 			// forces all users to use in-memory index for now
 			// TODO implement other types of indexes based on manifest info
 			// fetch all tenants and create a collection for each tenant
-			namespaces, err := db.GetNamespaces(ctx, collectionName)
+			namespaces, err := db.GetUniqueNamespaces(ctx, collectionName)
 			if err != nil {
 				logger.Err(ctx, err).
 					Str("collection_name", collectionName).
-					Msg("Failed to get namespaces.")
+					Msg("Failed to get unique namespaces.")
 			}
 			if !slices.Contains(namespaces, in_mem.DefaultNamespace) {
 				namespaces = append(namespaces, in_mem.DefaultNamespace)
