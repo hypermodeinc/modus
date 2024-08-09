@@ -36,9 +36,18 @@ func (pr *pluginRegistry) AddOrUpdate(plugin *plugins.Plugin) {
 	pr.mutex.Lock()
 	defer pr.mutex.Unlock()
 
+	// only one plugin per name is allowed
+	name := plugin.Name()
+	if existing, found := pr.nameIndex[name]; found {
+		delete(pr.idRevIndex, existing)
+		delete(pr.idIndex, existing.Id)
+		delete(pr.nameIndex, name)
+		delete(pr.fileIndex, existing.FileName)
+	}
+
 	pr.idRevIndex[plugin] = plugin.Id
 	pr.idIndex[plugin.Id] = plugin
-	pr.nameIndex[plugin.Name()] = plugin
+	pr.nameIndex[name] = plugin
 	pr.fileIndex[plugin.FileName] = plugin
 }
 
