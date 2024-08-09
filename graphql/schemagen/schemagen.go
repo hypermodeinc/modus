@@ -27,8 +27,7 @@ func GetGraphQLSchema(ctx context.Context, md *metadata.Metadata) (*GraphQLSchem
 	defer span.Finish()
 
 	lti := languages.GetLanguageForSDK(md.SDK).TypeInfo()
-	typeDefs := make(map[string]*TypeDefinition, len(md.Types))
-	errors := transformTypes(md.Types, typeDefs, lti)
+	typeDefs, errors := transformTypes(md.Types, lti)
 	functions, errs := transformFunctions(md.FnExports, typeDefs, lti)
 	types := utils.MapValues(typeDefs)
 	errors = append(errors, errs...)
@@ -61,7 +60,8 @@ type TransformError struct {
 	Error  error
 }
 
-func transformTypes(types metadata.TypeMap, typeDefs map[string]*TypeDefinition, lti languages.TypeInfo) []*TransformError {
+func transformTypes(types metadata.TypeMap, lti languages.TypeInfo) (map[string]*TypeDefinition, []*TransformError) {
+	typeDefs := make(map[string]*TypeDefinition, len(types))
 	errors := make([]*TransformError, 0)
 	for _, t := range types {
 		name := lti.GetNameForType(t.Name)
@@ -82,7 +82,7 @@ func transformTypes(types metadata.TypeMap, typeDefs map[string]*TypeDefinition,
 			Fields: fields,
 		}
 	}
-	return errors
+	return typeDefs, errors
 }
 
 type FunctionSignature struct {

@@ -58,6 +58,16 @@ func (ti *typeInfoProvider) GetMapSubtypes(t string) (string, string) {
 
 func (ti *typeInfoProvider) GetNameForType(t string) string {
 	s := ti.GetUnderlyingType(t)
+
+	if ti.IsArrayType(s) {
+		return ti.GetNameForType(ti.GetArraySubtype(s)) + "[]"
+	}
+
+	if ti.IsMapType(s) {
+		kt, vt := ti.GetMapSubtypes(s)
+		return "Map<" + ti.GetNameForType(kt) + "," + ti.GetNameForType(vt) + ">"
+	}
+
 	return s[strings.LastIndex(s, "/")+1:]
 }
 

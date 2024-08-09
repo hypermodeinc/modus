@@ -9,7 +9,7 @@
 - Improve encoding and decoding of arrays and maps [#308](https://github.com/hypermodeAI/runtime/pull/308)
 - Listen on both IPv4 and IPv6 for localhost [#309](https://github.com/hypermodeAI/runtime/pull/309)
 - Warn instead of error on some db connection failures [#310](https://github.com/hypermodeAI/runtime/pull/310)
-- Modularize language-specific features [#314](https://github.com/hypermodeAI/runtime/pull/314)
+- Modularize language-specific features [#314](https://github.com/hypermodeAI/runtime/pull/314) [#325](https://github.com/hypermodeAI/runtime/pull/325)
 - Fix error reporting with host functions [#318](https://github.com/hypermodeAI/runtime/pull/318)
 - Log cancellations and host function activity [#320](https://github.com/hypermodeAI/runtime/pull/320)
 - Add namespaces to collections to isolate storage [#321](https://github.com/hypermodeAI/runtime/pull/321)
