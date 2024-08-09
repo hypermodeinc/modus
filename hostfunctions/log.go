@@ -13,12 +13,15 @@ import (
 	wasm "github.com/tetratelabs/wazero/api"
 )
 
-func hostLog(ctx context.Context, mod wasm.Module, pLevel uint32, pMessage uint32) {
+func init() {
+	addHostFunction("log", hostLog, withI32Params(2))
+}
+
+func hostLog(ctx context.Context, mod wasm.Module, stack []uint64) {
 
 	// read input parameters
 	var level, message string
-	err := readParams(ctx, mod, param{pLevel, &level}, param{pMessage, &message})
-	if err != nil {
+	if err := readParams(ctx, mod, stack, &level, &message); err != nil {
 		logger.Err(ctx, err).Msg("Error reading input parameters.")
 		return
 	}

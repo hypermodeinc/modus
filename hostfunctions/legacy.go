@@ -14,15 +14,20 @@ import (
 	wasm "github.com/tetratelabs/wazero/api"
 )
 
-func hostInvokeClassifier(ctx context.Context, mod wasm.Module, pModelName, pSentenceMap uint32) uint32 {
+func init() {
+	addHostFunction("invokeClassifier", hostInvokeClassifier, withI32Params(2), withI32Result())
+	addHostFunction("computeEmbedding", hostComputeEmbedding, withI32Params(2), withI32Result())
+	addHostFunction("invokeTextGenerator", hostInvokeTextGenerator, withI32Params(4), withI32Result())
+}
+
+func hostInvokeClassifier(ctx context.Context, mod wasm.Module, stack []uint64) {
 
 	// Read input parameters
 	var modelName string
 	var sentenceMap map[string]string
-	err := readParams(ctx, mod, param{pModelName, &modelName}, param{pSentenceMap, &sentenceMap})
-	if err != nil {
+	if err := readParams(ctx, mod, stack, &modelName, &sentenceMap); err != nil {
 		logger.Err(ctx, err).Msg("Error reading input parameters.")
-		return 0
+		return
 	}
 
 	// Prepare log messages
@@ -43,28 +48,23 @@ func hostInvokeClassifier(ctx context.Context, mod wasm.Module, pModelName, pSen
 
 	// Call the host function
 	if ok := callHostFunction(ctx, fn, msgs); !ok {
-		return 0
+		return
 	}
 
 	// Write the results
-	offset, err := writeResult(ctx, mod, resultMap)
-	if err != nil {
-		logger.Err(ctx, err).Msg("Error writing result to wasm memory.")
-		return 0
+	if err := writeResults(ctx, mod, stack, resultMap); err != nil {
+		logger.Err(ctx, err).Msg("Error writing results to wasm memory.")
 	}
-
-	return offset
 }
 
-func hostComputeEmbedding(ctx context.Context, mod wasm.Module, pModelName, pSentenceMap uint32) uint32 {
+func hostComputeEmbedding(ctx context.Context, mod wasm.Module, stack []uint64) {
 
 	// Read input parameters
 	var modelName string
 	var sentenceMap map[string]string
-	err := readParams(ctx, mod, param{pModelName, &modelName}, param{pSentenceMap, &sentenceMap})
-	if err != nil {
+	if err := readParams(ctx, mod, stack, &modelName, &sentenceMap); err != nil {
 		logger.Err(ctx, err).Msg("Error reading input parameters.")
-		return 0
+		return
 	}
 
 	// Prepare log messages
@@ -85,27 +85,22 @@ func hostComputeEmbedding(ctx context.Context, mod wasm.Module, pModelName, pSen
 
 	// Call the host function
 	if ok := callHostFunction(ctx, fn, msgs); !ok {
-		return 0
+		return
 	}
 
 	// Write the results
-	offset, err := writeResult(ctx, mod, result)
-	if err != nil {
-		logger.Err(ctx, err).Msg("Error writing result to wasm memory.")
-		return 0
+	if err := writeResults(ctx, mod, stack, result); err != nil {
+		logger.Err(ctx, err).Msg("Error writing results to wasm memory.")
 	}
-
-	return offset
 }
 
-func hostInvokeTextGenerator(ctx context.Context, mod wasm.Module, pModelName, pInstruction, pSentence, pFormat uint32) uint32 {
+func hostInvokeTextGenerator(ctx context.Context, mod wasm.Module, stack []uint64) {
 
 	// Read input parameters
 	var modelName, instruction, sentence, format string
-	err := readParams(ctx, mod, param{pModelName, &modelName}, param{pInstruction, &instruction}, param{pSentence, &sentence}, param{pFormat, &format})
-	if err != nil {
+	if err := readParams(ctx, mod, stack, &modelName, &instruction, &sentence, &format); err != nil {
 		logger.Err(ctx, err).Msg("Error reading input parameters.")
-		return 0
+		return
 	}
 
 	// Prepare log messages
@@ -126,15 +121,11 @@ func hostInvokeTextGenerator(ctx context.Context, mod wasm.Module, pModelName, p
 
 	// Call the host function
 	if ok := callHostFunction(ctx, fn, msgs); !ok {
-		return 0
+		return
 	}
 
 	// Write the results
-	offset, err := writeResult(ctx, mod, content)
-	if err != nil {
-		logger.Err(ctx, err).Msg("Error writing result to wasm memory.")
-		return 0
+	if err := writeResults(ctx, mod, stack, content); err != nil {
+		logger.Err(ctx, err).Msg("Error writing results to wasm memory.")
 	}
-
-	return offset
 }

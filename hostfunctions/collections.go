@@ -11,21 +11,48 @@ import (
 	wasm "github.com/tetratelabs/wazero/api"
 )
 
-func hostUpsertToCollection(ctx context.Context, mod wasm.Module, pCollectionName uint32, pKey uint32, pText uint32) uint32 {
-	return hostUpsertToCollectionV2(ctx, mod, pCollectionName, 0, pKey, pText, 0)
+func init() {
+	// Current host functions for collections
+	addHostFunction("upsertToCollection_v2", hostUpsertToCollection, withI32Params(4), withI32Result())
+	addHostFunction("deleteFromCollection_v2", hostDeleteFromCollection, withI32Params(3), withI32Result())
+	addHostFunction("searchCollection_v2", hostSearchCollection, withI32Params(6), withI32Result())
+	addHostFunction("nnClassifyCollection_v2", hostNnClassifyCollection, withI32Params(4), withI32Result())
+	addHostFunction("recomputeSearchMethod_v2", hostRecomputeSearchMethod, withI32Params(5), withI32Result())
+	addHostFunction("computeDistance_v2", hostComputeDistance, withI32Params(5), withI32Result())
+	addHostFunction("getTextFromCollection_v2", hostGetTextFromCollection, withI32Params(3), withI32Result())
+	addHostFunction("getTextsFromCollection_v2", hostGetTextsFromCollection, withI32Params(2), withI32Result())
+	addHostFunction("getNamespacesFromCollection", hostGetNamespacesFromCollection, withI32Param(), withI32Result())
+
+	// Support functions from older SDK versions
+	addHostFunction("upsertToCollection", hostUpsertToCollection, withI32Params(3), withI32Result())
+	addHostFunction("deleteFromCollection", hostDeleteFromCollection, withI32Params(2), withI32Result())
+	addHostFunction("searchCollection", hostSearchCollection, withI32Params(5), withI32Result())
+	addHostFunction("nnClassifyCollection", hostNnClassifyCollection, withI32Params(3), withI32Result())
+	addHostFunction("recomputeSearchMethod", hostRecomputeSearchMethod, withI32Params(4), withI32Result())
+	addHostFunction("computeSimilarity", hostComputeDistance, withI32Params(4), withI32Result())
+	addHostFunction("computeDistance", hostComputeDistance, withI32Params(4), withI32Result())
+	addHostFunction("getTextFromCollection", hostGetTextFromCollection, withI32Params(2), withI32Result())
+	addHostFunction("getTextsFromCollection", hostGetTextsFromCollection, withI32Param(), withI32Result())
 }
 
-func hostUpsertToCollectionV2(ctx context.Context, mod wasm.Module, pCollectionName uint32, pNamespace uint32, pKeys uint32, pTexts uint32, pLabels uint32) uint32 {
-	var collectionName string
-	var namespace string
-	var keys []string
-	var texts []string
-	var labels [][]string
+func hostUpsertToCollection(ctx context.Context, mod wasm.Module, stack []uint64) {
 
-	err := readParams(ctx, mod, param{pCollectionName, &collectionName}, param{pNamespace, &namespace}, param{pKeys, &keys}, param{pTexts, &texts}, param{pLabels, &labels})
-	if err != nil {
-		logger.Err(ctx, err).Msg("Error reading input parameters.")
-		return 0
+	// Read input parameters
+	var collectionName, namespace string
+	var keys, texts []string
+	var labels [][]string
+	if len(stack) == 3 {
+		// v1
+		if err := readParams(ctx, mod, stack, &collectionName, &keys, &texts); err != nil {
+			logger.Err(ctx, err).Msg("Error reading input parameters.")
+			return
+		}
+	} else {
+		// v2 (with labels)
+		if err := readParams(ctx, mod, stack, &collectionName, &keys, &texts, &labels); err != nil {
+			logger.Err(ctx, err).Msg("Error reading input parameters.")
+			return
+		}
 	}
 
 	// Prepare log messages
@@ -50,32 +77,31 @@ func hostUpsertToCollectionV2(ctx context.Context, mod wasm.Module, pCollectionN
 
 	// Call the host function
 	if ok := callHostFunction(ctx, fn, msgs); !ok {
-		return 0
+		return
 	}
 
 	// Write the results
-	offset, err := writeResult(ctx, mod, mutationRes)
-	if err != nil {
-		logger.Err(ctx, err).Msg("Error writing result.")
-		return 0
+	if err := writeResults(ctx, mod, stack, mutationRes); err != nil {
+		logger.Err(ctx, err).Msg("Error writing results to wasm memory.")
 	}
-
-	return offset
 }
 
-func hostDeleteFromCollection(ctx context.Context, mod wasm.Module, pCollectionName uint32, pKey uint32) uint32 {
-	return hostDeleteFromCollectionV2(ctx, mod, pCollectionName, 0, pKey)
-}
+func hostDeleteFromCollection(ctx context.Context, mod wasm.Module, stack []uint64) {
 
-func hostDeleteFromCollectionV2(ctx context.Context, mod wasm.Module, pCollectionName uint32, pNamespace uint32, pKey uint32) uint32 {
-	var collectionName string
-	var namespace string
-	var key string
-
-	err := readParams(ctx, mod, param{pCollectionName, &collectionName}, param{pNamespace, &namespace}, param{pKey, &key})
-	if err != nil {
-		logger.Err(ctx, err).Msg("Error reading input parameters.")
-		return 0
+	// Read input parameters
+	var collectionName, namespace, key string
+	if len(stack) == 2 {
+		// v1
+		if err := readParams(ctx, mod, stack, &collectionName, &key); err != nil {
+			logger.Err(ctx, err).Msg("Error reading input parameters.")
+			return
+		}
+	} else {
+		// v2 (with namespace)
+		if err := readParams(ctx, mod, stack, &collectionName, &namespace, &key); err != nil {
+			logger.Err(ctx, err).Msg("Error reading input parameters.")
+			return
+		}
 	}
 
 	// Prepare log messages
@@ -100,37 +126,33 @@ func hostDeleteFromCollectionV2(ctx context.Context, mod wasm.Module, pCollectio
 
 	// Call the host function
 	if ok := callHostFunction(ctx, fn, msgs); !ok {
-		return 0
+		return
 	}
 
 	// Write the results
-	offset, err := writeResult(ctx, mod, mutationRes)
-	if err != nil {
-		logger.Err(ctx, err).Msg("Error writing result.")
-		return 0
+	if err := writeResults(ctx, mod, stack, mutationRes); err != nil {
+		logger.Err(ctx, err).Msg("Error writing results to wasm memory.")
 	}
-
-	return offset
 }
 
-func hostSearchCollection(ctx context.Context, mod wasm.Module, pCollectionName uint32, pSearchMethod uint32,
-	pText uint32, pLimit uint32, pReturnText uint32) uint32 {
-	return hostSearchCollectionV2(ctx, mod, pCollectionName, 0, pSearchMethod, pText, pLimit, pReturnText)
-}
+func hostSearchCollection(ctx context.Context, mod wasm.Module, stack []uint64) {
 
-func hostSearchCollectionV2(ctx context.Context, mod wasm.Module, pCollectionName uint32, pNamespace uint32, pSearchMethod uint32,
-	pText uint32, pLimit uint32, pReturnText uint32) uint32 {
-	var collectionName string
-	var namespace string
-	var searchMethod string
-	var text string
+	// Read input parameters
+	var collectionName, namespace, searchMethod, text string
 	var limit int32
 	var returnText bool
-
-	err := readParams(ctx, mod, param{pCollectionName, &collectionName}, param{pNamespace, &namespace}, param{pSearchMethod, &searchMethod}, param{pText, &text}, param{pLimit, &limit}, param{pReturnText, &returnText})
-	if err != nil {
-		logger.Err(ctx, err).Msg("Error reading input parameters.")
-		return 0
+	if len(stack) == 5 {
+		// v1
+		if err := readParams(ctx, mod, stack, &collectionName, &searchMethod, &text, &limit, &returnText); err != nil {
+			logger.Err(ctx, err).Msg("Error reading input parameters.")
+			return
+		}
+	} else {
+		// v2 (with namespace)
+		if err := readParams(ctx, mod, stack, &collectionName, &namespace, &searchMethod, &text, &limit, &returnText); err != nil {
+			logger.Err(ctx, err).Msg("Error reading input parameters.")
+			return
+		}
 	}
 
 	// Prepare log messages
@@ -155,33 +177,31 @@ func hostSearchCollectionV2(ctx context.Context, mod wasm.Module, pCollectionNam
 
 	// Call the host function
 	if ok := callHostFunction(ctx, fn, msgs); !ok {
-		return 0
+		return
 	}
 
 	// Write the results
-	offset, err := writeResult(ctx, mod, searchRes)
-	if err != nil {
-		logger.Err(ctx, err).Msg("Error writing result.")
-		return 0
+	if err := writeResults(ctx, mod, stack, searchRes); err != nil {
+		logger.Err(ctx, err).Msg("Error writing results to wasm memory.")
 	}
-
-	return offset
 }
 
-func hostNnClassifyCollection(ctx context.Context, mod wasm.Module, pCollectionName uint32, pSearchMethod uint32, pText uint32) uint32 {
-	return hostNnClassifyCollectionV2(ctx, mod, pCollectionName, 0, pSearchMethod, pText)
-}
+func hostNnClassifyCollection(ctx context.Context, mod wasm.Module, stack []uint64) {
 
-func hostNnClassifyCollectionV2(ctx context.Context, mod wasm.Module, pCollectionName uint32, pNamespace uint32, pSearchMethod uint32, pText uint32) uint32 {
-	var collectionName string
-	var namespace string
-	var searchMethod string
-	var text string
-
-	err := readParams(ctx, mod, param{pCollectionName, &collectionName}, param{pNamespace, &namespace}, param{pSearchMethod, &searchMethod}, param{pText, &text})
-	if err != nil {
-		logger.Err(ctx, err).Msg("Error reading input parameters.")
-		return 0
+	// Read input parameters
+	var collectionName, namespace, searchMethod, text string
+	if len(stack) == 3 {
+		// v1
+		if err := readParams(ctx, mod, stack, &collectionName, &searchMethod, &text); err != nil {
+			logger.Err(ctx, err).Msg("Error reading input parameters.")
+			return
+		}
+	} else {
+		// v2 (with namespace)
+		if err := readParams(ctx, mod, stack, &collectionName, &namespace, &searchMethod, &text); err != nil {
+			logger.Err(ctx, err).Msg("Error reading input parameters.")
+			return
+		}
 	}
 
 	// Prepare log messages
@@ -206,34 +226,31 @@ func hostNnClassifyCollectionV2(ctx context.Context, mod wasm.Module, pCollectio
 
 	// Call the host function
 	if ok := callHostFunction(ctx, fn, msgs); !ok {
-		return 0
+		return
 	}
 
 	// Write the results
-	offset, err := writeResult(ctx, mod, classification)
-	if err != nil {
-		logger.Err(ctx, err).Msg("Error writing result.")
-		return 0
+	if err := writeResults(ctx, mod, stack, classification); err != nil {
+		logger.Err(ctx, err).Msg("Error writing results to wasm memory.")
 	}
-
-	return offset
 }
 
-func hostComputeDistance(ctx context.Context, mod wasm.Module, pCollectionName uint32, pSearchMethod uint32, pId1 uint32, pId2 uint32) uint32 {
-	return hostComputeDistanceV2(ctx, mod, pCollectionName, 0, pSearchMethod, pId1, pId2)
-}
+func hostComputeDistance(ctx context.Context, mod wasm.Module, stack []uint64) {
 
-func hostComputeDistanceV2(ctx context.Context, mod wasm.Module, pCollectionName uint32, pNamespace uint32, pSearchMethod uint32, pId1 uint32, pId2 uint32) uint32 {
-	var collectionName string
-	var namespace string
-	var searchMethod string
-	var id1 string
-	var id2 string
-
-	err := readParams(ctx, mod, param{pCollectionName, &collectionName}, param{pNamespace, &namespace}, param{pSearchMethod, &searchMethod}, param{pId1, &id1}, param{pId2, &id2})
-	if err != nil {
-		logger.Err(ctx, err).Msg("Error reading input parameters.")
-		return 0
+	// Read input parameters
+	var collectionName, namespace, searchMethod, id1, id2 string
+	if len(stack) == 4 {
+		// v1
+		if err := readParams(ctx, mod, stack, &collectionName, &searchMethod, &id1, &id2); err != nil {
+			logger.Err(ctx, err).Msg("Error reading input parameters.")
+			return
+		}
+	} else {
+		// v2 (with namespace)
+		if err := readParams(ctx, mod, stack, &collectionName, &namespace, &searchMethod, &id1, &id2); err != nil {
+			logger.Err(ctx, err).Msg("Error reading input parameters.")
+			return
+		}
 	}
 
 	// Prepare log messages
@@ -258,32 +275,31 @@ func hostComputeDistanceV2(ctx context.Context, mod wasm.Module, pCollectionName
 
 	// Call the host function
 	if ok := callHostFunction(ctx, fn, msgs); !ok {
-		return 0
+		return
 	}
 
 	// Write the results
-	offset, err := writeResult(ctx, mod, resObj)
-	if err != nil {
-		logger.Err(ctx, err).Msg("Error writing result.")
-		return 0
+	if err := writeResults(ctx, mod, stack, resObj); err != nil {
+		logger.Err(ctx, err).Msg("Error writing results to wasm memory.")
 	}
-
-	return offset
 }
 
-func hostRecomputeSearchMethod(ctx context.Context, mod wasm.Module, pCollectionName uint32, pSearchMethod uint32) uint32 {
-	return hostRecomputeSearchMethodV2(ctx, mod, pCollectionName, 0, pSearchMethod)
-}
+func hostRecomputeSearchMethod(ctx context.Context, mod wasm.Module, stack []uint64) {
 
-func hostRecomputeSearchMethodV2(ctx context.Context, mod wasm.Module, pCollectionName uint32, pNamespace uint32, pSearchMethod uint32) uint32 {
-	var collectionName string
-	var namespace string
-	var searchMethod string
-
-	err := readParams(ctx, mod, param{pCollectionName, &collectionName}, param{pNamespace, &namespace}, param{pSearchMethod, &searchMethod})
-	if err != nil {
-		logger.Err(ctx, err).Msg("Error reading input parameters.")
-		return 0
+	// Read input parameters
+	var collectionName, namespace, searchMethod string
+	if len(stack) == 2 {
+		// v1
+		if err := readParams(ctx, mod, stack, &collectionName, &searchMethod); err != nil {
+			logger.Err(ctx, err).Msg("Error reading input parameters.")
+			return
+		}
+	} else {
+		// v2 (with namespace)
+		if err := readParams(ctx, mod, stack, &collectionName, &namespace, &searchMethod); err != nil {
+			logger.Err(ctx, err).Msg("Error reading input parameters.")
+			return
+		}
 	}
 
 	// Prepare log messages
@@ -304,32 +320,31 @@ func hostRecomputeSearchMethodV2(ctx context.Context, mod wasm.Module, pCollecti
 
 	// Call the host function
 	if ok := callHostFunction(ctx, fn, msgs); !ok {
-		return 0
+		return
 	}
 
 	// Write the results
-	offset, err := writeResult(ctx, mod, mutationRes)
-	if err != nil {
-		logger.Err(ctx, err).Msg("Error writing result.")
-		return 0
+	if err := writeResults(ctx, mod, stack, mutationRes); err != nil {
+		logger.Err(ctx, err).Msg("Error writing results to wasm memory.")
 	}
-
-	return offset
 }
 
-func hostGetTextFromCollection(ctx context.Context, mod wasm.Module, pCollectionName uint32, pKey uint32) uint32 {
-	return hostGetTextFromCollectionV2(ctx, mod, pCollectionName, 0, pKey)
-}
+func hostGetTextFromCollection(ctx context.Context, mod wasm.Module, stack []uint64) {
 
-func hostGetTextFromCollectionV2(ctx context.Context, mod wasm.Module, pCollectionName uint32, pNamespace uint32, pKey uint32) uint32 {
-	var collectionName string
-	var namespace string
-	var key string
-
-	err := readParams(ctx, mod, param{pCollectionName, &collectionName}, param{pNamespace, &namespace}, param{pKey, &key})
-	if err != nil {
-		logger.Err(ctx, err).Msg("Error reading input parameters.")
-		return 0
+	// Read input parameters
+	var collectionName, namespace, key string
+	if len(stack) == 2 {
+		// v1
+		if err := readParams(ctx, mod, stack, &collectionName, &key); err != nil {
+			logger.Err(ctx, err).Msg("Error reading input parameters.")
+			return
+		}
+	} else {
+		// v2 (with namespace)
+		if err := readParams(ctx, mod, stack, &collectionName, &namespace, &key); err != nil {
+			logger.Err(ctx, err).Msg("Error reading input parameters.")
+			return
+		}
 	}
 
 	// Prepare log messages
@@ -354,31 +369,31 @@ func hostGetTextFromCollectionV2(ctx context.Context, mod wasm.Module, pCollecti
 
 	// Call the host function
 	if ok := callHostFunction(ctx, fn, msgs); !ok {
-		return 0
+		return
 	}
 
 	// Write the results
-	offset, err := writeResult(ctx, mod, text)
-	if err != nil {
-		logger.Err(ctx, err).Msg("Error writing result.")
-		return 0
+	if err := writeResults(ctx, mod, stack, text); err != nil {
+		logger.Err(ctx, err).Msg("Error writing results to wasm memory.")
 	}
-
-	return offset
 }
 
-func hostGetTextsFromCollection(ctx context.Context, mod wasm.Module, pCollectionName uint32) uint32 {
-	return hostGetTextsFromCollectionV2(ctx, mod, pCollectionName, 0)
-}
+func hostGetTextsFromCollection(ctx context.Context, mod wasm.Module, stack []uint64) {
 
-func hostGetTextsFromCollectionV2(ctx context.Context, mod wasm.Module, pCollectionName uint32, pNamespace uint32) uint32 {
-	var collectionName string
-	var namespace string
-
-	err := readParams(ctx, mod, param{pCollectionName, &collectionName}, param{pNamespace, &namespace})
-	if err != nil {
-		logger.Err(ctx, err).Msg("Error reading input parameters.")
-		return 0
+	// Read input parameters
+	var collectionName, namespace string
+	if len(stack) == 1 {
+		// v1
+		if err := readParams(ctx, mod, stack, &collectionName); err != nil {
+			logger.Err(ctx, err).Msg("Error reading input parameters.")
+			return
+		}
+	} else {
+		// v2 (with namespace)
+		if err := readParams(ctx, mod, stack, &collectionName, &namespace); err != nil {
+			logger.Err(ctx, err).Msg("Error reading input parameters.")
+			return
+		}
 	}
 
 	// Prepare log messages
@@ -403,26 +418,22 @@ func hostGetTextsFromCollectionV2(ctx context.Context, mod wasm.Module, pCollect
 
 	// Call the host function
 	if ok := callHostFunction(ctx, fn, msgs); !ok {
-		return 0
+		return
 	}
 
 	// Write the results
-	offset, err := writeResult(ctx, mod, texts)
-	if err != nil {
-		logger.Err(ctx, err).Msg("Error writing result.")
-		return 0
+	if err := writeResults(ctx, mod, stack, texts); err != nil {
+		logger.Err(ctx, err).Msg("Error writing results to wasm memory.")
 	}
-
-	return offset
 }
 
-func hostGetNamespacesFromCollection(ctx context.Context, mod wasm.Module, pCollectionName uint32) uint32 {
-	var collectionName string
+func hostGetNamespacesFromCollection(ctx context.Context, mod wasm.Module, stack []uint64) {
 
-	err := readParams(ctx, mod, param{pCollectionName, &collectionName})
-	if err != nil {
+	// Read input parameters
+	var collectionName string
+	if err := readParams(ctx, mod, stack, &collectionName); err != nil {
 		logger.Err(ctx, err).Msg("Error reading input parameters.")
-		return 0
+		return
 	}
 
 	// Prepare log messages
@@ -447,15 +458,11 @@ func hostGetNamespacesFromCollection(ctx context.Context, mod wasm.Module, pColl
 
 	// Call the host function
 	if ok := callHostFunction(ctx, fn, msgs); !ok {
-		return 0
+		return
 	}
 
 	// Write the results
-	offset, err := writeResult(ctx, mod, namespaces)
-	if err != nil {
-		logger.Err(ctx, err).Msg("Error writing result.")
-		return 0
+	if err := writeResults(ctx, mod, stack, namespaces); err != nil {
+		logger.Err(ctx, err).Msg("Error writing results to wasm memory.")
 	}
-
-	return offset
 }
