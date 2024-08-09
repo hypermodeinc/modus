@@ -13,7 +13,7 @@
 - Fix error reporting with host functions [#318](https://github.com/hypermodeAI/runtime/pull/318)
 - Log cancellations and host function activity [#320](https://github.com/hypermodeAI/runtime/pull/320)
 - Add namespaces to collections to isolate storage [#321](https://github.com/hypermodeAI/runtime/pull/321)
-- Use more direct approach for registering host functions [#322](https://github.com/hypermodeAI/runtime/pull/322)
+- Use more direct approach for registering host functions [#322](https://github.com/hypermodeAI/runtime/pull/322) [#326](https://github.com/hypermodeAI/runtime/pull/326)
 - Add getNamespaces host function for collections [#324]https://github.com/hypermodeAI/runtime/pull/324
 
 ## 2024-07-23 - Version 0.10.1

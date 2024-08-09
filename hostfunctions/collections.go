@@ -13,11 +13,11 @@ import (
 
 func init() {
 	// Current host functions for collections
-	addHostFunction("upsertToCollection_v2", hostUpsertToCollection, withI32Params(4), withI32Result())
+	addHostFunction("upsertToCollection_v2", hostUpsertToCollection, withI32Params(5), withI32Result())
 	addHostFunction("deleteFromCollection_v2", hostDeleteFromCollection, withI32Params(3), withI32Result())
 	addHostFunction("searchCollection_v2", hostSearchCollection, withI32Params(6), withI32Result())
 	addHostFunction("nnClassifyCollection_v2", hostNnClassifyCollection, withI32Params(4), withI32Result())
-	addHostFunction("recomputeSearchMethod_v2", hostRecomputeSearchMethod, withI32Params(5), withI32Result())
+	addHostFunction("recomputeSearchMethod_v2", hostRecomputeSearchMethod, withI32Params(3), withI32Result())
 	addHostFunction("computeDistance_v2", hostComputeDistance, withI32Params(5), withI32Result())
 	addHostFunction("getTextFromCollection_v2", hostGetTextFromCollection, withI32Params(3), withI32Result())
 	addHostFunction("getTextsFromCollection_v2", hostGetTextsFromCollection, withI32Params(2), withI32Result())
@@ -28,7 +28,7 @@ func init() {
 	addHostFunction("deleteFromCollection", hostDeleteFromCollection, withI32Params(2), withI32Result())
 	addHostFunction("searchCollection", hostSearchCollection, withI32Params(5), withI32Result())
 	addHostFunction("nnClassifyCollection", hostNnClassifyCollection, withI32Params(3), withI32Result())
-	addHostFunction("recomputeSearchMethod", hostRecomputeSearchMethod, withI32Params(4), withI32Result())
+	addHostFunction("recomputeSearchMethod", hostRecomputeSearchMethod, withI32Params(2), withI32Result())
 	addHostFunction("computeSimilarity", hostComputeDistance, withI32Params(4), withI32Result())
 	addHostFunction("computeDistance", hostComputeDistance, withI32Params(4), withI32Result())
 	addHostFunction("getTextFromCollection", hostGetTextFromCollection, withI32Params(2), withI32Result())
@@ -48,8 +48,8 @@ func hostUpsertToCollection(ctx context.Context, mod wasm.Module, stack []uint64
 			return
 		}
 	} else {
-		// v2 (with labels)
-		if err := readParams(ctx, mod, stack, &collectionName, &keys, &texts, &labels); err != nil {
+		// v2 (with namespace and labels)
+		if err := readParams(ctx, mod, stack, &collectionName, &namespace, &keys, &texts, &labels); err != nil {
 			logger.Err(ctx, err).Msg("Error reading input parameters.")
 			return
 		}
