@@ -273,13 +273,14 @@ func WriteInferenceHistory(ctx context.Context, model *manifest.ModelInfo, input
 
 func getCollectionId(ctx context.Context, tx pgx.Tx, collectionName string) (int32, error) {
 	var id int32
-	const query = "SELECT id FROM collections WHERE c.name = $1"
+	const query = "SELECT id FROM collections WHERE name = $1"
 	err := tx.QueryRow(ctx, query, collectionName).Scan(&id)
 	if err == pgx.ErrNoRows {
 		const insertQuery = "INSERT INTO collections (name) VALUES ($1) RETURNING id"
 		if err := tx.QueryRow(ctx, insertQuery, collectionName).Scan(&id); err != nil {
 			return 0, err
 		}
+		return id, nil
 	}
 
 	return id, err
@@ -303,6 +304,7 @@ func getNamespaceId(ctx context.Context, tx pgx.Tx, collection, namespace string
 		if err := tx.QueryRow(ctx, insertQuery, cId, namespace).Scan(&id); err != nil {
 			return 0, err
 		}
+		return id, nil
 	}
 
 	return id, err
