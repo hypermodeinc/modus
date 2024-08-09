@@ -304,8 +304,7 @@ func Test_ConvertType_AssemblyScript(t *testing.T) {
 				inputTypes[td.Name] = td
 			}
 
-			typeDefs := make(map[string]*TypeDefinition, len(tc.inputTypeDefs))
-			errors := transformTypes(inputTypes, typeDefs, lti)
+			typeDefs, errors := transformTypes(inputTypes, lti)
 			require.Empty(t, errors)
 
 			result, err := convertType(tc.inputType, lti, typeDefs, false)
