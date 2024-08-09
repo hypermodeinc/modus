@@ -488,31 +488,41 @@ func WriteCollectionVectors(ctx context.Context, searchMethodName string, textId
 		}
 
 		// Insert the new rows
-		const insertQuery = "INSERT INTO collection_vectors (search_method, text_id, vector) VALUES ($1, $2, $3::real[]) RETURNING id"
-		for i, textId := range textIds {
-			vector := vectors[i]
-			row := tx.QueryRow(ctx, insertQuery, searchMethodName, textId, vector)
-			var id int64
-			if err := row.Scan(&id); err != nil {
+		{
+			const insertQuery = "INSERT INTO collection_vectors (search_method, text_id, vector) VALUES ($1, unnest($2::bigint[]), unnest_nd_1d($3::real[][])) RETURNING id"
+			rows, err := tx.Query(ctx, insertQuery, searchMethodName, textIds, vectors)
+			if err != nil {
 				return err
 			}
-			vectorIds[i] = id
-		}
+			defer rows.Close()
 
-		const query = "SELECT key FROM collection_texts WHERE id = ANY($1)"
-		rows, err := tx.Query(ctx, query, textIds)
-		if err != nil {
-			return err
-		}
-		defer rows.Close()
-
-		for i := 0; rows.Next(); i++ {
-			if err := rows.Scan(&keys[i]); err != nil {
+			for i := 0; rows.Next(); i++ {
+				if err := rows.Scan(&vectorIds[i]); err != nil {
+					return err
+				}
+			}
+			if err := rows.Err(); err != nil {
 				return err
 			}
 		}
-		if err := rows.Err(); err != nil {
-			return err
+
+		// Get the keys
+		{
+			const query = "SELECT key FROM collection_texts WHERE id = ANY($1)"
+			rows, err := tx.Query(ctx, query, textIds)
+			if err != nil {
+				return err
+			}
+			defer rows.Close()
+
+			for i := 0; rows.Next(); i++ {
+				if err := rows.Scan(&keys[i]); err != nil {
+					return err
+				}
+			}
+			if err := rows.Err(); err != nil {
+				return err
+			}
 		}
 
 		return nil
