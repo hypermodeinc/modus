@@ -103,6 +103,9 @@ func readParams(ctx context.Context, mod wasm.Module, stack []uint64, params ...
 		if err := adapter.DecodeValue(ctx, mod, stack[i], p); err != nil {
 			errs = append(errs, err)
 		}
+
+		// clear the stack value after reading it, so that it can't be treated as a result
+		stack[i] = 0
 	}
 
 	if len(errs) > 0 {
@@ -131,11 +134,6 @@ func writeResults(ctx context.Context, mod wasm.Module, stack []uint64, results 
 		} else {
 			stack[i] = val
 		}
-	}
-
-	// clear the rest of the stack
-	for i := len(results); i < len(stack); i++ {
-		stack[i] = 0
 	}
 
 	if len(errs) > 0 {
