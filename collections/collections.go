@@ -554,11 +554,6 @@ func GetNamespacesFromCollection(ctx context.Context, collectionName string) ([]
 	}
 
 	namespaceMap := collection.GetCollectionNamespaceMap()
-
-	namespaces := make([]string, 0, len(namespaceMap))
-	for namespace := range namespaceMap {
-		namespaces = append(namespaces, namespace)
-	}
-
+	namespaces := utils.MapKeys(namespaceMap)
 	return namespaces, nil
 }

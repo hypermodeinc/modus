@@ -15,6 +15,7 @@
   "cSpell.words": [
     "abstractlogger",
     "allocs",
+    "ANYARRAY",
     "APPDATA",
     "archdx",
     "arraybuffer",
@@ -75,6 +76,7 @@
     "operationreport",
     "pgconn",
     "pgxpool",
+    "plpgsql",
     "pluginmanager",
     "promhttp",
     "reindex",
