@@ -308,7 +308,7 @@ func getNamespaceId(ctx context.Context, tx pgx.Tx, collection, namespace string
 	return id, err
 }
 
-func GetUniqueNamespaces(ctx context.Context, collectionName string) ([]string, error) {
+func GetNamespaces(ctx context.Context, collectionName string) ([]string, error) {
 	var namespaces []string
 	err := WithTx(ctx, func(tx pgx.Tx) error {
 		const query = `
