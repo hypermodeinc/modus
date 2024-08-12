@@ -225,7 +225,7 @@ func SearchCollection(ctx context.Context, collectionName string, namespaces []s
 		return nil, err
 	}
 
-	if namespaces == nil || len(namespaces) == 0 {
+	if len(namespaces) == 0 {
 		namespaces = []string{in_mem.DefaultNamespace}
 	}
 
