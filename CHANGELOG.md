@@ -1,6 +1,6 @@
 # Change Log
 
-## UNRELEASED
+## 2024-08-12 - Version 0.11.0
 
 - Perf improvements to internal storage of hnsw data in Collections [#299](https://github.com/hypermodeAI/runtime/pull/299)
 - Fix type resolution issues [#304](https://github.com/hypermodeAI/runtime/pull/304) [#306](https://github.com/hypermodeAI/runtime/pull/306)
