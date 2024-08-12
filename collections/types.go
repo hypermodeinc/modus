@@ -25,10 +25,11 @@ type CollectionSearchResult struct {
 }
 
 type CollectionSearchResultObject struct {
-	Key      string
-	Text     string
-	Distance float64
-	Score    float64
+	Namespace string
+	Key       string
+	Text      string
+	Distance  float64
+	Score     float64
 }
 
 type CollectionClassificationResult struct {

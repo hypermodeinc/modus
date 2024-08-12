@@ -138,7 +138,8 @@ func hostDeleteFromCollection(ctx context.Context, mod wasm.Module, stack []uint
 func hostSearchCollection(ctx context.Context, mod wasm.Module, stack []uint64) {
 
 	// Read input parameters
-	var collectionName, namespace, searchMethod, text string
+	var collectionName, searchMethod, text string
+	var namespaces []string
 	var limit int32
 	var returnText bool
 	if len(stack) == 5 {
@@ -149,7 +150,7 @@ func hostSearchCollection(ctx context.Context, mod wasm.Module, stack []uint64) 
 		}
 	} else {
 		// v2 (with namespace)
-		if err := readParams(ctx, mod, stack, &collectionName, &namespace, &searchMethod, &text, &limit, &returnText); err != nil {
+		if err := readParams(ctx, mod, stack, &collectionName, &namespaces, &searchMethod, &text, &limit, &returnText); err != nil {
 			logger.Err(ctx, err).Msg("Error reading input parameters.")
 			return
 		}
@@ -171,7 +172,7 @@ func hostSearchCollection(ctx context.Context, mod wasm.Module, stack []uint64) 
 	// Prepare the host function
 	var searchRes *collections.CollectionSearchResult
 	fn := func() (err error) {
-		searchRes, err = collections.SearchCollection(ctx, collectionName, namespace, searchMethod, text, limit, returnText)
+		searchRes, err = collections.SearchCollection(ctx, collectionName, namespaces, searchMethod, text, limit, returnText)
 		return err
 	}
 
