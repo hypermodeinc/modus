@@ -13,6 +13,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/sts v1.30.3
 	github.com/buger/jsonparser v1.1.1
 	github.com/chewxy/math32 v1.10.1
+	github.com/dgraph-io/dgo/v230 v230.0.1
 	github.com/docker/docker v27.1.2+incompatible
 	github.com/docker/go-connections v0.5.0
 	github.com/getsentry/sentry-go v0.28.1
@@ -33,6 +34,7 @@ require (
 	github.com/viterin/vek v0.4.2
 	github.com/wundergraph/graphql-go-tools/execution v1.0.5-0.20240814100737-614aaa4f1b4a
 	github.com/wundergraph/graphql-go-tools/v2 v2.0.0-rc.74
+	google.golang.org/grpc v1.61.0
 )
 
 require (
@@ -56,7 +58,6 @@ require (
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/containerd/log v0.1.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/dgraph-io/dgo/v230 v230.0.1 // indirect
 	github.com/distribution/reference v0.6.0 // indirect
 	github.com/dlclark/regexp2 v1.11.4 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
@@ -115,7 +116,6 @@ require (
 	golang.org/x/sys v0.24.0 // indirect
 	golang.org/x/text v0.17.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240102182953-50ed04b92917 // indirect
-	google.golang.org/grpc v1.61.0 // indirect
 	google.golang.org/protobuf v1.34.2 // indirect
 	gopkg.in/cenkalti/backoff.v1 v1.1.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
