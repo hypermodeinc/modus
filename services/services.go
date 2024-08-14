@@ -41,7 +41,7 @@ func Start(ctx context.Context) {
 	db.Initialize(ctx)
 	collections.InitializeIndexFactory(ctx)
 	manifestdata.MonitorManifestFile(ctx)
-	pluginmanager.MonitorPlugins(ctx)
+	pluginmanager.Initialize(ctx)
 	graphql.Initialize()
 }
 

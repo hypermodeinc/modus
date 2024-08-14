@@ -1,5 +1,9 @@
 # Change Log
 
+## UNRELEASED
+
+- Improve logger registration code [#335](https://github.com/hypermodeAI/runtime/pull/335)
+
 ## 2024-08-12 - Version 0.11.0
 
 - Perf improvements to internal storage of hnsw data in Collections [#299](https://github.com/hypermodeAI/runtime/pull/299)
