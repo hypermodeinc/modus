@@ -21,7 +21,7 @@ import (
 	"github.com/tetratelabs/wazero"
 )
 
-func MonitorPlugins(ctx context.Context) {
+func monitorPlugins(ctx context.Context) {
 	loadPluginFile := func(fi storage.FileInfo) error {
 		err := loadPlugin(ctx, fi.Name)
 		if err != nil {

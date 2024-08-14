@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 
 	"hmruntime/manifestdata"
@@ -46,7 +47,7 @@ func TestMain(m *testing.M) {
 		},
 	})
 
-	m.Run()
+	os.Exit(m.Run())
 }
 
 func TestPostExternalModelEndpoint(t *testing.T) {

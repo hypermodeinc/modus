@@ -46,7 +46,7 @@ func InvokeTextGenerator(ctx context.Context, modelName string, format string, i
 	}
 
 	if result.Error.Message != "" {
-		err := fmt.Errorf(result.Error.Message)
+		err := fmt.Errorf("error received: %s", result.Error.Message)
 		return "", err
 	}
 

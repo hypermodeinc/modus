@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"hmruntime/config"
-	"hmruntime/plugins"
 	"hmruntime/utils"
 
 	zls "github.com/archdx/zerolog-sentry"
@@ -19,11 +18,6 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
-
-// these are the field names that will be used in the logs
-const executionIdKey = "execution_id"
-const pluginNameKey = "plugin"
-const buildIdKey = "build_id"
 
 var zlsCloser io.Closer
 
@@ -72,38 +66,22 @@ func Close() {
 	}
 }
 
-func Get(ctx context.Context) *zerolog.Logger {
-	executionId, eidFound := ctx.Value(utils.ExecutionIdContextKey).(string)
-	plugin := plugins.GetPlugin(ctx)
+var adapters []func(context.Context, zerolog.Context) zerolog.Context
 
-	// If no context values, just return the global logger.
-	if !eidFound && plugin != nil {
+func AddAdapter(adapter func(context.Context, zerolog.Context) zerolog.Context) {
+	adapters = append(adapters, adapter)
+}
+
+func Get(ctx context.Context) *zerolog.Logger {
+	if len(adapters) == 0 {
 		return &log.Logger
 	}
 
-	// Create a logger context with the context values.
 	lc := log.Logger.With()
-
-	if executionId != "" {
-		lc = lc.Str(executionIdKey, executionId)
+	for _, adapter := range adapters {
+		lc = adapter(ctx, lc)
 	}
 
-	var buildId string
-	var pluginName string
-	if plugin != nil {
-		buildId = plugin.BuildId()
-		pluginName = plugin.Name()
-	}
-
-	if buildId != "" {
-		lc = lc.Str(buildIdKey, buildId)
-	}
-
-	if pluginName != "" {
-		lc = lc.Str(pluginNameKey, pluginName)
-	}
-
-	// Return a logger built from the context.
 	l := lc.Logger()
 	return &l
 }
