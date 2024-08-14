@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"time"
 
+	"hmruntime/dqlclient"
 	"hmruntime/languages"
 	"hmruntime/logger"
 	"hmruntime/manifestdata"
@@ -42,6 +43,7 @@ func RegisterHostFunctions(ctx context.Context) {
 
 	manifestdata.RegisterManifestLoadedCallback(func(ctx context.Context) error {
 		sqlclient.ShutdownPGPools()
+		dqlclient.ShutdownConns()
 		return nil
 	})
 }
