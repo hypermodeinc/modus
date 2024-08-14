@@ -132,11 +132,13 @@ func TestMain(m *testing.M) {
 	}
 
 	// run tests
-	m.Run()
+	exitCode := m.Run()
 
 	// stop the HTTP server
 	stop()
 	<-done
+
+	os.Exit(exitCode)
 }
 
 func TestPostgresqlNoConnection(t *testing.T) {
@@ -260,7 +262,9 @@ func (ps *postgresqlSuite) setupPostgresContainer() error {
 		return fmt.Errorf("error pulling docker image: %w", err)
 	}
 	defer imagePullResp.Close()
-	io.Copy(os.Stdout, imagePullResp)
+	if _, err := io.Copy(os.Stdout, imagePullResp); err != nil {
+		return fmt.Errorf("error copying image pull response: %w", err)
+	}
 
 	ports := nat.PortSet{"5432": {}}
 	pgEnv := []string{"POSTGRES_PASSWORD=password", "POSTGRES_DB=data"}
