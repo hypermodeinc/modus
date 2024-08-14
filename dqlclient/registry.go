@@ -68,9 +68,12 @@ func (dr *dgraphRegistry) getDgraphConnector(ctx context.Context, dgName string)
 			return nil, fmt.Errorf("dgraph host %s has empty address", dgName)
 		}
 
-		confKey, err := secrets.ApplyHostSecretsToString(ctx, info, host.Key)
+		hostKey, err := secrets.ApplyHostSecretsToString(ctx, info, host.Key)
+		if err != nil {
+			return nil, err
+		}
 
-		conn, err := dgo.DialCloud(host.Endpoint, confKey)
+		conn, err := dgo.DialCloud(host.Endpoint, hostKey)
 		if err != nil {
 			return nil, err
 		}

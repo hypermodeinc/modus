@@ -10,7 +10,7 @@ import (
 	"hmruntime/utils"
 )
 
-func ExecuteQuery(ctx context.Context, hostName, statement, paramsJson string) (string, error) {
+func ExecuteQuery(ctx context.Context, hostName, query string, mutations []string, paramsJson string) (string, error) {
 	var params map[string]string
 	if err := utils.JsonDeserialize([]byte(paramsJson), &params); err != nil {
 		return "", fmt.Errorf("error deserializing database query parameters: %w", err)
@@ -21,5 +21,5 @@ func ExecuteQuery(ctx context.Context, hostName, statement, paramsJson string) (
 		return "", err
 	}
 
-	return dc.query(ctx, statement, params)
+	return dc.execute(ctx, query, mutations, params)
 }

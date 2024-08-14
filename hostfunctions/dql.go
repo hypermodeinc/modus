@@ -15,14 +15,15 @@ import (
 )
 
 func init() {
-	addHostFunction("executeDQL", hostExecuteDQL, withI32Params(3), withI32Result())
+	addHostFunction("executeDQL", hostExecuteDQL, withI32Params(4), withI32Result())
 }
 
 func hostExecuteDQL(ctx context.Context, mod wasm.Module, stack []uint64) {
 
 	// Read input parameters
-	var hostName, stmt, varsJson string
-	if err := readParams(ctx, mod, stack, &hostName, &stmt, &varsJson); err != nil {
+	var hostName, query, varsJson string
+	var mutations []string
+	if err := readParams(ctx, mod, stack, &hostName, &query, &mutations, &varsJson); err != nil {
 		logger.Err(ctx, err).Msg("Error reading input parameters.")
 		return
 	}
@@ -33,13 +34,13 @@ func hostExecuteDQL(ctx context.Context, mod wasm.Module, stack []uint64) {
 		Completed: "Completed DQL operation.",
 		Cancelled: "Cancelled DQL operation.",
 		Error:     "Error executing DQL operation.",
-		Detail:    fmt.Sprintf("Host: %s Query: %s", hostName, stmt),
+		Detail:    fmt.Sprintf("Host: %s Query: %s Mutations: %v", hostName, query, mutations),
 	}
 
 	// Prepare the host function
 	var result string
 	fn := func() (err error) {
-		result, err = dqlclient.ExecuteQuery(ctx, hostName, stmt, varsJson)
+		result, err = dqlclient.ExecuteQuery(ctx, hostName, query, mutations, varsJson)
 		return err
 	}
 
