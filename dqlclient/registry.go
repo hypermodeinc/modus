@@ -74,16 +74,18 @@ func (dr *dgraphRegistry) getDgraphConnector(ctx context.Context, dgName string)
 		var err error
 		if host.Endpoint == "localhost:9080" {
 			conn, err = grpc.Dial(host.Endpoint, grpc.WithTransportCredentials(insecure.NewCredentials()))
+			if err != nil {
+				return nil, err
+			}
 		} else {
 			hostKey, err := secrets.ApplyHostSecretsToString(ctx, info, host.Key)
 			if err != nil {
 				return nil, err
 			}
 			conn, err = dgo.DialCloud(host.Endpoint, hostKey)
-		}
-
-		if err != nil {
-			return nil, err
+			if err != nil {
+				return nil, err
+			}
 		}
 
 		ds := &dgraphConnector{
