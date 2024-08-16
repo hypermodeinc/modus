@@ -61,7 +61,7 @@ func (dc *dgraphConnector) executeQuery(ctx context.Context, query string, param
 
 	req := &api.Request{Query: query}
 
-	if params != nil && len(params) > 0 {
+	if len(params) > 0 {
 		req.Vars = params
 	}
 
