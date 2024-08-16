@@ -12,6 +12,8 @@ import (
 	"sync"
 
 	"github.com/hypermodeAI/manifest"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/dgraph-io/dgo/v230"
 	"github.com/dgraph-io/dgo/v230/protos/api"
@@ -68,12 +70,18 @@ func (dr *dgraphRegistry) getDgraphConnector(ctx context.Context, dgName string)
 			return nil, fmt.Errorf("dgraph host %s has empty address", dgName)
 		}
 
-		hostKey, err := secrets.ApplyHostSecretsToString(ctx, info, host.Key)
-		if err != nil {
-			return nil, err
+		var conn *grpc.ClientConn
+		var err error
+		if host.Endpoint == "localhost:9080" {
+			conn, err = grpc.Dial(host.Endpoint, grpc.WithTransportCredentials(insecure.NewCredentials()))
+		} else {
+			hostKey, err := secrets.ApplyHostSecretsToString(ctx, info, host.Key)
+			if err != nil {
+				return nil, err
+			}
+			conn, err = dgo.DialCloud(host.Endpoint, hostKey)
 		}
 
-		conn, err := dgo.DialCloud(host.Endpoint, hostKey)
 		if err != nil {
 			return nil, err
 		}
