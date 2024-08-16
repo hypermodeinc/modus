@@ -24,13 +24,13 @@ func ExecuteQuery(ctx context.Context, hostName, query string, paramsJson string
 	return dc.executeQuery(ctx, query, params)
 }
 
-func ExecuteMutations(ctx context.Context, hostName string, mutations []string) (map[string]string, error) {
+func ExecuteMutations(ctx context.Context, hostName string, setMutations, delMutations []string) (map[string]string, error) {
 	dc, err := dgr.getDgraphConnector(ctx, hostName)
 	if err != nil {
 		return nil, err
 	}
 
-	return dc.executeMutations(ctx, mutations)
+	return dc.executeMutations(ctx, setMutations, delMutations)
 }
 
 func AlterSchema(ctx context.Context, hostName, schema string) (string, error) {

@@ -16,7 +16,7 @@ import (
 
 func init() {
 	addHostFunction("executeDQLQuery", hostExecuteDQLQuery, withI32Params(3), withI32Result())
-	addHostFunction("executeDQLMutations", hostExecuteDQLMutations, withI32Params(2), withI32Result())
+	addHostFunction("executeDQLMutations", hostExecuteDQLMutations, withI32Params(3), withI32Result())
 	addHostFunction("alterSchema", hostAlterSchema, withI32Params(2), withI32Result())
 	addHostFunction("dropAttr", hostDropAttr, withI32Params(2), withI32Result())
 	addHostFunction("dropAll", hostDropAll, withI32Params(1), withI32Result())
@@ -63,8 +63,8 @@ func hostExecuteDQLMutations(ctx context.Context, mod wasm.Module, stack []uint6
 
 	// Read input parameters
 	var hostName string
-	var mutations []string
-	if err := readParams(ctx, mod, stack, &hostName, &mutations); err != nil {
+	var setMutations, delMutations []string
+	if err := readParams(ctx, mod, stack, &hostName, &setMutations, &delMutations); err != nil {
 		logger.Err(ctx, err).Msg("Error reading input parameters.")
 		return
 	}
@@ -75,13 +75,13 @@ func hostExecuteDQLMutations(ctx context.Context, mod wasm.Module, stack []uint6
 		Completed: "Completed DQL mutations.",
 		Cancelled: "Cancelled DQL mutations.",
 		Error:     "Error executing DQL mutations.",
-		Detail:    fmt.Sprintf("Host: %s Mutations: %v", hostName, mutations),
+		Detail:    fmt.Sprintf("Host: %s SetMutations: %v DelMutations: %v", hostName, setMutations, delMutations),
 	}
 
 	// Prepare the host function
 	var result map[string]string
 	fn := func() (err error) {
-		result, err = dqlclient.ExecuteMutations(ctx, hostName, mutations)
+		result, err = dqlclient.ExecuteMutations(ctx, hostName, setMutations, delMutations)
 		return err
 	}
 

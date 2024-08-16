@@ -73,8 +73,8 @@ func (dc *dgraphConnector) executeQuery(ctx context.Context, query string, param
 	return string(resp.Json), nil
 }
 
-func (dc *dgraphConnector) executeMutations(ctx context.Context, mutations []string) (map[string]string, error) {
-	if len(mutations) == 0 {
+func (dc *dgraphConnector) executeMutations(ctx context.Context, setMutations, delMutations []string) (map[string]string, error) {
+	if len(setMutations) == 0 && len(delMutations) == 0 {
 		return nil, nil
 	}
 
@@ -87,9 +87,14 @@ func (dc *dgraphConnector) executeMutations(ctx context.Context, mutations []str
 
 	}()
 
-	mus := make([]*api.Mutation, 0, len(mutations))
-	for _, m := range mutations {
+	mus := make([]*api.Mutation, 0, len(setMutations)+len(delMutations))
+
+	for _, m := range setMutations {
 		mus = append(mus, &api.Mutation{SetNquads: []byte(m)})
+	}
+
+	for _, m := range delMutations {
+		mus = append(mus, &api.Mutation{DelNquads: []byte(m)})
 	}
 
 	req := &api.Request{Mutations: mus, CommitNow: true}
