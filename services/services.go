@@ -10,6 +10,7 @@ import (
 	"hmruntime/aws"
 	"hmruntime/collections"
 	"hmruntime/db"
+	"hmruntime/dqlclient"
 	"hmruntime/graphql"
 	"hmruntime/hostfunctions"
 	"hmruntime/logger"
@@ -55,6 +56,7 @@ func Stop(ctx context.Context) {
 
 	collections.CloseIndexFactory(ctx)
 	sqlclient.ShutdownPGPools()
+	dqlclient.ShutdownConns()
 	wasmhost.RuntimeInstance.Close(ctx)
 	logger.Close()
 	db.Stop(ctx)
