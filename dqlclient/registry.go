@@ -105,7 +105,7 @@ func (dr *dgraphRegistry) getDgraphConnector(ctx context.Context, dgName string)
 			if err != nil {
 				return nil, err
 			}
-		} else if strings.Split(host.GrpcTarget, ":")[0] == "localhost" {
+		} else if strings.Split(host.GrpcTarget, ":")[0] != "localhost" {
 			pool, err := x509.SystemCertPool()
 			if err != nil {
 				return nil, err
