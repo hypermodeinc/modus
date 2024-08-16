@@ -6,6 +6,7 @@ package dqlclient
 
 import (
 	"context"
+	"crypto/x509"
 	"fmt"
 	"hmruntime/manifestdata"
 	"hmruntime/secrets"
@@ -13,6 +14,7 @@ import (
 
 	"github.com/hypermodeAI/manifest"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/dgraph-io/dgo/v230"
@@ -24,6 +26,20 @@ var dgr = newDgraphRegistry()
 type dgraphRegistry struct {
 	sync.RWMutex
 	dgraphConnectorCache map[string]*dgraphConnector
+}
+
+type authCreds struct {
+	token string
+}
+
+func (a *authCreds) GetRequestMetadata(ctx context.Context, uri ...string) (
+	map[string]string, error) {
+
+	return map[string]string{"Authorization": a.token}, nil
+}
+
+func (a *authCreds) RequireTransportSecurity() bool {
+	return true
 }
 
 func newDgraphRegistry() *dgraphRegistry {
@@ -61,28 +77,35 @@ func (dr *dgraphRegistry) getDgraphConnector(ctx context.Context, dgName string)
 			continue
 		}
 
-		if info.HostType() != manifest.HostTypeDgraphCloud {
-			return nil, fmt.Errorf("host %s is not a dgraph cloud host", dgName)
+		if info.HostType() != manifest.HostTypeDgraph {
+			return nil, fmt.Errorf("host %s is not a dgraph host", dgName)
 		}
 
-		host := info.(manifest.DgraphCloudHostInfo)
-		if host.Endpoint == "" {
-			return nil, fmt.Errorf("dgraph host %s has empty address", dgName)
+		host := info.(manifest.DgraphHostInfo)
+		if host.GrpcTarget == "" {
+			return nil, fmt.Errorf("dgraph host %s has empty GrpcTarget", dgName)
 		}
 
 		var conn *grpc.ClientConn
 		var err error
-		if host.Endpoint == "localhost:9080" {
-			conn, err = grpc.Dial(host.Endpoint, grpc.WithTransportCredentials(insecure.NewCredentials()))
-			if err != nil {
-				return nil, err
-			}
-		} else {
+
+		if host.Key != "" {
 			hostKey, err := secrets.ApplyHostSecretsToString(ctx, info, host.Key)
 			if err != nil {
 				return nil, err
 			}
-			conn, err = dgo.DialCloud(host.Endpoint, hostKey)
+
+			pool, err := x509.SystemCertPool()
+			if err != nil {
+				return nil, err
+			}
+			creds := credentials.NewClientTLSFromCert(pool, "")
+			conn, err = grpc.Dial(host.GrpcTarget, grpc.WithTransportCredentials(creds), grpc.WithPerRPCCredentials(&authCreds{hostKey}))
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			conn, err = grpc.Dial(host.GrpcTarget, grpc.WithTransportCredentials(insecure.NewCredentials()))
 			if err != nil {
 				return nil, err
 			}
