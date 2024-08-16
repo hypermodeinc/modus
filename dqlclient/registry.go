@@ -88,7 +88,7 @@ func (dr *dgraphRegistry) getDgraphConnector(ctx context.Context, dgName string)
 		}
 
 		var conn *grpc.ClientConn
-		var err error
+		var opts []grpc.DialOption
 
 		if host.Key != "" {
 			hostKey, err := secrets.ApplyHostSecretsToString(ctx, info, host.Key)
@@ -101,9 +101,9 @@ func (dr *dgraphRegistry) getDgraphConnector(ctx context.Context, dgName string)
 				return nil, err
 			}
 			creds := credentials.NewClientTLSFromCert(pool, "")
-			conn, err = grpc.Dial(host.GrpcTarget, grpc.WithTransportCredentials(creds), grpc.WithPerRPCCredentials(&authCreds{hostKey}))
-			if err != nil {
-				return nil, err
+			opts = []grpc.DialOption{
+				grpc.WithTransportCredentials(creds),
+				grpc.WithPerRPCCredentials(&authCreds{hostKey}),
 			}
 		} else if strings.Split(host.GrpcTarget, ":")[0] != "localhost" {
 			pool, err := x509.SystemCertPool()
@@ -111,15 +111,19 @@ func (dr *dgraphRegistry) getDgraphConnector(ctx context.Context, dgName string)
 				return nil, err
 			}
 			creds := credentials.NewClientTLSFromCert(pool, "")
-			conn, err = grpc.Dial(host.GrpcTarget, grpc.WithTransportCredentials(creds))
-			if err != nil {
-				return nil, err
+			opts = []grpc.DialOption{
+				grpc.WithTransportCredentials(creds),
 			}
 		} else {
-			conn, err = grpc.Dial(host.GrpcTarget, grpc.WithTransportCredentials(insecure.NewCredentials()))
-			if err != nil {
-				return nil, err
+			opts = []grpc.DialOption{
+				grpc.WithTransportCredentials(insecure.NewCredentials()),
 			}
+		}
+
+		var err error
+		conn, err = grpc.Dial(host.GrpcTarget, opts...)
+		if err != nil {
+			return nil, err
 		}
 
 		ds := &dgraphConnector{
