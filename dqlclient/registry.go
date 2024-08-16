@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"hmruntime/manifestdata"
 	"hmruntime/secrets"
+	"strings"
 	"sync"
 
 	"github.com/hypermodeAI/manifest"
@@ -101,6 +102,16 @@ func (dr *dgraphRegistry) getDgraphConnector(ctx context.Context, dgName string)
 			}
 			creds := credentials.NewClientTLSFromCert(pool, "")
 			conn, err = grpc.Dial(host.GrpcTarget, grpc.WithTransportCredentials(creds), grpc.WithPerRPCCredentials(&authCreds{hostKey}))
+			if err != nil {
+				return nil, err
+			}
+		} else if strings.Split(host.GrpcTarget, ":")[0] == "localhost" {
+			pool, err := x509.SystemCertPool()
+			if err != nil {
+				return nil, err
+			}
+			creds := credentials.NewClientTLSFromCert(pool, "")
+			conn, err = grpc.Dial(host.GrpcTarget, grpc.WithTransportCredentials(creds))
 			if err != nil {
 				return nil, err
 			}

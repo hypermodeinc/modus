@@ -3,6 +3,7 @@
 ## UNRELEASED
 
 - Improve logger registration code [#335](https://github.com/hypermodeAI/runtime/pull/335)
+- Add dgraph host functions [#336](https://github.com/hypermodeAI/runtime/pull/336)
 
 ## 2024-08-12 - Version 0.11.0
 

@@ -17,9 +17,9 @@ import (
 func init() {
 	addHostFunction("executeDQLQuery", hostExecuteDQLQuery, withI32Params(3), withI32Result())
 	addHostFunction("executeDQLMutations", hostExecuteDQLMutations, withI32Params(3), withI32Result())
-	addHostFunction("alterSchema", hostAlterSchema, withI32Params(2), withI32Result())
-	addHostFunction("dropAttr", hostDropAttr, withI32Params(2), withI32Result())
-	addHostFunction("dropAll", hostDropAll, withI32Params(1), withI32Result())
+	addHostFunction("dgraphAlterSchema", hostDgraphAlterSchema, withI32Params(2), withI32Result())
+	addHostFunction("dgraphDropAttr", hostDgraphDropAttr, withI32Params(2), withI32Result())
+	addHostFunction("dgraphDropAll", hostDgraphDropAll, withI32Params(1), withI32Result())
 }
 
 func hostExecuteDQLQuery(ctx context.Context, mod wasm.Module, stack []uint64) {
@@ -96,7 +96,7 @@ func hostExecuteDQLMutations(ctx context.Context, mod wasm.Module, stack []uint6
 	}
 }
 
-func hostAlterSchema(ctx context.Context, mod wasm.Module, stack []uint64) {
+func hostDgraphAlterSchema(ctx context.Context, mod wasm.Module, stack []uint64) {
 
 	// Read input parameters
 	var hostName, schema string
@@ -132,7 +132,7 @@ func hostAlterSchema(ctx context.Context, mod wasm.Module, stack []uint64) {
 	}
 }
 
-func hostDropAttr(ctx context.Context, mod wasm.Module, stack []uint64) {
+func hostDgraphDropAttr(ctx context.Context, mod wasm.Module, stack []uint64) {
 
 	// Read input parameters
 	var hostName, attr string
@@ -168,7 +168,7 @@ func hostDropAttr(ctx context.Context, mod wasm.Module, stack []uint64) {
 	}
 }
 
-func hostDropAll(ctx context.Context, mod wasm.Module, stack []uint64) {
+func hostDgraphDropAll(ctx context.Context, mod wasm.Module, stack []uint64) {
 
 	// Read input parameters
 	var hostName string
