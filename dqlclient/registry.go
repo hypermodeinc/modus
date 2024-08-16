@@ -87,7 +87,6 @@ func (dr *dgraphRegistry) getDgraphConnector(ctx context.Context, dgName string)
 			return nil, fmt.Errorf("dgraph host %s has empty GrpcTarget", dgName)
 		}
 
-		var conn *grpc.ClientConn
 		var opts []grpc.DialOption
 
 		if host.Key != "" {
@@ -120,8 +119,7 @@ func (dr *dgraphRegistry) getDgraphConnector(ctx context.Context, dgName string)
 			}
 		}
 
-		var err error
-		conn, err = grpc.Dial(host.GrpcTarget, opts...)
+		conn, err := grpc.NewClient(host.GrpcTarget, opts...)
 		if err != nil {
 			return nil, err
 		}
