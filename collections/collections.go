@@ -290,7 +290,9 @@ func SearchCollection(ctx context.Context, collectionName string, namespaces []s
 		return mergedObjects[i].Distance < mergedObjects[j].Distance
 	})
 
-	mergedObjects = mergedObjects[:int(limit)]
+	if len(mergedObjects) > int(limit) {
+		mergedObjects = mergedObjects[:int(limit)]
+	}
 
 	return &CollectionSearchResult{
 		Collection:   collectionName,
