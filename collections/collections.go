@@ -451,9 +451,17 @@ func ComputeDistance(ctx context.Context, collectionName, namespace, searchMetho
 		return nil, err
 	}
 
+	if vec1 == nil {
+		return nil, fmt.Errorf("vector for id %s not found", id1)
+	}
+
 	vec2, err := vectorIndex.GetVector(ctx, id2)
 	if err != nil {
 		return nil, err
+	}
+
+	if vec2 == nil {
+		return nil, fmt.Errorf("vector for id %s not found", id2)
 	}
 
 	distance, err := collection_utils.CosineDistance(vec1, vec2)
