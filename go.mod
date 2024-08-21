@@ -8,11 +8,11 @@ require (
 	github.com/aws/aws-sdk-go-v2 v1.30.4
 	github.com/aws/aws-sdk-go-v2/config v1.27.28
 	github.com/aws/aws-sdk-go-v2/service/bedrockruntime v1.15.1
-	github.com/aws/aws-sdk-go-v2/service/s3 v1.59.0
+	github.com/aws/aws-sdk-go-v2/service/s3 v1.60.0
 	github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.32.5
 	github.com/aws/aws-sdk-go-v2/service/sts v1.30.4
 	github.com/buger/jsonparser v1.1.1
-	github.com/chewxy/math32 v1.10.1
+	github.com/chewxy/math32 v1.11.0
 	github.com/dgraph-io/dgo/v230 v230.0.1
 	github.com/docker/docker v27.1.2+incompatible
 	github.com/docker/go-connections v0.5.0
@@ -24,7 +24,7 @@ require (
 	github.com/jackc/pgx/v5 v5.6.0
 	github.com/jensneuse/abstractlogger v0.0.4
 	github.com/joho/godotenv v1.5.1
-	github.com/prometheus/client_golang v1.20.0
+	github.com/prometheus/client_golang v1.20.1
 	github.com/prometheus/common v0.55.0
 	github.com/rs/cors v1.11.0
 	github.com/rs/xid v1.5.0
