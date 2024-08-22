@@ -33,6 +33,15 @@ func ExecuteMutations(ctx context.Context, hostName string, setMutations, delMut
 	return dc.executeMutations(ctx, setMutations, delMutations)
 }
 
+func ExecuteUpserts(ctx context.Context, hostName, query string, setMutations, delMutations []string) (map[string]string, error) {
+	dc, err := dgr.getDgraphConnector(ctx, hostName)
+	if err != nil {
+		return nil, err
+	}
+
+	return dc.executeUpserts(ctx, query, setMutations, delMutations)
+}
+
 func AlterSchema(ctx context.Context, hostName, schema string) (string, error) {
 	dc, err := dgr.getDgraphConnector(ctx, hostName)
 	if err != nil {

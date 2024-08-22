@@ -17,6 +17,7 @@ import (
 func init() {
 	addHostFunction("executeDQLQuery", hostExecuteDQLQuery, withI32Params(3), withI32Result())
 	addHostFunction("executeDQLMutations", hostExecuteDQLMutations, withI32Params(3), withI32Result())
+	addHostFunction("executeDQLUpserts", hostExecuteDQLUpserts, withI32Params(4), withI32Result())
 	addHostFunction("dgraphAlterSchema", hostDgraphAlterSchema, withI32Params(2), withI32Result())
 	addHostFunction("dgraphDropAttr", hostDgraphDropAttr, withI32Params(2), withI32Result())
 	addHostFunction("dgraphDropAll", hostDgraphDropAll, withI32Params(1), withI32Result())
@@ -82,6 +83,43 @@ func hostExecuteDQLMutations(ctx context.Context, mod wasm.Module, stack []uint6
 	var result map[string]string
 	fn := func() (err error) {
 		result, err = dqlclient.ExecuteMutations(ctx, hostName, setMutations, delMutations)
+		return err
+	}
+
+	// Call the host function
+	if ok := callHostFunction(ctx, fn, msgs); !ok {
+		return
+	}
+
+	// Write the results
+	if err := writeResults(ctx, mod, stack, result); err != nil {
+		logger.Err(ctx, err).Msg("Error writing results to wasm memory.")
+	}
+}
+
+func hostExecuteDQLUpserts(ctx context.Context, mod wasm.Module, stack []uint64) {
+
+	// Read input parameters
+	var hostName, query string
+	var setMutations, delMutations []string
+	if err := readParams(ctx, mod, stack, &hostName, &query, &setMutations, &delMutations); err != nil {
+		logger.Err(ctx, err).Msg("Error reading input parameters.")
+		return
+	}
+
+	// Prepare log messages
+	msgs := &hostFunctionMessages{
+		Starting:  "Executing DQL upserts.",
+		Completed: "Completed DQL upserts.",
+		Cancelled: "Cancelled DQL upserts.",
+		Error:     "Error executing DQL upserts.",
+		Detail:    fmt.Sprintf("Host: %s Query: %s SetMutations: %v DelMutations: %v", hostName, query, setMutations, delMutations),
+	}
+
+	// Prepare the host function
+	var result map[string]string
+	fn := func() (err error) {
+		result, err = dqlclient.ExecuteUpserts(ctx, hostName, query, setMutations, delMutations)
 		return err
 	}
 
