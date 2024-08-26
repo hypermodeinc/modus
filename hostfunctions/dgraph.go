@@ -8,7 +8,7 @@ import (
 	"context"
 	"fmt"
 
-	"hmruntime/dqlclient"
+	"hmruntime/dgraphclient"
 	"hmruntime/logger"
 
 	wasm "github.com/tetratelabs/wazero/api"
@@ -18,6 +18,7 @@ func init() {
 	addHostFunction("executeDQLQuery", hostExecuteDQLQuery, withI32Params(3), withI32Result())
 	addHostFunction("executeDQLMutations", hostExecuteDQLMutations, withI32Params(3), withI32Result())
 	addHostFunction("executeDQLUpserts", hostExecuteDQLUpserts, withI32Params(4), withI32Result())
+	addHostFunction("executeDQL", hostExecuteDQL, withI32Params(2), withI32Result())
 	addHostFunction("dgraphAlterSchema", hostDgraphAlterSchema, withI32Params(2), withI32Result())
 	addHostFunction("dgraphDropAttr", hostDgraphDropAttr, withI32Params(2), withI32Result())
 	addHostFunction("dgraphDropAll", hostDgraphDropAll, withI32Params(1), withI32Result())
@@ -45,7 +46,7 @@ func hostExecuteDQLQuery(ctx context.Context, mod wasm.Module, stack []uint64) {
 	// Prepare the host function
 	var result string
 	fn := func() (err error) {
-		result, err = dqlclient.ExecuteQuery(ctx, hostName, query, varsJson)
+		result, err = dgraphclient.ExecuteQuery(ctx, hostName, query, varsJson)
 		return err
 	}
 
@@ -82,7 +83,7 @@ func hostExecuteDQLMutations(ctx context.Context, mod wasm.Module, stack []uint6
 	// Prepare the host function
 	var result map[string]string
 	fn := func() (err error) {
-		result, err = dqlclient.ExecuteMutations(ctx, hostName, setMutations, delMutations)
+		result, err = dgraphclient.ExecuteMutations(ctx, hostName, setMutations, delMutations)
 		return err
 	}
 
@@ -95,6 +96,44 @@ func hostExecuteDQLMutations(ctx context.Context, mod wasm.Module, stack []uint6
 	if err := writeResults(ctx, mod, stack, result); err != nil {
 		logger.Err(ctx, err).Msg("Error writing results to wasm memory.")
 	}
+}
+
+func hostExecuteDQL(ctx context.Context, mod wasm.Module, stack []uint64) {
+
+	// Read input parameters
+	var hostName string
+	var req dgraphclient.Request
+	if err := readParams(ctx, mod, stack, &hostName, &req); err != nil {
+		logger.Err(ctx, err).Msg("Error reading input parameters.")
+		return
+	}
+
+	// Prepare log messages
+	msgs := &hostFunctionMessages{
+		Starting:  "Executing DQL operation.",
+		Completed: "Completed DQL operation.",
+		Cancelled: "Cancelled DQL operation.",
+		Error:     "Error executing DQL operation.",
+		Detail:    fmt.Sprintf("Host: %s Req: %s", hostName, fmt.Sprint(req)),
+	}
+
+	// Prepare the host function
+	var result dgraphclient.Response
+	fn := func() (err error) {
+		result, err = dgraphclient.Execute(ctx, hostName, req)
+		return err
+	}
+
+	// Call the host function
+	if ok := callHostFunction(ctx, fn, msgs); !ok {
+		return
+	}
+
+	// Write the results
+	if err := writeResults(ctx, mod, stack, result); err != nil {
+		logger.Err(ctx, err).Msg("Error writing results to wasm memory.")
+	}
+
 }
 
 func hostExecuteDQLUpserts(ctx context.Context, mod wasm.Module, stack []uint64) {
@@ -119,7 +158,7 @@ func hostExecuteDQLUpserts(ctx context.Context, mod wasm.Module, stack []uint64)
 	// Prepare the host function
 	var result map[string]string
 	fn := func() (err error) {
-		result, err = dqlclient.ExecuteUpserts(ctx, hostName, query, setMutations, delMutations)
+		result, err = dgraphclient.ExecuteUpserts(ctx, hostName, query, setMutations, delMutations)
 		return err
 	}
 
@@ -155,7 +194,7 @@ func hostDgraphAlterSchema(ctx context.Context, mod wasm.Module, stack []uint64)
 	// Prepare the host function
 	var result string
 	fn := func() (err error) {
-		result, err = dqlclient.AlterSchema(ctx, hostName, schema)
+		result, err = dgraphclient.AlterSchema(ctx, hostName, schema)
 		return err
 	}
 
@@ -191,7 +230,7 @@ func hostDgraphDropAttr(ctx context.Context, mod wasm.Module, stack []uint64) {
 	// Prepare the host function
 	var result string
 	fn := func() (err error) {
-		result, err = dqlclient.DropAttr(ctx, hostName, attr)
+		result, err = dgraphclient.DropAttr(ctx, hostName, attr)
 		return err
 	}
 
@@ -227,7 +266,7 @@ func hostDgraphDropAll(ctx context.Context, mod wasm.Module, stack []uint64) {
 	// Prepare the host function
 	var result string
 	fn := func() (err error) {
-		result, err = dqlclient.DropAll(ctx, hostName)
+		result, err = dgraphclient.DropAll(ctx, hostName)
 		return err
 	}
 

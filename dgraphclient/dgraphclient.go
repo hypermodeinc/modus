@@ -2,7 +2,7 @@
  * Copyright 2024 Hypermode, Inc.
  */
 
-package dqlclient
+package dgraphclient
 
 import (
 	"context"
@@ -31,6 +31,15 @@ func ExecuteMutations(ctx context.Context, hostName string, setMutations, delMut
 	}
 
 	return dc.executeMutations(ctx, setMutations, delMutations)
+}
+
+func Execute(ctx context.Context, hostName string, req Request) (Response, error) {
+	dc, err := dgr.getDgraphConnector(ctx, hostName)
+	if err != nil {
+		return Response{}, err
+	}
+
+	return dc.execute(ctx, req)
 }
 
 func ExecuteUpserts(ctx context.Context, hostName, query string, setMutations, delMutations []string) (map[string]string, error) {
