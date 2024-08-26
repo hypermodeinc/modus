@@ -15,87 +15,11 @@ import (
 )
 
 func init() {
-	addHostFunction("executeDQLQuery", hostExecuteDQLQuery, withI32Params(3), withI32Result())
-	addHostFunction("executeDQLMutations", hostExecuteDQLMutations, withI32Params(3), withI32Result())
 	addHostFunction("executeDQLUpserts", hostExecuteDQLUpserts, withI32Params(4), withI32Result())
 	addHostFunction("executeDQL", hostExecuteDQL, withI32Params(2), withI32Result())
 	addHostFunction("dgraphAlterSchema", hostDgraphAlterSchema, withI32Params(2), withI32Result())
 	addHostFunction("dgraphDropAttr", hostDgraphDropAttr, withI32Params(2), withI32Result())
 	addHostFunction("dgraphDropAll", hostDgraphDropAll, withI32Params(1), withI32Result())
-}
-
-func hostExecuteDQLQuery(ctx context.Context, mod wasm.Module, stack []uint64) {
-
-	// Read input parameters
-	var hostName, query, varsJson string
-	var mutations []string
-	if err := readParams(ctx, mod, stack, &hostName, &query, &varsJson); err != nil {
-		logger.Err(ctx, err).Msg("Error reading input parameters.")
-		return
-	}
-
-	// Prepare log messages
-	msgs := &hostFunctionMessages{
-		Starting:  "Executing DQL operation.",
-		Completed: "Completed DQL operation.",
-		Cancelled: "Cancelled DQL operation.",
-		Error:     "Error executing DQL operation.",
-		Detail:    fmt.Sprintf("Host: %s Query: %s Mutations: %v", hostName, query, mutations),
-	}
-
-	// Prepare the host function
-	var result string
-	fn := func() (err error) {
-		result, err = dgraphclient.ExecuteQuery(ctx, hostName, query, varsJson)
-		return err
-	}
-
-	// Call the host function
-	if ok := callHostFunction(ctx, fn, msgs); !ok {
-		return
-	}
-
-	// Write the results
-	if err := writeResults(ctx, mod, stack, result); err != nil {
-		logger.Err(ctx, err).Msg("Error writing results to wasm memory.")
-	}
-}
-
-func hostExecuteDQLMutations(ctx context.Context, mod wasm.Module, stack []uint64) {
-
-	// Read input parameters
-	var hostName string
-	var setMutations, delMutations []string
-	if err := readParams(ctx, mod, stack, &hostName, &setMutations, &delMutations); err != nil {
-		logger.Err(ctx, err).Msg("Error reading input parameters.")
-		return
-	}
-
-	// Prepare log messages
-	msgs := &hostFunctionMessages{
-		Starting:  "Executing DQL mutations.",
-		Completed: "Completed DQL mutations.",
-		Cancelled: "Cancelled DQL mutations.",
-		Error:     "Error executing DQL mutations.",
-		Detail:    fmt.Sprintf("Host: %s SetMutations: %v DelMutations: %v", hostName, setMutations, delMutations),
-	}
-
-	// Prepare the host function
-	var result map[string]string
-	fn := func() (err error) {
-		result, err = dgraphclient.ExecuteMutations(ctx, hostName, setMutations, delMutations)
-		return err
-	}
-
-	// Call the host function
-	if ok := callHostFunction(ctx, fn, msgs); !ok {
-		return
-	}
-
-	// Write the results
-	if err := writeResults(ctx, mod, stack, result); err != nil {
-		logger.Err(ctx, err).Msg("Error writing results to wasm memory.")
-	}
 }
 
 func hostExecuteDQL(ctx context.Context, mod wasm.Module, stack []uint64) {

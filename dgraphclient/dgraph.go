@@ -45,64 +45,6 @@ func (dc *dgraphConnector) dropAll(ctx context.Context) (string, error) {
 	return "success", nil
 }
 
-func (dc *dgraphConnector) executeQuery(ctx context.Context, query string, params map[string]string) (string, error) {
-	if query == "" {
-		return "", nil
-	}
-
-	tx := dc.dgClient.NewReadOnlyTxn()
-	defer func() {
-		if err := tx.Discard(ctx); err != nil {
-			logger.Warn(ctx).Err(err).Msg("Error discarding transaction.")
-			return
-		}
-
-	}()
-
-	req := &api.Request{Query: query}
-
-	if len(params) > 0 {
-		req.Vars = params
-	}
-
-	resp, err := tx.Do(ctx, req)
-	if err != nil {
-		return "", err
-	}
-
-	return string(resp.Json), nil
-}
-
-func (dc *dgraphConnector) executeMutations(ctx context.Context, setMutations, delMutations []string) (map[string]string, error) {
-	if len(setMutations) == 0 && len(delMutations) == 0 {
-		return nil, nil
-	}
-
-	tx := dc.dgClient.NewTxn()
-	defer func() {
-		if err := tx.Discard(ctx); err != nil {
-			logger.Warn(ctx).Err(err).Msg("Error discarding transaction.")
-			return
-		}
-
-	}()
-
-	mus := make([]*api.Mutation, 0, len(setMutations)+len(delMutations))
-
-	for _, m := range setMutations {
-		mus = append(mus, &api.Mutation{SetNquads: []byte(m)})
-	}
-
-	for _, m := range delMutations {
-		mus = append(mus, &api.Mutation{DelNquads: []byte(m)})
-	}
-
-	req := &api.Request{Mutations: mus, CommitNow: true}
-
-	resp, err := tx.Do(ctx, req)
-	return resp.Uids, err
-}
-
 func (dc *dgraphConnector) execute(ctx context.Context, req Request) (Response, error) {
 	if len(req.Mutations) == 0 {
 		if req.Query.Query == "" {
