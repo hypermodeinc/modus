@@ -22,6 +22,7 @@ func init() {
 	addHostFunction("getTextFromCollection_v2", hostGetTextFromCollection, withI32Params(3), withI32Result())
 	addHostFunction("getTextsFromCollection_v2", hostGetTextsFromCollection, withI32Params(2), withI32Result())
 	addHostFunction("getNamespacesFromCollection", hostGetNamespacesFromCollection, withI32Param(), withI32Result())
+	addHostFunction("getVector", hostGetVector, withI32Params(4), withI32Result())
 
 	// Support functions from older SDK versions
 	addHostFunction("upsertToCollection", hostUpsertToCollection, withI32Params(3), withI32Result())
@@ -464,6 +465,90 @@ func hostGetNamespacesFromCollection(ctx context.Context, mod wasm.Module, stack
 
 	// Write the results
 	if err := writeResults(ctx, mod, stack, namespaces); err != nil {
+		logger.Err(ctx, err).Msg("Error writing results to wasm memory.")
+	}
+}
+
+func hostGetVector(ctx context.Context, mod wasm.Module, stack []uint64) {
+
+	// Read input parameters
+	var collectionName, namespace, searchMethod, id string
+	if err := readParams(ctx, mod, stack, &collectionName, &namespace, &searchMethod, &id); err != nil {
+		logger.Err(ctx, err).Msg("Error reading input parameters.")
+		return
+	}
+
+	// Prepare log messages
+	msgs := &hostFunctionMessages{
+		Cancelled: "Cancelled getting vector from collection.",
+		Error:     "Error getting vector from collection.",
+		Detail:    fmt.Sprintf("Collection: %s, Method: %s, ID: %s", collectionName, searchMethod, id),
+	}
+
+	// Track start/complete messages only if debug is enabled, to reduce log noise
+	if utils.HypermodeDebugEnabled() {
+		msgs.Starting = "Starting getting vector from collection."
+		msgs.Completed = "Completed getting vector from collection."
+	}
+
+	// Prepare the host function
+	var vector []float32
+	fn := func() (err error) {
+		vector, err = collections.GetVector(ctx, collectionName, namespace, searchMethod, id)
+		return err
+	}
+
+	// Call the host function
+	if ok := callHostFunction(ctx, fn, msgs); !ok {
+		return
+	}
+
+	// Write the results
+	if err := writeResults(ctx, mod, stack, vector); err != nil {
+		logger.Err(ctx, err).Msg("Error writing results to wasm memory.")
+	}
+}
+
+func hostSearchCollectionByVector(ctx context.Context, mod wasm.Module, stack []uint64) {
+
+	// Read input parameters
+	var collectionName, searchMethod string
+	var namespaces []string
+	var vector []float32
+	var limit int32
+	var returnText bool
+	if err := readParams(ctx, mod, stack, &collectionName, &namespaces, &searchMethod, &vector, &limit, &returnText); err != nil {
+		logger.Err(ctx, err).Msg("Error reading input parameters.")
+		return
+	}
+
+	// Prepare log messages
+	msgs := &hostFunctionMessages{
+		Cancelled: "Cancelled searching collection by vector.",
+		Error:     "Error searching collection by vector.",
+		Detail:    fmt.Sprintf("Collection: %s, Namespaces: %v, Method: %s", collectionName, namespaces, searchMethod),
+	}
+
+	// Track start/complete messages only if debug is enabled, to reduce log noise
+	if utils.HypermodeDebugEnabled() {
+		msgs.Starting = "Starting searching collection by vector."
+		msgs.Completed = "Completed searching collection by vector."
+	}
+
+	// Prepare the host function
+	var searchRes *collections.CollectionSearchResult
+	fn := func() (err error) {
+		searchRes, err = collections.SearchCollectionByVector(ctx, collectionName, namespaces, searchMethod, vector, limit, returnText)
+		return err
+	}
+
+	// Call the host function
+	if ok := callHostFunction(ctx, fn, msgs); !ok {
+		return
+	}
+
+	// Write the results
+	if err := writeResults(ctx, mod, stack, searchRes); err != nil {
 		logger.Err(ctx, err).Msg("Error writing results to wasm memory.")
 	}
 }
