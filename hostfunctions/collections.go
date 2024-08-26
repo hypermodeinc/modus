@@ -23,6 +23,7 @@ func init() {
 	addHostFunction("getTextsFromCollection_v2", hostGetTextsFromCollection, withI32Params(2), withI32Result())
 	addHostFunction("getNamespacesFromCollection", hostGetNamespacesFromCollection, withI32Param(), withI32Result())
 	addHostFunction("getVector", hostGetVector, withI32Params(4), withI32Result())
+	addHostFunction("searchCollectionByVector", hostSearchCollectionByVector, withI32Params(6), withI32Result())
 
 	// Support functions from older SDK versions
 	addHostFunction("upsertToCollection", hostUpsertToCollection, withI32Params(3), withI32Result())
