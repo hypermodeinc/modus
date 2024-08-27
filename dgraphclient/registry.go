@@ -2,7 +2,7 @@
 * Copyright 2024 Hypermode, Inc.
  */
 
-package dqlclient
+package dgraphclient
 
 import (
 	"context"

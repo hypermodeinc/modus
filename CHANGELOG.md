@@ -3,6 +3,7 @@
 ## UNRELEASED
 
 - Add vector retrieval and search by vector to collections [#343](https://github.com/hypermodeAI/runtime/pull/343)
+- Refactor dgraph host functions to use single execute host function [#342](https://github.com/hypermodeAI/runtime/pull/342)
 
 ## 2024-08-16 - Version 0.11.1
 

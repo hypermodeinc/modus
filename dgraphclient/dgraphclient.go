@@ -2,35 +2,19 @@
  * Copyright 2024 Hypermode, Inc.
  */
 
-package dqlclient
+package dgraphclient
 
 import (
 	"context"
-	"fmt"
-	"hmruntime/utils"
 )
 
-func ExecuteQuery(ctx context.Context, hostName, query string, paramsJson string) (string, error) {
-	var params map[string]string
-	if err := utils.JsonDeserialize([]byte(paramsJson), &params); err != nil {
-		return "", fmt.Errorf("error deserializing database query parameters: %w", err)
-	}
-
+func Execute(ctx context.Context, hostName string, req *Request) (*Response, error) {
 	dc, err := dgr.getDgraphConnector(ctx, hostName)
 	if err != nil {
-		return "", err
+		return &Response{}, err
 	}
 
-	return dc.executeQuery(ctx, query, params)
-}
-
-func ExecuteMutations(ctx context.Context, hostName string, setMutations, delMutations []string) (map[string]string, error) {
-	dc, err := dgr.getDgraphConnector(ctx, hostName)
-	if err != nil {
-		return nil, err
-	}
-
-	return dc.executeMutations(ctx, setMutations, delMutations)
+	return dc.execute(ctx, req)
 }
 
 func AlterSchema(ctx context.Context, hostName, schema string) (string, error) {

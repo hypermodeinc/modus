@@ -34,7 +34,7 @@
     "dgraph",
     "displaylines",
     "dotproduct",
-    "dqlclient",
+    "dgraphclient",
     "dsname",
     "dspc",
     "embedder",

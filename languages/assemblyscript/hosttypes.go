@@ -18,4 +18,8 @@ var hostTypes = map[string]string{
 	"hmruntime/httpclient.HttpHeader":                            "~lib/@hypermode/functions-as/assembly/http/Header",
 	"hmruntime/sqlclient.HostQueryResponse":                      "~lib/@hypermode/functions-as/assembly/database/HostQueryResponse",
 	"hmruntime/models.ModelInfo":                                 "~lib/@hypermode/models-as/index/ModelInfo",
+	"hmruntime/dgraphclient.Request":                             "~lib/@hypermode/functions-as/assembly/dgraph/Request",
+	"hmruntime/dgraphclient.Response":                            "~lib/@hypermode/functions-as/assembly/dgraph/Response",
+	"hmruntime/dgraphclient.Query":                               "~lib/@hypermode/functions-as/assembly/dgraph/Query",
+	"hmruntime/dgraphclient.Mutation":                            "~lib/@hypermode/functions-as/assembly/dgraph/Mutation",
 }
