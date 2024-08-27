@@ -41,9 +41,9 @@ func hostExecuteDQL(ctx context.Context, mod wasm.Module, stack []uint64) {
 	}
 
 	// Prepare the host function
-	var result dgraphclient.Response
+	var result *dgraphclient.Response
 	fn := func() (err error) {
-		result, err = dgraphclient.Execute(ctx, hostName, req)
+		result, err = dgraphclient.Execute(ctx, hostName, &req)
 		return err
 	}
 

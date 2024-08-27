@@ -45,10 +45,10 @@ func (dc *dgraphConnector) dropAll(ctx context.Context) (string, error) {
 	return "success", nil
 }
 
-func (dc *dgraphConnector) execute(ctx context.Context, req Request) (Response, error) {
+func (dc *dgraphConnector) execute(ctx context.Context, req *Request) (*Response, error) {
 	if len(req.Mutations) == 0 {
 		if req.Query.Query == "" {
-			return Response{}, nil
+			return &Response{}, nil
 		}
 
 		tx := dc.dgClient.NewReadOnlyTxn()
@@ -68,10 +68,10 @@ func (dc *dgraphConnector) execute(ctx context.Context, req Request) (Response, 
 
 		resp, err := tx.Do(ctx, dgoReq)
 		if err != nil {
-			return Response{}, err
+			return &Response{}, err
 		}
 
-		return Response{Json: string(resp.Json), Uids: resp.Uids}, nil
+		return &Response{Json: string(resp.Json), Uids: resp.Uids}, nil
 	}
 
 	tx := dc.dgClient.NewTxn()
@@ -118,8 +118,8 @@ func (dc *dgraphConnector) execute(ctx context.Context, req Request) (Response, 
 
 	resp, err := tx.Do(ctx, dgoReq)
 	if err != nil {
-		return Response{}, err
+		return &Response{}, err
 	}
 
-	return Response{Json: string(resp.Json), Uids: resp.Uids}, nil
+	return &Response{Json: string(resp.Json), Uids: resp.Uids}, nil
 }
