@@ -303,6 +303,68 @@ func SearchCollection(ctx context.Context, collectionName string, namespaces []s
 
 }
 
+func SearchCollectionByVector(ctx context.Context, collectionName string, namespaces []string, searchMethod string, vector []float32, limit int32, returnText bool) (*CollectionSearchResult, error) {
+
+	collection, err := GlobalNamespaceManager.FindCollection(ctx, collectionName)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(namespaces) == 0 {
+		namespaces = []string{in_mem.DefaultNamespace}
+	}
+
+	// merge all objects
+	mergedObjects := make([]*CollectionSearchResultObject, 0, len(namespaces)*int(limit))
+	for _, ns := range namespaces {
+		collNs, err := collection.FindNamespace(ctx, ns)
+		if err != nil {
+			return nil, err
+		}
+
+		vectorIndex, err := collNs.GetVectorIndex(ctx, searchMethod)
+		if err != nil {
+			return nil, err
+		}
+
+		objects, err := vectorIndex.Search(ctx, vector, int(limit), nil)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, object := range objects {
+			text, err := collNs.GetText(ctx, object.GetIndex())
+			if err != nil {
+				return nil, err
+			}
+			mergedObjects = append(mergedObjects, &CollectionSearchResultObject{
+				Namespace: ns,
+				Key:       object.GetIndex(),
+				Text:      text,
+				Distance:  object.GetValue(),
+				Score:     1 - object.GetValue(),
+			})
+		}
+	}
+
+	// sort by score
+	sort.Slice(mergedObjects, func(i, j int) bool {
+		return mergedObjects[i].Distance < mergedObjects[j].Distance
+	})
+
+	if len(mergedObjects) > int(limit) {
+		mergedObjects = mergedObjects[:int(limit)]
+	}
+
+	return &CollectionSearchResult{
+		Collection:   collectionName,
+		SearchMethod: searchMethod,
+		Status:       "success",
+		Objects:      mergedObjects,
+	}, nil
+
+}
+
 func NnClassify(ctx context.Context, collectionName, namespace, searchMethod, text string) (*CollectionClassificationResult, error) {
 
 	collection, err := GlobalNamespaceManager.FindCollection(ctx, collectionName)
@@ -423,6 +485,35 @@ func NnClassify(ctx context.Context, collectionName, namespace, searchMethod, te
 	res.LabelsResult = labelsResult
 
 	return res, nil
+}
+
+func GetVector(ctx context.Context, collectionName, namespace, searchMethod, id string) ([]float32, error) {
+
+	collection, err := GlobalNamespaceManager.FindCollection(ctx, collectionName)
+	if err != nil {
+		return nil, err
+	}
+
+	if namespace == "" {
+		namespace = in_mem.DefaultNamespace
+	}
+
+	collNs, err := collection.FindNamespace(ctx, namespace)
+	if err != nil {
+		return nil, err
+	}
+
+	vectorIndex, err := collNs.GetVectorIndex(ctx, searchMethod)
+	if err != nil {
+		return nil, err
+	}
+
+	vec, err := vectorIndex.GetVector(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	return vec, nil
 }
 
 func ComputeDistance(ctx context.Context, collectionName, namespace, searchMethod, id1, id2 string) (*CollectionSearchResultObject, error) {
