@@ -7,7 +7,6 @@ package dgraphclient
 type Request struct {
 	Query     Query
 	Mutations []Mutation
-	CommitNow bool
 }
 
 type Query struct {
