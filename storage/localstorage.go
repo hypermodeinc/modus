@@ -7,8 +7,8 @@ package storage
 import (
 	"context"
 	"fmt"
-	"hmruntime/config"
-	"hmruntime/logger"
+	"hypruntime/config"
+	"hypruntime/logger"
 	"os"
 	"path/filepath"
 	"strings"

@@ -8,8 +8,8 @@ import (
 	"os"
 	"testing"
 
-	"hmruntime/manifestdata"
-	"hmruntime/secrets"
+	"hypruntime/manifestdata"
+	"hypruntime/secrets"
 
 	"github.com/hypermodeAI/manifest"
 	"github.com/stretchr/testify/assert"

@@ -1,4 +1,4 @@
-module hmruntime
+module hypruntime
 
 go 1.22
 

@@ -5,9 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"hmruntime/collections/in_mem/sequential"
-	"hmruntime/collections/index"
-	"hmruntime/collections/utils"
+	"hypruntime/collections/in_mem/sequential"
+	"hypruntime/collections/index"
+	"hypruntime/collections/utils"
 )
 
 var (

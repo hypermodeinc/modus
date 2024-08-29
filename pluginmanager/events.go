@@ -8,7 +8,7 @@ import (
 	"context"
 	"sync"
 
-	"hmruntime/plugins/metadata"
+	"hypruntime/plugins/metadata"
 )
 
 type PluginLoadedCallback = func(ctx context.Context, md *metadata.Metadata) error

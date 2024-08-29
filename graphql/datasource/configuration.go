@@ -5,7 +5,7 @@
 package datasource
 
 import (
-	"hmruntime/wasmhost"
+	"hypruntime/wasmhost"
 )
 
 type HypDSConfig struct {

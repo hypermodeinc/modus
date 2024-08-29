@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"hmruntime/config"
+	"hypruntime/config"
 
 	"github.com/getsentry/sentry-go"
 )
@@ -31,13 +31,13 @@ func InitSentry(rootPath string) {
 
 	rootSourcePath = rootPath
 	err := sentry.Init(sentry.ClientOptions{
-		Dsn:         sentryDsn,
-		Environment: config.GetEnvironmentName(),
-		Release:     config.GetVersionNumber(),
-		BeforeSend:  sentryBeforeSend,
+		Dsn:                   sentryDsn,
+		Environment:           config.GetEnvironmentName(),
+		Release:               config.GetVersionNumber(),
+		BeforeSend:            sentryBeforeSend,
 		BeforeSendTransaction: sentryBeforeSendTransaction,
 
-		// Note - We use Prometheus for _metrics_ (see hmruntime/metrics package).
+		// Note - We use Prometheus for _metrics_ (see hypruntime/metrics package).
 		// However, we can still use Sentry for _tracing_ to allow us to improve performance of the Runtime.
 		// We should only trace code that we expect to run in a roughly consistent amount of time.
 		// For example, we should not trace a user's function execution, or the outer GraphQL request handling,
@@ -110,7 +110,6 @@ func sentryBeforeSend(event *sentry.Event, hint *sentry.EventHint) *sentry.Event
 	sentryAddExtras(event)
 	return event
 }
-
 
 func sentryBeforeSendTransaction(event *sentry.Event, hint *sentry.EventHint) *sentry.Event {
 	sentryAddExtras(event)

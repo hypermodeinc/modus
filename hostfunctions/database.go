@@ -7,7 +7,7 @@ package hostfunctions
 import (
 	"fmt"
 
-	"hmruntime/sqlclient"
+	"hypruntime/sqlclient"
 )
 
 func init() {

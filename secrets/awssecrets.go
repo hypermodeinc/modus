@@ -11,11 +11,11 @@ import (
 	"strings"
 	"time"
 
-	"hmruntime/aws"
-	"hmruntime/config"
-	"hmruntime/logger"
-	"hmruntime/manifestdata"
-	"hmruntime/utils"
+	"hypruntime/aws"
+	"hypruntime/config"
+	"hypruntime/logger"
+	"hypruntime/manifestdata"
+	"hypruntime/utils"
 
 	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
 	"github.com/aws/aws-sdk-go-v2/service/secretsmanager/types"

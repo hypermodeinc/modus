@@ -9,8 +9,8 @@ import (
 	"fmt"
 	"reflect"
 
-	"hmruntime/languages/assemblyscript/hash"
-	"hmruntime/utils"
+	"hypruntime/languages/assemblyscript/hash"
+	"hypruntime/utils"
 )
 
 // Reference: https://github.com/AssemblyScript/assemblyscript/blob/main/std/assembly/map.ts

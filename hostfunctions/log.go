@@ -7,8 +7,8 @@ package hostfunctions
 import (
 	"context"
 
-	"hmruntime/logger"
-	"hmruntime/utils"
+	"hypruntime/logger"
+	"hypruntime/utils"
 )
 
 func init() {

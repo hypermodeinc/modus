@@ -9,8 +9,8 @@ import (
 	"errors"
 	"fmt"
 
-	v1 "hmruntime/plugins/metadata/legacy/v1"
-	"hmruntime/utils"
+	v1 "hypruntime/plugins/metadata/legacy/v1"
+	"hypruntime/utils"
 
 	"github.com/tetratelabs/wazero"
 )

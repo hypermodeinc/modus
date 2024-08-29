@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"hmruntime/collections/index"
-	"hmruntime/collections/index/interfaces"
-	"hmruntime/db"
+	"hypruntime/collections/index"
+	"hypruntime/collections/index/interfaces"
+	"hypruntime/db"
 	"sync"
 )
 

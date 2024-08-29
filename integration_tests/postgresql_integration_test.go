@@ -16,9 +16,9 @@ import (
 	"testing"
 	"time"
 
-	"hmruntime/config"
-	"hmruntime/httpserver"
-	"hmruntime/services"
+	"hypruntime/config"
+	"hypruntime/httpserver"
+	"hypruntime/services"
 
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/image"

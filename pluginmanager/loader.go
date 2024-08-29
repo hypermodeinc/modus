@@ -8,14 +8,14 @@ import (
 	"context"
 	"fmt"
 
-	"hmruntime/db"
-	"hmruntime/functions"
-	"hmruntime/logger"
-	"hmruntime/plugins"
-	"hmruntime/plugins/metadata"
-	"hmruntime/storage"
-	"hmruntime/utils"
-	"hmruntime/wasmhost"
+	"hypruntime/db"
+	"hypruntime/functions"
+	"hypruntime/logger"
+	"hypruntime/plugins"
+	"hypruntime/plugins/metadata"
+	"hypruntime/storage"
+	"hypruntime/utils"
+	"hypruntime/wasmhost"
 )
 
 func monitorPlugins(ctx context.Context) {

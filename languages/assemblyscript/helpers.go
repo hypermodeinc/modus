@@ -7,7 +7,7 @@ package assemblyscript
 import (
 	"context"
 	"fmt"
-	"hmruntime/utils"
+	"hypruntime/utils"
 	"reflect"
 )
 

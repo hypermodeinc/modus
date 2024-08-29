@@ -7,7 +7,7 @@ package dgraphclient
 import (
 	"context"
 
-	"hmruntime/manifestdata"
+	"hypruntime/manifestdata"
 )
 
 func Initialize() {

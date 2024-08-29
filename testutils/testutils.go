@@ -12,11 +12,11 @@ import (
 	"reflect"
 	"testing"
 
-	"hmruntime/functions"
-	"hmruntime/plugins"
-	"hmruntime/plugins/metadata"
-	"hmruntime/utils"
-	"hmruntime/wasmhost"
+	"hypruntime/functions"
+	"hypruntime/plugins"
+	"hypruntime/plugins/metadata"
+	"hypruntime/utils"
+	"hypruntime/wasmhost"
 
 	wasm "github.com/tetratelabs/wazero/api"
 )

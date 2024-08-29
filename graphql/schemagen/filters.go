@@ -4,7 +4,7 @@
 
 package schemagen
 
-import "hmruntime/manifestdata"
+import "hypruntime/manifestdata"
 
 func getFnFilter() func(*FunctionSignature) bool {
 	embedders := make(map[string]bool)

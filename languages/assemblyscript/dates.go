@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"time"
 
-	"hmruntime/utils"
+	"hypruntime/utils"
 )
 
 func (wa *wasmAdapter) readDate(offset uint32) (data utils.JSONTime, err error) {

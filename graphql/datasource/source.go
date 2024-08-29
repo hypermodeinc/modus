@@ -11,9 +11,9 @@ import (
 	"fmt"
 	"io"
 
-	"hmruntime/logger"
-	"hmruntime/utils"
-	"hmruntime/wasmhost"
+	"hypruntime/logger"
+	"hypruntime/utils"
+	"hypruntime/wasmhost"
 
 	"github.com/buger/jsonparser"
 	"github.com/wundergraph/graphql-go-tools/v2/pkg/engine/datasource/httpclient"

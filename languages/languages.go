@@ -7,7 +7,7 @@ package languages
 import (
 	"strings"
 
-	"hmruntime/languages/assemblyscript"
+	"hypruntime/languages/assemblyscript"
 
 	wasm "github.com/tetratelabs/wazero/api"
 )

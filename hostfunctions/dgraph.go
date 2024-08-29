@@ -7,7 +7,7 @@ package hostfunctions
 import (
 	"fmt"
 
-	"hmruntime/dgraphclient"
+	"hypruntime/dgraphclient"
 )
 
 func init() {

@@ -11,7 +11,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"hmruntime/httpserver"
+	"hypruntime/httpserver"
 
 	"github.com/prometheus/common/expfmt"
 )

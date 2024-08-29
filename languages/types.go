@@ -8,8 +8,8 @@ import (
 	"context"
 	"errors"
 
-	"hmruntime/plugins/metadata"
-	"hmruntime/utils"
+	"hypruntime/plugins/metadata"
+	"hypruntime/utils"
 
 	wasm "github.com/tetratelabs/wazero/api"
 )

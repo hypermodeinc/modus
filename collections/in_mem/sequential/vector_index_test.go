@@ -3,7 +3,7 @@ package sequential
 import (
 	"context"
 	"fmt"
-	"hmruntime/collections/utils"
+	"hypruntime/collections/utils"
 	"sync"
 	"testing"
 )

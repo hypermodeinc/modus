@@ -11,9 +11,9 @@ import (
 	urlpkg "net/url"
 	"strings"
 
-	"hmruntime/manifestdata"
-	"hmruntime/secrets"
-	"hmruntime/utils"
+	"hypruntime/manifestdata"
+	"hypruntime/secrets"
+	"hypruntime/utils"
 
 	"github.com/hypermodeAI/manifest"
 )

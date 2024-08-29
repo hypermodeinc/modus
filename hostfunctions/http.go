@@ -6,7 +6,7 @@ package hostfunctions
 
 import (
 	"fmt"
-	"hmruntime/httpclient"
+	"hypruntime/httpclient"
 )
 
 func init() {

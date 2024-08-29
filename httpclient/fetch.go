@@ -11,9 +11,9 @@ import (
 	"net/http"
 	"strings"
 
-	"hmruntime/hosts"
-	"hmruntime/secrets"
-	"hmruntime/utils"
+	"hypruntime/hosts"
+	"hypruntime/secrets"
+	"hypruntime/utils"
 )
 
 func HttpFetch(ctx context.Context, request *HttpRequest) (*HttpResponse, error) {

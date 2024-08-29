@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"hmruntime/logger"
+	"hypruntime/logger"
 )
 
 type AdminRequest struct {

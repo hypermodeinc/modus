@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"hmruntime/collections"
+	"hypruntime/collections"
 )
 
 func init() {

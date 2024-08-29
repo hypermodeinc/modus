@@ -6,8 +6,8 @@ package pluginmanager
 
 import (
 	"cmp"
-	"hmruntime/plugins"
-	"hmruntime/utils"
+	"hypruntime/plugins"
+	"hypruntime/utils"
 	"slices"
 	"sync"
 )

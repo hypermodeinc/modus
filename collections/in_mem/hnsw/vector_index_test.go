@@ -3,7 +3,7 @@ package hnsw
 import (
 	"context"
 	"fmt"
-	"hmruntime/collections/utils"
+	"hypruntime/collections/utils"
 	"sync"
 	"testing"
 )

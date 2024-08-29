@@ -8,7 +8,7 @@ import (
 	"bytes"
 	"testing"
 
-	"hmruntime/utils"
+	"hypruntime/utils"
 )
 
 // "Hello World" in Japanese

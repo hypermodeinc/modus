@@ -8,10 +8,10 @@ import (
 	"context"
 	"testing"
 
-	"hmruntime/languages"
-	"hmruntime/manifestdata"
-	"hmruntime/plugins/metadata"
-	"hmruntime/utils"
+	"hypruntime/languages"
+	"hypruntime/manifestdata"
+	"hypruntime/plugins/metadata"
+	"hypruntime/utils"
 
 	"github.com/hypermodeAI/manifest"
 	"github.com/stretchr/testify/require"

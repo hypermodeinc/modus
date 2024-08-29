@@ -1,5 +1,5 @@
-/hmruntime
-/hmruntime.exe
+/hypruntime
+/hypruntime.exe
 *.env
 __debug_bin*
 .DS_Store

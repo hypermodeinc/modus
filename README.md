@@ -88,7 +88,7 @@ Then, you can do any of the following:
 
   ```sh
   go build
-  ./hmruntime
+  ./hypruntime
   ```
 
 - You can run and debug the source code in VS Code, using the VS Code debugger.
@@ -111,12 +111,12 @@ When running the image via Docker Desktop, keep in mind:
 For example:
 
 ```sh
-docker run --name hmruntime \
+docker run --name hypruntime \
   -p 8686:8686 \
   -v ~/.hypermode:/root/.hypermode hypermode/runtime
 ```
 
-_Note, if you have previously created a container with the same name, then delete it first with `docker rm hmruntime`._
+_Note, if you have previously created a container with the same name, then delete it first with `docker rm hypruntime`._
 
 ## AWS Setup
 
@@ -146,7 +146,7 @@ using the `Hypermode Runtime (AWS)` launch profile, or from the command line as 
 ```sh
 export AWS_SDK_LOAD_CONFIG=true
 export AWS_PROFILE=sandbox
-./hmruntime \
+./hypruntime \
   --useAwsSecrets \
   --useAwsStorage \
   --s3bucket=sandbox-runtime-storage \

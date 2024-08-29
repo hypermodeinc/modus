@@ -4,7 +4,7 @@
 
 package hostfunctions
 
-import "hmruntime/wasmhost"
+import "hypruntime/wasmhost"
 
 var registrations []func(*wasmhost.WasmHost) error
 

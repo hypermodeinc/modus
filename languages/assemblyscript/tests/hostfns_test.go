@@ -9,8 +9,8 @@ import (
 	"reflect"
 	"testing"
 
-	"hmruntime/testutils"
-	"hmruntime/wasmhost"
+	"hypruntime/testutils"
+	"hypruntime/wasmhost"
 )
 
 func getTestHostFunctionRegistrations() []func(*wasmhost.WasmHost) error {
