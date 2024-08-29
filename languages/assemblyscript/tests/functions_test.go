@@ -8,8 +8,8 @@ import (
 	"context"
 	"testing"
 
-	"hmruntime/languages/assemblyscript"
-	"hmruntime/plugins/metadata"
+	"hypruntime/languages/assemblyscript"
+	"hypruntime/plugins/metadata"
 
 	"github.com/stretchr/testify/require"
 	"github.com/tetratelabs/wazero/api"

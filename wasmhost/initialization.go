@@ -7,8 +7,8 @@ package wasmhost
 import (
 	"context"
 
-	"hmruntime/logger"
-	"hmruntime/utils"
+	"hypruntime/logger"
+	"hypruntime/utils"
 
 	"github.com/rs/zerolog"
 )

@@ -11,9 +11,9 @@ import (
 	"path"
 	"strings"
 
-	"hmruntime/aws"
-	"hmruntime/config"
-	"hmruntime/logger"
+	"hypruntime/aws"
+	"hypruntime/config"
+	"hypruntime/logger"
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 )

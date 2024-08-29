@@ -9,7 +9,7 @@ import (
 	"runtime"
 	"testing"
 
-	"hmruntime/testutils"
+	"hypruntime/testutils"
 )
 
 var basePath = func() string {

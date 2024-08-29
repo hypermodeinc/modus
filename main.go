@@ -13,11 +13,11 @@ import (
 	"path/filepath"
 	"runtime"
 
-	"hmruntime/config"
-	"hmruntime/httpserver"
-	"hmruntime/logger"
-	"hmruntime/services"
-	"hmruntime/utils"
+	"hypruntime/config"
+	"hypruntime/httpserver"
+	"hypruntime/logger"
+	"hypruntime/services"
+	"hypruntime/utils"
 
 	"github.com/joho/godotenv"
 )

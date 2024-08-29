@@ -7,8 +7,8 @@ package metadata
 import (
 	"strings"
 
-	v1 "hmruntime/plugins/metadata/legacy/v1"
-	"hmruntime/utils"
+	v1 "hypruntime/plugins/metadata/legacy/v1"
+	"hypruntime/utils"
 )
 
 func metadataV1toV2(m *v1.Metadata) *Metadata {

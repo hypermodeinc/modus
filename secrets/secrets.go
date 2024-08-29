@@ -11,9 +11,9 @@ import (
 	"net/http"
 	"regexp"
 
-	"hmruntime/config"
-	"hmruntime/logger"
-	"hmruntime/utils"
+	"hypruntime/config"
+	"hypruntime/logger"
+	"hypruntime/utils"
 
 	"github.com/hypermodeAI/manifest"
 )

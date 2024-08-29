@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"hmruntime/config"
+	"hypruntime/config"
 
 	"github.com/getsentry/sentry-go"
 )
@@ -31,10 +31,10 @@ func InitSentry(rootPath string) {
 
 	rootSourcePath = rootPath
 	err := sentry.Init(sentry.ClientOptions{
-		Dsn:         sentryDsn,
-		Environment: config.GetEnvironmentName(),
-		Release:     config.GetVersionNumber(),
-		BeforeSend:  sentryBeforeSend,
+		Dsn:                   sentryDsn,
+		Environment:           config.GetEnvironmentName(),
+		Release:               config.GetVersionNumber(),
+		BeforeSend:            sentryBeforeSend,
 		BeforeSendTransaction: sentryBeforeSendTransaction,
 
 		// Note - We use Prometheus for _metrics_ (see hmruntime/metrics package).
@@ -110,7 +110,6 @@ func sentryBeforeSend(event *sentry.Event, hint *sentry.EventHint) *sentry.Event
 	sentryAddExtras(event)
 	return event
 }
-
 
 func sentryBeforeSendTransaction(event *sentry.Event, hint *sentry.EventHint) *sentry.Event {
 	sentryAddExtras(event)

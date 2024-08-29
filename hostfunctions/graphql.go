@@ -7,7 +7,7 @@ package hostfunctions
 import (
 	"fmt"
 
-	"hmruntime/graphqlclient"
+	"hypruntime/graphqlclient"
 )
 
 func init() {

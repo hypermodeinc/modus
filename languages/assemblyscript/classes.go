@@ -10,7 +10,7 @@ import (
 	"reflect"
 	"strings"
 
-	"hmruntime/logger"
+	"hypruntime/logger"
 )
 
 const maxDepth = 5 // TODO: make this based on the depth requested in the query

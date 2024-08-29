@@ -10,7 +10,7 @@ import (
 	"fmt"
 	"reflect"
 
-	"hmruntime/utils"
+	"hypruntime/utils"
 
 	wasm "github.com/tetratelabs/wazero/api"
 )

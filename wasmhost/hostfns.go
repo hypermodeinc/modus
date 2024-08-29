@@ -11,10 +11,10 @@ import (
 	"reflect"
 	"time"
 
-	"hmruntime/languages"
-	"hmruntime/logger"
-	"hmruntime/plugins/metadata"
-	"hmruntime/utils"
+	"hypruntime/languages"
+	"hypruntime/logger"
+	"hypruntime/plugins/metadata"
+	"hypruntime/utils"
 
 	wasm "github.com/tetratelabs/wazero/api"
 )

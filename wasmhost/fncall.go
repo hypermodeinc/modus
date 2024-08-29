@@ -11,12 +11,12 @@ import (
 	"os"
 	"time"
 
-	"hmruntime/functions"
-	"hmruntime/logger"
-	"hmruntime/metrics"
-	"hmruntime/plugins"
-	"hmruntime/plugins/metadata"
-	"hmruntime/utils"
+	"hypruntime/functions"
+	"hypruntime/logger"
+	"hypruntime/metrics"
+	"hypruntime/plugins"
+	"hypruntime/plugins/metadata"
+	"hypruntime/utils"
 
 	"github.com/rs/xid"
 	"github.com/tetratelabs/wazero/sys"

@@ -11,7 +11,7 @@ import (
 	"reflect"
 	"time"
 
-	"hmruntime/utils"
+	"hypruntime/utils"
 )
 
 func (wa *wasmAdapter) readObject(ctx context.Context, typ string, offset uint32) (data any, err error) {

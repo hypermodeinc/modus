@@ -7,7 +7,7 @@ package functions
 import (
 	"fmt"
 
-	"hmruntime/plugins/metadata"
+	"hypruntime/plugins/metadata"
 )
 
 func CreateParametersMap(fn *metadata.Function, paramValues ...any) (map[string]any, error) {

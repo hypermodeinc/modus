@@ -8,7 +8,7 @@ import (
 	"context"
 	"fmt"
 
-	"hmruntime/plugins/metadata"
+	"hypruntime/plugins/metadata"
 )
 
 func (wa *wasmAdapter) InvokeFunction(ctx context.Context, function *metadata.Function, parameters map[string]any) (result any, err error) {

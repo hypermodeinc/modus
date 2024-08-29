@@ -15,11 +15,11 @@ import (
 	"syscall"
 	"time"
 
-	"hmruntime/config"
-	"hmruntime/graphql"
-	"hmruntime/logger"
-	"hmruntime/metrics"
-	"hmruntime/utils"
+	"hypruntime/config"
+	"hypruntime/graphql"
+	"hypruntime/logger"
+	"hypruntime/metrics"
+	"hypruntime/utils"
 
 	"github.com/rs/cors"
 )

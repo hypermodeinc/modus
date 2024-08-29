@@ -9,12 +9,12 @@ import (
 	"fmt"
 	"net/http"
 
-	"hmruntime/graphql/engine"
-	"hmruntime/logger"
-	"hmruntime/manifestdata"
-	"hmruntime/pluginmanager"
-	"hmruntime/utils"
-	"hmruntime/wasmhost"
+	"hypruntime/graphql/engine"
+	"hypruntime/logger"
+	"hypruntime/manifestdata"
+	"hypruntime/pluginmanager"
+	"hypruntime/utils"
+	"hypruntime/wasmhost"
 
 	"github.com/buger/jsonparser"
 	eng "github.com/wundergraph/graphql-go-tools/execution/engine"

@@ -8,9 +8,9 @@ import (
 	"context"
 	"fmt"
 
-	"hmruntime/hosts"
-	"hmruntime/models"
-	"hmruntime/utils"
+	"hypruntime/hosts"
+	"hypruntime/models"
+	"hypruntime/utils"
 )
 
 type outputFormat string

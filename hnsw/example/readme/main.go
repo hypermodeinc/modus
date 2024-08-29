@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"hmruntime/hnsw"
+	"hypruntime/hnsw"
 )
 
 func main() {

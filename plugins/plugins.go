@@ -6,9 +6,9 @@ package plugins
 
 import (
 	"context"
-	"hmruntime/languages"
-	"hmruntime/plugins/metadata"
-	"hmruntime/utils"
+	"hypruntime/languages"
+	"hypruntime/plugins/metadata"
+	"hypruntime/utils"
 
 	"github.com/tetratelabs/wazero"
 )

@@ -7,11 +7,11 @@ import (
 	"sync"
 	"time"
 
-	"hmruntime/logger"
-	"hmruntime/metrics"
-	"hmruntime/plugins"
-	"hmruntime/secrets"
-	"hmruntime/utils"
+	"hypruntime/logger"
+	"hypruntime/metrics"
+	"hypruntime/plugins"
+	"hypruntime/secrets"
+	"hypruntime/utils"
 
 	"github.com/hypermodeAI/manifest"
 	"github.com/jackc/pgx/v5"

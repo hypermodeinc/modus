@@ -13,9 +13,9 @@ import (
 	"sort"
 	"strings"
 
-	"hmruntime/languages"
-	"hmruntime/plugins/metadata"
-	"hmruntime/utils"
+	"hypruntime/languages"
+	"hypruntime/plugins/metadata"
+	"hypruntime/utils"
 )
 
 type GraphQLSchema struct {

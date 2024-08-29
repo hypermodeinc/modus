@@ -8,8 +8,8 @@ import (
 	"context"
 	"fmt"
 
-	"hmruntime/models"
-	"hmruntime/utils"
+	"hypruntime/models"
+	"hypruntime/utils"
 
 	"github.com/hypermodeAI/manifest"
 )

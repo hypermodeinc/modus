@@ -7,14 +7,14 @@ import (
 	"math"
 	"sort"
 
-	"hmruntime/collections/in_mem"
-	"hmruntime/collections/index"
-	collection_utils "hmruntime/collections/utils"
-	"hmruntime/functions"
-	"hmruntime/manifestdata"
-	"hmruntime/plugins"
-	"hmruntime/utils"
-	"hmruntime/wasmhost"
+	"hypruntime/collections/in_mem"
+	"hypruntime/collections/index"
+	collection_utils "hypruntime/collections/utils"
+	"hypruntime/functions"
+	"hypruntime/manifestdata"
+	"hypruntime/plugins"
+	"hypruntime/utils"
+	"hypruntime/wasmhost"
 )
 
 func UpsertToCollection(ctx context.Context, collectionName, namespace string, keys, texts []string, labels [][]string) (*CollectionMutationResult, error) {

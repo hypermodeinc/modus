@@ -7,8 +7,8 @@ package assemblyscript
 import (
 	"context"
 	"fmt"
-	"hmruntime/plugins/metadata"
-	"hmruntime/utils"
+	"hypruntime/plugins/metadata"
+	"hypruntime/utils"
 	"reflect"
 	"strings"
 	"time"

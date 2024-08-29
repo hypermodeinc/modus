@@ -8,7 +8,7 @@ import (
 	"context"
 	"fmt"
 
-	"hmruntime/utils"
+	"hypruntime/utils"
 )
 
 func (wa *wasmAdapter) readString(offset uint32) (data string, err error) {

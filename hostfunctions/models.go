@@ -7,7 +7,7 @@ package hostfunctions
 import (
 	"fmt"
 
-	"hmruntime/models"
+	"hypruntime/models"
 )
 
 func init() {

@@ -10,9 +10,9 @@ import (
 	"fmt"
 	"io"
 
-	"hmruntime/logger"
-	"hmruntime/plugins"
-	"hmruntime/utils"
+	"hypruntime/logger"
+	"hypruntime/plugins"
+	"hypruntime/utils"
 
 	"github.com/rs/zerolog"
 	"github.com/tetratelabs/wazero"

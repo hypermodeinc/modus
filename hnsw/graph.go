@@ -9,8 +9,8 @@ import (
 	"sync"
 	"time"
 
-	"hmruntime/hnsw/heap"
-	"hmruntime/utils"
+	"hypruntime/hnsw/heap"
+	"hypruntime/utils"
 )
 
 type Vector = []float32

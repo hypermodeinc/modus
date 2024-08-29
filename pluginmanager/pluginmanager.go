@@ -7,8 +7,8 @@ package pluginmanager
 import (
 	"context"
 
-	"hmruntime/logger"
-	"hmruntime/plugins"
+	"hypruntime/logger"
+	"hypruntime/plugins"
 
 	"github.com/rs/zerolog"
 )

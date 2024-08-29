@@ -8,8 +8,8 @@ import (
 	"context"
 	"crypto/x509"
 	"fmt"
-	"hmruntime/manifestdata"
-	"hmruntime/secrets"
+	"hypruntime/manifestdata"
+	"hypruntime/secrets"
 	"strings"
 	"sync"
 

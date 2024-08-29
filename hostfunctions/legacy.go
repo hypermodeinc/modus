@@ -7,7 +7,7 @@ package hostfunctions
 import (
 	"fmt"
 
-	"hmruntime/models/legacymodels"
+	"hypruntime/models/legacymodels"
 )
 
 func init() {

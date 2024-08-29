@@ -8,9 +8,9 @@ import (
 	"context"
 	"fmt"
 
-	"hmruntime/logger"
-	"hmruntime/plugins"
-	"hmruntime/plugins/metadata"
+	"hypruntime/logger"
+	"hypruntime/plugins"
+	"hypruntime/plugins/metadata"
 )
 
 var functions = make(map[string]*functionInfo)

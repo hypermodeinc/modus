@@ -8,9 +8,9 @@ import (
 	"context"
 	"sync"
 
-	"hmruntime/logger"
-	"hmruntime/storage"
-	"hmruntime/utils"
+	"hypruntime/logger"
+	"hypruntime/storage"
+	"hypruntime/utils"
 
 	"github.com/hypermodeAI/manifest"
 )

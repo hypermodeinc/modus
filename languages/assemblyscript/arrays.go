@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"reflect"
 
-	"hmruntime/utils"
+	"hypruntime/utils"
 )
 
 // Reference: https://github.com/AssemblyScript/assemblyscript/blob/main/std/assembly/array.ts

@@ -5,7 +5,7 @@
 package logger
 
 import (
-	"hmruntime/utils"
+	"hypruntime/utils"
 	"strings"
 
 	"github.com/rs/zerolog"

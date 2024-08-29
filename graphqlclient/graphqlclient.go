@@ -8,9 +8,9 @@ import (
 	"context"
 	"fmt"
 
-	"hmruntime/hosts"
-	"hmruntime/logger"
-	"hmruntime/utils"
+	"hypruntime/hosts"
+	"hypruntime/logger"
+	"hypruntime/utils"
 
 	"github.com/buger/jsonparser"
 )

@@ -6,10 +6,10 @@ package storage
 
 import (
 	"context"
-	"hmruntime/config"
+	"hypruntime/config"
 	"time"
 
-	"hmruntime/utils"
+	"hypruntime/utils"
 )
 
 var provider storageProvider

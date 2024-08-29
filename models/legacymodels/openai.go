@@ -9,9 +9,9 @@ import (
 	"fmt"
 	"regexp"
 
-	"hmruntime/db"
-	"hmruntime/hosts"
-	"hmruntime/manifestdata"
+	"hypruntime/db"
+	"hypruntime/hosts"
+	"hypruntime/manifestdata"
 
 	"github.com/hypermodeAI/manifest"
 )

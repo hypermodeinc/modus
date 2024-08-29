@@ -6,8 +6,8 @@ package storage
 
 import (
 	"context"
-	"hmruntime/config"
-	"hmruntime/logger"
+	"hypruntime/config"
+	"hypruntime/logger"
 	"time"
 )
 

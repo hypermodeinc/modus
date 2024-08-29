@@ -10,12 +10,12 @@ import (
 	"net/http"
 	"strings"
 
-	"hmruntime/config"
-	"hmruntime/db"
-	"hmruntime/hosts"
-	"hmruntime/manifestdata"
-	"hmruntime/secrets"
-	"hmruntime/utils"
+	"hypruntime/config"
+	"hypruntime/db"
+	"hypruntime/hosts"
+	"hypruntime/manifestdata"
+	"hypruntime/secrets"
+	"hypruntime/utils"
 
 	"github.com/hypermodeAI/manifest"
 )
