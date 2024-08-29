@@ -1,3 +1,7 @@
+/*
+ * Copyright 2024 Hypermode, Inc.
+ */
+
 package collections
 
 import (
@@ -9,6 +13,7 @@ import (
 
 	"hypruntime/collections/in_mem"
 	"hypruntime/collections/index"
+	"hypruntime/collections/index/interfaces"
 	collection_utils "hypruntime/collections/utils"
 	"hypruntime/functions"
 	"hypruntime/manifestdata"
@@ -17,12 +22,29 @@ import (
 	"hypruntime/wasmhost"
 )
 
+var errInvalidEmbedderSignature = errors.New("invalid embedder function signature")
+
+func Initialize(ctx context.Context) {
+	globalNamespaceManager = newCollectionFactory()
+	manifestdata.RegisterManifestLoadedCallback(cleanAndProcessManifest)
+	functions.RegisterFunctionsLoadedCallback(func(ctx context.Context) {
+		globalNamespaceManager.readFromPostgres(ctx)
+	})
+
+	go globalNamespaceManager.worker(ctx)
+}
+
+func Shutdown(ctx context.Context) {
+	close(globalNamespaceManager.quit)
+	<-globalNamespaceManager.done
+}
+
 func UpsertToCollection(ctx context.Context, collectionName, namespace string, keys, texts []string, labels [][]string) (*CollectionMutationResult, error) {
 
 	// Get the collectionName data from the manifest
 	collectionData := manifestdata.GetManifest().Collections[collectionName]
 
-	collection, err := GlobalNamespaceManager.FindCollection(ctx, collectionName)
+	col, err := globalNamespaceManager.findCollection(collectionName)
 	if err != nil {
 		return nil, err
 	}
@@ -31,7 +53,9 @@ func UpsertToCollection(ctx context.Context, collectionName, namespace string, k
 		namespace = in_mem.DefaultNamespace
 	}
 
-	collNs, err := collection.FindOrCreateNamespace(ctx, namespace, in_mem.NewCollectionNamespace(collectionName, namespace))
+	collNs, err := func(namespace string, index interfaces.CollectionNamespace) (interfaces.CollectionNamespace, error) {
+		return col.findOrCreateNamespace(namespace, index)
+	}(namespace, in_mem.NewCollectionNamespace(collectionName, namespace))
 	if err != nil {
 		return nil, err
 	}
@@ -115,44 +139,8 @@ func UpsertToCollection(ctx context.Context, collectionName, namespace string, k
 	}, nil
 }
 
-var errInvalidEmbedderSignature = errors.New("invalid embedder function signature")
-
-func validateEmbedder(ctx context.Context, embedder string) error {
-
-	fn, err := functions.GetFunction(embedder)
-	if err != nil {
-		return err
-	}
-
-	// Embedder functions must take a single string[] parameter and return a single f32[][] or f64[][] array.
-	// The types are language-specific, so we use the plugin language's type info.
-
-	if len(fn.Parameters) != 1 || len(fn.Results) != 1 {
-		return errInvalidEmbedderSignature
-	}
-
-	lti := plugins.GetPlugin(ctx).Language.TypeInfo()
-
-	p := fn.Parameters[0]
-	if !lti.IsListType(p.Type) || !lti.IsStringType(lti.GetListSubtype(p.Type)) {
-		return errInvalidEmbedderSignature
-	}
-
-	r := fn.Results[0]
-	if !lti.IsListType(r.Type) {
-		return errInvalidEmbedderSignature
-	}
-
-	a := lti.GetListSubtype(r.Type)
-	if !lti.IsListType(a) || !lti.IsFloatType(lti.GetListSubtype(a)) {
-		return errInvalidEmbedderSignature
-	}
-
-	return nil
-}
-
 func DeleteFromCollection(ctx context.Context, collectionName, namespace, key string) (*CollectionMutationResult, error) {
-	collection, err := GlobalNamespaceManager.FindCollection(ctx, collectionName)
+	col, err := globalNamespaceManager.findCollection(collectionName)
 	if err != nil {
 		return nil, err
 	}
@@ -161,7 +149,7 @@ func DeleteFromCollection(ctx context.Context, collectionName, namespace, key st
 		namespace = in_mem.DefaultNamespace
 	}
 
-	collNs, err := collection.FindNamespace(ctx, namespace)
+	collNs, err := col.findNamespace(namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -190,35 +178,11 @@ func DeleteFromCollection(ctx context.Context, collectionName, namespace, key st
 		Keys:       keys,
 		Error:      "",
 	}, nil
-
-}
-
-func getEmbedder(ctx context.Context, collectionName string, searchMethod string) (string, error) {
-	manifestColl, ok := manifestdata.GetManifest().Collections[collectionName]
-	if !ok {
-		return "", fmt.Errorf("collection %s not found in manifest", collectionName)
-	}
-
-	manifestSearchMethod, ok := manifestColl.SearchMethods[searchMethod]
-	if !ok {
-		return "", fmt.Errorf("search method %s not found in collection %s", searchMethod, collectionName)
-	}
-
-	embedder := manifestSearchMethod.Embedder
-	if embedder == "" {
-		return "", fmt.Errorf("embedder not found in search method %s of collection %s", searchMethod, collectionName)
-	}
-
-	if err := validateEmbedder(ctx, embedder); err != nil {
-		return "", err
-	}
-
-	return embedder, nil
 }
 
 func SearchCollection(ctx context.Context, collectionName string, namespaces []string, searchMethod, text string, limit int32, returnText bool) (*CollectionSearchResult, error) {
 
-	collection, err := GlobalNamespaceManager.FindCollection(ctx, collectionName)
+	col, err := globalNamespaceManager.findCollection(collectionName)
 	if err != nil {
 		return nil, err
 	}
@@ -253,7 +217,7 @@ func SearchCollection(ctx context.Context, collectionName string, namespaces []s
 	// merge all objects
 	mergedObjects := make([]*CollectionSearchResultObject, 0, len(namespaces)*int(limit))
 	for _, ns := range namespaces {
-		collNs, err := collection.FindNamespace(ctx, ns)
+		collNs, err := col.findNamespace(ns)
 		if err != nil {
 			return nil, err
 		}
@@ -298,12 +262,11 @@ func SearchCollection(ctx context.Context, collectionName string, namespaces []s
 		Status:       "success",
 		Objects:      mergedObjects,
 	}, nil
-
 }
 
 func SearchCollectionByVector(ctx context.Context, collectionName string, namespaces []string, searchMethod string, vector []float32, limit int32, returnText bool) (*CollectionSearchResult, error) {
 
-	collection, err := GlobalNamespaceManager.FindCollection(ctx, collectionName)
+	col, err := globalNamespaceManager.findCollection(collectionName)
 	if err != nil {
 		return nil, err
 	}
@@ -315,7 +278,7 @@ func SearchCollectionByVector(ctx context.Context, collectionName string, namesp
 	// merge all objects
 	mergedObjects := make([]*CollectionSearchResultObject, 0, len(namespaces)*int(limit))
 	for _, ns := range namespaces {
-		collNs, err := collection.FindNamespace(ctx, ns)
+		collNs, err := col.findNamespace(ns)
 		if err != nil {
 			return nil, err
 		}
@@ -360,12 +323,11 @@ func SearchCollectionByVector(ctx context.Context, collectionName string, namesp
 		Status:       "success",
 		Objects:      mergedObjects,
 	}, nil
-
 }
 
 func NnClassify(ctx context.Context, collectionName, namespace, searchMethod, text string) (*CollectionClassificationResult, error) {
 
-	collection, err := GlobalNamespaceManager.FindCollection(ctx, collectionName)
+	col, err := globalNamespaceManager.findCollection(collectionName)
 	if err != nil {
 		return nil, err
 	}
@@ -374,7 +336,7 @@ func NnClassify(ctx context.Context, collectionName, namespace, searchMethod, te
 		namespace = in_mem.DefaultNamespace
 	}
 
-	collNs, err := collection.FindNamespace(ctx, namespace)
+	collNs, err := col.findNamespace(namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -487,7 +449,7 @@ func NnClassify(ctx context.Context, collectionName, namespace, searchMethod, te
 
 func GetVector(ctx context.Context, collectionName, namespace, searchMethod, id string) ([]float32, error) {
 
-	collection, err := GlobalNamespaceManager.FindCollection(ctx, collectionName)
+	col, err := globalNamespaceManager.findCollection(collectionName)
 	if err != nil {
 		return nil, err
 	}
@@ -496,7 +458,7 @@ func GetVector(ctx context.Context, collectionName, namespace, searchMethod, id 
 		namespace = in_mem.DefaultNamespace
 	}
 
-	collNs, err := collection.FindNamespace(ctx, namespace)
+	collNs, err := col.findNamespace(namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -516,7 +478,7 @@ func GetVector(ctx context.Context, collectionName, namespace, searchMethod, id 
 
 func ComputeDistance(ctx context.Context, collectionName, namespace, searchMethod, id1, id2 string) (*CollectionSearchResultObject, error) {
 
-	collection, err := GlobalNamespaceManager.FindCollection(ctx, collectionName)
+	col, err := globalNamespaceManager.findCollection(collectionName)
 	if err != nil {
 		return nil, err
 	}
@@ -525,7 +487,7 @@ func ComputeDistance(ctx context.Context, collectionName, namespace, searchMetho
 		namespace = in_mem.DefaultNamespace
 	}
 
-	collNs, err := collection.FindNamespace(ctx, namespace)
+	collNs, err := col.findNamespace(namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -569,7 +531,7 @@ func ComputeDistance(ctx context.Context, collectionName, namespace, searchMetho
 
 func RecomputeSearchMethod(ctx context.Context, collectionName, namespace, searchMethod string) (*SearchMethodMutationResult, error) {
 
-	collection, err := GlobalNamespaceManager.FindCollection(ctx, collectionName)
+	col, err := globalNamespaceManager.findCollection(collectionName)
 	if err != nil {
 		return nil, err
 	}
@@ -578,7 +540,7 @@ func RecomputeSearchMethod(ctx context.Context, collectionName, namespace, searc
 		namespace = in_mem.DefaultNamespace
 	}
 
-	collNs, err := collection.FindNamespace(ctx, namespace)
+	collNs, err := col.findNamespace(namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -588,12 +550,7 @@ func RecomputeSearchMethod(ctx context.Context, collectionName, namespace, searc
 		return nil, err
 	}
 
-	embedder, err := getEmbedder(ctx, collectionName, searchMethod)
-	if err != nil {
-		return nil, err
-	}
-
-	err = ProcessTextMap(ctx, collNs, embedder, vectorIndex)
+	err = processTextMap(ctx, collNs, interfaces.VectorIndex(vectorIndex))
 	if err != nil {
 		return nil, err
 	}
@@ -604,16 +561,15 @@ func RecomputeSearchMethod(ctx context.Context, collectionName, namespace, searc
 		Status:     "success",
 		Error:      "",
 	}, nil
-
 }
 
 func GetTextFromCollection(ctx context.Context, collectionName, namespace, key string) (string, error) {
-	collection, err := GlobalNamespaceManager.FindCollection(ctx, collectionName)
+	col, err := globalNamespaceManager.findCollection(collectionName)
 	if err != nil {
 		return "", err
 	}
 
-	collNs, err := collection.FindNamespace(ctx, namespace)
+	collNs, err := col.findNamespace(namespace)
 	if err != nil {
 		return "", err
 	}
@@ -628,7 +584,7 @@ func GetTextFromCollection(ctx context.Context, collectionName, namespace, key s
 
 func GetTextsFromCollection(ctx context.Context, collectionName, namespace string) (map[string]string, error) {
 
-	collection, err := GlobalNamespaceManager.FindCollection(ctx, collectionName)
+	col, err := globalNamespaceManager.findCollection(collectionName)
 	if err != nil {
 		return nil, err
 	}
@@ -637,7 +593,7 @@ func GetTextsFromCollection(ctx context.Context, collectionName, namespace strin
 		namespace = in_mem.DefaultNamespace
 	}
 
-	collNs, err := collection.FindNamespace(ctx, namespace)
+	collNs, err := col.findNamespace(namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -651,12 +607,12 @@ func GetTextsFromCollection(ctx context.Context, collectionName, namespace strin
 }
 
 func GetNamespacesFromCollection(ctx context.Context, collectionName string) ([]string, error) {
-	collection, err := GlobalNamespaceManager.FindCollection(ctx, collectionName)
+	col, err := globalNamespaceManager.findCollection(collectionName)
 	if err != nil {
 		return nil, err
 	}
 
-	namespaceMap := collection.GetCollectionNamespaceMap()
+	namespaceMap := col.getCollectionNamespaceMap()
 
 	namespaces := make([]string, 0, len(namespaceMap))
 	for namespace := range namespaceMap {
@@ -664,4 +620,61 @@ func GetNamespacesFromCollection(ctx context.Context, collectionName string) ([]
 	}
 
 	return namespaces, nil
+}
+
+func getEmbedder(ctx context.Context, collectionName string, searchMethod string) (string, error) {
+	manifestColl, ok := manifestdata.GetManifest().Collections[collectionName]
+	if !ok {
+		return "", fmt.Errorf("collection %s not found in manifest", collectionName)
+	}
+
+	manifestSearchMethod, ok := manifestColl.SearchMethods[searchMethod]
+	if !ok {
+		return "", fmt.Errorf("search method %s not found in collection %s", searchMethod, collectionName)
+	}
+
+	embedder := manifestSearchMethod.Embedder
+	if embedder == "" {
+		return "", fmt.Errorf("embedder not found in search method %s of collection %s", searchMethod, collectionName)
+	}
+
+	if err := validateEmbedder(ctx, embedder); err != nil {
+		return "", err
+	}
+
+	return embedder, nil
+}
+
+func validateEmbedder(ctx context.Context, embedder string) error {
+
+	fn, err := functions.GetFunction(embedder)
+	if err != nil {
+		return err
+	}
+
+	// Embedder functions must take a single string[] parameter and return a single f32[][] or f64[][] array.
+	// The types are language-specific, so we use the plugin language's type info.
+
+	if len(fn.Parameters) != 1 || len(fn.Results) != 1 {
+		return errInvalidEmbedderSignature
+	}
+
+	lti := plugins.GetPlugin(ctx).Language.TypeInfo()
+
+	p := fn.Parameters[0]
+	if !lti.IsListType(p.Type) || !lti.IsStringType(lti.GetListSubtype(p.Type)) {
+		return errInvalidEmbedderSignature
+	}
+
+	r := fn.Results[0]
+	if !lti.IsListType(r.Type) {
+		return errInvalidEmbedderSignature
+	}
+
+	a := lti.GetListSubtype(r.Type)
+	if !lti.IsListType(a) || !lti.IsFloatType(lti.GetListSubtype(a)) {
+		return errInvalidEmbedderSignature
+	}
+
+	return nil
 }

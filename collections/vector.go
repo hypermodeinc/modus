@@ -1,3 +1,7 @@
+/*
+ * Copyright 2024 Hypermode, Inc.
+ */
+
 package collections
 
 import (
@@ -19,55 +23,7 @@ import (
 	"github.com/hypermodeAI/manifest"
 )
 
-const (
-	batchSize = 25
-)
-
-func ProcessTexts(ctx context.Context, collection interfaces.CollectionNamespace, vectorIndex interfaces.VectorIndex, keys []string, texts []string) error {
-	if len(keys) != len(texts) {
-		return fmt.Errorf("mismatch in keys and texts")
-	}
-	for i := 0; i < len(keys); i += batchSize {
-		end := i + batchSize
-		if end > len(keys) {
-			end = len(keys)
-		}
-		keysBatch := keys[i:end]
-		textsBatch := texts[i:end]
-
-		executionInfo, err := wasmhost.CallFunction(ctx, vectorIndex.GetEmbedderName(), textsBatch)
-		if err != nil {
-			return err
-		}
-
-		result := executionInfo.Result
-
-		textVecs, err := utils.ConvertToFloat32_2DArray(result)
-		if err != nil {
-			return err
-		}
-
-		if len(textVecs) == 0 {
-			return fmt.Errorf("no vectors returned for texts: %v", textsBatch)
-		}
-
-		textIds := make([]int64, len(keysBatch))
-
-		for i, key := range keysBatch {
-			textId, err := collection.GetExternalId(ctx, key)
-			if err != nil {
-				return err
-			}
-			textIds[i] = textId
-		}
-
-		err = vectorIndex.InsertVectors(ctx, textIds, textVecs)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
+const batchSize = 25
 
 func batchInsertVectorsToMemory(ctx context.Context, vectorIndex interfaces.VectorIndex, textIds, vectorIds []int64, keys []string, vecs [][]float32) error {
 	if len(vectorIds) != len(vecs) || len(keys) != len(vecs) || len(textIds) != len(vecs) {
@@ -91,63 +47,86 @@ func batchInsertVectorsToMemory(ctx context.Context, vectorIndex interfaces.Vect
 	return nil
 }
 
-func ProcessText(ctx context.Context, collection interfaces.CollectionNamespace, vectorIndex interfaces.VectorIndex, key, text string) error {
-	texts := []string{text}
-	executionInfo, err := wasmhost.CallFunction(ctx, vectorIndex.GetEmbedderName(), texts)
-	if err != nil {
-		return err
-	}
-
-	result := executionInfo.Result
-
-	textVecs, err := utils.ConvertToFloat32_2DArray(result)
-	if err != nil {
-		return err
-	}
-
-	if len(textVecs) == 0 {
-		return fmt.Errorf("no vectors returned for text: %s", text)
-	}
-
-	textId, err := collection.GetExternalId(ctx, key)
-	if err != nil {
-		return err
-	}
-	err = vectorIndex.InsertVector(ctx, textId, textVecs[0])
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func ProcessTextMap(ctx context.Context, collection interfaces.CollectionNamespace, embedder string, vectorIndex interfaces.VectorIndex) error {
-
-	textMap, err := collection.GetTextMap(ctx)
-	if err != nil {
-		return err
-	}
-
-	keys := make([]string, 0, len(textMap))
-	texts := make([]string, 0, len(textMap))
-	for key, text := range textMap {
-		keys = append(keys, key)
-		texts = append(texts, text)
-	}
-
-	return ProcessTexts(ctx, collection, vectorIndex, keys, texts)
-}
-
-func CleanAndProcessManifest(ctx context.Context) error {
+func cleanAndProcessManifest(ctx context.Context) error {
 	deleteIndexesNotInManifest(ctx, manifestdata.GetManifest())
 	processManifestCollections(ctx, manifestdata.GetManifest())
 	return nil
 }
 
+func createIndexObject(searchMethod manifest.SearchMethodInfo, searchMethodName string) (*interfaces.VectorIndexWrapper, error) {
+	vectorIndex := &interfaces.VectorIndexWrapper{}
+	switch searchMethod.Index.Type {
+	case interfaces.SequentialManifestType:
+		vectorIndex.Type = sequential.SequentialVectorIndexType
+		vectorIndex.VectorIndex = sequential.NewSequentialVectorIndex(searchMethodName, searchMethod.Embedder)
+	case interfaces.HnswManifestType:
+		vectorIndex.Type = sequential.SequentialVectorIndexType
+		vectorIndex.VectorIndex = sequential.NewSequentialVectorIndex(searchMethodName, searchMethod.Embedder)
+		// // TODO: hnsw currently broken, auto-sync is not working, it keeps embedding forever, even though it has correctly indexed. for now, set it to sequential. fix in future PR
+		// vectorIndex.Type = hnsw.HnswVectorIndexType
+		// vectorIndex.VectorIndex = hnsw.NewHnswVectorIndex(collectionName, searchMethodName, searchMethod.Embedder)
+	case "":
+		vectorIndex.Type = sequential.SequentialVectorIndexType
+		vectorIndex.VectorIndex = sequential.NewSequentialVectorIndex(searchMethodName, searchMethod.Embedder)
+	default:
+		return nil, fmt.Errorf("Unknown index type: %s", searchMethod.Index.Type)
+	}
+
+	return vectorIndex, nil
+}
+
+func deleteIndexesNotInManifest(ctx context.Context, man *manifest.HypermodeManifest) {
+	for collectionName := range globalNamespaceManager.getNamespaceCollectionFactoryMap() {
+		if _, ok := man.Collections[collectionName]; !ok {
+			err := globalNamespaceManager.removeCollection(collectionName)
+			if err != nil {
+				logger.Err(ctx, err).
+					Str("collection_name", collectionName).
+					Msg("Failed to remove collection.")
+			}
+			continue
+		}
+		col, err := globalNamespaceManager.findCollection(collectionName)
+		if err != nil {
+			logger.Err(ctx, err).
+				Str("collection_name", collectionName).
+				Msg("Failed to find collection.")
+			continue
+		}
+		for _, collNs := range col.collectionNamespaceMap {
+			vectorIndexMap := collNs.GetVectorIndexMap()
+			if vectorIndexMap == nil {
+				continue
+			}
+			for searchMethodName := range vectorIndexMap {
+				err := deleteVectorIndexesNotInManifest(ctx, man, collNs, collectionName, searchMethodName)
+				if err != nil {
+					logger.Err(ctx, err).
+						Str("index_name", searchMethodName).
+						Msg("Failed to delete vector index.")
+					continue
+				}
+			}
+		}
+	}
+}
+
+func deleteVectorIndexesNotInManifest(ctx context.Context, man *manifest.HypermodeManifest, col interfaces.CollectionNamespace, collectionName, searchMethodName string) error {
+	_, ok := man.Collections[collectionName].SearchMethods[searchMethodName]
+	if !ok {
+		err := col.DeleteVectorIndex(ctx, searchMethodName)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func processManifestCollections(ctx context.Context, man *manifest.HypermodeManifest) {
 	for collectionName, collectionInfo := range man.Collections {
-		collection, err := GlobalNamespaceManager.FindCollection(ctx, collectionName)
-		if err == ErrCollectionNotFound {
-			collection, err = GlobalNamespaceManager.CreateCollection(ctx, collectionName, NewCollection(ctx, collectionName))
+		col, err := globalNamespaceManager.findCollection(collectionName)
+		if err == errCollectionNotFound {
+			col, err = globalNamespaceManager.createCollection(collectionName, newCollection())
 			if err != nil {
 				logger.Err(ctx, err).
 					Str("collection_name", collectionName).
@@ -167,7 +146,7 @@ func processManifestCollections(ctx context.Context, man *manifest.HypermodeMani
 			}
 
 			for _, namespace := range namespaces {
-				_, err := collection.CreateCollectionNamespace(ctx, namespace, in_mem.NewCollectionNamespace(collectionName, namespace))
+				_, err := col.createCollectionNamespace(namespace, in_mem.NewCollectionNamespace(collectionName, namespace))
 				if err != nil {
 					logger.Err(ctx, err).
 						Str("collection_name", collectionName).
@@ -176,7 +155,7 @@ func processManifestCollections(ctx context.Context, man *manifest.HypermodeMani
 				}
 			}
 		}
-		for _, collNs := range collection.collectionNamespaceMap {
+		for _, collNs := range col.collectionNamespaceMap {
 			for searchMethodName, searchMethod := range collectionInfo.SearchMethods {
 				vi, err := collNs.GetVectorIndex(ctx, searchMethodName)
 
@@ -223,26 +202,67 @@ func processManifestCollections(ctx context.Context, man *manifest.HypermodeMani
 	}
 }
 
-func createIndexObject(searchMethod manifest.SearchMethodInfo, searchMethodName string) (*interfaces.VectorIndexWrapper, error) {
-	vectorIndex := &interfaces.VectorIndexWrapper{}
-	switch searchMethod.Index.Type {
-	case interfaces.SequentialManifestType:
-		vectorIndex.Type = sequential.SequentialVectorIndexType
-		vectorIndex.VectorIndex = sequential.NewSequentialVectorIndex(searchMethodName, searchMethod.Embedder)
-	case interfaces.HnswManifestType:
-		vectorIndex.Type = sequential.SequentialVectorIndexType
-		vectorIndex.VectorIndex = sequential.NewSequentialVectorIndex(searchMethodName, searchMethod.Embedder)
-		// // TODO: hnsw currently broken ,autosync is not working, it keeps embedding forever, even though it has correctly indexed. for now, set it to sequential. fix in future PR
-		// vectorIndex.Type = hnsw.HnswVectorIndexType
-		// vectorIndex.VectorIndex = hnsw.NewHnswVectorIndex(collectionName, searchMethodName, searchMethod.Embedder)
-	case "":
-		vectorIndex.Type = sequential.SequentialVectorIndexType
-		vectorIndex.VectorIndex = sequential.NewSequentialVectorIndex(searchMethodName, searchMethod.Embedder)
-	default:
-		return nil, fmt.Errorf("Unknown index type: %s", searchMethod.Index.Type)
+func processTexts(ctx context.Context, col interfaces.CollectionNamespace, vectorIndex interfaces.VectorIndex, keys []string, texts []string) error {
+	if len(keys) != len(texts) {
+		return fmt.Errorf("mismatch in keys and texts")
+	}
+	for i := 0; i < len(keys); i += batchSize {
+		end := i + batchSize
+		if end > len(keys) {
+			end = len(keys)
+		}
+		keysBatch := keys[i:end]
+		textsBatch := texts[i:end]
+
+		executionInfo, err := wasmhost.CallFunction(ctx, vectorIndex.GetEmbedderName(), textsBatch)
+		if err != nil {
+			return err
+		}
+
+		result := executionInfo.Result
+
+		textVecs, err := utils.ConvertToFloat32_2DArray(result)
+		if err != nil {
+			return err
+		}
+
+		if len(textVecs) == 0 {
+			return fmt.Errorf("no vectors returned for texts: %v", textsBatch)
+		}
+
+		textIds := make([]int64, len(keysBatch))
+
+		for i, key := range keysBatch {
+			textId, err := col.GetExternalId(ctx, key)
+			if err != nil {
+				return err
+			}
+			textIds[i] = textId
+		}
+
+		err = vectorIndex.InsertVectors(ctx, textIds, textVecs)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func processTextMap(ctx context.Context, col interfaces.CollectionNamespace, vectorIndex interfaces.VectorIndex) error {
+
+	textMap, err := col.GetTextMap(ctx)
+	if err != nil {
+		return err
 	}
 
-	return vectorIndex, nil
+	keys := make([]string, 0, len(textMap))
+	texts := make([]string, 0, len(textMap))
+	for key, text := range textMap {
+		keys = append(keys, key)
+		texts = append(texts, text)
+	}
+
+	return processTexts(ctx, col, vectorIndex, keys, texts)
 }
 
 func setIndex(ctx context.Context, collNs interfaces.CollectionNamespace, searchMethod manifest.SearchMethodInfo, searchMethodName string) error {
@@ -254,53 +274,6 @@ func setIndex(ctx context.Context, collNs interfaces.CollectionNamespace, search
 	err = collNs.SetVectorIndex(ctx, searchMethodName, vectorIndex)
 	if err != nil {
 		return err
-	}
-	return nil
-}
-
-func deleteIndexesNotInManifest(ctx context.Context, man *manifest.HypermodeManifest) {
-	for collectionName := range GlobalNamespaceManager.GetNamespaceCollectionFactoryMap() {
-		if _, ok := man.Collections[collectionName]; !ok {
-			err := GlobalNamespaceManager.RemoveCollection(ctx, collectionName)
-			if err != nil {
-				logger.Err(ctx, err).
-					Str("collection_name", collectionName).
-					Msg("Failed to remove collection.")
-			}
-			continue
-		}
-		collection, err := GlobalNamespaceManager.FindCollection(ctx, collectionName)
-		if err != nil {
-			logger.Err(ctx, err).
-				Str("collection_name", collectionName).
-				Msg("Failed to find collection.")
-			continue
-		}
-		for _, collNs := range collection.collectionNamespaceMap {
-			vectorIndexMap := collNs.GetVectorIndexMap()
-			if vectorIndexMap == nil {
-				continue
-			}
-			for searchMethodName := range vectorIndexMap {
-				err := deleteVectorIndexesNotInManifest(ctx, man, collNs, collectionName, searchMethodName)
-				if err != nil {
-					logger.Err(ctx, err).
-						Str("index_name", searchMethodName).
-						Msg("Failed to delete vector index.")
-					continue
-				}
-			}
-		}
-	}
-}
-
-func deleteVectorIndexesNotInManifest(ctx context.Context, man *manifest.HypermodeManifest, collection interfaces.CollectionNamespace, collectionName, searchMethodName string) error {
-	_, ok := man.Collections[collectionName].SearchMethods[searchMethodName]
-	if !ok {
-		err := collection.DeleteVectorIndex(ctx, searchMethodName)
-		if err != nil {
-			return err
-		}
 	}
 	return nil
 }

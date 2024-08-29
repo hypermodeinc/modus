@@ -44,7 +44,7 @@ func Start(ctx context.Context) {
 	secrets.Initialize(ctx)
 	storage.Initialize(ctx)
 	db.Initialize(ctx)
-	collections.InitializeIndexFactory(ctx)
+	collections.Initialize(ctx)
 	manifestdata.MonitorManifestFile(ctx)
 	pluginmanager.Initialize(ctx)
 	graphql.Initialize()
@@ -58,7 +58,7 @@ func Stop(ctx context.Context) {
 
 	// Unlike start, these should each block until they are fully stopped.
 
-	collections.CloseIndexFactory(ctx)
+	collections.Shutdown(ctx)
 	sqlclient.ShutdownPGPools()
 	dgraphclient.ShutdownConns()
 	wasmhost.GlobalWasmHost.Close(ctx)

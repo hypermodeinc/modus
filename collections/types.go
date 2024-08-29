@@ -1,3 +1,7 @@
+/*
+ * Copyright 2024 Hypermode, Inc.
+ */
+
 package collections
 
 type CollectionMutationResult struct {

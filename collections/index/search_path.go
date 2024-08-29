@@ -1,3 +1,7 @@
+/*
+ * Copyright 2024 Hypermode, Inc.
+ */
+
 package index
 
 // SearchPathResult is the return-type for the optional

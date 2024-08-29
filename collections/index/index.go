@@ -1,3 +1,7 @@
+/*
+ * Copyright 2024 Hypermode, Inc.
+ */
+
 package index
 
 // SearchFilter defines a predicate function that we will use to determine
