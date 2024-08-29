@@ -1,4 +1,4 @@
-# build hmruntime binary
+# build hypruntime binary
 FROM --platform=$BUILDPLATFORM golang:alpine as builder
 WORKDIR /src
 
@@ -32,7 +32,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     less 
 
 # copy runtime binary from the build phase
-COPY --from=builder /src/hmruntime /usr/bin/hmruntime
+COPY --from=builder /src/hypruntime /usr/bin/hypruntime
 
 # update certificates every build
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -40,4 +40,4 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # set the default entrypoint and options
-ENTRYPOINT ["hmruntime", "--jsonlogs"]
+ENTRYPOINT ["hypruntime", "--jsonlogs"]

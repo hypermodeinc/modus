@@ -55,7 +55,7 @@
     "graphqlerrors",
     "greq",
     "hconf",
-    "hmruntime",
+    "hypruntime",
     "hnsw",
     "hostfns",
     "hostfunctions",
