@@ -10,7 +10,6 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
-	"runtime"
 	"testing"
 
 	"hmruntime/functions"
@@ -21,11 +20,6 @@ import (
 
 	wasm "github.com/tetratelabs/wazero/api"
 )
-
-var basePath = func() string {
-	_, file, _, _ := runtime.Caller(0)
-	return filepath.Dir(file)
-}()
 
 type WasmTestFixture struct {
 	Context     context.Context
