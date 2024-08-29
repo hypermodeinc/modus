@@ -17,6 +17,7 @@ import (
 	"hmruntime/logger"
 	"hmruntime/plugins/metadata"
 	"hmruntime/utils"
+	"hmruntime/wasmhost"
 
 	"github.com/wundergraph/graphql-go-tools/execution/engine"
 	gql "github.com/wundergraph/graphql-go-tools/execution/graphql"
@@ -63,7 +64,7 @@ func Activate(ctx context.Context, md *metadata.Metadata) error {
 	return nil
 }
 
-func generateSchema(ctx context.Context, md *metadata.Metadata) (*gql.Schema, *datasource.Configuration, error) {
+func generateSchema(ctx context.Context, md *metadata.Metadata) (*gql.Schema, *datasource.HypDSConfig, error) {
 	span := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
 
@@ -85,14 +86,15 @@ func generateSchema(ctx context.Context, md *metadata.Metadata) (*gql.Schema, *d
 		return nil, nil, err
 	}
 
-	cfg := &datasource.Configuration{
+	cfg := &datasource.HypDSConfig{
+		WasmHost: wasmhost.GlobalWasmHost,
 		MapTypes: generated.MapTypes,
 	}
 
 	return schema, cfg, nil
 }
 
-func getDatasourceConfig(ctx context.Context, schema *gql.Schema, cfg *datasource.Configuration) (plan.DataSourceConfiguration[datasource.Configuration], error) {
+func getDatasourceConfig(ctx context.Context, schema *gql.Schema, cfg *datasource.HypDSConfig) (plan.DataSourceConfiguration[datasource.HypDSConfig], error) {
 	span := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
 
@@ -118,13 +120,13 @@ func getDatasourceConfig(ctx context.Context, schema *gql.Schema, cfg *datasourc
 
 	return plan.NewDataSourceConfiguration(
 		datasource.DataSourceName,
-		&datasource.Factory[datasource.Configuration]{Ctx: ctx},
+		&datasource.HypDSFactory{Ctx: ctx},
 		&plan.DataSourceMetadata{RootNodes: rootNodes, ChildNodes: childNodes},
 		*cfg,
 	)
 }
 
-func makeEngine(ctx context.Context, schema *gql.Schema, datasourceConfig plan.DataSourceConfiguration[datasource.Configuration]) (*engine.ExecutionEngine, error) {
+func makeEngine(ctx context.Context, schema *gql.Schema, datasourceConfig plan.DataSourceConfiguration[datasource.HypDSConfig]) (*engine.ExecutionEngine, error) {
 	span := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
 

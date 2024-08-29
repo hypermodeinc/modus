@@ -6,7 +6,16 @@ package dgraphclient
 
 import (
 	"context"
+
+	"hmruntime/manifestdata"
 )
+
+func Initialize() {
+	manifestdata.RegisterManifestLoadedCallback(func(ctx context.Context) error {
+		ShutdownConns()
+		return nil
+	})
+}
 
 func Execute(ctx context.Context, hostName string, req *Request) (*Response, error) {
 	dc, err := dgr.getDgraphConnector(ctx, hostName)

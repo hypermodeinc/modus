@@ -10,6 +10,7 @@ import (
 	"context"
 	"fmt"
 	"slices"
+	"sort"
 	"strings"
 
 	"hmruntime/languages"
@@ -29,7 +30,6 @@ func GetGraphQLSchema(ctx context.Context, md *metadata.Metadata) (*GraphQLSchem
 	lti := languages.GetLanguageForSDK(md.SDK).TypeInfo()
 	typeDefs, errors := transformTypes(md.Types, lti)
 	functions, errs := transformFunctions(md.FnExports, typeDefs, lti)
-	types := utils.MapValues(typeDefs)
 	errors = append(errors, errs...)
 
 	if len(errors) > 0 {
@@ -37,7 +37,7 @@ func GetGraphQLSchema(ctx context.Context, md *metadata.Metadata) (*GraphQLSchem
 	}
 
 	functions = filterFunctions(functions)
-	types = filterTypes(types, functions)
+	types := filterTypes(utils.MapValues(typeDefs), functions)
 
 	buf := bytes.Buffer{}
 	writeSchema(&buf, functions, types)
@@ -60,14 +60,16 @@ type TransformError struct {
 	Error  error
 }
 
+func (e *TransformError) String() string {
+	return fmt.Sprintf("source: %+v, error: %v", e.Source, e.Error)
+}
+
 func transformTypes(types metadata.TypeMap, lti languages.TypeInfo) (map[string]*TypeDefinition, []*TransformError) {
 	typeDefs := make(map[string]*TypeDefinition, len(types))
 	errors := make([]*TransformError, 0)
 	for _, t := range types {
 		name := lti.GetNameForType(t.Name)
-
 		if _, ok := typeDefs[name]; ok {
-			errors = append(errors, &TransformError{t, fmt.Errorf("type already exists: %s", name)})
 			continue
 		}
 
@@ -113,7 +115,11 @@ func transformFunctions(functions metadata.FunctionMap, typeDefs map[string]*Typ
 	errors := make([]*TransformError, 0)
 
 	i := 0
-	for _, f := range functions {
+	fnNames := utils.MapKeys(functions)
+	sort.Strings(fnNames)
+	for _, name := range fnNames {
+		f := functions[name]
+
 		params, err := convertParameters(f.Parameters, lti, typeDefs)
 		if err != nil {
 			errors = append(errors, &TransformError{f, err})
@@ -211,10 +217,10 @@ func writeSchema(buf *bytes.Buffer, functions []*FunctionSignature, typeDefs []*
 
 	// sort functions and type definitions
 	slices.SortFunc(functions, func(a, b *FunctionSignature) int {
-		return cmp.Compare(a.Name, b.Name)
+		return cmp.Compare(strings.ToLower(a.Name), strings.ToLower(b.Name))
 	})
 	slices.SortFunc(typeDefs, func(a, b *TypeDefinition) int {
-		return cmp.Compare(a.Name, b.Name)
+		return cmp.Compare(strings.ToLower(a.Name), strings.ToLower(b.Name))
 	})
 
 	// write query functions
@@ -324,26 +330,28 @@ func convertResults(results []*metadata.Result, lti languages.TypeInfo, typeDefs
 	case 1:
 		// Note: Single result doesn't use the name, even if it's present.
 		return convertType(results[0].Type, lti, typeDefs, false)
-	default:
-		fields := getFieldsFromResults(results)
-		t := getTypeForFields(fields, typeDefs)
-		return t, nil
 	}
-}
 
-func getFieldsFromResults(results []*metadata.Result) []*NameTypePair {
 	fields := make([]*NameTypePair, len(results))
 	for i, r := range results {
 		name := r.Name
 		if name == "" {
-			name = fmt.Sprintf("field_%d", i+1)
+			name = fmt.Sprintf("item%d", i+1)
 		}
+
+		typ, err := convertType(r.Type, lti, typeDefs, false)
+		if err != nil {
+			return "", err
+		}
+
 		fields[i] = &NameTypePair{
 			Name: name,
-			Type: r.Type,
+			Type: typ,
 		}
 	}
-	return fields
+
+	t := getTypeForFields(fields, typeDefs)
+	return t, nil
 }
 
 func getTypeForFields(fields []*NameTypePair, typeDefs map[string]*TypeDefinition) string {
@@ -369,7 +377,7 @@ func getTypeForFields(fields []*NameTypePair, typeDefs map[string]*TypeDefinitio
 	// there's no existing type that matches, so create a new one
 	var name string
 	for i := 1; ; i++ {
-		name = fmt.Sprintf("type_%d", i)
+		name = fmt.Sprintf("_type%d", i)
 		if _, ok := typeDefs[name]; !ok {
 			break
 		}
@@ -408,16 +416,72 @@ func convertType(typ string, lti languages.TypeInfo, typeDefs map[string]*TypeDe
 	// In GraphQL, types are nullable by default,
 	// and non-nullable types are indicated by a "!" suffix
 	var n string
-	if lti.IsNullable(typ) {
-		n = ""
-		typ = lti.GetUnderlyingType(typ)
-	} else {
+	if !lti.IsNullable(typ) {
 		n = "!"
 	}
 
+	// unwrap nullable types (and dereference pointers)
+	for lti.IsNullable(typ) {
+		t := lti.GetUnderlyingType(typ)
+		if t == typ {
+			break
+		}
+		typ = t
+	}
+
+	// convert basic types
+	// TODO: How do we want to provide GraphQL "ID" scalar types? Maybe they're annotated? or maybe by naming convention?
+
+	if lti.IsStringType(typ) {
+		return "String" + n, nil
+	}
+
+	if lti.IsByteSequenceType(typ) {
+		// Note: If the bytes represent valid UTF-8 strings, Go will serialize them as actual strings.
+		// Otherwise, the data will be base64 encoded.
+		// TODO: We may want to ensure that the results are _always_ base64 encoded.
+		return "String" + n, nil
+	}
+
+	if lti.IsBooleanType(typ) {
+		return "Boolean" + n, nil
+	}
+
+	if lti.IsFloatType(typ) {
+		return "Float" + n, nil
+	}
+
+	if lti.IsIntegerType(typ) {
+		ctx := context.Background() // context is always unused for this purpose
+		signed := lti.IsSignedIntegerType(typ)
+		size, err := lti.GetSizeOfType(ctx, typ)
+		if err != nil {
+			return "", err
+		}
+
+		switch size {
+		case 8:
+			if signed {
+				return newScalar("Int64", typeDefs) + n, nil
+			} else {
+				return newScalar("UInt64", typeDefs) + n, nil
+			}
+		case 4:
+			if !signed {
+				return newScalar("UInt", typeDefs) + n, nil
+			}
+		}
+
+		return "Int" + n, nil
+	}
+
+	if lti.IsTimestampType(typ) {
+		return newScalar("Timestamp", typeDefs) + n, nil
+	}
+
 	// check for array types
-	if lti.IsArrayType(typ) {
-		elem := lti.GetArraySubtype(typ)
+	if lti.IsListType(typ) {
+		elem := lti.GetListSubtype(typ)
 		t, err := convertType(elem, lti, typeDefs, firstPass)
 		if err != nil {
 			return "", err
@@ -455,52 +519,6 @@ func convertType(typ string, lti languages.TypeInfo, typeDefs map[string]*TypeDe
 		// The list might be nullable, but the pair type within the list is always non-nullable.
 		// ex: [StringStringPair!] or [StringStringPair!]!
 		return "[" + typeName + "!]" + n, nil
-	}
-
-	// convert basic types
-	// TODO: How do we want to provide GraphQL "ID" scalar types? Maybe they're annotated? or maybe by naming convention?
-
-	if lti.IsStringType(typ) {
-		return "String" + n, nil
-	}
-
-	if lti.IsByteSequenceType(typ) {
-		// Note: If the bytes represent valid UTF-8 strings, Go will serialize them as actual strings.
-		// Otherwise, the data will be base64 encoded.
-		// TODO: We may want to ensure that the results are _always_ base64 encoded.
-		return "String" + n, nil
-	}
-
-	if lti.IsBooleanType(typ) {
-		return "Boolean" + n, nil
-	}
-
-	if lti.IsFloatType(typ) {
-		return "Float" + n, nil
-	}
-
-	if lti.IsIntegerType(typ) {
-		size := lti.SizeOfType(typ)
-		signed := lti.IsSignedIntegerType(typ)
-
-		switch size {
-		case 8:
-			if signed {
-				return newScalar("Int64", typeDefs) + n, nil
-			} else {
-				return newScalar("UInt64", typeDefs) + n, nil
-			}
-		case 4:
-			if !signed {
-				return newScalar("UInt", typeDefs) + n, nil
-			}
-		}
-
-		return "Int" + n, nil
-	}
-
-	if lti.IsTimestampType(typ) {
-		return newScalar("Timestamp", typeDefs) + n, nil
 	}
 
 	name := lti.GetNameForType(typ)

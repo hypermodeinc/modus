@@ -12,50 +12,52 @@ import (
 	"time"
 
 	"hmruntime/utils"
-
-	wasm "github.com/tetratelabs/wazero/api"
 )
 
-func (wa *wasmAdapter) readObject(ctx context.Context, mem wasm.Memory, typeName string, offset uint32) (data any, err error) {
-	switch typeName {
-	case "~lib/arraybuffer/ArrayBuffer":
-		return wa.readBytes(mem, offset)
-	case "string", "~lib/string/String":
-		return wa.readString(mem, offset)
-	case "~lib/date/Date", "~lib/wasi_date/wasi_Date":
-		return wa.readDate(mem, offset)
+func (wa *wasmAdapter) readObject(ctx context.Context, typ string, offset uint32) (data any, err error) {
+	if offset == 0 {
+		return nil, nil
 	}
 
-	typ, err := wa.typeInfo.getTypeDefinition(ctx, typeName)
+	switch typ {
+	case "~lib/arraybuffer/ArrayBuffer":
+		return wa.readBytes(offset)
+	case "string", "~lib/string/String":
+		return wa.readString(offset)
+	case "~lib/date/Date", "~lib/wasi_date/wasi_Date":
+		return wa.readDate(offset)
+	}
+
+	def, err := wa.typeInfo.GetTypeDefinition(ctx, typ)
 	if err != nil {
 		return nil, err
 	}
 
-	id, _ := mem.ReadUint32Le(offset - 8)
-	if id != typ.Id {
-		return nil, fmt.Errorf("pointer is not to a %s", typeName)
+	id, _ := wa.mod.Memory().ReadUint32Le(offset - 8)
+	if id != def.Id {
+		return nil, fmt.Errorf("pointer is not to a %s", typ)
 	}
 
-	if wa.typeInfo.IsArrayType(typeName) {
-		return wa.readArray(ctx, mem, typ, offset)
-	} else if wa.typeInfo.IsMapType(typeName) {
-		return wa.readMap(ctx, mem, typ, offset)
+	if wa.typeInfo.IsListType(typ) {
+		return wa.readArray(ctx, typ, offset)
+	} else if wa.typeInfo.IsMapType(typ) {
+		return wa.readMap(ctx, typ, offset)
 	}
 
-	return wa.readClass(ctx, mem, typ, offset)
+	return wa.readClass(ctx, typ, offset)
 }
 
-func (wa *wasmAdapter) writeObject(ctx context.Context, mod wasm.Module, typeName string, val any) (offset uint32, err error) {
-	switch typeName {
+func (wa *wasmAdapter) writeObject(ctx context.Context, typ string, val any) (offset uint32, err error) {
+	switch typ {
 	case "~lib/arraybuffer/ArrayBuffer":
 		switch v := val.(type) {
 		case []byte:
-			return wa.writeBytes(ctx, mod, v)
+			return wa.writeBytes(ctx, v)
 		case *[]byte:
 			if v == nil {
 				return 0, nil
 			}
-			return wa.writeBytes(ctx, mod, *v)
+			return wa.writeBytes(ctx, *v)
 		default:
 			return 0, fmt.Errorf("input value is not a byte array")
 		}
@@ -63,12 +65,12 @@ func (wa *wasmAdapter) writeObject(ctx context.Context, mod wasm.Module, typeNam
 	case "string", "~lib/string/String":
 		switch v := val.(type) {
 		case string:
-			return wa.writeString(ctx, mod, v)
+			return wa.writeString(ctx, v)
 		case *string:
 			if v == nil {
 				return 0, nil
 			}
-			return wa.writeString(ctx, mod, *v)
+			return wa.writeString(ctx, *v)
 		default:
 			return 0, fmt.Errorf("input value is not a string")
 		}
@@ -124,12 +126,7 @@ func (wa *wasmAdapter) writeObject(ctx context.Context, mod wasm.Module, typeNam
 			return 0, fmt.Errorf("input value is not a valid for a time object")
 		}
 
-		return wa.writeDate(ctx, mod, t)
-	}
-
-	typ, err := wa.typeInfo.getTypeDefinition(ctx, typeName)
-	if err != nil {
-		return 0, err
+		return wa.writeDate(ctx, t)
 	}
 
 	if reflect.TypeOf(val).Kind() == reflect.Ptr {
@@ -141,11 +138,11 @@ func (wa *wasmAdapter) writeObject(ctx context.Context, mod wasm.Module, typeNam
 		}
 	}
 
-	if wa.typeInfo.IsArrayType(typeName) {
-		return wa.writeArray(ctx, mod, typ, val)
-	} else if wa.typeInfo.IsMapType(typeName) {
-		return wa.writeMap(ctx, mod, typ, val)
+	if wa.typeInfo.IsListType(typ) {
+		return wa.writeArray(ctx, typ, val)
+	} else if wa.typeInfo.IsMapType(typ) {
+		return wa.writeMap(ctx, typ, val)
 	} else {
-		return wa.writeClass(ctx, mod, typ, val)
+		return wa.writeClass(ctx, typ, val)
 	}
 }

@@ -10,25 +10,46 @@ import (
 	"reflect"
 	"strings"
 
-	"hmruntime/plugins/metadata"
-
-	wasm "github.com/tetratelabs/wazero/api"
+	"hmruntime/logger"
 )
 
-func (wa *wasmAdapter) readClass(ctx context.Context, mem wasm.Memory, typ *metadata.TypeDefinition, offset uint32) (data map[string]any, err error) {
-	data = make(map[string]any)
+const maxDepth = 5 // TODO: make this based on the depth requested in the query
+
+func (wa *wasmAdapter) readClass(ctx context.Context, typ string, offset uint32) (data map[string]any, err error) {
+
+	// Check for recursion
+	if wa.visitedPtrs[offset] >= maxDepth {
+		logger.Warn(ctx).Bool("user_visible", true).Msgf("Excessive recursion detected in %s. Stopping at depth %d.", typ, maxDepth)
+		return nil, nil
+	}
+	wa.visitedPtrs[offset]++
+	defer func() {
+		n := wa.visitedPtrs[offset]
+		if n == 1 {
+			delete(wa.visitedPtrs, offset)
+		} else {
+			wa.visitedPtrs[offset] = n - 1
+		}
+	}()
+
+	def, err := wa.typeInfo.GetTypeDefinition(ctx, typ)
+	if err != nil {
+		return nil, err
+	}
+
+	data = make(map[string]any, len(def.Fields))
 	fieldOffset := uint32(0)
-	for _, field := range typ.Fields {
+	for _, field := range def.Fields {
 
 		// align the field offset to the size of the field
-		size := wa.typeInfo.SizeOfType(field.Type)
+		size, _ := wa.typeInfo.GetSizeOfType(ctx, field.Type)
 		mask := size - 1
 		if fieldOffset&mask != 0 {
 			fieldOffset = (fieldOffset | mask) + 1
 		}
 
 		// read the field value
-		val, err := wa.readField(ctx, mem, field.Type, offset+fieldOffset)
+		val, err := wa.readField(ctx, field.Type, offset+fieldOffset)
 		if err != nil {
 			return nil, err
 		}
@@ -37,12 +58,16 @@ func (wa *wasmAdapter) readClass(ctx context.Context, mem wasm.Memory, typ *meta
 		// move to the next field
 		fieldOffset += size
 	}
+
 	return data, nil
 }
 
-func (wa *wasmAdapter) readField(ctx context.Context, mem wasm.Memory, typ string, offset uint32) (data any, err error) {
+func (wa *wasmAdapter) readField(ctx context.Context, typ string, offset uint32) (data any, err error) {
 	var result any
 	var ok bool
+
+	mem := wa.mod.Memory()
+
 	switch typ {
 	case "bool":
 		var val byte
@@ -55,7 +80,7 @@ func (wa *wasmAdapter) readField(ctx context.Context, mem wasm.Memory, typ strin
 	case "u16":
 		result, ok = mem.ReadUint16Le(offset)
 
-	case "u32":
+	case "u32", "usize":
 		result, ok = mem.ReadUint32Le(offset)
 
 	case "u64":
@@ -71,7 +96,7 @@ func (wa *wasmAdapter) readField(ctx context.Context, mem wasm.Memory, typ strin
 		val, ok = mem.ReadUint16Le(offset)
 		result = int16(val)
 
-	case "i32":
+	case "i32", "isize":
 		var val uint32
 		val, ok = mem.ReadUint32Le(offset)
 		result = int32(val)
@@ -105,7 +130,7 @@ func (wa *wasmAdapter) readField(ctx context.Context, mem wasm.Memory, typ strin
 		}
 
 		// Read the actual data.
-		return wa.readObject(ctx, mem, typ, p)
+		return wa.readObject(ctx, typ, p)
 	}
 
 	if !ok {
@@ -115,13 +140,18 @@ func (wa *wasmAdapter) readField(ctx context.Context, mem wasm.Memory, typ strin
 	return result, nil
 }
 
-func (wa *wasmAdapter) writeClass(ctx context.Context, mod wasm.Module, typ *metadata.TypeDefinition, data any) (offset uint32, err error) {
+func (wa *wasmAdapter) writeClass(ctx context.Context, typ string, data any) (offset uint32, err error) {
+
+	def, err := wa.typeInfo.GetTypeDefinition(ctx, typ)
+	if err != nil {
+		return 0, err
+	}
 
 	// unpin everything when done
-	pins := make([]uint32, 0, len(typ.Fields)+1)
+	pins := make([]uint32, 0, len(def.Fields)+1)
 	defer func() {
 		for _, ptr := range pins {
-			err = wa.unpinWasmMemory(ctx, mod, ptr)
+			err = wa.unpinWasmMemory(ctx, ptr)
 			if err != nil {
 				break
 			}
@@ -130,8 +160,8 @@ func (wa *wasmAdapter) writeClass(ctx context.Context, mod wasm.Module, typ *met
 
 	// calculate total size of all fields
 	totalSize := uint32(0)
-	for _, field := range typ.Fields {
-		size := wa.typeInfo.SizeOfType(field.Type)
+	for _, field := range def.Fields {
+		size, _ := wa.typeInfo.GetSizeOfType(ctx, field.Type)
 		mask := size - 1
 		if totalSize&mask != 0 {
 			totalSize = (totalSize | mask) + 1
@@ -140,14 +170,14 @@ func (wa *wasmAdapter) writeClass(ctx context.Context, mod wasm.Module, typ *met
 	}
 
 	// Allocate memory for the object
-	offset, err = wa.allocateWasmMemory(ctx, mod, totalSize, typ.Id)
+	offset, err = wa.allocateWasmMemory(ctx, totalSize, def.Id)
 	if err != nil {
 		return 0, err
 	}
 
 	// we need to pin the object in memory so it doesn't get garbage collected
 	// if we allocate more memory when writing a field before returning the object
-	err = wa.pinWasmMemory(ctx, mod, offset)
+	err = wa.pinWasmMemory(ctx, offset)
 	if err != nil {
 		return 0, err
 	}
@@ -162,7 +192,7 @@ func (wa *wasmAdapter) writeClass(ctx context.Context, mod wasm.Module, typ *met
 
 	// Loop over all fields in the class definition.
 	fieldOffset := uint32(0)
-	for _, field := range typ.Fields {
+	for _, field := range def.Fields {
 
 		// Read the field value from the data object.
 		var val any
@@ -181,21 +211,21 @@ func (wa *wasmAdapter) writeClass(ctx context.Context, mod wasm.Module, typ *met
 		}
 
 		// align the field offset to the size of the field
-		size := wa.typeInfo.SizeOfType(field.Type)
+		size, _ := wa.typeInfo.GetSizeOfType(ctx, field.Type)
 		mask := size - 1
 		if fieldOffset&mask != 0 {
 			fieldOffset = (fieldOffset | mask) + 1
 		}
 
 		// Write the field value to WASM memory.
-		ptr, err := wa.writeField(ctx, mod, field.Type, offset+fieldOffset, val)
+		ptr, err := wa.writeField(ctx, field.Type, offset+fieldOffset, val)
 		if err != nil {
 			return 0, err
 		}
 
 		// If we allocated memory for the field, we need to pin it too.
 		if ptr != 0 {
-			err = wa.pinWasmMemory(ctx, mod, ptr)
+			err = wa.pinWasmMemory(ctx, ptr)
 			if err != nil {
 				return 0, err
 			}
@@ -209,13 +239,13 @@ func (wa *wasmAdapter) writeClass(ctx context.Context, mod wasm.Module, typ *met
 	return offset, nil
 }
 
-func (wa *wasmAdapter) writeField(ctx context.Context, mod wasm.Module, typ string, offset uint32, val any) (ptr uint32, err error) {
-	enc, err := wa.encodeValue(ctx, mod, typ, val)
+func (wa *wasmAdapter) writeField(ctx context.Context, typ string, offset uint32, val any) (ptr uint32, err error) {
+	enc, err := wa.encodeValue(ctx, typ, val)
 	if err != nil {
 		return 0, err
 	}
 
-	mem := mod.Memory()
+	mem := wa.mod.Memory()
 
 	var ok bool
 	switch typ {
@@ -223,7 +253,7 @@ func (wa *wasmAdapter) writeField(ctx context.Context, mod wasm.Module, typ stri
 		ok = mem.WriteByte(offset, byte(enc))
 	case "i16", "u16":
 		ok = mem.WriteUint16Le(offset, uint16(enc))
-	case "i32", "u32", "f32":
+	case "i32", "u32", "f32", "isize", "usize":
 		ok = mem.WriteUint32Le(offset, uint32(enc))
 	case "i64", "u64", "f64":
 		ok = mem.WriteUint64Le(offset, enc)

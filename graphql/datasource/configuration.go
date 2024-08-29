@@ -4,6 +4,11 @@
 
 package datasource
 
-type Configuration struct {
+import (
+	"hmruntime/wasmhost"
+)
+
+type HypDSConfig struct {
+	WasmHost *wasmhost.WasmHost
 	MapTypes []string
 }

@@ -8,10 +8,18 @@ import (
 	"context"
 	"fmt"
 
+	"hmruntime/manifestdata"
 	"hmruntime/utils"
 
 	"github.com/hypermodeAI/manifest"
 )
+
+func Initialize() {
+	manifestdata.RegisterManifestLoadedCallback(func(ctx context.Context) error {
+		ShutdownPGPools()
+		return nil
+	})
+}
 
 func ExecuteQuery(ctx context.Context, hostName, dbType, statement, paramsJson string) (*HostQueryResponse, error) {
 	var params []any

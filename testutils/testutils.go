@@ -6,42 +6,106 @@ package testutils
 
 import (
 	"context"
-	_ "embed"
+	"fmt"
+	"os"
+	"path/filepath"
+	"reflect"
+	"testing"
 
-	"github.com/tetratelabs/wazero"
+	"hmruntime/functions"
+	"hmruntime/plugins"
+	"hmruntime/plugins/metadata"
+	"hmruntime/utils"
+	"hmruntime/wasmhost"
+
 	wasm "github.com/tetratelabs/wazero/api"
-	wasi "github.com/tetratelabs/wazero/imports/wasi_snapshot_preview1"
 )
 
-//go:embed data/test-as/test-as.wasm
-var testWasm []byte
-
 type WasmTestFixture struct {
-	Context context.Context
-	Runtime wazero.Runtime
-	Module  wasm.Module
-	Memory  wasm.Memory
+	Context        context.Context
+	WasmHost       *wasmhost.WasmHost
+	Plugin         *plugins.Plugin
+	Buffers        *utils.OutputBuffers
+	Module         wasm.Module
+	customTypes    map[string]reflect.Type
+	customTypesRev map[reflect.Type]string
 }
 
-func (f *WasmTestFixture) Close() error {
-	return f.Runtime.Close(f.Context)
+func (f *WasmTestFixture) Close() {
+	f.WasmHost.Close(f.Context)
 }
 
-func NewWasmTestFixture() WasmTestFixture {
-	ctx := context.Background()
-	r := wazero.NewRuntime(ctx)
-	wasi.MustInstantiate(ctx, r)
+func (f *WasmTestFixture) AddCustomType(name string, typ reflect.Type) {
+	if f.customTypes == nil {
+		f.customTypes = make(map[string]reflect.Type)
+		f.customTypesRev = make(map[reflect.Type]string)
+	}
 
-	// TODO: refactor to share config with the real code so we're testing the same thing
-	cfg := wazero.NewModuleConfig().
-		WithSysWalltime().WithSysNanotime()
+	f.customTypes[name] = typ
+	f.customTypesRev[typ] = name
+}
 
-	mod, err := r.InstantiateWithConfig(ctx, testWasm, cfg)
+func (f *WasmTestFixture) InvokeFunction(name string, paramValues ...any) (any, error) {
+	fn, ok := f.Plugin.Metadata.FnExports[name]
+	if !ok {
+		return nil, fmt.Errorf("function %s not found", name)
+	}
+
+	params, err := functions.CreateParametersMap(fn, paramValues...)
+	if err != nil {
+		return nil, err
+	}
+
+	ctx := context.WithValue(f.Context, utils.CustomTypesContextKey, f.customTypes)
+	ctx = context.WithValue(ctx, utils.CustomTypesRevContextKey, f.customTypesRev)
+
+	info, err := f.WasmHost.InvokeFunction(ctx, f.Plugin, fn, params)
+	if err != nil {
+		return nil, err
+	}
+
+	return info.Result, nil
+}
+
+type testContextKey struct{}
+
+func GetTestT(ctx context.Context) *testing.T {
+	return ctx.Value(testContextKey{}).(*testing.T)
+}
+
+func NewWasmTestFixture(wasmFilePath string, t *testing.T, hostOpts ...func(*wasmhost.WasmHost) error) *WasmTestFixture {
+	content, err := os.ReadFile(wasmFilePath)
 	if err != nil {
 		panic(err)
 	}
 
-	mem := mod.Memory()
+	ctx := context.WithValue(context.Background(), testContextKey{}, t)
+	host := wasmhost.NewWasmHost(ctx, hostOpts...)
 
-	return WasmTestFixture{ctx, r, mod, mem}
+	cm, err := host.CompileModule(ctx, content)
+	if err != nil {
+		panic(err)
+	}
+
+	md, err := metadata.GetMetadata(ctx, cm)
+	if err != nil {
+		panic(err)
+	}
+
+	filename := filepath.Base(wasmFilePath)
+	plugin := plugins.NewPlugin(cm, filename, md)
+	buffers := &utils.OutputBuffers{}
+
+	mod, err := host.GetModuleInstance(ctx, plugin, buffers)
+	if err != nil {
+		panic(err)
+	}
+
+	return &WasmTestFixture{
+		Context:  ctx,
+		WasmHost: host,
+		Plugin:   plugin,
+		Buffers:  buffers,
+		Module:   mod,
+	}
 }

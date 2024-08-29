@@ -1,0 +1,6 @@
+{
+  "extends": "./node_modules/@hypermode/functions-as/plugin.asconfig.json",
+  "options": {
+    "transform": ["@hypermode/functions-as/transform", "json-as/transform"]
+  }
+}

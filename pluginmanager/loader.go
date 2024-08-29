@@ -10,15 +10,12 @@ import (
 
 	"hmruntime/db"
 	"hmruntime/functions"
-	"hmruntime/languages"
 	"hmruntime/logger"
 	"hmruntime/plugins"
 	"hmruntime/plugins/metadata"
 	"hmruntime/storage"
 	"hmruntime/utils"
 	"hmruntime/wasmhost"
-
-	"github.com/tetratelabs/wazero"
 )
 
 func monitorPlugins(ctx context.Context) {
@@ -64,7 +61,7 @@ func loadPlugin(ctx context.Context, filename string) error {
 	}
 
 	// Compile the plugin into a module
-	cm, err := compileModule(ctx, bytes)
+	cm, err := wasmhost.GlobalWasmHost.CompileModule(ctx, bytes)
 	if err != nil {
 		return err
 	}
@@ -81,7 +78,7 @@ func loadPlugin(ctx context.Context, filename string) error {
 	}
 
 	// Make the plugin object.
-	plugin := makePlugin(ctx, cm, filename, md)
+	plugin := plugins.NewPlugin(cm, filename, md)
 
 	// Write the plugin info to the database.
 	// Note, this may update the ID if a plugin with the same BuildID is in the db already.
@@ -97,31 +94,6 @@ func loadPlugin(ctx context.Context, filename string) error {
 	err = triggerPluginLoaded(ctx, md)
 
 	return err
-}
-
-func compileModule(ctx context.Context, bytes []byte) (wazero.CompiledModule, error) {
-	span := utils.NewSentrySpanForCurrentFunc(ctx)
-	defer span.Finish()
-
-	cm, err := wasmhost.RuntimeInstance.CompileModule(ctx, bytes)
-	if err != nil {
-		return nil, fmt.Errorf("failed to compile the plugin: %w", err)
-	}
-
-	return cm, nil
-}
-
-func makePlugin(ctx context.Context, cm wazero.CompiledModule, filename string, md *metadata.Metadata) *plugins.Plugin {
-	span := utils.NewSentrySpanForCurrentFunc(ctx)
-	defer span.Finish()
-
-	return &plugins.Plugin{
-		Id:       utils.GenerateUUIDv7(),
-		Module:   cm,
-		Metadata: md,
-		FileName: filename,
-		Language: languages.GetLanguageForSDK(md.SDK),
-	}
 }
 
 func logPluginLoaded(ctx context.Context, plugin *plugins.Plugin) {

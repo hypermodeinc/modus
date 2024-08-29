@@ -17,7 +17,6 @@ import (
 	"hmruntime/wasmhost"
 
 	"github.com/hypermodeAI/manifest"
-	wasm "github.com/tetratelabs/wazero/api"
 )
 
 const (
@@ -121,7 +120,7 @@ func ProcessText(ctx context.Context, collection interfaces.CollectionNamespace,
 	return nil
 }
 
-func ProcessTextMapWithModule(ctx context.Context, mod wasm.Module, collection interfaces.CollectionNamespace, embedder string, vectorIndex interfaces.VectorIndex) error {
+func ProcessTextMap(ctx context.Context, collection interfaces.CollectionNamespace, embedder string, vectorIndex interfaces.VectorIndex) error {
 
 	textMap, err := collection.GetTextMap(ctx)
 	if err != nil {

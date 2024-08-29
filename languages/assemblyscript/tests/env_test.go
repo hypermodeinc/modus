@@ -2,20 +2,19 @@
  * Copyright 2024 Hypermode, Inc.
  */
 
-package functions
+package assemblyscript_test
 
 import (
 	"testing"
 	"time"
-
-	"hmruntime/testutils"
 )
 
 func Test_DateNow(t *testing.T) {
+	t.Parallel()
 
 	startTs := time.Now().UnixMilli()
 
-	f := testutils.NewWasmTestFixture()
+	f := NewASWasmTestFixture(t)
 	defer f.Close()
 
 	fn := f.Module.ExportedFunction("now")
@@ -36,10 +35,11 @@ func Test_DateNow(t *testing.T) {
 }
 
 func Test_PerformanceNow(t *testing.T) {
+	t.Parallel()
 
 	const expectedDuration = 100 // ms
 
-	f := testutils.NewWasmTestFixture()
+	f := NewASWasmTestFixture(t)
 	defer f.Close()
 
 	fn := f.Module.ExportedFunction("spin")

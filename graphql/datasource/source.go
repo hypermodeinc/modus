@@ -11,7 +11,6 @@ import (
 	"fmt"
 	"io"
 
-	"hmruntime/functions"
 	"hmruntime/logger"
 	"hmruntime/utils"
 	"hmruntime/wasmhost"
@@ -28,9 +27,11 @@ type callInfo struct {
 	Parameters map[string]any `json:"data"`
 }
 
-type Source struct{}
+type HypermodeDataSource struct {
+	WasmHost *wasmhost.WasmHost
+}
 
-func (s Source) Load(ctx context.Context, input []byte, out *bytes.Buffer) error {
+func (s *HypermodeDataSource) Load(ctx context.Context, input []byte, out *bytes.Buffer) error {
 
 	// Parse the input to get the function call info
 	var ci callInfo
@@ -51,14 +52,14 @@ func (s Source) Load(ctx context.Context, input []byte, out *bytes.Buffer) error
 	return err
 }
 
-func (Source) LoadWithFiles(ctx context.Context, input []byte, files []httpclient.File, out *bytes.Buffer) (err error) {
+func (*HypermodeDataSource) LoadWithFiles(ctx context.Context, input []byte, files []httpclient.File, out *bytes.Buffer) (err error) {
 	// See https://github.com/wundergraph/graphql-go-tools/pull/758
 	panic("not implemented")
 }
 
-func (s Source) callFunction(ctx context.Context, callInfo callInfo) (any, []resolve.GraphQLError, error) {
+func (s *HypermodeDataSource) callFunction(ctx context.Context, callInfo callInfo) (any, []resolve.GraphQLError, error) {
 	// Call the function
-	info, err := wasmhost.CallFunctionWithParametersMap(ctx, callInfo.Function.Name, callInfo.Parameters)
+	info, err := s.WasmHost.CallFunctionWithParametersMap(ctx, callInfo.Function.Name, callInfo.Parameters)
 	if err != nil {
 		// The full error message has already been logged.  Return a generic error to the caller, which will be included in the response.
 		return nil, nil, errors.New("error calling function")
@@ -77,8 +78,8 @@ func (s Source) callFunction(ctx context.Context, callInfo callInfo) (any, []res
 
 func writeGraphQLResponse(writer io.Writer, result any, gqlErrors []resolve.GraphQLError, fnErr error, ci callInfo) error {
 
-	// Include the function error (except any we've filtered out)
-	if fnErr != nil && functions.ShouldReturnErrorToResponse(fnErr) {
+	// Include the function error
+	if fnErr != nil {
 		gqlErrors = append(gqlErrors, resolve.GraphQLError{
 			Message: fnErr.Error(),
 			Path:    []any{ci.Function.AliasOrName()},
@@ -117,10 +118,12 @@ func writeGraphQLResponse(writer io.Writer, result any, gqlErrors []resolve.Grap
 	}
 
 	// Build and write the response, including errors if there are any
-	if len(gqlErrors) > 0 {
-		fmt.Fprintf(writer, `{"data":%s,"errors":%s}`, jsonData, jsonErrors)
-	} else {
+	if len(gqlErrors) == 0 {
 		fmt.Fprintf(writer, `{"data":%s}`, jsonData)
+	} else if result == nil {
+		fmt.Fprintf(writer, `{"errors":%s}`, jsonErrors)
+	} else {
+		fmt.Fprintf(writer, `{"data":%s,"errors":%s}`, jsonData, jsonErrors)
 	}
 
 	return nil
@@ -143,13 +146,13 @@ func transformValue(data []byte, tf *fieldInfo) (result []byte, err error) {
 		return data, nil
 	}
 
-	if tf.IsMapType {
-		return transformMap(data, tf)
-	}
-
 	switch data[0] {
 	case '{':
-		return transformObject(data, tf)
+		if tf.IsMapType {
+			return transformMap(data, tf)
+		} else {
+			return transformObject(data, tf)
+		}
 	case '[':
 		return transformArray(data, tf)
 	default:
@@ -222,18 +225,41 @@ func transformObject(data []byte, tf *fieldInfo) ([]byte, error) {
 }
 
 func transformMap(data []byte, tf *fieldInfo) ([]byte, error) {
+
+	// check for pseudo map
+	md, dt, _, err := jsonparser.Get(data, "$mapdata")
+	if err == nil && dt == jsonparser.Array {
+		return transformPseudoMap(md, tf)
+	}
+
+	var keyType string
+	for _, f := range tf.Fields {
+		if f.Name == "key" {
+			keyType = f.TypeName
+			break
+		}
+	}
+
 	buf := bytes.Buffer{}
 	buf.WriteByte('[')
-	err := jsonparser.ObjectEach(data, func(key []byte, value []byte, dataType jsonparser.ValueType, offset int) error {
+	if err := jsonparser.ObjectEach(data, func(key []byte, value []byte, dataType jsonparser.ValueType, offset int) error {
 		if buf.Len() > 1 {
 			buf.WriteByte(',')
 		}
 
 		b := bytes.Buffer{}
 		b.WriteByte('{')
-		b.WriteString(`"key":"`)
-		b.Write(key)
-		b.WriteString(`","value":`)
+		b.WriteString(`"key":`)
+		if keyType == "String" {
+			k, err := utils.JsonSerialize(string(key))
+			if err != nil {
+				return err
+			}
+			b.Write(k)
+		} else {
+			b.Write(key)
+		}
+		b.WriteString(`,"value":`)
 		if dataType == jsonparser.String {
 			b.WriteString(`"`)
 			b.Write(value)
@@ -250,9 +276,72 @@ func transformMap(data []byte, tf *fieldInfo) ([]byte, error) {
 		buf.Write(val)
 
 		return nil
+	}); err != nil {
+		return nil, err
+	}
+
+	buf.WriteByte(']')
+	return buf.Bytes(), nil
+}
+
+func transformPseudoMap(data []byte, tf *fieldInfo) ([]byte, error) {
+	buf := bytes.Buffer{}
+	buf.WriteByte('[')
+
+	var loopErr error
+	_, err := jsonparser.ArrayEach(data, func(item []byte, _ jsonparser.ValueType, _ int, _ error) {
+		if loopErr != nil {
+			return
+		}
+
+		key, kdt, _, err := jsonparser.Get(item, "key")
+		if err != nil {
+			loopErr = err
+			return
+		}
+
+		value, vdt, _, err := jsonparser.Get(item, "value")
+		if err != nil {
+			loopErr = err
+			return
+		}
+
+		if buf.Len() > 1 {
+			buf.WriteByte(',')
+		}
+
+		b := bytes.Buffer{}
+		b.WriteByte('{')
+		b.WriteString(`"key":`)
+		if kdt == jsonparser.String {
+			b.WriteString(`"`)
+			b.Write(key)
+			b.WriteString(`"`)
+		} else {
+			b.Write(key)
+		}
+		b.WriteString(`,"value":`)
+		if vdt == jsonparser.String {
+			b.WriteString(`"`)
+			b.Write(value)
+			b.WriteString(`"`)
+		} else {
+			b.Write(value)
+		}
+		b.WriteByte('}')
+
+		val, err := transformObject(b.Bytes(), tf)
+		if err != nil {
+			loopErr = err
+			return
+		}
+		buf.Write(val)
 	})
 	if err != nil {
 		return nil, err
+	}
+	if loopErr != nil {
+		return nil, loopErr
 	}
 
 	buf.WriteByte(']')

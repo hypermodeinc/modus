@@ -14,31 +14,31 @@ import (
 	"time"
 )
 
-func (ti *typeInfoProvider) GetArraySubtype(t string) string {
-	if strings.HasPrefix(t, "~lib/array/Array<") {
-		return t[17 : len(t)-1]
+func (ti *typeInfoProvider) GetListSubtype(typ string) string {
+	if strings.HasPrefix(typ, "~lib/array/Array<") {
+		return typ[17 : len(typ)-1]
 	}
 
-	if strings.HasSuffix(t, "[]") {
-		return t[:len(t)-2]
+	if strings.HasSuffix(typ, "[]") {
+		return typ[:len(typ)-2]
 	}
 
 	return ""
 }
 
-func (ti *typeInfoProvider) GetMapSubtypes(t string) (string, string) {
+func (ti *typeInfoProvider) GetMapSubtypes(typ string) (string, string) {
 	prefix := "~lib/map/Map<"
-	if !strings.HasPrefix(t, prefix) {
+	if !strings.HasPrefix(typ, prefix) {
 		prefix = "Map<"
-		if !strings.HasPrefix(t, prefix) {
+		if !strings.HasPrefix(typ, prefix) {
 			return "", ""
 		}
 	}
 
 	n := 1
 	c := 0
-	for i := len(prefix); i < len(t); i++ {
-		switch t[i] {
+	for i := len(prefix); i < len(typ); i++ {
+		switch typ[i] {
 		case '<':
 			n++
 		case ',':
@@ -48,7 +48,7 @@ func (ti *typeInfoProvider) GetMapSubtypes(t string) (string, string) {
 		case '>':
 			n--
 			if n == 0 {
-				return t[len(prefix):c], t[c+1 : i]
+				return typ[len(prefix):c], typ[c+1 : i]
 			}
 		}
 	}
@@ -56,11 +56,11 @@ func (ti *typeInfoProvider) GetMapSubtypes(t string) (string, string) {
 	return "", ""
 }
 
-func (ti *typeInfoProvider) GetNameForType(t string) string {
-	s := ti.GetUnderlyingType(t)
+func (ti *typeInfoProvider) GetNameForType(typ string) string {
+	s := ti.GetUnderlyingType(typ)
 
-	if ti.IsArrayType(s) {
-		return ti.GetNameForType(ti.GetArraySubtype(s)) + "[]"
+	if ti.IsListType(s) {
+		return ti.GetNameForType(ti.GetListSubtype(s)) + "[]"
 	}
 
 	if ti.IsMapType(s) {
@@ -71,20 +71,20 @@ func (ti *typeInfoProvider) GetNameForType(t string) string {
 	return s[strings.LastIndex(s, "/")+1:]
 }
 
-func (ti *typeInfoProvider) GetUnderlyingType(t string) string {
-	return strings.TrimSuffix(t, "|null")
+func (ti *typeInfoProvider) GetUnderlyingType(typ string) string {
+	return strings.TrimSuffix(typ, "|null")
 }
 
-func (ti *typeInfoProvider) IsArrayType(t string) bool {
-	return strings.HasPrefix(t, "~lib/array/Array<") || strings.HasSuffix(t, "[]")
+func (ti *typeInfoProvider) IsListType(typ string) bool {
+	return strings.HasPrefix(typ, "~lib/array/Array<") || strings.HasSuffix(typ, "[]")
 }
 
-func (ti *typeInfoProvider) IsBooleanType(t string) bool {
-	return t == "bool"
+func (ti *typeInfoProvider) IsBooleanType(typ string) bool {
+	return typ == "bool"
 }
 
-func (ti *typeInfoProvider) IsByteSequenceType(t string) bool {
-	switch t {
+func (ti *typeInfoProvider) IsByteSequenceType(typ string) bool {
+	switch typ {
 	case
 		"~lib/arraybuffer/ArrayBuffer",
 		"~lib/typedarray/Uint8Array",
@@ -95,8 +95,8 @@ func (ti *typeInfoProvider) IsByteSequenceType(t string) bool {
 	}
 }
 
-func (ti *typeInfoProvider) IsFloatType(t string) bool {
-	switch t {
+func (ti *typeInfoProvider) IsFloatType(typ string) bool {
+	switch typ {
 	case "f32", "f64":
 		return true
 	default:
@@ -104,8 +104,8 @@ func (ti *typeInfoProvider) IsFloatType(t string) bool {
 	}
 }
 
-func (ti *typeInfoProvider) IsIntegerType(t string) bool {
-	switch t {
+func (ti *typeInfoProvider) IsIntegerType(typ string) bool {
+	switch typ {
 	case "i8", "i16", "i32", "i64",
 		"u8", "u16", "u32", "u64",
 		"isize", "usize":
@@ -115,16 +115,16 @@ func (ti *typeInfoProvider) IsIntegerType(t string) bool {
 	}
 }
 
-func (ti *typeInfoProvider) IsMapType(t string) bool {
-	return strings.HasPrefix(t, "~lib/map/Map<") || strings.HasPrefix(t, "Map<")
+func (ti *typeInfoProvider) IsMapType(typ string) bool {
+	return strings.HasPrefix(typ, "~lib/map/Map<") || strings.HasPrefix(typ, "Map<")
 }
 
-func (ti *typeInfoProvider) IsNullable(t string) bool {
-	return strings.HasSuffix(t, "|null")
+func (ti *typeInfoProvider) IsNullable(typ string) bool {
+	return strings.HasSuffix(typ, "|null")
 }
 
-func (ti *typeInfoProvider) IsSignedIntegerType(t string) bool {
-	switch t {
+func (ti *typeInfoProvider) IsSignedIntegerType(typ string) bool {
+	switch typ {
 	case "i8", "i16", "i32", "i64", "isize":
 		return true
 	default:
@@ -132,8 +132,8 @@ func (ti *typeInfoProvider) IsSignedIntegerType(t string) bool {
 	}
 }
 
-func (ti *typeInfoProvider) IsStringType(t string) bool {
-	switch t {
+func (ti *typeInfoProvider) IsStringType(typ string) bool {
+	switch typ {
 	case "string", "~lib/string/String":
 		return true
 	default:
@@ -141,8 +141,8 @@ func (ti *typeInfoProvider) IsStringType(t string) bool {
 	}
 }
 
-func (ti *typeInfoProvider) IsTimestampType(t string) bool {
-	switch t {
+func (ti *typeInfoProvider) IsTimestampType(typ string) bool {
+	switch typ {
 	case "Date", "~lib/date/Date", "~lib/wasi_date/wasi_Date":
 		return true
 	default:
@@ -150,34 +150,40 @@ func (ti *typeInfoProvider) IsTimestampType(t string) bool {
 	}
 }
 
-func (ti *typeInfoProvider) SizeOfType(t string) uint32 {
-	switch t {
+func (ti *typeInfoProvider) GetSizeOfType(ctx context.Context, typ string) (uint32, error) {
+	switch typ {
 	case "u64", "i64", "f64":
-		return 8
+		return 8, nil
 	case "u16", "i16":
-		return 2
+		return 2, nil
 	case "u8", "i8", "bool":
-		return 1
+		return 1, nil
 	default:
 		// 32-bit types, including primitive types and pointers to managed objects
 		// we only support wasm32, so we can assume 32-bit pointers
-		return 4
+		return 4, nil
 	}
 }
 
-func (ti *typeInfoProvider) getTypeDefinition(ctx context.Context, typeName string) (*metadata.TypeDefinition, error) {
+func (ti *typeInfoProvider) GetTypeDefinition(ctx context.Context, typ string) (*metadata.TypeDefinition, error) {
 
 	md := ctx.Value(utils.MetadataContextKey).(*metadata.Metadata)
-	typ, ok := md.Types[typeName]
+	def, ok := md.Types[typ]
 	if !ok {
-		return nil, fmt.Errorf("info for type %s not found in plugin %s", typeName, md.Name())
+		return nil, fmt.Errorf("info for type %s not found in plugin %s", typ, md.Name())
 	}
 
-	return typ, nil
+	return def, nil
 }
 
-func (ti *typeInfoProvider) getAssemblyScriptType(t reflect.Type) (string, error) {
-	switch t.Kind() {
+func (ti *typeInfoProvider) getAssemblyScriptType(rt reflect.Type, customTypes map[reflect.Type]string) (string, error) {
+	if customTypes != nil {
+		if typ, ok := customTypes[rt]; ok {
+			return typ, nil
+		}
+	}
+
+	switch rt.Kind() {
 	case reflect.Bool:
 		return "bool", nil
 	case reflect.Int:
@@ -208,13 +214,13 @@ func (ti *typeInfoProvider) getAssemblyScriptType(t reflect.Type) (string, error
 		return "~lib/string/String", nil
 
 	case reflect.Slice:
-		if t.Elem().Kind() == reflect.Uint8 {
+		if rt.Elem().Kind() == reflect.Uint8 {
 			return "~lib/arraybuffer/ArrayBuffer", nil
 		}
 
 		// TODO: should we use Uint8Array and other typed array buffers?
 
-		elemType, err := ti.getAssemblyScriptType(t.Elem())
+		elemType, err := ti.getAssemblyScriptType(rt.Elem(), customTypes)
 		if err != nil {
 			return "", err
 		}
@@ -222,12 +228,12 @@ func (ti *typeInfoProvider) getAssemblyScriptType(t reflect.Type) (string, error
 		return "~lib/array/Array<" + elemType + ">", nil
 
 	case reflect.Map:
-		keyType, err := ti.getAssemblyScriptType(t.Key())
+		keyType, err := ti.getAssemblyScriptType(rt.Key(), customTypes)
 		if err != nil {
 			return "", err
 		}
 
-		valueType, err := ti.getAssemblyScriptType(t.Elem())
+		valueType, err := ti.getAssemblyScriptType(rt.Elem(), customTypes)
 		if err != nil {
 			return "", err
 		}
@@ -235,10 +241,10 @@ func (ti *typeInfoProvider) getAssemblyScriptType(t reflect.Type) (string, error
 		return "~lib/map/Map<" + keyType + "," + valueType + ">", nil
 
 	case reflect.Ptr:
-		return ti.getAssemblyScriptType(t.Elem())
+		return ti.getAssemblyScriptType(rt.Elem(), customTypes)
 
 	case reflect.Struct:
-		id := t.PkgPath() + "." + t.Name()
+		id := rt.PkgPath() + "." + rt.Name()
 		typ, found := hostTypes[id]
 		if found {
 			return typ, nil
@@ -247,38 +253,44 @@ func (ti *typeInfoProvider) getAssemblyScriptType(t reflect.Type) (string, error
 		return "", fmt.Errorf("struct missing from host types map: %s", id)
 	}
 
-	return "", fmt.Errorf("unsupported type kind %s", t.Kind())
+	return "", fmt.Errorf("unsupported type kind %s", rt.Kind())
 }
 
-func (ti *typeInfoProvider) getGoType(asType string) (reflect.Type, error) {
-	if goType, ok := asToGoTypeMap[asType]; ok {
-		return goType, nil
+func (ti *typeInfoProvider) getReflectedType(typ string, customTypes map[string]reflect.Type) (reflect.Type, error) {
+	if customTypes != nil {
+		if rt, ok := customTypes[typ]; ok {
+			return rt, nil
+		}
 	}
 
-	if ti.IsArrayType(asType) {
-		et := ti.GetArraySubtype(asType)
+	if rt, ok := asToGoTypeMap[typ]; ok {
+		return rt, nil
+	}
+
+	if ti.IsListType(typ) {
+		et := ti.GetListSubtype(typ)
 		if et == "" {
-			return nil, fmt.Errorf("invalid array type: %s", asType)
+			return nil, fmt.Errorf("invalid array type: %s", typ)
 		}
 
-		elementType, err := ti.getGoType(et)
+		elementType, err := ti.getReflectedType(et, customTypes)
 		if err != nil {
 			return nil, err
 		}
 		return reflect.SliceOf(elementType), nil
 	}
 
-	if ti.IsMapType(asType) {
-		kt, vt := ti.GetMapSubtypes(asType)
+	if ti.IsMapType(typ) {
+		kt, vt := ti.GetMapSubtypes(typ)
 		if kt == "" || vt == "" {
-			return nil, fmt.Errorf("invalid map type: %s", asType)
+			return nil, fmt.Errorf("invalid map type: %s", typ)
 		}
 
-		keyType, err := ti.getGoType(kt)
+		keyType, err := ti.getReflectedType(kt, customTypes)
 		if err != nil {
 			return nil, err
 		}
-		valType, err := ti.getGoType(vt)
+		valType, err := ti.getReflectedType(vt, customTypes)
 		if err != nil {
 			return nil, err
 		}

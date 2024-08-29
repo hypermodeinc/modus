@@ -2,13 +2,13 @@
  * Copyright 2024 Hypermode, Inc.
  */
 
-package assemblyscript
+package utils_test
 
 import (
 	"bytes"
 	"testing"
 
-	"hmruntime/testutils"
+	"hmruntime/utils"
 )
 
 // "Hello World" in Japanese
@@ -23,7 +23,7 @@ var testUTF16 = []byte{
 
 func Test_EncodeUTF16(t *testing.T) {
 
-	arr := encodeUTF16(testString)
+	arr := utils.EncodeUTF16(testString)
 
 	if !bytes.Equal(arr, testUTF16) {
 		t.Errorf("expected %x, got %x", testUTF16, arr)
@@ -32,28 +32,7 @@ func Test_EncodeUTF16(t *testing.T) {
 
 func Test_DecodeUTF16(t *testing.T) {
 
-	str := decodeUTF16(testUTF16)
-
-	if str != testString {
-		t.Errorf("expected %s, got %s", testString, str)
-	}
-}
-
-func Test_ReadWriteString(t *testing.T) {
-	f := testutils.NewWasmTestFixture()
-	defer f.Close()
-
-	wa := _wasmAdapter
-
-	ptr, err := wa.writeString(f.Context, f.Module, testString)
-	if err != nil {
-		t.Error(err)
-	}
-
-	str, err := wa.readString(f.Memory, ptr)
-	if err != nil {
-		t.Error(err)
-	}
+	str := utils.DecodeUTF16(testUTF16)
 
 	if str != testString {
 		t.Errorf("expected %s, got %s", testString, str)

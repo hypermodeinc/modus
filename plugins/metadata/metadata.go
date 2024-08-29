@@ -5,6 +5,7 @@
 package metadata
 
 import (
+	"fmt"
 	"strings"
 
 	"hmruntime/utils"
@@ -38,7 +39,7 @@ type Function struct {
 
 type TypeDefinition struct {
 	Name   string   `json:"-"`
-	Id     uint32   `json:"id,omitempty"` // used in AssemblyScript only
+	Id     uint32   `json:"id,omitempty"`
 	Fields []*Field `json:"fields,omitempty"`
 }
 
@@ -70,13 +71,11 @@ func (p *Parameter) UnmarshalJSON(data []byte) error {
 	}
 	p.Name = name
 
-	typeData, _, _, err := jsonparser.Get(data, "type")
+	typ, err := jsonparser.GetString(data, "type")
 	if err != nil {
 		return err
 	}
-	if err := utils.JsonDeserialize(typeData, &p.Type); err != nil {
-		return err
-	}
+	p.Type = typ
 
 	defaultData, dt, _, err := jsonparser.Get(data, "default")
 	switch dt {
@@ -205,4 +204,18 @@ func (t *TypeDefinition) WithField(name string, typ string) *TypeDefinition {
 	f := &Field{Name: name, Type: typ}
 	t.Fields = append(t.Fields, f)
 	return t
+}
+
+func (f *Function) String() string {
+	p := strings.Trim(fmt.Sprintf("%v", f.Parameters), "[]")
+	r := strings.Trim(fmt.Sprintf("%v", f.Results), "[]")
+	return strings.TrimSpace(fmt.Sprintf("%s(%s) %s", f.Name, p, r))
+}
+
+func (p *Parameter) String() string {
+	return fmt.Sprintf("%s %s", p.Name, p.Type)
+}
+
+func (r *Result) String() string {
+	return fmt.Sprintf("%s %s", r.Name, r.Type)
 }

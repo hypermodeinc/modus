@@ -46,7 +46,7 @@ func SplitConsoleOutputLine(line string) (level string, message string) {
 			return "warning", a[1]
 		case "Error: ":
 			return "error", a[1]
-		case "abort: ":
+		case "abort: ", "panic: ":
 			return "fatal", a[1]
 		}
 	}

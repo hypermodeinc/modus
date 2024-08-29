@@ -21,6 +21,16 @@ type Plugin struct {
 	Language languages.Language
 }
 
+func NewPlugin(cm wazero.CompiledModule, filename string, md *metadata.Metadata) *Plugin {
+	return &Plugin{
+		Id:       utils.GenerateUUIDv7(),
+		Module:   cm,
+		Metadata: md,
+		FileName: filename,
+		Language: languages.GetLanguageForSDK(md.SDK),
+	}
+}
+
 func (p *Plugin) NameAndVersion() (name string, version string) {
 	return p.Metadata.NameAndVersion()
 }
