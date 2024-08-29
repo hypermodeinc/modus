@@ -14,7 +14,7 @@ require (
 	github.com/buger/jsonparser v1.1.1
 	github.com/chewxy/math32 v1.11.0
 	github.com/dgraph-io/dgo/v230 v230.0.1
-	github.com/docker/docker v27.1.2+incompatible
+	github.com/docker/docker v27.2.0+incompatible
 	github.com/docker/go-connections v0.5.0
 	github.com/getsentry/sentry-go v0.28.1
 	github.com/go-viper/mapstructure/v2 v2.1.0
@@ -25,7 +25,7 @@ require (
 	github.com/jensneuse/abstractlogger v0.0.4
 	github.com/joho/godotenv v1.5.1
 	github.com/prometheus/client_golang v1.20.2
-	github.com/prometheus/common v0.55.0
+	github.com/prometheus/common v0.56.0
 	github.com/rs/cors v1.11.0
 	github.com/rs/xid v1.6.0
 	github.com/rs/zerolog v1.33.0
@@ -34,7 +34,7 @@ require (
 	github.com/viterin/vek v0.4.2
 	github.com/wundergraph/graphql-go-tools/execution v1.0.5
 	github.com/wundergraph/graphql-go-tools/v2 v2.0.0-rc.76
-	google.golang.org/grpc v1.65.0
+	google.golang.org/grpc v1.66.0
 )
 
 require (
