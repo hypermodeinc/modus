@@ -19,8 +19,8 @@ import (
 	wasm "github.com/tetratelabs/wazero/api"
 )
 
-var contextType = reflect.TypeOf((*context.Context)(nil)).Elem()
-var errorType = reflect.TypeOf((*error)(nil)).Elem()
+var rtContext = reflect.TypeOf((*context.Context)(nil)).Elem()
+var rtError = reflect.TypeOf((*error)(nil)).Elem()
 
 type hfMessages struct {
 	msgStarting  string
@@ -97,13 +97,13 @@ func newHostFunction(modName, funcName string, fn any, opts ...func(*HostFunctio
 
 	// Optionally, the first parameter can be a context.
 	var hasContextParam bool
-	if numParams > 0 && rtFunc.In(0).Implements(contextType) {
+	if numParams > 0 && rtFunc.In(0).Implements(rtContext) {
 		hasContextParam = true
 	}
 
 	// Optionally, the last return value can be an error.
 	var hasErrorResult bool
-	if numResults > 0 && rtFunc.Out(numResults-1).Implements(errorType) {
+	if numResults > 0 && rtFunc.Out(numResults-1).Implements(rtError) {
 		hasErrorResult = true
 	}
 
@@ -211,12 +211,12 @@ func newHostFunction(modName, funcName string, fn any, opts ...func(*HostFunctio
 			if hasContextParam && i == 0 {
 				continue
 			}
-			paramType := rtFunc.In(i)
+			rtParam := rtFunc.In(i)
 			var rvParam reflect.Value
-			if paramType.Kind() == reflect.Ptr {
-				rvParam = reflect.New(paramType.Elem())
+			if rtParam.Kind() == reflect.Ptr {
+				rvParam = reflect.New(rtParam.Elem())
 			} else {
-				rvParam = reflect.New(paramType)
+				rvParam = reflect.New(rtParam)
 			}
 			params = append(params, rvParam.Interface())
 		}
@@ -233,8 +233,8 @@ func newHostFunction(modName, funcName string, fn any, opts ...func(*HostFunctio
 			i++
 		}
 		for _, param := range params {
-			paramType := rtFunc.In(i)
-			if paramType.Kind() == reflect.Ptr {
+			rtParam := rtFunc.In(i)
+			if rtParam.Kind() == reflect.Ptr {
 				inputs = append(inputs, reflect.ValueOf(param))
 			} else {
 				inputs = append(inputs, reflect.ValueOf(param).Elem())
