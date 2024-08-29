@@ -34,6 +34,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # copy runtime binary from the build phase
 COPY --from=builder /src/hypruntime /usr/bin/hypruntime
 
+# create a link to the old name for backwards compatibility
+RUN ln -s /usr/bin/hypruntime /usr/bin/hmruntime
+
 # update certificates every build
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
