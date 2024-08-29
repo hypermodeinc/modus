@@ -22,15 +22,15 @@ import (
 var contextType = reflect.TypeOf((*context.Context)(nil)).Elem()
 var errorType = reflect.TypeOf((*error)(nil)).Elem()
 
-type hfMessageType int
+type hfMessages struct {
+	msgStarting  string
+	msgCompleted string
+	msgCancelled string
+	msgError     string
 
-const (
-	hfMessageDetail hfMessageType = iota
-	hfMessageStarting
-	hfMessageCompleted
-	hfMessageCancelled
-	hfMessageError
-)
+	fnDetail  any
+	msgDetail string
+}
 
 type HostFunction struct {
 	module          string
@@ -38,8 +38,7 @@ type HostFunction struct {
 	function        wasm.GoFunction
 	wasmParamTypes  []wasm.ValueType
 	wasmResultTypes []wasm.ValueType
-	messages        map[hfMessageType]string
-	msgDetailFunc   any
+	messages        *hfMessages
 }
 
 func (hf *HostFunction) Name() string {
@@ -48,36 +47,36 @@ func (hf *HostFunction) Name() string {
 
 func WithStartingMessage(text string) func(*HostFunction) {
 	return func(hf *HostFunction) {
-		hf.messages[hfMessageStarting] = text
+		hf.messages.msgStarting = text
 	}
 }
 
 func WithCompletedMessage(text string) func(*HostFunction) {
 	return func(hf *HostFunction) {
-		hf.messages[hfMessageCompleted] = text
+		hf.messages.msgCompleted = text
 	}
 }
 
 func WithCancelledMessage(text string) func(*HostFunction) {
 	return func(hf *HostFunction) {
-		hf.messages[hfMessageCancelled] = text
+		hf.messages.msgCancelled = text
 	}
 }
 
 func WithErrorMessage(text string) func(*HostFunction) {
 	return func(hf *HostFunction) {
-		hf.messages[hfMessageError] = text
+		hf.messages.msgError = text
 	}
 }
 
 func WithMessageDetail(fn any) func(*HostFunction) {
 	return func(hf *HostFunction) {
-		hf.msgDetailFunc = fn
+		hf.messages.fnDetail = fn
 	}
 }
 
 func (host *WasmHost) RegisterHostFunction(modName, funcName string, fn any, opts ...func(*HostFunction)) error {
-	hf, err := prepareHostFunction(modName, funcName, fn, opts...)
+	hf, err := newHostFunction(modName, funcName, fn, opts...)
 	if err != nil {
 		return fmt.Errorf("failed to register host function %s.%s: %w", modName, funcName, err)
 	}
@@ -86,25 +85,25 @@ func (host *WasmHost) RegisterHostFunction(modName, funcName string, fn any, opt
 	return nil
 }
 
-func prepareHostFunction(modName, funcName string, fn any, opts ...func(*HostFunction)) (*HostFunction, error) {
+func newHostFunction(modName, funcName string, fn any, opts ...func(*HostFunction)) (*HostFunction, error) {
 	rvFunc := reflect.ValueOf(fn)
 	if rvFunc.Kind() != reflect.Func {
 		return nil, fmt.Errorf("host function %s.%s is not a function type", modName, funcName)
 	}
 
-	fnType := rvFunc.Type()
-	numParams := fnType.NumIn()
-	numResults := fnType.NumOut()
+	rtFunc := rvFunc.Type()
+	numParams := rtFunc.NumIn()
+	numResults := rtFunc.NumOut()
 
 	// Optionally, the first parameter can be a context.
 	var hasContextParam bool
-	if numParams > 0 && fnType.In(0).Implements(contextType) {
+	if numParams > 0 && rtFunc.In(0).Implements(contextType) {
 		hasContextParam = true
 	}
 
 	// Optionally, the last return value can be an error.
 	var hasErrorResult bool
-	if numResults > 0 && fnType.Out(numResults-1).Implements(errorType) {
+	if numResults > 0 && rtFunc.Out(numResults-1).Implements(errorType) {
 		hasErrorResult = true
 	}
 
@@ -124,7 +123,7 @@ func prepareHostFunction(modName, funcName string, fn any, opts ...func(*HostFun
 		if hasContextParam && i == 0 {
 			continue
 		}
-		switch fnType.In(i).Kind() {
+		switch rtFunc.In(i).Kind() {
 		case reflect.Float64:
 			paramTypes = append(paramTypes, wasm.ValueTypeF64)
 		case reflect.Float32:
@@ -141,7 +140,7 @@ func prepareHostFunction(modName, funcName string, fn any, opts ...func(*HostFun
 		if hasErrorResult && i == numResults-1 {
 			continue
 		}
-		switch fnType.Out(i).Kind() {
+		switch rtFunc.Out(i).Kind() {
 		case reflect.Float64:
 			resultTypes = append(resultTypes, wasm.ValueTypeF64)
 		case reflect.Float32:
@@ -159,10 +158,37 @@ func prepareHostFunction(modName, funcName string, fn any, opts ...func(*HostFun
 		name:            funcName,
 		wasmParamTypes:  paramTypes,
 		wasmResultTypes: resultTypes,
-		messages:        make(map[hfMessageType]string),
+		messages:        &hfMessages{},
 	}
 	for _, opt := range opts {
 		opt(hf)
+	}
+
+	// Prep the message detail function
+	var rvDetail reflect.Value
+	var rtDetail reflect.Type
+	if hf.messages.fnDetail != nil {
+		rvDetail = reflect.ValueOf(hf.messages.fnDetail)
+		if rvDetail.Kind() != reflect.Func {
+			return nil, fmt.Errorf("message detail func for host function %s.%s is not a function type", modName, funcName)
+		}
+		rtDetail = rvDetail.Type()
+		if rtDetail.NumOut() != 1 || rtDetail.Out(0).Kind() != reflect.String {
+			return nil, fmt.Errorf("message detail func for host function %s.%s must have one string return value", modName, funcName)
+		}
+
+		start, end := 0, rtDetail.NumIn()
+		if hasContextParam {
+			start++
+			end++
+		}
+		i := 0
+		for j := start; j < end; j++ {
+			if rtDetail.In(i) != rtFunc.In(j) {
+				return nil, fmt.Errorf("message detail func for host function %s.%s has mismatched parameter types", modName, funcName)
+			}
+			i++
+		}
 	}
 
 	// Make the host function wrapper
@@ -185,7 +211,7 @@ func prepareHostFunction(modName, funcName string, fn any, opts ...func(*HostFun
 			if hasContextParam && i == 0 {
 				continue
 			}
-			paramType := fnType.In(i)
+			paramType := rtFunc.In(i)
 			var rvParam reflect.Value
 			if paramType.Kind() == reflect.Ptr {
 				rvParam = reflect.New(paramType.Elem())
@@ -199,29 +225,29 @@ func prepareHostFunction(modName, funcName string, fn any, opts ...func(*HostFun
 			return
 		}
 
+		// prepare the input parameters
+		inputs := make([]reflect.Value, 0, numParams)
+		i := 0
+		if hasContextParam {
+			inputs = append(inputs, reflect.ValueOf(ctx))
+			i++
+		}
+		for _, param := range params {
+			paramType := rtFunc.In(i)
+			if paramType.Kind() == reflect.Ptr {
+				inputs = append(inputs, reflect.ValueOf(param))
+			} else {
+				inputs = append(inputs, reflect.ValueOf(param).Elem())
+			}
+			i++
+		}
+
 		// Prepare to call the host function
 		results := make([]any, 0, numResults)
 		wrappedFn := func() error {
 
-			// prepare the input parameters
-			in := make([]reflect.Value, 0, numParams)
-			i := 0
-			if hasContextParam {
-				in = append(in, reflect.ValueOf(ctx))
-				i++
-			}
-			for _, param := range params {
-				paramType := fnType.In(i)
-				if paramType.Kind() == reflect.Ptr {
-					in = append(in, reflect.ValueOf(param))
-				} else {
-					in = append(in, reflect.ValueOf(param).Elem())
-				}
-				i++
-			}
-
 			// invoke the function
-			out := rvFunc.Call(in)
+			out := rvFunc.Call(inputs)
 
 			// check for an error
 			if hasErrorResult && len(out) > 0 {
@@ -242,8 +268,19 @@ func prepareHostFunction(modName, funcName string, fn any, opts ...func(*HostFun
 			return nil
 		}
 
+		// If there is a message detail function, call it to get the detail message
+		msgs := *hf.messages
+		if msgs.fnDetail != nil {
+			start, end := 0, rtDetail.NumIn()
+			if hasContextParam {
+				start++
+				end++
+			}
+			msgs.msgDetail = rvDetail.Call(inputs[start:end])[0].String()
+		}
+
 		// Call the host function
-		if ok := callHostFunction(ctx, wrappedFn, hf.messages); !ok {
+		if ok := callHostFunction(ctx, wrappedFn, msgs); !ok {
 			return
 		}
 
@@ -425,16 +462,13 @@ func encodeResults(ctx context.Context, fn *metadata.Function, stack []uint64, r
 	return nil
 }
 
-func callHostFunction(ctx context.Context, fn func() error, msgs map[hfMessageType]string) bool {
-
-	detail := msgs[hfMessageDetail]
-
-	if msg, ok := msgs[hfMessageStarting]; ok {
+func callHostFunction(ctx context.Context, fn func() error, msgs hfMessages) bool {
+	if msgs.msgStarting != "" {
 		l := logger.Info(ctx).Bool("user_visible", true)
-		if detail != "" {
-			l.Str("detail", detail)
+		if msgs.msgDetail != "" {
+			l.Str("detail", msgs.msgDetail)
 		}
-		l.Msg(msg)
+		l.Msg(msgs.msgStarting)
 	}
 
 	start := time.Now()
@@ -442,30 +476,30 @@ func callHostFunction(ctx context.Context, fn func() error, msgs map[hfMessageTy
 	duration := time.Since(start)
 
 	if errors.Is(err, context.Canceled) {
-		if msg, ok := msgs[hfMessageCancelled]; ok {
+		if msgs.msgCancelled != "" {
 			l := logger.Warn(ctx).Bool("user_visible", true).Dur("duration_ms", duration)
-			if detail != "" {
-				l.Str("detail", detail)
+			if msgs.msgDetail != "" {
+				l.Str("detail", msgs.msgDetail)
 			}
-			l.Msg(msg)
+			l.Msg(msgs.msgCancelled)
 		}
 		return false
 	} else if err != nil {
-		if msg, ok := msgs[hfMessageError]; ok {
+		if msgs.msgError != "" {
 			l := logger.Err(ctx, err).Bool("user_visible", true).Dur("duration_ms", duration)
-			if detail != "" {
-				l.Str("detail", detail)
+			if msgs.msgDetail != "" {
+				l.Str("detail", msgs.msgDetail)
 			}
-			l.Msg(msg)
+			l.Msg(msgs.msgError)
 		}
 		return false
 	} else {
-		if msg, ok := msgs[hfMessageCompleted]; ok {
+		if msgs.msgCompleted != "" {
 			l := logger.Info(ctx).Bool("user_visible", true).Dur("duration_ms", duration)
-			if detail != "" {
-				l.Str("detail", detail)
+			if msgs.msgDetail != "" {
+				l.Str("detail", msgs.msgDetail)
 			}
-			l.Msg(msg)
+			l.Msg(msgs.msgCompleted)
 		}
 		return true
 	}

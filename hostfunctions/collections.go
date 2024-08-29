@@ -135,7 +135,7 @@ func registerLegacyCollectionsHostFunctions() {
 		},
 		withCancelledMessage("Cancelled getting text from collection."),
 		withErrorMessage("Error getting text from collection."),
-		withMessageDetail(func(collectionName, namespace, key string) string {
+		withMessageDetail(func(collectionName, key string) string {
 			return fmt.Sprintf("Collection: %s, Key: %s", collectionName, key)
 		}))
 
@@ -187,7 +187,7 @@ func registerLegacyCollectionsHostFunctions() {
 		},
 		withCancelledMessage("Cancelled collection upsert."),
 		withErrorMessage("Error upserting to collection."),
-		withMessageDetail(func(collectionName, keys []string) string {
+		withMessageDetail(func(collectionName string, keys []string) string {
 			return fmt.Sprintf("Collection: %s, Keys: %v", collectionName, keys)
 		}))
 }

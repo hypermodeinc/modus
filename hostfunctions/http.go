@@ -16,6 +16,6 @@ func init() {
 		withCancelledMessage("Cancelled HTTP request."),
 		withErrorMessage("Error making HTTP request."),
 		withMessageDetail(func(request *httpclient.HttpRequest) string {
-			return fmt.Sprintf("HTTP request: %s %s", request.Method, request.Url)
+			return fmt.Sprintf("%s %s", request.Method, request.Url)
 		}))
 }
