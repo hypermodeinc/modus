@@ -28,14 +28,18 @@ func Start(ctx context.Context) {
 	transaction, ctx := utils.NewSentryTransactionForCurrentFunc(ctx)
 	defer transaction.Finish()
 
+	// Init the wasm host before anything else.
+	registrations := hostfunctions.GetRegistrations()
+	wasmhost.InitWasmHost(ctx, registrations...)
+
 	// None of these should block. If they need to do background work, they should start a goroutine internally.
 
 	// NOTE: Initialization order is important in some cases.
 	// If you need to change the order or add new services, be sure to test thoroughly.
 	// Generally, new services should be added to the end of the list, unless there is a specific reason to do otherwise.
 
-	wasmhost.InitWasmHost(ctx)
-	hostfunctions.RegisterHostFunctions(ctx)
+	sqlclient.Initialize()
+	dgraphclient.Initialize()
 	aws.Initialize(ctx)
 	secrets.Initialize(ctx)
 	storage.Initialize(ctx)
@@ -57,7 +61,7 @@ func Stop(ctx context.Context) {
 	collections.CloseIndexFactory(ctx)
 	sqlclient.ShutdownPGPools()
 	dgraphclient.ShutdownConns()
-	wasmhost.RuntimeInstance.Close(ctx)
+	wasmhost.GlobalWasmHost.Close(ctx)
 	logger.Close()
 	db.Stop(ctx)
 }

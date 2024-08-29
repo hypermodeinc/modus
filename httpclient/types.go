@@ -7,19 +7,19 @@ package httpclient
 type HttpRequest struct {
 	Url     string
 	Method  string
-	Headers HttpHeaders
+	Headers *HttpHeaders
 	Body    []byte
 }
 
 type HttpResponse struct {
 	Status     uint16
 	StatusText string
-	Headers    HttpHeaders
+	Headers    *HttpHeaders
 	Body       []byte
 }
 
 type HttpHeaders struct {
-	Data map[string]HttpHeader
+	Data map[string]*HttpHeader
 }
 
 type HttpHeader struct {

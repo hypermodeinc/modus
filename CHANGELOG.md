@@ -1,5 +1,9 @@
 # Change Log
 
+## UNRELEASED
+
+- Major refactoring to support multiple guest languages [#347](https://github.com/hypermodeAI/runtime/pull/347)
+
 ## 2024-08-27 - Version 0.11.2
 
 - Refactor dgraph host functions to use single execute host function [#342](https://github.com/hypermodeAI/runtime/pull/342)

@@ -11,16 +11,16 @@ import (
 	"github.com/wundergraph/graphql-go-tools/v2/pkg/engine/plan"
 )
 
-type Factory[T Configuration] struct {
+type HypDSFactory struct {
 	Ctx context.Context
 }
 
-func (f *Factory[T]) Planner(logger abstractlogger.Logger) plan.DataSourcePlanner[T] {
-	return &Planner[T]{
+func (f *HypDSFactory) Planner(logger abstractlogger.Logger) plan.DataSourcePlanner[HypDSConfig] {
+	return &HypDSPlanner{
 		ctx: f.Ctx,
 	}
 }
 
-func (f *Factory[T]) Context() context.Context {
+func (f *HypDSFactory) Context() context.Context {
 	return f.Ctx
 }

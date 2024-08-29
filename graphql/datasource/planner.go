@@ -18,9 +18,9 @@ import (
 	"github.com/wundergraph/graphql-go-tools/v2/pkg/engine/resolve"
 )
 
-type Planner[T Configuration] struct {
+type HypDSPlanner struct {
 	ctx       context.Context
-	config    Configuration
+	config    HypDSConfig
 	visitor   *plan.Visitor
 	variables resolve.Variables
 	fields    map[int]*fieldInfo
@@ -40,22 +40,22 @@ type fieldInfo struct {
 	fieldRefs []int        `json:"-"`
 }
 
-func (t fieldInfo) AliasOrName() string {
+func (t *fieldInfo) AliasOrName() string {
 	if t.Alias != "" {
 		return t.Alias
 	}
 	return t.Name
 }
 
-func (p *Planner[T]) UpstreamSchema(dataSourceConfig plan.DataSourceConfiguration[T]) (*ast.Document, bool) {
+func (p *HypDSPlanner) UpstreamSchema(dataSourceConfig plan.DataSourceConfiguration[HypDSConfig]) (*ast.Document, bool) {
 	return nil, false
 }
 
-func (p *Planner[T]) DownstreamResponseFieldAlias(downstreamFieldRef int) (alias string, exists bool) {
+func (p *HypDSPlanner) DownstreamResponseFieldAlias(downstreamFieldRef int) (alias string, exists bool) {
 	return
 }
 
-func (p *Planner[T]) DataSourcePlanningBehavior() plan.DataSourcePlanningBehavior {
+func (p *HypDSPlanner) DataSourcePlanningBehavior() plan.DataSourcePlanningBehavior {
 	return plan.DataSourcePlanningBehavior{
 		// This needs to be true, so we can distinguish results for multiple function calls in the same query.
 		// Example:
@@ -72,20 +72,20 @@ func (p *Planner[T]) DataSourcePlanningBehavior() plan.DataSourcePlanningBehavio
 	}
 }
 
-func (p *Planner[T]) Register(visitor *plan.Visitor, configuration plan.DataSourceConfiguration[T], dspc plan.DataSourcePlannerConfiguration) error {
+func (p *HypDSPlanner) Register(visitor *plan.Visitor, configuration plan.DataSourceConfiguration[HypDSConfig], dspc plan.DataSourcePlannerConfiguration) error {
 	p.visitor = visitor
 	visitor.Walker.RegisterEnterDocumentVisitor(p)
 	visitor.Walker.RegisterEnterFieldVisitor(p)
 	visitor.Walker.RegisterLeaveDocumentVisitor(p)
-	p.config = Configuration(configuration.CustomConfiguration())
+	p.config = HypDSConfig(configuration.CustomConfiguration())
 	return nil
 }
 
-func (p *Planner[T]) EnterDocument(operation, definition *ast.Document) {
+func (p *HypDSPlanner) EnterDocument(operation, definition *ast.Document) {
 	p.fields = make(map[int]*fieldInfo, len(operation.Fields))
 }
 
-func (p *Planner[T]) EnterField(ref int) {
+func (p *HypDSPlanner) EnterField(ref int) {
 
 	// Capture information about every field in the query.
 	f := p.captureField(ref)
@@ -106,12 +106,12 @@ func (p *Planner[T]) EnterField(ref int) {
 	}
 }
 
-func (p *Planner[T]) LeaveDocument(operation, definition *ast.Document) {
+func (p *HypDSPlanner) LeaveDocument(operation, definition *ast.Document) {
 	// Stitch the captured fields together to form a tree.
 	p.stitchFields(p.template.function)
 }
 
-func (p *Planner[T]) stitchFields(f *fieldInfo) {
+func (p *HypDSPlanner) stitchFields(f *fieldInfo) {
 	if len(f.fieldRefs) == 0 {
 		return
 	}
@@ -124,7 +124,7 @@ func (p *Planner[T]) stitchFields(f *fieldInfo) {
 	}
 }
 
-func (p *Planner[T]) enclosingTypeIsRootNode() bool {
+func (p *HypDSPlanner) enclosingTypeIsRootNode() bool {
 	enclosingTypeDef := p.visitor.Walker.EnclosingTypeDefinition
 	for _, node := range p.visitor.Operation.RootNodes {
 		if node.Ref == enclosingTypeDef.Ref {
@@ -134,7 +134,7 @@ func (p *Planner[T]) enclosingTypeIsRootNode() bool {
 	return false
 }
 
-func (p *Planner[T]) captureField(ref int) *fieldInfo {
+func (p *HypDSPlanner) captureField(ref int) *fieldInfo {
 	operation := p.visitor.Operation
 	definition := p.visitor.Definition
 	walker := p.visitor.Walker
@@ -161,7 +161,7 @@ func (p *Planner[T]) captureField(ref int) *fieldInfo {
 	return &f
 }
 
-func (p *Planner[T]) captureInputData(fieldRef int) error {
+func (p *HypDSPlanner) captureInputData(fieldRef int) error {
 	operation := p.visitor.Operation
 	variables := resolve.NewVariables()
 	var buf bytes.Buffer
@@ -202,7 +202,7 @@ func (p *Planner[T]) captureInputData(fieldRef int) error {
 	return nil
 }
 
-func (p *Planner[T]) ConfigureFetch() resolve.FetchConfiguration {
+func (p *HypDSPlanner) ConfigureFetch() resolve.FetchConfiguration {
 	fnJson, err := utils.JsonSerialize(p.template.function)
 	if err != nil {
 		logger.Error(p.ctx).Err(err).Msg("Error serializing json while configuring graphql fetch.")
@@ -215,9 +215,11 @@ func (p *Planner[T]) ConfigureFetch() resolve.FetchConfiguration {
 	inputTemplate := fmt.Sprintf(`{"fn":%s,"data":%s}`, fnJson, p.template.data)
 
 	return resolve.FetchConfiguration{
-		Input:      inputTemplate,
-		Variables:  p.variables,
-		DataSource: Source{},
+		Input:     inputTemplate,
+		Variables: p.variables,
+		DataSource: &HypermodeDataSource{
+			WasmHost: p.config.WasmHost,
+		},
 		PostProcessing: resolve.PostProcessingConfiguration{
 			SelectResponseDataPath:   []string{"data"},
 			SelectResponseErrorsPath: []string{"errors"},
@@ -225,6 +227,6 @@ func (p *Planner[T]) ConfigureFetch() resolve.FetchConfiguration {
 	}
 }
 
-func (p *Planner[T]) ConfigureSubscription() plan.SubscriptionConfiguration {
+func (p *HypDSPlanner) ConfigureSubscription() plan.SubscriptionConfiguration {
 	panic("subscription not implemented")
 }

@@ -7,50 +7,49 @@ package assemblyscript
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"reflect"
 
-	"github.com/go-viper/mapstructure/v2"
+	"hmruntime/utils"
+
 	wasm "github.com/tetratelabs/wazero/api"
 )
 
-func (wa *wasmAdapter) EncodeValue(ctx context.Context, mod wasm.Module, data any) (uint64, error) {
+func (wa *wasmAdapter) EncodeData(ctx context.Context, typ string, data any) ([]uint64, utils.Cleaner, error) {
 
-	rt := reflect.TypeOf(data)
-	typ, err := wa.typeInfo.getAssemblyScriptType(rt)
-	if err != nil {
-		return 0, err
+	// support older SDKs that don't pass the type
+	// TODO: eventually remove this
+	if typ == "" {
+		rt := reflect.TypeOf(data)
+		if t, err := wa.typeInfo.getAssemblyScriptType(rt); err != nil {
+			return nil, nil, err
+		} else {
+			typ = t
+		}
 	}
 
-	return wa.encodeValue(ctx, mod, typ, data)
+	val, err := wa.encodeValue(ctx, typ, data)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return []uint64{val}, nil, nil
 }
 
-func (wa *wasmAdapter) encodeValue(ctx context.Context, mod wasm.Module, typ string, data any) (uint64, error) {
+func (wa *wasmAdapter) encodeValue(ctx context.Context, typ string, data any) (uint64, error) {
 	// For most calls, we don't need to pin the memory.
 	// If it needs to be pinned, the caller will do it.
-	return wa.doEncodeValue(ctx, mod, typ, data, false)
+	return wa.doEncodeValue(ctx, typ, data, false)
 }
 
-func (wa *wasmAdapter) encodeValueForParameter(ctx context.Context, mod wasm.Module, typ string, data any) (uint64, error) {
+func (wa *wasmAdapter) encodeValueForParameter(ctx context.Context, typ string, data any) (uint64, error) {
 	// For the inbound parameters, we need to pin the memory.
 	// Otherwise, just allocating more parameters could cause the GC to run and free the memory we just allocated.
 	// Note we don't bother tracking these to unpin later, because we discard the module instance and its memory after the call.
-	return wa.doEncodeValue(ctx, mod, typ, data, true)
+	return wa.doEncodeValue(ctx, typ, data, true)
 }
 
-func (wa *wasmAdapter) doEncodeValue(ctx context.Context, mod wasm.Module, typ string, data any, pin bool) (val uint64, err error) {
-
-	// Recover from panics and convert them to errors
-	defer func() {
-		if r := recover(); r != nil {
-			if e, ok := r.(error); ok {
-				err = e
-			} else if e, ok := r.(string); ok {
-				err = errors.New(e)
-			}
-		}
-	}()
+func (wa *wasmAdapter) doEncodeValue(ctx context.Context, typ string, data any, pin bool) (val uint64, err error) {
 
 	// Handle null values if the type is nullable
 	if wa.typeInfo.IsNullable(typ) {
@@ -82,7 +81,7 @@ func (wa *wasmAdapter) doEncodeValue(ctx context.Context, mod wasm.Module, typ s
 			return 0, nil
 		}
 
-	case "u8", "u16", "u32":
+	case "u8", "u16", "u32", "usize":
 		var x uint32
 		switch v := data.(type) {
 		case json.Number:
@@ -105,7 +104,7 @@ func (wa *wasmAdapter) doEncodeValue(ctx context.Context, mod wasm.Module, typ s
 
 		return wasm.EncodeU32(x), nil
 
-	case "i8", "i16", "i32":
+	case "i8", "i16", "i32", "isize":
 		var x int32
 		switch v := data.(type) {
 		case json.Number:
@@ -183,14 +182,14 @@ func (wa *wasmAdapter) doEncodeValue(ctx context.Context, mod wasm.Module, typ s
 	}
 
 	// Managed types need to be written to wasm memory
-	offset, err := wa.writeObject(ctx, mod, typ, data)
+	offset, err := wa.writeObject(ctx, typ, data)
 	if err != nil {
 		return 0, err
 	}
 
 	// Pin the memory if requested
 	if pin {
-		err := wa.pinWasmMemory(ctx, mod, offset)
+		err := wa.pinWasmMemory(ctx, offset)
 		if err != nil {
 			return 0, fmt.Errorf("failed to pin wasm memory: %w", err)
 		}
@@ -199,39 +198,50 @@ func (wa *wasmAdapter) doEncodeValue(ctx context.Context, mod wasm.Module, typ s
 	return uint64(offset), nil
 }
 
-func (wa *wasmAdapter) DecodeValue(ctx context.Context, mod wasm.Module, val uint64, data any) error {
+func (wa *wasmAdapter) DecodeData(ctx context.Context, typ string, vals []uint64, pData any) error {
+	if len(vals) == 0 {
+		return nil
+	}
+
+	// all values in AssemblyScript are passed as a single 64-bit integer
+	val := vals[0]
 	if val == 0 {
 		return nil
 	}
 
-	rv := reflect.ValueOf(data)
+	rv := reflect.ValueOf(pData)
 	if rv.Kind() != reflect.Ptr {
-		return fmt.Errorf("expected pointer, got %T", data)
+		return fmt.Errorf("expected pointer, got %T", pData)
 	}
-
 	rvElem := rv.Elem()
 
-	typ, err := wa.typeInfo.getAssemblyScriptType(rvElem.Type())
-	if err != nil {
-		return err
+	// support older SDKs that don't pass the type
+	// TODO: eventually remove this
+	if typ == "" {
+		rt := rvElem.Type()
+		if t, err := wa.typeInfo.getAssemblyScriptType(rt); err != nil {
+			return err
+		} else {
+			typ = t
+		}
 	}
 
-	d, err := wa.decodeValue(ctx, mod, typ, val)
+	data, err := wa.decodeValue(ctx, typ, val)
 	if err != nil {
 		return err
 	}
 
 	if rvElem.Kind() == reflect.Struct {
-		if m, ok := d.(map[string]any); ok {
-			if err := mapToStruct(m, rv.Interface()); err != nil {
+		if m, ok := data.(map[string]any); ok {
+			if err := utils.MapToStruct(m, rv.Interface()); err != nil {
 				return err
 			}
 			return nil
 		}
 	}
 
-	rd := reflect.ValueOf(d)
-	if rd.Type() == rvElem.Type() {
+	rd := reflect.ValueOf(data)
+	if rd.Type().AssignableTo(rvElem.Type()) {
 		rvElem.Set(rd)
 		return nil
 	}
@@ -239,22 +249,11 @@ func (wa *wasmAdapter) DecodeValue(ctx context.Context, mod wasm.Module, val uin
 	return fmt.Errorf("expected %s, got %s", rvElem.Type(), rd.Type())
 }
 
-func (wa *wasmAdapter) decodeValueForResult(ctx context.Context, mod wasm.Module, typ string, val uint64) (data any, err error) {
-	return wa.decodeValue(ctx, mod, typ, val)
+func (wa *wasmAdapter) decodeValueForResult(ctx context.Context, typ string, val uint64) (data any, err error) {
+	return wa.decodeValue(ctx, typ, val)
 }
 
-func (wa *wasmAdapter) decodeValue(ctx context.Context, mod wasm.Module, typ string, val uint64) (data any, err error) {
-
-	// Recover from panics and convert them to errors
-	defer func() {
-		if r := recover(); r != nil {
-			if e, ok := r.(error); ok {
-				err = e
-			} else if e, ok := r.(string); ok {
-				err = errors.New(e)
-			}
-		}
-	}()
+func (wa *wasmAdapter) decodeValue(ctx context.Context, typ string, val uint64) (data any, err error) {
 
 	// Handle null values if the type is nullable
 	if wa.typeInfo.IsNullable(typ) {
@@ -272,10 +271,10 @@ func (wa *wasmAdapter) decodeValue(ctx context.Context, mod wasm.Module, typ str
 	case "bool":
 		return val != 0, nil
 
-	case "u8", "u16", "u32":
+	case "u8", "u16", "u32", "usize":
 		return wasm.DecodeU32(val), nil
 
-	case "i8", "i16", "i32":
+	case "i8", "i16", "i32", "isize":
 		return wasm.DecodeI32(val), nil
 
 	case "i64", "u64":
@@ -289,20 +288,11 @@ func (wa *wasmAdapter) decodeValue(ctx context.Context, mod wasm.Module, typ str
 	}
 
 	// Managed types are read from wasm memory
-	mem := mod.Memory()
-	return wa.readObject(ctx, mem, typ, uint32(val))
+	return wa.readObject(ctx, typ, uint32(val))
 }
 
-func mapToStruct(m map[string]any, result any) error {
-
-	config := &mapstructure.DecoderConfig{
-		Result: result,
-	}
-
-	decoder, err := mapstructure.NewDecoder(config)
-	if err != nil {
-		return err
-	}
-
-	return decoder.Decode(m)
+func (wa *wasmAdapter) GetEncodingLength(ctx context.Context, typ string) (int, error) {
+	// All values in AssemblyScript are passed as a single 64-bit integer
+	// The function exists on the interface to support other languages that use variable-length encoding
+	return 1, nil
 }

@@ -7,21 +7,20 @@ package assemblyscript
 import (
 	"context"
 	"fmt"
-	"unicode/utf16"
-	"unsafe"
 
-	wasm "github.com/tetratelabs/wazero/api"
+	"hmruntime/utils"
 )
 
-func (wa *wasmAdapter) readString(mem wasm.Memory, offset uint32) (data string, err error) {
+func (wa *wasmAdapter) readString(offset uint32) (data string, err error) {
 	if offset == 0 {
 		return "", nil
 	}
+
 	// AssemblyScript managed objects have their classid stored 8 bytes before the offset.
 	// See https://www.assemblyscript.org/runtime.html#memory-layout
 
 	// Read the class id.
-	id, ok := mem.ReadUint32Le(offset - 8)
+	id, ok := wa.mod.Memory().ReadUint32Le(offset - 8)
 	if !ok {
 		return "", fmt.Errorf("failed to read class id of the WASM object")
 	}
@@ -32,47 +31,16 @@ func (wa *wasmAdapter) readString(mem wasm.Memory, offset uint32) (data string, 
 	}
 
 	// Read from the buffer and decode it as a string.
-	buf, err := wa.readBytes(mem, offset)
+	buf, err := wa.readBytes(offset)
 	if err != nil {
 		return "", err
 	}
 
-	return decodeUTF16(buf), nil
+	return utils.DecodeUTF16(buf), nil
 }
 
-func (wa *wasmAdapter) writeString(ctx context.Context, mod wasm.Module, s string) (offset uint32, err error) {
+func (wa *wasmAdapter) writeString(ctx context.Context, s string) (offset uint32, err error) {
 	const classId = 2 // The fixed class id for a string in AssemblyScript.
-	bytes := encodeUTF16(s)
-	return wa.writeRawBytes(ctx, mod, bytes, classId)
-}
-
-func decodeUTF16(bytes []byte) string {
-
-	// Make sure the buffer is valid.
-	if len(bytes) == 0 || len(bytes)%2 != 0 {
-		return ""
-	}
-
-	// Reinterpret []byte as []uint16 to avoid excess copying.
-	// This works because we can presume the system is little-endian.
-	ptr := unsafe.Pointer(&bytes[0])
-	words := unsafe.Slice((*uint16)(ptr), len(bytes)/2)
-
-	// Decode UTF-16 words to a UTF-8 string.
-	str := string(utf16.Decode(words))
-	return str
-}
-
-func encodeUTF16(str string) []byte {
-	if len(str) == 0 {
-		return []byte{}
-	}
-	// Encode the UTF-8 string to UTF-16 words.
-	words := utf16.Encode([]rune(str))
-
-	// Reinterpret []uint16 as []byte to avoid excess copying.
-	// This works because we can presume the system is little-endian.
-	ptr := unsafe.Pointer(&words[0])
-	bytes := unsafe.Slice((*byte)(ptr), len(words)*2)
-	return bytes
+	bytes := utils.EncodeUTF16(s)
+	return wa.writeRawBytes(ctx, bytes, classId)
 }

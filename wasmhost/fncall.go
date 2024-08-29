@@ -7,6 +7,8 @@ package wasmhost
 import (
 	"context"
 	"errors"
+	"fmt"
+	"os"
 	"time"
 
 	"hmruntime/functions"
@@ -17,6 +19,7 @@ import (
 	"hmruntime/utils"
 
 	"github.com/rs/xid"
+	"github.com/tetratelabs/wazero/sys"
 )
 
 type ExecutionInfo struct {
@@ -27,6 +30,10 @@ type ExecutionInfo struct {
 }
 
 func CallFunction(ctx context.Context, fnName string, paramValues ...any) (*ExecutionInfo, error) {
+	return GlobalWasmHost.CallFunction(ctx, fnName, paramValues...)
+}
+
+func (host *WasmHost) CallFunction(ctx context.Context, fnName string, paramValues ...any) (*ExecutionInfo, error) {
 	function, plugin, err := functions.GetFunctionAndPlugin(fnName)
 	if err != nil {
 		return nil, err
@@ -37,19 +44,19 @@ func CallFunction(ctx context.Context, fnName string, paramValues ...any) (*Exec
 		return nil, err
 	}
 
-	return doCallFunction(ctx, plugin, function, parameters)
+	return host.InvokeFunction(ctx, plugin, function, parameters)
 }
 
-func CallFunctionWithParametersMap(ctx context.Context, fnName string, parameters map[string]any) (*ExecutionInfo, error) {
+func (host *WasmHost) CallFunctionWithParametersMap(ctx context.Context, fnName string, parameters map[string]any) (*ExecutionInfo, error) {
 	function, plugin, err := functions.GetFunctionAndPlugin(fnName)
 	if err != nil {
 		return nil, err
 	}
 
-	return doCallFunction(ctx, plugin, function, parameters)
+	return host.InvokeFunction(ctx, plugin, function, parameters)
 }
 
-func doCallFunction(ctx context.Context, plugin *plugins.Plugin, function *metadata.Function, parameters map[string]any) (*ExecutionInfo, error) {
+func (host *WasmHost) InvokeFunction(ctx context.Context, plugin *plugins.Plugin, function *metadata.Function, parameters map[string]any) (*ExecutionInfo, error) {
 
 	execInfo := ExecutionInfo{
 		ExecutionId: xid.New().String(),
@@ -68,12 +75,15 @@ func doCallFunction(ctx context.Context, plugin *plugins.Plugin, function *metad
 	// This also protects against security risk, as each request will have its own
 	// isolated memory space.  (One request cannot access another request's memory.)
 
-	mod, err := GetModuleInstance(ctx, plugin, execInfo.Buffers)
+	mod, err := host.GetModuleInstance(ctx, plugin, execInfo.Buffers)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error getting module instance.")
 		return nil, err
 	}
 	defer mod.Close(ctx)
+
+	wa := plugin.Language.NewWasmAdapter(mod)
+	ctx = context.WithValue(ctx, utils.WasmAdapterContextKey, wa)
 
 	logger.Info(ctx).
 		Str("function", function.Name).
@@ -81,28 +91,47 @@ func doCallFunction(ctx context.Context, plugin *plugins.Plugin, function *metad
 		Msg("Calling function.")
 
 	start := time.Now()
-	result, err := plugin.Language.WasmAdapter().InvokeFunction(ctx, mod, function, parameters)
+	result, err := func() (result any, err error) {
+		defer func() {
+			if e := utils.ConvertToError(recover()); e != nil {
+				err = e
+			}
+		}()
+		return wa.InvokeFunction(ctx, function, parameters)
+	}()
 	duration := time.Since(start)
 
-	if errors.Is(err, context.Canceled) {
-		logger.Warn(ctx).
-			Str("function", function.Name).
-			Dur("duration_ms", duration).
-			Bool("user_visible", true).
-			Msg("Function execution was canceled.")
-	} else if err != nil {
-		err = functions.TransformError(err)
-		logger.Err(ctx, err).
-			Str("function", function.Name).
-			Dur("duration_ms", duration).
-			Bool("user_visible", true).
-			Msg("Error while executing function.")
-	} else {
+	exitErr := &sys.ExitError{}
+
+	if err == nil {
 		logger.Info(ctx).
 			Str("function", function.Name).
 			Dur("duration_ms", duration).
 			Bool("user_visible", true).
 			Msg("Function completed successfully.")
+	} else if errors.As(err, &exitErr) {
+		exitCode := int32(exitErr.ExitCode())
+		logger.Error(ctx).
+			Str("function", function.Name).
+			Dur("duration_ms", duration).
+			Bool("user_visible", true).
+			Int32("exit_code", exitCode).
+			Msgf("Function ended prematurely with exit code %d.", exitCode)
+	} else if errors.Is(err, context.Canceled) {
+		logger.Warn(ctx).
+			Str("function", function.Name).
+			Dur("duration_ms", duration).
+			Bool("user_visible", true).
+			Msg("Function execution was canceled.")
+	} else {
+		if utils.HypermodeDebugEnabled() {
+			fmt.Fprintln(os.Stderr, err)
+		}
+		logger.Err(ctx, err).
+			Str("function", function.Name).
+			Dur("duration_ms", duration).
+			Bool("user_visible", true).
+			Msg("Error while executing function.")
 	}
 
 	// Update metrics

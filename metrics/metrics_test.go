@@ -9,11 +9,8 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
-	"path"
-	"runtime"
 	"testing"
 
-	"hmruntime/config"
 	"hmruntime/httpserver"
 
 	"github.com/prometheus/common/expfmt"
@@ -25,12 +22,6 @@ const (
 	healthEndpoint  = "/health"
 	metricsEndpoint = "/metrics"
 )
-
-func setupRuntime() {
-	// configure a wasm plugin
-	_, thisFilePath, _, _ := runtime.Caller(0)
-	config.StoragePath = path.Join(thisFilePath, "..", "testutils", "data", "test-as")
-}
 
 func httpGet(t *testing.T, s *httptest.Server, endpoint string) []byte {
 	resp, err := http.Get(s.URL + endpoint)
@@ -61,8 +52,6 @@ func ensureValidMetrics(t *testing.T, s *httptest.Server, totalRequests int) {
 }
 
 func TestRuntimeMetrics(t *testing.T) {
-
-	setupRuntime()
 
 	mux := httpserver.GetHandlerMux()
 	s := httptest.NewServer(mux)

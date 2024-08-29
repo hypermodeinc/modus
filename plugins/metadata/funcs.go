@@ -6,8 +6,8 @@ package metadata
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"strconv"
 
 	v1 "hmruntime/plugins/metadata/legacy/v1"
 	"hmruntime/utils"
@@ -36,18 +36,17 @@ func GetMetadata(ctx context.Context, cm wazero.CompiledModule) (*Metadata, erro
 	}
 }
 
-func getPluginMetadataVersion(cm wazero.CompiledModule) (int, error) {
+func getPluginMetadataVersion(cm wazero.CompiledModule) (byte, error) {
 	verData, found := getCustomSectionData(cm, "hypermode_version")
 	if !found {
-		return 1, nil
+		return 1, nil // version 1 did not have a version section
 	}
 
-	ver, err := strconv.Atoi(string(verData))
-	if err != nil {
-		return 0, fmt.Errorf("failed to parse plugin metadata version: %w", err)
+	if len(verData) != 1 {
+		return 0, errors.New("failed to parse plugin metadata version")
 	}
 
-	return ver, nil
+	return verData[0], nil
 }
 
 func getPluginMetadata_v1(ctx context.Context, cm wazero.CompiledModule) (*Metadata, error) {
@@ -110,4 +109,9 @@ func getCustomSectionData(cm wazero.CompiledModule, name string) (data []byte, f
 		}
 	}
 	return data, found
+}
+
+func GetFunctionImportMetadata(ctx context.Context, name string) *Function {
+	md := ctx.Value(utils.MetadataContextKey).(*Metadata)
+	return md.FnImports[name]
 }

@@ -9,15 +9,14 @@ import (
 	"fmt"
 	"reflect"
 
-	"hmruntime/plugins/metadata"
 	"hmruntime/utils"
-
-	wasm "github.com/tetratelabs/wazero/api"
 )
 
 // Reference: https://github.com/AssemblyScript/assemblyscript/blob/main/std/assembly/array.ts
 
-func (wa *wasmAdapter) readArray(ctx context.Context, mem wasm.Memory, typ *metadata.TypeDefinition, offset uint32) (data any, err error) {
+func (wa *wasmAdapter) readArray(ctx context.Context, typ string, offset uint32) (data any, err error) {
+
+	mem := wa.mod.Memory()
 
 	// buffer, ok := mem.ReadUint32Le(offset)
 	// if !ok {
@@ -39,17 +38,17 @@ func (wa *wasmAdapter) readArray(ctx context.Context, mem wasm.Memory, typ *meta
 		return nil, fmt.Errorf("failed to read array length")
 	}
 
-	itemType := wa.typeInfo.GetArraySubtype(typ.Name)
-	itemSize := wa.typeInfo.SizeOfType(itemType)
+	itemType := wa.typeInfo.GetListSubtype(typ)
+	itemSize, _ := wa.typeInfo.GetSizeOfType(ctx, itemType)
 
-	goItemType, err := wa.typeInfo.getGoType(itemType)
+	goItemType, err := wa.getReflectedType(ctx, itemType)
 	if err != nil {
 		return nil, err
 	}
 
 	arr := reflect.MakeSlice(reflect.SliceOf(goItemType), int(arrLen), int(arrLen))
 	for i := uint32(0); i < arrLen; i++ {
-		val, err := wa.readField(ctx, mem, itemType, dataStart+(i*itemSize))
+		val, err := wa.readField(ctx, itemType, dataStart+(i*itemSize))
 		if err != nil {
 			return nil, err
 		}
@@ -59,9 +58,9 @@ func (wa *wasmAdapter) readArray(ctx context.Context, mem wasm.Memory, typ *meta
 	return arr.Interface(), nil
 }
 
-func (wa *wasmAdapter) writeArray(ctx context.Context, mod wasm.Module, typ *metadata.TypeDefinition, data any) (offset uint32, err error) {
+func (wa *wasmAdapter) writeArray(ctx context.Context, typ string, data any) (offset uint32, err error) {
 	var arr []any
-	arr, err = utils.ConvertToArray(data)
+	arr, err = utils.ConvertToSlice(data)
 	if err != nil {
 		return 0, err
 	}
@@ -74,7 +73,7 @@ func (wa *wasmAdapter) writeArray(ctx context.Context, mod wasm.Module, typ *met
 	var pins = make([]uint32, 0, arrLen+1)
 	defer func() {
 		for _, ptr := range pins {
-			err = wa.unpinWasmMemory(ctx, mod, ptr)
+			err = wa.unpinWasmMemory(ctx, ptr)
 			if err != nil {
 				break
 			}
@@ -84,17 +83,17 @@ func (wa *wasmAdapter) writeArray(ctx context.Context, mod wasm.Module, typ *met
 	// write array buffer
 	// note: empty array has no array buffer
 	if arrLen > 0 {
-		itemType := wa.typeInfo.GetArraySubtype(typ.Name)
-		itemSize := wa.typeInfo.SizeOfType(itemType)
+		itemType := wa.typeInfo.GetListSubtype(typ)
+		itemSize, _ := wa.typeInfo.GetSizeOfType(ctx, itemType)
 		bufferSize = itemSize * arrLen
-		bufferOffset, err = wa.allocateWasmMemory(ctx, mod, bufferSize, 1)
+		bufferOffset, err = wa.allocateWasmMemory(ctx, bufferSize, 1)
 		if err != nil {
 			return 0, fmt.Errorf("failed to allocate memory for array buffer: %w", err)
 		}
 
 		// pin the array buffer so it can't get garbage collected
 		// when we allocate the array object
-		err = wa.pinWasmMemory(ctx, mod, bufferOffset)
+		err = wa.pinWasmMemory(ctx, bufferOffset)
 		if err != nil {
 			return 0, fmt.Errorf("failed to pin array buffer: %w", err)
 		}
@@ -102,14 +101,14 @@ func (wa *wasmAdapter) writeArray(ctx context.Context, mod wasm.Module, typ *met
 
 		for i, v := range arr {
 			itemOffset := bufferOffset + (itemSize * uint32(i))
-			ptr, err := wa.writeField(ctx, mod, itemType, itemOffset, v)
+			ptr, err := wa.writeField(ctx, itemType, itemOffset, v)
 			if err != nil {
 				return 0, fmt.Errorf("failed to write array item: %w", err)
 			}
 
 			// If we allocated memory for the item, we need to pin it too.
 			if ptr != 0 {
-				err = wa.pinWasmMemory(ctx, mod, ptr)
+				err = wa.pinWasmMemory(ctx, ptr)
 				if err != nil {
 					return 0, err
 				}
@@ -118,14 +117,19 @@ func (wa *wasmAdapter) writeArray(ctx context.Context, mod wasm.Module, typ *met
 		}
 	}
 
-	// write array object
-	const size = 16
-	offset, err = wa.allocateWasmMemory(ctx, mod, size, typ.Id)
+	def, err := wa.typeInfo.GetTypeDefinition(ctx, typ)
 	if err != nil {
 		return 0, err
 	}
 
-	mem := mod.Memory()
+	// write array object
+	const size = 16
+	offset, err = wa.allocateWasmMemory(ctx, size, def.Id)
+	if err != nil {
+		return 0, err
+	}
+
+	mem := wa.mod.Memory()
 	ok := mem.WriteUint32Le(offset, bufferOffset)
 	if !ok {
 		return 0, fmt.Errorf("failed to write array buffer pointer")

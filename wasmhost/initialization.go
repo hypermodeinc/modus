@@ -11,18 +11,19 @@ import (
 	"hmruntime/utils"
 
 	"github.com/rs/zerolog"
-	"github.com/tetratelabs/wazero"
 )
 
-func InitWasmHost(ctx context.Context) {
+// TODO: refactor to remove global
+
+var GlobalWasmHost *WasmHost
+
+func InitWasmHost(ctx context.Context, opts ...func(*WasmHost) error) {
 	span := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
 
 	configureLogger()
 
-	cfg := wazero.NewRuntimeConfig()
-	cfg = cfg.WithCloseOnContextDone(true)
-	RuntimeInstance = wazero.NewRuntimeWithConfig(ctx, cfg)
+	GlobalWasmHost = NewWasmHost(ctx, opts...)
 }
 
 func configureLogger() {

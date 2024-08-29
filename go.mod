@@ -29,6 +29,7 @@ require (
 	github.com/rs/cors v1.11.0
 	github.com/rs/xid v1.6.0
 	github.com/rs/zerolog v1.33.0
+	github.com/spf13/cast v1.7.0
 	github.com/stretchr/testify v1.9.0
 	github.com/tetratelabs/wazero v1.8.0
 	github.com/viterin/vek v0.4.2

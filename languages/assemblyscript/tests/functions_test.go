@@ -2,12 +2,14 @@
  * Copyright 2024 Hypermode, Inc.
  */
 
-package assemblyscript
+package assemblyscript_test
 
 import (
 	"context"
-	"hmruntime/plugins/metadata"
 	"testing"
+
+	"hmruntime/languages/assemblyscript"
+	"hmruntime/plugins/metadata"
 
 	"github.com/stretchr/testify/require"
 	"github.com/tetratelabs/wazero/api"
@@ -39,8 +41,9 @@ func (m *MockModule) IsClosed() bool                                            
 func (m *MockModule) Close(ctx context.Context) error                                { return m.CloseWithExitCode(ctx, 0) }
 
 func Test_GetParameters(t *testing.T) {
+	t.Parallel()
 
-	adapter := &wasmAdapter{}
+	wa := assemblyscript.NewWasmAdapter(&MockModule{})
 
 	makeDefault := func(val any) *any {
 		return &val
@@ -54,8 +57,7 @@ func Test_GetParameters(t *testing.T) {
 
 	// no parameters supplied
 	parameters := make(map[string]any)
-	mockModule := &MockModule{}
-	params, _, err := adapter.getParameters(context.Background(), mockModule, paramInfo, parameters)
+	params, _, err := wa.GetParameters(context.Background(), paramInfo, parameters)
 	require.NoError(t, err)
 	require.Equal(t, uint64(0), params[0])
 	require.Equal(t, uint64(1), params[1])
@@ -64,8 +66,7 @@ func Test_GetParameters(t *testing.T) {
 	// only first parameter supplied
 	parameters = make(map[string]any)
 	parameters["x"] = 100
-	mockModule = &MockModule{}
-	params, _, err = adapter.getParameters(context.Background(), mockModule, paramInfo, parameters)
+	params, _, err = wa.GetParameters(context.Background(), paramInfo, parameters)
 	require.NoError(t, err)
 	require.Equal(t, uint64(100), params[0])
 	require.Equal(t, uint64(1), params[1])
@@ -74,8 +75,7 @@ func Test_GetParameters(t *testing.T) {
 	// only second parameter supplied
 	parameters = make(map[string]any)
 	parameters["y"] = 100
-	mockModule = &MockModule{}
-	params, _, err = adapter.getParameters(context.Background(), mockModule, paramInfo, parameters)
+	params, _, err = wa.GetParameters(context.Background(), paramInfo, parameters)
 	require.NoError(t, err)
 	require.Equal(t, uint64(0), params[0])
 	require.Equal(t, uint64(100), params[1])

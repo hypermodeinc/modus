@@ -16,7 +16,7 @@ import (
 	"hmruntime/utils"
 )
 
-func HttpFetch(ctx context.Context, request HttpRequest) (*HttpResponse, error) {
+func HttpFetch(ctx context.Context, request *HttpRequest) (*HttpResponse, error) {
 	host, err := hosts.GetHttpHostForUrl(request.Url)
 	if err != nil {
 		return nil, err
@@ -28,8 +28,10 @@ func HttpFetch(ctx context.Context, request HttpRequest) (*HttpResponse, error) 
 		return nil, err
 	}
 
-	for _, header := range request.Headers.Data {
-		req.Header[header.Name] = header.Values
+	if request.Headers != nil {
+		for _, header := range request.Headers.Data {
+			req.Header[header.Name] = header.Values
+		}
 	}
 
 	if err := secrets.ApplyHostSecretsToHttpRequest(ctx, host, req); err != nil {
@@ -49,9 +51,9 @@ func HttpFetch(ctx context.Context, request HttpRequest) (*HttpResponse, error) 
 		return nil, err
 	}
 
-	headers := make(map[string]HttpHeader, len(resp.Header))
+	headers := make(map[string]*HttpHeader, len(resp.Header))
 	for name, values := range resp.Header {
-		header := HttpHeader{
+		header := &HttpHeader{
 			Name:   name,
 			Values: values,
 		}
@@ -61,7 +63,7 @@ func HttpFetch(ctx context.Context, request HttpRequest) (*HttpResponse, error) 
 	response := &HttpResponse{
 		Status:     uint16(resp.StatusCode),
 		StatusText: resp.Status[4:], // Remove the status code from the status text.
-		Headers:    HttpHeaders{Data: headers},
+		Headers:    &HttpHeaders{Data: headers},
 		Body:       content,
 	}
 

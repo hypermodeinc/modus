@@ -15,8 +15,6 @@ import (
 	"hmruntime/plugins"
 	"hmruntime/utils"
 	"hmruntime/wasmhost"
-
-	wasm "github.com/tetratelabs/wazero/api"
 )
 
 func UpsertToCollection(ctx context.Context, collectionName, namespace string, keys, texts []string, labels [][]string) (*CollectionMutationResult, error) {
@@ -136,17 +134,17 @@ func validateEmbedder(ctx context.Context, embedder string) error {
 	lti := plugins.GetPlugin(ctx).Language.TypeInfo()
 
 	p := fn.Parameters[0]
-	if !lti.IsArrayType(p.Type) || !lti.IsStringType(lti.GetArraySubtype(p.Type)) {
+	if !lti.IsListType(p.Type) || !lti.IsStringType(lti.GetListSubtype(p.Type)) {
 		return errInvalidEmbedderSignature
 	}
 
 	r := fn.Results[0]
-	if !lti.IsArrayType(r.Type) {
+	if !lti.IsListType(r.Type) {
 		return errInvalidEmbedderSignature
 	}
 
-	a := lti.GetArraySubtype(r.Type)
-	if !lti.IsArrayType(a) || !lti.IsFloatType(lti.GetArraySubtype(a)) {
+	a := lti.GetListSubtype(r.Type)
+	if !lti.IsListType(a) || !lti.IsFloatType(lti.GetListSubtype(a)) {
 		return errInvalidEmbedderSignature
 	}
 
@@ -569,7 +567,7 @@ func ComputeDistance(ctx context.Context, collectionName, namespace, searchMetho
 	}, nil
 }
 
-func RecomputeSearchMethod(ctx context.Context, mod wasm.Module, collectionName, namespace, searchMethod string) (*SearchMethodMutationResult, error) {
+func RecomputeSearchMethod(ctx context.Context, collectionName, namespace, searchMethod string) (*SearchMethodMutationResult, error) {
 
 	collection, err := GlobalNamespaceManager.FindCollection(ctx, collectionName)
 	if err != nil {
@@ -595,7 +593,7 @@ func RecomputeSearchMethod(ctx context.Context, mod wasm.Module, collectionName,
 		return nil, err
 	}
 
-	err = ProcessTextMapWithModule(ctx, mod, collNs, embedder, vectorIndex)
+	err = ProcessTextMap(ctx, collNs, embedder, vectorIndex)
 	if err != nil {
 		return nil, err
 	}

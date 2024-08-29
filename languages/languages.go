@@ -8,12 +8,16 @@ import (
 	"strings"
 
 	"hmruntime/languages/assemblyscript"
+
+	wasm "github.com/tetratelabs/wazero/api"
 )
 
 var lang_AssemblyScript = &language{
-	name:        assemblyscript.LanguageName,
-	typeInfo:    assemblyscript.TypeInfo(),
-	wasmAdapter: assemblyscript.WasmAdapter(),
+	name:     assemblyscript.LanguageName,
+	typeInfo: assemblyscript.TypeInfo(),
+	wasmAdapterFactory: func(mod wasm.Module) WasmAdapter {
+		return assemblyscript.NewWasmAdapter(mod)
+	},
 }
 
 func AssemblyScript() Language {

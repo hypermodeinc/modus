@@ -5,6 +5,8 @@
 package utils
 
 import (
+	"errors"
+	"fmt"
 	"os"
 	"strconv"
 	"strings"
@@ -28,22 +30,6 @@ func If[T any](condition bool, trueVal, falseVal T) T {
 		return trueVal
 	}
 	return falseVal
-}
-
-func MapKeys[M ~map[K]V, K comparable, V any](m M) []K {
-	r := make([]K, 0, len(m))
-	for k := range m {
-		r = append(r, k)
-	}
-	return r
-}
-
-func MapValues[M ~map[K]V, K comparable, V any](m M) []V {
-	r := make([]V, 0, len(m))
-	for _, v := range m {
-		r = append(r, v)
-	}
-	return r
 }
 
 func EnvVarFlagEnabled(envVarName string) bool {
@@ -70,4 +56,19 @@ func TrimStringBefore(s string, sep string) string {
 
 func GenerateUUIDv7() string {
 	return uuid.Must(uuid.NewV7()).String()
+}
+
+func ConvertToError(e any) error {
+	if e == nil {
+		return nil
+	}
+
+	switch e := e.(type) {
+	case error:
+		return e
+	case string:
+		return errors.New(e)
+	default:
+		return fmt.Errorf("%v", e)
+	}
 }

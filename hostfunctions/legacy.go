@@ -5,127 +5,36 @@
 package hostfunctions
 
 import (
-	"context"
 	"fmt"
 
-	"hmruntime/logger"
 	"hmruntime/models/legacymodels"
-
-	wasm "github.com/tetratelabs/wazero/api"
 )
 
 func init() {
-	addHostFunction("invokeClassifier", hostInvokeClassifier, withI32Params(2), withI32Result())
-	addHostFunction("computeEmbedding", hostComputeEmbedding, withI32Params(2), withI32Result())
-	addHostFunction("invokeTextGenerator", hostInvokeTextGenerator, withI32Params(4), withI32Result())
-}
+	registerHostFunction("hypermode", "invokeClassifier", legacymodels.InvokeClassifier,
+		withStartingMessage("Invoking model."),
+		withCompletedMessage("Completed model invocation."),
+		withCancelledMessage("Cancelled model invocation."),
+		withErrorMessage("Error invoking model."),
+		withMessageDetail(func(modelName string) string {
+			return fmt.Sprintf("Model: %s", modelName)
+		}))
 
-func hostInvokeClassifier(ctx context.Context, mod wasm.Module, stack []uint64) {
+	registerHostFunction("hypermode", "computeEmbedding", legacymodels.ComputeEmbedding,
+		withStartingMessage("Invoking model."),
+		withCompletedMessage("Completed model invocation."),
+		withCancelledMessage("Cancelled model invocation."),
+		withErrorMessage("Error invoking model."),
+		withMessageDetail(func(modelName string) string {
+			return fmt.Sprintf("Model: %s", modelName)
+		}))
 
-	// Read input parameters
-	var modelName string
-	var sentenceMap map[string]string
-	if err := readParams(ctx, mod, stack, &modelName, &sentenceMap); err != nil {
-		logger.Err(ctx, err).Msg("Error reading input parameters.")
-		return
-	}
-
-	// Prepare log messages
-	msgs := &hostFunctionMessages{
-		Starting:  "Invoking model.",
-		Completed: "Completed model invocation.",
-		Cancelled: "Cancelled model invocation.",
-		Error:     "Error invoking model.",
-		Detail:    fmt.Sprintf("Model: %s", modelName),
-	}
-
-	// Prepare the host function
-	var resultMap map[string]map[string]float32
-	fn := func() (err error) {
-		resultMap, err = legacymodels.InvokeClassifier(ctx, modelName, sentenceMap)
-		return err
-	}
-
-	// Call the host function
-	if ok := callHostFunction(ctx, fn, msgs); !ok {
-		return
-	}
-
-	// Write the results
-	if err := writeResults(ctx, mod, stack, resultMap); err != nil {
-		logger.Err(ctx, err).Msg("Error writing results to wasm memory.")
-	}
-}
-
-func hostComputeEmbedding(ctx context.Context, mod wasm.Module, stack []uint64) {
-
-	// Read input parameters
-	var modelName string
-	var sentenceMap map[string]string
-	if err := readParams(ctx, mod, stack, &modelName, &sentenceMap); err != nil {
-		logger.Err(ctx, err).Msg("Error reading input parameters.")
-		return
-	}
-
-	// Prepare log messages
-	msgs := &hostFunctionMessages{
-		Starting:  "Invoking model.",
-		Completed: "Completed model invocation.",
-		Cancelled: "Cancelled model invocation.",
-		Error:     "Error invoking model.",
-		Detail:    fmt.Sprintf("Model: %s", modelName),
-	}
-
-	// Prepare the host function
-	var result map[string][]float64
-	fn := func() (err error) {
-		result, err = legacymodels.ComputeEmbedding(ctx, modelName, sentenceMap)
-		return err
-	}
-
-	// Call the host function
-	if ok := callHostFunction(ctx, fn, msgs); !ok {
-		return
-	}
-
-	// Write the results
-	if err := writeResults(ctx, mod, stack, result); err != nil {
-		logger.Err(ctx, err).Msg("Error writing results to wasm memory.")
-	}
-}
-
-func hostInvokeTextGenerator(ctx context.Context, mod wasm.Module, stack []uint64) {
-
-	// Read input parameters
-	var modelName, instruction, sentence, format string
-	if err := readParams(ctx, mod, stack, &modelName, &instruction, &sentence, &format); err != nil {
-		logger.Err(ctx, err).Msg("Error reading input parameters.")
-		return
-	}
-
-	// Prepare log messages
-	msgs := &hostFunctionMessages{
-		Starting:  "Invoking model.",
-		Completed: "Completed model invocation.",
-		Cancelled: "Cancelled model invocation.",
-		Error:     "Error invoking model.",
-		Detail:    fmt.Sprintf("Model: %s", modelName),
-	}
-
-	// Prepare the host function
-	var content string
-	fn := func() (err error) {
-		content, err = legacymodels.InvokeTextGenerator(ctx, modelName, format, instruction, sentence)
-		return err
-	}
-
-	// Call the host function
-	if ok := callHostFunction(ctx, fn, msgs); !ok {
-		return
-	}
-
-	// Write the results
-	if err := writeResults(ctx, mod, stack, content); err != nil {
-		logger.Err(ctx, err).Msg("Error writing results to wasm memory.")
-	}
+	registerHostFunction("hypermode", "invokeTextGenerator", legacymodels.InvokeTextGenerator,
+		withStartingMessage("Invoking model."),
+		withCompletedMessage("Completed model invocation."),
+		withCancelledMessage("Cancelled model invocation."),
+		withErrorMessage("Error invoking model."),
+		withMessageDetail(func(modelName string) string {
+			return fmt.Sprintf("Model: %s", modelName)
+		}))
 }
