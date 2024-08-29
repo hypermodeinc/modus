@@ -59,7 +59,7 @@ type TypeInfo interface {
 type WasmAdapter interface {
 	InvokeFunction(ctx context.Context, function *metadata.Function, parameters map[string]any) (any, error)
 	EncodeData(ctx context.Context, typ string, data any) ([]uint64, utils.Cleaner, error)
-	DecodeData(ctx context.Context, typ string, vals []uint64, data any) error
+	DecodeData(ctx context.Context, typ string, vals []uint64, pData *any) error
 	GetEncodingLength(ctx context.Context, typ string) (int, error)
 }
 

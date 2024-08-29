@@ -176,8 +176,14 @@ func (ti *typeInfoProvider) GetTypeDefinition(ctx context.Context, typ string) (
 	return def, nil
 }
 
-func (ti *typeInfoProvider) getAssemblyScriptType(t reflect.Type) (string, error) {
-	switch t.Kind() {
+func (ti *typeInfoProvider) getAssemblyScriptType(rt reflect.Type, customTypes map[reflect.Type]string) (string, error) {
+	if customTypes != nil {
+		if typ, ok := customTypes[rt]; ok {
+			return typ, nil
+		}
+	}
+
+	switch rt.Kind() {
 	case reflect.Bool:
 		return "bool", nil
 	case reflect.Int:
@@ -208,13 +214,13 @@ func (ti *typeInfoProvider) getAssemblyScriptType(t reflect.Type) (string, error
 		return "~lib/string/String", nil
 
 	case reflect.Slice:
-		if t.Elem().Kind() == reflect.Uint8 {
+		if rt.Elem().Kind() == reflect.Uint8 {
 			return "~lib/arraybuffer/ArrayBuffer", nil
 		}
 
 		// TODO: should we use Uint8Array and other typed array buffers?
 
-		elemType, err := ti.getAssemblyScriptType(t.Elem())
+		elemType, err := ti.getAssemblyScriptType(rt.Elem(), customTypes)
 		if err != nil {
 			return "", err
 		}
@@ -222,12 +228,12 @@ func (ti *typeInfoProvider) getAssemblyScriptType(t reflect.Type) (string, error
 		return "~lib/array/Array<" + elemType + ">", nil
 
 	case reflect.Map:
-		keyType, err := ti.getAssemblyScriptType(t.Key())
+		keyType, err := ti.getAssemblyScriptType(rt.Key(), customTypes)
 		if err != nil {
 			return "", err
 		}
 
-		valueType, err := ti.getAssemblyScriptType(t.Elem())
+		valueType, err := ti.getAssemblyScriptType(rt.Elem(), customTypes)
 		if err != nil {
 			return "", err
 		}
@@ -235,10 +241,10 @@ func (ti *typeInfoProvider) getAssemblyScriptType(t reflect.Type) (string, error
 		return "~lib/map/Map<" + keyType + "," + valueType + ">", nil
 
 	case reflect.Ptr:
-		return ti.getAssemblyScriptType(t.Elem())
+		return ti.getAssemblyScriptType(rt.Elem(), customTypes)
 
 	case reflect.Struct:
-		id := t.PkgPath() + "." + t.Name()
+		id := rt.PkgPath() + "." + rt.Name()
 		typ, found := hostTypes[id]
 		if found {
 			return typ, nil
@@ -247,7 +253,7 @@ func (ti *typeInfoProvider) getAssemblyScriptType(t reflect.Type) (string, error
 		return "", fmt.Errorf("struct missing from host types map: %s", id)
 	}
 
-	return "", fmt.Errorf("unsupported type kind %s", t.Kind())
+	return "", fmt.Errorf("unsupported type kind %s", rt.Kind())
 }
 
 func (ti *typeInfoProvider) getReflectedType(typ string, customTypes map[string]reflect.Type) (reflect.Type, error) {

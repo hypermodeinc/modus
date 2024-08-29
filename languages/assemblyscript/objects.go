@@ -15,6 +15,10 @@ import (
 )
 
 func (wa *wasmAdapter) readObject(ctx context.Context, typ string, offset uint32) (data any, err error) {
+	if offset == 0 {
+		return nil, nil
+	}
+
 	switch typ {
 	case "~lib/arraybuffer/ArrayBuffer":
 		return wa.readBytes(offset)

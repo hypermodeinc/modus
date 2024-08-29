@@ -22,16 +22,27 @@ import (
 )
 
 type WasmTestFixture struct {
-	Context     context.Context
-	WasmHost    *wasmhost.WasmHost
-	Plugin      *plugins.Plugin
-	Buffers     *utils.OutputBuffers
-	Module      wasm.Module
-	CustomTypes map[string]reflect.Type
+	Context        context.Context
+	WasmHost       *wasmhost.WasmHost
+	Plugin         *plugins.Plugin
+	Buffers        *utils.OutputBuffers
+	Module         wasm.Module
+	customTypes    map[string]reflect.Type
+	customTypesRev map[reflect.Type]string
 }
 
 func (f *WasmTestFixture) Close() {
 	f.WasmHost.Close(f.Context)
+}
+
+func (f *WasmTestFixture) AddCustomType(name string, typ reflect.Type) {
+	if f.customTypes == nil {
+		f.customTypes = make(map[string]reflect.Type)
+		f.customTypesRev = make(map[reflect.Type]string)
+	}
+
+	f.customTypes[name] = typ
+	f.customTypesRev[typ] = name
 }
 
 func (f *WasmTestFixture) InvokeFunction(name string, paramValues ...any) (any, error) {
@@ -45,7 +56,8 @@ func (f *WasmTestFixture) InvokeFunction(name string, paramValues ...any) (any, 
 		return nil, err
 	}
 
-	ctx := context.WithValue(f.Context, utils.CustomTypesContextKey, f.CustomTypes)
+	ctx := context.WithValue(f.Context, utils.CustomTypesContextKey, f.customTypes)
+	ctx = context.WithValue(ctx, utils.CustomTypesRevContextKey, f.customTypesRev)
 
 	info, err := f.WasmHost.InvokeFunction(ctx, f.Plugin, fn, params)
 	if err != nil {
@@ -89,14 +101,11 @@ func NewWasmTestFixture(wasmFilePath string, t *testing.T, hostOpts ...func(*was
 		panic(err)
 	}
 
-	customTypes := make(map[string]reflect.Type)
-
 	return &WasmTestFixture{
-		Context:     ctx,
-		WasmHost:    host,
-		Plugin:      plugin,
-		Buffers:     buffers,
-		Module:      mod,
-		CustomTypes: customTypes,
+		Context:  ctx,
+		WasmHost: host,
+		Plugin:   plugin,
+		Buffers:  buffers,
+		Module:   mod,
 	}
 }

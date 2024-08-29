@@ -19,8 +19,8 @@ import (
 	wasm "github.com/tetratelabs/wazero/api"
 )
 
-var rtContext = reflect.TypeOf((*context.Context)(nil)).Elem()
-var rtError = reflect.TypeOf((*error)(nil)).Elem()
+var rtContext = reflect.TypeFor[context.Context]()
+var rtError = reflect.TypeFor[error]()
 
 type hfMessages struct {
 	msgStarting  string
@@ -212,34 +212,21 @@ func newHostFunction(modName, funcName string, fn any, opts ...func(*HostFunctio
 				continue
 			}
 			rtParam := rtFunc.In(i)
-			var rvParam reflect.Value
-			if rtParam.Kind() == reflect.Ptr {
-				rvParam = reflect.New(rtParam.Elem())
-			} else {
-				rvParam = reflect.New(rtParam)
-			}
+			rvParam := reflect.New(rtParam).Elem()
 			params = append(params, rvParam.Interface())
 		}
-		if err := decodeParams(ctx, fnMeta, stack, params...); err != nil {
+		if err := decodeParams(ctx, fnMeta, stack, params); err != nil {
 			logger.Err(ctx, err).Msg("Error decoding input parameters.")
 			return
 		}
 
 		// prepare the input parameters
 		inputs := make([]reflect.Value, 0, numParams)
-		i := 0
 		if hasContextParam {
 			inputs = append(inputs, reflect.ValueOf(ctx))
-			i++
 		}
 		for _, param := range params {
-			rtParam := rtFunc.In(i)
-			if rtParam.Kind() == reflect.Ptr {
-				inputs = append(inputs, reflect.ValueOf(param))
-			} else {
-				inputs = append(inputs, reflect.ValueOf(param).Elem())
-			}
-			i++
+			inputs = append(inputs, reflect.ValueOf(param))
 		}
 
 		// Prepare to call the host function
@@ -286,7 +273,7 @@ func newHostFunction(modName, funcName string, fn any, opts ...func(*HostFunctio
 
 		// Encode the results (if there are any)
 		if len(results) > 0 {
-			if err := encodeResults(ctx, fnMeta, stack, results...); err != nil {
+			if err := encodeResults(ctx, fnMeta, stack, results); err != nil {
 				logger.Err(ctx, err).Msg("Error encoding results.")
 			}
 		}
@@ -320,7 +307,7 @@ func (host *WasmHost) instantiateHostFunctions(ctx context.Context) error {
 	return nil
 }
 
-func decodeParams(ctx context.Context, fn *metadata.Function, stack []uint64, params ...any) error {
+func decodeParams(ctx context.Context, fn *metadata.Function, stack []uint64, params []any) error {
 
 	// regardless of the outcome, ensure parameter values are cleared from the stack before returning
 	indirect := false
@@ -384,7 +371,7 @@ func decodeParams(ctx context.Context, fn *metadata.Function, stack []uint64, pa
 		}
 	}
 
-	for i, p := range params {
+	for i := 0; i < len(params); i++ {
 		// get values from the stack
 		encLength := encLengths[i]
 		vals := stack[stackPos : stackPos+encLength]
@@ -395,7 +382,7 @@ func decodeParams(ctx context.Context, fn *metadata.Function, stack []uint64, pa
 		if fn != nil {
 			typ = fn.Parameters[i].Type
 		}
-		if err := wa.DecodeData(ctx, typ, vals, p); err != nil {
+		if err := wa.DecodeData(ctx, typ, vals, &params[i]); err != nil {
 			return err
 		}
 	}
@@ -403,7 +390,7 @@ func decodeParams(ctx context.Context, fn *metadata.Function, stack []uint64, pa
 	return nil
 }
 
-func encodeResults(ctx context.Context, fn *metadata.Function, stack []uint64, results ...any) error {
+func encodeResults(ctx context.Context, fn *metadata.Function, stack []uint64, results []any) error {
 
 	if fn != nil {
 		expected := len(fn.Results)

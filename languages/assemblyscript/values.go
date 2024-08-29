@@ -21,7 +21,7 @@ func (wa *wasmAdapter) EncodeData(ctx context.Context, typ string, data any) ([]
 	// TODO: eventually remove this
 	if typ == "" {
 		rt := reflect.TypeOf(data)
-		if t, err := wa.typeInfo.getAssemblyScriptType(rt); err != nil {
+		if t, err := wa.getAssemblyScriptType(ctx, rt); err != nil {
 			return nil, nil, err
 		} else {
 			typ = t
@@ -198,7 +198,7 @@ func (wa *wasmAdapter) doEncodeValue(ctx context.Context, typ string, data any, 
 	return uint64(offset), nil
 }
 
-func (wa *wasmAdapter) DecodeData(ctx context.Context, typ string, vals []uint64, pData any) error {
+func (wa *wasmAdapter) DecodeData(ctx context.Context, typ string, vals []uint64, pData *any) error {
 	if len(vals) == 0 {
 		return nil
 	}
@@ -209,17 +209,12 @@ func (wa *wasmAdapter) DecodeData(ctx context.Context, typ string, vals []uint64
 		return nil
 	}
 
-	rv := reflect.ValueOf(pData)
-	if rv.Kind() != reflect.Ptr {
-		return fmt.Errorf("expected pointer, got %T", pData)
-	}
-	rvElem := rv.Elem()
-
 	// support older SDKs that don't pass the type
 	// TODO: eventually remove this
+	var rt reflect.Type
 	if typ == "" {
-		rt := rvElem.Type()
-		if t, err := wa.typeInfo.getAssemblyScriptType(rt); err != nil {
+		rt = reflect.TypeOf(*pData)
+		if t, err := wa.getAssemblyScriptType(ctx, rt); err != nil {
 			return err
 		} else {
 			typ = t
@@ -231,26 +226,14 @@ func (wa *wasmAdapter) DecodeData(ctx context.Context, typ string, vals []uint64
 		return err
 	}
 
-	if rvElem.Kind() == reflect.Struct {
-		if m, ok := data.(map[string]any); ok {
-			if err := utils.MapToStruct(m, rv.Interface()); err != nil {
-				return err
-			}
-			return nil
+	if m, ok := data.(map[string]any); ok {
+		if _, ok := (*pData).(map[string]any); !ok {
+			return utils.MapToStruct(m, pData)
 		}
 	}
 
-	rd := reflect.ValueOf(data)
-	if rd.Type().AssignableTo(rvElem.Type()) {
-		rvElem.Set(rd)
-		return nil
-	}
-
-	return fmt.Errorf("expected %s, got %s", rvElem.Type(), rd.Type())
-}
-
-func (wa *wasmAdapter) decodeValueForResult(ctx context.Context, typ string, val uint64) (data any, err error) {
-	return wa.decodeValue(ctx, typ, val)
+	*pData = data
+	return nil
 }
 
 func (wa *wasmAdapter) decodeValue(ctx context.Context, typ string, val uint64) (data any, err error) {

@@ -6,6 +6,7 @@ package assemblyscript_test
 
 import (
 	"context"
+	"reflect"
 	"testing"
 
 	"hmruntime/testutils"
@@ -23,6 +24,9 @@ func getTestHostFunctionRegistrations() []func(*wasmhost.WasmHost) error {
 		func(host *wasmhost.WasmHost) error {
 			return host.RegisterHostFunction("test", "echo", hostEcho)
 		},
+		func(host *wasmhost.WasmHost) error {
+			return host.RegisterHostFunction("test", "echoObject", hostEchoObject)
+		},
 	}
 }
 
@@ -36,8 +40,22 @@ func hostAdd(a, b int32) int32 {
 	return a + b
 }
 
-func hostEcho(s *string) string {
-	return "echo: " + *s
+func hostEcho(s string) string {
+	return "echo: " + s
+}
+
+func hostEchoObject(obj *TestHostObject) *TestHostObject {
+	return &TestHostObject{
+		A: obj.A + 1,
+		B: !obj.B,
+		C: obj.C + "!",
+	}
+}
+
+type TestHostObject struct {
+	A int32
+	B bool
+	C string
 }
 
 func TestHostFn_add(t *testing.T) {
@@ -78,5 +96,39 @@ func TestHostFn_echo(t *testing.T) {
 		t.Errorf("expected a string, got %T", result)
 	} else if r != expected {
 		t.Errorf("expected %s, got %s", expected, r)
+	}
+}
+
+func TestHostFn_echoObject(t *testing.T) {
+	t.Parallel()
+
+	f := NewASWasmTestFixture(t)
+	defer f.Close()
+
+	f.AddCustomType("assembly/hostfns/TestHostObject", reflect.TypeFor[TestHostObject]())
+
+	o := &TestHostObject{
+		A: 1,
+		B: true,
+		C: "hello",
+	}
+
+	result, err := f.InvokeFunction("echoObject", o)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expected := map[string]any{
+		"A": int32(2),
+		"B": false,
+		"C": "hello!",
+	}
+
+	if result == nil {
+		t.Error("expected a result")
+	} else if r, ok := result.(map[string]any); !ok {
+		t.Errorf("expected a map[string]any, got %T", result)
+	} else if reflect.DeepEqual(expected, r) {
+		t.Errorf("expected %+v, got %+v", expected, r)
 	}
 }

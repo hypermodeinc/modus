@@ -47,7 +47,7 @@ func (wa *wasmAdapter) InvokeFunction(ctx context.Context, function *metadata.Fu
 
 	// Get the result
 	resultType := function.Results[0].Type
-	if result, err := wa.decodeValueForResult(ctx, resultType, res[0]); err != nil {
+	if result, err := wa.decodeValue(ctx, resultType, res[0]); err != nil {
 		return nil, fmt.Errorf("function result is invalid: %w", err)
 	} else {
 		return result, nil

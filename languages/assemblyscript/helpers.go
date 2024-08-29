@@ -61,3 +61,11 @@ func (wa *wasmAdapter) getReflectedType(ctx context.Context, typ string) (reflec
 		return wa.typeInfo.getReflectedType(typ, nil)
 	}
 }
+
+func (wa *wasmAdapter) getAssemblyScriptType(ctx context.Context, t reflect.Type) (string, error) {
+	if customTypes, ok := ctx.Value(utils.CustomTypesRevContextKey).(map[reflect.Type]string); ok {
+		return wa.typeInfo.getAssemblyScriptType(t, customTypes)
+	} else {
+		return wa.typeInfo.getAssemblyScriptType(t, nil)
+	}
+}
