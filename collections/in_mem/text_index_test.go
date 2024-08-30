@@ -1,3 +1,7 @@
+/*
+ * Copyright 2024 Hypermode, Inc.
+ */
+
 package in_mem
 
 import (
@@ -34,17 +38,17 @@ func TestMultipleInMemCollections(t *testing.T) {
 			}
 
 			// Create a new InMemCollection
-			collection := NewCollectionNamespace("collection"+fmt.Sprint(i), "")
+			col := NewCollectionNamespace("collection"+fmt.Sprint(i), "")
 
 			// Insert the texts into the collection
-			err := collection.InsertTextsToMemory(ctx, ids, keys, texts, labels)
+			err := col.InsertTextsToMemory(ctx, ids, keys, texts, labels)
 			if err != nil {
 				t.Errorf("Failed to insert texts into collection: %v", err)
 			}
 
 			// Verify the texts were inserted correctly
 			for j, key := range keys {
-				text, err := collection.GetText(ctx, key)
+				text, err := col.GetText(ctx, key)
 				if err != nil {
 					t.Errorf("Failed to get text from collection: %v", err)
 				}
@@ -53,7 +57,7 @@ func TestMultipleInMemCollections(t *testing.T) {
 				}
 
 				// Verify the external ID
-				extID, err := collection.GetExternalId(ctx, key)
+				extID, err := col.GetExternalId(ctx, key)
 				if err != nil {
 					t.Errorf("Failed to get external ID from collection: %v", err)
 				}
@@ -63,7 +67,7 @@ func TestMultipleInMemCollections(t *testing.T) {
 			}
 
 			// Verify the checkpoint ID
-			chkID, err := collection.GetCheckpointId(ctx)
+			chkID, err := col.GetCheckpointId(ctx)
 			if err != nil {
 				t.Errorf("Failed to get checkpoint ID from collection: %v", err)
 			}

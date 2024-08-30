@@ -1,13 +1,17 @@
+/*
+ * Copyright 2024 Hypermode, Inc.
+ */
+
 package in_mem
 
 import (
 	"context"
 	"fmt"
+	"sync"
 
 	"hypruntime/collections/index"
 	"hypruntime/collections/index/interfaces"
 	"hypruntime/db"
-	"sync"
 )
 
 const DefaultNamespace = ""

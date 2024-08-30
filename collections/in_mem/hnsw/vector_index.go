@@ -1,15 +1,20 @@
+/*
+ * Copyright 2024 Hypermode, Inc.
+ */
+
 package hnsw
 
 import (
 	"container/heap"
 	"context"
 	"fmt"
+	"slices"
+	"sync"
+
 	"hypruntime/collections/index"
 	"hypruntime/collections/utils"
 	"hypruntime/db"
 	"hypruntime/hnsw"
-	"slices"
-	"sync"
 )
 
 const (

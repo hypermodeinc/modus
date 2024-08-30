@@ -1,13 +1,18 @@
+/*
+ * Copyright 2024 Hypermode, Inc.
+ */
+
 package sequential
 
 import (
 	"container/heap"
 	"context"
 	"fmt"
+	"sync"
+
 	"hypruntime/collections/index"
 	"hypruntime/collections/utils"
 	"hypruntime/db"
-	"sync"
 )
 
 const (

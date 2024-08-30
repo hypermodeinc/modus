@@ -1,11 +1,16 @@
+/*
+ * Copyright 2024 Hypermode, Inc.
+ */
+
 package hnsw
 
 import (
 	"context"
 	"fmt"
-	"hypruntime/collections/utils"
 	"sync"
 	"testing"
+
+	"hypruntime/collections/utils"
 )
 
 func TestMultipleSequentialVectorIndexes(t *testing.T) {
