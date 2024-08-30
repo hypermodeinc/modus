@@ -211,9 +211,8 @@ func (wa *wasmAdapter) DecodeData(ctx context.Context, typ string, vals []uint64
 
 	// support older SDKs that don't pass the type
 	// TODO: eventually remove this
-	var rt reflect.Type
 	if typ == "" {
-		rt = reflect.TypeOf(*pData)
+		rt := reflect.TypeOf(*pData)
 		if t, err := wa.getAssemblyScriptType(ctx, rt); err != nil {
 			return err
 		} else {
