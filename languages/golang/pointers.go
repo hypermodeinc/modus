@@ -83,7 +83,11 @@ func (wa *wasmAdapter) doWritePointer(ctx context.Context, typ string, obj any) 
 	// dereference the pointer (if necessary)
 	rv := reflect.ValueOf(obj)
 	if rv.Kind() == reflect.Ptr {
-		obj = rv.Elem().Interface()
+		if rv.IsNil() {
+			return 0, nil, nil
+		} else {
+			obj = rv.Elem().Interface()
+		}
 	}
 
 	// get the underlying type
