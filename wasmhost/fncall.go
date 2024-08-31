@@ -14,59 +14,76 @@ import (
 	"hypruntime/functions"
 	"hypruntime/logger"
 	"hypruntime/metrics"
-	"hypruntime/plugins"
-	"hypruntime/plugins/metadata"
 	"hypruntime/utils"
 
 	"github.com/rs/xid"
 	"github.com/tetratelabs/wazero/sys"
 )
 
-type ExecutionInfo struct {
-	ExecutionId string
-	Buffers     *utils.OutputBuffers
-	Messages    []utils.LogMessage
-	Result      any
+type ExecutionInfo interface {
+	ExecutionId() string
+	Buffers() utils.OutputBuffers
+	Messages() []utils.LogMessage
+	Result() any
 }
 
-func CallFunction(ctx context.Context, fnName string, paramValues ...any) (*ExecutionInfo, error) {
-	return GlobalWasmHost.CallFunction(ctx, fnName, paramValues...)
+type executionInfo struct {
+	executionId string
+	buffers     utils.OutputBuffers
+	messages    []utils.LogMessage
+	result      any
 }
 
-func (host *WasmHost) CallFunction(ctx context.Context, fnName string, paramValues ...any) (*ExecutionInfo, error) {
-	function, plugin, err := functions.GetFunctionAndPlugin(fnName)
+func (e *executionInfo) ExecutionId() string {
+	return e.executionId
+}
+
+func (e *executionInfo) Buffers() utils.OutputBuffers {
+	return e.buffers
+}
+
+func (e *executionInfo) Messages() []utils.LogMessage {
+	return e.messages
+}
+
+func (e *executionInfo) Result() any {
+	return e.result
+}
+
+func CallFunction(ctx context.Context, fnName string, paramValues ...any) (ExecutionInfo, error) {
+	return GetWasmHost(ctx).CallFunctionByName(ctx, fnName, paramValues...)
+}
+
+func (host *wasmHost) CallFunctionByName(ctx context.Context, fnName string, paramValues ...any) (ExecutionInfo, error) {
+	info, err := host.fnRegistry.GetFunctionInfo(fnName)
 	if err != nil {
 		return nil, err
 	}
 
-	parameters, err := functions.CreateParametersMap(function, paramValues...)
+	fn := info.Metadata()
+	parameters, err := functions.CreateParametersMap(fn, paramValues...)
 	if err != nil {
 		return nil, err
 	}
 
-	return host.InvokeFunction(ctx, plugin, function, parameters)
+	return host.CallFunction(ctx, info, parameters)
 }
 
-func (host *WasmHost) CallFunctionWithParametersMap(ctx context.Context, fnName string, parameters map[string]any) (*ExecutionInfo, error) {
-	function, plugin, err := functions.GetFunctionAndPlugin(fnName)
-	if err != nil {
-		return nil, err
+func (host *wasmHost) CallFunction(ctx context.Context, fnInfo functions.FunctionInfo, parameters map[string]any) (ExecutionInfo, error) {
+
+	execInfo := &executionInfo{
+		executionId: xid.New().String(),
+		buffers:     utils.NewOutputBuffers(),
+		messages:    []utils.LogMessage{},
 	}
 
-	return host.InvokeFunction(ctx, plugin, function, parameters)
-}
+	fnName := fnInfo.Name()
+	plugin := fnInfo.Plugin()
+	plan := fnInfo.ExecutionPlan()
 
-func (host *WasmHost) InvokeFunction(ctx context.Context, plugin *plugins.Plugin, function *metadata.Function, parameters map[string]any) (*ExecutionInfo, error) {
-
-	execInfo := ExecutionInfo{
-		ExecutionId: xid.New().String(),
-		Buffers:     &utils.OutputBuffers{},
-		Messages:    []utils.LogMessage{},
-	}
-
-	ctx = context.WithValue(ctx, utils.ExecutionIdContextKey, execInfo.ExecutionId)
-	ctx = context.WithValue(ctx, utils.FunctionMessagesContextKey, &execInfo.Messages)
-	ctx = context.WithValue(ctx, utils.FunctionNameContextKey, function.Name)
+	ctx = context.WithValue(ctx, utils.ExecutionIdContextKey, execInfo.executionId)
+	ctx = context.WithValue(ctx, utils.FunctionMessagesContextKey, &execInfo.messages)
+	ctx = context.WithValue(ctx, utils.FunctionNameContextKey, fnName)
 	ctx = context.WithValue(ctx, utils.PluginContextKey, plugin)
 	ctx = context.WithValue(ctx, utils.MetadataContextKey, plugin.Metadata)
 
@@ -75,7 +92,7 @@ func (host *WasmHost) InvokeFunction(ctx context.Context, plugin *plugins.Plugin
 	// This also protects against security risk, as each request will have its own
 	// isolated memory space.  (One request cannot access another request's memory.)
 
-	mod, err := host.GetModuleInstance(ctx, plugin, execInfo.Buffers)
+	mod, err := host.GetModuleInstance(ctx, plugin, execInfo.buffers)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error getting module instance.")
 		return nil, err
@@ -86,40 +103,33 @@ func (host *WasmHost) InvokeFunction(ctx context.Context, plugin *plugins.Plugin
 	ctx = context.WithValue(ctx, utils.WasmAdapterContextKey, wa)
 
 	logger.Info(ctx).
-		Str("function", function.Name).
+		Str("function", fnName).
 		Bool("user_visible", true).
 		Msg("Calling function.")
 
 	start := time.Now()
-	result, err := func() (result any, err error) {
-		defer func() {
-			if e := utils.ConvertToError(recover()); e != nil {
-				err = e
-			}
-		}()
-		return wa.InvokeFunction(ctx, function, parameters)
-	}()
+	result, err := plan.InvokeFunction(ctx, wa, parameters)
 	duration := time.Since(start)
 
 	exitErr := &sys.ExitError{}
 
 	if err == nil {
 		logger.Info(ctx).
-			Str("function", function.Name).
+			Str("function", fnName).
 			Dur("duration_ms", duration).
 			Bool("user_visible", true).
 			Msg("Function completed successfully.")
 	} else if errors.As(err, &exitErr) {
 		exitCode := int32(exitErr.ExitCode())
 		logger.Error(ctx).
-			Str("function", function.Name).
+			Str("function", fnName).
 			Dur("duration_ms", duration).
 			Bool("user_visible", true).
 			Int32("exit_code", exitCode).
 			Msgf("Function ended prematurely with exit code %d.", exitCode)
 	} else if errors.Is(err, context.Canceled) {
 		logger.Warn(ctx).
-			Str("function", function.Name).
+			Str("function", fnName).
 			Dur("duration_ms", duration).
 			Bool("user_visible", true).
 			Msg("Function execution was canceled.")
@@ -128,7 +138,7 @@ func (host *WasmHost) InvokeFunction(ctx context.Context, plugin *plugins.Plugin
 			fmt.Fprintln(os.Stderr, err)
 		}
 		logger.Err(ctx, err).
-			Str("function", function.Name).
+			Str("function", fnName).
 			Dur("duration_ms", duration).
 			Bool("user_visible", true).
 			Msg("Error while executing function.")
@@ -138,6 +148,6 @@ func (host *WasmHost) InvokeFunction(ctx context.Context, plugin *plugins.Plugin
 	metrics.FunctionExecutionsNum.Inc()
 	metrics.FunctionExecutionDurationMilliseconds.Observe(float64(duration.Milliseconds()))
 
-	execInfo.Result = result
-	return &execInfo, err
+	execInfo.result = result
+	return execInfo, err
 }

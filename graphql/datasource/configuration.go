@@ -9,6 +9,6 @@ import (
 )
 
 type HypDSConfig struct {
-	WasmHost *wasmhost.WasmHost
+	WasmHost wasmhost.WasmHost
 	MapTypes []string
 }

@@ -43,15 +43,15 @@ func Test_GetGraphQLSchema_AssemblyScript(t *testing.T) {
 		WithResult("i32")
 
 	md.FnExports.AddFunction("sayHello").
-		WithParameter("name", "string").
-		WithResult("string")
+		WithParameter("name", "~lib/string/String").
+		WithResult("~lib/string/String")
 
 	md.FnExports.AddFunction("currentTime").
-		WithResult("Date")
+		WithResult("~lib/date/Date")
 
 	md.FnExports.AddFunction("transform").
-		WithParameter("items", "Map<string,string>").
-		WithResult("Map<string,string>")
+		WithParameter("items", "~lib/map/Map<~lib/string/String,~lib/string/String>").
+		WithResult("~lib/map/Map<~lib/string/String,~lib/string/String>")
 
 	md.FnExports.AddFunction("testDefaultIntParams").
 		WithParameter("a", "i32").
@@ -59,71 +59,71 @@ func Test_GetGraphQLSchema_AssemblyScript(t *testing.T) {
 		WithParameter("c", "i32", 1)
 
 	md.FnExports.AddFunction("testDefaultStringParams").
-		WithParameter("a", "string").
-		WithParameter("b", "string", "").
-		WithParameter("c", "string", `a"b`).
-		WithParameter("d", "string|null").
-		WithParameter("e", "string|null", nil).
-		WithParameter("f", "string|null", "").
-		WithParameter("g", "string|null", "test")
+		WithParameter("a", "~lib/string/String").
+		WithParameter("b", "~lib/string/String", "").
+		WithParameter("c", "~lib/string/String", `a"b`).
+		WithParameter("d", "~lib/string/String | null").
+		WithParameter("e", "~lib/string/String | null", nil).
+		WithParameter("f", "~lib/string/String | null", "").
+		WithParameter("g", "~lib/string/String | null", "test")
 
 	md.FnExports.AddFunction("testDefaultArrayParams").
-		WithParameter("a", "i32[]").
-		WithParameter("b", "i32[]", []int32{}).
-		WithParameter("c", "i32[]", []int32{1, 2, 3}).
-		WithParameter("d", "i32[]|null").
-		WithParameter("e", "i32[]|null", nil).
-		WithParameter("f", "i32[]|null", []int32{}).
-		WithParameter("g", "i32[]|null", []int32{1, 2, 3})
+		WithParameter("a", "~lib/array/Array<i32>").
+		WithParameter("b", "~lib/array/Array<i32>", []int32{}).
+		WithParameter("c", "~lib/array/Array<i32>", []int32{1, 2, 3}).
+		WithParameter("d", "~lib/array/Array<i32> | null").
+		WithParameter("e", "~lib/array/Array<i32> | null", nil).
+		WithParameter("f", "~lib/array/Array<i32> | null", []int32{}).
+		WithParameter("g", "~lib/array/Array<i32> | null", []int32{1, 2, 3})
 
 	md.FnExports.AddFunction("getPerson").
-		WithResult("Person")
+		WithResult("assembly/test/Person")
 
 	md.FnExports.AddFunction("getPeople").
-		WithResult("Person[]")
+		WithResult("~lib/array/Array<assembly/test/Person>")
 
 	md.FnExports.AddFunction("getProductMap").
-		WithResult("Map<string,Product>")
+		WithResult("~lib/map/Map<~lib/string/String,assembly/test/Product>")
 
 	md.FnExports.AddFunction("doNothing")
 
 	// This should be excluded from the final schema
 	md.FnExports.AddFunction("myEmbedder").
-		WithParameter("text", "string").
-		WithResult("f64[]")
+		WithParameter("text", "~lib/string/String").
+		WithResult("~lib/array/Array<f64>")
 
-	md.Types.AddType("Company").
-		WithField("name", "string")
+	md.Types.AddType("assembly/test/Company").
+		WithField("name", "~lib/string/String")
 
-	md.Types.AddType("Product").
-		WithField("name", "string").
+	md.Types.AddType("assembly/test/Product").
+		WithField("name", "~lib/string/String").
 		WithField("price", "f64").
-		WithField("manufacturer", "Company").
-		WithField("components", "Product[]")
+		WithField("manufacturer", "assembly/test/Company").
+		WithField("components", "~lib/array/Array<assembly/test/Product>")
 
-	md.Types.AddType("Person").
-		WithField("name", "string").
+	md.Types.AddType("assembly/test/Person").
+		WithField("name", "~lib/string/String").
 		WithField("age", "i32").
-		WithField("addresses", "Address[]")
+		WithField("addresses", "~lib/array/Array<assembly/test/Address>")
 
-	md.Types.AddType("Person[]")
+	md.Types.AddType("~lib/array/Array<assembly/test/Person>")
 
-	md.Types.AddType("Address").
-		WithField("street", "string").
-		WithField("city", "string").
-		WithField("state", "string").
-		WithField("country", "string").
-		WithField("postalCode", "string").
-		WithField("location", "Coordinates")
+	md.Types.AddType("assembly/test/Address").
+		WithField("street", "~lib/string/String").
+		WithField("city", "~lib/string/String").
+		WithField("state", "~lib/string/String").
+		WithField("country", "~lib/string/String").
+		WithField("postalCode", "~lib/string/String").
+		WithField("location", "assembly/test/Coordinates")
 
-	md.Types.AddType("Coordinates").
+	md.Types.AddType("assembly/test/Coordinates").
 		WithField("lat", "f64").
 		WithField("lon", "f64")
 
 	// This should be excluded from the final schema
-	md.Types.AddType("Header").
-		WithField("name", "string").
-		WithField("values", "string[]")
+	md.Types.AddType("assembly/test/Header").
+		WithField("name", "~lib/string/String").
+		WithField("values", "~lib/array/Array<~lib/string/String>")
 
 	result, err := GetGraphQLSchema(context.Background(), md)
 
@@ -204,7 +204,7 @@ func Test_ConvertType_AssemblyScript(t *testing.T) {
 		expectedTypeDefs   []*TypeDefinition
 	}{
 		// Plain non-nullable types
-		{"string", "String!", nil, nil},
+		{"~lib/string/String", "String!", nil, nil},
 		{"bool", "Boolean!", nil, nil},
 		{"i32", "Int!", nil, nil},
 		{"i16", "Int!", nil, nil},
@@ -215,23 +215,23 @@ func Test_ConvertType_AssemblyScript(t *testing.T) {
 		{"f32", "Float!", nil, nil},
 
 		// Array types
-		{"string[]", "[String!]!", nil, nil},
-		{"string[][]", "[[String!]!]!", nil, nil},
-		{"(string|null)[]", "[String]!", nil, nil},
+		{"~lib/array/Array<~lib/string/String>", "[String!]!", nil, nil},
+		{"~lib/array/Array<~lib/array/Array<~lib/string/String>>", "[[String!]!]!", nil, nil},
+		{"~lib/array/Array<~lib/string/String|null>", "[String]!", nil, nil},
 
 		// Custom scalar types
-		{"Date", "Timestamp!", nil, []*TypeDefinition{{Name: "Timestamp"}}},
+		{"~lib/date/Date", "Timestamp!", nil, []*TypeDefinition{{Name: "Timestamp"}}},
 		{"i64", "Int64!", nil, []*TypeDefinition{{Name: "Int64"}}},
 		{"u32", "UInt!", nil, []*TypeDefinition{{Name: "UInt"}}},
 		{"u64", "UInt64!", nil, []*TypeDefinition{{Name: "UInt64"}}},
 
 		// Custom types
-		{"User", "User!",
+		{"assembly/test/User", "User!",
 			[]*metadata.TypeDefinition{{
 				Name: "User",
 				Fields: []*metadata.Field{
-					{Name: "firstName", Type: "string"},
-					{Name: "lastName", Type: "string"},
+					{Name: "firstName", Type: "~lib/string/String"},
+					{Name: "lastName", Type: "~lib/string/String"},
 					{Name: "age", Type: "u8"},
 				},
 			}},
@@ -246,13 +246,13 @@ func Test_ConvertType_AssemblyScript(t *testing.T) {
 
 		// bool and numeric types can't be nullable in AssemblyScript
 		// but string and custom types can
-		{"string|null", "String", nil, nil},
-		{"Foo|null", "Foo",
-			[]*metadata.TypeDefinition{{Name: "Foo"}},
+		{"~lib/string/String | null", "String", nil, nil},
+		{"assembly/test/Foo | null", "Foo",
+			[]*metadata.TypeDefinition{{Name: "assembly/test/Foo"}},
 			[]*TypeDefinition{{Name: "Foo"}}},
 
 		// Map types
-		{"Map<string,string>", "[StringStringPair!]!", nil, []*TypeDefinition{{
+		{"~lib/map/Map<~lib/string/String,~lib/string/String>", "[StringStringPair!]!", nil, []*TypeDefinition{{
 			Name: "StringStringPair",
 			Fields: []*NameTypePair{
 				{"key", "String!"},
@@ -260,7 +260,7 @@ func Test_ConvertType_AssemblyScript(t *testing.T) {
 			},
 			IsMapType: true,
 		}}},
-		{"Map<string,string|null>", "[StringNullableStringPair!]!", nil, []*TypeDefinition{{
+		{"~lib/map/Map<~lib/string/String,~lib/string/String|null>", "[StringNullableStringPair!]!", nil, []*TypeDefinition{{
 			Name: "StringNullableStringPair",
 			Fields: []*NameTypePair{
 				{"key", "String!"},
@@ -268,7 +268,7 @@ func Test_ConvertType_AssemblyScript(t *testing.T) {
 			},
 			IsMapType: true,
 		}}},
-		{"Map<i32,string>", "[IntStringPair!]!", nil, []*TypeDefinition{{
+		{"~lib/map/Map<i32,~lib/string/String>", "[IntStringPair!]!", nil, []*TypeDefinition{{
 			Name: "IntStringPair",
 			Fields: []*NameTypePair{
 				{"key", "Int!"},
@@ -276,7 +276,7 @@ func Test_ConvertType_AssemblyScript(t *testing.T) {
 			},
 			IsMapType: true,
 		}}},
-		{"Map<string,Map<string,f32>>", "[StringStringFloatPairListPair!]!", nil, []*TypeDefinition{
+		{"~lib/map/Map<~lib/string/String,~lib/map/Map<~lib/string/String,f32>>", "[StringStringFloatPairListPair!]!", nil, []*TypeDefinition{
 			{
 				Name: "StringStringFloatPairListPair",
 				Fields: []*NameTypePair{

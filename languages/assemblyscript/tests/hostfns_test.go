@@ -9,28 +9,30 @@ import (
 	"reflect"
 	"testing"
 
+	"hypruntime/hostfunctions"
 	"hypruntime/testutils"
 	"hypruntime/wasmhost"
 )
 
-func getTestHostFunctionRegistrations() []func(*wasmhost.WasmHost) error {
-	return []func(*wasmhost.WasmHost) error{
-		func(host *wasmhost.WasmHost) error {
+func getTestHostFunctionRegistrations() []func(wasmhost.WasmHost) error {
+	return []func(wasmhost.WasmHost) error{
+		func(host wasmhost.WasmHost) error {
 			return host.RegisterHostFunction("hypermode", "log", hostLog)
 		},
-		func(host *wasmhost.WasmHost) error {
+		func(host wasmhost.WasmHost) error {
 			return host.RegisterHostFunction("test", "add", hostAdd)
 		},
-		func(host *wasmhost.WasmHost) error {
+		func(host wasmhost.WasmHost) error {
 			return host.RegisterHostFunction("test", "echo", hostEcho)
 		},
-		func(host *wasmhost.WasmHost) error {
+		func(host wasmhost.WasmHost) error {
 			return host.RegisterHostFunction("test", "echoObject", hostEchoObject)
 		},
 	}
 }
 
 func hostLog(ctx context.Context, level, message string) {
+	hostfunctions.LogFunctionMessage(ctx, level, message)
 	t := testutils.GetTestT(ctx)
 	t.Logf("[%s] %s", level, message)
 }
@@ -64,7 +66,7 @@ func TestHostFn_add(t *testing.T) {
 	f := NewASWasmTestFixture(t)
 	defer f.Close()
 
-	result, err := f.InvokeFunction("add", 1, 2)
+	result, err := f.CallFunction("add", 1, 2)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -84,7 +86,7 @@ func TestHostFn_echo(t *testing.T) {
 	f := NewASWasmTestFixture(t)
 	defer f.Close()
 
-	result, err := f.InvokeFunction("echo", "hello")
+	result, err := f.CallFunction("echo", "hello")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -113,7 +115,7 @@ func TestHostFn_echoObject(t *testing.T) {
 		C: "hello",
 	}
 
-	result, err := f.InvokeFunction("echoObject", o)
+	result, err := f.CallFunction("echoObject", o)
 	if err != nil {
 		t.Fatal(err)
 	}

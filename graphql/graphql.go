@@ -75,7 +75,7 @@ func HandleGraphQLRequest(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Create the output map
-	output := map[string]*wasmhost.ExecutionInfo{}
+	output := make(map[string]wasmhost.ExecutionInfo)
 	ctx = context.WithValue(ctx, utils.FunctionOutputContextKey, output)
 
 	// Set tracing options
@@ -129,7 +129,7 @@ func HandleGraphQLRequest(w http.ResponseWriter, r *http.Request) {
 	_, _ = w.Write(response)
 }
 
-func addOutputToResponse(response []byte, output map[string]*wasmhost.ExecutionInfo) ([]byte, error) {
+func addOutputToResponse(response []byte, output map[string]wasmhost.ExecutionInfo) ([]byte, error) {
 
 	type invocationInfo struct {
 		ExecutionId string             `json:"executionId"`
@@ -139,10 +139,10 @@ func addOutputToResponse(response []byte, output map[string]*wasmhost.ExecutionI
 	invocations := make(map[string]invocationInfo, len(output))
 	for key, item := range output {
 		invocation := invocationInfo{
-			ExecutionId: item.ExecutionId,
+			ExecutionId: item.ExecutionId(),
 		}
 
-		l := utils.TransformConsoleOutput(item.Buffers)
+		l := utils.TransformConsoleOutput(item.Buffers())
 		a := make([]utils.LogMessage, 0, len(l))
 		for _, m := range l {
 			// Only include non-error messages here.

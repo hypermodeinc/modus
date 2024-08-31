@@ -12,8 +12,8 @@ import (
 	"sync"
 )
 
-// thread-safe registry of all plugins that are loaded
-var registry = pluginRegistry{
+// thread-safe globalPluginRegistry of all plugins that are loaded
+var globalPluginRegistry = &pluginRegistry{
 	idRevIndex: make(map[*plugins.Plugin]string),
 	idIndex:    make(map[string]*plugins.Plugin),
 	nameIndex:  make(map[string]*plugins.Plugin),
@@ -21,7 +21,7 @@ var registry = pluginRegistry{
 }
 
 func GetRegisteredPlugins() []*plugins.Plugin {
-	return registry.GetAll()
+	return globalPluginRegistry.GetAll()
 }
 
 type pluginRegistry struct {

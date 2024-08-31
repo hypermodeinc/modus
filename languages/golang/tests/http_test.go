@@ -29,7 +29,7 @@ func TestHttpResponseHeaders(t *testing.T) {
 		Body: []byte("Hello, world!"),
 	}
 
-	if _, err := f.InvokeFunction("testHttpResponseHeaders", r); err != nil {
+	if _, err := f.CallFunction("testHttpResponseHeaders", r); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -49,7 +49,7 @@ func TestHttpHeaders(t *testing.T) {
 		},
 	}
 
-	if _, err := f.InvokeFunction("testHttpHeaders", h); err != nil {
+	if _, err := f.CallFunction("testHttpHeaders", h); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -67,7 +67,7 @@ func TestHttpHeaderMap(t *testing.T) {
 		},
 	}
 
-	if _, err := f.InvokeFunction("testHttpHeaderMap", m); err != nil {
+	if _, err := f.CallFunction("testHttpHeaderMap", m); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -83,7 +83,7 @@ func TestHttpHeader(t *testing.T) {
 		Values: []string{"text/plain"},
 	}
 
-	if _, err := f.InvokeFunction("testHttpHeader", h); err != nil {
+	if _, err := f.CallFunction("testHttpHeader", h); err != nil {
 		t.Fatal(err)
 	}
 }

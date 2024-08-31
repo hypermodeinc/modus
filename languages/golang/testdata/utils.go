@@ -6,6 +6,7 @@ import (
 	"os"
 	"reflect"
 	"slices"
+	"unsafe"
 )
 
 func fail(msg string) {
@@ -43,11 +44,22 @@ func ptrValsEqual[T comparable](a, b *T) bool {
 }
 
 func assertNil[T any](actual T) {
-	switch reflect.TypeOf(actual).Kind() {
-	case reflect.Chan, reflect.Func, reflect.Interface, reflect.Map, reflect.Pointer, reflect.Slice:
-		if reflect.ValueOf(actual).IsNil() {
-			return
-		}
+	if !hasNil(actual) {
+		fail(fmt.Sprintf("expected nil, got %v", actual))
 	}
-	fail(fmt.Sprintf("expected nil, got %v", actual))
+}
+
+func getUnsafeDataPtr(x any) unsafe.Pointer {
+	type iface struct {
+		typ  unsafe.Pointer
+		data unsafe.Pointer
+	}
+
+	internal := *(*iface)(unsafe.Pointer(&x))
+	return internal.data
+}
+
+// hasNil returns true if the given interface value is nil, or contains a nil pointer.
+func hasNil(x any) bool {
+	return x == nil || uintptr(getUnsafeDataPtr(x)) == 0
 }

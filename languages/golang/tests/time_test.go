@@ -7,6 +7,8 @@ package golang_test
 import (
 	"testing"
 	"time"
+
+	"hypruntime/utils"
 )
 
 var testTime, _ = time.Parse(time.RFC3339, "2024-12-31T23:59:59.999999999Z")
@@ -18,7 +20,7 @@ func TestTimeInput(t *testing.T) {
 	f := NewGoWasmTestFixture(t)
 	defer f.Close()
 
-	if _, err := f.InvokeFunction("testTimeInput", testTime); err != nil {
+	if _, err := f.CallFunction("testTimeInput", testTime); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -29,10 +31,10 @@ func TestTimePtrInput(t *testing.T) {
 	f := NewGoWasmTestFixture(t)
 	defer f.Close()
 
-	if _, err := f.InvokeFunction("testTimePtrInput", testTime); err != nil {
+	if _, err := f.CallFunction("testTimePtrInput", testTime); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := f.InvokeFunction("testTimePtrInput", &testTime); err != nil {
+	if _, err := f.CallFunction("testTimePtrInput", &testTime); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -43,7 +45,7 @@ func TestTimePtrInput_nil(t *testing.T) {
 	f := NewGoWasmTestFixture(t)
 	defer f.Close()
 
-	if _, err := f.InvokeFunction("testTimePtrInput_nil", nil); err != nil {
+	if _, err := f.CallFunction("testTimePtrInput_nil", nil); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -54,7 +56,7 @@ func TestTimeOutput(t *testing.T) {
 	f := NewGoWasmTestFixture(t)
 	defer f.Close()
 
-	result, err := f.InvokeFunction("testTimeOutput")
+	result, err := f.CallFunction("testTimeOutput")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -74,7 +76,7 @@ func TestTimePtrOutput(t *testing.T) {
 	f := NewGoWasmTestFixture(t)
 	defer f.Close()
 
-	result, err := f.InvokeFunction("testTimePtrOutput")
+	result, err := f.CallFunction("testTimePtrOutput")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -94,12 +96,12 @@ func TestTimePtrOutput_nil(t *testing.T) {
 	f := NewGoWasmTestFixture(t)
 	defer f.Close()
 
-	result, err := f.InvokeFunction("testTimePtrOutput_nil")
+	result, err := f.CallFunction("testTimePtrOutput_nil")
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if result != nil {
+	if !utils.HasNil(result) {
 		t.Error("expected a nil result")
 	}
 }
@@ -110,7 +112,7 @@ func TestDurationInput(t *testing.T) {
 	f := NewGoWasmTestFixture(t)
 	defer f.Close()
 
-	if _, err := f.InvokeFunction("testDurationInput", testDuration); err != nil {
+	if _, err := f.CallFunction("testDurationInput", testDuration); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -121,10 +123,10 @@ func TestDurationPtrInput(t *testing.T) {
 	f := NewGoWasmTestFixture(t)
 	defer f.Close()
 
-	if _, err := f.InvokeFunction("testDurationPtrInput", testDuration); err != nil {
+	if _, err := f.CallFunction("testDurationPtrInput", testDuration); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := f.InvokeFunction("testDurationPtrInput", &testDuration); err != nil {
+	if _, err := f.CallFunction("testDurationPtrInput", &testDuration); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -135,7 +137,7 @@ func TestDurationPtrInput_nil(t *testing.T) {
 	f := NewGoWasmTestFixture(t)
 	defer f.Close()
 
-	if _, err := f.InvokeFunction("testDurationPtrInput_nil", nil); err != nil {
+	if _, err := f.CallFunction("testDurationPtrInput_nil", nil); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -146,7 +148,7 @@ func TestDurationOutput(t *testing.T) {
 	f := NewGoWasmTestFixture(t)
 	defer f.Close()
 
-	result, err := f.InvokeFunction("testDurationOutput")
+	result, err := f.CallFunction("testDurationOutput")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -166,7 +168,7 @@ func TestDurationPtrOutput(t *testing.T) {
 	f := NewGoWasmTestFixture(t)
 	defer f.Close()
 
-	result, err := f.InvokeFunction("testDurationPtrOutput")
+	result, err := f.CallFunction("testDurationPtrOutput")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -186,12 +188,12 @@ func TestDurationPtrOutput_nil(t *testing.T) {
 	f := NewGoWasmTestFixture(t)
 	defer f.Close()
 
-	result, err := f.InvokeFunction("testDurationPtrOutput_nil")
+	result, err := f.CallFunction("testDurationPtrOutput_nil")
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if result != nil {
+	if !utils.HasNil(result) {
 		t.Error("expected a nil result")
 	}
 }

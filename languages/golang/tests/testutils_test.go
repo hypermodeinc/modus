@@ -18,7 +18,7 @@ var basePath = func() string {
 }()
 
 func NewGoWasmTestFixture(t *testing.T) *testutils.WasmTestFixture {
-	path := filepath.Join(basePath, "..", "testdata", "testdata.wasm")
+	path := filepath.Join(basePath, "..", "testdata", "build", "testdata.wasm")
 	registrations := getTestHostFunctionRegistrations()
 	return testutils.NewWasmTestFixture(path, t, registrations...)
 }

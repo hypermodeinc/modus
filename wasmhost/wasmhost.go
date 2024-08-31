@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io"
 
+	"hypruntime/functions"
 	"hypruntime/logger"
 	"hypruntime/plugins"
 	"hypruntime/utils"
@@ -20,20 +21,41 @@ import (
 	wasi "github.com/tetratelabs/wazero/imports/wasi_snapshot_preview1"
 )
 
-type WasmHost struct {
-	runtime       wazero.Runtime
-	hostFunctions []*HostFunction
+type WasmHost interface {
+	RegisterHostFunction(modName, funcName string, fn any, opts ...HostFunctionOption) error
+	CallFunction(ctx context.Context, fnInfo functions.FunctionInfo, parameters map[string]any) (ExecutionInfo, error)
+	CallFunctionByName(ctx context.Context, fnName string, paramValues ...any) (ExecutionInfo, error)
+	Close(ctx context.Context)
+	CompileModule(ctx context.Context, bytes []byte) (wazero.CompiledModule, error)
+	GetFunctionInfo(fnName string) (functions.FunctionInfo, error)
+	GetFunctionRegistry() functions.FunctionRegistry
+	GetModuleInstance(ctx context.Context, plugin *plugins.Plugin, buffers utils.OutputBuffers) (wasm.Module, error)
 }
 
-func NewWasmHost(ctx context.Context, opts ...func(*WasmHost) error) *WasmHost {
+type wasmHost struct {
+	runtime       wazero.Runtime
+	fnRegistry    functions.FunctionRegistry
+	hostFunctions []*hostFunction
+}
+
+func NewWasmHost(ctx context.Context, registrations ...func(WasmHost) error) WasmHost {
 	cfg := wazero.NewRuntimeConfig().WithCloseOnContextDone(true)
 	runtime := wazero.NewRuntimeWithConfig(ctx, cfg)
 	wasi.MustInstantiate(ctx, runtime)
-	host := &WasmHost{runtime: runtime}
 
-	for _, reg := range opts {
+	if err := instantiateEnvHostFunctions(ctx, runtime); err != nil {
+		logger.Fatal(ctx).Err(err).Msg("Failed to instantiate env host functions.")
+		return nil
+	}
+
+	host := &wasmHost{
+		runtime:    runtime,
+		fnRegistry: functions.NewFunctionRegistry(),
+	}
+
+	for _, reg := range registrations {
 		if err := reg(host); err != nil {
-			logger.Fatal(ctx).Err(err).Msg("Failed to apply an option to the WASM host.")
+			logger.Fatal(ctx).Err(err).Msg("Failed to apply a registration to the WASM host.")
 			return nil
 		}
 	}
@@ -46,14 +68,31 @@ func NewWasmHost(ctx context.Context, opts ...func(*WasmHost) error) *WasmHost {
 	return host
 }
 
-func (host *WasmHost) Close(ctx context.Context) {
+func GetWasmHost(ctx context.Context) WasmHost {
+	host, ok := ctx.Value(utils.WasmHostContextKey).(WasmHost)
+	if !ok {
+		logger.Fatal(ctx).Msg("WASM Host not found in context.")
+		return nil
+	}
+	return host
+}
+
+func (host *wasmHost) Close(ctx context.Context) {
 	if err := host.runtime.Close(ctx); err != nil {
 		logger.Err(ctx, err).Msg("Failed to cleanly close the WASM runtime.")
 	}
 }
 
+func (host *wasmHost) GetFunctionInfo(fnName string) (functions.FunctionInfo, error) {
+	return host.fnRegistry.GetFunctionInfo(fnName)
+}
+
+func (host *wasmHost) GetFunctionRegistry() functions.FunctionRegistry {
+	return host.fnRegistry
+}
+
 // Gets a module instance for the given plugin, used for a single invocation.
-func (host *WasmHost) GetModuleInstance(ctx context.Context, plugin *plugins.Plugin, buffers *utils.OutputBuffers) (wasm.Module, error) {
+func (host *wasmHost) GetModuleInstance(ctx context.Context, plugin *plugins.Plugin, buffers utils.OutputBuffers) (wasm.Module, error) {
 
 	// Get the logger and writers for the plugin's stdout and stderr.
 	log := logger.Get(ctx).With().Bool("user_visible", true).Logger()
@@ -61,8 +100,8 @@ func (host *WasmHost) GetModuleInstance(ctx context.Context, plugin *plugins.Plu
 	wErrorLog := logger.NewLogWriter(&log, zerolog.ErrorLevel)
 
 	// Capture stdout/stderr both to logs, and to provided writers.
-	wOut := io.MultiWriter(&buffers.StdOut, wInfoLog)
-	wErr := io.MultiWriter(&buffers.StdErr, wErrorLog)
+	wOut := io.MultiWriter(buffers.StdOut(), wInfoLog)
+	wErr := io.MultiWriter(buffers.StdErr(), wErrorLog)
 
 	// Configure the module instance.
 	// Note, we use an anonymous module name (empty string) here,
@@ -86,7 +125,7 @@ func (host *WasmHost) GetModuleInstance(ctx context.Context, plugin *plugins.Plu
 	return mod, nil
 }
 
-func (host *WasmHost) CompileModule(ctx context.Context, bytes []byte) (wazero.CompiledModule, error) {
+func (host *wasmHost) CompileModule(ctx context.Context, bytes []byte) (wazero.CompiledModule, error) {
 	span := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
 

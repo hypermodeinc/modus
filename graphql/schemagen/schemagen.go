@@ -13,6 +13,7 @@ import (
 	"sort"
 	"strings"
 
+	"hypruntime/langsupport"
 	"hypruntime/languages"
 	"hypruntime/plugins/metadata"
 	"hypruntime/utils"
@@ -64,7 +65,7 @@ func (e *TransformError) String() string {
 	return fmt.Sprintf("source: %+v, error: %v", e.Source, e.Error)
 }
 
-func transformTypes(types metadata.TypeMap, lti languages.TypeInfo) (map[string]*TypeDefinition, []*TransformError) {
+func transformTypes(types metadata.TypeMap, lti langsupport.TypeInfo) (map[string]*TypeDefinition, []*TransformError) {
 	typeDefs := make(map[string]*TypeDefinition, len(types))
 	errors := make([]*TransformError, 0)
 	for _, t := range types {
@@ -110,7 +111,7 @@ type ParameterSignature struct {
 	Default *any
 }
 
-func transformFunctions(functions metadata.FunctionMap, typeDefs map[string]*TypeDefinition, lti languages.TypeInfo) ([]*FunctionSignature, []*TransformError) {
+func transformFunctions(functions metadata.FunctionMap, typeDefs map[string]*TypeDefinition, lti langsupport.TypeInfo) ([]*FunctionSignature, []*TransformError) {
 	output := make([]*FunctionSignature, len(functions))
 	errors := make([]*TransformError, 0)
 
@@ -292,7 +293,7 @@ func writeSchema(buf *bytes.Buffer, functions []*FunctionSignature, typeDefs []*
 	buf.WriteByte('\n')
 }
 
-func convertParameters(parameters []*metadata.Parameter, lti languages.TypeInfo, typeDefs map[string]*TypeDefinition) ([]*ParameterSignature, error) {
+func convertParameters(parameters []*metadata.Parameter, lti langsupport.TypeInfo, typeDefs map[string]*TypeDefinition) ([]*ParameterSignature, error) {
 	if len(parameters) == 0 {
 		return nil, nil
 	}
@@ -323,7 +324,7 @@ func convertParameters(parameters []*metadata.Parameter, lti languages.TypeInfo,
 	return output, nil
 }
 
-func convertResults(results []*metadata.Result, lti languages.TypeInfo, typeDefs map[string]*TypeDefinition) (string, error) {
+func convertResults(results []*metadata.Result, lti langsupport.TypeInfo, typeDefs map[string]*TypeDefinition) (string, error) {
 	switch len(results) {
 	case 0:
 		return newScalar("Void", typeDefs), nil
@@ -386,7 +387,7 @@ func getTypeForFields(fields []*NameTypePair, typeDefs map[string]*TypeDefinitio
 	return newType(name, fields, typeDefs)
 }
 
-func convertFields(fields []*metadata.Field, lti languages.TypeInfo, typeDefs map[string]*TypeDefinition) ([]*NameTypePair, error) {
+func convertFields(fields []*metadata.Field, lti langsupport.TypeInfo, typeDefs map[string]*TypeDefinition) ([]*NameTypePair, error) {
 	if len(fields) == 0 {
 		return nil, nil
 	}
@@ -405,7 +406,7 @@ func convertFields(fields []*metadata.Field, lti languages.TypeInfo, typeDefs ma
 	return results, nil
 }
 
-func convertType(typ string, lti languages.TypeInfo, typeDefs map[string]*TypeDefinition, firstPass bool) (string, error) {
+func convertType(typ string, lti langsupport.TypeInfo, typeDefs map[string]*TypeDefinition, firstPass bool) (string, error) {
 
 	// Unwrap parentheses if present
 	if strings.HasPrefix(typ, "(") && strings.HasSuffix(typ, ")") {

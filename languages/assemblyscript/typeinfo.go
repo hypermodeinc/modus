@@ -7,32 +7,37 @@ package assemblyscript
 import (
 	"context"
 	"fmt"
-	"hypruntime/plugins/metadata"
-	"hypruntime/utils"
 	"reflect"
 	"strings"
 	"time"
+
+	"hypruntime/langsupport"
+	"hypruntime/plugins/metadata"
+	"hypruntime/utils"
 )
 
-func (ti *typeInfoProvider) GetListSubtype(typ string) string {
+var _typeInfo = &typeInfo{}
+
+func TypeInfo() langsupport.TypeInfo {
+	return _typeInfo
+}
+
+type typeInfo struct{}
+
+func (ti *typeInfo) GetListSubtype(typ string) string {
+	typ = ti.GetUnderlyingType(typ)
 	if strings.HasPrefix(typ, "~lib/array/Array<") {
 		return typ[17 : len(typ)-1]
-	}
-
-	if strings.HasSuffix(typ, "[]") {
-		return typ[:len(typ)-2]
 	}
 
 	return ""
 }
 
-func (ti *typeInfoProvider) GetMapSubtypes(typ string) (string, string) {
+func (ti *typeInfo) GetMapSubtypes(typ string) (string, string) {
+	typ = ti.GetUnderlyingType(typ)
 	prefix := "~lib/map/Map<"
 	if !strings.HasPrefix(typ, prefix) {
-		prefix = "Map<"
-		if !strings.HasPrefix(typ, prefix) {
-			return "", ""
-		}
+		return "", ""
 	}
 
 	n := 1
@@ -56,7 +61,7 @@ func (ti *typeInfoProvider) GetMapSubtypes(typ string) (string, string) {
 	return "", ""
 }
 
-func (ti *typeInfoProvider) GetNameForType(typ string) string {
+func (ti *typeInfo) GetNameForType(typ string) string {
 	s := ti.GetUnderlyingType(typ)
 
 	if ti.IsListType(s) {
@@ -71,31 +76,41 @@ func (ti *typeInfoProvider) GetNameForType(typ string) string {
 	return s[strings.LastIndex(s, "/")+1:]
 }
 
-func (ti *typeInfoProvider) GetUnderlyingType(typ string) string {
-	return strings.TrimSuffix(typ, "|null")
+func (ti *typeInfo) GetUnderlyingType(typ string) string {
+	if s, ok := strings.CutSuffix(typ, " | null"); ok {
+		return s
+	} else {
+		return strings.TrimSuffix(typ, "|null")
+	}
 }
 
-func (ti *typeInfoProvider) IsListType(typ string) bool {
-	return strings.HasPrefix(typ, "~lib/array/Array<") || strings.HasSuffix(typ, "[]")
+func (ti *typeInfo) IsNullable(typ string) bool {
+	return strings.HasSuffix(typ, " | null") || strings.HasSuffix(typ, "|null")
 }
 
-func (ti *typeInfoProvider) IsBooleanType(typ string) bool {
+func (ti *typeInfo) IsListType(typ string) bool {
+	return strings.HasPrefix(typ, "~lib/array/Array<")
+}
+
+func (ti *typeInfo) IsBooleanType(typ string) bool {
 	return typ == "bool"
 }
 
-func (ti *typeInfoProvider) IsByteSequenceType(typ string) bool {
+func (ti *typeInfo) IsByteSequenceType(typ string) bool {
+	typ = ti.GetUnderlyingType(typ)
 	switch typ {
 	case
 		"~lib/arraybuffer/ArrayBuffer",
 		"~lib/typedarray/Uint8Array",
-		"~lib/array/Array<u8>", "u8[]":
+		"~lib/typedarray/Uint8ClampedArray",
+		"~lib/array/Array<u8>":
 		return true
 	default:
 		return false
 	}
 }
 
-func (ti *typeInfoProvider) IsFloatType(typ string) bool {
+func (ti *typeInfo) IsFloatType(typ string) bool {
 	switch typ {
 	case "f32", "f64":
 		return true
@@ -104,7 +119,7 @@ func (ti *typeInfoProvider) IsFloatType(typ string) bool {
 	}
 }
 
-func (ti *typeInfoProvider) IsIntegerType(typ string) bool {
+func (ti *typeInfo) IsIntegerType(typ string) bool {
 	switch typ {
 	case "i8", "i16", "i32", "i64",
 		"u8", "u16", "u32", "u64",
@@ -115,15 +130,16 @@ func (ti *typeInfoProvider) IsIntegerType(typ string) bool {
 	}
 }
 
-func (ti *typeInfoProvider) IsMapType(typ string) bool {
-	return strings.HasPrefix(typ, "~lib/map/Map<") || strings.HasPrefix(typ, "Map<")
+func (ti *typeInfo) IsMapType(typ string) bool {
+	typ = ti.GetUnderlyingType(typ)
+	return strings.HasPrefix(typ, "~lib/map/Map<")
 }
 
-func (ti *typeInfoProvider) IsNullable(typ string) bool {
-	return strings.HasSuffix(typ, "|null")
+func (ti *typeInfo) IsPrimitiveType(typ string) bool {
+	return ti.IsBooleanType(typ) || ti.IsIntegerType(typ) || ti.IsFloatType(typ)
 }
 
-func (ti *typeInfoProvider) IsSignedIntegerType(typ string) bool {
+func (ti *typeInfo) IsSignedIntegerType(typ string) bool {
 	switch typ {
 	case "i8", "i16", "i32", "i64", "isize":
 		return true
@@ -132,16 +148,20 @@ func (ti *typeInfoProvider) IsSignedIntegerType(typ string) bool {
 	}
 }
 
-func (ti *typeInfoProvider) IsStringType(typ string) bool {
-	switch typ {
-	case "string", "~lib/string/String":
-		return true
-	default:
-		return false
-	}
+func (ti *typeInfo) IsStringType(typ string) bool {
+	return ti.GetUnderlyingType(typ) == "~lib/string/String"
 }
 
-func (ti *typeInfoProvider) IsTimestampType(typ string) bool {
+func (ti *typeInfo) IsArrayBufferType(typ string) bool {
+	return ti.GetUnderlyingType(typ) == "~lib/arraybuffer/ArrayBuffer"
+}
+
+func (ti *typeInfo) IsTypedArrayType(typ string) bool {
+	return strings.HasPrefix(typ, "~lib/typedarray/")
+}
+
+func (ti *typeInfo) IsTimestampType(typ string) bool {
+	typ = ti.GetUnderlyingType(typ)
 	switch typ {
 	case "Date", "~lib/date/Date", "~lib/wasi_date/wasi_Date":
 		return true
@@ -150,7 +170,7 @@ func (ti *typeInfoProvider) IsTimestampType(typ string) bool {
 	}
 }
 
-func (ti *typeInfoProvider) GetSizeOfType(ctx context.Context, typ string) (uint32, error) {
+func (ti *typeInfo) GetSizeOfType(ctx context.Context, typ string) (uint32, error) {
 	switch typ {
 	case "u64", "i64", "f64":
 		return 8, nil
@@ -165,105 +185,41 @@ func (ti *typeInfoProvider) GetSizeOfType(ctx context.Context, typ string) (uint
 	}
 }
 
-func (ti *typeInfoProvider) GetTypeDefinition(ctx context.Context, typ string) (*metadata.TypeDefinition, error) {
-
+// Deprecated: use metadata.Metadata.GetTypeDefinition instead
+func (ti *typeInfo) GetTypeDefinition(ctx context.Context, typ string) (*metadata.TypeDefinition, error) {
 	md := ctx.Value(utils.MetadataContextKey).(*metadata.Metadata)
-	def, ok := md.Types[typ]
-	if !ok {
-		return nil, fmt.Errorf("info for type %s not found in plugin %s", typ, md.Name())
-	}
-
-	return def, nil
+	return md.GetTypeDefinition(typ)
 }
 
-func (ti *typeInfoProvider) getAssemblyScriptType(rt reflect.Type, customTypes map[reflect.Type]string) (string, error) {
-	if customTypes != nil {
-		if typ, ok := customTypes[rt]; ok {
-			return typ, nil
-		}
+func (ti *typeInfo) GetReflectedType(ctx context.Context, typ string) (reflect.Type, error) {
+	if customTypes, ok := ctx.Value(utils.CustomTypesContextKey).(map[string]reflect.Type); ok {
+		return ti.getReflectedType(typ, customTypes)
+	} else {
+		return ti.getReflectedType(typ, nil)
 	}
-
-	switch rt.Kind() {
-	case reflect.Bool:
-		return "bool", nil
-	case reflect.Int:
-		return "isize", nil
-	case reflect.Int8:
-		return "i8", nil
-	case reflect.Int16:
-		return "i16", nil
-	case reflect.Int32:
-		return "i32", nil
-	case reflect.Int64:
-		return "i64", nil
-	case reflect.Uint:
-		return "usize", nil
-	case reflect.Uint8:
-		return "u8", nil
-	case reflect.Uint16:
-		return "u16", nil
-	case reflect.Uint32:
-		return "u32", nil
-	case reflect.Uint64:
-		return "u64", nil
-	case reflect.Float32:
-		return "f32", nil
-	case reflect.Float64:
-		return "f64", nil
-	case reflect.String:
-		return "~lib/string/String", nil
-
-	case reflect.Slice:
-		if rt.Elem().Kind() == reflect.Uint8 {
-			return "~lib/arraybuffer/ArrayBuffer", nil
-		}
-
-		// TODO: should we use Uint8Array and other typed array buffers?
-
-		elemType, err := ti.getAssemblyScriptType(rt.Elem(), customTypes)
-		if err != nil {
-			return "", err
-		}
-
-		return "~lib/array/Array<" + elemType + ">", nil
-
-	case reflect.Map:
-		keyType, err := ti.getAssemblyScriptType(rt.Key(), customTypes)
-		if err != nil {
-			return "", err
-		}
-
-		valueType, err := ti.getAssemblyScriptType(rt.Elem(), customTypes)
-		if err != nil {
-			return "", err
-		}
-
-		return "~lib/map/Map<" + keyType + "," + valueType + ">", nil
-
-	case reflect.Ptr:
-		return ti.getAssemblyScriptType(rt.Elem(), customTypes)
-
-	case reflect.Struct:
-		id := rt.PkgPath() + "." + rt.Name()
-		typ, found := hostTypes[id]
-		if found {
-			return typ, nil
-		}
-
-		return "", fmt.Errorf("struct missing from host types map: %s", id)
-	}
-
-	return "", fmt.Errorf("unsupported type kind %s", rt.Kind())
 }
 
-func (ti *typeInfoProvider) getReflectedType(typ string, customTypes map[string]reflect.Type) (reflect.Type, error) {
+func (ti *typeInfo) getReflectedType(typ string, customTypes map[string]reflect.Type) (reflect.Type, error) {
+
+	if ti.IsNullable(typ) {
+		rt, err := ti.getReflectedType(ti.GetUnderlyingType(typ), customTypes)
+		if err != nil {
+			return nil, err
+		}
+		if utils.CanBeNil(rt) {
+			return rt, nil
+		} else {
+			return reflect.PointerTo(rt), nil
+		}
+	}
+
 	if customTypes != nil {
 		if rt, ok := customTypes[typ]; ok {
 			return rt, nil
 		}
 	}
 
-	if rt, ok := asToGoTypeMap[typ]; ok {
+	if rt, ok := reflectedTypeMap[typ]; ok {
 		return rt, nil
 	}
 
@@ -299,40 +255,37 @@ func (ti *typeInfoProvider) getReflectedType(typ string, customTypes map[string]
 	}
 
 	// All other types are custom classes, which are represented as a map[string]any
-	return goMapStringAnyType, nil
+	return rtMapStringAny, nil
 }
 
-var goMapStringAnyType = reflect.TypeOf(map[string]any{})
-
-// map all AssemblyScript types to Go types
-var asToGoTypeMap = map[string]reflect.Type{
-	"bool":                              reflect.TypeOf(bool(false)),
-	"usize":                             reflect.TypeOf(uint(0)),
-	"u8":                                reflect.TypeOf(uint8(0)),
-	"u16":                               reflect.TypeOf(uint16(0)),
-	"u32":                               reflect.TypeOf(uint32(0)),
-	"u64":                               reflect.TypeOf(uint64(0)),
-	"isize":                             reflect.TypeOf(int(0)),
-	"i8":                                reflect.TypeOf(int8(0)),
-	"i16":                               reflect.TypeOf(int16(0)),
-	"i32":                               reflect.TypeOf(int32(0)),
-	"i64":                               reflect.TypeOf(int64(0)),
-	"f32":                               reflect.TypeOf(float32(0)),
-	"f64":                               reflect.TypeOf(float64(0)),
-	"string":                            reflect.TypeOf(string("")),
-	"~lib/string/String":                reflect.TypeOf(string("")),
-	"~lib/arraybuffer/ArrayBuffer":      reflect.TypeOf([]byte{}),
-	"~lib/typedarray/Uint8ClampedArray": reflect.TypeOf([]uint8{}),
-	"~lib/typedarray/Uint8Array":        reflect.TypeOf([]uint8{}),
-	"~lib/typedarray/Uint16Array":       reflect.TypeOf([]uint16{}),
-	"~lib/typedarray/Uint32Array":       reflect.TypeOf([]uint32{}),
-	"~lib/typedarray/Uint64Array":       reflect.TypeOf([]uint64{}),
-	"~lib/typedarray/Int8Array":         reflect.TypeOf([]int8{}),
-	"~lib/typedarray/Int16Array":        reflect.TypeOf([]int16{}),
-	"~lib/typedarray/Int32Array":        reflect.TypeOf([]int32{}),
-	"~lib/typedarray/Int64Array":        reflect.TypeOf([]int64{}),
-	"~lib/typedarray/Float32Array":      reflect.TypeOf([]float32{}),
-	"~lib/typedarray/Float64Array":      reflect.TypeOf([]float64{}),
-	"~lib/date/Date":                    reflect.TypeOf(time.Time{}),
-	"~lib/wasi_date/wasi_Date":          reflect.TypeOf(time.Time{}),
+var rtMapStringAny = reflect.TypeFor[map[string]any]()
+var reflectedTypeMap = map[string]reflect.Type{
+	"bool":                              reflect.TypeFor[bool](),
+	"usize":                             reflect.TypeFor[uint](),
+	"u8":                                reflect.TypeFor[uint8](),
+	"u16":                               reflect.TypeFor[uint16](),
+	"u32":                               reflect.TypeFor[uint32](),
+	"u64":                               reflect.TypeFor[uint64](),
+	"isize":                             reflect.TypeFor[int](),
+	"i8":                                reflect.TypeFor[int8](),
+	"i16":                               reflect.TypeFor[int16](),
+	"i32":                               reflect.TypeFor[int32](),
+	"i64":                               reflect.TypeFor[int64](),
+	"f32":                               reflect.TypeFor[float32](),
+	"f64":                               reflect.TypeFor[float64](),
+	"~lib/string/String":                reflect.TypeFor[string](),
+	"~lib/arraybuffer/ArrayBuffer":      reflect.TypeFor[[]byte](),
+	"~lib/typedarray/Uint8ClampedArray": reflect.TypeFor[[]uint8](),
+	"~lib/typedarray/Uint8Array":        reflect.TypeFor[[]uint8](),
+	"~lib/typedarray/Uint16Array":       reflect.TypeFor[[]uint16](),
+	"~lib/typedarray/Uint32Array":       reflect.TypeFor[[]uint32](),
+	"~lib/typedarray/Uint64Array":       reflect.TypeFor[[]uint64](),
+	"~lib/typedarray/Int8Array":         reflect.TypeFor[[]int8](),
+	"~lib/typedarray/Int16Array":        reflect.TypeFor[[]int16](),
+	"~lib/typedarray/Int32Array":        reflect.TypeFor[[]int32](),
+	"~lib/typedarray/Int64Array":        reflect.TypeFor[[]int64](),
+	"~lib/typedarray/Float32Array":      reflect.TypeFor[[]float32](),
+	"~lib/typedarray/Float64Array":      reflect.TypeFor[[]float64](),
+	"~lib/date/Date":                    reflect.TypeFor[time.Time](),
+	"~lib/wasi_date/wasi_Date":          reflect.TypeFor[time.Time](),
 }

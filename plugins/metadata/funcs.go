@@ -110,8 +110,3 @@ func getCustomSectionData(cm wazero.CompiledModule, name string) (data []byte, f
 	}
 	return data, found
 }
-
-func GetFunctionImportMetadata(ctx context.Context, name string) *Function {
-	md := ctx.Value(utils.MetadataContextKey).(*Metadata)
-	return md.FnImports[name]
-}

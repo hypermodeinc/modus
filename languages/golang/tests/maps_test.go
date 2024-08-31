@@ -23,7 +23,7 @@ func TestMapInput_string_string(t *testing.T) {
 		"c": "3",
 	}
 
-	if _, err := f.InvokeFunction("testMapInput_string_string", val); err != nil {
+	if _, err := f.CallFunction("testMapInput_string_string", val); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -40,10 +40,10 @@ func TestMapPtrInput_string_string(t *testing.T) {
 		"c": "3",
 	}
 
-	if _, err := f.InvokeFunction("testMapPtrInput_string_string", val); err != nil {
+	if _, err := f.CallFunction("testMapPtrInput_string_string", val); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := f.InvokeFunction("testMapPtrInput_string_string", &val); err != nil {
+	if _, err := f.CallFunction("testMapPtrInput_string_string", &val); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -54,7 +54,7 @@ func TestMapOutput_string_string(t *testing.T) {
 	f := NewGoWasmTestFixture(t)
 	defer f.Close()
 
-	result, err := f.InvokeFunction("testMapOutput_string_string")
+	result, err := f.CallFunction("testMapOutput_string_string")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -68,7 +68,7 @@ func TestMapOutput_string_string(t *testing.T) {
 	if result == nil {
 		t.Error("expected a result")
 	} else if r, ok := result.(map[string]string); !ok {
-		t.Errorf("expected a map[string]string, got %T", result)
+		t.Errorf("expected %T, got %T", expected, result)
 	} else if !maps.Equal(expected, r) {
 		t.Errorf("expected %v, got %v", expected, r)
 	}
@@ -80,7 +80,7 @@ func TestMapPtrOutput_string_string(t *testing.T) {
 	f := NewGoWasmTestFixture(t)
 	defer f.Close()
 
-	result, err := f.InvokeFunction("testMapPtrOutput_string_string")
+	result, err := f.CallFunction("testMapPtrOutput_string_string")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -94,7 +94,7 @@ func TestMapPtrOutput_string_string(t *testing.T) {
 	if result == nil {
 		t.Error("expected a result")
 	} else if r, ok := result.(*map[string]string); !ok {
-		t.Errorf("expected a *map[string]string, got %T", result)
+		t.Errorf("expected %T, got %T", expected, result)
 	} else if !maps.Equal(expected, *r) {
 		t.Errorf("expected %v, got %v", expected, r)
 	}
@@ -108,7 +108,7 @@ func TestIterateMap_string_string(t *testing.T) {
 
 	var m = makeTestMap(100)
 
-	if _, err := f.InvokeFunction("testIterateMap_string_string", m); err != nil {
+	if _, err := f.CallFunction("testIterateMap_string_string", m); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -121,7 +121,7 @@ func TestMapLookup_string_string(t *testing.T) {
 
 	var m = makeTestMap(100)
 
-	result, err := f.InvokeFunction("testMapLookup_string_string", m, "key_047")
+	result, err := f.CallFunction("testMapLookup_string_string", m, "key_047")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -131,7 +131,7 @@ func TestMapLookup_string_string(t *testing.T) {
 	if result == nil {
 		t.Error("expected a result")
 	} else if r, ok := result.(string); !ok {
-		t.Errorf("expected a string, got %T", result)
+		t.Errorf("expected %T, got %T", expected, result)
 	} else if expected != r {
 		t.Errorf("expected %s, got %s", expected, r)
 	}
@@ -155,7 +155,7 @@ func TestStructContainingMapInput_string_string(t *testing.T) {
 		"c": "3",
 	}}
 
-	if _, err := f.InvokeFunction("testStructContainingMapInput_string_string", s); err != nil {
+	if _, err := f.CallFunction("testStructContainingMapInput_string_string", s); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -168,7 +168,7 @@ func TestStructContainingMapOutput_string_string(t *testing.T) {
 
 	f.AddCustomType("testdata.TestStructWithMap", reflect.TypeFor[testStructWithMap]())
 
-	result, err := f.InvokeFunction("testStructContainingMapOutput_string_string")
+	result, err := f.CallFunction("testStructContainingMapOutput_string_string")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -182,7 +182,7 @@ func TestStructContainingMapOutput_string_string(t *testing.T) {
 	if result == nil {
 		t.Error("expected a result")
 	} else if r, ok := result.(testStructWithMap); !ok {
-		t.Errorf("expected a testStructWithMap, got %T", result)
+		t.Errorf("expected %T, got %T", expected, result)
 	} else if !reflect.DeepEqual(expected, r) {
 		t.Errorf("expected %v, got %v", expected, r)
 	}

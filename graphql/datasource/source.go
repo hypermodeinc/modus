@@ -28,10 +28,10 @@ type callInfo struct {
 }
 
 type HypermodeDataSource struct {
-	WasmHost *wasmhost.WasmHost
+	WasmHost wasmhost.WasmHost
 }
 
-func (s *HypermodeDataSource) Load(ctx context.Context, input []byte, out *bytes.Buffer) error {
+func (ds *HypermodeDataSource) Load(ctx context.Context, input []byte, out *bytes.Buffer) error {
 
 	// Parse the input to get the function call info
 	var ci callInfo
@@ -41,7 +41,7 @@ func (s *HypermodeDataSource) Load(ctx context.Context, input []byte, out *bytes
 	}
 
 	// Load the data
-	result, gqlErrors, err := s.callFunction(ctx, ci)
+	result, gqlErrors, err := ds.callFunction(ctx, ci)
 
 	// Write the response
 	err = writeGraphQLResponse(out, result, gqlErrors, err, ci)
@@ -57,23 +57,47 @@ func (*HypermodeDataSource) LoadWithFiles(ctx context.Context, input []byte, fil
 	panic("not implemented")
 }
 
-func (s *HypermodeDataSource) callFunction(ctx context.Context, callInfo callInfo) (any, []resolve.GraphQLError, error) {
+func (ds *HypermodeDataSource) callFunction(ctx context.Context, callInfo callInfo) (any, []resolve.GraphQLError, error) {
+
+	// Get the function info
+	fnInfo, err := ds.WasmHost.GetFunctionInfo(callInfo.Function.Name)
+	if err != nil {
+		return nil, nil, err
+	}
+
 	// Call the function
-	info, err := s.WasmHost.CallFunctionWithParametersMap(ctx, callInfo.Function.Name, callInfo.Parameters)
+	execInfo, err := ds.WasmHost.CallFunction(ctx, fnInfo, callInfo.Parameters)
 	if err != nil {
 		// The full error message has already been logged.  Return a generic error to the caller, which will be included in the response.
 		return nil, nil, errors.New("error calling function")
 	}
 
 	// Store the execution info into the function output map.
-	outputMap := ctx.Value(utils.FunctionOutputContextKey).(map[string]*wasmhost.ExecutionInfo)
-	outputMap[callInfo.Function.AliasOrName()] = info
+	outputMap := ctx.Value(utils.FunctionOutputContextKey).(map[string]wasmhost.ExecutionInfo)
+	outputMap[callInfo.Function.AliasOrName()] = execInfo
 
 	// Transform messages (and error lines in the output buffers) to GraphQL errors.
-	messages := append(info.Messages, utils.TransformConsoleOutput(info.Buffers)...)
+	messages := append(execInfo.Messages(), utils.TransformConsoleOutput(execInfo.Buffers())...)
 	gqlErrors := transformErrors(messages, callInfo)
 
-	return info.Result, gqlErrors, err
+	// Get the result.
+	result := execInfo.Result()
+
+	// If we have multiple results, unpack them into a map that matches the schema generated type.
+	if results, ok := result.([]any); ok && len(fnInfo.ExecutionPlan().ResultHandlers()) > 1 {
+		fnMeta := fnInfo.Metadata()
+		m := make(map[string]any, len(results))
+		for i, r := range results {
+			name := fnMeta.Results[i].Name
+			if name == "" {
+				name = fmt.Sprintf("item%d", i+1)
+			}
+			m[name] = r
+		}
+		result = m
+	}
+
+	return result, gqlErrors, err
 }
 
 func writeGraphQLResponse(writer io.Writer, result any, gqlErrors []resolve.GraphQLError, fnErr error, ci callInfo) error {

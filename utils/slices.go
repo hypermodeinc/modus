@@ -77,3 +77,96 @@ func convertSlice[T any](input []T) ([]any, error) {
 	}
 	return out, nil
 }
+
+func ConvertToSliceOf[T any](obj any) ([]T, bool) {
+	switch obj := obj.(type) {
+	case nil:
+		return nil, true
+	case []T:
+		return obj, true
+	case []any:
+		out := make([]T, len(obj))
+		for i, v := range obj {
+			out[i] = v.(T)
+		}
+		return out, true
+	case [0]T:
+		return obj[:], true
+	case [1]T:
+		return obj[:], true
+	case [2]T:
+		return obj[:], true
+	case [3]T:
+		return obj[:], true
+	case [4]T:
+		return obj[:], true
+	case [5]T:
+		return obj[:], true
+	case [6]T:
+		return obj[:], true
+	case [7]T:
+		return obj[:], true
+	case [8]T:
+		return obj[:], true
+	case [9]T:
+		return obj[:], true
+	case [10]T:
+		return obj[:], true
+	case [11]T:
+		return obj[:], true
+	case [12]T:
+		return obj[:], true
+	case [13]T:
+		return obj[:], true
+	case [14]T:
+		return obj[:], true
+	case [15]T:
+		return obj[:], true
+	case [16]T:
+		return obj[:], true
+	case [17]T:
+		return obj[:], true
+	case [18]T:
+		return obj[:], true
+	case [19]T:
+		return obj[:], true
+	case [20]T:
+		return obj[:], true
+	case [21]T:
+		return obj[:], true
+	case [22]T:
+		return obj[:], true
+	case [23]T:
+		return obj[:], true
+	case [24]T:
+		return obj[:], true
+	case [25]T:
+		return obj[:], true
+	case [26]T:
+		return obj[:], true
+	case [27]T:
+		return obj[:], true
+	case [28]T:
+		return obj[:], true
+	case [29]T:
+		return obj[:], true
+	case [30]T:
+		return obj[:], true
+	case [31]T:
+		return obj[:], true
+	case [32]T:
+		return obj[:], true
+	}
+
+	rv := reflect.ValueOf(obj)
+	switch rv.Kind() {
+	case reflect.Slice, reflect.Array:
+		out := make([]T, rv.Len())
+		for i := 0; i < rv.Len(); i++ {
+			out[i] = rv.Index(i).Interface().(T)
+		}
+		return out, true
+	}
+
+	return nil, false
+}

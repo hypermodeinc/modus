@@ -13,17 +13,13 @@ import (
 	"github.com/rs/zerolog"
 )
 
-// TODO: refactor to remove global
-
-var GlobalWasmHost *WasmHost
-
-func InitWasmHost(ctx context.Context, opts ...func(*WasmHost) error) {
+func InitWasmHost(ctx context.Context, registrations ...func(WasmHost) error) WasmHost {
 	span := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
 
 	configureLogger()
 
-	GlobalWasmHost = NewWasmHost(ctx, opts...)
+	return NewWasmHost(ctx, registrations...)
 }
 
 func configureLogger() {

@@ -6,6 +6,8 @@ package plugins
 
 import (
 	"context"
+
+	"hypruntime/langsupport"
 	"hypruntime/languages"
 	"hypruntime/plugins/metadata"
 	"hypruntime/utils"
@@ -18,16 +20,22 @@ type Plugin struct {
 	Module   wazero.CompiledModule
 	Metadata *metadata.Metadata
 	FileName string
-	Language languages.Language
+	Language langsupport.Language
+	Planner  langsupport.Planner
 }
 
 func NewPlugin(cm wazero.CompiledModule, filename string, md *metadata.Metadata) *Plugin {
+
+	language := languages.GetLanguageForSDK(md.SDK)
+	planner := language.NewPlanner(md)
+
 	return &Plugin{
 		Id:       utils.GenerateUUIDv7(),
 		Module:   cm,
 		Metadata: md,
 		FileName: filename,
-		Language: languages.GetLanguageForSDK(md.SDK),
+		Language: language,
+		Planner:  planner,
 	}
 }
 

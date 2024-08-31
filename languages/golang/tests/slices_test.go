@@ -18,7 +18,7 @@ func TestSliceInput_byte(t *testing.T) {
 
 	var val = []byte{0x01, 0x02, 0x03, 0x04}
 
-	if _, err := f.InvokeFunction("testSliceInput_byte", val); err != nil {
+	if _, err := f.CallFunction("testSliceInput_byte", val); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -31,7 +31,7 @@ func TestSliceInput_intPtr(t *testing.T) {
 
 	var val = getIntPtrSlice()
 
-	if _, err := f.InvokeFunction("testSliceInput_intPtr", val); err != nil {
+	if _, err := f.CallFunction("testSliceInput_intPtr", val); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -44,7 +44,7 @@ func TestSliceInput_string(t *testing.T) {
 
 	var val = []string{"abc", "def", "ghi"}
 
-	if _, err := f.InvokeFunction("testSliceInput_string", val); err != nil {
+	if _, err := f.CallFunction("testSliceInput_string", val); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -57,7 +57,7 @@ func TestSliceInput_stringPtr(t *testing.T) {
 
 	var val = getStringPtrSlice()
 
-	if _, err := f.InvokeFunction("testSliceInput_stringPtr", val); err != nil {
+	if _, err := f.CallFunction("testSliceInput_stringPtr", val); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -68,7 +68,7 @@ func TestSliceOutput_byte(t *testing.T) {
 	f := NewGoWasmTestFixture(t)
 	defer f.Close()
 
-	result, err := f.InvokeFunction("testSliceOutput_byte")
+	result, err := f.CallFunction("testSliceOutput_byte")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -90,7 +90,7 @@ func TestSliceOutput_intPtr(t *testing.T) {
 	f := NewGoWasmTestFixture(t)
 	defer f.Close()
 
-	result, err := f.InvokeFunction("testSliceOutput_intPtr")
+	result, err := f.CallFunction("testSliceOutput_intPtr")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -111,7 +111,7 @@ func TestSliceOutput_string(t *testing.T) {
 	f := NewGoWasmTestFixture(t)
 	defer f.Close()
 
-	result, err := f.InvokeFunction("testSliceOutput_string")
+	result, err := f.CallFunction("testSliceOutput_string")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -132,7 +132,7 @@ func TestSliceOutput_stringPtr(t *testing.T) {
 	f := NewGoWasmTestFixture(t)
 	defer f.Close()
 
-	result, err := f.InvokeFunction("testSliceOutput_stringPtr")
+	result, err := f.CallFunction("testSliceOutput_stringPtr")
 	if err != nil {
 		t.Fatal(err)
 	}

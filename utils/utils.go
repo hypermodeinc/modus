@@ -8,8 +8,10 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"reflect"
 	"strconv"
 	"strings"
+	"unsafe"
 
 	"github.com/google/uuid"
 )
@@ -70,5 +72,29 @@ func ConvertToError(e any) error {
 		return errors.New(e)
 	default:
 		return fmt.Errorf("%v", e)
+	}
+}
+
+func GetUnsafeDataPtr(x any) unsafe.Pointer {
+	type iface struct {
+		typ  unsafe.Pointer
+		data unsafe.Pointer
+	}
+
+	internal := *(*iface)(unsafe.Pointer(&x))
+	return internal.data
+}
+
+// HasNil returns true if the given interface value is nil, or contains a nil pointer.
+func HasNil(x any) bool {
+	return x == nil || uintptr(GetUnsafeDataPtr(x)) == 0
+}
+
+func CanBeNil(rt reflect.Type) bool {
+	switch rt.Kind() {
+	case reflect.Chan, reflect.Func, reflect.Interface, reflect.Map, reflect.Ptr, reflect.Slice, reflect.UnsafePointer:
+		return true
+	default:
+		return false
 	}
 }

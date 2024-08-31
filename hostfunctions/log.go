@@ -12,10 +12,10 @@ import (
 )
 
 func init() {
-	registerHostFunction("hypermode", "log", logFunctionMessage)
+	registerHostFunction("hypermode", "log", LogFunctionMessage)
 }
 
-func logFunctionMessage(ctx context.Context, level, message string) {
+func LogFunctionMessage(ctx context.Context, level, message string) {
 
 	// write to the logger
 	logger.Get(ctx).

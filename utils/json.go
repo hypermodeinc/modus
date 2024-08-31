@@ -21,11 +21,8 @@ func JsonSerialize(v any) ([]byte, error) {
 		return nil, err
 	}
 
-	// Remove the newline at the end, if there is one
-	bytes := buf.Bytes()
-	if bytes[len(bytes)-1] == '\n' {
-		bytes = bytes[:len(bytes)-1]
-	}
+	// Remove the extraneous trailing newline
+	bytes := buf.Bytes()[:buf.Len()-1]
 
 	return bytes, nil
 }

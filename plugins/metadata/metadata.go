@@ -134,6 +134,22 @@ func (m *Metadata) SdkVersion() string {
 	return version
 }
 
+func (m *Metadata) GetTypeDefinition(typ string) (*TypeDefinition, error) {
+	switch typ {
+	case "[]byte":
+		return &TypeDefinition{typ, 1, nil}, nil
+	case "string":
+		return &TypeDefinition{typ, 2, nil}, nil
+	}
+
+	def, ok := m.Types[typ]
+	if !ok {
+		return nil, fmt.Errorf("info for type %s not found in plugin %s", typ, m.Name())
+	}
+
+	return def, nil
+}
+
 func parseNameAndVersion(s string) (name string, version string) {
 	i := strings.LastIndex(s, "@")
 	if i == -1 {
@@ -169,6 +185,10 @@ func (m *TypeMap) AddType(name string) *TypeDefinition {
 
 	(*m)[name] = t
 	return t
+}
+
+func NewFunction(name string) *Function {
+	return &Function{Name: name}
 }
 
 func (f *Function) WithParameter(name string, typ string, dflt ...any) *Function {

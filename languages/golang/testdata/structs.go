@@ -21,6 +21,11 @@ type TestStruct4 struct {
 	C *string
 }
 
+type TestRecursiveStruct struct {
+	A bool
+	B *TestRecursiveStruct
+}
+
 var testStruct1 = TestStruct1{
 	A: true,
 }
@@ -48,6 +53,14 @@ var testStruct4_withNil = TestStruct4{
 	C: nil,
 }
 
+var testRecursiveStruct = func() TestRecursiveStruct {
+	r := TestRecursiveStruct{
+		A: true,
+	}
+	r.B = &r
+	return r
+}()
+
 func TestStructInput1(o TestStruct1) {
 	assertEqual(testStruct1, o)
 }
@@ -66,6 +79,10 @@ func TestStructInput4(o TestStruct4) {
 
 func TestStructInput4_withNil(o TestStruct4) {
 	assertEqual(testStruct4_withNil, o)
+}
+
+func TestRecursiveStructInput(o TestRecursiveStruct) {
+	assertEqual(testRecursiveStruct, o)
 }
 
 func TestStructPtrInput1(o *TestStruct1) {
@@ -88,6 +105,10 @@ func TestStructPtrInput4_withNil(o *TestStruct4) {
 	assertEqual(testStruct4_withNil, *o)
 }
 
+func TestRecursiveStructPtrInput(o *TestRecursiveStruct) {
+	assertEqual(testRecursiveStruct, *o)
+}
+
 func TestStructPtrInput1_nil(o *TestStruct1) {
 	assertNil(o)
 }
@@ -101,6 +122,10 @@ func TestStructPtrInput3_nil(o *TestStruct3) {
 }
 
 func TestStructPtrInput4_nil(o *TestStruct4) {
+	assertNil(o)
+}
+
+func TestRecursiveStructPtrInput_nil(o *TestRecursiveStruct) {
 	assertNil(o)
 }
 
@@ -124,6 +149,10 @@ func TestStructOutput4_withNil() TestStruct4 {
 	return testStruct4_withNil
 }
 
+func TestRecursiveStructOutput() TestRecursiveStruct {
+	return testRecursiveStruct
+}
+
 func TestStructPtrOutput1() *TestStruct1 {
 	return &testStruct1
 }
@@ -144,6 +173,10 @@ func TestStructPtrOutput4_withNil() *TestStruct4 {
 	return &testStruct4_withNil
 }
 
+func TestRecursiveStructPtrOutput() *TestRecursiveStruct {
+	return &testRecursiveStruct
+}
+
 func TestStructPtrOutput1_nil() *TestStruct1 {
 	return nil
 }
@@ -157,5 +190,9 @@ func TestStructPtrOutput3_nil() *TestStruct3 {
 }
 
 func TestStructPtrOutput4_nil() *TestStruct4 {
+	return nil
+}
+
+func TestRecursiveStructPtrOutput_nil() *TestRecursiveStruct {
 	return nil
 }

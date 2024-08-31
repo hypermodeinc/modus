@@ -10,21 +10,21 @@ import (
 	"hypruntime/wasmhost"
 )
 
-func getTestHostFunctionRegistrations() []func(*wasmhost.WasmHost) error {
-	return []func(*wasmhost.WasmHost) error{
-		func(host *wasmhost.WasmHost) error {
+func getTestHostFunctionRegistrations() []func(wasmhost.WasmHost) error {
+	return []func(wasmhost.WasmHost) error{
+		func(host wasmhost.WasmHost) error {
 			return host.RegisterHostFunction("test", "add", hostAdd)
 		},
-		func(host *wasmhost.WasmHost) error {
+		func(host wasmhost.WasmHost) error {
 			return host.RegisterHostFunction("test", "echo1", hostEcho1)
 		},
-		func(host *wasmhost.WasmHost) error {
+		func(host wasmhost.WasmHost) error {
 			return host.RegisterHostFunction("test", "echo2", hostEcho2)
 		},
-		func(host *wasmhost.WasmHost) error {
+		func(host wasmhost.WasmHost) error {
 			return host.RegisterHostFunction("test", "echo3", hostEcho3)
 		},
-		func(host *wasmhost.WasmHost) error {
+		func(host wasmhost.WasmHost) error {
 			return host.RegisterHostFunction("test", "echo4", hostEcho4)
 		},
 	}
@@ -58,7 +58,7 @@ func TestHostFn_add(t *testing.T) {
 	f := NewGoWasmTestFixture(t)
 	defer f.Close()
 
-	result, err := f.InvokeFunction("add", 1, 2)
+	result, err := f.CallFunction("add", 1, 2)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -78,7 +78,7 @@ func TestHostFn_echo1_string(t *testing.T) {
 	f := NewGoWasmTestFixture(t)
 	defer f.Close()
 
-	result, err := f.InvokeFunction("echo1", "hello")
+	result, err := f.CallFunction("echo1", "hello")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -100,7 +100,7 @@ func TestHostFn_echo1_stringPtr(t *testing.T) {
 	defer f.Close()
 
 	s := "hello"
-	result, err := f.InvokeFunction("echo1", &s)
+	result, err := f.CallFunction("echo1", &s)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -121,7 +121,7 @@ func TestHostFn_echo2_string(t *testing.T) {
 	f := NewGoWasmTestFixture(t)
 	defer f.Close()
 
-	result, err := f.InvokeFunction("echo2", "hello")
+	result, err := f.CallFunction("echo2", "hello")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -143,7 +143,7 @@ func TestHostFn_echo2_stringPtr(t *testing.T) {
 	defer f.Close()
 
 	s := "hello"
-	result, err := f.InvokeFunction("echo2", &s)
+	result, err := f.CallFunction("echo2", &s)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -164,7 +164,7 @@ func TestHostFn_echo3_string(t *testing.T) {
 	f := NewGoWasmTestFixture(t)
 	defer f.Close()
 
-	result, err := f.InvokeFunction("echo3", "hello")
+	result, err := f.CallFunction("echo3", "hello")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -186,7 +186,7 @@ func TestHostFn_echo3_stringPtr(t *testing.T) {
 	defer f.Close()
 
 	s := "hello"
-	result, err := f.InvokeFunction("echo3", &s)
+	result, err := f.CallFunction("echo3", &s)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -207,7 +207,7 @@ func TestHostFn_echo4_string(t *testing.T) {
 	f := NewGoWasmTestFixture(t)
 	defer f.Close()
 
-	result, err := f.InvokeFunction("echo4", "hello")
+	result, err := f.CallFunction("echo4", "hello")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -229,7 +229,7 @@ func TestHostFn_echo4_stringPtr(t *testing.T) {
 	defer f.Close()
 
 	s := "hello"
-	result, err := f.InvokeFunction("echo4", &s)
+	result, err := f.CallFunction("echo4", &s)
 	if err != nil {
 		t.Fatal(err)
 	}

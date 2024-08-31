@@ -104,11 +104,11 @@ func TestMain(m *testing.M) {
 	config.Port = httpListenPort
 
 	// setup runtime services
-	services.Start(context.Background())
-	defer services.Stop(context.Background())
+	ctx := services.Start()
+	defer services.Stop(ctx)
 
 	// start HTTP server
-	ctx, stop := context.WithCancel(context.Background())
+	ctx, stop := context.WithCancel(ctx)
 	done := make(chan struct{})
 	go func() {
 		httpserver.Start(ctx, true)
@@ -158,7 +158,7 @@ func TestPostgresqlNoHost(t *testing.T) {
   "hosts": {
     "postgres": {
       "type": "postgresql",
-      "connString": "postgresql://postgres:password@localhost:5432/data?sslmode=disable"
+      "connString": "postgresql://postgres:password@localhost:5499/data?sslmode=disable"
     }
   }
 }`)
@@ -180,9 +180,9 @@ func TestPostgresqlNoPostgresqlHost(t *testing.T) {
 	jsonManifest := []byte(`
 {
   "hosts": {
-    "neon": {
+    "my-database": {
       "type": "http",
-      "connString": "http://localhost:5432/data"
+      "connString": "http://localhost:5499/data"
     }
   }
 }`)
@@ -204,9 +204,9 @@ func TestPostgresqlWrongConnString(t *testing.T) {
 	jsonManifest := []byte(`
 {
   "hosts": {
-    "neon": {
+    "my-database": {
       "type": "postgresql",
-      "connString": "http://localhost:5432/data"
+      "connString": "http://localhost:5499/data"
     }
   }
 }`)
@@ -228,7 +228,7 @@ func TestPostgresqlNoConnString(t *testing.T) {
 	jsonManifest := []byte(`
 	{
 	  "hosts": {
-		"neon": {
+		"my-database": {
 		  "type": "postgresql"
 		}
 	  }
@@ -266,12 +266,11 @@ func (ps *postgresqlSuite) setupPostgresContainer() error {
 		return fmt.Errorf("error copying image pull response: %w", err)
 	}
 
-	ports := nat.PortSet{"5432": {}}
 	pgEnv := []string{"POSTGRES_PASSWORD=password", "POSTGRES_DB=data"}
-	cconf := &container.Config{Image: "docker.io/postgres:16-alpine", ExposedPorts: ports, Env: pgEnv}
-	portBindings := nat.PortMap(map[nat.Port][]nat.PortBinding{"5432": {{HostPort: "5432"}}})
+	cconf := &container.Config{Image: "docker.io/postgres:16-alpine", ExposedPorts: nat.PortSet{"5432": {}}, Env: pgEnv}
+	portBindings := nat.PortMap(map[nat.Port][]nat.PortBinding{"5432": {{HostPort: "5499"}}})
 	hconf := &container.HostConfig{PortBindings: portBindings, AutoRemove: true}
-	resp, err := ps.dcli.ContainerCreate(ctx, cconf, hconf, nil, nil, "postgres")
+	resp, err := ps.dcli.ContainerCreate(ctx, cconf, hconf, nil, nil, "postgres_hypermode_integration_test")
 	if err != nil {
 		return err
 	}
@@ -313,12 +312,12 @@ func (ps *postgresqlSuite) setupPostgresContainer() error {
 	}
 
 	// create people table
-	connStr := "postgresql://postgres:password@localhost:5432/data?sslmode=disable"
-	conn, err := pgx.Connect(context.Background(), connStr)
+	connStr := "postgresql://postgres:password@localhost:5499/data?sslmode=disable"
+	conn, err := pgx.Connect(ctx, connStr)
 	if err != nil {
 		return err
 	}
-	defer conn.Close(context.Background())
+	defer conn.Close(ctx)
 
 	sql := `
 CREATE TABLE people (
@@ -379,7 +378,7 @@ func (ps *postgresqlSuite) TestPostgresqlWrongTypeInsert() {
 	// try inserting data with wrong type, column: age
 	query := `
 query AddPerson {
-    addPerson(name: "test", age: "21") {
+    addPerson(name: "test", age: "abc") {
         id
         name
         age

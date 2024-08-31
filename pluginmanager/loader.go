@@ -9,7 +9,6 @@ import (
 	"fmt"
 
 	"hypruntime/db"
-	"hypruntime/functions"
 	"hypruntime/logger"
 	"hypruntime/plugins"
 	"hypruntime/plugins/metadata"
@@ -43,8 +42,9 @@ func monitorPlugins(ctx context.Context) {
 	}
 	sm.Changed = func(errors []error) {
 		if len(errors) == 0 {
-			plugins := registry.GetAll()
-			functions.RegisterFunctions(ctx, plugins)
+			plugins := globalPluginRegistry.GetAll()
+			registry := wasmhost.GetWasmHost(ctx).GetFunctionRegistry()
+			registry.RegisterAllFunctions(ctx, plugins...)
 		}
 	}
 	sm.Start(ctx)
@@ -61,7 +61,7 @@ func loadPlugin(ctx context.Context, filename string) error {
 	}
 
 	// Compile the plugin into a module
-	cm, err := wasmhost.GlobalWasmHost.CompileModule(ctx, bytes)
+	cm, err := wasmhost.GetWasmHost(ctx).CompileModule(ctx, bytes)
 	if err != nil {
 		return err
 	}
@@ -85,7 +85,7 @@ func loadPlugin(ctx context.Context, filename string) error {
 	db.WritePluginInfo(ctx, plugin)
 
 	// Register the plugin.
-	registry.AddOrUpdate(plugin)
+	globalPluginRegistry.AddOrUpdate(plugin)
 
 	// Log the details of the loaded plugin.
 	logPluginLoaded(ctx, plugin)
@@ -147,7 +147,7 @@ func unloadPlugin(ctx context.Context, filename string) error {
 	transaction, ctx := utils.NewSentryTransactionForCurrentFunc(ctx)
 	defer transaction.Finish()
 
-	p := registry.GetByFile(filename)
+	p := globalPluginRegistry.GetByFile(filename)
 	if p == nil {
 		return fmt.Errorf("plugin not found: %s", filename)
 	}
@@ -157,6 +157,6 @@ func unloadPlugin(ctx context.Context, filename string) error {
 		Str("build_id", p.BuildId()).
 		Msg("Unloading plugin.")
 
-	registry.Remove(p)
+	globalPluginRegistry.Remove(p)
 	return p.Module.Close(ctx)
 }
