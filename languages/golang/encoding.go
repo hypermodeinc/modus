@@ -7,6 +7,7 @@ package golang
 import (
 	"context"
 	"fmt"
+	"reflect"
 
 	"hypruntime/utils"
 )
@@ -33,10 +34,17 @@ func (wa *wasmAdapter) DecodeData(ctx context.Context, typ string, vals []uint64
 		return err
 	}
 
+	// special case for structs represented as maps
 	if m, ok := data.(map[string]any); ok {
 		if _, ok := (*pData).(map[string]any); !ok {
 			return utils.MapToStruct(m, pData)
 		}
+	}
+
+	// special case for pointers that need to be dereferenced
+	if wa.typeInfo.IsPointerType(typ) && reflect.TypeOf(*pData).Kind() != reflect.Ptr {
+		*pData = reflect.ValueOf(data).Elem().Interface()
+		return nil
 	}
 
 	*pData = data
