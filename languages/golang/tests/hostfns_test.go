@@ -16,7 +16,16 @@ func getTestHostFunctionRegistrations() []func(*wasmhost.WasmHost) error {
 			return host.RegisterHostFunction("test", "add", hostAdd)
 		},
 		func(host *wasmhost.WasmHost) error {
-			return host.RegisterHostFunction("test", "echo", hostEcho)
+			return host.RegisterHostFunction("test", "echo1", hostEcho1)
+		},
+		func(host *wasmhost.WasmHost) error {
+			return host.RegisterHostFunction("test", "echo2", hostEcho2)
+		},
+		func(host *wasmhost.WasmHost) error {
+			return host.RegisterHostFunction("test", "echo3", hostEcho3)
+		},
+		func(host *wasmhost.WasmHost) error {
+			return host.RegisterHostFunction("test", "echo4", hostEcho4)
 		},
 	}
 }
@@ -25,8 +34,22 @@ func hostAdd(a, b int) int {
 	return a + b
 }
 
-func hostEcho(s *string) string {
+func hostEcho1(s string) string {
+	return "echo: " + s
+}
+
+func hostEcho2(s *string) string {
 	return "echo: " + *s
+}
+
+func hostEcho3(s string) *string {
+	result := "echo: " + s
+	return &result
+}
+
+func hostEcho4(s *string) *string {
+	result := "echo: " + *s
+	return &result
 }
 
 func TestHostFn_add(t *testing.T) {
@@ -49,13 +72,164 @@ func TestHostFn_add(t *testing.T) {
 	}
 }
 
-func TestHostFn_echo(t *testing.T) {
+func TestHostFn_echo1_string(t *testing.T) {
 	t.Parallel()
 
 	f := NewGoWasmTestFixture(t)
 	defer f.Close()
 
-	result, err := f.InvokeFunction("echo", "hello")
+	result, err := f.InvokeFunction("echo1", "hello")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expected := "echo: hello"
+	if result == nil {
+		t.Error("expected a result")
+	} else if r, ok := result.(string); !ok {
+		t.Errorf("expected a string, got %T", result)
+	} else if r != expected {
+		t.Errorf("expected %s, got %s", expected, r)
+	}
+}
+
+func TestHostFn_echo1_stringPtr(t *testing.T) {
+	t.Parallel()
+
+	f := NewGoWasmTestFixture(t)
+	defer f.Close()
+
+	s := "hello"
+	result, err := f.InvokeFunction("echo1", &s)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expected := "echo: hello"
+	if result == nil {
+		t.Error("expected a result")
+	} else if r, ok := result.(string); !ok {
+		t.Errorf("expected a string, got %T", result)
+	} else if r != expected {
+		t.Errorf("expected %s, got %s", expected, r)
+	}
+}
+
+func TestHostFn_echo2_string(t *testing.T) {
+	t.Parallel()
+
+	f := NewGoWasmTestFixture(t)
+	defer f.Close()
+
+	result, err := f.InvokeFunction("echo2", "hello")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expected := "echo: hello"
+	if result == nil {
+		t.Error("expected a result")
+	} else if r, ok := result.(string); !ok {
+		t.Errorf("expected a string, got %T", result)
+	} else if r != expected {
+		t.Errorf("expected %s, got %s", expected, r)
+	}
+}
+
+func TestHostFn_echo2_stringPtr(t *testing.T) {
+	t.Parallel()
+
+	f := NewGoWasmTestFixture(t)
+	defer f.Close()
+
+	s := "hello"
+	result, err := f.InvokeFunction("echo2", &s)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expected := "echo: hello"
+	if result == nil {
+		t.Error("expected a result")
+	} else if r, ok := result.(string); !ok {
+		t.Errorf("expected a string, got %T", result)
+	} else if r != expected {
+		t.Errorf("expected %s, got %s", expected, r)
+	}
+}
+
+func TestHostFn_echo3_string(t *testing.T) {
+	t.Parallel()
+
+	f := NewGoWasmTestFixture(t)
+	defer f.Close()
+
+	result, err := f.InvokeFunction("echo3", "hello")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expected := "echo: hello"
+	if result == nil {
+		t.Error("expected a result")
+	} else if r, ok := result.(string); !ok {
+		t.Errorf("expected a string, got %T", result)
+	} else if r != expected {
+		t.Errorf("expected %s, got %s", expected, r)
+	}
+}
+
+func TestHostFn_echo3_stringPtr(t *testing.T) {
+	t.Parallel()
+
+	f := NewGoWasmTestFixture(t)
+	defer f.Close()
+
+	s := "hello"
+	result, err := f.InvokeFunction("echo3", &s)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expected := "echo: hello"
+	if result == nil {
+		t.Error("expected a result")
+	} else if r, ok := result.(string); !ok {
+		t.Errorf("expected a string, got %T", result)
+	} else if r != expected {
+		t.Errorf("expected %s, got %s", expected, r)
+	}
+}
+
+func TestHostFn_echo4_string(t *testing.T) {
+	t.Parallel()
+
+	f := NewGoWasmTestFixture(t)
+	defer f.Close()
+
+	result, err := f.InvokeFunction("echo4", "hello")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expected := "echo: hello"
+	if result == nil {
+		t.Error("expected a result")
+	} else if r, ok := result.(string); !ok {
+		t.Errorf("expected a string, got %T", result)
+	} else if r != expected {
+		t.Errorf("expected %s, got %s", expected, r)
+	}
+}
+
+func TestHostFn_echo4_stringPtr(t *testing.T) {
+	t.Parallel()
+
+	f := NewGoWasmTestFixture(t)
+	defer f.Close()
+
+	s := "hello"
+	result, err := f.InvokeFunction("echo4", &s)
 	if err != nil {
 		t.Fatal(err)
 	}
