@@ -52,6 +52,12 @@ var testStruct4 = TestStruct4{
 	C: func() *string { s := "abc"; return &s }(),
 }
 
+var testStruct4_withNil = TestStruct4{
+	A: true,
+	B: 123,
+	C: nil,
+}
+
 var testStruct1AsMap = map[string]any{
 	"A": true,
 }
@@ -71,6 +77,12 @@ var testStruct4AsMap = map[string]any{
 	"A": true,
 	"B": 123,
 	"C": func() *string { s := "abc"; return &s }(),
+}
+
+var testStruct4AsMap_withNil = map[string]any{
+	"A": true,
+	"B": 123,
+	"C": nil,
 }
 
 func TestStructInput1(t *testing.T) {
@@ -113,6 +125,17 @@ func TestStructInput4(t *testing.T) {
 	defer f.Close()
 
 	if _, err := f.InvokeFunction("testStructInput4", testStruct4); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestStructInput4_withNil(t *testing.T) {
+	t.Parallel()
+
+	f := NewGoWasmTestFixture(t)
+	defer f.Close()
+
+	if _, err := f.InvokeFunction("testStructInput4_withNil", testStruct4_withNil); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -173,6 +196,20 @@ func TestStructPtrInput4(t *testing.T) {
 	}
 }
 
+func TestStructPtrInput4_withNil(t *testing.T) {
+	t.Parallel()
+
+	f := NewGoWasmTestFixture(t)
+	defer f.Close()
+
+	if _, err := f.InvokeFunction("testStructPtrInput4_withNil", testStruct4_withNil); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := f.InvokeFunction("testStructPtrInput4_withNil", &testStruct4_withNil); err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestStructInput1_map(t *testing.T) {
 	t.Parallel()
 
@@ -213,6 +250,17 @@ func TestStructInput4_map(t *testing.T) {
 	defer f.Close()
 
 	if _, err := f.InvokeFunction("testStructInput4", testStruct4AsMap); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestStructInput4_map_withNil(t *testing.T) {
+	t.Parallel()
+
+	f := NewGoWasmTestFixture(t)
+	defer f.Close()
+
+	if _, err := f.InvokeFunction("testStructInput4_withNil", testStruct4AsMap_withNil); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -269,6 +317,20 @@ func TestStructPtrInput4_map(t *testing.T) {
 		t.Fatal(err)
 	}
 	if _, err := f.InvokeFunction("testStructPtrInput4", &testStruct4AsMap); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestStructPtrInput4_map_withNil(t *testing.T) {
+	t.Parallel()
+
+	f := NewGoWasmTestFixture(t)
+	defer f.Close()
+
+	if _, err := f.InvokeFunction("testStructPtrInput4_withNil", testStruct4AsMap_withNil); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := f.InvokeFunction("testStructPtrInput4_withNil", &testStruct4AsMap_withNil); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -405,6 +467,28 @@ func TestStructOutput4(t *testing.T) {
 	}
 }
 
+func TestStructOutput4_withNil(t *testing.T) {
+	t.Parallel()
+
+	f := NewGoWasmTestFixture(t)
+	defer f.Close()
+
+	f.AddCustomType("testdata.TestStruct4", reflect.TypeFor[TestStruct4]())
+
+	result, err := f.InvokeFunction("testStructOutput4_withNil")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if result == nil {
+		t.Error("expected a result")
+	} else if r, ok := result.(TestStruct4); !ok {
+		t.Errorf("expected a struct, got %T", result)
+	} else if !reflect.DeepEqual(testStruct4_withNil, r) {
+		t.Errorf("expected %v, got %v", testStruct4_withNil, r)
+	}
+}
+
 func TestStructPtrOutput1(t *testing.T) {
 	t.Parallel()
 
@@ -493,6 +577,28 @@ func TestStructPtrOutput4(t *testing.T) {
 	}
 }
 
+func TestStructPtrOutput4_withNil(t *testing.T) {
+	t.Parallel()
+
+	f := NewGoWasmTestFixture(t)
+	defer f.Close()
+
+	f.AddCustomType("testdata.TestStruct4", reflect.TypeFor[TestStruct4]())
+
+	result, err := f.InvokeFunction("testStructPtrOutput4_withNil")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if result == nil {
+		t.Error("expected a result")
+	} else if r, ok := result.(*TestStruct4); !ok {
+		t.Errorf("expected a pointer to a struct, got %T", result)
+	} else if !reflect.DeepEqual(testStruct4_withNil, *r) {
+		t.Errorf("expected %v, got %v", testStruct4_withNil, *r)
+	}
+}
+
 func TestStructOutput1_map(t *testing.T) {
 	t.Parallel()
 
@@ -573,6 +679,26 @@ func TestStructOutput4_map(t *testing.T) {
 	}
 }
 
+func TestStructOutput4_map_withNil(t *testing.T) {
+	t.Parallel()
+
+	f := NewGoWasmTestFixture(t)
+	defer f.Close()
+
+	result, err := f.InvokeFunction("testStructOutput4_withNil")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if result == nil {
+		t.Error("expected a result")
+	} else if r, ok := result.(map[string]any); !ok {
+		t.Errorf("expected a map[string]any, got %T", result)
+	} else if !reflect.DeepEqual(testStruct4AsMap_withNil, r) {
+		t.Errorf("expected %v, got %v", testStruct4AsMap_withNil, r)
+	}
+}
+
 func TestStructPtrOutput1_map(t *testing.T) {
 	t.Parallel()
 
@@ -650,6 +776,26 @@ func TestStructPtrOutput4_map(t *testing.T) {
 		t.Errorf("expected a map[string]any, got %T", result)
 	} else if !reflect.DeepEqual(testStruct4AsMap, r) {
 		t.Errorf("expected %v, got %v", testStruct4AsMap, r)
+	}
+}
+
+func TestStructPtrOutput4_map_withNil(t *testing.T) {
+	t.Parallel()
+
+	f := NewGoWasmTestFixture(t)
+	defer f.Close()
+
+	result, err := f.InvokeFunction("testStructPtrOutput4_withNil")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if result == nil {
+		t.Error("expected a result")
+	} else if r, ok := result.(map[string]any); !ok {
+		t.Errorf("expected a map[string]any, got %T", result)
+	} else if !reflect.DeepEqual(testStruct4AsMap_withNil, r) {
+		t.Errorf("expected %v, got %v", testStruct4AsMap_withNil, r)
 	}
 }
 
