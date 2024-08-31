@@ -373,7 +373,7 @@ func TestArrayOutput2_struct(t *testing.T) {
 	f := NewGoWasmTestFixture(t)
 	defer f.Close()
 
-	f.AddCustomType("test-go.TestStruct2", reflect.TypeFor[TestStruct2]())
+	f.AddCustomType("testdata.TestStruct2", reflect.TypeFor[TestStruct2]())
 
 	result, err := f.InvokeFunction("testArrayOutput2_struct")
 	if err != nil {
@@ -396,7 +396,7 @@ func TestArrayOutput2_structPtr(t *testing.T) {
 	f := NewGoWasmTestFixture(t)
 	defer f.Close()
 
-	f.AddCustomType("test-go.TestStruct2", reflect.TypeFor[TestStruct2]())
+	f.AddCustomType("testdata.TestStruct2", reflect.TypeFor[TestStruct2]())
 
 	result, err := f.InvokeFunction("testArrayOutput2_structPtr")
 	if err != nil {
