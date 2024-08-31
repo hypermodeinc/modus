@@ -147,7 +147,7 @@ func TestStructContainingMapInput_string_string(t *testing.T) {
 	f := NewGoWasmTestFixture(t)
 	defer f.Close()
 
-	f.AddCustomType("test-go.TestStructWithMap", reflect.TypeFor[testStructWithMap]())
+	f.AddCustomType("testdata.TestStructWithMap", reflect.TypeFor[testStructWithMap]())
 
 	s := testStructWithMap{M: map[string]string{
 		"a": "1",
@@ -166,7 +166,7 @@ func TestStructContainingMapOutput_string_string(t *testing.T) {
 	f := NewGoWasmTestFixture(t)
 	defer f.Close()
 
-	f.AddCustomType("test-go.TestStructWithMap", reflect.TypeFor[testStructWithMap]())
+	f.AddCustomType("testdata.TestStructWithMap", reflect.TypeFor[testStructWithMap]())
 
 	result, err := f.InvokeFunction("testStructContainingMapOutput_string_string")
 	if err != nil {

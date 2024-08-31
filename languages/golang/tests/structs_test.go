@@ -164,7 +164,7 @@ func TestStructOutput1(t *testing.T) {
 	f := NewGoWasmTestFixture(t)
 	defer f.Close()
 
-	f.AddCustomType("test-go.TestStruct1", reflect.TypeFor[TestStruct1]())
+	f.AddCustomType("testdata.TestStruct1", reflect.TypeFor[TestStruct1]())
 
 	result, err := f.InvokeFunction("testStructOutput1")
 	if err != nil {
@@ -186,7 +186,7 @@ func TestStructOutput2(t *testing.T) {
 	f := NewGoWasmTestFixture(t)
 	defer f.Close()
 
-	f.AddCustomType("test-go.TestStruct2", reflect.TypeFor[TestStruct2]())
+	f.AddCustomType("testdata.TestStruct2", reflect.TypeFor[TestStruct2]())
 
 	result, err := f.InvokeFunction("testStructOutput2")
 	if err != nil {
@@ -208,7 +208,7 @@ func TestStructPtrOutput1(t *testing.T) {
 	f := NewGoWasmTestFixture(t)
 	defer f.Close()
 
-	f.AddCustomType("test-go.TestStruct1", reflect.TypeFor[TestStruct1]())
+	f.AddCustomType("testdata.TestStruct1", reflect.TypeFor[TestStruct1]())
 
 	result, err := f.InvokeFunction("testStructPtrOutput1")
 	if err != nil {
@@ -230,7 +230,7 @@ func TestStructPtrOutput2(t *testing.T) {
 	f := NewGoWasmTestFixture(t)
 	defer f.Close()
 
-	f.AddCustomType("test-go.TestStruct2", reflect.TypeFor[TestStruct2]())
+	f.AddCustomType("testdata.TestStruct2", reflect.TypeFor[TestStruct2]())
 
 	result, err := f.InvokeFunction("testStructPtrOutput2")
 	if err != nil {
