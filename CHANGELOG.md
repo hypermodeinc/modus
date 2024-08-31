@@ -2,7 +2,7 @@
 
 ## UNRELEASED
 
-- Add language support for Hypermode Go SDK [#317](https://github.com/hypermodeAI/runtime/pull/317) [#351](https://github.com/hypermodeAI/runtime/pull/351)
+- Add language support for Hypermode Go SDK [#317](https://github.com/hypermodeAI/runtime/pull/317) [#351](https://github.com/hypermodeAI/runtime/pull/351) [#352](https://github.com/hypermodeAI/runtime/pull/352)
 - Major refactoring to support multiple guest languages [#347](https://github.com/hypermodeAI/runtime/pull/347)
 - Rename `hmruntime` to `hypruntime` [#348](https://github.com/hypermodeAI/runtime/pull/348)
 
