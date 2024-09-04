@@ -120,7 +120,7 @@ func getDatasourceConfig(ctx context.Context, schema *gql.Schema, cfg *datasourc
 
 	return plan.NewDataSourceConfiguration(
 		datasource.DataSourceName,
-		&datasource.HypDSFactory{Ctx: ctx},
+		datasource.NewHypDSFactory(ctx),
 		&plan.DataSourceMetadata{RootNodes: rootNodes, ChildNodes: childNodes},
 		*cfg,
 	)
