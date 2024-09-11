@@ -6,6 +6,7 @@
 - Major refactoring to support multiple guest languages [#347](https://github.com/hypermodeAI/runtime/pull/347)
 - Rename `hmruntime` to `hypruntime` [#348](https://github.com/hypermodeAI/runtime/pull/348)
 - Make empty dgraph responses nil [#355](https://github.com/hypermodeAI/runtime/pull/355)
+- Support objects as parameters to functions via GraphQL input types [#359](https://github.com/hypermodeAI/runtime/pull/359)
 
 ## 2024-08-27 - Version 0.11.2
 
