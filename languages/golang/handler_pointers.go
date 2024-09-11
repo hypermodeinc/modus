@@ -9,7 +9,6 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
-	"time"
 
 	"hypruntime/langsupport"
 	"hypruntime/plugins/metadata"
@@ -96,7 +95,7 @@ func (h *pointerHandler) readData(ctx context.Context, wa langsupport.WasmAdapte
 		return nil, err
 	}
 
-	ptr := h.makePointer(data)
+	ptr := utils.MakePointer(data)
 	return ptr, nil
 }
 
@@ -106,10 +105,7 @@ func (h *pointerHandler) writeData(ctx context.Context, wa langsupport.WasmAdapt
 		return 0, nil, nil
 	}
 
-	data, err := h.dereferencePointer(obj)
-	if err != nil {
-		return 0, nil, err
-	}
+	data := utils.DereferencePointer(obj)
 
 	ptr, cln, err := wa.(*wasmAdapter).newWasmObject(ctx, h.typeDef.Id)
 	if err != nil {
@@ -123,104 +119,4 @@ func (h *pointerHandler) writeData(ctx context.Context, wa langsupport.WasmAdapt
 	}
 
 	return ptr, cln, nil
-}
-
-func (h *pointerHandler) dereferencePointer(obj any) (any, error) {
-	// optimization for common types
-	switch t := obj.(type) {
-	case *string:
-		return *t, nil
-	case *bool:
-		return *t, nil
-	case *int:
-		return *t, nil
-	case *int8:
-		return *t, nil
-	case *int16:
-		return *t, nil
-	case *int32:
-		return *t, nil
-	case *int64:
-		return *t, nil
-	case *uint:
-		return *t, nil
-	case *uint8:
-		return *t, nil
-	case *uint16:
-		return *t, nil
-	case *uint32:
-		return *t, nil
-	case *uint64:
-		return *t, nil
-	case *uintptr:
-		return *t, nil
-	case *float32:
-		return *t, nil
-	case *float64:
-		return *t, nil
-	case *time.Time:
-		return *t, nil
-	case *time.Duration:
-		return *t, nil
-	case string, bool,
-		int, int8, int16, int32, int64,
-		uint, uint8, uint16, uint32, uint64, uintptr,
-		float32, float64,
-		time.Time, time.Duration:
-		return t, nil // already dereferenced
-	}
-
-	rv := reflect.ValueOf(obj)
-	if rv.Kind() != reflect.Ptr {
-		return obj, nil // already dereferenced
-	}
-	if rv.IsNil() {
-		return nil, errors.New("nil pointer can't be dereferenced")
-	}
-	return rv.Elem().Interface(), nil
-}
-
-func (h *pointerHandler) makePointer(obj any) any {
-	// optimization for common types
-	switch t := obj.(type) {
-	case string:
-		return &t
-	case bool:
-		return &t
-	case int:
-		return &t
-	case int8:
-		return &t
-	case int16:
-		return &t
-	case int32:
-		return &t
-	case int64:
-		return &t
-	case uint:
-		return &t
-	case uint8:
-		return &t
-	case uint16:
-		return &t
-	case uint32:
-		return &t
-	case uint64:
-		return &t
-	case uintptr:
-		return &t
-	case float32:
-		return &t
-	case float64:
-		return &t
-	case time.Time:
-		return &t
-	case time.Duration:
-		return &t
-	}
-
-	rt := h.elementHandler.Info().RuntimeType()
-	p := reflect.New(rt)
-	p.Elem().Set(reflect.ValueOf(obj))
-	return p.Interface()
 }

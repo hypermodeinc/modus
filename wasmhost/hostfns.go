@@ -369,7 +369,7 @@ func decodeParams(ctx context.Context, wa langsupport.WasmAdapter, fnInfo functi
 
 		// special case for pointers that need to be dereferenced
 		if hInfo.RuntimeType().Kind() == reflect.Ptr && reflect.TypeOf(params[i]).Kind() != reflect.Ptr {
-			params[i] = reflect.ValueOf(data).Elem().Interface()
+			params[i] = utils.DereferencePointer(data)
 			continue
 		}
 
