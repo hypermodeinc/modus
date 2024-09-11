@@ -298,17 +298,17 @@ func (ps *postgresqlSuite) setupPostgresContainer() error {
 	// wait for postgres to be up
 	counter := 0
 	for {
-		time.Sleep(time.Second)
-
 		pgLog, err := getLogs()
 		if err == nil && strings.Count(pgLog, "database system is ready to accept connections") == 2 {
 			break
 		}
 
 		counter++
-		if counter == 3 {
+		if counter == 5 {
 			return fmt.Errorf("database did not come up")
 		}
+
+		time.Sleep(time.Second * 2)
 	}
 
 	// create people table
