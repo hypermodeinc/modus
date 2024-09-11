@@ -5,7 +5,6 @@
 package golang_test
 
 import (
-	"maps"
 	"reflect"
 	"testing"
 
@@ -267,12 +266,14 @@ func TestStructOutput1(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	expected := testStruct1
+
 	if result == nil {
 		t.Error("expected a result")
 	} else if r, ok := result.(TestStruct1); !ok {
-		t.Errorf("expected a struct, got %T", result)
-	} else if !reflect.DeepEqual(testStruct1, r) {
-		t.Errorf("expected %v, got %v", testStruct1, r)
+		t.Errorf("expected %T, got %T", expected, result)
+	} else if !reflect.DeepEqual(expected, r) {
+		t.Errorf("expected %v, got %v", expected, r)
 	}
 }
 
@@ -282,12 +283,14 @@ func TestStructOutput2(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	expected := testStruct2
+
 	if result == nil {
 		t.Error("expected a result")
 	} else if r, ok := result.(TestStruct2); !ok {
-		t.Errorf("expected a struct, got %T", result)
-	} else if !reflect.DeepEqual(testStruct2, r) {
-		t.Errorf("expected %v, got %v", testStruct2, r)
+		t.Errorf("expected %T, got %T", expected, result)
+	} else if !reflect.DeepEqual(expected, r) {
+		t.Errorf("expected %v, got %v", expected, r)
 	}
 }
 
@@ -297,12 +300,14 @@ func TestStructOutput3(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	expected := testStruct3
+
 	if result == nil {
 		t.Error("expected a result")
 	} else if r, ok := result.(TestStruct3); !ok {
-		t.Errorf("expected a struct, got %T", result)
-	} else if !reflect.DeepEqual(testStruct3, r) {
-		t.Errorf("expected %v, got %v", testStruct3, r)
+		t.Errorf("expected %T, got %T", expected, result)
+	} else if !reflect.DeepEqual(expected, r) {
+		t.Errorf("expected %v, got %v", expected, r)
 	}
 }
 
@@ -312,12 +317,14 @@ func TestStructOutput4(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	expected := testStruct4
+
 	if result == nil {
 		t.Error("expected a result")
 	} else if r, ok := result.(TestStruct4); !ok {
-		t.Errorf("expected a struct, got %T", result)
-	} else if !reflect.DeepEqual(testStruct4, r) {
-		t.Errorf("expected %v, got %v", testStruct4, r)
+		t.Errorf("expected %T, got %T", expected, result)
+	} else if !reflect.DeepEqual(expected, r) {
+		t.Errorf("expected %v, got %v", expected, r)
 	}
 }
 
@@ -327,12 +334,14 @@ func TestStructOutput4_withNil(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	expected := testStruct4_withNil
+
 	if result == nil {
 		t.Error("expected a result")
 	} else if r, ok := result.(TestStruct4); !ok {
-		t.Errorf("expected a struct, got %T", result)
-	} else if !reflect.DeepEqual(testStruct4_withNil, r) {
-		t.Errorf("expected %v, got %v", testStruct4_withNil, r)
+		t.Errorf("expected %T, got %T", expected, result)
+	} else if !reflect.DeepEqual(expected, r) {
+		t.Errorf("expected %v, got %v", expected, r)
 	}
 }
 
@@ -342,12 +351,14 @@ func TestStructPtrOutput1(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	expected := &testStruct1
+
 	if result == nil {
 		t.Error("expected a result")
 	} else if r, ok := result.(*TestStruct1); !ok {
-		t.Errorf("expected a pointer to a struct, got %T", result)
-	} else if !reflect.DeepEqual(testStruct1, *r) {
-		t.Errorf("expected %v, got %v", testStruct1, *r)
+		t.Errorf("expected %T, got %T", expected, result)
+	} else if !reflect.DeepEqual(expected, r) {
+		t.Errorf("expected %v, got %v", expected, r)
 	}
 }
 
@@ -357,12 +368,14 @@ func TestStructPtrOutput2(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	expected := &testStruct2
+
 	if result == nil {
 		t.Error("expected a result")
 	} else if r, ok := result.(*TestStruct2); !ok {
-		t.Errorf("expected a pointer to a struct, got %T", result)
-	} else if !reflect.DeepEqual(testStruct2, *r) {
-		t.Errorf("expected %v, got %v", testStruct2, *r)
+		t.Errorf("expected %T, got %T", expected, result)
+	} else if !reflect.DeepEqual(expected, r) {
+		t.Errorf("expected %v, got %v", expected, r)
 	}
 }
 
@@ -372,12 +385,14 @@ func TestStructPtrOutput3(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	expected := &testStruct3
+
 	if result == nil {
 		t.Error("expected a result")
 	} else if r, ok := result.(*TestStruct3); !ok {
-		t.Errorf("expected a pointer to a struct, got %T", result)
-	} else if !reflect.DeepEqual(testStruct3, *r) {
-		t.Errorf("expected %v, got %v", testStruct3, *r)
+		t.Errorf("expected %T, got %T", expected, result)
+	} else if !reflect.DeepEqual(expected, r) {
+		t.Errorf("expected %v, got %v", expected, r)
 	}
 }
 
@@ -387,12 +402,14 @@ func TestStructPtrOutput4(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	expected := &testStruct4
+
 	if result == nil {
 		t.Error("expected a result")
 	} else if r, ok := result.(*TestStruct4); !ok {
-		t.Errorf("expected a pointer to a struct, got %T", result)
-	} else if !reflect.DeepEqual(testStruct4, *r) {
-		t.Errorf("expected %v, got %v", testStruct4, *r)
+		t.Errorf("expected %T, got %T", expected, result)
+	} else if !reflect.DeepEqual(expected, r) {
+		t.Errorf("expected %v, got %v", expected, r)
 	}
 }
 
@@ -402,12 +419,14 @@ func TestStructPtrOutput4_withNil(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	expected := &testStruct4_withNil
+
 	if result == nil {
 		t.Error("expected a result")
 	} else if r, ok := result.(*TestStruct4); !ok {
-		t.Errorf("expected a pointer to a struct, got %T", result)
-	} else if !reflect.DeepEqual(testStruct4_withNil, *r) {
-		t.Errorf("expected %v, got %v", testStruct4_withNil, *r)
+		t.Errorf("expected %T, got %T", expected, result)
+	} else if !reflect.DeepEqual(expected, r) {
+		t.Errorf("expected %v, got %v", expected, r)
 	}
 }
 
@@ -417,12 +436,14 @@ func TestStructOutput1_map(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	expected := testStruct1AsMap
+
 	if result == nil {
 		t.Error("expected a result")
 	} else if r, ok := result.(map[string]any); !ok {
-		t.Errorf("expected a map[string]any, got %T", result)
-	} else if !maps.Equal(testStruct1AsMap, r) {
-		t.Errorf("expected %v, got %v", testStruct1AsMap, r)
+		t.Errorf("expected %T, got %T", expected, result)
+	} else if !reflect.DeepEqual(expected, r) {
+		t.Errorf("expected %v, got %v", expected, r)
 	}
 }
 
@@ -432,12 +453,14 @@ func TestStructOutput2_map(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	expected := testStruct2AsMap
+
 	if result == nil {
 		t.Error("expected a result")
 	} else if r, ok := result.(map[string]any); !ok {
-		t.Errorf("expected a map[string]any, got %T", result)
-	} else if !maps.Equal(testStruct2AsMap, r) {
-		t.Errorf("expected %v, got %v", testStruct2AsMap, r)
+		t.Errorf("expected %T, got %T", expected, result)
+	} else if !reflect.DeepEqual(expected, r) {
+		t.Errorf("expected %v, got %v", expected, r)
 	}
 }
 
@@ -447,12 +470,14 @@ func TestStructOutput3_map(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	expected := testStruct3AsMap
+
 	if result == nil {
 		t.Error("expected a result")
 	} else if r, ok := result.(map[string]any); !ok {
-		t.Errorf("expected a map[string]any, got %T", result)
-	} else if !maps.Equal(testStruct3AsMap, r) {
-		t.Errorf("expected %v, got %v", testStruct3AsMap, r)
+		t.Errorf("expected %T, got %T", expected, result)
+	} else if !reflect.DeepEqual(expected, r) {
+		t.Errorf("expected %v, got %v", expected, r)
 	}
 }
 
@@ -462,12 +487,14 @@ func TestStructOutput4_map(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	expected := testStruct4AsMap
+
 	if result == nil {
 		t.Error("expected a result")
 	} else if r, ok := result.(map[string]any); !ok {
-		t.Errorf("expected a map[string]any, got %T", result)
-	} else if !reflect.DeepEqual(testStruct4AsMap, r) {
-		t.Errorf("expected %v, got %v", testStruct4AsMap, r)
+		t.Errorf("expected %T, got %T", expected, result)
+	} else if !reflect.DeepEqual(expected, r) {
+		t.Errorf("expected %v, got %v", expected, r)
 	}
 }
 
@@ -477,12 +504,14 @@ func TestStructOutput4_map_withNil(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	expected := testStruct4AsMap_withNil
+
 	if result == nil {
 		t.Error("expected a result")
 	} else if r, ok := result.(map[string]any); !ok {
-		t.Errorf("expected a map[string]any, got %T", result)
-	} else if !reflect.DeepEqual(testStruct4AsMap_withNil, r) {
-		t.Errorf("expected %v, got %v", testStruct4AsMap_withNil, r)
+		t.Errorf("expected %T, got %T", expected, result)
+	} else if !reflect.DeepEqual(expected, r) {
+		t.Errorf("expected %v, got %v", expected, r)
 	}
 }
 
@@ -492,12 +521,14 @@ func TestStructPtrOutput1_map(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	expected := &testStruct1AsMap
+
 	if result == nil {
 		t.Error("expected a result")
 	} else if r, ok := result.(*map[string]any); !ok {
-		t.Errorf("expected a *map[string]interface{}, got %T", result)
-	} else if !maps.Equal(testStruct1AsMap, *r) {
-		t.Errorf("expected %v, got %v", testStruct1AsMap, *r)
+		t.Errorf("expected %T, got %T", expected, result)
+	} else if !reflect.DeepEqual(expected, r) {
+		t.Errorf("expected %v, got %v", expected, r)
 	}
 }
 
@@ -507,12 +538,14 @@ func TestStructPtrOutput2_map(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	expected := &testStruct2AsMap
+
 	if result == nil {
 		t.Error("expected a result")
 	} else if r, ok := result.(*map[string]any); !ok {
-		t.Errorf("expected a *map[string]any, got %T", result)
-	} else if !maps.Equal(testStruct2AsMap, *r) {
-		t.Errorf("expected %v, got %v", testStruct2AsMap, *r)
+		t.Errorf("expected %T, got %T", expected, result)
+	} else if !reflect.DeepEqual(expected, r) {
+		t.Errorf("expected %v, got %v", expected, r)
 	}
 }
 
@@ -522,12 +555,14 @@ func TestStructPtrOutput3_map(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	expected := &testStruct3AsMap
+
 	if result == nil {
 		t.Error("expected a result")
 	} else if r, ok := result.(*map[string]any); !ok {
-		t.Errorf("expected a *map[string]any, got %T", result)
-	} else if !maps.Equal(testStruct3AsMap, *r) {
-		t.Errorf("expected %v, got %v", testStruct3AsMap, *r)
+		t.Errorf("expected %T, got %T", expected, result)
+	} else if !reflect.DeepEqual(expected, r) {
+		t.Errorf("expected %v, got %v", expected, r)
 	}
 }
 
@@ -537,12 +572,14 @@ func TestStructPtrOutput4_map(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	expected := &testStruct4AsMap
+
 	if result == nil {
 		t.Error("expected a result")
 	} else if r, ok := result.(*map[string]any); !ok {
-		t.Errorf("expected a *map[string]any, got %T", result)
-	} else if !reflect.DeepEqual(testStruct4AsMap, *r) {
-		t.Errorf("expected %v, got %v", testStruct4AsMap, *r)
+		t.Errorf("expected %T, got %T", expected, result)
+	} else if !reflect.DeepEqual(expected, r) {
+		t.Errorf("expected %v, got %v", expected, r)
 	}
 }
 
@@ -552,12 +589,14 @@ func TestStructPtrOutput4_map_withNil(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	expected := &testStruct4AsMap_withNil
+
 	if result == nil {
 		t.Error("expected a result")
 	} else if r, ok := result.(*map[string]any); !ok {
-		t.Errorf("expected a *map[string]any, got %T", result)
-	} else if !reflect.DeepEqual(testStruct4AsMap_withNil, *r) {
-		t.Errorf("expected %v, got %v", testStruct4AsMap_withNil, *r)
+		t.Errorf("expected %T, got %T", expected, result)
+	} else if !reflect.DeepEqual(expected, r) {
+		t.Errorf("expected %v, got %v", expected, r)
 	}
 }
 
