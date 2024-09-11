@@ -13,24 +13,14 @@ import (
 const testString = "こんにちは、世界"
 
 func TestStringInput(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	_, err := f.CallFunction("testStringInput", testString)
+	_, err := fixture.CallFunction(t, "testStringInput", testString)
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestStringOutput(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	result, err := f.CallFunction("testStringOutput")
+	result, err := fixture.CallFunction(t, "testStringOutput")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -45,24 +35,14 @@ func TestStringOutput(t *testing.T) {
 }
 
 func TestStringInput_empty(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	_, err := f.CallFunction("testStringInput_empty", "")
+	_, err := fixture.CallFunction(t, "testStringInput_empty", "")
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestStringOutput_empty(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	result, err := f.CallFunction("testStringOutput_empty")
+	result, err := fixture.CallFunction(t, "testStringOutput_empty")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -77,26 +57,16 @@ func TestStringOutput_empty(t *testing.T) {
 }
 
 func TestNullStringInput(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
 	s := testString
 
-	_, err := f.CallFunction("testNullStringInput", &s)
+	_, err := fixture.CallFunction(t, "testNullStringInput", &s)
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestNullStringOutput(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	result, err := f.CallFunction("testNullStringOutput")
+	result, err := fixture.CallFunction(t, "testNullStringOutput")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -111,25 +81,15 @@ func TestNullStringOutput(t *testing.T) {
 }
 
 func TestNullStringInput_empty(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
 	s := ""
-	_, err := f.CallFunction("testNullStringInput_empty", &s)
+	_, err := fixture.CallFunction(t, "testNullStringInput_empty", &s)
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestNullStringOutput_empty(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	result, err := f.CallFunction("testNullStringOutput_empty")
+	result, err := fixture.CallFunction(t, "testNullStringOutput_empty")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -145,24 +105,14 @@ func TestNullStringOutput_empty(t *testing.T) {
 }
 
 func TestNullStringInput_null(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	_, err := f.CallFunction("testNullStringInput_null", nil)
+	_, err := fixture.CallFunction(t, "testNullStringInput_null", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestNullStringOutput_null(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	result, err := f.CallFunction("testNullStringOutput_null")
+	result, err := fixture.CallFunction(t, "testNullStringOutput_null")
 	if err != nil {
 		t.Fatal(err)
 	}

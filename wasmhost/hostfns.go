@@ -88,9 +88,10 @@ func (host *wasmHost) RegisterHostFunction(modName, funcName string, fn any, opt
 }
 
 func (host *wasmHost) newHostFunction(modName, funcName string, fn any, opts ...HostFunctionOption) (*hostFunction, error) {
+	fullName := modName + "." + funcName
 	rvFunc := reflect.ValueOf(fn)
 	if rvFunc.Kind() != reflect.Func {
-		return nil, fmt.Errorf("host function %s.%s is not a function type", modName, funcName)
+		return nil, fmt.Errorf("host function %s is not a function type", fullName)
 	}
 
 	rtFunc := rvFunc.Type()
@@ -113,7 +114,7 @@ func (host *wasmHost) newHostFunction(modName, funcName string, fn any, opts ...
 	// languages that don't naturally support them.
 	// TODO: In the future, this could be done by having the SDK generate a struct type for the return value.
 	if (hasErrorResult && numResults > 2) || (!hasErrorResult && numResults > 1) {
-		return nil, fmt.Errorf("host function %s.%s cannot return multiple data values", modName, funcName)
+		return nil, fmt.Errorf("host function %s cannot return multiple data values", fullName)
 	}
 
 	// TODO: the following assumes a lot.  We should use the language's type system to determine the encoding
@@ -172,11 +173,11 @@ func (host *wasmHost) newHostFunction(modName, funcName string, fn any, opts ...
 	if hf.messages.fnDetail != nil {
 		rvDetail = reflect.ValueOf(hf.messages.fnDetail)
 		if rvDetail.Kind() != reflect.Func {
-			return nil, fmt.Errorf("message detail func for host function %s.%s is not a function type", modName, funcName)
+			return nil, fmt.Errorf("message detail func for host function %s is not a function type", fullName)
 		}
 		rtDetail = rvDetail.Type()
 		if rtDetail.NumOut() != 1 || rtDetail.Out(0).Kind() != reflect.String {
-			return nil, fmt.Errorf("message detail func for host function %s.%s must have one string return value", modName, funcName)
+			return nil, fmt.Errorf("message detail func for host function %s must have one string return value", fullName)
 		}
 
 		start, end := 0, rtDetail.NumIn()
@@ -187,7 +188,7 @@ func (host *wasmHost) newHostFunction(modName, funcName string, fn any, opts ...
 		i := 0
 		for j := start; j < end; j++ {
 			if rtDetail.In(i) != rtFunc.In(j) {
-				return nil, fmt.Errorf("message detail func for host function %s.%s has mismatched parameter types", modName, funcName)
+				return nil, fmt.Errorf("message detail func for host function %s has mismatched parameter types", fullName)
 			}
 			i++
 		}
@@ -199,7 +200,7 @@ func (host *wasmHost) newHostFunction(modName, funcName string, fn any, opts ...
 		// Log any panics that occur in the host function
 		defer func() {
 			if e := utils.ConvertToError(recover()); e != nil {
-				logger.Err(ctx, e).Msg("Panic in host function.")
+				logger.Err(ctx, e).Str("host_function", fullName).Msg("Panic in host function.")
 			}
 		}()
 
@@ -211,10 +212,9 @@ func (host *wasmHost) newHostFunction(modName, funcName string, fn any, opts ...
 		}
 
 		// Get the host function's info
-		fullName := modName + "." + funcName
 		fnInfo, err := host.GetFunctionInfo(fullName)
 		if err != nil {
-			logger.Err(ctx, err).Msgf("Error getting info for imported function %s.", fullName)
+			logger.Err(ctx, err).Str("host_function", fullName).Msg("Error getting info for imported function.")
 			return
 		}
 
@@ -229,7 +229,7 @@ func (host *wasmHost) newHostFunction(modName, funcName string, fn any, opts ...
 			params = append(params, rvParam.Interface())
 		}
 		if err := decodeParams(ctx, wa, fnInfo, stack, params); err != nil {
-			logger.Err(ctx, err).Msg("Error decoding input parameters.")
+			logger.Err(ctx, err).Str("host_function", fullName).Msg("Error decoding input parameters.")
 			return
 		}
 
@@ -287,7 +287,7 @@ func (host *wasmHost) newHostFunction(modName, funcName string, fn any, opts ...
 		// Encode the results (if there are any)
 		if len(results) > 0 {
 			if err := encodeResults(ctx, wa, fnInfo, stack, results); err != nil {
-				logger.Err(ctx, err).Msg("Error encoding results.")
+				logger.Err(ctx, err).Str("host_function", fullName).Msg("Error encoding results.")
 			}
 		}
 	})

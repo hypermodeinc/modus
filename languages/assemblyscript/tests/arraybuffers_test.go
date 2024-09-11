@@ -12,24 +12,14 @@ import (
 var testBytes = []byte{0x01, 0x02, 0x03, 0x04}
 
 func TestArrayBufferInput(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	_, err := f.CallFunction("testArrayBufferInput", testBytes)
+	_, err := fixture.CallFunction(t, "testArrayBufferInput", testBytes)
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestArrayBufferOutput(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	result, err := f.CallFunction("testArrayBufferOutput")
+	result, err := fixture.CallFunction(t, "testArrayBufferOutput")
 	if err != nil {
 		t.Fatal(err)
 	}

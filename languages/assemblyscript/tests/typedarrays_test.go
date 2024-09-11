@@ -10,26 +10,16 @@ import (
 )
 
 func TestInt8ArrayInput(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
 	arr := []int8{0, 1, 2, 3}
 
-	_, err := f.CallFunction("testInt8ArrayInput", arr)
+	_, err := fixture.CallFunction(t, "testInt8ArrayInput", arr)
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestInt8ArrayBufferOutput(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	result, err := f.CallFunction("testInt8ArrayOutput")
+	result, err := fixture.CallFunction(t, "testInt8ArrayOutput")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -46,26 +36,16 @@ func TestInt8ArrayBufferOutput(t *testing.T) {
 }
 
 func TestInt16ArrayInput(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
 	arr := []int16{0, 1, 2, 3}
 
-	_, err := f.CallFunction("testInt16ArrayInput", arr)
+	_, err := fixture.CallFunction(t, "testInt16ArrayInput", arr)
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestInt16ArrayBufferOutput(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	result, err := f.CallFunction("testInt16ArrayOutput")
+	result, err := fixture.CallFunction(t, "testInt16ArrayOutput")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -82,26 +62,16 @@ func TestInt16ArrayBufferOutput(t *testing.T) {
 }
 
 func TestInt32ArrayInput(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
 	arr := []int32{0, 1, 2, 3}
 
-	_, err := f.CallFunction("testInt32ArrayInput", arr)
+	_, err := fixture.CallFunction(t, "testInt32ArrayInput", arr)
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestInt32ArrayBufferOutput(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	result, err := f.CallFunction("testInt32ArrayOutput")
+	result, err := fixture.CallFunction(t, "testInt32ArrayOutput")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -118,26 +88,16 @@ func TestInt32ArrayBufferOutput(t *testing.T) {
 }
 
 func TestInt64ArrayInput(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
 	arr := []int64{0, 1, 2, 3}
 
-	_, err := f.CallFunction("testInt64ArrayInput", arr)
+	_, err := fixture.CallFunction(t, "testInt64ArrayInput", arr)
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestInt64ArrayBufferOutput(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	result, err := f.CallFunction("testInt64ArrayOutput")
+	result, err := fixture.CallFunction(t, "testInt64ArrayOutput")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -154,50 +114,30 @@ func TestInt64ArrayBufferOutput(t *testing.T) {
 }
 
 func TestUint8ArrayInput(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
 	arr := []uint8{0, 1, 2, 3}
 
-	_, err := f.CallFunction("testUint8ArrayInput", arr)
+	_, err := fixture.CallFunction(t, "testUint8ArrayInput", arr)
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestUint8ArrayInput_empty(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	_, err := f.CallFunction("testUint8ArrayInput_empty", []uint8{})
+	_, err := fixture.CallFunction(t, "testUint8ArrayInput_empty", []uint8{})
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestUint8ArrayInput_null(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	_, err := f.CallFunction("testUint8ArrayInput_null", nil)
+	_, err := fixture.CallFunction(t, "testUint8ArrayInput_null", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestUint8ArrayBufferOutput(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	result, err := f.CallFunction("testUint8ArrayOutput")
+	result, err := fixture.CallFunction(t, "testUint8ArrayOutput")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -214,12 +154,7 @@ func TestUint8ArrayBufferOutput(t *testing.T) {
 }
 
 func TestUint8ArrayBufferOutput_empty(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	result, err := f.CallFunction("testUint8ArrayOutput_empty")
+	result, err := fixture.CallFunction(t, "testUint8ArrayOutput_empty")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -236,12 +171,7 @@ func TestUint8ArrayBufferOutput_empty(t *testing.T) {
 }
 
 func TestUint8ArrayBufferOutput_null(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	result, err := f.CallFunction("testUint8ArrayOutput_null")
+	result, err := fixture.CallFunction(t, "testUint8ArrayOutput_null")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -252,26 +182,16 @@ func TestUint8ArrayBufferOutput_null(t *testing.T) {
 }
 
 func TestUint16ArrayInput(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
 	arr := []uint16{0, 1, 2, 3}
 
-	_, err := f.CallFunction("testUint16ArrayInput", arr)
+	_, err := fixture.CallFunction(t, "testUint16ArrayInput", arr)
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestUint16ArrayBufferOutput(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	result, err := f.CallFunction("testUint16ArrayOutput")
+	result, err := fixture.CallFunction(t, "testUint16ArrayOutput")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -288,26 +208,16 @@ func TestUint16ArrayBufferOutput(t *testing.T) {
 }
 
 func TestUint32ArrayInput(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
 	arr := []uint32{0, 1, 2, 3}
 
-	_, err := f.CallFunction("testUint32ArrayInput", arr)
+	_, err := fixture.CallFunction(t, "testUint32ArrayInput", arr)
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestUint32ArrayBufferOutput(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	result, err := f.CallFunction("testUint32ArrayOutput")
+	result, err := fixture.CallFunction(t, "testUint32ArrayOutput")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -324,26 +234,16 @@ func TestUint32ArrayBufferOutput(t *testing.T) {
 }
 
 func TestUint64ArrayInput(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
 	arr := []uint64{0, 1, 2, 3}
 
-	_, err := f.CallFunction("testUint64ArrayInput", arr)
+	_, err := fixture.CallFunction(t, "testUint64ArrayInput", arr)
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestUint64ArrayBufferOutput(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	result, err := f.CallFunction("testUint64ArrayOutput")
+	result, err := fixture.CallFunction(t, "testUint64ArrayOutput")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -360,26 +260,16 @@ func TestUint64ArrayBufferOutput(t *testing.T) {
 }
 
 func TestFloat32ArrayInput(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
 	arr := []float32{0, 1, 2, 3}
 
-	_, err := f.CallFunction("testFloat32ArrayInput", arr)
+	_, err := fixture.CallFunction(t, "testFloat32ArrayInput", arr)
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestFloat32ArrayBufferOutput(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	result, err := f.CallFunction("testFloat32ArrayOutput")
+	result, err := fixture.CallFunction(t, "testFloat32ArrayOutput")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -396,26 +286,16 @@ func TestFloat32ArrayBufferOutput(t *testing.T) {
 }
 
 func TestFloat64ArrayInput(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
 	arr := []float64{0, 1, 2, 3}
 
-	_, err := f.CallFunction("testFloat64ArrayInput", arr)
+	_, err := fixture.CallFunction(t, "testFloat64ArrayInput", arr)
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestFloat64ArrayBufferOutput(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	result, err := f.CallFunction("testFloat64ArrayOutput")
+	result, err := fixture.CallFunction(t, "testFloat64ArrayOutput")
 	if err != nil {
 		t.Fatal(err)
 	}

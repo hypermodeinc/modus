@@ -14,49 +14,29 @@ import (
 const testString = "こんにちは、世界"
 
 func TestStringInput(t *testing.T) {
-	t.Parallel()
-
-	f := NewGoWasmTestFixture(t)
-	defer f.Close()
-
-	if _, err := f.CallFunction("testStringInput", testString); err != nil {
+	if _, err := fixture.CallFunction(t, "testStringInput", testString); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestStringPtrInput(t *testing.T) {
-	t.Parallel()
-
-	f := NewGoWasmTestFixture(t)
-	defer f.Close()
-
 	s := testString
-	if _, err := f.CallFunction("testStringPtrInput", s); err != nil {
+	if _, err := fixture.CallFunction(t, "testStringPtrInput", s); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := f.CallFunction("testStringPtrInput", &s); err != nil {
+	if _, err := fixture.CallFunction(t, "testStringPtrInput", &s); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestStringPtrInput_nil(t *testing.T) {
-	t.Parallel()
-
-	f := NewGoWasmTestFixture(t)
-	defer f.Close()
-
-	if _, err := f.CallFunction("testStringPtrInput_nil", nil); err != nil {
+	if _, err := fixture.CallFunction(t, "testStringPtrInput_nil", nil); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestStringOutput(t *testing.T) {
-	t.Parallel()
-
-	f := NewGoWasmTestFixture(t)
-	defer f.Close()
-
-	result, err := f.CallFunction("testStringOutput")
+	result, err := fixture.CallFunction(t, "testStringOutput")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -71,12 +51,7 @@ func TestStringOutput(t *testing.T) {
 }
 
 func TestStringPtrOutput(t *testing.T) {
-	t.Parallel()
-
-	f := NewGoWasmTestFixture(t)
-	defer f.Close()
-
-	result, err := f.CallFunction("testStringPtrOutput")
+	result, err := fixture.CallFunction(t, "testStringPtrOutput")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -91,12 +66,7 @@ func TestStringPtrOutput(t *testing.T) {
 }
 
 func TestStringPtrOutput_nil(t *testing.T) {
-	t.Parallel()
-
-	f := NewGoWasmTestFixture(t)
-	defer f.Close()
-
-	result, err := f.CallFunction("testStringPtrOutput_nil")
+	result, err := fixture.CallFunction(t, "testStringPtrOutput_nil")
 	if err != nil {
 		t.Fatal(err)
 	}

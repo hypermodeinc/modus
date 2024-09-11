@@ -30,9 +30,7 @@ type TestRecursiveStruct struct {
 // }()
 
 // func TestRecursiveStructInput(t *testing.T) {
-// 	t.Parallel()
-
-// 	f := NewGoWasmTestFixture(t)
+// // 	f := NewGoWasmTestFixture(t)
 // 	defer f.Close()
 
 // 	if _, err := f.InvokeFunction("testRecursiveStructInput", testRecursiveStruct); err != nil {
@@ -41,9 +39,7 @@ type TestRecursiveStruct struct {
 // }
 
 // func TestRecursiveStructPtrInput(t *testing.T) {
-// 	t.Parallel()
-
-// 	f := NewGoWasmTestFixture(t)
+// // 	f := NewGoWasmTestFixture(t)
 // 	defer f.Close()
 
 // 	if _, err := f.InvokeFunction("testRecursiveStructPtrInput", testRecursiveStruct); err != nil {
@@ -55,9 +51,7 @@ type TestRecursiveStruct struct {
 // }
 
 // func TestRecursiveStructInput_map(t *testing.T) {
-// 	t.Parallel()
-
-// 	f := NewGoWasmTestFixture(t)
+// // 	f := NewGoWasmTestFixture(t)
 // 	defer f.Close()
 
 // 	if _, err := f.InvokeFunction("testRecursiveStructInput", testRecursiveStructAsMap); err != nil {
@@ -66,9 +60,7 @@ type TestRecursiveStruct struct {
 // }
 
 // func TestRecursiveStructPtrInput_map(t *testing.T) {
-// 	t.Parallel()
-
-// 	f := NewGoWasmTestFixture(t)
+// // 	f := NewGoWasmTestFixture(t)
 // 	defer f.Close()
 
 // 	if _, err := f.InvokeFunction("testRecursiveStructInput", testRecursiveStructAsMap); err != nil {
@@ -80,9 +72,7 @@ type TestRecursiveStruct struct {
 // }
 
 // func TestRecursiveStructPtrInput_nil(t *testing.T) {
-// 	t.Parallel()
-
-// 	f := NewGoWasmTestFixture(t)
+// // 	f := NewGoWasmTestFixture(t)
 // 	defer f.Close()
 
 // 	if _, err := f.InvokeFunction("testRecursiveStructPtrInput_nil", nil); err != nil {
@@ -91,12 +81,10 @@ type TestRecursiveStruct struct {
 // }
 
 // func TestRecursiveStructOutput(t *testing.T) {
-// 	t.Parallel()
-
-// 	f := NewGoWasmTestFixture(t)
+// // 	f := NewGoWasmTestFixture(t)
 // 	defer f.Close()
 
-// 	f.AddCustomType("testdata.TestRecursiveStruct", reflect.TypeFor[TestRecursiveStruct]())
+// 	fixture.AddCustomType("testdata.TestRecursiveStruct", reflect.TypeFor[TestRecursiveStruct]())
 
 // 	result, err := f.InvokeFunction("testRecursiveStructOutput")
 // 	if err != nil {
@@ -113,12 +101,10 @@ type TestRecursiveStruct struct {
 // }
 
 // func TestRecursiveStructPtrOutput(t *testing.T) {
-// 	t.Parallel()
-
-// 	f := NewGoWasmTestFixture(t)
+// // 	f := NewGoWasmTestFixture(t)
 // 	defer f.Close()
 
-// 	f.AddCustomType("testdata.TestRecursiveStruct", reflect.TypeFor[TestRecursiveStruct]())
+// 	fixture.AddCustomType("testdata.TestRecursiveStruct", reflect.TypeFor[TestRecursiveStruct]())
 
 // 	result, err := f.InvokeFunction("testRecursiveStructPtrOutput")
 // 	if err != nil {
@@ -135,9 +121,7 @@ type TestRecursiveStruct struct {
 // }
 
 // func TestRecursiveStructOutput_map(t *testing.T) {
-// 	t.Parallel()
-
-// 	f := NewGoWasmTestFixture(t)
+// // 	f := NewGoWasmTestFixture(t)
 // 	defer f.Close()
 
 // 	result, err := f.InvokeFunction("testRecursiveStructOutput")
@@ -155,9 +139,7 @@ type TestRecursiveStruct struct {
 // }
 
 // func TestRecursiveStructPtrOutput_map(t *testing.T) {
-// 	t.Parallel()
-
-// 	f := NewGoWasmTestFixture(t)
+// // 	f := NewGoWasmTestFixture(t)
 // 	defer f.Close()
 
 // 	result, err := f.InvokeFunction("testRecursiveStructPtrOutput")
@@ -175,9 +157,7 @@ type TestRecursiveStruct struct {
 // }
 
 // func TestRecursiveStructPtrOutput_nil(t *testing.T) {
-// 	t.Parallel()
-
-// 	f := NewGoWasmTestFixture(t)
+// // 	f := NewGoWasmTestFixture(t)
 // 	defer f.Close()
 
 // 	result, err := f.InvokeFunction("testRecursiveStructPtrOutput_nil")

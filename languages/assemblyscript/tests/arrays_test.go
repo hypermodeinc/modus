@@ -10,26 +10,16 @@ import (
 )
 
 func TestArrayInput_i8(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
 	arr := []int8{1, 2, 3}
 
-	_, err := f.CallFunction("testArrayInput_i8", arr)
+	_, err := fixture.CallFunction(t, "testArrayInput_i8", arr)
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestArrayOutput_i8(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	result, err := f.CallFunction("testArrayOutput_i8")
+	result, err := fixture.CallFunction(t, "testArrayOutput_i8")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -45,26 +35,16 @@ func TestArrayOutput_i8(t *testing.T) {
 }
 
 func TestArrayInput_i8_empty(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
 	arr := []int8{}
 
-	_, err := f.CallFunction("testArrayInput_i8_empty", arr)
+	_, err := fixture.CallFunction(t, "testArrayInput_i8_empty", arr)
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestArrayOutput_i8_empty(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	result, err := f.CallFunction("testArrayOutput_i8_empty")
+	result, err := fixture.CallFunction(t, "testArrayOutput_i8_empty")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -80,24 +60,14 @@ func TestArrayOutput_i8_empty(t *testing.T) {
 }
 
 func TestArrayInput_i8_null(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	_, err := f.CallFunction("testArrayInput_i8_null", nil)
+	_, err := fixture.CallFunction(t, "testArrayInput_i8_null", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestArrayOutput_i8_null(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	result, err := f.CallFunction("testArrayOutput_i8_null")
+	result, err := fixture.CallFunction(t, "testArrayOutput_i8_null")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -108,26 +78,16 @@ func TestArrayOutput_i8_null(t *testing.T) {
 }
 
 func TestArrayInput_i32(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
 	arr := []int32{1, 2, 3}
 
-	_, err := f.CallFunction("testArrayInput_i32", arr)
+	_, err := fixture.CallFunction(t, "testArrayInput_i32", arr)
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestArrayOutput_i32(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	result, err := f.CallFunction("testArrayOutput_i32")
+	result, err := fixture.CallFunction(t, "testArrayOutput_i32")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -143,26 +103,16 @@ func TestArrayOutput_i32(t *testing.T) {
 }
 
 func TestArrayInput_f32(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
 	arr := []float32{1, 2, 3}
 
-	_, err := f.CallFunction("testArrayInput_f32", arr)
+	_, err := fixture.CallFunction(t, "testArrayInput_f32", arr)
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestArrayOutput_f32(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	result, err := f.CallFunction("testArrayOutput_f32")
+	result, err := fixture.CallFunction(t, "testArrayOutput_f32")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -178,26 +128,16 @@ func TestArrayOutput_f32(t *testing.T) {
 }
 
 func TestArrayInput_string(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
 	arr := []string{"abc", "def", "ghi"}
 
-	_, err := f.CallFunction("testArrayInput_string", arr)
+	_, err := fixture.CallFunction(t, "testArrayInput_string", arr)
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestArrayOutput_string(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	result, err := f.CallFunction("testArrayOutput_string")
+	result, err := fixture.CallFunction(t, "testArrayOutput_string")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -218,11 +158,6 @@ type TestObject1 struct {
 }
 
 func TestArrayIteration(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
 	// Note, the below works, but we can make it fail easily
 	// if we make the array larger than the elements we provide.
 	// That's because the test function uses a non-nullable type for
@@ -234,7 +169,7 @@ func TestArrayIteration(t *testing.T) {
 	arr[1] = &TestObject1{A: 3, B: 4}
 	arr[2] = &TestObject1{A: 5, B: 6}
 
-	_, err := f.CallFunction("testArrayIteration", arr)
+	_, err := fixture.CallFunction(t, "testArrayIteration", arr)
 	if err != nil {
 		t.Fatal(err)
 	}

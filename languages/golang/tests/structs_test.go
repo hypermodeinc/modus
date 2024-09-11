@@ -88,308 +88,181 @@ var testStruct4AsMap_withNil = map[string]any{
 }
 
 func TestStructInput1(t *testing.T) {
-	t.Parallel()
-
-	f := NewGoWasmTestFixture(t)
-	defer f.Close()
-
-	if _, err := f.CallFunction("testStructInput1", testStruct1); err != nil {
+	if _, err := fixture.CallFunction(t, "testStructInput1", testStruct1); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestStructInput2(t *testing.T) {
-	t.Parallel()
-
-	f := NewGoWasmTestFixture(t)
-	defer f.Close()
-
-	if _, err := f.CallFunction("testStructInput2", testStruct2); err != nil {
+	if _, err := fixture.CallFunction(t, "testStructInput2", testStruct2); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestStructInput3(t *testing.T) {
-	t.Parallel()
-
-	f := NewGoWasmTestFixture(t)
-	defer f.Close()
-
-	if _, err := f.CallFunction("testStructInput3", testStruct3); err != nil {
+	if _, err := fixture.CallFunction(t, "testStructInput3", testStruct3); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestStructInput4(t *testing.T) {
-	t.Parallel()
-
-	f := NewGoWasmTestFixture(t)
-	defer f.Close()
-
-	if _, err := f.CallFunction("testStructInput4", testStruct4); err != nil {
+	if _, err := fixture.CallFunction(t, "testStructInput4", testStruct4); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestStructInput4_withNil(t *testing.T) {
-	t.Parallel()
-
-	f := NewGoWasmTestFixture(t)
-	defer f.Close()
-
-	if _, err := f.CallFunction("testStructInput4_withNil", testStruct4_withNil); err != nil {
+	if _, err := fixture.CallFunction(t, "testStructInput4_withNil", testStruct4_withNil); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestStructPtrInput1(t *testing.T) {
-	t.Parallel()
-
-	f := NewGoWasmTestFixture(t)
-	defer f.Close()
-
-	if _, err := f.CallFunction("testStructPtrInput1", testStruct1); err != nil {
+	if _, err := fixture.CallFunction(t, "testStructPtrInput1", testStruct1); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := f.CallFunction("testStructPtrInput1", &testStruct1); err != nil {
+	if _, err := fixture.CallFunction(t, "testStructPtrInput1", &testStruct1); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestStructPtrInput2(t *testing.T) {
-	t.Parallel()
-
-	f := NewGoWasmTestFixture(t)
-	defer f.Close()
-
-	if _, err := f.CallFunction("testStructPtrInput2", testStruct2); err != nil {
+	if _, err := fixture.CallFunction(t, "testStructPtrInput2", testStruct2); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := f.CallFunction("testStructPtrInput2", &testStruct2); err != nil {
+	if _, err := fixture.CallFunction(t, "testStructPtrInput2", &testStruct2); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestStructPtrInput3(t *testing.T) {
-	t.Parallel()
-
-	f := NewGoWasmTestFixture(t)
-	defer f.Close()
-
-	if _, err := f.CallFunction("testStructPtrInput3", testStruct3); err != nil {
+	if _, err := fixture.CallFunction(t, "testStructPtrInput3", testStruct3); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := f.CallFunction("testStructPtrInput3", &testStruct3); err != nil {
+	if _, err := fixture.CallFunction(t, "testStructPtrInput3", &testStruct3); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestStructPtrInput4(t *testing.T) {
-	t.Parallel()
-
-	f := NewGoWasmTestFixture(t)
-	defer f.Close()
-
-	if _, err := f.CallFunction("testStructPtrInput4", testStruct4); err != nil {
+	if _, err := fixture.CallFunction(t, "testStructPtrInput4", testStruct4); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := f.CallFunction("testStructPtrInput4", &testStruct4); err != nil {
+	if _, err := fixture.CallFunction(t, "testStructPtrInput4", &testStruct4); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestStructPtrInput4_withNil(t *testing.T) {
-	t.Parallel()
-
-	f := NewGoWasmTestFixture(t)
-	defer f.Close()
-
-	if _, err := f.CallFunction("testStructPtrInput4_withNil", testStruct4_withNil); err != nil {
+	if _, err := fixture.CallFunction(t, "testStructPtrInput4_withNil", testStruct4_withNil); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := f.CallFunction("testStructPtrInput4_withNil", &testStruct4_withNil); err != nil {
+	if _, err := fixture.CallFunction(t, "testStructPtrInput4_withNil", &testStruct4_withNil); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestStructInput1_map(t *testing.T) {
-	t.Parallel()
-
-	f := NewGoWasmTestFixture(t)
-	defer f.Close()
-
-	if _, err := f.CallFunction("testStructInput1", testStruct1AsMap); err != nil {
+	if _, err := fixture.CallFunction(t, "testStructInput1", testStruct1AsMap); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestStructInput2_map(t *testing.T) {
-	t.Parallel()
-
-	f := NewGoWasmTestFixture(t)
-	defer f.Close()
-
-	if _, err := f.CallFunction("testStructInput2", testStruct2AsMap); err != nil {
+	if _, err := fixture.CallFunction(t, "testStructInput2", testStruct2AsMap); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestStructInput3_map(t *testing.T) {
-	t.Parallel()
-
-	f := NewGoWasmTestFixture(t)
-	defer f.Close()
-
-	if _, err := f.CallFunction("testStructInput3", testStruct3AsMap); err != nil {
+	if _, err := fixture.CallFunction(t, "testStructInput3", testStruct3AsMap); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestStructInput4_map(t *testing.T) {
-	t.Parallel()
-
-	f := NewGoWasmTestFixture(t)
-	defer f.Close()
-
-	if _, err := f.CallFunction("testStructInput4", testStruct4AsMap); err != nil {
+	if _, err := fixture.CallFunction(t, "testStructInput4", testStruct4AsMap); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestStructInput4_map_withNil(t *testing.T) {
-	t.Parallel()
-
-	f := NewGoWasmTestFixture(t)
-	defer f.Close()
-
-	if _, err := f.CallFunction("testStructInput4_withNil", testStruct4AsMap_withNil); err != nil {
+	if _, err := fixture.CallFunction(t, "testStructInput4_withNil", testStruct4AsMap_withNil); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestStructPtrInput1_map(t *testing.T) {
-	t.Parallel()
-
-	f := NewGoWasmTestFixture(t)
-	defer f.Close()
-
-	if _, err := f.CallFunction("testStructPtrInput1", testStruct1AsMap); err != nil {
+	if _, err := fixture.CallFunction(t, "testStructPtrInput1", testStruct1AsMap); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := f.CallFunction("testStructPtrInput1", &testStruct1AsMap); err != nil {
+	if _, err := fixture.CallFunction(t, "testStructPtrInput1", &testStruct1AsMap); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestStructPtrInput2_map(t *testing.T) {
-	t.Parallel()
-
-	f := NewGoWasmTestFixture(t)
-	defer f.Close()
-
-	if _, err := f.CallFunction("testStructPtrInput2", testStruct2AsMap); err != nil {
+	if _, err := fixture.CallFunction(t, "testStructPtrInput2", testStruct2AsMap); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := f.CallFunction("testStructPtrInput2", &testStruct2AsMap); err != nil {
+	if _, err := fixture.CallFunction(t, "testStructPtrInput2", &testStruct2AsMap); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestStructPtrInput3_map(t *testing.T) {
-	t.Parallel()
-
-	f := NewGoWasmTestFixture(t)
-	defer f.Close()
-
-	if _, err := f.CallFunction("testStructPtrInput3", testStruct3AsMap); err != nil {
+	if _, err := fixture.CallFunction(t, "testStructPtrInput3", testStruct3AsMap); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := f.CallFunction("testStructPtrInput3", &testStruct3AsMap); err != nil {
+	if _, err := fixture.CallFunction(t, "testStructPtrInput3", &testStruct3AsMap); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestStructPtrInput4_map(t *testing.T) {
-	t.Parallel()
-
-	f := NewGoWasmTestFixture(t)
-	defer f.Close()
-
-	if _, err := f.CallFunction("testStructPtrInput4", testStruct4AsMap); err != nil {
+	if _, err := fixture.CallFunction(t, "testStructPtrInput4", testStruct4AsMap); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := f.CallFunction("testStructPtrInput4", &testStruct4AsMap); err != nil {
+	if _, err := fixture.CallFunction(t, "testStructPtrInput4", &testStruct4AsMap); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestStructPtrInput4_map_withNil(t *testing.T) {
-	t.Parallel()
-
-	f := NewGoWasmTestFixture(t)
-	defer f.Close()
-
-	if _, err := f.CallFunction("testStructPtrInput4_withNil", testStruct4AsMap_withNil); err != nil {
+	if _, err := fixture.CallFunction(t, "testStructPtrInput4_withNil", testStruct4AsMap_withNil); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := f.CallFunction("testStructPtrInput4_withNil", &testStruct4AsMap_withNil); err != nil {
+	if _, err := fixture.CallFunction(t, "testStructPtrInput4_withNil", &testStruct4AsMap_withNil); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestStructPtrInput1_nil(t *testing.T) {
-	t.Parallel()
-
-	f := NewGoWasmTestFixture(t)
-	defer f.Close()
-
-	if _, err := f.CallFunction("testStructPtrInput1_nil", nil); err != nil {
+	if _, err := fixture.CallFunction(t, "testStructPtrInput1_nil", nil); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestStructPtrInput2_nil(t *testing.T) {
-	t.Parallel()
-
-	f := NewGoWasmTestFixture(t)
-	defer f.Close()
-
-	if _, err := f.CallFunction("testStructPtrInput2_nil", nil); err != nil {
+	if _, err := fixture.CallFunction(t, "testStructPtrInput2_nil", nil); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestStructPtrInput3_nil(t *testing.T) {
-	t.Parallel()
-
-	f := NewGoWasmTestFixture(t)
-	defer f.Close()
-
-	if _, err := f.CallFunction("testStructPtrInput3_nil", nil); err != nil {
+	if _, err := fixture.CallFunction(t, "testStructPtrInput3_nil", nil); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestStructPtrInput4_nil(t *testing.T) {
-	t.Parallel()
-
-	f := NewGoWasmTestFixture(t)
-	defer f.Close()
-
-	if _, err := f.CallFunction("testStructPtrInput4_nil", nil); err != nil {
+	if _, err := fixture.CallFunction(t, "testStructPtrInput4_nil", nil); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestStructOutput1(t *testing.T) {
-	t.Parallel()
-
-	f := NewGoWasmTestFixture(t)
-	defer f.Close()
-
-	f.AddCustomType("testdata.TestStruct1", reflect.TypeFor[TestStruct1]())
-
-	result, err := f.CallFunction("testStructOutput1")
+	result, err := fixture.CallFunction(t, "testStructOutput1")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -404,14 +277,7 @@ func TestStructOutput1(t *testing.T) {
 }
 
 func TestStructOutput2(t *testing.T) {
-	t.Parallel()
-
-	f := NewGoWasmTestFixture(t)
-	defer f.Close()
-
-	f.AddCustomType("testdata.TestStruct2", reflect.TypeFor[TestStruct2]())
-
-	result, err := f.CallFunction("testStructOutput2")
+	result, err := fixture.CallFunction(t, "testStructOutput2")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -426,14 +292,7 @@ func TestStructOutput2(t *testing.T) {
 }
 
 func TestStructOutput3(t *testing.T) {
-	t.Parallel()
-
-	f := NewGoWasmTestFixture(t)
-	defer f.Close()
-
-	f.AddCustomType("testdata.TestStruct3", reflect.TypeFor[TestStruct3]())
-
-	result, err := f.CallFunction("testStructOutput3")
+	result, err := fixture.CallFunction(t, "testStructOutput3")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -448,14 +307,7 @@ func TestStructOutput3(t *testing.T) {
 }
 
 func TestStructOutput4(t *testing.T) {
-	t.Parallel()
-
-	f := NewGoWasmTestFixture(t)
-	defer f.Close()
-
-	f.AddCustomType("testdata.TestStruct4", reflect.TypeFor[TestStruct4]())
-
-	result, err := f.CallFunction("testStructOutput4")
+	result, err := fixture.CallFunction(t, "testStructOutput4")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -470,14 +322,7 @@ func TestStructOutput4(t *testing.T) {
 }
 
 func TestStructOutput4_withNil(t *testing.T) {
-	t.Parallel()
-
-	f := NewGoWasmTestFixture(t)
-	defer f.Close()
-
-	f.AddCustomType("testdata.TestStruct4", reflect.TypeFor[TestStruct4]())
-
-	result, err := f.CallFunction("testStructOutput4_withNil")
+	result, err := fixture.CallFunction(t, "testStructOutput4_withNil")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -492,14 +337,7 @@ func TestStructOutput4_withNil(t *testing.T) {
 }
 
 func TestStructPtrOutput1(t *testing.T) {
-	t.Parallel()
-
-	f := NewGoWasmTestFixture(t)
-	defer f.Close()
-
-	f.AddCustomType("testdata.TestStruct1", reflect.TypeFor[TestStruct1]())
-
-	result, err := f.CallFunction("testStructPtrOutput1")
+	result, err := fixture.CallFunction(t, "testStructPtrOutput1")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -514,14 +352,7 @@ func TestStructPtrOutput1(t *testing.T) {
 }
 
 func TestStructPtrOutput2(t *testing.T) {
-	t.Parallel()
-
-	f := NewGoWasmTestFixture(t)
-	defer f.Close()
-
-	f.AddCustomType("testdata.TestStruct2", reflect.TypeFor[TestStruct2]())
-
-	result, err := f.CallFunction("testStructPtrOutput2")
+	result, err := fixture.CallFunction(t, "testStructPtrOutput2")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -536,14 +367,7 @@ func TestStructPtrOutput2(t *testing.T) {
 }
 
 func TestStructPtrOutput3(t *testing.T) {
-	t.Parallel()
-
-	f := NewGoWasmTestFixture(t)
-	defer f.Close()
-
-	f.AddCustomType("testdata.TestStruct3", reflect.TypeFor[TestStruct3]())
-
-	result, err := f.CallFunction("testStructPtrOutput3")
+	result, err := fixture.CallFunction(t, "testStructPtrOutput3")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -558,14 +382,7 @@ func TestStructPtrOutput3(t *testing.T) {
 }
 
 func TestStructPtrOutput4(t *testing.T) {
-	t.Parallel()
-
-	f := NewGoWasmTestFixture(t)
-	defer f.Close()
-
-	f.AddCustomType("testdata.TestStruct4", reflect.TypeFor[TestStruct4]())
-
-	result, err := f.CallFunction("testStructPtrOutput4")
+	result, err := fixture.CallFunction(t, "testStructPtrOutput4")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -580,14 +397,7 @@ func TestStructPtrOutput4(t *testing.T) {
 }
 
 func TestStructPtrOutput4_withNil(t *testing.T) {
-	t.Parallel()
-
-	f := NewGoWasmTestFixture(t)
-	defer f.Close()
-
-	f.AddCustomType("testdata.TestStruct4", reflect.TypeFor[TestStruct4]())
-
-	result, err := f.CallFunction("testStructPtrOutput4_withNil")
+	result, err := fixture.CallFunction(t, "testStructPtrOutput4_withNil")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -602,12 +412,7 @@ func TestStructPtrOutput4_withNil(t *testing.T) {
 }
 
 func TestStructOutput1_map(t *testing.T) {
-	t.Parallel()
-
-	f := NewGoWasmTestFixture(t)
-	defer f.Close()
-
-	result, err := f.CallFunction("testStructOutput1")
+	result, err := fixture.CallFunction(t, "testStructOutput1_map")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -622,12 +427,7 @@ func TestStructOutput1_map(t *testing.T) {
 }
 
 func TestStructOutput2_map(t *testing.T) {
-	t.Parallel()
-
-	f := NewGoWasmTestFixture(t)
-	defer f.Close()
-
-	result, err := f.CallFunction("testStructOutput2")
+	result, err := fixture.CallFunction(t, "testStructOutput2_map")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -642,12 +442,7 @@ func TestStructOutput2_map(t *testing.T) {
 }
 
 func TestStructOutput3_map(t *testing.T) {
-	t.Parallel()
-
-	f := NewGoWasmTestFixture(t)
-	defer f.Close()
-
-	result, err := f.CallFunction("testStructOutput3")
+	result, err := fixture.CallFunction(t, "testStructOutput3_map")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -662,12 +457,7 @@ func TestStructOutput3_map(t *testing.T) {
 }
 
 func TestStructOutput4_map(t *testing.T) {
-	t.Parallel()
-
-	f := NewGoWasmTestFixture(t)
-	defer f.Close()
-
-	result, err := f.CallFunction("testStructOutput4")
+	result, err := fixture.CallFunction(t, "testStructOutput4_map")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -682,12 +472,7 @@ func TestStructOutput4_map(t *testing.T) {
 }
 
 func TestStructOutput4_map_withNil(t *testing.T) {
-	t.Parallel()
-
-	f := NewGoWasmTestFixture(t)
-	defer f.Close()
-
-	result, err := f.CallFunction("testStructOutput4_withNil")
+	result, err := fixture.CallFunction(t, "testStructOutput4_map_withNil")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -702,12 +487,7 @@ func TestStructOutput4_map_withNil(t *testing.T) {
 }
 
 func TestStructPtrOutput1_map(t *testing.T) {
-	t.Parallel()
-
-	f := NewGoWasmTestFixture(t)
-	defer f.Close()
-
-	result, err := f.CallFunction("testStructPtrOutput1")
+	result, err := fixture.CallFunction(t, "testStructPtrOutput1_map")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -722,12 +502,7 @@ func TestStructPtrOutput1_map(t *testing.T) {
 }
 
 func TestStructPtrOutput2_map(t *testing.T) {
-	t.Parallel()
-
-	f := NewGoWasmTestFixture(t)
-	defer f.Close()
-
-	result, err := f.CallFunction("testStructPtrOutput2")
+	result, err := fixture.CallFunction(t, "testStructPtrOutput2_map")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -742,12 +517,7 @@ func TestStructPtrOutput2_map(t *testing.T) {
 }
 
 func TestStructPtrOutput3_map(t *testing.T) {
-	t.Parallel()
-
-	f := NewGoWasmTestFixture(t)
-	defer f.Close()
-
-	result, err := f.CallFunction("testStructPtrOutput3")
+	result, err := fixture.CallFunction(t, "testStructPtrOutput3_map")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -762,12 +532,7 @@ func TestStructPtrOutput3_map(t *testing.T) {
 }
 
 func TestStructPtrOutput4_map(t *testing.T) {
-	t.Parallel()
-
-	f := NewGoWasmTestFixture(t)
-	defer f.Close()
-
-	result, err := f.CallFunction("testStructPtrOutput4")
+	result, err := fixture.CallFunction(t, "testStructPtrOutput4_map")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -782,12 +547,7 @@ func TestStructPtrOutput4_map(t *testing.T) {
 }
 
 func TestStructPtrOutput4_map_withNil(t *testing.T) {
-	t.Parallel()
-
-	f := NewGoWasmTestFixture(t)
-	defer f.Close()
-
-	result, err := f.CallFunction("testStructPtrOutput4_withNil")
+	result, err := fixture.CallFunction(t, "testStructPtrOutput4_map_withNil")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -802,12 +562,7 @@ func TestStructPtrOutput4_map_withNil(t *testing.T) {
 }
 
 func TestStructPtrOutput1_nil(t *testing.T) {
-	t.Parallel()
-
-	f := NewGoWasmTestFixture(t)
-	defer f.Close()
-
-	result, err := f.CallFunction("testStructPtrOutput1_nil")
+	result, err := fixture.CallFunction(t, "testStructPtrOutput1_nil")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -818,12 +573,7 @@ func TestStructPtrOutput1_nil(t *testing.T) {
 }
 
 func TestStructPtrOutput2_nil(t *testing.T) {
-	t.Parallel()
-
-	f := NewGoWasmTestFixture(t)
-	defer f.Close()
-
-	result, err := f.CallFunction("testStructPtrOutput2_nil")
+	result, err := fixture.CallFunction(t, "testStructPtrOutput2_nil")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -834,12 +584,7 @@ func TestStructPtrOutput2_nil(t *testing.T) {
 }
 
 func TestStructPtrOutput3_nil(t *testing.T) {
-	t.Parallel()
-
-	f := NewGoWasmTestFixture(t)
-	defer f.Close()
-
-	result, err := f.CallFunction("testStructPtrOutput3_nil")
+	result, err := fixture.CallFunction(t, "testStructPtrOutput3_nil")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -850,12 +595,7 @@ func TestStructPtrOutput3_nil(t *testing.T) {
 }
 
 func TestStructPtrOutput4_nil(t *testing.T) {
-	t.Parallel()
-
-	f := NewGoWasmTestFixture(t)
-	defer f.Close()
-
-	result, err := f.CallFunction("testStructPtrOutput4_nil")
+	result, err := fixture.CallFunction(t, "testStructPtrOutput4_nil")
 	if err != nil {
 		t.Fatal(err)
 	}

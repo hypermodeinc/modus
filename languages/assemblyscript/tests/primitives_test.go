@@ -10,24 +10,14 @@ import (
 )
 
 func TestBoolInput_false(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	_, err := f.CallFunction("testBoolInput_false", false)
+	_, err := fixture.CallFunction(t, "testBoolInput_false", false)
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestBoolOutput_false(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	result, err := f.CallFunction("testBoolOutput_false")
+	result, err := fixture.CallFunction(t, "testBoolOutput_false")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -43,24 +33,14 @@ func TestBoolOutput_false(t *testing.T) {
 }
 
 func TestBoolInput_true(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	_, err := f.CallFunction("testBoolInput_true", true)
+	_, err := fixture.CallFunction(t, "testBoolInput_true", true)
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestBoolOutput_true(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	result, err := f.CallFunction("testBoolOutput_true")
+	result, err := fixture.CallFunction(t, "testBoolOutput_true")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -76,24 +56,14 @@ func TestBoolOutput_true(t *testing.T) {
 }
 
 func TestI8Input_min(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	_, err := f.CallFunction("testI8Input_min", int8(math.MinInt8))
+	_, err := fixture.CallFunction(t, "testI8Input_min", int8(math.MinInt8))
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestI8Output_min(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	result, err := f.CallFunction("testI8Output_min")
+	result, err := fixture.CallFunction(t, "testI8Output_min")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -109,24 +79,14 @@ func TestI8Output_min(t *testing.T) {
 }
 
 func TestI8Input_max(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	_, err := f.CallFunction("testI8Input_max", int8(math.MaxInt8))
+	_, err := fixture.CallFunction(t, "testI8Input_max", int8(math.MaxInt8))
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestI8Output_max(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	result, err := f.CallFunction("testI8Output_max")
+	result, err := fixture.CallFunction(t, "testI8Output_max")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -142,24 +102,14 @@ func TestI8Output_max(t *testing.T) {
 }
 
 func TestI16Input_min(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	_, err := f.CallFunction("testI16Input_min", int16(math.MinInt16))
+	_, err := fixture.CallFunction(t, "testI16Input_min", int16(math.MinInt16))
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestI16Output_min(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	result, err := f.CallFunction("testI16Output_min")
+	result, err := fixture.CallFunction(t, "testI16Output_min")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -175,24 +125,14 @@ func TestI16Output_min(t *testing.T) {
 }
 
 func TestI16Input_max(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	_, err := f.CallFunction("testI16Input_max", int16(math.MaxInt16))
+	_, err := fixture.CallFunction(t, "testI16Input_max", int16(math.MaxInt16))
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestI16Output_max(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	result, err := f.CallFunction("testI16Output_max")
+	result, err := fixture.CallFunction(t, "testI16Output_max")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -208,24 +148,14 @@ func TestI16Output_max(t *testing.T) {
 }
 
 func TestI32Input_min(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	_, err := f.CallFunction("testI32Input_min", int32(math.MinInt32))
+	_, err := fixture.CallFunction(t, "testI32Input_min", int32(math.MinInt32))
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestI32Output_min(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	result, err := f.CallFunction("testI32Output_min")
+	result, err := fixture.CallFunction(t, "testI32Output_min")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -241,24 +171,14 @@ func TestI32Output_min(t *testing.T) {
 }
 
 func TestI32Input_max(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	_, err := f.CallFunction("testI32Input_max", int32(math.MaxInt32))
+	_, err := fixture.CallFunction(t, "testI32Input_max", int32(math.MaxInt32))
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestI32Output_max(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	result, err := f.CallFunction("testI32Output_max")
+	result, err := fixture.CallFunction(t, "testI32Output_max")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -274,24 +194,14 @@ func TestI32Output_max(t *testing.T) {
 }
 
 func TestI64Input_min(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	_, err := f.CallFunction("testI64Input_min", int64(math.MinInt64))
+	_, err := fixture.CallFunction(t, "testI64Input_min", int64(math.MinInt64))
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestI64Output_min(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	result, err := f.CallFunction("testI64Output_min")
+	result, err := fixture.CallFunction(t, "testI64Output_min")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -307,24 +217,14 @@ func TestI64Output_min(t *testing.T) {
 }
 
 func TestI64Input_max(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	_, err := f.CallFunction("testI64Input_max", int64(math.MaxInt64))
+	_, err := fixture.CallFunction(t, "testI64Input_max", int64(math.MaxInt64))
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestI64Output_max(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	result, err := f.CallFunction("testI64Output_max")
+	result, err := fixture.CallFunction(t, "testI64Output_max")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -340,24 +240,14 @@ func TestI64Output_max(t *testing.T) {
 }
 
 func TestISizeInput_min(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	_, err := f.CallFunction("testISizeInput_min", int(math.MinInt32))
+	_, err := fixture.CallFunction(t, "testISizeInput_min", int(math.MinInt32))
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestISizeOutput_min(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	result, err := f.CallFunction("testISizeOutput_min")
+	result, err := fixture.CallFunction(t, "testISizeOutput_min")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -373,24 +263,14 @@ func TestISizeOutput_min(t *testing.T) {
 }
 
 func TestISizeInput_max(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	_, err := f.CallFunction("testISizeInput_max", int(math.MaxInt32))
+	_, err := fixture.CallFunction(t, "testISizeInput_max", int(math.MaxInt32))
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestISizeOutput_max(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	result, err := f.CallFunction("testISizeOutput_max")
+	result, err := fixture.CallFunction(t, "testISizeOutput_max")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -406,24 +286,14 @@ func TestISizeOutput_max(t *testing.T) {
 }
 
 func TestU8Input_min(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	_, err := f.CallFunction("testU8Input_min", uint8(0))
+	_, err := fixture.CallFunction(t, "testU8Input_min", uint8(0))
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestU8Output_min(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	result, err := f.CallFunction("testU8Output_min")
+	result, err := fixture.CallFunction(t, "testU8Output_min")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -439,24 +309,14 @@ func TestU8Output_min(t *testing.T) {
 }
 
 func TestU8Input_max(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	_, err := f.CallFunction("testU8Input_max", uint8(math.MaxUint8))
+	_, err := fixture.CallFunction(t, "testU8Input_max", uint8(math.MaxUint8))
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestU8Output_max(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	result, err := f.CallFunction("testU8Output_max")
+	result, err := fixture.CallFunction(t, "testU8Output_max")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -472,24 +332,14 @@ func TestU8Output_max(t *testing.T) {
 }
 
 func TestU16Input_min(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	_, err := f.CallFunction("testU16Input_min", uint16(0))
+	_, err := fixture.CallFunction(t, "testU16Input_min", uint16(0))
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestU16Output_min(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	result, err := f.CallFunction("testU16Output_min")
+	result, err := fixture.CallFunction(t, "testU16Output_min")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -505,24 +355,14 @@ func TestU16Output_min(t *testing.T) {
 }
 
 func TestU16Input_max(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	_, err := f.CallFunction("testU16Input_max", uint16(math.MaxUint16))
+	_, err := fixture.CallFunction(t, "testU16Input_max", uint16(math.MaxUint16))
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestU16Output_max(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	result, err := f.CallFunction("testU16Output_max")
+	result, err := fixture.CallFunction(t, "testU16Output_max")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -538,24 +378,14 @@ func TestU16Output_max(t *testing.T) {
 }
 
 func TestU32Input_min(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	_, err := f.CallFunction("testU32Input_min", uint32(0))
+	_, err := fixture.CallFunction(t, "testU32Input_min", uint32(0))
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestU32Output_min(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	result, err := f.CallFunction("testU32Output_min")
+	result, err := fixture.CallFunction(t, "testU32Output_min")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -571,24 +401,14 @@ func TestU32Output_min(t *testing.T) {
 }
 
 func TestU32Input_max(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	_, err := f.CallFunction("testU32Input_max", uint32(math.MaxUint32))
+	_, err := fixture.CallFunction(t, "testU32Input_max", uint32(math.MaxUint32))
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestU32Output_max(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	result, err := f.CallFunction("testU32Output_max")
+	result, err := fixture.CallFunction(t, "testU32Output_max")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -604,24 +424,14 @@ func TestU32Output_max(t *testing.T) {
 }
 
 func TestU64Input_min(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	_, err := f.CallFunction("testU64Input_min", uint64(0))
+	_, err := fixture.CallFunction(t, "testU64Input_min", uint64(0))
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestU64Output_min(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	result, err := f.CallFunction("testU64Output_min")
+	result, err := fixture.CallFunction(t, "testU64Output_min")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -637,24 +447,14 @@ func TestU64Output_min(t *testing.T) {
 }
 
 func TestU64Input_max(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	_, err := f.CallFunction("testU64Input_max", uint64(math.MaxUint64))
+	_, err := fixture.CallFunction(t, "testU64Input_max", uint64(math.MaxUint64))
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestU64Output_max(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	result, err := f.CallFunction("testU64Output_max")
+	result, err := fixture.CallFunction(t, "testU64Output_max")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -670,24 +470,14 @@ func TestU64Output_max(t *testing.T) {
 }
 
 func TestUSizeInput_min(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	_, err := f.CallFunction("testUSizeInput_min", uint(0))
+	_, err := fixture.CallFunction(t, "testUSizeInput_min", uint(0))
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestUSizeOutput_min(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	result, err := f.CallFunction("testUSizeOutput_min")
+	result, err := fixture.CallFunction(t, "testUSizeOutput_min")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -703,24 +493,14 @@ func TestUSizeOutput_min(t *testing.T) {
 }
 
 func TestUSizeInput_max(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	_, err := f.CallFunction("testUSizeInput_max", uint(math.MaxUint32))
+	_, err := fixture.CallFunction(t, "testUSizeInput_max", uint(math.MaxUint32))
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestUSizeOutput_max(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	result, err := f.CallFunction("testUSizeOutput_max")
+	result, err := fixture.CallFunction(t, "testUSizeOutput_max")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -736,24 +516,14 @@ func TestUSizeOutput_max(t *testing.T) {
 }
 
 func TestF32Input_min(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	_, err := f.CallFunction("testF32Input_min", float32(math.SmallestNonzeroFloat32))
+	_, err := fixture.CallFunction(t, "testF32Input_min", float32(math.SmallestNonzeroFloat32))
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestF32Output_min(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	result, err := f.CallFunction("testF32Output_min")
+	result, err := fixture.CallFunction(t, "testF32Output_min")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -769,24 +539,14 @@ func TestF32Output_min(t *testing.T) {
 }
 
 func TestF32Input_max(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	_, err := f.CallFunction("testF32Input_max", float32(math.MaxFloat32))
+	_, err := fixture.CallFunction(t, "testF32Input_max", float32(math.MaxFloat32))
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestF32Output_max(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	result, err := f.CallFunction("testF32Output_max")
+	result, err := fixture.CallFunction(t, "testF32Output_max")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -802,24 +562,14 @@ func TestF32Output_max(t *testing.T) {
 }
 
 func TestF64Input_min(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	_, err := f.CallFunction("testF64Input_min", float64(math.SmallestNonzeroFloat64))
+	_, err := fixture.CallFunction(t, "testF64Input_min", float64(math.SmallestNonzeroFloat64))
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestF64Output_min(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	result, err := f.CallFunction("testF64Output_min")
+	result, err := fixture.CallFunction(t, "testF64Output_min")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -835,24 +585,14 @@ func TestF64Output_min(t *testing.T) {
 }
 
 func TestF64Input_max(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	_, err := f.CallFunction("testF64Input_max", float64(math.MaxFloat64))
+	_, err := fixture.CallFunction(t, "testF64Input_max", float64(math.MaxFloat64))
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestF64Output_max(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	result, err := f.CallFunction("testF64Output_max")
+	result, err := fixture.CallFunction(t, "testF64Output_max")
 	if err != nil {
 		t.Fatal(err)
 	}

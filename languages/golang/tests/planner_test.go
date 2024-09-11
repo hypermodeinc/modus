@@ -13,16 +13,11 @@ import (
 )
 
 func TestGetHandler_int(t *testing.T) {
-	t.Parallel()
-
-	f := NewGoWasmTestFixture(t)
-	defer f.Close()
-
 	typ := "int"
 	rt := reflect.TypeFor[int]()
 
-	planner := f.NewPlanner()
-	handler, err := planner.GetHandler(f.Context, typ)
+	planner := fixture.NewPlanner()
+	handler, err := planner.GetHandler(fixture.Context, typ)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -45,16 +40,11 @@ func TestGetHandler_int(t *testing.T) {
 }
 
 func TestGetHandler_intPtr(t *testing.T) {
-	t.Parallel()
-
-	f := NewGoWasmTestFixture(t)
-	defer f.Close()
-
 	typ := "*int"
 	rt := reflect.TypeFor[*int]()
 
-	planner := f.NewPlanner()
-	handler, err := planner.GetHandler(f.Context, typ)
+	planner := fixture.NewPlanner()
+	handler, err := planner.GetHandler(fixture.Context, typ)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -96,16 +86,11 @@ func TestGetHandler_intPtr(t *testing.T) {
 }
 
 func TestGetHandler_string(t *testing.T) {
-	t.Parallel()
-
-	f := NewGoWasmTestFixture(t)
-	defer f.Close()
-
 	typ := "string"
 	rt := reflect.TypeFor[string]()
 
-	planner := f.NewPlanner()
-	handler, err := planner.GetHandler(f.Context, typ)
+	planner := fixture.NewPlanner()
+	handler, err := planner.GetHandler(fixture.Context, typ)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -128,16 +113,11 @@ func TestGetHandler_string(t *testing.T) {
 }
 
 func TestGetHandler_stringPtr(t *testing.T) {
-	t.Parallel()
-
-	f := NewGoWasmTestFixture(t)
-	defer f.Close()
-
 	typ := "*string"
 	rt := reflect.TypeFor[*string]()
 
-	planner := f.NewPlanner()
-	handler, err := planner.GetHandler(f.Context, typ)
+	planner := fixture.NewPlanner()
+	handler, err := planner.GetHandler(fixture.Context, typ)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -179,16 +159,11 @@ func TestGetHandler_stringPtr(t *testing.T) {
 }
 
 func TestGetHandler_stringSlice(t *testing.T) {
-	t.Parallel()
-
-	f := NewGoWasmTestFixture(t)
-	defer f.Close()
-
 	typ := "[]string"
 	rt := reflect.TypeFor[[]string]()
 
-	planner := f.NewPlanner()
-	handler, err := planner.GetHandler(f.Context, typ)
+	planner := fixture.NewPlanner()
+	handler, err := planner.GetHandler(fixture.Context, typ)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -230,16 +205,11 @@ func TestGetHandler_stringSlice(t *testing.T) {
 }
 
 func TestGetHandler_stringArray(t *testing.T) {
-	t.Parallel()
-
-	f := NewGoWasmTestFixture(t)
-	defer f.Close()
-
 	typ := "[2]string"
 	rt := reflect.TypeFor[[2]string]()
 
-	planner := f.NewPlanner()
-	handler, err := planner.GetHandler(f.Context, typ)
+	planner := fixture.NewPlanner()
+	handler, err := planner.GetHandler(fixture.Context, typ)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -281,16 +251,11 @@ func TestGetHandler_stringArray(t *testing.T) {
 }
 
 func TestGetHandler_time(t *testing.T) {
-	t.Parallel()
-
-	f := NewGoWasmTestFixture(t)
-	defer f.Close()
-
 	typ := "time.Time"
 	rt := reflect.TypeFor[time.Time]()
 
-	planner := f.NewPlanner()
-	handler, err := planner.GetHandler(f.Context, typ)
+	planner := fixture.NewPlanner()
+	handler, err := planner.GetHandler(fixture.Context, typ)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -313,16 +278,11 @@ func TestGetHandler_time(t *testing.T) {
 }
 
 func TestGetHandler_duration(t *testing.T) {
-	t.Parallel()
-
-	f := NewGoWasmTestFixture(t)
-	defer f.Close()
-
 	typ := "time.Duration"
 	rt := reflect.TypeFor[time.Duration]()
 
-	planner := f.NewPlanner()
-	handler, err := planner.GetHandler(f.Context, typ)
+	planner := fixture.NewPlanner()
+	handler, err := planner.GetHandler(fixture.Context, typ)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -345,16 +305,11 @@ func TestGetHandler_duration(t *testing.T) {
 }
 
 func TestGetHandler_map(t *testing.T) {
-	t.Parallel()
-
-	f := NewGoWasmTestFixture(t)
-	defer f.Close()
-
 	typ := "map[string]string"
 	rt := reflect.TypeFor[map[string]string]()
 
-	planner := f.NewPlanner()
-	handler, err := planner.GetHandler(f.Context, typ)
+	planner := fixture.NewPlanner()
+	handler, err := planner.GetHandler(fixture.Context, typ)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -410,17 +365,11 @@ func TestGetHandler_map(t *testing.T) {
 }
 
 func TestGetHandler_struct(t *testing.T) {
-	t.Parallel()
-
-	f := NewGoWasmTestFixture(t)
-	defer f.Close()
-
 	typ := "testdata.TestStruct3"
 	rt := reflect.TypeFor[TestStruct3]()
-	f.AddCustomType(typ, rt)
 
-	planner := f.NewPlanner()
-	handler, err := planner.GetHandler(f.Context, typ)
+	planner := fixture.NewPlanner()
+	handler, err := planner.GetHandler(fixture.Context, typ)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -490,17 +439,11 @@ func TestGetHandler_struct(t *testing.T) {
 }
 
 func TestGetHandler_recursiveStruct(t *testing.T) {
-	t.Parallel()
-
-	f := NewGoWasmTestFixture(t)
-	defer f.Close()
-
 	typ := "testdata.TestRecursiveStruct"
 	rt := reflect.TypeFor[TestRecursiveStruct]()
-	f.AddCustomType(typ, rt)
 
-	planner := f.NewPlanner()
-	handler, err := planner.GetHandler(f.Context, typ)
+	planner := fixture.NewPlanner()
+	handler, err := planner.GetHandler(fixture.Context, typ)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}

@@ -7,10 +7,12 @@ import (
 	"reflect"
 	"slices"
 	"unsafe"
+
+	"github.com/hypermodeAI/functions-go/pkg/console"
 )
 
 func fail(msg string) {
-	os.Stderr.WriteString(msg + "\n")
+	console.Error(msg)
 	os.Exit(1)
 }
 

@@ -12,49 +12,34 @@ import (
 )
 
 func TestMapInput_string_string(t *testing.T) {
-	t.Parallel()
-
-	f := NewGoWasmTestFixture(t)
-	defer f.Close()
-
 	var val = map[string]string{
 		"a": "1",
 		"b": "2",
 		"c": "3",
 	}
 
-	if _, err := f.CallFunction("testMapInput_string_string", val); err != nil {
+	if _, err := fixture.CallFunction(t, "testMapInput_string_string", val); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestMapPtrInput_string_string(t *testing.T) {
-	t.Parallel()
-
-	f := NewGoWasmTestFixture(t)
-	defer f.Close()
-
 	var val = map[string]string{
 		"a": "1",
 		"b": "2",
 		"c": "3",
 	}
 
-	if _, err := f.CallFunction("testMapPtrInput_string_string", val); err != nil {
+	if _, err := fixture.CallFunction(t, "testMapPtrInput_string_string", val); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := f.CallFunction("testMapPtrInput_string_string", &val); err != nil {
+	if _, err := fixture.CallFunction(t, "testMapPtrInput_string_string", &val); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestMapOutput_string_string(t *testing.T) {
-	t.Parallel()
-
-	f := NewGoWasmTestFixture(t)
-	defer f.Close()
-
-	result, err := f.CallFunction("testMapOutput_string_string")
+	result, err := fixture.CallFunction(t, "testMapOutput_string_string")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -75,12 +60,7 @@ func TestMapOutput_string_string(t *testing.T) {
 }
 
 func TestMapPtrOutput_string_string(t *testing.T) {
-	t.Parallel()
-
-	f := NewGoWasmTestFixture(t)
-	defer f.Close()
-
-	result, err := f.CallFunction("testMapPtrOutput_string_string")
+	result, err := fixture.CallFunction(t, "testMapPtrOutput_string_string")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -101,27 +81,17 @@ func TestMapPtrOutput_string_string(t *testing.T) {
 }
 
 func TestIterateMap_string_string(t *testing.T) {
-	t.Parallel()
-
-	f := NewGoWasmTestFixture(t)
-	defer f.Close()
-
 	var m = makeTestMap(100)
 
-	if _, err := f.CallFunction("testIterateMap_string_string", m); err != nil {
+	if _, err := fixture.CallFunction(t, "testIterateMap_string_string", m); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestMapLookup_string_string(t *testing.T) {
-	t.Parallel()
-
-	f := NewGoWasmTestFixture(t)
-	defer f.Close()
-
 	var m = makeTestMap(100)
 
-	result, err := f.CallFunction("testMapLookup_string_string", m, "key_047")
+	result, err := fixture.CallFunction(t, "testMapLookup_string_string", m, "key_047")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -142,33 +112,19 @@ type testStructWithMap struct {
 }
 
 func TestStructContainingMapInput_string_string(t *testing.T) {
-	t.Parallel()
-
-	f := NewGoWasmTestFixture(t)
-	defer f.Close()
-
-	f.AddCustomType("testdata.TestStructWithMap", reflect.TypeFor[testStructWithMap]())
-
 	s := testStructWithMap{M: map[string]string{
 		"a": "1",
 		"b": "2",
 		"c": "3",
 	}}
 
-	if _, err := f.CallFunction("testStructContainingMapInput_string_string", s); err != nil {
+	if _, err := fixture.CallFunction(t, "testStructContainingMapInput_string_string", s); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestStructContainingMapOutput_string_string(t *testing.T) {
-	t.Parallel()
-
-	f := NewGoWasmTestFixture(t)
-	defer f.Close()
-
-	f.AddCustomType("testdata.TestStructWithMap", reflect.TypeFor[testStructWithMap]())
-
-	result, err := f.CallFunction("testStructContainingMapOutput_string_string")
+	result, err := fixture.CallFunction(t, "testStructContainingMapOutput_string_string")
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -12,29 +12,19 @@ import (
 )
 
 func TestMapInput_u8_string(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
 	var val = map[uint8]string{
 		1: "a",
 		2: "b",
 		3: "c",
 	}
 
-	if _, err := f.CallFunction("testMapInput_u8_string", val); err != nil {
+	if _, err := fixture.CallFunction(t, "testMapInput_u8_string", val); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestMapOutput_u8_string(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	result, err := f.CallFunction("testMapOutput_u8_string")
+	result, err := fixture.CallFunction(t, "testMapOutput_u8_string")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -55,29 +45,19 @@ func TestMapOutput_u8_string(t *testing.T) {
 }
 
 func TestMapInput_string_string(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
 	var val = map[string]string{
 		"a": "1",
 		"b": "2",
 		"c": "3",
 	}
 
-	if _, err := f.CallFunction("testMapInput_string_string", val); err != nil {
+	if _, err := fixture.CallFunction(t, "testMapInput_string_string", val); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestMapOutput_string_string(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	result, err := f.CallFunction("testMapOutput_string_string")
+	result, err := fixture.CallFunction(t, "testMapOutput_string_string")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -98,32 +78,22 @@ func TestMapOutput_string_string(t *testing.T) {
 }
 
 func TestNullableMapInput_string_string(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
 	var val = map[string]string{
 		"a": "1",
 		"b": "2",
 		"c": "3",
 	}
 
-	if _, err := f.CallFunction("testNullableMapInput_string_string", val); err != nil {
+	if _, err := fixture.CallFunction(t, "testNullableMapInput_string_string", val); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := f.CallFunction("testNullableMapInput_string_string", &val); err != nil {
+	if _, err := fixture.CallFunction(t, "testNullableMapInput_string_string", &val); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestNullableMapOutput_string_string(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	result, err := f.CallFunction("testNullableMapOutput_string_string")
+	result, err := fixture.CallFunction(t, "testNullableMapOutput_string_string")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -144,27 +114,17 @@ func TestNullableMapOutput_string_string(t *testing.T) {
 }
 
 func TestIterateMap_string_string(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
 	var m = makeTestMap(100)
 
-	if _, err := f.CallFunction("testIterateMap_string_string", m); err != nil {
+	if _, err := fixture.CallFunction(t, "testIterateMap_string_string", m); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestMapLookup_string_string(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
 	var m = makeTestMap(100)
 
-	result, err := f.CallFunction("testMapLookup_string_string", m, "key_047")
+	result, err := fixture.CallFunction(t, "testMapLookup_string_string", m, "key_047")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -185,33 +145,19 @@ type testClassWithMap struct {
 }
 
 func TestClassContainingMapInput_string_string(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	f.AddCustomType("assembly/maps/TestClassWithMap", reflect.TypeFor[testClassWithMap]())
-
 	s := testClassWithMap{M: map[string]string{
 		"a": "1",
 		"b": "2",
 		"c": "3",
 	}}
 
-	if _, err := f.CallFunction("testClassContainingMapInput_string_string", s); err != nil {
+	if _, err := fixture.CallFunction(t, "testClassContainingMapInput_string_string", s); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestClassContainingMapOutput_string_string(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	f.AddCustomType("assembly/maps/TestClassWithMap", reflect.TypeFor[testClassWithMap]())
-
-	result, err := f.CallFunction("testClassContainingMapOutput_string_string")
+	result, err := fixture.CallFunction(t, "testClassContainingMapOutput_string_string")
 	if err != nil {
 		t.Fatal(err)
 	}

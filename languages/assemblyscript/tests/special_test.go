@@ -10,16 +10,20 @@ import (
 	"testing"
 
 	"hypruntime/plugins/metadata"
+	"hypruntime/utils"
 
 	wasm "github.com/tetratelabs/wazero/api"
 )
 
 func TestGetRuntimeTypeInfo(t *testing.T) {
 
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
+	buffers := utils.NewOutputBuffers()
+	mod, err := fixture.WasmHost.GetModuleInstance(fixture.Context, fixture.Plugin, buffers)
+	if err != nil {
+		t.Fatal(err)
+	}
 
-	rtti, err := GetRuntimeTypeInfo(f.Module, f.Plugin.Metadata)
+	rtti, err := GetRuntimeTypeInfo(mod, fixture.Plugin.Metadata)
 	if err != nil {
 		t.Fatal(err)
 	}

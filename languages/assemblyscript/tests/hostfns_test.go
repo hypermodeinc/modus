@@ -11,6 +11,7 @@ import (
 
 	"hypruntime/hostfunctions"
 	"hypruntime/testutils"
+	"hypruntime/utils"
 	"hypruntime/wasmhost"
 )
 
@@ -32,12 +33,13 @@ func getTestHostFunctionRegistrations() []func(wasmhost.WasmHost) error {
 }
 
 func hostLog(ctx context.Context, level, message string) {
-	hostfunctions.LogFunctionMessage(ctx, level, message)
+	if utils.HypermodeDebugEnabled() {
+		hostfunctions.LogFunctionMessage(ctx, level, message)
+	}
 	t := testutils.GetTestT(ctx)
 	t.Logf("[%s] %s", level, message)
 }
 
-// TODO: we should be able to pass these as int
 func hostAdd(a, b int32) int32 {
 	return a + b
 }
@@ -61,12 +63,7 @@ type TestHostObject struct {
 }
 
 func TestHostFn_add(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	result, err := f.CallFunction("add", 1, 2)
+	result, err := fixture.CallFunction(t, "add", 1, 2)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -81,12 +78,7 @@ func TestHostFn_add(t *testing.T) {
 }
 
 func TestHostFn_echo(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	result, err := f.CallFunction("echo", "hello")
+	result, err := fixture.CallFunction(t, "echo", "hello")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -102,20 +94,13 @@ func TestHostFn_echo(t *testing.T) {
 }
 
 func TestHostFn_echoObject(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	f.AddCustomType("assembly/hostfns/TestHostObject", reflect.TypeFor[TestHostObject]())
-
 	o := &TestHostObject{
 		A: 1,
 		B: true,
 		C: "hello",
 	}
 
-	result, err := f.CallFunction("echoObject", o)
+	result, err := fixture.CallFunction(t, "echoObject", o)
 	if err != nil {
 		t.Fatal(err)
 	}

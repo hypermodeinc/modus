@@ -10,12 +10,7 @@ import (
 )
 
 func TestMultiOutput(t *testing.T) {
-	t.Parallel()
-
-	f := NewGoWasmTestFixture(t)
-	defer f.Close()
-
-	result, err := f.CallFunction("testMultiOutput")
+	result, err := fixture.CallFunction(t, "testMultiOutput")
 	if err != nil {
 		t.Fatal(err)
 	}

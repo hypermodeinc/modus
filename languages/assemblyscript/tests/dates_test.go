@@ -13,24 +13,14 @@ import (
 var testTime, _ = time.Parse(time.RFC3339, "2024-12-31T23:59:59.999Z")
 
 func TestDateInput(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	_, err := f.CallFunction("testDateInput", testTime)
+	_, err := fixture.CallFunction(t, "testDateInput", testTime)
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestDateOutput(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	result, err := f.CallFunction("testDateOutput")
+	result, err := fixture.CallFunction(t, "testDateOutput")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -45,26 +35,16 @@ func TestDateOutput(t *testing.T) {
 }
 
 func TestNullDateInput(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
 	dt := testTime
 
-	_, err := f.CallFunction("testNullDateInput", &dt)
+	_, err := fixture.CallFunction(t, "testNullDateInput", &dt)
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestNullDateOutput(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	result, err := f.CallFunction("testNullDateOutput")
+	result, err := fixture.CallFunction(t, "testNullDateOutput")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -79,24 +59,14 @@ func TestNullDateOutput(t *testing.T) {
 }
 
 func TestNullDateInput_null(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	_, err := f.CallFunction("testNullDateInput_null", nil)
+	_, err := fixture.CallFunction(t, "testNullDateInput_null", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestNullDateOutput_null(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	result, err := f.CallFunction("testNullDateOutput_null")
+	result, err := fixture.CallFunction(t, "testNullDateOutput_null")
 	if err != nil {
 		t.Fatal(err)
 	}

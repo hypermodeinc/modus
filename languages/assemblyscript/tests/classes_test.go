@@ -101,146 +101,79 @@ var testClass5AsMap = map[string]any{
 }
 
 func TestClassInput1(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	if _, err := f.CallFunction("testClassInput1", testClass1); err != nil {
+	if _, err := fixture.CallFunction(t, "testClassInput1", testClass1); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestClassInput2(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	if _, err := f.CallFunction("testClassInput2", testClass2); err != nil {
+	if _, err := fixture.CallFunction(t, "testClassInput2", testClass2); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestClassInput3(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	if _, err := f.CallFunction("testClassInput3", testClass3); err != nil {
+	if _, err := fixture.CallFunction(t, "testClassInput3", testClass3); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestClassInput4(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	if _, err := f.CallFunction("testClassInput4", testClass4); err != nil {
+	if _, err := fixture.CallFunction(t, "testClassInput4", testClass4); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestClassInput4_withNull(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	if _, err := f.CallFunction("testClassInput4_withNull", testClass4_withNull); err != nil {
+	if _, err := fixture.CallFunction(t, "testClassInput4_withNull", testClass4_withNull); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestClassInput5(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	if _, err := f.CallFunction("testClassInput5", testClass5); err != nil {
+	if _, err := fixture.CallFunction(t, "testClassInput5", testClass5); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestClassInput1_map(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	if _, err := f.CallFunction("testClassInput1", testClass1AsMap); err != nil {
+	if _, err := fixture.CallFunction(t, "testClassInput1", testClass1AsMap); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestClassInput2_map(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	if _, err := f.CallFunction("testClassInput2", testClass2AsMap); err != nil {
+	if _, err := fixture.CallFunction(t, "testClassInput2", testClass2AsMap); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestClassInput3_map(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	if _, err := f.CallFunction("testClassInput3", testClass3AsMap); err != nil {
+	if _, err := fixture.CallFunction(t, "testClassInput3", testClass3AsMap); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestClassInput4_map(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	if _, err := f.CallFunction("testClassInput4", testClass4AsMap); err != nil {
+	if _, err := fixture.CallFunction(t, "testClassInput4", testClass4AsMap); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestClassInput4_map_withNull(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	if _, err := f.CallFunction("testClassInput4_withNull", testClass4AsMap_withNull); err != nil {
+	if _, err := fixture.CallFunction(t, "testClassInput4_withNull", testClass4AsMap_withNull); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestClassInput5_map(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	if _, err := f.CallFunction("testClassInput5", testClass5AsMap); err != nil {
+	if _, err := fixture.CallFunction(t, "testClassInput5", testClass5AsMap); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestClassOutput1(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	f.AddCustomType("assembly/classes/TestClass1", reflect.TypeFor[TestClass1]())
-
-	result, err := f.CallFunction("testClassOutput1")
+	result, err := fixture.CallFunction(t, "testClassOutput1")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -255,14 +188,7 @@ func TestClassOutput1(t *testing.T) {
 }
 
 func TestClassOutput2(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	f.AddCustomType("assembly/classes/TestClass2", reflect.TypeFor[TestClass2]())
-
-	result, err := f.CallFunction("testClassOutput2")
+	result, err := fixture.CallFunction(t, "testClassOutput2")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -277,14 +203,7 @@ func TestClassOutput2(t *testing.T) {
 }
 
 func TestClassOutput3(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	f.AddCustomType("assembly/classes/TestClass3", reflect.TypeFor[TestClass3]())
-
-	result, err := f.CallFunction("testClassOutput3")
+	result, err := fixture.CallFunction(t, "testClassOutput3")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -299,14 +218,7 @@ func TestClassOutput3(t *testing.T) {
 }
 
 func TestClassOutput4(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	f.AddCustomType("assembly/classes/TestClass4", reflect.TypeFor[TestClass4]())
-
-	result, err := f.CallFunction("testClassOutput4")
+	result, err := fixture.CallFunction(t, "testClassOutput4")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -321,14 +233,7 @@ func TestClassOutput4(t *testing.T) {
 }
 
 func TestClassOutput4_withNull(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	f.AddCustomType("assembly/classes/TestClass4", reflect.TypeFor[TestClass4]())
-
-	result, err := f.CallFunction("testClassOutput4_withNull")
+	result, err := fixture.CallFunction(t, "testClassOutput4_withNull")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -343,14 +248,7 @@ func TestClassOutput4_withNull(t *testing.T) {
 }
 
 func TestClassOutput5(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	f.AddCustomType("assembly/classes/TestClass5", reflect.TypeFor[TestClass5]())
-
-	result, err := f.CallFunction("testClassOutput5")
+	result, err := fixture.CallFunction(t, "testClassOutput5")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -365,12 +263,7 @@ func TestClassOutput5(t *testing.T) {
 }
 
 func TestClassOutput1_map(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	result, err := f.CallFunction("testClassOutput1")
+	result, err := fixture.CallFunction(t, "testClassOutput1_map")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -385,12 +278,7 @@ func TestClassOutput1_map(t *testing.T) {
 }
 
 func TestClassOutput2_map(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	result, err := f.CallFunction("testClassOutput2")
+	result, err := fixture.CallFunction(t, "testClassOutput2_map")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -405,12 +293,7 @@ func TestClassOutput2_map(t *testing.T) {
 }
 
 func TestClassOutput3_map(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	result, err := f.CallFunction("testClassOutput3")
+	result, err := fixture.CallFunction(t, "testClassOutput3_map")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -425,12 +308,7 @@ func TestClassOutput3_map(t *testing.T) {
 }
 
 func TestClassOutput4_map(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	result, err := f.CallFunction("testClassOutput4")
+	result, err := fixture.CallFunction(t, "testClassOutput4_map")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -445,12 +323,7 @@ func TestClassOutput4_map(t *testing.T) {
 }
 
 func TestClassOutput4_map_withNull(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	result, err := f.CallFunction("testClassOutput4_withNull")
+	result, err := fixture.CallFunction(t, "testClassOutput4_map_withNull")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -465,12 +338,7 @@ func TestClassOutput4_map_withNull(t *testing.T) {
 }
 
 func TestClassOutput5_map(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	result, err := f.CallFunction("testClassOutput5")
+	result, err := fixture.CallFunction(t, "testClassOutput5_map")
 	if err != nil {
 		t.Fatal(err)
 	}
