@@ -358,9 +358,17 @@ func decodeParams(ctx context.Context, wa langsupport.WasmAdapter, fnInfo functi
 		}
 
 		// special case for structs represented as maps
-		if m, ok := data.(map[string]any); ok {
+		switch m := data.(type) {
+		case map[string]any:
 			if _, ok := (params[i]).(map[string]any); !ok {
 				if err := utils.MapToStruct(m, &params[i]); err != nil {
+					return err
+				}
+				continue
+			}
+		case *map[string]any:
+			if _, ok := (params[i]).(*map[string]any); !ok {
+				if err := utils.MapToStruct(*m, &params[i]); err != nil {
 					return err
 				}
 				continue
