@@ -29,8 +29,10 @@ func GetGraphQLSchema(ctx context.Context, md *metadata.Metadata) (*GraphQLSchem
 	defer span.Finish()
 
 	lti := languages.GetLanguageForSDK(md.SDK).TypeInfo()
-	typeDefs, errors := transformTypes(md.Types, lti)
-	functions, errs := transformFunctions(md.FnExports, typeDefs, lti)
+	inputTypeDefs, errors := transformTypes(md.Types, lti, true)
+	resultTypeDefs, errs := transformTypes(md.Types, lti, false)
+	errors = append(errors, errs...)
+	functions, errs := transformFunctions(md.FnExports, inputTypeDefs, resultTypeDefs, lti)
 	errors = append(errors, errs...)
 
 	if len(errors) > 0 {
@@ -38,13 +40,15 @@ func GetGraphQLSchema(ctx context.Context, md *metadata.Metadata) (*GraphQLSchem
 	}
 
 	functions = filterFunctions(functions)
-	types := filterTypes(utils.MapValues(typeDefs), functions)
+	scalarTypes := extractCustomScalarTypes(inputTypeDefs, resultTypeDefs)
+	inputTypes := filterTypes(utils.MapValues(inputTypeDefs), functions, true)
+	resultTypes := filterTypes(utils.MapValues(resultTypeDefs), functions, false)
 
 	buf := bytes.Buffer{}
-	writeSchema(&buf, functions, types)
+	writeSchema(&buf, functions, scalarTypes, inputTypes, resultTypes)
 
-	mapTypes := make([]string, 0, len(typeDefs))
-	for _, t := range typeDefs {
+	mapTypes := make([]string, 0, len(resultTypeDefs))
+	for _, t := range resultTypeDefs {
 		if t.IsMapType {
 			mapTypes = append(mapTypes, t.Name)
 		}
@@ -65,16 +69,30 @@ func (e *TransformError) String() string {
 	return fmt.Sprintf("source: %+v, error: %v", e.Source, e.Error)
 }
 
-func transformTypes(types metadata.TypeMap, lti langsupport.TypeInfo) (map[string]*TypeDefinition, []*TransformError) {
+func transformTypes(types metadata.TypeMap, lti langsupport.TypeInfo, forInput bool) (map[string]*TypeDefinition, []*TransformError) {
 	typeDefs := make(map[string]*TypeDefinition, len(types))
 	errors := make([]*TransformError, 0)
 	for _, t := range types {
+		if lti.IsListType(t.Name) || lti.IsMapType(t.Name) || lti.IsTimestampType(t.Name) {
+			continue
+		}
+
 		name := lti.GetNameForType(t.Name)
+		if forInput {
+			if len(t.Fields) > 0 && !strings.HasSuffix(name, "Input") {
+				if _, found := types[t.Name+"Input"]; found {
+					continue
+				}
+				name += "Input"
+			}
+		} else if _, found := types[strings.TrimSuffix(t.Name, "Input")]; !found {
+			name = strings.TrimSuffix(name, "Input")
+		}
 		if _, ok := typeDefs[name]; ok {
 			continue
 		}
 
-		fields, err := convertFields(t.Fields, lti, typeDefs)
+		fields, err := convertFields(t.Fields, lti, typeDefs, forInput)
 		if err != nil {
 			errors = append(errors, &TransformError{t, err})
 			continue
@@ -111,7 +129,7 @@ type ParameterSignature struct {
 	Default *any
 }
 
-func transformFunctions(functions metadata.FunctionMap, typeDefs map[string]*TypeDefinition, lti langsupport.TypeInfo) ([]*FunctionSignature, []*TransformError) {
+func transformFunctions(functions metadata.FunctionMap, inputTypeDefs, resultTypeDefs map[string]*TypeDefinition, lti langsupport.TypeInfo) ([]*FunctionSignature, []*TransformError) {
 	output := make([]*FunctionSignature, len(functions))
 	errors := make([]*TransformError, 0)
 
@@ -121,13 +139,13 @@ func transformFunctions(functions metadata.FunctionMap, typeDefs map[string]*Typ
 	for _, name := range fnNames {
 		f := functions[name]
 
-		params, err := convertParameters(f.Parameters, lti, typeDefs)
+		params, err := convertParameters(f.Parameters, lti, inputTypeDefs)
 		if err != nil {
 			errors = append(errors, &TransformError{f, err})
 			continue
 		}
 
-		returnType, err := convertResults(f.Results, lti, typeDefs)
+		returnType, err := convertResults(f.Results, lti, resultTypeDefs)
 		if err != nil {
 			errors = append(errors, &TransformError{f, err})
 			continue
@@ -157,7 +175,7 @@ func filterFunctions(functions []*FunctionSignature) []*FunctionSignature {
 	return results
 }
 
-func filterTypes(types []*TypeDefinition, functions []*FunctionSignature) []*TypeDefinition {
+func filterTypes(types []*TypeDefinition, functions []*FunctionSignature, forInput bool) []*TypeDefinition {
 	// Filter out types that are not used by any function.
 	// Also then recursively filter out types that are not used by any type.
 
@@ -171,10 +189,13 @@ func filterTypes(types []*TypeDefinition, functions []*FunctionSignature) []*Typ
 	// Get all types used by functions, including subtypes
 	usedTypes := make(map[string]bool)
 	for _, f := range functions {
-		for _, p := range f.Parameters {
-			addUsedTypes(p.Type, typeMap, usedTypes)
+		if forInput {
+			for _, p := range f.Parameters {
+				addUsedTypes(p.Type, typeMap, usedTypes)
+			}
+		} else {
+			addUsedTypes(f.ReturnType, typeMap, usedTypes)
 		}
-		addUsedTypes(f.ReturnType, typeMap, usedTypes)
 	}
 
 	// Filter out types that are not used
@@ -187,6 +208,24 @@ func filterTypes(types []*TypeDefinition, functions []*FunctionSignature) []*Typ
 	}
 
 	return results
+}
+
+func extractCustomScalarTypes(inputTypeDefs, resultTypeDefs map[string]*TypeDefinition) []string {
+	scalarTypes := make(map[string]bool)
+	for _, t := range inputTypeDefs {
+		if len(t.Fields) == 0 {
+			scalarTypes[t.Name] = true
+			delete(inputTypeDefs, t.Name)
+		}
+	}
+	for _, t := range resultTypeDefs {
+		if len(t.Fields) == 0 {
+			scalarTypes[t.Name] = true
+			delete(resultTypeDefs, t.Name)
+		}
+	}
+
+	return utils.MapKeys(scalarTypes)
 }
 
 func addUsedTypes(name string, types map[string]*TypeDefinition, usedTypes map[string]bool) {
@@ -211,16 +250,22 @@ func getBaseType(name string) string {
 	return name
 }
 
-func writeSchema(buf *bytes.Buffer, functions []*FunctionSignature, typeDefs []*TypeDefinition) {
+func writeSchema(buf *bytes.Buffer, functions []*FunctionSignature, scalarTypes []string, inputTypeDefs, resultTypeDefs []*TypeDefinition) {
 
 	// write header
 	buf.WriteString("# Hypermode GraphQL Schema (auto-generated)\n\n")
 
-	// sort functions and type definitions
+	// sort everything
 	slices.SortFunc(functions, func(a, b *FunctionSignature) int {
 		return cmp.Compare(strings.ToLower(a.Name), strings.ToLower(b.Name))
 	})
-	slices.SortFunc(typeDefs, func(a, b *TypeDefinition) int {
+	slices.SortFunc(scalarTypes, func(a, b string) int {
+		return cmp.Compare(strings.ToLower(a), strings.ToLower(b))
+	})
+	slices.SortFunc(inputTypeDefs, func(a, b *TypeDefinition) int {
+		return cmp.Compare(strings.ToLower(a.Name), strings.ToLower(b.Name))
+	})
+	slices.SortFunc(resultTypeDefs, func(a, b *TypeDefinition) int {
 		return cmp.Compare(strings.ToLower(a.Name), strings.ToLower(b.Name))
 	})
 
@@ -255,27 +300,34 @@ func writeSchema(buf *bytes.Buffer, functions []*FunctionSignature, typeDefs []*
 	buf.WriteByte('}')
 
 	// write scalars
-	wroteScalar := false
-	for _, t := range typeDefs {
-		if len(t.Fields) > 0 || strings.HasSuffix(t.Name, "[]") || strings.HasPrefix(t.Name, "Map<") {
-			continue
-		}
-		if !wroteScalar {
-			wroteScalar = true
+	for i, scalar := range scalarTypes {
+		if i == 0 {
 			buf.WriteByte('\n')
 		}
 
 		buf.WriteByte('\n')
 		buf.WriteString("scalar ")
-		buf.WriteString(t.Name)
+		buf.WriteString(scalar)
 	}
 
-	// write types
-	for _, t := range typeDefs {
-		if (len(t.Fields)) == 0 {
-			continue
+	// write input types
+	for _, t := range inputTypeDefs {
+		buf.WriteString("\n\n")
+		buf.WriteString("input ")
+		buf.WriteString(t.Name)
+		buf.WriteString(" {\n")
+		for _, f := range t.Fields {
+			buf.WriteString("  ")
+			buf.WriteString(f.Name)
+			buf.WriteString(": ")
+			buf.WriteString(f.Type)
+			buf.WriteByte('\n')
 		}
+		buf.WriteByte('}')
+	}
 
+	// write result types
+	for _, t := range resultTypeDefs {
 		buf.WriteString("\n\n")
 		buf.WriteString("type ")
 		buf.WriteString(t.Name)
@@ -301,7 +353,7 @@ func convertParameters(parameters []*metadata.Parameter, lti langsupport.TypeInf
 	output := make([]*ParameterSignature, len(parameters))
 	for i, p := range parameters {
 
-		t, err := convertType(p.Type, lti, typeDefs, false)
+		t, err := convertType(p.Type, lti, typeDefs, false, true)
 		if err != nil {
 			return nil, err
 		}
@@ -330,7 +382,7 @@ func convertResults(results []*metadata.Result, lti langsupport.TypeInfo, typeDe
 		return newScalar("Void", typeDefs), nil
 	case 1:
 		// Note: Single result doesn't use the name, even if it's present.
-		return convertType(results[0].Type, lti, typeDefs, false)
+		return convertType(results[0].Type, lti, typeDefs, false, false)
 	}
 
 	fields := make([]*NameTypePair, len(results))
@@ -340,7 +392,7 @@ func convertResults(results []*metadata.Result, lti langsupport.TypeInfo, typeDe
 			name = fmt.Sprintf("item%d", i+1)
 		}
 
-		typ, err := convertType(r.Type, lti, typeDefs, false)
+		typ, err := convertType(r.Type, lti, typeDefs, false, false)
 		if err != nil {
 			return "", err
 		}
@@ -387,14 +439,14 @@ func getTypeForFields(fields []*NameTypePair, typeDefs map[string]*TypeDefinitio
 	return newType(name, fields, typeDefs)
 }
 
-func convertFields(fields []*metadata.Field, lti langsupport.TypeInfo, typeDefs map[string]*TypeDefinition) ([]*NameTypePair, error) {
+func convertFields(fields []*metadata.Field, lti langsupport.TypeInfo, typeDefs map[string]*TypeDefinition, forInput bool) ([]*NameTypePair, error) {
 	if len(fields) == 0 {
 		return nil, nil
 	}
 
 	results := make([]*NameTypePair, len(fields))
 	for i, f := range fields {
-		t, err := convertType(f.Type, lti, typeDefs, true)
+		t, err := convertType(f.Type, lti, typeDefs, true, forInput)
 		if err != nil {
 			return nil, err
 		}
@@ -406,11 +458,11 @@ func convertFields(fields []*metadata.Field, lti langsupport.TypeInfo, typeDefs 
 	return results, nil
 }
 
-func convertType(typ string, lti langsupport.TypeInfo, typeDefs map[string]*TypeDefinition, firstPass bool) (string, error) {
+func convertType(typ string, lti langsupport.TypeInfo, typeDefs map[string]*TypeDefinition, firstPass, forInput bool) (string, error) {
 
 	// Unwrap parentheses if present
 	if strings.HasPrefix(typ, "(") && strings.HasSuffix(typ, ")") {
-		return convertType(typ[1:len(typ)-1], lti, typeDefs, firstPass)
+		return convertType(typ[1:len(typ)-1], lti, typeDefs, firstPass, forInput)
 	}
 
 	// Set the nullable flag.
@@ -483,7 +535,7 @@ func convertType(typ string, lti langsupport.TypeInfo, typeDefs map[string]*Type
 	// check for array types
 	if lti.IsListType(typ) {
 		elem := lti.GetListSubtype(typ)
-		t, err := convertType(elem, lti, typeDefs, firstPass)
+		t, err := convertType(elem, lti, typeDefs, firstPass, forInput)
 		if err != nil {
 			return "", err
 		}
@@ -493,11 +545,11 @@ func convertType(typ string, lti langsupport.TypeInfo, typeDefs map[string]*Type
 	// check for map types
 	if lti.IsMapType(typ) {
 		k, v := lti.GetMapSubtypes(typ)
-		kt, err := convertType(k, lti, typeDefs, firstPass)
+		kt, err := convertType(k, lti, typeDefs, firstPass, forInput)
 		if err != nil {
 			return "", err
 		}
-		vt, err := convertType(v, lti, typeDefs, firstPass)
+		vt, err := convertType(v, lti, typeDefs, firstPass, forInput)
 		if err != nil {
 			return "", err
 		}
@@ -507,12 +559,24 @@ func convertType(typ string, lti langsupport.TypeInfo, typeDefs map[string]*Type
 		ktn := utils.If(strings.HasSuffix(kt, "!"), kt[:len(kt)-1], "Nullable"+kt)
 		vtn := utils.If(strings.HasSuffix(vt, "!"), vt[:len(vt)-1], "Nullable"+vt)
 		if ktn[0] == '[' {
-			ktn = ktn[1:len(ktn)-2] + "List"
+			t := ktn[1 : len(ktn)-2]
+			if forInput {
+				t = strings.TrimSuffix(t, "Input")
+			}
+			ktn = t + "List"
+		} else if forInput {
+			ktn = strings.TrimSuffix(ktn, "Input")
 		}
 		if vtn[0] == '[' {
-			vtn = vtn[1:len(vtn)-2] + "List"
+			t := vtn[1 : len(vtn)-2]
+			if forInput {
+				t = strings.TrimSuffix(t, "Input")
+			}
+			vtn = t + "List"
+		} else if forInput {
+			vtn = strings.TrimSuffix(vtn, "Input")
 		}
-		typeName := ktn + vtn + "Pair"
+		typeName := ktn + vtn + "Pair" + utils.If(forInput, "Input", "")
 
 		newMapType(typeName, []*NameTypePair{{"key", kt}, {"value", vt}}, typeDefs)
 
@@ -523,6 +587,13 @@ func convertType(typ string, lti langsupport.TypeInfo, typeDefs map[string]*Type
 	}
 
 	name := lti.GetNameForType(typ)
+	if forInput {
+		if !strings.HasSuffix(name, "Input") {
+			name += "Input"
+		}
+	} else {
+		name = strings.TrimSuffix(name, "Input")
+	}
 
 	// in the first pass, we convert input custom type definitions
 	if firstPass {
@@ -532,6 +603,14 @@ func convertType(typ string, lti langsupport.TypeInfo, typeDefs map[string]*Type
 	// going forward, convert custom types only if they have a type definition
 	if _, ok := typeDefs[name]; ok {
 		return name + n, nil
+	}
+
+	// edge case: a custom scalar used for input
+	if forInput {
+		name = strings.TrimSuffix(name, "Input")
+		if _, ok := typeDefs[name]; ok {
+			return name + n, nil
+		}
 	}
 
 	return "", fmt.Errorf("unsupported type or missing type definition: %s", typ)
