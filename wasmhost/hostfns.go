@@ -360,14 +360,17 @@ func decodeParams(ctx context.Context, wa langsupport.WasmAdapter, fnInfo functi
 		// special case for structs represented as maps
 		if m, ok := data.(map[string]any); ok {
 			if _, ok := (params[i]).(map[string]any); !ok {
-				return utils.MapToStruct(m, &params[i])
+				if err := utils.MapToStruct(m, &params[i]); err != nil {
+					return err
+				}
+				continue
 			}
 		}
 
 		// special case for pointers that need to be dereferenced
 		if hInfo.RuntimeType().Kind() == reflect.Ptr && reflect.TypeOf(params[i]).Kind() != reflect.Ptr {
 			params[i] = reflect.ValueOf(data).Elem().Interface()
-			return nil
+			continue
 		}
 
 		params[i] = data
