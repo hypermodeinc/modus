@@ -4,12 +4,27 @@ type TestStruct1 struct {
 	A bool
 }
 
+type TestStruct1_map struct {
+	A bool
+}
+
 type TestStruct2 struct {
 	A bool
 	B int
 }
 
+type TestStruct2_map struct {
+	A bool
+	B int
+}
+
 type TestStruct3 struct {
+	A bool
+	B int
+	C string
+}
+
+type TestStruct3_map struct {
 	A bool
 	B int
 	C string
@@ -21,7 +36,27 @@ type TestStruct4 struct {
 	C *string
 }
 
+type TestStruct4_map struct {
+	A bool
+	B int
+	C *string
+}
+
+type TestRecursiveStruct struct {
+	A bool
+	B *TestRecursiveStruct
+}
+
+type TestRecursiveStruct_map struct {
+	A bool
+	B *TestRecursiveStruct_map
+}
+
 var testStruct1 = TestStruct1{
+	A: true,
+}
+
+var testStruct1_map = TestStruct1_map{
 	A: true,
 }
 
@@ -30,7 +65,18 @@ var testStruct2 = TestStruct2{
 	B: 123,
 }
 
+var testStruct2_map = TestStruct2_map{
+	A: true,
+	B: 123,
+}
+
 var testStruct3 = TestStruct3{
+	A: true,
+	B: 123,
+	C: "abc",
+}
+
+var testStruct3_map = TestStruct3_map{
 	A: true,
 	B: 123,
 	C: "abc",
@@ -42,11 +88,39 @@ var testStruct4 = TestStruct4{
 	C: func() *string { s := "abc"; return &s }(),
 }
 
+var testStruct4_map = TestStruct4_map{
+	A: true,
+	B: 123,
+	C: func() *string { s := "abc"; return &s }(),
+}
+
 var testStruct4_withNil = TestStruct4{
 	A: true,
 	B: 123,
 	C: nil,
 }
+
+var testStruct4_map_withNil = TestStruct4_map{
+	A: true,
+	B: 123,
+	C: nil,
+}
+
+var testRecursiveStruct = func() TestRecursiveStruct {
+	r := TestRecursiveStruct{
+		A: true,
+	}
+	r.B = &r
+	return r
+}()
+
+var testRecursiveStruct_map = func() TestRecursiveStruct_map {
+	r := TestRecursiveStruct_map{
+		A: true,
+	}
+	r.B = &r
+	return r
+}()
 
 func TestStructInput1(o TestStruct1) {
 	assertEqual(testStruct1, o)
@@ -66,6 +140,10 @@ func TestStructInput4(o TestStruct4) {
 
 func TestStructInput4_withNil(o TestStruct4) {
 	assertEqual(testStruct4_withNil, o)
+}
+
+func TestRecursiveStructInput(o TestRecursiveStruct) {
+	assertEqual(testRecursiveStruct, o)
 }
 
 func TestStructPtrInput1(o *TestStruct1) {
@@ -88,6 +166,10 @@ func TestStructPtrInput4_withNil(o *TestStruct4) {
 	assertEqual(testStruct4_withNil, *o)
 }
 
+func TestRecursiveStructPtrInput(o *TestRecursiveStruct) {
+	assertEqual(testRecursiveStruct, *o)
+}
+
 func TestStructPtrInput1_nil(o *TestStruct1) {
 	assertNil(o)
 }
@@ -104,44 +186,104 @@ func TestStructPtrInput4_nil(o *TestStruct4) {
 	assertNil(o)
 }
 
+func TestRecursiveStructPtrInput_nil(o *TestRecursiveStruct) {
+	assertNil(o)
+}
+
 func TestStructOutput1() TestStruct1 {
 	return testStruct1
+}
+
+func TestStructOutput1_map() TestStruct1_map {
+	return testStruct1_map
 }
 
 func TestStructOutput2() TestStruct2 {
 	return testStruct2
 }
 
+func TestStructOutput2_map() TestStruct2_map {
+	return testStruct2_map
+}
+
 func TestStructOutput3() TestStruct3 {
 	return testStruct3
+}
+
+func TestStructOutput3_map() TestStruct3_map {
+	return testStruct3_map
 }
 
 func TestStructOutput4() TestStruct4 {
 	return testStruct4
 }
 
+func TestStructOutput4_map() TestStruct4_map {
+	return testStruct4_map
+}
+
 func TestStructOutput4_withNil() TestStruct4 {
 	return testStruct4_withNil
+}
+
+func TestStructOutput4_map_withNil() TestStruct4_map {
+	return testStruct4_map_withNil
+}
+
+func TestRecursiveStructOutput() TestRecursiveStruct {
+	return testRecursiveStruct
+}
+
+func TestRecursiveStructOutput_map() TestRecursiveStruct_map {
+	return testRecursiveStruct_map
 }
 
 func TestStructPtrOutput1() *TestStruct1 {
 	return &testStruct1
 }
 
+func TestStructPtrOutput1_map() *TestStruct1_map {
+	return &testStruct1_map
+}
+
 func TestStructPtrOutput2() *TestStruct2 {
 	return &testStruct2
+}
+
+func TestStructPtrOutput2_map() *TestStruct2_map {
+	return &testStruct2_map
 }
 
 func TestStructPtrOutput3() *TestStruct3 {
 	return &testStruct3
 }
 
+func TestStructPtrOutput3_map() *TestStruct3_map {
+	return &testStruct3_map
+}
+
 func TestStructPtrOutput4() *TestStruct4 {
 	return &testStruct4
 }
 
+func TestStructPtrOutput4_map() *TestStruct4_map {
+	return &testStruct4_map
+}
+
 func TestStructPtrOutput4_withNil() *TestStruct4 {
 	return &testStruct4_withNil
+}
+
+func TestStructPtrOutput4_map_withNil() *TestStruct4_map {
+	return &testStruct4_map_withNil
+}
+
+func TestRecursiveStructPtrOutput() *TestRecursiveStruct {
+	return &testRecursiveStruct
+}
+
+func TestRecursiveStructPtrOutput_map() *TestRecursiveStruct_map {
+	return &testRecursiveStruct_map
 }
 
 func TestStructPtrOutput1_nil() *TestStruct1 {
@@ -157,5 +299,9 @@ func TestStructPtrOutput3_nil() *TestStruct3 {
 }
 
 func TestStructPtrOutput4_nil() *TestStruct4 {
+	return nil
+}
+
+func TestRecursiveStructPtrOutput_nil() *TestRecursiveStruct {
 	return nil
 }

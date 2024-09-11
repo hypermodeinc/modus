@@ -94,8 +94,6 @@ func newTestGraph[K cmp.Ordered]() *Graph[K] {
 }
 
 func TestGraph_AddSearch(t *testing.T) {
-	t.Parallel()
-
 	g := newTestGraph[int]()
 
 	for i := 0; i < 128; i++ {
@@ -142,8 +140,6 @@ func TestGraph_AddSearch(t *testing.T) {
 }
 
 func TestGraph_AddDelete(t *testing.T) {
-	t.Parallel()
-
 	g := newTestGraph[int]()
 	for i := 0; i < 128; i++ {
 		err := g.Add(Node[int]{

@@ -219,7 +219,7 @@ func processTexts(ctx context.Context, col interfaces.CollectionNamespace, vecto
 			return err
 		}
 
-		result := executionInfo.Result
+		result := executionInfo.Result()
 
 		textVecs, err := utils.ConvertToFloat32_2DArray(result)
 		if err != nil {

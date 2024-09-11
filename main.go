@@ -7,7 +7,6 @@
 package main
 
 import (
-	"context"
 	"os"
 	"path"
 	"path/filepath"
@@ -45,11 +44,8 @@ func main() {
 	utils.InitSentry(rootSourcePath)
 	defer utils.FlushSentryEvents()
 
-	// Create the main background context
-	ctx := context.Background()
-
-	// Start the runtime services
-	services.Start(ctx)
+	// Start the background services
+	ctx := services.Start()
 	defer services.Stop(ctx)
 
 	// Set local mode if debugging is enabled

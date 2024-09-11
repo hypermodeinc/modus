@@ -87,7 +87,7 @@ func generateSchema(ctx context.Context, md *metadata.Metadata) (*gql.Schema, *d
 	}
 
 	cfg := &datasource.HypDSConfig{
-		WasmHost: wasmhost.GlobalWasmHost,
+		WasmHost: wasmhost.GetWasmHost(ctx),
 		MapTypes: generated.MapTypes,
 	}
 

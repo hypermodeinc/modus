@@ -197,3 +197,61 @@ func getMapPtrArray2() [2]*map[string]string {
 		{"C": "false", "D": "456"},
 	}
 }
+
+func TestPtrArrayInput1_int(val *[1]int) {
+	var expected = getPtrIntArray1()
+	assertEqual(expected, val)
+}
+
+func TestPtrArrayOutput1_int() *[1]int {
+	return getPtrIntArray1()
+}
+
+func getPtrIntArray1() *[1]int {
+	a := 11
+	return &[1]int{a}
+}
+
+func TestPtrArrayInput2_int(val *[2]int) {
+	var expected = getPtrIntArray2()
+	assertEqual(expected, val)
+}
+
+func TestPtrArrayOutput2_int() *[2]int {
+	return getPtrIntArray2()
+}
+
+func getPtrIntArray2() *[2]int {
+	a := 11
+	b := 22
+	return &[2]int{a, b}
+}
+
+func TestPtrArrayInput1_string(val *[1]string) {
+	var expected = getPtrStringArray1()
+	assertEqual(expected, val)
+}
+
+func TestPtrArrayOutput1_string() *[1]string {
+	return getPtrStringArray1()
+}
+
+func getPtrStringArray1() *[1]string {
+	a := "abc"
+	return &[1]string{a}
+}
+
+func getPtrStringArray2() *[2]string {
+	a := "abc"
+	b := "def"
+	return &[2]string{a, b}
+}
+
+func TestPtrArrayInput2_string(val *[2]string) {
+	var expected = getPtrStringArray2()
+	assertEqual(expected, val)
+}
+
+func TestPtrArrayOutput2_string() *[2]string {
+	return getPtrStringArray2()
+}

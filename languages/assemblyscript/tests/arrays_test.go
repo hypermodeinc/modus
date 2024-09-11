@@ -9,75 +9,146 @@ import (
 	"testing"
 )
 
-func TestArrayInput_i32(t *testing.T) {
-	t.Parallel()
+func TestArrayInput_i8(t *testing.T) {
+	arr := []int8{1, 2, 3}
 
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	arr := []int32{1, 2, 3}
-
-	_, err := f.InvokeFunction("testArrayInput_i32", arr)
+	_, err := fixture.CallFunction(t, "testArrayInput_i8", arr)
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
-func TestArrayInput_string(t *testing.T) {
-	t.Parallel()
+func TestArrayOutput_i8(t *testing.T) {
+	result, err := fixture.CallFunction(t, "testArrayOutput_i8")
+	if err != nil {
+		t.Fatal(err)
+	}
 
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
+	expected := []int8{1, 2, 3}
+	if result == nil {
+		t.Error("expected a result")
+	} else if r, ok := result.([]int8); !ok {
+		t.Errorf("expected %T, got %T", expected, result)
+	} else if !slices.Equal(expected, r) {
+		t.Errorf("expected %v, got %v", expected, r)
+	}
+}
 
-	arr := []string{"abc", "def", "ghi"}
+func TestArrayInput_i8_empty(t *testing.T) {
+	arr := []int8{}
 
-	_, err := f.InvokeFunction("testArrayInput_string", arr)
+	_, err := fixture.CallFunction(t, "testArrayInput_i8_empty", arr)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestArrayOutput_i8_empty(t *testing.T) {
+	result, err := fixture.CallFunction(t, "testArrayOutput_i8_empty")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expected := []int8{}
+	if result == nil {
+		t.Error("expected a result")
+	} else if r, ok := result.([]int8); !ok {
+		t.Errorf("expected %T, got %T", expected, result)
+	} else if !slices.Equal(expected, r) {
+		t.Errorf("expected %v, got %v", expected, r)
+	}
+}
+
+func TestArrayInput_i8_null(t *testing.T) {
+	_, err := fixture.CallFunction(t, "testArrayInput_i8_null", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestArrayOutput_i8_null(t *testing.T) {
+	result, err := fixture.CallFunction(t, "testArrayOutput_i8_null")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if result != nil {
+		t.Errorf("expected nil, got %T", result)
+	}
+}
+
+func TestArrayInput_i32(t *testing.T) {
+	arr := []int32{1, 2, 3}
+
+	_, err := fixture.CallFunction(t, "testArrayInput_i32", arr)
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestArrayOutput_i32(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	result, err := f.InvokeFunction("testArrayOutput_i32")
+	result, err := fixture.CallFunction(t, "testArrayOutput_i32")
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	arr := []int32{1, 2, 3}
-
+	expected := []int32{1, 2, 3}
 	if result == nil {
 		t.Error("expected a result")
 	} else if r, ok := result.([]int32); !ok {
-		t.Errorf("expected a []int32, got %T", result)
-	} else if !slices.Equal(arr, r) {
-		t.Errorf("expected %x, got %x", arr, r)
+		t.Errorf("expected %T, got %T", expected, result)
+	} else if !slices.Equal(expected, r) {
+		t.Errorf("expected %v, got %v", expected, r)
+	}
+}
+
+func TestArrayInput_f32(t *testing.T) {
+	arr := []float32{1, 2, 3}
+
+	_, err := fixture.CallFunction(t, "testArrayInput_f32", arr)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestArrayOutput_f32(t *testing.T) {
+	result, err := fixture.CallFunction(t, "testArrayOutput_f32")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expected := []float32{1, 2, 3}
+	if result == nil {
+		t.Error("expected a result")
+	} else if r, ok := result.([]float32); !ok {
+		t.Errorf("expected %T, got %T", expected, result)
+	} else if !slices.Equal(expected, r) {
+		t.Errorf("expected %v, got %v", expected, r)
+	}
+}
+
+func TestArrayInput_string(t *testing.T) {
+	arr := []string{"abc", "def", "ghi"}
+
+	_, err := fixture.CallFunction(t, "testArrayInput_string", arr)
+	if err != nil {
+		t.Fatal(err)
 	}
 }
 
 func TestArrayOutput_string(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	result, err := f.InvokeFunction("testArrayOutput_string")
+	result, err := fixture.CallFunction(t, "testArrayOutput_string")
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	arr := []string{"abc", "def", "ghi"}
-
+	expected := []string{"abc", "def", "ghi"}
 	if result == nil {
 		t.Error("expected a result")
 	} else if r, ok := result.([]string); !ok {
-		t.Errorf("expected a []string, got %T", result)
-	} else if !slices.Equal(arr, r) {
-		t.Errorf("expected %x, got %x", arr, r)
+		t.Errorf("expected %T, got %T", expected, result)
+	} else if !slices.Equal(expected, r) {
+		t.Errorf("expected %v, got %v", expected, r)
 	}
 }
 
@@ -87,11 +158,6 @@ type TestObject1 struct {
 }
 
 func TestArrayIteration(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
 	// Note, the below works, but we can make it fail easily
 	// if we make the array larger than the elements we provide.
 	// That's because the test function uses a non-nullable type for
@@ -103,7 +169,7 @@ func TestArrayIteration(t *testing.T) {
 	arr[1] = &TestObject1{A: 3, B: 4}
 	arr[2] = &TestObject1{A: 5, B: 6}
 
-	_, err := f.InvokeFunction("testArrayIteration", arr)
+	_, err := fixture.CallFunction(t, "testArrayIteration", arr)
 	if err != nil {
 		t.Fatal(err)
 	}

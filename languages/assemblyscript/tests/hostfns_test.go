@@ -9,33 +9,37 @@ import (
 	"reflect"
 	"testing"
 
+	"hypruntime/hostfunctions"
 	"hypruntime/testutils"
+	"hypruntime/utils"
 	"hypruntime/wasmhost"
 )
 
-func getTestHostFunctionRegistrations() []func(*wasmhost.WasmHost) error {
-	return []func(*wasmhost.WasmHost) error{
-		func(host *wasmhost.WasmHost) error {
+func getTestHostFunctionRegistrations() []func(wasmhost.WasmHost) error {
+	return []func(wasmhost.WasmHost) error{
+		func(host wasmhost.WasmHost) error {
 			return host.RegisterHostFunction("hypermode", "log", hostLog)
 		},
-		func(host *wasmhost.WasmHost) error {
+		func(host wasmhost.WasmHost) error {
 			return host.RegisterHostFunction("test", "add", hostAdd)
 		},
-		func(host *wasmhost.WasmHost) error {
+		func(host wasmhost.WasmHost) error {
 			return host.RegisterHostFunction("test", "echo", hostEcho)
 		},
-		func(host *wasmhost.WasmHost) error {
+		func(host wasmhost.WasmHost) error {
 			return host.RegisterHostFunction("test", "echoObject", hostEchoObject)
 		},
 	}
 }
 
 func hostLog(ctx context.Context, level, message string) {
+	if utils.HypermodeDebugEnabled() {
+		hostfunctions.LogFunctionMessage(ctx, level, message)
+	}
 	t := testutils.GetTestT(ctx)
 	t.Logf("[%s] %s", level, message)
 }
 
-// TODO: we should be able to pass these as int
 func hostAdd(a, b int32) int32 {
 	return a + b
 }
@@ -59,12 +63,7 @@ type TestHostObject struct {
 }
 
 func TestHostFn_add(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	result, err := f.InvokeFunction("add", 1, 2)
+	result, err := fixture.CallFunction(t, "add", 1, 2)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -79,12 +78,7 @@ func TestHostFn_add(t *testing.T) {
 }
 
 func TestHostFn_echo(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	result, err := f.InvokeFunction("echo", "hello")
+	result, err := fixture.CallFunction(t, "echo", "hello")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -100,20 +94,13 @@ func TestHostFn_echo(t *testing.T) {
 }
 
 func TestHostFn_echoObject(t *testing.T) {
-	t.Parallel()
-
-	f := NewASWasmTestFixture(t)
-	defer f.Close()
-
-	f.AddCustomType("assembly/hostfns/TestHostObject", reflect.TypeFor[TestHostObject]())
-
 	o := &TestHostObject{
 		A: 1,
 		B: true,
 		C: "hello",
 	}
 
-	result, err := f.InvokeFunction("echoObject", o)
+	result, err := fixture.CallFunction(t, "echoObject", o)
 	if err != nil {
 		t.Fatal(err)
 	}

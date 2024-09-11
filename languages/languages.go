@@ -7,37 +7,34 @@ package languages
 import (
 	"strings"
 
+	"hypruntime/langsupport"
 	"hypruntime/languages/assemblyscript"
 	"hypruntime/languages/golang"
-
-	wasm "github.com/tetratelabs/wazero/api"
 )
 
-var lang_AssemblyScript = &language{
-	name:     assemblyscript.LanguageName,
-	typeInfo: assemblyscript.TypeInfo(),
-	wasmAdapterFactory: func(mod wasm.Module) WasmAdapter {
-		return assemblyscript.NewWasmAdapter(mod)
-	},
-}
+var lang_AssemblyScript = langsupport.NewLanguage(
+	"AssemblyScript",
+	assemblyscript.TypeInfo(),
+	assemblyscript.NewPlanner,
+	assemblyscript.NewWasmAdapter,
+)
 
-func AssemblyScript() Language {
+var lang_Go = langsupport.NewLanguage(
+	"Go",
+	golang.TypeInfo(),
+	golang.NewPlanner,
+	golang.NewWasmAdapter,
+)
+
+func AssemblyScript() langsupport.Language {
 	return lang_AssemblyScript
 }
 
-var lang_Go = &language{
-	name:     golang.LanguageName,
-	typeInfo: golang.TypeInfo(),
-	wasmAdapterFactory: func(mod wasm.Module) WasmAdapter {
-		return golang.NewWasmAdapter(mod)
-	},
-}
-
-func GoLang() Language {
+func GoLang() langsupport.Language {
 	return lang_Go
 }
 
-func GetLanguageForSDK(sdk string) Language {
+func GetLanguageForSDK(sdk string) langsupport.Language {
 
 	// strip version if present
 	if i := strings.Index(sdk, "@"); i != -1 {

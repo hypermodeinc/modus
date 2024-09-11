@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Hypermode, Inc.
+ * Copyright 2024 Hypermode, Inc.
  */
 
 package functions
@@ -7,81 +7,166 @@ package functions
 import (
 	"context"
 	"fmt"
+	"strings"
 
+	"hypruntime/hostfunctions/compatibility"
 	"hypruntime/logger"
 	"hypruntime/plugins"
-	"hypruntime/plugins/metadata"
+	"hypruntime/utils"
 )
 
-var functions = make(map[string]*functionInfo)
-
-type functionInfo struct {
-	Function *metadata.Function
-	Plugin   *plugins.Plugin
+func NewFunctionRegistry() FunctionRegistry {
+	return &functionRegistry{
+		functions: make(map[string]FunctionInfo),
+	}
 }
 
-func GetFunction(fnName string) (*metadata.Function, error) {
-	f, _, err := GetFunctionAndPlugin(fnName)
-	return f, err
+type FunctionRegistry interface {
+	GetFunctionInfo(fnName string) (FunctionInfo, error)
+	RegisterAllFunctions(ctx context.Context, plugins ...*plugins.Plugin)
+	RegisterImports(ctx context.Context, plugin *plugins.Plugin) []string
+	RegisterExports(ctx context.Context, plugin *plugins.Plugin) []string
 }
 
-func GetFunctionAndPlugin(fnName string) (*metadata.Function, *plugins.Plugin, error) {
-	info, ok := functions[fnName]
+type functionRegistry struct {
+	functions map[string]FunctionInfo
+}
+
+func (fr *functionRegistry) GetFunctionInfo(fnName string) (FunctionInfo, error) {
+	info, ok := fr.functions[fnName]
 	if !ok {
-		return nil, nil, fmt.Errorf("no function registered named %s", fnName)
+		return nil, fmt.Errorf("no function registered named %s", fnName)
 	}
-	return info.Function, info.Plugin, nil
+	return info, nil
 }
 
-func RegisterFunctions(ctx context.Context, plugins []*plugins.Plugin) {
-	r := &registration{
-		functions: make(map[string]bool),
-		types:     make(map[string]bool),
-	}
-
+func (fr *functionRegistry) RegisterAllFunctions(ctx context.Context, plugins ...*plugins.Plugin) {
+	var names []string
 	for _, plugin := range plugins {
-		r.registerPlugin(ctx, plugin)
+		ctx = context.WithValue(ctx, utils.PluginContextKey, plugin)
+		ctx = context.WithValue(ctx, utils.MetadataContextKey, plugin.Metadata)
+		importNames := fr.RegisterImports(ctx, plugin)
+		exportNames := fr.RegisterExports(ctx, plugin)
+		names = append(names, importNames...)
+		names = append(names, exportNames...)
 	}
 
-	r.cleanup(ctx)
+	fr.cleanup(ctx, names)
 
 	triggerFunctionsLoaded(ctx)
 }
 
-type registration struct {
-	functions map[string]bool
-	types     map[string]bool
-}
+func (fr *functionRegistry) RegisterExports(ctx context.Context, plugin *plugins.Plugin) []string {
+	fnExports := plugin.Module.ExportedFunctions()
+	names := make([]string, 0, len(fnExports))
+	for fnName, fnDef := range fnExports {
+		if fnMeta, ok := plugin.Metadata.FnExports[fnName]; ok {
 
-func (r *registration) registerPlugin(ctx context.Context, plugin *plugins.Plugin) {
+			plan, err := plugin.Planner.GetPlan(ctx, fnMeta, fnDef)
+			if err != nil {
+				logger.Err(ctx, err).
+					Str("function", fnName).
+					Str("plugin", plugin.Name()).
+					Str("build_id", plugin.BuildId()).
+					Msg("Error creating execution plan.")
+				continue
+			}
 
-	// Save exported functions from the metadata to the functions map
-	for _, fn := range plugin.Metadata.FnExports {
-		functions[fn.Name] = &functionInfo{
-			Function: fn,
-			Plugin:   plugin,
+			fr.functions[fnName] = NewFunctionInfo(plugin, plan)
+			names = append(names, fnName)
+
+			logger.Info(ctx).
+				Str("function", fnName).
+				Str("plugin", plugin.Name()).
+				Str("build_id", plugin.BuildId()).
+				Msg("Registered exported function.")
 		}
-		r.functions[fn.Name] = true
-
-		logger.Info(ctx).
-			Str("function", fn.Name).
-			Str("plugin", plugin.Name()).
-			Str("build_id", plugin.BuildId()).
-			Msg("Registered function.")
 	}
+	return names
 }
 
-func (r *registration) cleanup(ctx context.Context) {
+func (fr *functionRegistry) RegisterImports(ctx context.Context, plugin *plugins.Plugin) []string {
+	gaveCompatibilityWarning := false
+	fnImports := plugin.Module.ImportedFunctions()
+	names := make([]string, 0, len(fnImports))
+	for _, fnDef := range fnImports {
+		modName, fnName, _ := fnDef.Import()
+		impName := fmt.Sprintf("%s.%s", modName, fnName)
+		if _, ok := fr.functions[impName]; ok {
+			continue // already registered
+		}
 
-	// Cleanup any previously registered functions
-	for name, fn := range functions {
-		if !r.functions[name] {
-			delete(functions, name)
+		fnMeta, found := plugin.Metadata.FnImports[impName]
+		if !found {
+			if modName == "hypermode" {
+				if !gaveCompatibilityWarning {
+					logger.Warn(ctx).
+						Str("plugin", plugin.Name()).
+						Str("build_id", plugin.BuildId()).
+						Msg("Hypermode function imports are missing from the metadata. Using compatibility shims. Please update your SDK to the latest version.")
+					gaveCompatibilityWarning = true
+				}
+				if m, err := compatibility.GetImportMetadataShim(impName); err == nil {
+					fnMeta = m
+				} else {
+					logger.Err(ctx, err).
+						Str("function", impName).
+						Str("plugin", plugin.Name()).
+						Str("build_id", plugin.BuildId()).
+						Msg("Error creating compatibility shim.")
+					continue
+				}
+			} else if fr.shouldIgnoreModule(modName) {
+				continue
+			} else {
+				logger.Warn(ctx).
+					Str("function", impName).
+					Str("plugin", plugin.Name()).
+					Str("build_id", plugin.BuildId()).
+					Msg("Function is not registered in metadata imports.  The plugin may not work as expected.")
+				continue
+			}
+		}
+
+		plan, err := plugin.Planner.GetPlan(ctx, fnMeta, fnDef)
+		if err != nil {
+			logger.Err(ctx, err).
+				Str("function", impName).
+				Str("plugin", plugin.Name()).
+				Str("build_id", plugin.BuildId()).
+				Msg("Error creating execution plan.")
+			continue
+		}
+
+		fr.functions[impName] = NewFunctionInfo(plugin, plan)
+		names = append(names, impName)
+	}
+	return names
+}
+
+func (fr *functionRegistry) cleanup(ctx context.Context, registeredNames []string) {
+	m := make(map[string]bool, len(registeredNames))
+	for _, name := range registeredNames {
+		m[name] = true
+	}
+
+	for name, fnInfo := range fr.functions {
+		if !m[name] {
+			delete(fr.functions, name)
 			logger.Info(ctx).
 				Str("function", name).
-				Str("plugin", fn.Plugin.Name()).
-				Str("build_id", fn.Plugin.BuildId()).
+				Str("plugin", fnInfo.Plugin().Name()).
+				Str("build_id", fnInfo.Plugin().BuildId()).
 				Msg("Unregistered function.")
 		}
 	}
+}
+
+func (fr *functionRegistry) shouldIgnoreModule(name string) bool {
+	switch name {
+	case "wasi_snapshot_preview1", "wasi", "env", "runtime", "syscall", "test":
+		return true
+	}
+
+	return strings.HasPrefix(name, "wasi_")
 }

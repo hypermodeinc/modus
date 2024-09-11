@@ -102,7 +102,7 @@ func UpsertToCollection(ctx context.Context, collectionName, namespace string, k
 			return nil, err
 		}
 
-		result := executionInfo.Result
+		result := executionInfo.Result()
 
 		textVecs, err := collection_utils.ConvertToFloat32_2DArray(result)
 		if err != nil {
@@ -203,7 +203,7 @@ func SearchCollection(ctx context.Context, collectionName string, namespaces []s
 		return nil, err
 	}
 
-	result := executionInfo.Result
+	result := executionInfo.Result()
 
 	textVecs, err := collection_utils.ConvertToFloat32_2DArray(result)
 	if err != nil {
@@ -358,7 +358,7 @@ func NnClassify(ctx context.Context, collectionName, namespace, searchMethod, te
 		return nil, err
 	}
 
-	result := executionInfo.Result
+	result := executionInfo.Result()
 
 	textVecs, err := collection_utils.ConvertToFloat32_2DArray(result)
 	if err != nil {
@@ -647,10 +647,11 @@ func getEmbedder(ctx context.Context, collectionName string, searchMethod string
 
 func validateEmbedder(ctx context.Context, embedder string) error {
 
-	fn, err := functions.GetFunction(embedder)
+	info, err := wasmhost.GetWasmHost(ctx).GetFunctionInfo(embedder)
 	if err != nil {
 		return err
 	}
+	fn := info.Metadata()
 
 	// Embedder functions must take a single string[] parameter and return a single f32[][] or f64[][] array.
 	// The types are language-specific, so we use the plugin language's type info.

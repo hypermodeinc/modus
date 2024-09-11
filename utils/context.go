@@ -6,6 +6,7 @@ package utils
 
 type contextKey string
 
+const WasmHostContextKey contextKey = "wasm_host"
 const ExecutionIdContextKey contextKey = "execution_id"
 const PluginContextKey contextKey = "plugin"
 const MetadataContextKey contextKey = "metadata"
@@ -14,4 +15,3 @@ const FunctionNameContextKey contextKey = "function_name"
 const FunctionOutputContextKey contextKey = "function_output"
 const FunctionMessagesContextKey contextKey = "function_messages"
 const CustomTypesContextKey contextKey = "custom_types"
-const CustomTypesRevContextKey contextKey = "custom_types_rev"

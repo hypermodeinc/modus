@@ -10,11 +10,6 @@ import (
 )
 
 func TestHttpResponseHeaders(t *testing.T) {
-	t.Parallel()
-
-	f := NewGoWasmTestFixture(t)
-	defer f.Close()
-
 	r := &httpclient.HttpResponse{
 		Status:     200,
 		StatusText: "OK",
@@ -29,17 +24,12 @@ func TestHttpResponseHeaders(t *testing.T) {
 		Body: []byte("Hello, world!"),
 	}
 
-	if _, err := f.InvokeFunction("testHttpResponseHeaders", r); err != nil {
+	if _, err := fixture.CallFunction(t, "testHttpResponseHeaders", r); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestHttpHeaders(t *testing.T) {
-	t.Parallel()
-
-	f := NewGoWasmTestFixture(t)
-	defer f.Close()
-
 	h := &httpclient.HttpHeaders{
 		Data: map[string]*httpclient.HttpHeader{
 			"content-type": {
@@ -49,17 +39,12 @@ func TestHttpHeaders(t *testing.T) {
 		},
 	}
 
-	if _, err := f.InvokeFunction("testHttpHeaders", h); err != nil {
+	if _, err := fixture.CallFunction(t, "testHttpHeaders", h); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestHttpHeaderMap(t *testing.T) {
-	t.Parallel()
-
-	f := NewGoWasmTestFixture(t)
-	defer f.Close()
-
 	m := map[string]*httpclient.HttpHeader{
 		"content-type": {
 			Name:   "Content-Type",
@@ -67,23 +52,18 @@ func TestHttpHeaderMap(t *testing.T) {
 		},
 	}
 
-	if _, err := f.InvokeFunction("testHttpHeaderMap", m); err != nil {
+	if _, err := fixture.CallFunction(t, "testHttpHeaderMap", m); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestHttpHeader(t *testing.T) {
-	t.Parallel()
-
-	f := NewGoWasmTestFixture(t)
-	defer f.Close()
-
 	h := httpclient.HttpHeader{
 		Name:   "Content-Type",
 		Values: []string{"text/plain"},
 	}
 
-	if _, err := f.InvokeFunction("testHttpHeader", h); err != nil {
+	if _, err := fixture.CallFunction(t, "testHttpHeader", h); err != nil {
 		t.Fatal(err)
 	}
 }

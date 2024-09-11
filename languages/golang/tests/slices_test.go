@@ -11,64 +11,39 @@ import (
 )
 
 func TestSliceInput_byte(t *testing.T) {
-	t.Parallel()
-
-	f := NewGoWasmTestFixture(t)
-	defer f.Close()
-
 	var val = []byte{0x01, 0x02, 0x03, 0x04}
 
-	if _, err := f.InvokeFunction("testSliceInput_byte", val); err != nil {
+	if _, err := fixture.CallFunction(t, "testSliceInput_byte", val); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestSliceInput_intPtr(t *testing.T) {
-	t.Parallel()
-
-	f := NewGoWasmTestFixture(t)
-	defer f.Close()
-
 	var val = getIntPtrSlice()
 
-	if _, err := f.InvokeFunction("testSliceInput_intPtr", val); err != nil {
+	if _, err := fixture.CallFunction(t, "testSliceInput_intPtr", val); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestSliceInput_string(t *testing.T) {
-	t.Parallel()
-
-	f := NewGoWasmTestFixture(t)
-	defer f.Close()
-
 	var val = []string{"abc", "def", "ghi"}
 
-	if _, err := f.InvokeFunction("testSliceInput_string", val); err != nil {
+	if _, err := fixture.CallFunction(t, "testSliceInput_string", val); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestSliceInput_stringPtr(t *testing.T) {
-	t.Parallel()
-
-	f := NewGoWasmTestFixture(t)
-	defer f.Close()
-
 	var val = getStringPtrSlice()
 
-	if _, err := f.InvokeFunction("testSliceInput_stringPtr", val); err != nil {
+	if _, err := fixture.CallFunction(t, "testSliceInput_stringPtr", val); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestSliceOutput_byte(t *testing.T) {
-	t.Parallel()
-
-	f := NewGoWasmTestFixture(t)
-	defer f.Close()
-
-	result, err := f.InvokeFunction("testSliceOutput_byte")
+	result, err := fixture.CallFunction(t, "testSliceOutput_byte")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -85,12 +60,7 @@ func TestSliceOutput_byte(t *testing.T) {
 }
 
 func TestSliceOutput_intPtr(t *testing.T) {
-	t.Parallel()
-
-	f := NewGoWasmTestFixture(t)
-	defer f.Close()
-
-	result, err := f.InvokeFunction("testSliceOutput_intPtr")
+	result, err := fixture.CallFunction(t, "testSliceOutput_intPtr")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -106,12 +76,7 @@ func TestSliceOutput_intPtr(t *testing.T) {
 }
 
 func TestSliceOutput_string(t *testing.T) {
-	t.Parallel()
-
-	f := NewGoWasmTestFixture(t)
-	defer f.Close()
-
-	result, err := f.InvokeFunction("testSliceOutput_string")
+	result, err := fixture.CallFunction(t, "testSliceOutput_string")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -127,12 +92,7 @@ func TestSliceOutput_string(t *testing.T) {
 }
 
 func TestSliceOutput_stringPtr(t *testing.T) {
-	t.Parallel()
-
-	f := NewGoWasmTestFixture(t)
-	defer f.Close()
-
-	result, err := f.InvokeFunction("testSliceOutput_stringPtr")
+	result, err := fixture.CallFunction(t, "testSliceOutput_stringPtr")
 	if err != nil {
 		t.Fatal(err)
 	}

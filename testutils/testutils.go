@@ -13,22 +13,19 @@ import (
 	"testing"
 
 	"hypruntime/functions"
+	"hypruntime/langsupport"
+	"hypruntime/logger"
 	"hypruntime/plugins"
 	"hypruntime/plugins/metadata"
 	"hypruntime/utils"
 	"hypruntime/wasmhost"
-
-	wasm "github.com/tetratelabs/wazero/api"
 )
 
 type WasmTestFixture struct {
-	Context        context.Context
-	WasmHost       *wasmhost.WasmHost
-	Plugin         *plugins.Plugin
-	Buffers        *utils.OutputBuffers
-	Module         wasm.Module
-	customTypes    map[string]reflect.Type
-	customTypesRev map[reflect.Type]string
+	Context     context.Context
+	WasmHost    wasmhost.WasmHost
+	Plugin      *plugins.Plugin
+	customTypes map[string]reflect.Type
 }
 
 func (f *WasmTestFixture) Close() {
@@ -36,35 +33,40 @@ func (f *WasmTestFixture) Close() {
 }
 
 func (f *WasmTestFixture) AddCustomType(name string, typ reflect.Type) {
-	if f.customTypes == nil {
-		f.customTypes = make(map[string]reflect.Type)
-		f.customTypesRev = make(map[reflect.Type]string)
-	}
-
 	f.customTypes[name] = typ
-	f.customTypesRev[typ] = name
 }
 
-func (f *WasmTestFixture) InvokeFunction(name string, paramValues ...any) (any, error) {
-	fn, ok := f.Plugin.Metadata.FnExports[name]
+func (f *WasmTestFixture) CallFunction(t *testing.T, name string, paramValues ...any) (any, error) {
+	ctx := context.WithValue(f.Context, testContextKey{}, t)
+
+	fnMeta, ok := f.Plugin.Metadata.FnExports[name]
 	if !ok {
 		return nil, fmt.Errorf("function %s not found", name)
 	}
 
-	params, err := functions.CreateParametersMap(fn, paramValues...)
+	fnDef := f.Plugin.Module.ExportedFunctions()[name]
+	plan, err := f.Plugin.Planner.GetPlan(ctx, fnMeta, fnDef)
 	if err != nil {
 		return nil, err
 	}
 
-	ctx := context.WithValue(f.Context, utils.CustomTypesContextKey, f.customTypes)
-	ctx = context.WithValue(ctx, utils.CustomTypesRevContextKey, f.customTypesRev)
+	fnInfo := functions.NewFunctionInfo(f.Plugin, plan)
 
-	info, err := f.WasmHost.InvokeFunction(ctx, f.Plugin, fn, params)
+	params, err := functions.CreateParametersMap(fnMeta, paramValues...)
 	if err != nil {
 		return nil, err
 	}
 
-	return info.Result, nil
+	execInfo, err := f.WasmHost.CallFunction(ctx, fnInfo, params)
+	if err != nil {
+		return nil, err
+	}
+
+	return execInfo.Result(), nil
+}
+
+func (f *WasmTestFixture) NewPlanner() langsupport.Planner {
+	return f.Plugin.Language.NewPlanner(f.Plugin.Metadata)
 }
 
 type testContextKey struct{}
@@ -73,13 +75,15 @@ func GetTestT(ctx context.Context) *testing.T {
 	return ctx.Value(testContextKey{}).(*testing.T)
 }
 
-func NewWasmTestFixture(wasmFilePath string, t *testing.T, hostOpts ...func(*wasmhost.WasmHost) error) *WasmTestFixture {
+func NewWasmTestFixture(wasmFilePath string, hostOpts ...func(wasmhost.WasmHost) error) *WasmTestFixture {
+	logger.Initialize()
+
 	content, err := os.ReadFile(wasmFilePath)
 	if err != nil {
 		panic(err)
 	}
 
-	ctx := context.WithValue(context.Background(), testContextKey{}, t)
+	ctx := context.Background()
 	host := wasmhost.NewWasmHost(ctx, hostOpts...)
 
 	cm, err := host.CompileModule(ctx, content)
@@ -94,18 +98,19 @@ func NewWasmTestFixture(wasmFilePath string, t *testing.T, hostOpts ...func(*was
 
 	filename := filepath.Base(wasmFilePath)
 	plugin := plugins.NewPlugin(cm, filename, md)
-	buffers := &utils.OutputBuffers{}
+	registry := host.GetFunctionRegistry()
+	registry.RegisterImports(ctx, plugin)
 
-	mod, err := host.GetModuleInstance(ctx, plugin, buffers)
-	if err != nil {
-		panic(err)
+	f := &WasmTestFixture{
+		WasmHost:    host,
+		Plugin:      plugin,
+		customTypes: make(map[string]reflect.Type),
 	}
 
-	return &WasmTestFixture{
-		Context:  ctx,
-		WasmHost: host,
-		Plugin:   plugin,
-		Buffers:  buffers,
-		Module:   mod,
-	}
+	ctx = context.WithValue(ctx, utils.PluginContextKey, plugin)
+	ctx = context.WithValue(ctx, utils.MetadataContextKey, md)
+	ctx = context.WithValue(ctx, utils.CustomTypesContextKey, f.customTypes)
+	f.Context = ctx
+
+	return f
 }

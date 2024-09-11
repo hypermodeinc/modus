@@ -7,54 +7,36 @@ package golang_test
 import (
 	"testing"
 	"time"
+
+	"hypruntime/utils"
 )
 
 var testTime, _ = time.Parse(time.RFC3339, "2024-12-31T23:59:59.999999999Z")
 var testDuration = time.Duration(5 * time.Second)
 
 func TestTimeInput(t *testing.T) {
-	t.Parallel()
-
-	f := NewGoWasmTestFixture(t)
-	defer f.Close()
-
-	if _, err := f.InvokeFunction("testTimeInput", testTime); err != nil {
+	if _, err := fixture.CallFunction(t, "testTimeInput", testTime); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestTimePtrInput(t *testing.T) {
-	t.Parallel()
-
-	f := NewGoWasmTestFixture(t)
-	defer f.Close()
-
-	if _, err := f.InvokeFunction("testTimePtrInput", testTime); err != nil {
+	if _, err := fixture.CallFunction(t, "testTimePtrInput", testTime); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := f.InvokeFunction("testTimePtrInput", &testTime); err != nil {
+	if _, err := fixture.CallFunction(t, "testTimePtrInput", &testTime); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestTimePtrInput_nil(t *testing.T) {
-	t.Parallel()
-
-	f := NewGoWasmTestFixture(t)
-	defer f.Close()
-
-	if _, err := f.InvokeFunction("testTimePtrInput_nil", nil); err != nil {
+	if _, err := fixture.CallFunction(t, "testTimePtrInput_nil", nil); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestTimeOutput(t *testing.T) {
-	t.Parallel()
-
-	f := NewGoWasmTestFixture(t)
-	defer f.Close()
-
-	result, err := f.InvokeFunction("testTimeOutput")
+	result, err := fixture.CallFunction(t, "testTimeOutput")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -69,12 +51,7 @@ func TestTimeOutput(t *testing.T) {
 }
 
 func TestTimePtrOutput(t *testing.T) {
-	t.Parallel()
-
-	f := NewGoWasmTestFixture(t)
-	defer f.Close()
-
-	result, err := f.InvokeFunction("testTimePtrOutput")
+	result, err := fixture.CallFunction(t, "testTimePtrOutput")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -89,64 +66,39 @@ func TestTimePtrOutput(t *testing.T) {
 }
 
 func TestTimePtrOutput_nil(t *testing.T) {
-	t.Parallel()
-
-	f := NewGoWasmTestFixture(t)
-	defer f.Close()
-
-	result, err := f.InvokeFunction("testTimePtrOutput_nil")
+	result, err := fixture.CallFunction(t, "testTimePtrOutput_nil")
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if result != nil {
+	if !utils.HasNil(result) {
 		t.Error("expected a nil result")
 	}
 }
 
 func TestDurationInput(t *testing.T) {
-	t.Parallel()
-
-	f := NewGoWasmTestFixture(t)
-	defer f.Close()
-
-	if _, err := f.InvokeFunction("testDurationInput", testDuration); err != nil {
+	if _, err := fixture.CallFunction(t, "testDurationInput", testDuration); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestDurationPtrInput(t *testing.T) {
-	t.Parallel()
-
-	f := NewGoWasmTestFixture(t)
-	defer f.Close()
-
-	if _, err := f.InvokeFunction("testDurationPtrInput", testDuration); err != nil {
+	if _, err := fixture.CallFunction(t, "testDurationPtrInput", testDuration); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := f.InvokeFunction("testDurationPtrInput", &testDuration); err != nil {
+	if _, err := fixture.CallFunction(t, "testDurationPtrInput", &testDuration); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestDurationPtrInput_nil(t *testing.T) {
-	t.Parallel()
-
-	f := NewGoWasmTestFixture(t)
-	defer f.Close()
-
-	if _, err := f.InvokeFunction("testDurationPtrInput_nil", nil); err != nil {
+	if _, err := fixture.CallFunction(t, "testDurationPtrInput_nil", nil); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestDurationOutput(t *testing.T) {
-	t.Parallel()
-
-	f := NewGoWasmTestFixture(t)
-	defer f.Close()
-
-	result, err := f.InvokeFunction("testDurationOutput")
+	result, err := fixture.CallFunction(t, "testDurationOutput")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -161,12 +113,7 @@ func TestDurationOutput(t *testing.T) {
 }
 
 func TestDurationPtrOutput(t *testing.T) {
-	t.Parallel()
-
-	f := NewGoWasmTestFixture(t)
-	defer f.Close()
-
-	result, err := f.InvokeFunction("testDurationPtrOutput")
+	result, err := fixture.CallFunction(t, "testDurationPtrOutput")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -181,17 +128,12 @@ func TestDurationPtrOutput(t *testing.T) {
 }
 
 func TestDurationPtrOutput_nil(t *testing.T) {
-	t.Parallel()
-
-	f := NewGoWasmTestFixture(t)
-	defer f.Close()
-
-	result, err := f.InvokeFunction("testDurationPtrOutput_nil")
+	result, err := fixture.CallFunction(t, "testDurationPtrOutput_nil")
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if result != nil {
+	if !utils.HasNil(result) {
 		t.Error("expected a nil result")
 	}
 }

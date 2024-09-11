@@ -24,15 +24,18 @@ import (
 )
 
 // Starts any services that need to be started when the runtime starts.
-func Start(ctx context.Context) {
-	transaction, ctx := utils.NewSentryTransactionForCurrentFunc(ctx)
-	defer transaction.Finish()
+func Start() context.Context {
+	// Create the main background context
+	ctx := context.Background()
 
-	// Init the wasm host before anything else.
+	// Note, we cannot start a Sentry transaction here, or it will also be used for the background services, post-initiation.
+
+	// Init the wasm host and put it in context
 	registrations := hostfunctions.GetRegistrations()
-	wasmhost.InitWasmHost(ctx, registrations...)
+	host := wasmhost.InitWasmHost(ctx, registrations...)
+	ctx = context.WithValue(ctx, utils.WasmHostContextKey, host)
 
-	// None of these should block. If they need to do background work, they should start a goroutine internally.
+	// Start the background services.  None of these should block. If they need to do background work, they should start a goroutine internally.
 
 	// NOTE: Initialization order is important in some cases.
 	// If you need to change the order or add new services, be sure to test thoroughly.
@@ -48,20 +51,24 @@ func Start(ctx context.Context) {
 	manifestdata.MonitorManifestFile(ctx)
 	pluginmanager.Initialize(ctx)
 	graphql.Initialize()
+
+	return ctx
 }
 
 // Stops any services that need to be stopped when the runtime stops.
 func Stop(ctx context.Context) {
 
+	// Stop the wasm host first
+	wasmhost.GetWasmHost(ctx).Close(ctx)
+
+	// Stop the rest of the background services.
 	// NOTE: Stopping services also has an order dependency.
 	// If you need to change the order or add new services, be sure to test thoroughly.
-
 	// Unlike start, these should each block until they are fully stopped.
 
 	collections.Shutdown(ctx)
 	sqlclient.ShutdownPGPools()
 	dgraphclient.ShutdownConns()
-	wasmhost.GlobalWasmHost.Close(ctx)
 	logger.Close()
 	db.Stop(ctx)
 }

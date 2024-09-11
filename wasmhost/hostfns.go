@@ -11,9 +11,9 @@ import (
 	"reflect"
 	"time"
 
-	"hypruntime/languages"
+	"hypruntime/functions"
+	"hypruntime/langsupport"
 	"hypruntime/logger"
-	"hypruntime/plugins/metadata"
 	"hypruntime/utils"
 
 	wasm "github.com/tetratelabs/wazero/api"
@@ -32,7 +32,7 @@ type hfMessages struct {
 	msgDetail string
 }
 
-type HostFunction struct {
+type hostFunction struct {
 	module          string
 	name            string
 	function        wasm.GoFunction
@@ -41,42 +41,44 @@ type HostFunction struct {
 	messages        *hfMessages
 }
 
-func (hf *HostFunction) Name() string {
+func (hf *hostFunction) Name() string {
 	return hf.module + "." + hf.name
 }
 
-func WithStartingMessage(text string) func(*HostFunction) {
-	return func(hf *HostFunction) {
+type HostFunctionOption func(*hostFunction)
+
+func WithStartingMessage(text string) HostFunctionOption {
+	return func(hf *hostFunction) {
 		hf.messages.msgStarting = text
 	}
 }
 
-func WithCompletedMessage(text string) func(*HostFunction) {
-	return func(hf *HostFunction) {
+func WithCompletedMessage(text string) HostFunctionOption {
+	return func(hf *hostFunction) {
 		hf.messages.msgCompleted = text
 	}
 }
 
-func WithCancelledMessage(text string) func(*HostFunction) {
-	return func(hf *HostFunction) {
+func WithCancelledMessage(text string) HostFunctionOption {
+	return func(hf *hostFunction) {
 		hf.messages.msgCancelled = text
 	}
 }
 
-func WithErrorMessage(text string) func(*HostFunction) {
-	return func(hf *HostFunction) {
+func WithErrorMessage(text string) HostFunctionOption {
+	return func(hf *hostFunction) {
 		hf.messages.msgError = text
 	}
 }
 
-func WithMessageDetail(fn any) func(*HostFunction) {
-	return func(hf *HostFunction) {
+func WithMessageDetail(fn any) HostFunctionOption {
+	return func(hf *hostFunction) {
 		hf.messages.fnDetail = fn
 	}
 }
 
-func (host *WasmHost) RegisterHostFunction(modName, funcName string, fn any, opts ...func(*HostFunction)) error {
-	hf, err := newHostFunction(modName, funcName, fn, opts...)
+func (host *wasmHost) RegisterHostFunction(modName, funcName string, fn any, opts ...HostFunctionOption) error {
+	hf, err := host.newHostFunction(modName, funcName, fn, opts...)
 	if err != nil {
 		return fmt.Errorf("failed to register host function %s.%s: %w", modName, funcName, err)
 	}
@@ -85,10 +87,11 @@ func (host *WasmHost) RegisterHostFunction(modName, funcName string, fn any, opt
 	return nil
 }
 
-func newHostFunction(modName, funcName string, fn any, opts ...func(*HostFunction)) (*HostFunction, error) {
+func (host *wasmHost) newHostFunction(modName, funcName string, fn any, opts ...HostFunctionOption) (*hostFunction, error) {
+	fullName := modName + "." + funcName
 	rvFunc := reflect.ValueOf(fn)
 	if rvFunc.Kind() != reflect.Func {
-		return nil, fmt.Errorf("host function %s.%s is not a function type", modName, funcName)
+		return nil, fmt.Errorf("host function %s is not a function type", fullName)
 	}
 
 	rtFunc := rvFunc.Type()
@@ -111,7 +114,7 @@ func newHostFunction(modName, funcName string, fn any, opts ...func(*HostFunctio
 	// languages that don't naturally support them.
 	// TODO: In the future, this could be done by having the SDK generate a struct type for the return value.
 	if (hasErrorResult && numResults > 2) || (!hasErrorResult && numResults > 1) {
-		return nil, fmt.Errorf("host function %s.%s cannot return multiple data values", modName, funcName)
+		return nil, fmt.Errorf("host function %s cannot return multiple data values", fullName)
 	}
 
 	// TODO: the following assumes a lot.  We should use the language's type system to determine the encoding
@@ -153,7 +156,7 @@ func newHostFunction(modName, funcName string, fn any, opts ...func(*HostFunctio
 	}
 
 	// Create the host function object
-	hf := &HostFunction{
+	hf := &hostFunction{
 		module:          modName,
 		name:            funcName,
 		wasmParamTypes:  paramTypes,
@@ -170,11 +173,11 @@ func newHostFunction(modName, funcName string, fn any, opts ...func(*HostFunctio
 	if hf.messages.fnDetail != nil {
 		rvDetail = reflect.ValueOf(hf.messages.fnDetail)
 		if rvDetail.Kind() != reflect.Func {
-			return nil, fmt.Errorf("message detail func for host function %s.%s is not a function type", modName, funcName)
+			return nil, fmt.Errorf("message detail func for host function %s is not a function type", fullName)
 		}
 		rtDetail = rvDetail.Type()
 		if rtDetail.NumOut() != 1 || rtDetail.Out(0).Kind() != reflect.String {
-			return nil, fmt.Errorf("message detail func for host function %s.%s must have one string return value", modName, funcName)
+			return nil, fmt.Errorf("message detail func for host function %s must have one string return value", fullName)
 		}
 
 		start, end := 0, rtDetail.NumIn()
@@ -185,7 +188,7 @@ func newHostFunction(modName, funcName string, fn any, opts ...func(*HostFunctio
 		i := 0
 		for j := start; j < end; j++ {
 			if rtDetail.In(i) != rtFunc.In(j) {
-				return nil, fmt.Errorf("message detail func for host function %s.%s has mismatched parameter types", modName, funcName)
+				return nil, fmt.Errorf("message detail func for host function %s has mismatched parameter types", fullName)
 			}
 			i++
 		}
@@ -197,13 +200,23 @@ func newHostFunction(modName, funcName string, fn any, opts ...func(*HostFunctio
 		// Log any panics that occur in the host function
 		defer func() {
 			if e := utils.ConvertToError(recover()); e != nil {
-				logger.Err(ctx, e).Msg("Panic in host function.")
+				logger.Err(ctx, e).Str("host_function", fullName).Msg("Panic in host function.")
 			}
 		}()
 
-		// Get the host function's metadata
-		fullName := modName + "." + funcName
-		fnMeta := metadata.GetFunctionImportMetadata(ctx, fullName)
+		// Get the Wasm adapter
+		wa, err := langsupport.GetWasmAdapter(ctx)
+		if err != nil {
+			logger.Err(ctx, err).Msg("Error getting Wasm adapter.")
+			return
+		}
+
+		// Get the host function's info
+		fnInfo, err := host.GetFunctionInfo(fullName)
+		if err != nil {
+			logger.Err(ctx, err).Str("host_function", fullName).Msg("Error getting info for imported function.")
+			return
+		}
 
 		// Read input parameter values
 		params := make([]any, 0, numParams)
@@ -215,8 +228,8 @@ func newHostFunction(modName, funcName string, fn any, opts ...func(*HostFunctio
 			rvParam := reflect.New(rtParam).Elem()
 			params = append(params, rvParam.Interface())
 		}
-		if err := decodeParams(ctx, fnMeta, stack, params); err != nil {
-			logger.Err(ctx, err).Msg("Error decoding input parameters.")
+		if err := decodeParams(ctx, wa, fnInfo, stack, params); err != nil {
+			logger.Err(ctx, err).Str("host_function", fullName).Msg("Error decoding input parameters.")
 			return
 		}
 
@@ -273,8 +286,8 @@ func newHostFunction(modName, funcName string, fn any, opts ...func(*HostFunctio
 
 		// Encode the results (if there are any)
 		if len(results) > 0 {
-			if err := encodeResults(ctx, fnMeta, stack, results); err != nil {
-				logger.Err(ctx, err).Msg("Error encoding results.")
+			if err := encodeResults(ctx, wa, fnInfo, stack, results); err != nil {
+				logger.Err(ctx, err).Str("host_function", fullName).Msg("Error encoding results.")
 			}
 		}
 	})
@@ -282,11 +295,11 @@ func newHostFunction(modName, funcName string, fn any, opts ...func(*HostFunctio
 	return hf, nil
 }
 
-func (host *WasmHost) instantiateHostFunctions(ctx context.Context) error {
+func (host *wasmHost) instantiateHostFunctions(ctx context.Context) error {
 	span := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
 
-	hostFnsByModule := make(map[string][]*HostFunction)
+	hostFnsByModule := make(map[string][]*hostFunction)
 	for _, hf := range host.hostFunctions {
 		hostFnsByModule[hf.module] = append(hostFnsByModule[hf.module], hf)
 	}
@@ -307,7 +320,7 @@ func (host *WasmHost) instantiateHostFunctions(ctx context.Context) error {
 	return nil
 }
 
-func decodeParams(ctx context.Context, fn *metadata.Function, stack []uint64, params []any) error {
+func decodeParams(ctx context.Context, wa langsupport.WasmAdapter, fnInfo functions.FunctionInfo, stack []uint64, params []any) error {
 
 	// regardless of the outcome, ensure parameter values are cleared from the stack before returning
 	indirect := false
@@ -321,129 +334,115 @@ func decodeParams(ctx context.Context, fn *metadata.Function, stack []uint64, pa
 		}
 	}()
 
-	var expected int
-	if fn != nil {
-		expected = len(fn.Parameters)
-	} else {
-		expected = len(stack)
-	}
+	plan := fnInfo.ExecutionPlan()
+	expected := len(plan.ParamHandlers())
 	if len(params) != expected {
 		return fmt.Errorf("expected %d parameters, but got %d", expected, len(params))
 	}
 
-	wa, err := languages.GetWasmAdapter(ctx)
-	if err != nil {
-		return err
-	}
-
-	getEncLen := func(i int) (int, error) {
-		if fn == nil {
-			return 1, nil
-		}
-
-		typ := fn.Parameters[i].Type
-		encLength, err := wa.GetEncodingLength(ctx, typ)
-		if err != nil {
-			return 0, err
-		}
-
-		return encLength, nil
-	}
-
-	totalEncLength := 0
-	encLengths := make([]int, len(params))
-	for i := 0; i < len(params); i++ {
-		if n, err := getEncLen(i); err != nil {
-			return err
-		} else {
-			encLengths[i] = n
-			totalEncLength += n
-		}
-	}
-
 	stackPos := 0
-
-	// handle result indirection, if supported and needed
-	if _, ok := wa.(languages.WasmAdapterWithIndirection); ok {
-		if len(stack) == totalEncLength+1 {
-			stackPos++
-			indirect = true
-		}
+	if plan.UseResultIndirection() {
+		indirect = true
+		stackPos++
 	}
 
-	for i := 0; i < len(params); i++ {
-		// get values from the stack
-		encLength := encLengths[i]
+	for i, handler := range plan.ParamHandlers() {
+		hInfo := handler.Info()
+		encLength := hInfo.EncodingLength()
 		vals := stack[stackPos : stackPos+encLength]
 		stackPos += encLength
 
-		// decode the values for the parameter
-		var typ string
-		if fn != nil {
-			typ = fn.Parameters[i].Type
-		}
-		if err := wa.DecodeData(ctx, typ, vals, &params[i]); err != nil {
+		data, err := handler.Decode(ctx, wa, vals)
+		if err != nil {
 			return err
 		}
+
+		// special case for structs represented as maps
+		switch m := data.(type) {
+		case map[string]any:
+			if _, ok := (params[i]).(map[string]any); !ok {
+				if err := utils.MapToStruct(m, &params[i]); err != nil {
+					return err
+				}
+				continue
+			}
+		case *map[string]any:
+			if _, ok := (params[i]).(*map[string]any); !ok {
+				if err := utils.MapToStruct(*m, &params[i]); err != nil {
+					return err
+				}
+				continue
+			}
+		}
+
+		// special case for pointers that need to be dereferenced
+		if hInfo.RuntimeType().Kind() == reflect.Ptr && reflect.TypeOf(params[i]).Kind() != reflect.Ptr {
+			params[i] = utils.DereferencePointer(data)
+			continue
+		}
+
+		params[i] = data
 	}
 
 	return nil
 }
 
-func encodeResults(ctx context.Context, fn *metadata.Function, stack []uint64, results []any) error {
+func encodeResults(ctx context.Context, wa langsupport.WasmAdapter, fnInfo functions.FunctionInfo, stack []uint64, results []any) error {
 
-	if fn != nil {
-		expected := len(fn.Results)
-		if len(results) != expected {
-			return fmt.Errorf("expected %d results, but got %d", expected, len(results))
-		}
+	plan := fnInfo.ExecutionPlan()
+	expected := len(plan.ResultHandlers())
+	if len(results) != expected {
+		return fmt.Errorf("expected %d results, but got %d", expected, len(results))
 	}
 
-	wa, err := languages.GetWasmAdapter(ctx)
-	if err != nil {
-		return err
-	}
-
-	// if result indirection is supported, write the results indirectly if warranted
-	if wa, ok := wa.(languages.WasmAdapterWithIndirection); ok {
-		if len(stack) > 0 && stack[0] != 0 {
-			return wa.WriteIndirectResults(ctx, fn, uint32(stack[0]), results)
-		}
+	if plan.UseResultIndirection() {
+		return writeIndirectResults(ctx, wa, plan, uint32(stack[0]), results)
 	}
 
 	cleaner := utils.NewCleanerN(len(results))
-	errs := make([]error, 0, len(results))
-
 	stackPos := 0
-	for i, r := range results {
 
-		// get the type of the result
-		var typ string
-		if fn != nil {
-			typ = fn.Results[i].Type
-		}
-
-		// encode the result
-		vals, cln, err := wa.EncodeData(ctx, typ, r)
+	for i, handler := range plan.ResultHandlers() {
+		vals, cln, err := handler.Encode(ctx, wa, results[i])
 		cleaner.AddCleaner(cln)
 		if err != nil {
-			errs = append(errs, err)
+			return err
 		}
 
-		// push the encoded values onto the stack
 		for _, v := range vals {
 			stack[stackPos] = v
 			stackPos++
 		}
 	}
 
-	// unpin any values pinned during encoding
-	if err := cleaner.Clean(); err != nil {
-		errs = append(errs, err)
-	}
+	return cleaner.Clean()
+}
 
-	if len(errs) > 0 {
-		return errors.Join(errs...)
+func writeIndirectResults(ctx context.Context, wa langsupport.WasmAdapter, plan langsupport.ExecutionPlan, offset uint32, results []any) (err error) {
+
+	// multiple-results are written like a struct
+
+	cleaner := utils.NewCleanerN(len(results))
+	defer func() {
+		if e := cleaner.Clean(); e != nil && err == nil {
+			err = e
+		}
+	}()
+
+	handlers := plan.ResultHandlers()
+
+	fieldOffset := uint32(0)
+	for i, handler := range handlers {
+		size := handler.Info().TypeSize()
+		fieldOffset += langsupport.GetAlignmentPadding(fieldOffset, size)
+
+		cln, err := handler.Write(ctx, wa, offset+fieldOffset, results[i])
+		cleaner.AddCleaner(cln)
+		if err != nil {
+			return err
+		}
+
+		fieldOffset += size
 	}
 
 	return nil
