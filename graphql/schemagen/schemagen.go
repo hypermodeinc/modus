@@ -76,6 +76,9 @@ func transformTypes(types metadata.TypeMap, lti langsupport.TypeInfo, forInput b
 		if lti.IsListType(t.Name) || lti.IsMapType(t.Name) || lti.IsTimestampType(t.Name) {
 			continue
 		}
+		if lti.GetUnderlyingType(t.Name) != t.Name {
+			continue
+		}
 
 		name := lti.GetNameForType(t.Name)
 		if forInput {
