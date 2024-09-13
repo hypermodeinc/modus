@@ -559,8 +559,23 @@ func convertType(typ string, lti langsupport.TypeInfo, typeDefs map[string]*Type
 
 		// The pair type name will be composed from the key and value types.
 		// ex: StringStringPair, IntStringPair, StringNullableStringPair, etc.
-		ktn := utils.If(strings.HasSuffix(kt, "!"), kt[:len(kt)-1], "Nullable"+kt)
-		vtn := utils.If(strings.HasSuffix(vt, "!"), vt[:len(vt)-1], "Nullable"+vt)
+		var ktn, vtn string
+		if strings.HasSuffix(kt, "!") {
+			ktn = kt[:len(kt)-1]
+		} else if kt[0] == '[' {
+			ktn = "[Nullable" + kt[1:]
+		} else {
+			ktn = "Nullable" + kt
+		}
+
+		if strings.HasSuffix(vt, "!") {
+			vtn = vt[:len(vt)-1]
+		} else if vt[0] == '[' {
+			vtn = "[Nullable" + vt[1:]
+		} else {
+			vtn = "Nullable" + vt
+		}
+
 		if ktn[0] == '[' {
 			t := ktn[1 : len(ktn)-2]
 			if forInput {
@@ -579,7 +594,11 @@ func convertType(typ string, lti langsupport.TypeInfo, typeDefs map[string]*Type
 		} else if forInput {
 			vtn = strings.TrimSuffix(vtn, "Input")
 		}
-		typeName := ktn + vtn + "Pair" + utils.If(forInput, "Input", "")
+
+		typeName := ktn + vtn + "Pair"
+		if forInput {
+			typeName += "Input"
+		}
 
 		newMapType(typeName, []*NameTypePair{{"key", kt}, {"value", vt}}, typeDefs)
 

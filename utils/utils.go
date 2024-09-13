@@ -27,13 +27,6 @@ func NilIfEmpty(val string) *string {
 	return NilIf(val == "", val)
 }
 
-func If[T any](condition bool, trueVal, falseVal T) T {
-	if condition {
-		return trueVal
-	}
-	return falseVal
-}
-
 func EnvVarFlagEnabled(envVarName string) bool {
 	v := os.Getenv(envVarName)
 	b, err := strconv.ParseBool(v)
