@@ -8,6 +8,7 @@
 - Make empty dgraph responses nil [#355](https://github.com/hypermodeAI/runtime/pull/355)
 - Support objects as parameters to functions via GraphQL input types [#359](https://github.com/hypermodeAI/runtime/pull/359)
 - Fix GraphQL schema generation for Go functions [#360](https://github.com/hypermodeAI/runtime/pull/360)
+- Add getLabel to collection host functions [#361](https://github.com/hypermodeAI/runtime/pull/361)
 
 ## 2024-08-27 - Version 0.11.2
 
