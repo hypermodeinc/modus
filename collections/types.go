@@ -32,6 +32,7 @@ type CollectionSearchResultObject struct {
 	Namespace string
 	Key       string
 	Text      string
+	Labels    []string
 	Distance  float64
 	Score     float64
 }

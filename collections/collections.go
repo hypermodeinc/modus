@@ -237,10 +237,15 @@ func SearchCollection(ctx context.Context, collectionName string, namespaces []s
 			if err != nil {
 				return nil, err
 			}
+			labels, err := collNs.GetLabels(ctx, object.GetIndex())
+			if err != nil {
+				return nil, err
+			}
 			mergedObjects = append(mergedObjects, &CollectionSearchResultObject{
 				Namespace: ns,
 				Key:       object.GetIndex(),
 				Text:      text,
+				Labels:    labels,
 				Distance:  object.GetValue(),
 				Score:     1 - object.GetValue(),
 			})
@@ -298,10 +303,15 @@ func SearchCollectionByVector(ctx context.Context, collectionName string, namesp
 			if err != nil {
 				return nil, err
 			}
+			labels, err := collNs.GetLabels(ctx, object.GetIndex())
+			if err != nil {
+				return nil, err
+			}
 			mergedObjects = append(mergedObjects, &CollectionSearchResultObject{
 				Namespace: ns,
 				Key:       object.GetIndex(),
 				Text:      text,
+				Labels:    labels,
 				Distance:  object.GetValue(),
 				Score:     1 - object.GetValue(),
 			})
@@ -474,6 +484,25 @@ func GetVector(ctx context.Context, collectionName, namespace, searchMethod, id 
 	}
 
 	return vec, nil
+}
+
+func GetLabels(ctx context.Context, collectionName, namespace, key string) ([]string, error) {
+	col, err := globalNamespaceManager.findCollection(collectionName)
+	if err != nil {
+		return nil, err
+	}
+
+	collNs, err := col.findNamespace(namespace)
+	if err != nil {
+		return nil, err
+	}
+
+	labels, err := collNs.GetLabels(ctx, key)
+	if err != nil {
+		return nil, err
+	}
+
+	return labels, nil
 }
 
 func ComputeDistance(ctx context.Context, collectionName, namespace, searchMethod, id1, id2 string) (*CollectionSearchResultObject, error) {

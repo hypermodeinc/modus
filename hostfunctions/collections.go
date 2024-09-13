@@ -55,6 +55,13 @@ func registerCollectionsHostFunctions() {
 			return fmt.Sprintf("Collection: %s, Namespace: %s, Method: %s, ID: %s", collectionName, namespace, searchMethod, id)
 		}))
 
+	registerHostFunction("hypermode", "getLabels", collections.GetLabels,
+		withCancelledMessage("Cancelled getting labels from collection."),
+		withErrorMessage("Error getting labels from collection."),
+		withMessageDetail(func(collectionName, namespace, searchMethod, id string) string {
+			return fmt.Sprintf("Collection: %s, Namespace: %s, Method: %s, ID: %s", collectionName, namespace, searchMethod, id)
+		}))
+
 	registerHostFunction("hypermode", "nnClassifyCollection_v2", collections.NnClassify,
 		withCancelledMessage("Cancelled classification."),
 		withErrorMessage("Error during classification."),
