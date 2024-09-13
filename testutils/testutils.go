@@ -91,7 +91,7 @@ func NewWasmTestFixture(wasmFilePath string, hostOpts ...func(wasmhost.WasmHost)
 		panic(err)
 	}
 
-	md, err := metadata.GetMetadata(ctx, cm)
+	md, err := metadata.GetMetadataFromCompiledModule(cm)
 	if err != nil {
 		panic(err)
 	}

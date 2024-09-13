@@ -67,7 +67,7 @@ func loadPlugin(ctx context.Context, filename string) error {
 	}
 
 	// Get the metadata for the plugin.
-	md, err := metadata.GetMetadata(ctx, cm)
+	md, err := metadata.GetMetadataFromCompiledModule(cm)
 	if err == metadata.ErrMetadataNotFound {
 		logger.Error(ctx).
 			Bool("user_visible", true).
