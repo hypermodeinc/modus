@@ -553,6 +553,7 @@ func ComputeDistance(ctx context.Context, collectionName, namespace, searchMetho
 		Namespace: namespace,
 		Key:       "",
 		Text:      "",
+		Labels:    []string{},
 		Distance:  distance,
 		Score:     1 - distance,
 	}, nil
