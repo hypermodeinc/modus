@@ -39,6 +39,8 @@ func (p *planner) NewArrayHandler(ctx context.Context, typ string, rt reflect.Ty
 	}
 	handler.elementHandler = elementHandler
 
+	handler.emptyValue = reflect.MakeSlice(rt, 0, 0).Interface()
+
 	return handler, nil
 }
 
@@ -46,6 +48,7 @@ type arrayHandler struct {
 	info           langsupport.TypeHandlerInfo
 	typeDef        *metadata.TypeDefinition
 	elementHandler langsupport.TypeHandler
+	emptyValue     any
 }
 
 func (h *arrayHandler) Info() langsupport.TypeHandlerInfo {
@@ -66,7 +69,7 @@ func (h *arrayHandler) Read(ctx context.Context, wa langsupport.WasmAdapter, off
 	if !ok {
 		return nil, errors.New("failed to read array length")
 	} else if arrLen == 0 {
-		return []any{}, nil
+		return h.emptyValue, nil
 	}
 
 	elementSize := h.elementHandler.Info().TypeSize()

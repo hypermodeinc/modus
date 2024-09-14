@@ -120,3 +120,51 @@ func getStringPtrSlice() []*string {
 	c := "ghi"
 	return []*string{&a, &b, &c}
 }
+
+func TestSliceInput_string_empty(t *testing.T) {
+	var val = []string{}
+
+	if _, err := fixture.CallFunction(t, "testSliceInput_string_empty", val); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestSliceOutput_string_empty(t *testing.T) {
+	result, err := fixture.CallFunction(t, "testSliceOutput_string_empty")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var expected = []string{}
+	if result == nil {
+		t.Error("expected a result")
+	} else if r, ok := result.([]string); !ok {
+		t.Errorf("expected a []string, got %T", result)
+	} else if !slices.Equal(expected, r) {
+		t.Errorf("expected %v, got %v", expected, r)
+	}
+}
+
+func TestSliceInput_int32_empty(t *testing.T) {
+	var val = []int32{}
+
+	if _, err := fixture.CallFunction(t, "testSliceInput_int32_empty", val); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestSliceOutput_int32_empty(t *testing.T) {
+	result, err := fixture.CallFunction(t, "testSliceOutput_int32_empty")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var expected = []int32{}
+	if result == nil {
+		t.Error("expected a result")
+	} else if r, ok := result.([]int32); !ok {
+		t.Errorf("expected a []int32, got %T", result)
+	} else if !slices.Equal(expected, r) {
+		t.Errorf("expected %v, got %v", expected, r)
+	}
+}

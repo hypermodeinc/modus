@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"runtime/debug"
 	"time"
 
 	"hypruntime/functions"
@@ -199,8 +200,11 @@ func (host *wasmHost) newHostFunction(modName, funcName string, fn any, opts ...
 
 		// Log any panics that occur in the host function
 		defer func() {
-			if e := utils.ConvertToError(recover()); e != nil {
-				logger.Err(ctx, e).Str("host_function", fullName).Msg("Panic in host function.")
+			if r := recover(); r != nil {
+				logger.Err(ctx, utils.ConvertToError(r)).Str("host_function", fullName).Msg("Panic in host function.")
+				if utils.HypermodeDebugEnabled() {
+					debug.PrintStack()
+				}
 			}
 		}()
 
