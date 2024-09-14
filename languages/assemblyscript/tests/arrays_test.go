@@ -5,6 +5,7 @@
 package assemblyscript_test
 
 import (
+	"reflect"
 	"slices"
 	"testing"
 )
@@ -148,6 +149,35 @@ func TestArrayOutput_string(t *testing.T) {
 	} else if r, ok := result.([]string); !ok {
 		t.Errorf("expected %T, got %T", expected, result)
 	} else if !slices.Equal(expected, r) {
+		t.Errorf("expected %v, got %v", expected, r)
+	}
+}
+
+func TestArrayInput_string_2d(t *testing.T) {
+	arr := [][]string{
+		{"abc", "def", "ghi"}, {"jkl", "mno", "pqr"}, {"stu", "vwx", "yz"},
+	}
+
+	_, err := fixture.CallFunction(t, "testArrayInput_string_2d", arr)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestArrayOutput_string_2d(t *testing.T) {
+	result, err := fixture.CallFunction(t, "testArrayOutput_string_2d")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expected := [][]string{
+		{"abc", "def", "ghi"}, {"jkl", "mno", "pqr"}, {"stu", "vwx", "yz"},
+	}
+	if result == nil {
+		t.Error("expected a result")
+	} else if r, ok := result.([][]string); !ok {
+		t.Errorf("expected %T, got %T", expected, result)
+	} else if !reflect.DeepEqual(expected, r) {
 		t.Errorf("expected %v, got %v", expected, r)
 	}
 }

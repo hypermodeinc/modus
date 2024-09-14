@@ -58,6 +58,26 @@ export function testArrayOutput_string(): string[] {
     return ["abc", "def", "ghi"];
 }
 
+export function testArrayInput_string_2d(arr: string[][]): void {
+    assert(arr.length == 3);
+    assert(arr[0].length == 3);
+    assert(arr[0][0] == "abc");
+    assert(arr[0][1] == "def");
+    assert(arr[0][2] == "ghi");
+    assert(arr[1].length == 3);
+    assert(arr[1][0] == "jkl");
+    assert(arr[1][1] == "mno");
+    assert(arr[1][2] == "pqr");
+    assert(arr[2].length == 3);
+    assert(arr[2][0] == "stu");
+    assert(arr[2][1] == "vwx");
+    assert(arr[2][2] == "yz");
+}
+
+export function testArrayOutput_string_2d(): string[][] {
+    return [["abc", "def", "ghi"], ["jkl", "mno", "pqr"], ["stu", "vwx", "yz"]];
+}
+
 class TestObject1 {
     constructor(public a: i32, public b: i32) { }
 }
