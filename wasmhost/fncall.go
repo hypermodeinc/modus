@@ -86,6 +86,7 @@ func (host *wasmHost) CallFunction(ctx context.Context, fnInfo functions.Functio
 	ctx = context.WithValue(ctx, utils.FunctionNameContextKey, fnName)
 	ctx = context.WithValue(ctx, utils.PluginContextKey, plugin)
 	ctx = context.WithValue(ctx, utils.MetadataContextKey, plugin.Metadata)
+	ctx = context.WithValue(ctx, utils.WasmHostContextKey, host)
 
 	// Each request will get its own instance of the plugin module, so that we can run
 	// multiple requests in parallel without risk of corrupting the module's memory.

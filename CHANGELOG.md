@@ -10,6 +10,7 @@
 - Fix GraphQL schema generation for Go functions [#360](https://github.com/hypermodeAI/runtime/pull/360)
 - Fix import registration issue [#364](https://github.com/hypermodeAI/runtime/pull/364)
 - Fix conversion of empty arrays and slices [#365](https://github.com/hypermodeAI/runtime/pull/365)
+- Fix wasm host not found in context [#366](https://github.com/hypermodeAI/runtime/pull/366)
 
 ## 2024-08-27 - Version 0.11.2
 
