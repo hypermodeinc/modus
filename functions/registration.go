@@ -93,6 +93,7 @@ func (fr *functionRegistry) RegisterImports(ctx context.Context, plugin *plugins
 		modName, fnName, _ := fnDef.Import()
 		impName := fmt.Sprintf("%s.%s", modName, fnName)
 		if _, ok := fr.functions[impName]; ok {
+			names = append(names, impName)
 			continue // already registered
 		}
 
