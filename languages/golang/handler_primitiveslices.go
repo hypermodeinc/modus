@@ -146,7 +146,7 @@ func (h *primitiveSliceHandler[T]) doReadSlice(wa langsupport.WasmAdapter, data,
 
 	if size == 0 {
 		// empty slice
-		return []any{}, nil
+		return []T{}, nil
 	}
 
 	bufferSize := size * uint32(h.converter.TypeSize())
