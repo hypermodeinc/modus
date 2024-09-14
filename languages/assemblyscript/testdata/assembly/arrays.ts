@@ -78,6 +78,14 @@ export function testArrayOutput_string_2d(): string[][] {
     return [["abc", "def", "ghi"], ["jkl", "mno", "pqr"], ["stu", "vwx", "yz"]];
 }
 
+export function testArrayInput_string_2d_empty(arr: string[][]): void {
+    assert(arr.length == 0);
+}
+
+export function testArrayOutput_string_2d_empty(): string[][] {
+    return [];
+}
+
 class TestObject1 {
     constructor(public a: i32, public b: i32) { }
 }

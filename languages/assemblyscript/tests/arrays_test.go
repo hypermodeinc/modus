@@ -182,6 +182,31 @@ func TestArrayOutput_string_2d(t *testing.T) {
 	}
 }
 
+func TestArrayInput_string_2d_empty(t *testing.T) {
+	arr := [][]string{}
+
+	_, err := fixture.CallFunction(t, "testArrayInput_string_2d_empty", arr)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestArrayOutput_string_2d_empty(t *testing.T) {
+	result, err := fixture.CallFunction(t, "testArrayOutput_string_2d_empty")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expected := [][]string{}
+	if result == nil {
+		t.Error("expected a result")
+	} else if r, ok := result.([][]string); !ok {
+		t.Errorf("expected %T, got %T", expected, result)
+	} else if !reflect.DeepEqual(expected, r) {
+		t.Errorf("expected %v, got %v", expected, r)
+	}
+}
+
 type TestObject1 struct {
 	A int32
 	B int32
