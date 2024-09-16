@@ -56,7 +56,7 @@ func (wa *wasmAdapter) PreInvoke(ctx context.Context, plan langsupport.Execution
 func (wa *wasmAdapter) AllocateMemory(ctx context.Context, size uint32) (uint32, utils.Cleaner, error) {
 	res, err := wa.fnMalloc.Call(ctx, uint64(size))
 	if err != nil {
-		return 0, nil, fmt.Errorf("failed to allocate WASM memory: %w", err)
+		return 0, nil, fmt.Errorf("failed to allocate WASM memory (size: %d): %w", size, err)
 	}
 
 	ptr := uint32(res[0])
