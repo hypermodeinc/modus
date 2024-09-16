@@ -233,7 +233,7 @@ func (host *wasmHost) newHostFunction(modName, funcName string, fn any, opts ...
 			params = append(params, rvParam.Interface())
 		}
 		if err := decodeParams(ctx, wa, fnInfo, stack, params); err != nil {
-			logger.Err(ctx, err).Str("host_function", fullName).Msg("Error decoding input parameters.")
+			logger.Err(ctx, err).Str("host_function", fullName).Any("data", params).Msg("Error decoding input parameters.")
 			return
 		}
 
@@ -291,7 +291,7 @@ func (host *wasmHost) newHostFunction(modName, funcName string, fn any, opts ...
 		// Encode the results (if there are any)
 		if len(results) > 0 {
 			if err := encodeResults(ctx, wa, fnInfo, stack, results); err != nil {
-				logger.Err(ctx, err).Str("host_function", fullName).Msg("Error encoding results.")
+				logger.Err(ctx, err).Str("host_function", fullName).Any("data", results).Msg("Error encoding results.")
 			}
 		}
 	})

@@ -89,7 +89,7 @@ func (wa *wasmAdapter) allocateAndPinMemory(ctx context.Context, size, classId u
 func (wa *wasmAdapter) allocateWasmMemory(ctx context.Context, size, classId uint32) (uint32, error) {
 	res, err := wa.fnNew.Call(ctx, uint64(size), uint64(classId))
 	if err != nil {
-		return 0, fmt.Errorf("failed to allocate WASM memory: %w", err)
+		return 0, fmt.Errorf("failed to allocate WASM memory (size: %d, id: %d): %w", size, classId, err)
 	}
 
 	ptr := uint32(res[0])
