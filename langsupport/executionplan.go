@@ -7,6 +7,8 @@ package langsupport
 import (
 	"context"
 	"fmt"
+	"runtime/debug"
+
 	"hypruntime/plugins/metadata"
 	"hypruntime/utils"
 
@@ -71,8 +73,11 @@ func (p *executionPlan) HasDefaultParameters() bool {
 func (plan *executionPlan) InvokeFunction(ctx context.Context, wa WasmAdapter, parameters map[string]any) (result any, err error) {
 	// Recover from panics and convert them to errors
 	defer func() {
-		if e := utils.ConvertToError(recover()); e != nil {
-			err = e
+		if r := recover(); r != nil {
+			err = utils.ConvertToError(r)
+			if utils.HypermodeDebugEnabled() {
+				debug.PrintStack()
+			}
 		}
 	}()
 

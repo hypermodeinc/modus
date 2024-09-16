@@ -5,11 +5,29 @@
 package metadata
 
 import (
+	"encoding/json"
+	"fmt"
 	"strings"
 
 	v1 "hypruntime/plugins/metadata/legacy/v1"
-	"hypruntime/utils"
 )
+
+const timeFormat = "2006-01-02T15:04:05.000Z"
+
+func getPluginMetadata_v1(wasmCustomSections map[string][]byte) (*Metadata, error) {
+	metadataJson, found := wasmCustomSections["hypermode_meta"]
+	if !found {
+		return nil, ErrMetadataNotFound
+	}
+
+	md := v1.Metadata{}
+	err := json.Unmarshal(metadataJson, &md)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse plugin metadata: %w", err)
+	}
+
+	return metadataV1toV2(&md), nil
+}
 
 func metadataV1toV2(m *v1.Metadata) *Metadata {
 
@@ -21,12 +39,11 @@ func metadataV1toV2(m *v1.Metadata) *Metadata {
 	}
 
 	// convert the v1 metadata to v2
-
 	res := Metadata{
 		Plugin:    m.Plugin,
 		SDK:       sdk,
 		BuildId:   m.BuildId,
-		BuildTime: m.BuildTime.UTC().Format(utils.TimeFormat),
+		BuildTime: m.BuildTime.UTC().Format(timeFormat),
 		GitRepo:   m.GitRepo,
 		GitCommit: m.GitCommit,
 		FnExports: make(FunctionMap, len(m.Functions)),

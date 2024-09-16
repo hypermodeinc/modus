@@ -18,6 +18,24 @@ func TestSliceOutput_string() []string {
 	return []string{"abc", "def", "ghi"}
 }
 
+func TestSliceInput_string_empty(val []string) {
+	var expected = []string{}
+	assertSlicesEqual(expected, val)
+}
+
+func TestSliceOutput_string_empty() []string {
+	return []string{}
+}
+
+func TestSliceInput_int32_empty(val []int32) {
+	var expected = []int32{}
+	assertSlicesEqual(expected, val)
+}
+
+func TestSliceOutput_int32_empty() []int32 {
+	return []int32{}
+}
+
 func TestSliceInput_stringPtr(val []*string) {
 	var expected = getStringPtrSlice()
 	assertPtrSlicesEqual(expected, val)

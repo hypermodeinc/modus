@@ -33,6 +33,8 @@ func (p *planner) NewSliceHandler(ctx context.Context, typ string, rt reflect.Ty
 	}
 	handler.elementHandler = elementHandler
 
+	handler.emptyValue = reflect.MakeSlice(rt, 0, 0).Interface()
+
 	return handler, nil
 }
 
@@ -40,6 +42,7 @@ type sliceHandler struct {
 	info           langsupport.TypeHandlerInfo
 	typeDef        *metadata.TypeDefinition
 	elementHandler langsupport.TypeHandler
+	emptyValue     any
 }
 
 func (h *sliceHandler) Info() langsupport.TypeHandlerInfo {
@@ -104,7 +107,7 @@ func (h *sliceHandler) doReadSlice(ctx context.Context, wa langsupport.WasmAdapt
 
 	if size == 0 {
 		// empty slice
-		return []any{}, nil
+		return h.emptyValue, nil
 	}
 
 	elementSize := h.elementHandler.Info().TypeSize()

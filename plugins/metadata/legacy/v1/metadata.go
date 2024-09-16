@@ -5,9 +5,8 @@
 package v1
 
 import (
+	"encoding/json"
 	"time"
-
-	"hypruntime/utils"
 
 	"github.com/buger/jsonparser"
 )
@@ -69,7 +68,7 @@ func (p *Parameter) UnmarshalJSON(data []byte) error {
 	if err != nil {
 		return err
 	}
-	if err := utils.JsonDeserialize(typeData, &p.Type); err != nil {
+	if err := json.Unmarshal(typeData, &p.Type); err != nil {
 		return err
 	}
 
@@ -100,7 +99,7 @@ func (p *Parameter) UnmarshalJSON(data []byte) error {
 		if err != nil {
 			return err
 		}
-		if err := utils.JsonDeserialize(defaultData, &p.Default); err != nil {
+		if err := json.Unmarshal(defaultData, &p.Default); err != nil {
 			return err
 		}
 	}

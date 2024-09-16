@@ -108,11 +108,23 @@ func NewPrimitiveTypeConverter[T primitive]() TypeConverter[T] {
 }
 
 func bytesToSlice[T primitive](b []byte, size int) []T {
-	return unsafe.Slice((*T)(unsafe.Pointer(&b[0])), len(b)/size)
+	if b == nil {
+		return nil
+	} else if len(b) == 0 {
+		return []T{}
+	} else {
+		return unsafe.Slice((*T)(unsafe.Pointer(&b[0])), len(b)/size)
+	}
 }
 
 func sliceToBytes[T primitive](s []T, size int) []byte {
-	return unsafe.Slice((*byte)(unsafe.Pointer(&s[0])), len(s)*size)
+	if s == nil {
+		return nil
+	} else if len(s) == 0 {
+		return []byte{}
+	} else {
+		return unsafe.Slice((*byte)(unsafe.Pointer(&s[0])), len(s)*size)
+	}
 }
 
 func bytesToSliceFixed32[T ~int | ~uint | ~uintptr](b []byte, size int) []T {
