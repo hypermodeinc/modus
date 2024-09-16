@@ -9,7 +9,7 @@ import (
 	"sync"
 )
 
-type FunctionsLoadedCallback = func(ctx context.Context) bool
+type FunctionsLoadedCallback = func(ctx context.Context)
 
 var functionsLoadedCallbacks []FunctionsLoadedCallback
 var eventsMutex = sync.RWMutex{}

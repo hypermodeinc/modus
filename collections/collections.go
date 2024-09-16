@@ -27,8 +27,8 @@ var errInvalidEmbedderSignature = errors.New("invalid embedder function signatur
 func Initialize(ctx context.Context) {
 	globalNamespaceManager = newCollectionFactory()
 	manifestdata.RegisterManifestLoadedCallback(cleanAndProcessManifest)
-	functions.RegisterFunctionsLoadedCallback(func(ctx context.Context) bool {
-		return globalNamespaceManager.readFromPostgres(ctx)
+	functions.RegisterFunctionsLoadedCallback(func(ctx context.Context) {
+		globalNamespaceManager.readFromPostgres(ctx)
 	})
 
 	go globalNamespaceManager.worker(ctx)
