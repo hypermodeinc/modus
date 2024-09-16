@@ -77,10 +77,12 @@ func (cf *collectionFactory) removeCollection(name string) error {
 	return nil
 }
 
-func (cf *collectionFactory) readFromPostgres(ctx context.Context) {
+func (cf *collectionFactory) readFromPostgres(ctx context.Context) bool {
+	resetTimerFaster := false
+	var err error
 	for _, namespaceCollectionFactory := range cf.collectionMap {
 		for _, col := range namespaceCollectionFactory.collectionNamespaceMap {
-			err := loadTextsIntoCollection(ctx, col)
+			resetTimerFaster, err = loadTextsIntoCollection(ctx, col)
 			if err != nil {
 				logger.Err(ctx, err).
 					Str("collection_name", col.GetCollectionName()).
@@ -111,6 +113,7 @@ func (cf *collectionFactory) readFromPostgres(ctx context.Context) {
 			}
 		}
 	}
+	return resetTimerFaster
 }
 
 func (cf *collectionFactory) worker(ctx context.Context) {
@@ -122,37 +125,45 @@ func (cf *collectionFactory) worker(ctx context.Context) {
 		select {
 		case <-timer.C:
 			// read from postgres all collections & searchMethod after lastInsertedID
-			cf.readFromPostgres(ctx)
-			timer.Reset(collectionFactoryWriteInterval * time.Minute)
+			resetTimerFaster := cf.readFromPostgres(ctx)
+			if resetTimerFaster {
+				timer.Reset(10 * time.Second)
+			} else {
+				timer.Reset(collectionFactoryWriteInterval * time.Minute)
+			}
 		case <-cf.quit:
 			return
 		}
 	}
 }
 
-func loadTextsIntoCollection(ctx context.Context, col interfaces.CollectionNamespace) error {
+func loadTextsIntoCollection(ctx context.Context, col interfaces.CollectionNamespace) (resetTimerFaster bool, err error) {
 	// Get checkpoint id for collection
 	textCheckpointId, err := col.GetCheckpointId(ctx)
 	if err != nil {
-		return err
+		return false, err
 	}
 
 	// Query all texts from checkpoint
 	textIds, keys, texts, labels, err := db.QueryCollectionTextsFromCheckpoint(ctx, col.GetCollectionName(), col.GetNamespace(), textCheckpointId)
 	if err != nil {
-		return err
+		return false, err
 	}
 	if len(textIds) != len(keys) || len(keys) != len(texts) {
-		return errors.New("mismatch in keys and texts")
+		return false, errors.New("mismatch in keys and texts")
+	}
+
+	if (textCheckpointId == 0) && (len(textIds) == 0) {
+		return true, nil
 	}
 
 	// Insert all texts into collection
 	err = col.InsertTextsToMemory(ctx, textIds, keys, texts, labels)
 	if err != nil {
-		return err
+		return false, err
 	}
 
-	return nil
+	return false, nil
 }
 
 func loadVectorsIntoVectorIndex(ctx context.Context, vectorIndex interfaces.VectorIndex, col interfaces.CollectionNamespace) error {
