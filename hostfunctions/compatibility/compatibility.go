@@ -125,6 +125,13 @@ func GetImportMetadataShim(fnName string) (fn *metadata.Function, err error) {
 			WithParameter("key", "~lib/string/String").
 			WithResult("~lib/array/Array<f32>")
 
+	case "hypermode.getLabels":
+		fn = metadata.NewFunction(fnName).
+			WithParameter("collection", "~lib/string/String").
+			WithParameter("namespace", "~lib/string/String").
+			WithParameter("key", "~lib/string/String").
+			WithResult("~lib/array/Array<~lib/string/String>")
+
 	case "hypermode.nnClassifyCollection_v2":
 		fn = metadata.NewFunction(fnName).
 			WithParameter("collection", "~lib/string/String").
