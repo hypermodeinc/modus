@@ -18,6 +18,14 @@ func TestSliceOutput_string() []string {
 	return []string{"abc", "def", "ghi"}
 }
 
+func TestSliceInput_string_nil(val []string) {
+	assertNil(val)
+}
+
+func TestSliceOutput_string_nil() []string {
+	return nil
+}
+
 func TestSliceInput_string_empty(val []string) {
 	var expected = []string{}
 	assertSlicesEqual(expected, val)
@@ -66,4 +74,47 @@ func getIntPtrSlice() []*int {
 	b := 22
 	c := 33
 	return []*int{&a, &b, &c}
+}
+
+func Test2DSliceInput_string(val [][]string) {
+	var expected = [][]string{
+		{"abc", "def", "ghi"},
+		{"jkl", "mno", "pqr"},
+		{"stu", "vwx", "yz"},
+	}
+	assertEqual(expected, val)
+}
+
+func Test2DSliceOutput_string() [][]string {
+	return [][]string{
+		{"abc", "def", "ghi"},
+		{"jkl", "mno", "pqr"},
+		{"stu", "vwx", "yz"},
+	}
+}
+
+func Test2DSliceInput_string_nil(val [][]string) {
+	assertNil(val)
+}
+
+func Test2DSliceOutput_string_nil() [][]string {
+	return nil
+}
+
+func Test2DSliceInput_string_empty(val [][]string) {
+	var expected = [][]string{}
+	assertEqual(expected, val)
+}
+
+func Test2DSliceOutput_string_empty() [][]string {
+	return [][]string{}
+}
+
+func Test2DSliceInput_string_innerNil(val [][]string) {
+	var expected = [][]string{nil}
+	assertEqual(expected, val)
+}
+
+func Test2DSliceOutput_string_innerNil() [][]string {
+	return [][]string{nil}
 }

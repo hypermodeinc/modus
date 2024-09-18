@@ -6,6 +6,7 @@ package golang_test
 
 import (
 	"bytes"
+	"reflect"
 	"slices"
 	"testing"
 )
@@ -121,6 +122,22 @@ func getStringPtrSlice() []*string {
 	return []*string{&a, &b, &c}
 }
 
+func TestSliceInput_string_nil(t *testing.T) {
+	if _, err := fixture.CallFunction(t, "testSliceInput_string_nil", nil); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestSliceOutput_string_nil(t *testing.T) {
+	result, err := fixture.CallFunction(t, "testSliceOutput_string_nil")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result != nil {
+		t.Errorf("expected nil, got %v", result)
+	}
+}
+
 func TestSliceInput_string_empty(t *testing.T) {
 	var val = []string{}
 
@@ -165,6 +182,105 @@ func TestSliceOutput_int32_empty(t *testing.T) {
 	} else if r, ok := result.([]int32); !ok {
 		t.Errorf("expected a []int32, got %T", result)
 	} else if !slices.Equal(expected, r) {
+		t.Errorf("expected %v, got %v", expected, r)
+	}
+}
+
+func Test2DSliceInput_string(t *testing.T) {
+	var val = [][]string{
+		{"abc", "def", "ghi"},
+		{"jkl", "mno", "pqr"},
+		{"stu", "vwx", "yz"},
+	}
+
+	if _, err := fixture.CallFunction(t, "test2DSliceInput_string", val); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func Test2DSliceOutput_string(t *testing.T) {
+	result, err := fixture.CallFunction(t, "test2DSliceOutput_string")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var expected = [][]string{
+		{"abc", "def", "ghi"},
+		{"jkl", "mno", "pqr"},
+		{"stu", "vwx", "yz"},
+	}
+
+	if result == nil {
+		t.Error("expected a result")
+	} else if r, ok := result.([][]string); !ok {
+		t.Errorf("expected a []string, got %T", result)
+	} else if !reflect.DeepEqual(expected, r) {
+		t.Errorf("expected %v, got %v", expected, r)
+	}
+}
+
+func Test2DSliceInput_string_nil(t *testing.T) {
+	if _, err := fixture.CallFunction(t, "test2DSliceInput_string_nil", nil); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func Test2DSliceOutput_string_nil(t *testing.T) {
+	result, err := fixture.CallFunction(t, "test2DSliceOutput_string_nil")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result != nil {
+		t.Errorf("expected nil, got %v", result)
+	}
+}
+
+func Test2DSliceInput_string_empty(t *testing.T) {
+	var val = [][]string{}
+
+	if _, err := fixture.CallFunction(t, "test2DSliceInput_string_empty", val); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func Test2DSliceOutput_string_empty(t *testing.T) {
+	result, err := fixture.CallFunction(t, "test2DSliceOutput_string_empty")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var expected = [][]string{}
+
+	if result == nil {
+		t.Error("expected a result")
+	} else if r, ok := result.([][]string); !ok {
+		t.Errorf("expected a []string, got %T", result)
+	} else if !reflect.DeepEqual(expected, r) {
+		t.Errorf("expected %v, got %v", expected, r)
+	}
+}
+
+func Test2DSliceInput_string_innerNil(t *testing.T) {
+	var val = [][]string{nil}
+
+	if _, err := fixture.CallFunction(t, "test2DSliceInput_string_innerNil", val); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func Test2DSliceOutput_string_innerNil(t *testing.T) {
+	result, err := fixture.CallFunction(t, "test2DSliceOutput_string_innerNil")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var expected = [][]string{nil}
+
+	if result == nil {
+		t.Error("expected a result")
+	} else if r, ok := result.([][]string); !ok {
+		t.Errorf("expected a []string, got %T", result)
+	} else if !reflect.DeepEqual(expected, r) {
 		t.Errorf("expected %v, got %v", expected, r)
 	}
 }

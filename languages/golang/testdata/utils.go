@@ -6,7 +6,6 @@ import (
 	"os"
 	"reflect"
 	"slices"
-	"unsafe"
 
 	"github.com/hypermodeAI/functions-go/pkg/console"
 )
@@ -51,17 +50,25 @@ func assertNil[T any](actual T) {
 	}
 }
 
-func getUnsafeDataPtr(x any) unsafe.Pointer {
-	type iface struct {
-		typ  unsafe.Pointer
-		data unsafe.Pointer
+// HasNil returns true if the given interface value is nil, or contains a pointer, interface, slice, or map that is nil.
+func hasNil(x any) bool {
+	if x == nil {
+		return true
 	}
 
-	internal := *(*iface)(unsafe.Pointer(&x))
-	return internal.data
+	rv := reflect.ValueOf(x)
+	if canBeNil(rv.Type()) {
+		return rv.IsNil()
+	}
+
+	return false
 }
 
-// hasNil returns true if the given interface value is nil, or contains a nil pointer.
-func hasNil(x any) bool {
-	return x == nil || uintptr(getUnsafeDataPtr(x)) == 0
+func canBeNil(rt reflect.Type) bool {
+	switch rt.Kind() {
+	case reflect.Chan, reflect.Func, reflect.Interface, reflect.Map, reflect.Ptr, reflect.Slice, reflect.UnsafePointer:
+		return true
+	default:
+		return false
+	}
 }
