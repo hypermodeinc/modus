@@ -174,6 +174,10 @@ func (h *managedObjectHandler) doWrite(ctx context.Context, wa langsupport.WasmA
 		}
 	}
 
+	if h.nullable {
+		obj = utils.DereferencePointer(obj)
+	}
+
 	id := h.typeDef.Id
 	size := h.innerHandler.Info().TypeSize()
 
