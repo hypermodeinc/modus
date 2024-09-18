@@ -6,6 +6,7 @@ package golang_test
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"hypruntime/hostfunctions"
@@ -33,6 +34,12 @@ func getTestHostFunctionRegistrations() []func(wasmhost.WasmHost) error {
 		},
 		func(host wasmhost.WasmHost) error {
 			return host.RegisterHostFunction("test", "echo4", hostEcho4)
+		},
+		func(host wasmhost.WasmHost) error {
+			return host.RegisterHostFunction("test", "encodeStrings1", hostEncodeStrings1)
+		},
+		func(host wasmhost.WasmHost) error {
+			return host.RegisterHostFunction("test", "encodeStrings2", hostEncodeStrings2)
 		},
 	}
 }
@@ -64,6 +71,38 @@ func hostEcho3(s string) *string {
 
 func hostEcho4(s *string) *string {
 	result := "echo: " + *s
+	return &result
+}
+
+func hostEncodeStrings1(items *[]string) *string {
+	out := strings.Builder{}
+	out.WriteString("[")
+	for i, item := range *items {
+		if i > 0 {
+			out.WriteString(",")
+		}
+		b, _ := utils.JsonSerialize(item)
+		out.Write(b)
+	}
+	out.WriteString("]")
+
+	result := out.String()
+	return &result
+}
+
+func hostEncodeStrings2(items *[]*string) *string {
+	out := strings.Builder{}
+	out.WriteString("[")
+	for i, item := range *items {
+		if i > 0 {
+			out.WriteString(",")
+		}
+		b, _ := utils.JsonSerialize(item)
+		out.Write(b)
+	}
+	out.WriteString("]")
+
+	result := out.String()
 	return &result
 }
 
@@ -205,6 +244,42 @@ func TestHostFn_echo4_stringPtr(t *testing.T) {
 	}
 
 	expected := "echo: hello"
+	if result == nil {
+		t.Error("expected a result")
+	} else if r, ok := result.(string); !ok {
+		t.Errorf("expected a string, got %T", result)
+	} else if r != expected {
+		t.Errorf("expected %s, got %s", expected, r)
+	}
+}
+
+func TestHostFn_encodeStrings1(t *testing.T) {
+	s := []string{"hello", "world"}
+	result, err := fixture.CallFunction(t, "encodeStrings1", s)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expected := `["hello","world"]`
+	if result == nil {
+		t.Error("expected a result")
+	} else if r, ok := result.(string); !ok {
+		t.Errorf("expected a string, got %T", result)
+	} else if r != expected {
+		t.Errorf("expected %s, got %s", expected, r)
+	}
+}
+
+func TestHostFn_encodeStrings2(t *testing.T) {
+	e0 := "hello"
+	e1 := "world"
+	s := []*string{&e0, &e1}
+	result, err := fixture.CallFunction(t, "encodeStrings2", s)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expected := `["hello","world"]`
 	if result == nil {
 		t.Error("expected a result")
 	} else if r, ok := result.(string); !ok {

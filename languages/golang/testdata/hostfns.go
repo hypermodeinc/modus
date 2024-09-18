@@ -19,3 +19,11 @@ func Echo3(message string) string {
 func Echo4(message string) string {
 	return *hostEcho4(&message)
 }
+
+func EncodeStrings1(items []string) string {
+	return *hostEncodeStrings1(&items)
+}
+
+func EncodeStrings2(items []*string) string {
+	return *hostEncodeStrings2(&items)
+}

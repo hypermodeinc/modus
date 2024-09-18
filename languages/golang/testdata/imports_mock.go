@@ -21,3 +21,11 @@ func hostEcho3(message *string) *string {
 func hostEcho4(message *string) *string {
 	panic("should not be called")
 }
+
+func hostEncodeStrings1(items *[]string) *string {
+	panic("should not be called")
+}
+
+func hostEncodeStrings2(items *[]*string) *string {
+	panic("should not be called")
+}
