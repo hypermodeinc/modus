@@ -57,6 +57,8 @@ func ConvertToMap(input any) (map[any]any, error) {
 		return convertMap(input)
 	case map[string]string:
 		return convertMap(input)
+	case []any:
+		return keyValuePairsToMap(input)
 	}
 
 	// We need to use reflection for the general case.
@@ -64,7 +66,7 @@ func ConvertToMap(input any) (map[any]any, error) {
 	rv := reflect.ValueOf(input)
 	kind := rv.Kind()
 	if kind != reflect.Map {
-		return nil, fmt.Errorf("input is not a map")
+		return nil, fmt.Errorf("expected a map input when converting to a map, but got %T", input)
 	}
 
 	out := make(map[any]any, rv.Len())
@@ -83,6 +85,23 @@ func convertMap[K comparable, V any](input map[K]V) (map[any]any, error) {
 	out := make(map[any]any, len(input))
 	for k, v := range input {
 		out[k] = v
+	}
+	return out, nil
+}
+
+func keyValuePairsToMap(input []any) (map[any]any, error) {
+	out := make(map[any]any, len(input))
+	for _, pair := range input {
+		if m, ok := pair.(map[string]any); ok {
+			key := m["key"]
+			val := m["value"]
+			if key == nil || val == nil {
+				return nil, fmt.Errorf("expected 'key' and 'value' fields in map")
+			}
+			out[key] = val
+		} else {
+			return nil, fmt.Errorf("expected input to contain maps with 'key' and 'value' fields")
+		}
 	}
 	return out, nil
 }
