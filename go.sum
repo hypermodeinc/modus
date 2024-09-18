@@ -266,8 +266,8 @@ github.com/wundergraph/cosmo/router v0.0.0-20240916140928-9e6520fdb2fb h1:NkEXmx
 github.com/wundergraph/cosmo/router v0.0.0-20240916140928-9e6520fdb2fb/go.mod h1:hcEocQnviSg+gumcym4MmgTXvdjNy9HuQHP6ns7L3x0=
 github.com/wundergraph/graphql-go-tools/execution v1.0.5 h1:3MiArNTyrudf5Sp1a/YBSKNtTd35Zl1BPDymjGRIDuU=
 github.com/wundergraph/graphql-go-tools/execution v1.0.5/go.mod h1:sb+EyLG8bsKe8HVSU1tnTwWZSdhD8tFNvKH+1wllVuM=
-github.com/wundergraph/graphql-go-tools/v2 v2.0.0-rc.81 h1:uPWVzO/y8i7SaDVfXcIj5zI+c+gmZ07ZQ/luv47C1WM=
-github.com/wundergraph/graphql-go-tools/v2 v2.0.0-rc.81/go.mod h1:zkPVYJu1iQd0y1fBNj+oXe9uMI/33TSoiXEsKSAESZY=
+github.com/wundergraph/graphql-go-tools/v2 v2.0.0-rc.83 h1:h55NpJRtcYqLZ6VwQcXWs4XU6+imjOmN1naQWpji/1Y=
+github.com/wundergraph/graphql-go-tools/v2 v2.0.0-rc.83/go.mod h1:zkPVYJu1iQd0y1fBNj+oXe9uMI/33TSoiXEsKSAESZY=
 github.com/yuin/goldmark v1.1.27/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
 github.com/yuin/goldmark v1.2.1/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
 go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.55.0 h1:ZIg3ZT/aQ7AfKqdwp7ECpOK6vHqquXXuyTjIO8ZdmPs=

@@ -182,16 +182,13 @@ func (h *mapHandler) Read(ctx context.Context, wa langsupport.WasmAdapter, offse
 }
 
 func (h *mapHandler) Write(ctx context.Context, wa langsupport.WasmAdapter, offset uint32, obj any) (utils.Cleaner, error) {
-	rv := reflect.ValueOf(obj)
-	if rv.Kind() == reflect.Ptr {
-		rv = rv.Elem()
+	m, err := utils.ConvertToMap(obj)
+	if err != nil {
+		return nil, err
 	}
-	if rv.Kind() != reflect.Map {
-		return nil, fmt.Errorf("unsupported map type %T", obj)
-	}
-	mapLen := uint32(rv.Len())
 
 	// determine capacities and mask
+	mapLen := uint32(len(m))
 	bucketsCapacity := uint32(4)
 	entriesCapacity := uint32(4)
 	bucketsMask := bucketsCapacity - 1
@@ -230,14 +227,13 @@ func (h *mapHandler) Write(ctx context.Context, wa langsupport.WasmAdapter, offs
 		return cln, fmt.Errorf("failed to allocate memory for array buffer: %w", err)
 	}
 
-	mapKeys := rv.MapKeys()
-	for i, mapKey := range mapKeys {
+	keys, vals := utils.MapKeysAndValues(m)
+	for i, key := range keys {
 
 		entryOffset := entriesBufferOffset + (entrySize * uint32(i))
 
 		// write entry key and calculate hash code
 		var hashCode uint32
-		key := mapKey.Interface()
 
 		switch t := key.(type) {
 		case string:
@@ -264,8 +260,7 @@ func (h *mapHandler) Write(ctx context.Context, wa langsupport.WasmAdapter, offs
 		}
 
 		// write entry value
-		mapValue := rv.MapIndex(mapKey)
-		value := mapValue.Interface()
+		value := vals[i]
 		entryValueOffset := entryOffset + valueOffset
 		c, err := h.valueHandler.Write(ctx, wa, entryValueOffset, value)
 		cln.AddCleaner(c)
