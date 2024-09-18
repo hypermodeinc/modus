@@ -118,7 +118,9 @@ func (h *sliceHandler) doReadSlice(ctx context.Context, wa langsupport.WasmAdapt
 		if err != nil {
 			return nil, err
 		}
-		items.Index(int(i)).Set(reflect.ValueOf(item))
+		if !utils.HasNil(item) {
+			items.Index(int(i)).Set(reflect.ValueOf(item))
+		}
 	}
 
 	return items.Interface(), nil
@@ -158,10 +160,12 @@ func (h *sliceHandler) doWriteSlice(ctx context.Context, wa langsupport.WasmAdap
 
 	elementSize := h.elementHandler.Info().TypeSize()
 	for _, val := range slice {
-		c, err := h.elementHandler.Write(ctx, wa, offset, val)
-		innerCln.AddCleaner(c)
-		if err != nil {
-			return 0, cln, err
+		if !utils.HasNil(val) {
+			c, err := h.elementHandler.Write(ctx, wa, offset, val)
+			innerCln.AddCleaner(c)
+			if err != nil {
+				return 0, cln, err
+			}
 		}
 		offset += elementSize
 	}
