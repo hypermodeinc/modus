@@ -8,7 +8,7 @@ require (
 	github.com/aws/aws-sdk-go-v2 v1.30.5
 	github.com/aws/aws-sdk-go-v2/config v1.27.35
 	github.com/aws/aws-sdk-go-v2/service/bedrockruntime v1.16.3
-	github.com/aws/aws-sdk-go-v2/service/s3 v1.61.3
+	github.com/aws/aws-sdk-go-v2/service/s3 v1.62.0
 	github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.32.9
 	github.com/aws/aws-sdk-go-v2/service/sts v1.30.8
 	github.com/buger/jsonparser v1.1.1
@@ -101,8 +101,8 @@ require (
 	github.com/tidwall/sjson v1.2.5 // indirect
 	github.com/viterin/partial v1.1.0 // indirect
 	github.com/wundergraph/astjson v0.0.0-20240910140849-bb15f94bd362 // indirect
-	github.com/wundergraph/cosmo/composition-go v0.0.0-20240916140928-9e6520fdb2fb // indirect
-	github.com/wundergraph/cosmo/router v0.0.0-20240916140928-9e6520fdb2fb // indirect
+	github.com/wundergraph/cosmo/composition-go v0.0.0-20240918192925-b57c141cc353 // indirect
+	github.com/wundergraph/cosmo/router v0.0.0-20240918192925-b57c141cc353 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.55.0 // indirect
 	go.opentelemetry.io/otel v1.30.0 // indirect
 	go.opentelemetry.io/otel/metric v1.30.0 // indirect
