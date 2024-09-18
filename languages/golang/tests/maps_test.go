@@ -153,3 +153,36 @@ func makeTestMap(size int) map[string]string {
 	}
 	return m
 }
+
+func TestMapInput_int_float32(t *testing.T) {
+	var val = map[int]float32{
+		1: 1.1,
+		2: 2.2,
+		3: 3.3,
+	}
+
+	if _, err := fixture.CallFunction(t, "testMapInput_int_float32", val); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestMapOutput_int_float32(t *testing.T) {
+	result, err := fixture.CallFunction(t, "testMapOutput_int_float32")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var expected = map[int]float32{
+		1: 1.1,
+		2: 2.2,
+		3: 3.3,
+	}
+
+	if result == nil {
+		t.Error("expected a result")
+	} else if r, ok := result.(map[int]float32); !ok {
+		t.Errorf("expected %T, got %T", expected, result)
+	} else if !maps.Equal(expected, r) {
+		t.Errorf("expected %v, got %v", expected, r)
+	}
+}
