@@ -124,6 +124,10 @@ func (h *sliceHandler) doReadSlice(ctx context.Context, wa langsupport.WasmAdapt
 	return items.Interface(), nil
 }
 
+type sliceWriter interface {
+	doWriteSlice(ctx context.Context, wa langsupport.WasmAdapter, obj any) (ptr uint32, cln utils.Cleaner, err error)
+}
+
 func (h *sliceHandler) doWriteSlice(ctx context.Context, wa langsupport.WasmAdapter, obj any) (ptr uint32, cln utils.Cleaner, err error) {
 	if utils.HasNil(obj) {
 		return 0, nil, nil

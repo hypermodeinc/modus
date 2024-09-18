@@ -164,12 +164,12 @@ func (h *primitiveSliceHandler[T]) doWriteSlice(ctx context.Context, wa langsupp
 		return 0, nil, nil
 	}
 
-	items, ok := obj.([]T)
+	slice, ok := utils.ConvertToSliceOf[T](obj)
 	if !ok {
 		return 0, nil, fmt.Errorf("expected a %T, got %T", []T{}, obj)
 	}
 
-	arrayLen := uint32(len(items))
+	arrayLen := uint32(len(slice))
 	ptr, cln, err := wa.(*wasmAdapter).makeWasmObject(ctx, h.typeDef.Id, arrayLen)
 	if err != nil {
 		return 0, cln, err
@@ -180,7 +180,7 @@ func (h *primitiveSliceHandler[T]) doWriteSlice(ctx context.Context, wa langsupp
 		return 0, cln, errors.New("failed to read data pointer from WASM memory")
 	}
 
-	bytes := h.converter.SliceToBytes(items)
+	bytes := h.converter.SliceToBytes(slice)
 	if ok := wa.Memory().Write(offset, bytes); !ok {
 		return 0, cln, errors.New("failed to write bytes to WASM memory")
 	}
