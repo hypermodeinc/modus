@@ -68,7 +68,7 @@ func ConvertToError(e any) error {
 	}
 }
 
-func GetUnsafeDataPtr(x any) unsafe.Pointer {
+func getUnsafeDataPtr(x any) unsafe.Pointer {
 	type iface struct {
 		typ  unsafe.Pointer
 		data unsafe.Pointer
@@ -78,9 +78,21 @@ func GetUnsafeDataPtr(x any) unsafe.Pointer {
 	return internal.data
 }
 
-// HasNil returns true if the given interface value is nil, or contains a nil pointer.
+// HasNil returns true if the given interface value is nil, or contains an object that is nil.
 func HasNil(x any) bool {
-	return x == nil || uintptr(GetUnsafeDataPtr(x)) == 0
+	if x == nil {
+		return true
+	}
+
+	// this is essentially an optimized version of reflect.ValueOf(x).IsNil()
+	// that will never panic and avoids most of the reflection overhead
+	p := getUnsafeDataPtr(x)
+	switch reflect.TypeOf(x).Kind() {
+	case reflect.Interface, reflect.Slice:
+		return *(*unsafe.Pointer)(p) == nil
+	default:
+		return p == nil
+	}
 }
 
 func CanBeNil(rt reflect.Type) bool {
