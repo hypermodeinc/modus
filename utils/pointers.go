@@ -46,11 +46,20 @@ func DereferencePointer(obj any) any {
 		return *t
 	case *time.Duration:
 		return *t
+	case *map[string]string:
+		return *t
+	case *map[string]any:
+		return *t
+	case *map[string]map[string]any:
+		return *t
+	case *map[string]*map[string]any:
+		return *t
 	case string, bool,
 		int, int8, int16, int32, int64,
 		uint, uint8, uint16, uint32, uint64, uintptr,
 		float32, float64,
-		time.Time, time.Duration:
+		time.Time, time.Duration,
+		map[string]string, map[string]any, map[string]map[string]any, map[string]*map[string]any:
 		return t // already dereferenced
 	}
 

@@ -3,6 +3,7 @@
 ## UNRELEASED
 
 - Fix panic from Go maps with primitive types [#370](https://github.com/hypermodeAI/runtime/pull/370)
+- Fix error when using a map as an input parameter [#373](https://github.com/hypermodeAI/runtime/pull/373)
 
 ## 2024-09-16 - Version 0.12.0
 
