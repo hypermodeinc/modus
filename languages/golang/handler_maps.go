@@ -32,13 +32,13 @@ func (p *planner) NewMapHandler(ctx context.Context, typ string, rt reflect.Type
 	if err != nil {
 		return nil, err
 	}
-	handler.keysHandler = keysHandler.(*sliceHandler)
+	handler.keysHandler = keysHandler
 
 	valuesHandler, err := p.GetHandler(ctx, "[]"+valueType)
 	if err != nil {
 		return nil, err
 	}
-	handler.valuesHandler = valuesHandler.(*sliceHandler)
+	handler.valuesHandler = valuesHandler
 
 	rtKey := keysHandler.Info().RuntimeType().Elem()
 	rtValue := valuesHandler.Info().RuntimeType().Elem()
@@ -72,8 +72,8 @@ func (p *planner) NewMapHandler(ctx context.Context, typ string, rt reflect.Type
 type mapHandler struct {
 	info             langsupport.TypeHandlerInfo
 	typeDef          *metadata.TypeDefinition
-	keysHandler      *sliceHandler
-	valuesHandler    *sliceHandler
+	keysHandler      langsupport.TypeHandler
+	valuesHandler    langsupport.TypeHandler
 	usePseudoMap     bool
 	rtPseudoMap      reflect.Type
 	rtPseudoMapSlice reflect.Type
@@ -110,7 +110,7 @@ func (h *mapHandler) Read(ctx context.Context, wa langsupport.WasmAdapter, offse
 	rvVals := reflect.ValueOf(vals)
 	size := rvKeys.Len()
 
-	rtKey := h.keysHandler.elementHandler.Info().RuntimeType()
+	rtKey := h.keysHandler.Info().RuntimeType().Elem()
 	if rtKey.Comparable() {
 		// return a map
 		m := reflect.MakeMapWithSize(h.info.RuntimeType(), size)
@@ -214,13 +214,13 @@ func (h *mapHandler) doWriteMap(ctx context.Context, wa langsupport.WasmAdapter,
 		}
 	}()
 
-	pKeys, c, err := h.keysHandler.doWriteSlice(ctx, wa, keys)
+	pKeys, c, err := h.keysHandler.(sliceWriter).doWriteSlice(ctx, wa, keys)
 	innerCln.AddCleaner(c)
 	if err != nil {
 		return 0, cln, err
 	}
 
-	pVals, c, err := h.valuesHandler.doWriteSlice(ctx, wa, vals)
+	pVals, c, err := h.valuesHandler.(sliceWriter).doWriteSlice(ctx, wa, vals)
 	innerCln.AddCleaner(c)
 	if err != nil {
 		return 0, cln, err

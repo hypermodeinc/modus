@@ -1,5 +1,9 @@
 # Change Log
 
+## UNRELEASED
+
+- Fix panic from Go maps with primitive types [#370](https://github.com/hypermodeAI/runtime/pull/370)
+
 ## 2024-09-16 - Version 0.12.0
 
 - Add language support for Hypermode Go SDK [#317](https://github.com/hypermodeAI/runtime/pull/317) [#351](https://github.com/hypermodeAI/runtime/pull/351) [#352](https://github.com/hypermodeAI/runtime/pull/352)

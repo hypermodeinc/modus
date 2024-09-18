@@ -78,3 +78,21 @@ func TestStructContainingMapOutput_string_string() TestStructWithMap {
 		},
 	}
 }
+
+func TestMapInput_int_float32(m map[int]float32) {
+	var expected = map[int]float32{
+		1: 1.1,
+		2: 2.2,
+		3: 3.3,
+	}
+
+	assertMapsEqual(expected, m)
+}
+
+func TestMapOutput_int_float32() map[int]float32 {
+	return map[int]float32{
+		1: 1.1,
+		2: 2.2,
+		3: 3.3,
+	}
+}
