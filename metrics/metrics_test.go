@@ -12,6 +12,7 @@ import (
 	"testing"
 
 	"hypruntime/httpserver"
+	"hypruntime/metrics"
 
 	"github.com/prometheus/common/expfmt"
 )
@@ -65,4 +66,18 @@ func TestRuntimeMetrics(t *testing.T) {
 
 	_ = httpGet(t, s, healthEndpoint)
 	ensureValidMetrics(t, s, 2)
+}
+
+func BenchmarkSummary(b *testing.B) {
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		metrics.FunctionExecutionDurationMillisecondsSummary.Observe(float64(i))
+	}
+}
+
+func BenchmarkHistogram(b *testing.B) {
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		metrics.FunctionExecutionDurationMilliseconds.Observe(float64(i))
+	}
 }
