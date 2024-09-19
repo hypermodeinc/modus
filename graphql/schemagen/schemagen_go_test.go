@@ -140,6 +140,21 @@ func Test_GetGraphQLSchema_Go(t *testing.T) {
 	md.Types.AddType("testdata.Obj4Input").
 		WithField("name", "string")
 
+	// Test slice of pointers to structs
+	md.FnExports.AddFunction("testObj5").
+		WithResult("[]*testdata.Obj5")
+	md.Types.AddType("[]*testdata.Obj5")
+	md.Types.AddType("*testdata.Obj5")
+	md.Types.AddType("testdata.Obj5").
+		WithField("name", "string")
+
+	// Test slice of structs
+	md.FnExports.AddFunction("testObj6").
+		WithResult("[]testdata.Obj6")
+	md.Types.AddType("[]testdata.Obj6")
+	md.Types.AddType("testdata.Obj6").
+		WithField("name", "string")
+
 	md.Types.AddType("[]int32")
 	md.Types.AddType("[]float64")
 	md.Types.AddType("[]testdata.Person")
@@ -200,6 +215,8 @@ type Query {
   testObj2(obj: Obj2Input!): Obj2!
   testObj3(obj: Obj3Input!): Void
   testObj4(obj: Obj4Input!): Void
+  testObj5: [Obj5]
+  testObj6: [Obj6!]
   testPointers(a: Int, b: [Int], c: [Int!], d: [PersonInput], e: [PersonInput!]): Person
   transform(items: [StringStringPairInput!]): [StringStringPair!]
 }
@@ -274,6 +291,14 @@ type Obj1 {
 
 type Obj2 {
   id: Int!
+  name: String!
+}
+
+type Obj5 {
+  name: String!
+}
+
+type Obj6 {
   name: String!
 }
 
