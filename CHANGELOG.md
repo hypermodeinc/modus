@@ -1,5 +1,9 @@
 # Change Log
 
+## UNRELEASED
+
+- Fix missing GraphQL type schema [#376](https://github.com/hypermodeAI/runtime/pull/376)
+
 ## 2024-09-18 - Version 0.12.1
 
 - Fix panic from Go maps with primitive types [#370](https://github.com/hypermodeAI/runtime/pull/370)
