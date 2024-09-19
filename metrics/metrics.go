@@ -78,6 +78,15 @@ var (
 		},
 	)
 
+	// FunctionExecutionDurationMillisecondsSummary is a summary of latencies for wasm function executions of user plugins.
+	FunctionExecutionDurationMillisecondsSummary = prometheus.NewSummary(
+		prometheus.SummaryOpts{
+			Name:       "runtime_function_execution_duration_milliseconds_summary",
+			Help:       "A summary of latencies for wasm function executions of user plugins",
+			Objectives: map[float64]float64{0.5: 0.05, 0.75: 0.025, 0.9: 0.01, 0.99: 0.001},
+		},
+	)
+
 	DroppedInferencesNum = prometheus.NewCounter(
 		prometheus.CounterOpts{
 			Name: "runtime_dropped_inferences_num",
@@ -94,6 +103,7 @@ func init() {
 		httpResponseSizeBytes,
 		FunctionExecutionsNum,
 		FunctionExecutionDurationMilliseconds,
+		FunctionExecutionDurationMillisecondsSummary,
 		DroppedInferencesNum,
 	)
 }

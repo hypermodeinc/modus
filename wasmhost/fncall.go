@@ -147,7 +147,9 @@ func (host *wasmHost) CallFunction(ctx context.Context, fnInfo functions.Functio
 
 	// Update metrics
 	metrics.FunctionExecutionsNum.Inc()
-	metrics.FunctionExecutionDurationMilliseconds.Observe(float64(duration.Milliseconds()))
+	d := float64(duration.Milliseconds())
+	metrics.FunctionExecutionDurationMilliseconds.Observe(d)
+	metrics.FunctionExecutionDurationMillisecondsSummary.Observe(d)
 
 	execInfo.result = result
 	return execInfo, err
