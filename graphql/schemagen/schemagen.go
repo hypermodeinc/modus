@@ -247,7 +247,7 @@ func addUsedTypes(name string, types map[string]*TypeDefinition, usedTypes map[s
 func getBaseType(name string) string {
 	name = strings.TrimSuffix(name, "!")
 	if strings.HasPrefix(name, "[") {
-		return getBaseType(name[1 : len(name)-2])
+		return getBaseType(name[1 : len(name)-1])
 	}
 
 	return name
