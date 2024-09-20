@@ -30,6 +30,7 @@ func TestMain(m *testing.M) {
 	fixture.AddCustomType("testdata.TestStruct2", reflect.TypeFor[TestStruct2]())
 	fixture.AddCustomType("testdata.TestStruct3", reflect.TypeFor[TestStruct3]())
 	fixture.AddCustomType("testdata.TestStruct4", reflect.TypeFor[TestStruct4]())
+	fixture.AddCustomType("testdata.TestStruct5", reflect.TypeFor[TestStruct5]())
 	fixture.AddCustomType("testdata.TestStructWithMap", reflect.TypeFor[testStructWithMap]())
 	fixture.AddCustomType("testdata.TestRecursiveStruct", reflect.TypeFor[TestRecursiveStruct]())
 

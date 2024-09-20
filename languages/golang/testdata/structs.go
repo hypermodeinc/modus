@@ -42,6 +42,24 @@ type TestStruct4_map struct {
 	C *string
 }
 
+type TestStruct5 struct {
+	A string
+	B string
+	C string
+	D []string
+	E float64
+	F float64
+}
+
+type TestStruct5_map struct {
+	A string
+	B string
+	C string
+	D []string
+	E float64
+	F float64
+}
+
 type TestRecursiveStruct struct {
 	A bool
 	B *TestRecursiveStruct
@@ -106,6 +124,32 @@ var testStruct4_map_withNil = TestStruct4_map{
 	C: nil,
 }
 
+var testStruct5 = TestStruct5{
+	A: "abc",
+	B: "def",
+	C: "ghi",
+	D: []string{
+		"jkl",
+		"mno",
+		"pqr",
+	},
+	E: 0.12345,
+	F: 99.99999,
+}
+
+var testStruct5_map = TestStruct5_map{
+	A: "abc",
+	B: "def",
+	C: "ghi",
+	D: []string{
+		"jkl",
+		"mno",
+		"pqr",
+	},
+	E: 0.12345,
+	F: 99.99999,
+}
+
 var testRecursiveStruct = func() TestRecursiveStruct {
 	r := TestRecursiveStruct{
 		A: true,
@@ -138,6 +182,10 @@ func TestStructInput4(o TestStruct4) {
 	assertEqual(testStruct4, o)
 }
 
+func TestStructInput5(o TestStruct5) {
+	assertEqual(testStruct5, o)
+}
+
 func TestStructInput4_withNil(o TestStruct4) {
 	assertEqual(testStruct4_withNil, o)
 }
@@ -162,6 +210,10 @@ func TestStructPtrInput4(o *TestStruct4) {
 	assertEqual(testStruct4, *o)
 }
 
+func TestStructPtrInput5(o *TestStruct5) {
+	assertEqual(testStruct5, *o)
+}
+
 func TestStructPtrInput4_withNil(o *TestStruct4) {
 	assertEqual(testStruct4_withNil, *o)
 }
@@ -183,6 +235,10 @@ func TestStructPtrInput3_nil(o *TestStruct3) {
 }
 
 func TestStructPtrInput4_nil(o *TestStruct4) {
+	assertNil(o)
+}
+
+func TestStructPtrInput5_nil(o *TestStruct5) {
 	assertNil(o)
 }
 
@@ -220,6 +276,14 @@ func TestStructOutput4() TestStruct4 {
 
 func TestStructOutput4_map() TestStruct4_map {
 	return testStruct4_map
+}
+
+func TestStructOutput5() TestStruct5 {
+	return testStruct5
+}
+
+func TestStructOutput5_map() TestStruct5_map {
+	return testStruct5_map
 }
 
 func TestStructOutput4_withNil() TestStruct4 {
@@ -270,6 +334,14 @@ func TestStructPtrOutput4_map() *TestStruct4_map {
 	return &testStruct4_map
 }
 
+func TestStructPtrOutput5() *TestStruct5 {
+	return &testStruct5
+}
+
+func TestStructPtrOutput5_map() *TestStruct5_map {
+	return &testStruct5_map
+}
+
 func TestStructPtrOutput4_withNil() *TestStruct4 {
 	return &testStruct4_withNil
 }
@@ -299,6 +371,10 @@ func TestStructPtrOutput3_nil() *TestStruct3 {
 }
 
 func TestStructPtrOutput4_nil() *TestStruct4 {
+	return nil
+}
+
+func TestStructPtrOutput5_nil() *TestStruct5 {
 	return nil
 }
 
