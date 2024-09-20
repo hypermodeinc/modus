@@ -11,6 +11,7 @@ type TypeInfo interface {
 	GetMapSubtypes(typ string) (string, string)
 	GetNameForType(typ string) string
 	GetSizeOfType(ctx context.Context, typ string) (uint32, error)
+	GetAlignOfType(ctx context.Context, typ string) (uint32, error)
 	GetUnderlyingType(typ string) string
 	IsListType(typ string) bool
 	IsBooleanType(typ string) bool

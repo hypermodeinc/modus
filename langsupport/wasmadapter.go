@@ -14,6 +14,7 @@ import (
 )
 
 type WasmAdapter interface {
+	TypeInfo() TypeInfo
 	Memory() wasm.Memory
 	AllocateMemory(ctx context.Context, size uint32) (uint32, utils.Cleaner, error)
 	GetFunction(name string) wasm.Function

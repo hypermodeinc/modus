@@ -26,21 +26,36 @@ func (p *planner) NewClassHandler(ctx context.Context, typ string, rt reflect.Ty
 	handler.typeDef = typeDef
 
 	offset := uint32(0)
+	maxAlignment := uint32(0)
 	fieldHandlers := make([]langsupport.TypeHandler, len(typeDef.Fields))
+	fieldOffsets := make([]uint32, len(typeDef.Fields))
 	for i, field := range typeDef.Fields {
 		fieldHandler, err := p.GetHandler(ctx, field.Type)
 		if err != nil {
 			return nil, err
 		}
 		fieldHandlers[i] = fieldHandler
-		size := fieldHandler.Info().TypeSize()
-		pad := langsupport.GetAlignmentPadding(offset, size)
-		offset += size + pad
-	}
-	handler.fieldHandlers = fieldHandlers
-	totalSize := offset
 
-	handler.info = langsupport.NewTypeHandlerInfo(typ, rt, totalSize, 0)
+		fieldInfo := fieldHandler.Info()
+		size := fieldInfo.TypeSize()
+		alignment, err := _typeInfo.GetAlignOfType(ctx, field.Type)
+		if err != nil {
+			return nil, err
+		}
+
+		offset = langsupport.AlignOffset(offset, alignment)
+		fieldOffsets[i] = offset
+		offset += size
+
+		if alignment > maxAlignment {
+			maxAlignment = alignment
+		}
+	}
+	classSize := langsupport.AlignOffset(offset, maxAlignment)
+
+	handler.fieldHandlers = fieldHandlers
+	handler.fieldOffsets = fieldOffsets
+	handler.info = langsupport.NewTypeHandlerInfo(typ, rt, classSize, 0)
 
 	return handler, nil
 }
@@ -49,6 +64,7 @@ type classHandler struct {
 	info          langsupport.TypeHandlerInfo
 	typeDef       *metadata.TypeDefinition
 	fieldHandlers []langsupport.TypeHandler
+	fieldOffsets  []uint32
 }
 
 func (h *classHandler) Info() langsupport.TypeHandlerInfo {
@@ -60,33 +76,18 @@ func (h *classHandler) Read(ctx context.Context, wa langsupport.WasmAdapter, off
 		return nil, nil
 	}
 
-	mapData := make(map[string]any, len(h.fieldHandlers))
-	fieldOffset := uint32(0)
+	m := make(map[string]any, len(h.fieldHandlers))
 	for i, field := range h.typeDef.Fields {
 		handler := h.fieldHandlers[i]
-		size := handler.Info().TypeSize()
-		fieldOffset += langsupport.GetAlignmentPadding(fieldOffset, size)
-
-		val, err := handler.Read(ctx, wa, offset+fieldOffset)
+		fieldOffset := offset + h.fieldOffsets[i]
+		val, err := handler.Read(ctx, wa, fieldOffset)
 		if err != nil {
 			return nil, err
 		}
-
-		mapData[field.Name] = val
-		fieldOffset += size
+		m[field.Name] = val
 	}
 
-	rtData := h.info.RuntimeType()
-	if rtData.Kind() == reflect.Map {
-		return mapData, nil
-	}
-
-	rvDataPtr := reflect.New(rtData)
-	if err := utils.MapToStruct(mapData, rvDataPtr.Interface()); err != nil {
-		return nil, err
-	}
-
-	return rvDataPtr.Elem().Interface(), nil
+	return h.getStructOutput(m)
 }
 
 func (h *classHandler) Write(ctx context.Context, wa langsupport.WasmAdapter, offset uint32, obj any) (utils.Cleaner, error) {
@@ -106,9 +107,7 @@ func (h *classHandler) Write(ctx context.Context, wa langsupport.WasmAdapter, of
 
 	cln := utils.NewCleanerN(len(h.fieldHandlers))
 
-	fieldOffset := uint32(0)
 	for i, field := range h.typeDef.Fields {
-
 		var fieldObj any
 		if mapObj != nil {
 			// case sensitive when reading from map
@@ -118,19 +117,27 @@ func (h *classHandler) Write(ctx context.Context, wa langsupport.WasmAdapter, of
 			fieldObj = rvObj.FieldByNameFunc(func(s string) bool { return strings.EqualFold(s, field.Name) }).Interface()
 		}
 
-		size := h.fieldHandlers[i].Info().TypeSize()
-		pad := langsupport.GetAlignmentPadding(fieldOffset, size)
-		fieldOffset += pad
-
+		fieldOffset := offset + h.fieldOffsets[i]
 		handler := h.fieldHandlers[i]
-		c, err := handler.Write(ctx, wa, offset+fieldOffset, fieldObj)
+		c, err := handler.Write(ctx, wa, fieldOffset, fieldObj)
 		cln.AddCleaner(c)
 		if err != nil {
 			return cln, err
 		}
-
-		fieldOffset += size
 	}
 
 	return cln, nil
+}
+
+func (h *classHandler) getStructOutput(data map[string]any) (any, error) {
+	rt := h.info.RuntimeType()
+	if rt.Kind() == reflect.Map {
+		return data, nil
+	}
+
+	rv := reflect.New(rt)
+	if err := utils.MapToStruct(data, rv.Interface()); err != nil {
+		return nil, err
+	}
+	return rv.Elem().Interface(), nil
 }

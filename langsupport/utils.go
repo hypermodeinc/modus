@@ -4,17 +4,7 @@
 
 package langsupport
 
-func GetAlignmentPadding(offset, size uint32) uint32 {
-
-	// maximum alignment is 4 bytes on 32-bit wasm
-	if size > 4 {
-		size = 4
-	}
-
-	mask := size - 1
-	if offset&mask != 0 {
-		return (offset | mask) + 1 - offset
-	}
-
-	return 0
+// AlignOffset returns the smallest y >= x such that y % a == 0.
+func AlignOffset(x, a uint32) uint32 {
+	return (x + a - 1) &^ (a - 1)
 }

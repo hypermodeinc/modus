@@ -438,7 +438,13 @@ func writeIndirectResults(ctx context.Context, wa langsupport.WasmAdapter, plan 
 	fieldOffset := uint32(0)
 	for i, handler := range handlers {
 		size := handler.Info().TypeSize()
-		fieldOffset += langsupport.GetAlignmentPadding(fieldOffset, size)
+		fieldType := handler.Info().TypeName()
+		alignment, err := wa.TypeInfo().GetAlignOfType(ctx, fieldType)
+		if err != nil {
+			return err
+		}
+
+		fieldOffset = langsupport.AlignOffset(fieldOffset, alignment)
 
 		cln, err := handler.Write(ctx, wa, offset+fieldOffset, results[i])
 		cleaner.AddCleaner(cln)

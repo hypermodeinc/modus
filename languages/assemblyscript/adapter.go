@@ -17,7 +17,6 @@ import (
 func NewWasmAdapter(mod wasm.Module) langsupport.WasmAdapter {
 	return &wasmAdapter{
 		mod:                  mod,
-		typeInfo:             _typeInfo,
 		visitedPtrs:          make(map[uint32]int),
 		fnNew:                mod.ExportedFunction("__new"),
 		fnPin:                mod.ExportedFunction("__pin"),
@@ -33,12 +32,15 @@ func NewWasmAdapter_internal(mod wasm.Module) *wasmAdapter {
 
 type wasmAdapter struct {
 	mod                  wasm.Module
-	typeInfo             *typeInfo
 	visitedPtrs          map[uint32]int
 	fnNew                wasm.Function
 	fnPin                wasm.Function
 	fnUnpin              wasm.Function
 	fnSetArgumentsLength wasm.Function
+}
+
+func (*wasmAdapter) TypeInfo() langsupport.TypeInfo {
+	return _typeInfo
 }
 
 func (wa *wasmAdapter) Memory() wasm.Memory {
