@@ -195,29 +195,14 @@ func (ti *typeInfo) GetSizeOfType(ctx context.Context, typ string) (uint32, erro
 		return 4, nil
 	}
 
-	if ti.IsSliceType(typ) {
-		// slice header is a 4 byte pointer, 4 byte length, 4 byte capacity
-		return 12, nil
-	}
-
-	if ti.IsArrayType(typ) {
-		arrSize, err := ti.ArrayLength(typ)
-		if err != nil {
-			return 0, err
-		}
-
-		t := ti.GetListSubtype(typ)
-		elementSize, err := ti.GetSizeOfType(ctx, t)
-		if err != nil {
-			return 0, err
-		}
-
-		return uint32(arrSize) * elementSize, nil
-	}
-
 	if ti.IsMapType(typ) {
 		// maps are passed by reference using a 4 byte pointer
 		return 4, nil
+	}
+
+	if ti.IsSliceType(typ) {
+		// slice header is a 4 byte pointer, 4 byte length, 4 byte capacity
+		return 12, nil
 	}
 
 	if ti.IsTimestampType(typ) {
@@ -225,7 +210,35 @@ func (ti *typeInfo) GetSizeOfType(ctx context.Context, typ string) (uint32, erro
 		return 20, nil
 	}
 
+	if ti.IsArrayType(typ) {
+		return ti.getSizeOfArray(ctx, typ)
+	}
+
 	return ti.getSizeOfStruct(ctx, typ)
+}
+
+func (ti *typeInfo) getSizeOfArray(ctx context.Context, typ string) (uint32, error) {
+	// array size is the element size times the number of elements, aligned to the element size
+	arrSize, err := ti.ArrayLength(typ)
+	if err != nil {
+		return 0, err
+	}
+	if arrSize == 0 {
+		return 0, nil
+	}
+
+	t := ti.GetListSubtype(typ)
+	elementAlignment, err := ti.GetAlignOfType(ctx, t)
+	if err != nil {
+		return 0, err
+	}
+	elementSize, err := ti.GetSizeOfType(ctx, t)
+	if err != nil {
+		return 0, err
+	}
+
+	size := langsupport.AlignOffset(elementSize, elementAlignment)*uint32(arrSize-1) + elementSize
+	return size, nil
 }
 
 func (ti *typeInfo) getSizeOfStruct(ctx context.Context, typ string) (uint32, error) {
@@ -233,19 +246,79 @@ func (ti *typeInfo) getSizeOfStruct(ctx context.Context, typ string) (uint32, er
 	if err != nil {
 		return 0, err
 	}
+	if len(def.Fields) == 0 {
+		return 0, nil
+	}
 
 	offset := uint32(0)
+	maxAlign := uint32(1)
 	for _, field := range def.Fields {
 		size, err := ti.GetSizeOfType(ctx, field.Type)
 		if err != nil {
 			return 0, err
 		}
-
-		pad := langsupport.GetAlignmentPadding(offset, size)
-		offset += size + pad
+		alignment, err := ti.GetAlignOfType(ctx, field.Type)
+		if err != nil {
+			return 0, err
+		}
+		if alignment > maxAlign {
+			maxAlign = alignment
+		}
+		offset = langsupport.AlignOffset(offset, alignment)
+		offset += size
 	}
 
-	return offset, nil
+	size := langsupport.AlignOffset(offset, maxAlign)
+	return size, nil
+}
+
+func (ti *typeInfo) GetAlignOfType(ctx context.Context, typ string) (uint32, error) {
+
+	// reference: https://github.com/tinygo-org/tinygo/blob/release/compiler/sizes.go
+
+	// primitives align to their natural size
+	if ti.IsPrimitiveType(typ) {
+		return ti.GetSizeOfType(ctx, typ)
+	}
+
+	// arrays align to the alignment of their element type
+	if ti.IsArrayType(typ) {
+		t := ti.GetListSubtype(typ)
+		return ti.GetAlignOfType(ctx, t)
+	}
+
+	// reference types align to the pointer size (4 bytes on 32-bit wasm)
+	if ti.IsPointerType(typ) || ti.IsSliceType(typ) || ti.IsStringType(typ) || ti.IsMapType(typ) {
+		return 4, nil
+	}
+
+	// time.Time has 3 fields, the maximum alignment is 8 bytes
+	if ti.IsTimestampType(typ) {
+		return 8, nil
+	}
+
+	// structs align to the maximum alignment of their fields
+	return ti.getAlignOfStruct(ctx, typ)
+}
+
+func (ti *typeInfo) getAlignOfStruct(ctx context.Context, typ string) (uint32, error) {
+	def, err := ti.GetTypeDefinition(ctx, typ)
+	if err != nil {
+		return 0, err
+	}
+
+	max := uint32(1)
+	for _, field := range def.Fields {
+		align, err := ti.GetAlignOfType(ctx, field.Type)
+		if err != nil {
+			return 0, err
+		}
+		if align > max {
+			max = align
+		}
+	}
+
+	return max, nil
 }
 
 func (ti *typeInfo) GetTypeDefinition(ctx context.Context, typ string) (*metadata.TypeDefinition, error) {

@@ -185,6 +185,10 @@ func (ti *typeInfo) GetSizeOfType(ctx context.Context, typ string) (uint32, erro
 	}
 }
 
+func (ti *typeInfo) GetAlignOfType(ctx context.Context, typ string) (uint32, error) {
+	return ti.GetSizeOfType(ctx, typ)
+}
+
 // Deprecated: use metadata.Metadata.GetTypeDefinition instead
 func (ti *typeInfo) GetTypeDefinition(ctx context.Context, typ string) (*metadata.TypeDefinition, error) {
 	md := ctx.Value(utils.MetadataContextKey).(*metadata.Metadata)

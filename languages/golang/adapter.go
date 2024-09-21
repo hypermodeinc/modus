@@ -41,6 +41,10 @@ type wasmAdapter struct {
 	fnWriteMap  wasm.Function
 }
 
+func (*wasmAdapter) TypeInfo() langsupport.TypeInfo {
+	return _typeInfo
+}
+
 func (wa *wasmAdapter) Memory() wasm.Memory {
 	return wa.mod.Memory()
 }

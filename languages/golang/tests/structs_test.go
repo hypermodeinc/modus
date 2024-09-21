@@ -32,6 +32,15 @@ type TestStruct4 struct {
 	C *string
 }
 
+type TestStruct5 struct {
+	A string
+	B string
+	C string
+	D []string
+	E float64
+	F float64
+}
+
 var testStruct1 = TestStruct1{
 	A: true,
 }
@@ -57,6 +66,19 @@ var testStruct4_withNil = TestStruct4{
 	A: true,
 	B: 123,
 	C: nil,
+}
+
+var testStruct5 = TestStruct5{
+	A: "abc",
+	B: "def",
+	C: "ghi",
+	D: []string{
+		"jkl",
+		"mno",
+		"pqr",
+	},
+	E: 0.12345,
+	F: 99.99999,
 }
 
 var testStruct1AsMap = map[string]any{
@@ -86,6 +108,19 @@ var testStruct4AsMap_withNil = map[string]any{
 	"c": nil,
 }
 
+var testStruct5AsMap = map[string]any{
+	"a": "abc",
+	"b": "def",
+	"c": "ghi",
+	"d": []string{
+		"jkl",
+		"mno",
+		"pqr",
+	},
+	"e": 0.12345,
+	"f": 99.99999,
+}
+
 func TestStructInput1(t *testing.T) {
 	if _, err := fixture.CallFunction(t, "testStructInput1", testStruct1); err != nil {
 		t.Fatal(err)
@@ -106,6 +141,12 @@ func TestStructInput3(t *testing.T) {
 
 func TestStructInput4(t *testing.T) {
 	if _, err := fixture.CallFunction(t, "testStructInput4", testStruct4); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestStructInput5(t *testing.T) {
+	if _, err := fixture.CallFunction(t, "testStructInput5", testStruct5); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -152,6 +193,15 @@ func TestStructPtrInput4(t *testing.T) {
 	}
 }
 
+func TestStructPtrInput5(t *testing.T) {
+	if _, err := fixture.CallFunction(t, "testStructPtrInput5", testStruct5); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := fixture.CallFunction(t, "testStructPtrInput5", &testStruct5); err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestStructPtrInput4_withNil(t *testing.T) {
 	if _, err := fixture.CallFunction(t, "testStructPtrInput4_withNil", testStruct4_withNil); err != nil {
 		t.Fatal(err)
@@ -181,6 +231,12 @@ func TestStructInput3_map(t *testing.T) {
 
 func TestStructInput4_map(t *testing.T) {
 	if _, err := fixture.CallFunction(t, "testStructInput4", testStruct4AsMap); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestStructInput5_map(t *testing.T) {
+	if _, err := fixture.CallFunction(t, "testStructInput5", testStruct5AsMap); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -227,6 +283,15 @@ func TestStructPtrInput4_map(t *testing.T) {
 	}
 }
 
+func TestStructPtrInput5_map(t *testing.T) {
+	if _, err := fixture.CallFunction(t, "testStructPtrInput5", testStruct5AsMap); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := fixture.CallFunction(t, "testStructPtrInput5", &testStruct5AsMap); err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestStructPtrInput4_map_withNil(t *testing.T) {
 	if _, err := fixture.CallFunction(t, "testStructPtrInput4_withNil", testStruct4AsMap_withNil); err != nil {
 		t.Fatal(err)
@@ -256,6 +321,12 @@ func TestStructPtrInput3_nil(t *testing.T) {
 
 func TestStructPtrInput4_nil(t *testing.T) {
 	if _, err := fixture.CallFunction(t, "testStructPtrInput4_nil", nil); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestStructPtrInput5_nil(t *testing.T) {
+	if _, err := fixture.CallFunction(t, "testStructPtrInput5_nil", nil); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -322,6 +393,23 @@ func TestStructOutput4(t *testing.T) {
 	if result == nil {
 		t.Error("expected a result")
 	} else if r, ok := result.(TestStruct4); !ok {
+		t.Errorf("expected %T, got %T", expected, result)
+	} else if !reflect.DeepEqual(expected, r) {
+		t.Errorf("expected %v, got %v", expected, r)
+	}
+}
+
+func TestStructOutput5(t *testing.T) {
+	result, err := fixture.CallFunction(t, "testStructOutput5")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expected := testStruct5
+
+	if result == nil {
+		t.Error("expected a result")
+	} else if r, ok := result.(TestStruct5); !ok {
 		t.Errorf("expected %T, got %T", expected, result)
 	} else if !reflect.DeepEqual(expected, r) {
 		t.Errorf("expected %v, got %v", expected, r)
@@ -413,6 +501,23 @@ func TestStructPtrOutput4(t *testing.T) {
 	}
 }
 
+func TestStructPtrOutput5(t *testing.T) {
+	result, err := fixture.CallFunction(t, "testStructPtrOutput5")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expected := &testStruct5
+
+	if result == nil {
+		t.Error("expected a result")
+	} else if r, ok := result.(*TestStruct5); !ok {
+		t.Errorf("expected %T, got %T", expected, result)
+	} else if !reflect.DeepEqual(expected, r) {
+		t.Errorf("expected %v, got %v", expected, r)
+	}
+}
+
 func TestStructPtrOutput4_withNil(t *testing.T) {
 	result, err := fixture.CallFunction(t, "testStructPtrOutput4_withNil")
 	if err != nil {
@@ -488,6 +593,23 @@ func TestStructOutput4_map(t *testing.T) {
 	}
 
 	expected := testStruct4AsMap
+
+	if result == nil {
+		t.Error("expected a result")
+	} else if r, ok := result.(map[string]any); !ok {
+		t.Errorf("expected %T, got %T", expected, result)
+	} else if !reflect.DeepEqual(expected, r) {
+		t.Errorf("expected %v, got %v", expected, r)
+	}
+}
+
+func TestStructOutput5_map(t *testing.T) {
+	result, err := fixture.CallFunction(t, "testStructOutput5_map")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expected := testStruct5AsMap
 
 	if result == nil {
 		t.Error("expected a result")
@@ -583,6 +705,23 @@ func TestStructPtrOutput4_map(t *testing.T) {
 	}
 }
 
+func TestStructPtrOutput5_map(t *testing.T) {
+	result, err := fixture.CallFunction(t, "testStructPtrOutput5_map")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expected := &testStruct5AsMap
+
+	if result == nil {
+		t.Error("expected a result")
+	} else if r, ok := result.(*map[string]any); !ok {
+		t.Errorf("expected %T, got %T", expected, result)
+	} else if !reflect.DeepEqual(expected, r) {
+		t.Errorf("expected %v, got %v", expected, r)
+	}
+}
+
 func TestStructPtrOutput4_map_withNil(t *testing.T) {
 	result, err := fixture.CallFunction(t, "testStructPtrOutput4_map_withNil")
 	if err != nil {
@@ -635,6 +774,17 @@ func TestStructPtrOutput3_nil(t *testing.T) {
 
 func TestStructPtrOutput4_nil(t *testing.T) {
 	result, err := fixture.CallFunction(t, "testStructPtrOutput4_nil")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !utils.HasNil(result) {
+		t.Error("expected a nil result")
+	}
+}
+
+func TestStructPtrOutput5_nil(t *testing.T) {
+	result, err := fixture.CallFunction(t, "testStructPtrOutput5_nil")
 	if err != nil {
 		t.Fatal(err)
 	}

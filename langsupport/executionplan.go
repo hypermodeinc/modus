@@ -208,7 +208,14 @@ func (plan *executionPlan) readIndirectResults(ctx context.Context, wa WasmAdapt
 	fieldOffset := uint32(0)
 	for i, handler := range handlers {
 		size := handler.Info().TypeSize()
-		fieldOffset += GetAlignmentPadding(fieldOffset, size)
+
+		fieldType := handler.Info().TypeName()
+		alignment, err := wa.TypeInfo().GetAlignOfType(ctx, fieldType)
+		if err != nil {
+			return nil, err
+		}
+
+		fieldOffset = AlignOffset(fieldOffset, alignment)
 
 		val, err := handler.Read(ctx, wa, offset+fieldOffset)
 		if err != nil {
