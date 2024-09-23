@@ -14,14 +14,14 @@ import (
 
 var lang_AssemblyScript = langsupport.NewLanguage(
 	"AssemblyScript",
-	assemblyscript.TypeInfo(),
+	assemblyscript.LanguageTypeInfo(),
 	assemblyscript.NewPlanner,
 	assemblyscript.NewWasmAdapter,
 )
 
 var lang_Go = langsupport.NewLanguage(
 	"Go",
-	golang.TypeInfo(),
+	golang.LanguageTypeInfo(),
 	golang.NewPlanner,
 	golang.NewWasmAdapter,
 )

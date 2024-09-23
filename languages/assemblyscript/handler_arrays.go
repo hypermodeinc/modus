@@ -17,42 +17,33 @@ import (
 
 // Reference: https://github.com/AssemblyScript/assemblyscript/blob/main/std/assembly/array.ts
 
-func (p *planner) NewArrayHandler(ctx context.Context, typ string, rt reflect.Type) (managedTypeHandler, error) {
-	handler := new(arrayHandler)
-	handler.info = langsupport.NewTypeHandlerInfo(typ, rt, 16, 0)
+func (p *planner) NewArrayHandler(ctx context.Context, ti langsupport.TypeInfo) (managedTypeHandler, error) {
+	handler := &arrayHandler{
+		typeHandler: *NewTypeHandler(ti),
+	}
 
-	typ = _typeInfo.GetUnderlyingType(typ)
-	typeDef, err := p.metadata.GetTypeDefinition(typ)
+	typeDef, err := p.metadata.GetTypeDefinition(ti.Name())
 	if err != nil {
 		return nil, err
 	}
 	handler.typeDef = typeDef
 
-	elementType := _typeInfo.GetListSubtype(typ)
-	if elementType == "" {
-		return nil, errors.New("array type must have a subtype")
-	}
-
-	elementHandler, err := p.GetHandler(ctx, elementType)
+	elementHandler, err := p.GetHandler(ctx, ti.ListElementType().Name())
 	if err != nil {
 		return nil, err
 	}
 	handler.elementHandler = elementHandler
 
-	handler.emptyValue = reflect.MakeSlice(rt, 0, 0).Interface()
+	handler.emptyValue = reflect.MakeSlice(ti.ReflectedType(), 0, 0).Interface()
 
 	return handler, nil
 }
 
 type arrayHandler struct {
-	info           langsupport.TypeHandlerInfo
+	typeHandler
 	typeDef        *metadata.TypeDefinition
 	elementHandler langsupport.TypeHandler
 	emptyValue     any
-}
-
-func (h *arrayHandler) Info() langsupport.TypeHandlerInfo {
-	return h.info
 }
 
 func (h *arrayHandler) Read(ctx context.Context, wa langsupport.WasmAdapter, offset uint32) (any, error) {
@@ -72,8 +63,8 @@ func (h *arrayHandler) Read(ctx context.Context, wa langsupport.WasmAdapter, off
 		return h.emptyValue, nil
 	}
 
-	elementSize := h.elementHandler.Info().TypeSize()
-	items := reflect.MakeSlice(h.info.RuntimeType(), int(arrLen), int(arrLen))
+	elementSize := h.elementHandler.TypeInfo().Size()
+	items := reflect.MakeSlice(h.typeInfo.ReflectedType(), int(arrLen), int(arrLen))
 	for i := uint32(0); i < arrLen; i++ {
 		itemOffset := data + i*elementSize
 		item, err := h.elementHandler.Read(ctx, wa, itemOffset)
@@ -99,7 +90,7 @@ func (h *arrayHandler) Write(ctx context.Context, wa langsupport.WasmAdapter, of
 	}
 
 	// allocate memory for the buffer
-	elementSize := h.elementHandler.Info().TypeSize()
+	elementSize := h.elementHandler.TypeInfo().Size()
 	bufferSize := arrLen * elementSize
 	bufferOffset, cln, err := wa.AllocateMemory(ctx, bufferSize)
 	if err != nil {

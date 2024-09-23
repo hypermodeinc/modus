@@ -15,33 +15,34 @@ import (
 	"hypruntime/utils"
 )
 
-func (p *planner) NewMapHandler(ctx context.Context, typ string, rt reflect.Type) (langsupport.TypeHandler, error) {
-	handler := NewTypeHandler[mapHandler](p, typ)
+func (p *planner) NewMapHandler(ctx context.Context, ti langsupport.TypeInfo) (langsupport.TypeHandler, error) {
+	handler := &mapHandler{
+		typeHandler: *NewTypeHandler(ti),
+	}
+	p.AddHandler(handler)
 
-	// maps are passed by reference using a 4 byte pointer
-	handler.info = langsupport.NewTypeHandlerInfo(typ, rt, 4, 1)
-
-	typeDef, err := p.metadata.GetTypeDefinition(typ)
+	typeDef, err := p.metadata.GetTypeDefinition(ti.Name())
 	if err != nil {
 		return nil, err
 	}
 	handler.typeDef = typeDef
 
-	keyType, valueType := _typeInfo.GetMapSubtypes(typ)
-	keysHandler, err := p.GetHandler(ctx, "[]"+keyType)
+	keyType := ti.MapKeyType()
+	valueType := ti.MapValueType()
+	keysHandler, err := p.GetHandler(ctx, "[]"+keyType.Name())
 	if err != nil {
 		return nil, err
 	}
 	handler.keysHandler = keysHandler
 
-	valuesHandler, err := p.GetHandler(ctx, "[]"+valueType)
+	valuesHandler, err := p.GetHandler(ctx, "[]"+valueType.Name())
 	if err != nil {
 		return nil, err
 	}
 	handler.valuesHandler = valuesHandler
 
-	rtKey := keysHandler.Info().RuntimeType().Elem()
-	rtValue := valuesHandler.Info().RuntimeType().Elem()
+	rtKey := keyType.ReflectedType()
+	rtValue := valueType.ReflectedType()
 	if !rtKey.Comparable() {
 		handler.usePseudoMap = true
 		handler.rtPseudoMapSlice = reflect.SliceOf(reflect.StructOf([]reflect.StructField{
@@ -70,17 +71,13 @@ func (p *planner) NewMapHandler(ctx context.Context, typ string, rt reflect.Type
 }
 
 type mapHandler struct {
-	info             langsupport.TypeHandlerInfo
+	typeHandler
 	typeDef          *metadata.TypeDefinition
 	keysHandler      langsupport.TypeHandler
 	valuesHandler    langsupport.TypeHandler
 	usePseudoMap     bool
 	rtPseudoMap      reflect.Type
 	rtPseudoMapSlice reflect.Type
-}
-
-func (h *mapHandler) Info() langsupport.TypeHandlerInfo {
-	return h.info
 }
 
 func (h *mapHandler) Read(ctx context.Context, wa langsupport.WasmAdapter, offset uint32) (any, error) {
@@ -90,7 +87,7 @@ func (h *mapHandler) Read(ctx context.Context, wa langsupport.WasmAdapter, offse
 
 	res, err := wa.(*wasmAdapter).fnReadMap.Call(ctx, uint64(h.typeDef.Id), uint64(offset))
 	if err != nil {
-		return nil, fmt.Errorf("failed to read %s from WASM memory: %w", h.Info().TypeName(), err)
+		return nil, fmt.Errorf("failed to read %s from WASM memory: %w", h.typeInfo.Name(), err)
 	}
 	r := res[0]
 
@@ -110,10 +107,10 @@ func (h *mapHandler) Read(ctx context.Context, wa langsupport.WasmAdapter, offse
 	rvVals := reflect.ValueOf(vals)
 	size := rvKeys.Len()
 
-	rtKey := h.keysHandler.Info().RuntimeType().Elem()
+	rtKey := h.keysHandler.TypeInfo().ReflectedType().Elem()
 	if rtKey.Comparable() {
 		// return a map
-		m := reflect.MakeMapWithSize(h.info.RuntimeType(), size)
+		m := reflect.MakeMapWithSize(h.typeInfo.ReflectedType(), size)
 		for i := 0; i < size; i++ {
 			m.SetMapIndex(rvKeys.Index(i), rvVals.Index(i))
 		}
@@ -227,7 +224,7 @@ func (h *mapHandler) doWriteMap(ctx context.Context, wa langsupport.WasmAdapter,
 	}
 
 	if _, err := wa.(*wasmAdapter).fnWriteMap.Call(ctx, uint64(h.typeDef.Id), uint64(pMap), uint64(pKeys), uint64(pVals)); err != nil {
-		return 0, cln, fmt.Errorf("failed to write %s to WASM memory: %w", h.info.TypeName(), err)
+		return 0, cln, fmt.Errorf("failed to write %s to WASM memory: %w", h.typeInfo.Name(), err)
 	}
 
 	return pMap, cln, nil

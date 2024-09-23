@@ -8,25 +8,25 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"reflect"
 
 	"hypruntime/langsupport"
 	"hypruntime/plugins/metadata"
 	"hypruntime/utils"
 )
 
-func (p *planner) NewPointerHandler(ctx context.Context, typ string, rt reflect.Type) (langsupport.TypeHandler, error) {
-	handler := NewTypeHandler[pointerHandler](p, typ)
-	handler.info = langsupport.NewTypeHandlerInfo(typ, rt, 4, 1)
+func (p *planner) NewPointerHandler(ctx context.Context, ti langsupport.TypeInfo) (langsupport.TypeHandler, error) {
+	handler := &pointerHandler{
+		typeHandler: *NewTypeHandler(ti),
+	}
+	p.AddHandler(handler)
 
-	typeDef, err := p.metadata.GetTypeDefinition(typ)
+	typeDef, err := p.metadata.GetTypeDefinition(ti.Name())
 	if err != nil {
 		return nil, err
 	}
 	handler.typeDef = typeDef
 
-	elementType := _typeInfo.GetUnderlyingType(typ)
-	elementHandler, err := p.GetHandler(ctx, elementType)
+	elementHandler, err := p.GetHandler(ctx, ti.UnderlyingType().Name())
 	if err != nil {
 		return nil, err
 	}
@@ -36,13 +36,9 @@ func (p *planner) NewPointerHandler(ctx context.Context, typ string, rt reflect.
 }
 
 type pointerHandler struct {
-	info           langsupport.TypeHandlerInfo
+	typeHandler
 	typeDef        *metadata.TypeDefinition
 	elementHandler langsupport.TypeHandler
-}
-
-func (h *pointerHandler) Info() langsupport.TypeHandlerInfo {
-	return h.info
 }
 
 func (h *pointerHandler) Read(ctx context.Context, wa langsupport.WasmAdapter, offset uint32) (any, error) {

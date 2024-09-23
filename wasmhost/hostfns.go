@@ -351,8 +351,7 @@ func decodeParams(ctx context.Context, wa langsupport.WasmAdapter, fnInfo functi
 	}
 
 	for i, handler := range plan.ParamHandlers() {
-		hInfo := handler.Info()
-		encLength := hInfo.EncodingLength()
+		encLength := int(handler.TypeInfo().EncodingLength())
 		vals := stack[stackPos : stackPos+encLength]
 		stackPos += encLength
 
@@ -380,7 +379,7 @@ func decodeParams(ctx context.Context, wa langsupport.WasmAdapter, fnInfo functi
 		}
 
 		// special case for pointers that need to be dereferenced
-		if hInfo.RuntimeType().Kind() == reflect.Ptr && reflect.TypeOf(params[i]).Kind() != reflect.Ptr {
+		if handler.TypeInfo().ReflectedType().Kind() == reflect.Ptr && reflect.TypeOf(params[i]).Kind() != reflect.Ptr {
 			params[i] = utils.DereferencePointer(data)
 			continue
 		}
@@ -437,9 +436,9 @@ func writeIndirectResults(ctx context.Context, wa langsupport.WasmAdapter, plan 
 
 	fieldOffset := uint32(0)
 	for i, handler := range handlers {
-		size := handler.Info().TypeSize()
-		fieldType := handler.Info().TypeName()
-		alignment, err := wa.TypeInfo().GetAlignOfType(ctx, fieldType)
+		size := handler.TypeInfo().Size()
+		fieldType := handler.TypeInfo().Name()
+		alignment, err := wa.TypeInfo().GetAlignmentOfType(ctx, fieldType)
 		if err != nil {
 			return err
 		}

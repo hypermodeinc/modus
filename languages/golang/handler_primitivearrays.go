@@ -9,81 +9,73 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"time"
 
 	"hypruntime/langsupport"
 	"hypruntime/langsupport/primitives"
 	"hypruntime/utils"
 )
 
-func (p *planner) NewPrimitiveArrayHandler(typ string, rt reflect.Type) (langsupport.TypeHandler, error) {
-	arrayLen, err := _typeInfo.ArrayLength(typ)
+func (p *planner) NewPrimitiveArrayHandler(ti langsupport.TypeInfo) (h langsupport.TypeHandler, err error) {
+	defer func() {
+		if err == nil {
+			p.typeHandlers[ti.Name()] = h
+		}
+	}()
+
+	switch ti.ListElementType().Name() {
+	case "bool":
+		return newPrimitiveArrayHandler[bool](ti)
+	case "uint8", "byte":
+		return newPrimitiveArrayHandler[uint8](ti)
+	case "uint16":
+		return newPrimitiveArrayHandler[uint16](ti)
+	case "uint32":
+		return newPrimitiveArrayHandler[uint32](ti)
+	case "uint64":
+		return newPrimitiveArrayHandler[uint64](ti)
+	case "int8":
+		return newPrimitiveArrayHandler[int8](ti)
+	case "int16":
+		return newPrimitiveArrayHandler[int16](ti)
+	case "int32", "rune":
+		return newPrimitiveArrayHandler[int32](ti)
+	case "int64":
+		return newPrimitiveArrayHandler[int64](ti)
+	case "float32":
+		return newPrimitiveArrayHandler[float32](ti)
+	case "float64":
+		return newPrimitiveArrayHandler[float64](ti)
+	case "int":
+		return newPrimitiveArrayHandler[int](ti)
+	case "uint":
+		return newPrimitiveArrayHandler[uint](ti)
+	case "uintptr":
+		return newPrimitiveArrayHandler[uintptr](ti)
+	case "time.Duration":
+		return newPrimitiveArrayHandler[time.Duration](ti)
+	default:
+		return nil, fmt.Errorf("unsupported primitive array type: %s", ti.Name())
+	}
+}
+
+func newPrimitiveArrayHandler[T primitive](ti langsupport.TypeInfo) (*primitiveArrayHandler[T], error) {
+	arrayLen, err := _langTypeInfo.ArrayLength(ti.Name())
 	if err != nil {
 		return nil, err
 	}
 
-	info := langsupport.NewTypeHandlerInfo(typ, rt, uint32(arrayLen), arrayLen)
-
-	var handler langsupport.TypeHandler
-
-	switch rt.Elem().Kind() {
-	case reflect.Bool:
-		converter := primitives.NewPrimitiveTypeConverter[bool]()
-		handler = &primitiveArrayHandler[bool]{info, converter, arrayLen}
-	case reflect.Int8:
-		converter := primitives.NewPrimitiveTypeConverter[int8]()
-		handler = &primitiveArrayHandler[int8]{info, converter, arrayLen}
-	case reflect.Int16:
-		converter := primitives.NewPrimitiveTypeConverter[int16]()
-		handler = &primitiveArrayHandler[int16]{info, converter, arrayLen}
-	case reflect.Int32:
-		converter := primitives.NewPrimitiveTypeConverter[int32]()
-		handler = &primitiveArrayHandler[int32]{info, converter, arrayLen}
-	case reflect.Int64:
-		converter := primitives.NewPrimitiveTypeConverter[int64]()
-		handler = &primitiveArrayHandler[int64]{info, converter, arrayLen}
-	case reflect.Uint8:
-		converter := primitives.NewPrimitiveTypeConverter[uint8]()
-		handler = &primitiveArrayHandler[uint8]{info, converter, arrayLen}
-	case reflect.Uint16:
-		converter := primitives.NewPrimitiveTypeConverter[uint16]()
-		handler = &primitiveArrayHandler[uint16]{info, converter, arrayLen}
-	case reflect.Uint32:
-		converter := primitives.NewPrimitiveTypeConverter[uint32]()
-		handler = &primitiveArrayHandler[uint32]{info, converter, arrayLen}
-	case reflect.Uint64:
-		converter := primitives.NewPrimitiveTypeConverter[uint64]()
-		handler = &primitiveArrayHandler[uint64]{info, converter, arrayLen}
-	case reflect.Float32:
-		converter := primitives.NewPrimitiveTypeConverter[float32]()
-		handler = &primitiveArrayHandler[float32]{info, converter, arrayLen}
-	case reflect.Float64:
-		converter := primitives.NewPrimitiveTypeConverter[float64]()
-		handler = &primitiveArrayHandler[float64]{info, converter, arrayLen}
-	case reflect.Int:
-		converter := primitives.NewPrimitiveTypeConverter[int]()
-		handler = &primitiveArrayHandler[int]{info, converter, arrayLen}
-	case reflect.Uint:
-		converter := primitives.NewPrimitiveTypeConverter[uint]()
-		handler = &primitiveArrayHandler[uint]{info, converter, arrayLen}
-	case reflect.Uintptr:
-		converter := primitives.NewPrimitiveTypeConverter[uintptr]()
-		handler = &primitiveArrayHandler[uintptr]{info, converter, arrayLen}
-	default:
-		return nil, fmt.Errorf("unsupported primitive array type: %s", typ)
-	}
-
-	p.typeHandlers[typ] = handler
-	return handler, nil
+	return &primitiveArrayHandler[T]{
+		*NewTypeHandler(ti),
+		primitives.NewPrimitiveTypeConverter[T](),
+		arrayLen,
+	}, nil
 }
 
 type primitiveArrayHandler[T primitive] struct {
-	info      langsupport.TypeHandlerInfo
+	typeHandler
 	converter primitives.TypeConverter[T]
 	arrayLen  int
-}
-
-func (h *primitiveArrayHandler[T]) Info() langsupport.TypeHandlerInfo {
-	return h.info
 }
 
 func (h *primitiveArrayHandler[T]) Read(ctx context.Context, wa langsupport.WasmAdapter, offset uint32) (any, error) {
@@ -100,7 +92,7 @@ func (h *primitiveArrayHandler[T]) Read(ctx context.Context, wa langsupport.Wasm
 	items := h.converter.BytesToSlice(buf)
 
 	// convert the slice to an array of the target type
-	array := reflect.New(h.info.RuntimeType()).Elem()
+	array := reflect.New(h.typeInfo.ReflectedType()).Elem()
 	for i := 0; i < h.arrayLen; i++ {
 		array.Index(i).Set(reflect.ValueOf(items[i]))
 	}
@@ -122,7 +114,7 @@ func (h *primitiveArrayHandler[T]) Write(ctx context.Context, wa langsupport.Was
 
 	bytes := h.converter.SliceToBytes(items)
 	if ok := wa.Memory().Write(offset, bytes); !ok {
-		return nil, fmt.Errorf("failed to write primitive array to WASM memory of type %s", h.info.TypeName())
+		return nil, fmt.Errorf("failed to write primitive array to WASM memory of type %s", h.typeInfo.Name())
 	}
 
 	return nil, nil
@@ -133,7 +125,7 @@ func (h *primitiveArrayHandler[T]) Decode(ctx context.Context, wa langsupport.Wa
 		return [0]T{}, nil
 	}
 
-	rvItems := reflect.New(h.info.RuntimeType()).Elem()
+	rvItems := reflect.New(h.typeInfo.ReflectedType()).Elem()
 	for i := 0; i < h.arrayLen; i++ {
 		item := h.converter.Decode(vals[i])
 		ptr := rvItems.Index(i).Addr().UnsafePointer()
