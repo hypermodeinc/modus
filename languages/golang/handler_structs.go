@@ -18,61 +18,36 @@ import (
 
 const maxDepth = 5 // TODO: make this based on the depth requested in the query
 
-func (p *planner) NewStructHandler(ctx context.Context, typ string, rt reflect.Type) (langsupport.TypeHandler, error) {
-	handler := NewTypeHandler[structHandler](p, typ)
+func (p *planner) NewStructHandler(ctx context.Context, ti langsupport.TypeInfo) (langsupport.TypeHandler, error) {
+	handler := &structHandler{
+		typeHandler: *NewTypeHandler(ti),
+	}
+	p.AddHandler(handler)
 
-	typeDef, err := p.metadata.GetTypeDefinition(typ)
+	typeDef, err := p.metadata.GetTypeDefinition(ti.Name())
 	if err != nil {
 		return nil, err
 	}
 	handler.typeDef = typeDef
 
-	offset := uint32(0)
-	maxAlignment := uint32(0)
-	encodingLength := 0
-	fieldHandlers := make([]langsupport.TypeHandler, len(typeDef.Fields))
-	fieldOffsets := make([]uint32, len(typeDef.Fields))
-	for i, field := range typeDef.Fields {
-		fieldHandler, err := p.GetHandler(ctx, field.Type)
+	fieldTypes := ti.ObjectFieldTypes()
+	fieldHandlers := make([]langsupport.TypeHandler, len(fieldTypes))
+	for i, fieldType := range fieldTypes {
+		fieldHandler, err := p.GetHandler(ctx, fieldType.Name())
 		if err != nil {
 			return nil, err
 		}
-
 		fieldHandlers[i] = fieldHandler
-		fieldInfo := fieldHandler.Info()
-		size := fieldInfo.TypeSize()
-		alignment, err := _typeInfo.GetAlignOfType(ctx, field.Type)
-		if err != nil {
-			return nil, err
-		}
-		encodingLength += fieldInfo.EncodingLength()
-
-		offset = langsupport.AlignOffset(offset, alignment)
-		fieldOffsets[i] = offset
-		offset += size
-
-		if alignment > maxAlignment {
-			maxAlignment = alignment
-		}
 	}
-	structSize := langsupport.AlignOffset(offset, maxAlignment)
 
 	handler.fieldHandlers = fieldHandlers
-	handler.fieldOffsets = fieldOffsets
-	handler.info = langsupport.NewTypeHandlerInfo(typ, rt, structSize, encodingLength)
-
 	return handler, nil
 }
 
 type structHandler struct {
-	info          langsupport.TypeHandlerInfo
+	typeHandler
 	typeDef       *metadata.TypeDefinition
 	fieldHandlers []langsupport.TypeHandler
-	fieldOffsets  []uint32
-}
-
-func (h *structHandler) Info() langsupport.TypeHandlerInfo {
-	return h.info
 }
 
 func (h *structHandler) Read(ctx context.Context, wa langsupport.WasmAdapter, offset uint32) (any, error) {
@@ -80,7 +55,7 @@ func (h *structHandler) Read(ctx context.Context, wa langsupport.WasmAdapter, of
 	// Check for recursion
 	visitedPtrs := wa.(*wasmAdapter).visitedPtrs
 	if visitedPtrs[offset] >= maxDepth {
-		logger.Warn(ctx).Bool("user_visible", true).Msgf("Excessive recursion detected in %s. Stopping at depth %d.", h.info.TypeName(), maxDepth)
+		logger.Warn(ctx).Bool("user_visible", true).Msgf("Excessive recursion detected in %s. Stopping at depth %d.", h.typeInfo.Name(), maxDepth)
 		return nil, nil
 	}
 	visitedPtrs[offset]++
@@ -93,10 +68,12 @@ func (h *structHandler) Read(ctx context.Context, wa langsupport.WasmAdapter, of
 		}
 	}()
 
+	fieldOffsets := h.typeInfo.ObjectFieldOffsets()
+
 	m := make(map[string]any, len(h.fieldHandlers))
 	for i, field := range h.typeDef.Fields {
 		handler := h.fieldHandlers[i]
-		fieldOffset := offset + h.fieldOffsets[i]
+		fieldOffset := offset + fieldOffsets[i]
 		val, err := handler.Read(ctx, wa, fieldOffset)
 		if err != nil {
 			return nil, err
@@ -120,6 +97,7 @@ func (h *structHandler) Write(ctx context.Context, wa langsupport.WasmAdapter, o
 	}
 
 	numFields := len(h.typeDef.Fields)
+	fieldOffsets := h.typeInfo.ObjectFieldOffsets()
 	cleaner := utils.NewCleanerN(numFields)
 
 	for i, field := range h.typeDef.Fields {
@@ -132,7 +110,7 @@ func (h *structHandler) Write(ctx context.Context, wa langsupport.WasmAdapter, o
 			fieldObj = rvObj.FieldByNameFunc(func(s string) bool { return strings.EqualFold(s, field.Name) }).Interface()
 		}
 
-		fieldOffset := offset + h.fieldOffsets[i]
+		fieldOffset := offset + fieldOffsets[i]
 		handler := h.fieldHandlers[i]
 		cln, err := handler.Write(ctx, wa, fieldOffset, fieldObj)
 		cleaner.AddCleaner(cln)
@@ -158,7 +136,7 @@ func (h *structHandler) Decode(ctx context.Context, wa langsupport.WasmAdapter, 
 	}
 
 	// this doesn't need to be supported until TinyGo implements multi-value returns
-	return nil, fmt.Errorf("decoding struct of type %s is not supported", h.info.TypeName())
+	return nil, fmt.Errorf("decoding struct of type %s is not supported", h.typeInfo.Name())
 }
 
 func (h *structHandler) Encode(ctx context.Context, wa langsupport.WasmAdapter, obj any) ([]uint64, utils.Cleaner, error) {
@@ -200,7 +178,7 @@ func (h *structHandler) Encode(ctx context.Context, wa langsupport.WasmAdapter, 
 }
 
 func (h *structHandler) getStructOutput(data map[string]any) (any, error) {
-	rt := h.info.RuntimeType()
+	rt := h.typeInfo.ReflectedType()
 	if rt.Kind() == reflect.Map {
 		return data, nil
 	}

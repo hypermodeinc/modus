@@ -12,20 +12,23 @@ import (
 	"time"
 
 	"hypruntime/langsupport"
-	"hypruntime/plugins/metadata"
 	"hypruntime/utils"
 )
 
-var _typeInfo = &typeInfo{}
+var _langTypeInfo = &langTypeInfo{}
 
-func TypeInfo() langsupport.TypeInfo {
-	return _typeInfo
+func LanguageTypeInfo() langsupport.LanguageTypeInfo {
+	return _langTypeInfo
 }
 
-type typeInfo struct{}
+func GetTypeInfo(ctx context.Context, typeName string, typeCache map[string]langsupport.TypeInfo) (langsupport.TypeInfo, error) {
+	return langsupport.GetTypeInfo(ctx, _langTypeInfo, typeName, typeCache)
+}
 
-func (ti *typeInfo) GetListSubtype(typ string) string {
-	typ = ti.GetUnderlyingType(typ)
+type langTypeInfo struct{}
+
+func (lti *langTypeInfo) GetListSubtype(typ string) string {
+	typ = lti.GetUnderlyingType(typ)
 	if strings.HasPrefix(typ, "~lib/array/Array<") {
 		return typ[17 : len(typ)-1]
 	}
@@ -33,8 +36,8 @@ func (ti *typeInfo) GetListSubtype(typ string) string {
 	return ""
 }
 
-func (ti *typeInfo) GetMapSubtypes(typ string) (string, string) {
-	typ = ti.GetUnderlyingType(typ)
+func (lti *langTypeInfo) GetMapSubtypes(typ string) (string, string) {
+	typ = lti.GetUnderlyingType(typ)
 	prefix := "~lib/map/Map<"
 	if !strings.HasPrefix(typ, prefix) {
 		return "", ""
@@ -61,22 +64,22 @@ func (ti *typeInfo) GetMapSubtypes(typ string) (string, string) {
 	return "", ""
 }
 
-func (ti *typeInfo) GetNameForType(typ string) string {
-	s := ti.GetUnderlyingType(typ)
+func (lti *langTypeInfo) GetNameForType(typ string) string {
+	s := lti.GetUnderlyingType(typ)
 
-	if ti.IsListType(s) {
-		return ti.GetNameForType(ti.GetListSubtype(s)) + "[]"
+	if lti.IsListType(s) {
+		return lti.GetNameForType(lti.GetListSubtype(s)) + "[]"
 	}
 
-	if ti.IsMapType(s) {
-		kt, vt := ti.GetMapSubtypes(s)
-		return "Map<" + ti.GetNameForType(kt) + "," + ti.GetNameForType(vt) + ">"
+	if lti.IsMapType(s) {
+		kt, vt := lti.GetMapSubtypes(s)
+		return "Map<" + lti.GetNameForType(kt) + "," + lti.GetNameForType(vt) + ">"
 	}
 
 	return s[strings.LastIndex(s, "/")+1:]
 }
 
-func (ti *typeInfo) GetUnderlyingType(typ string) string {
+func (lti *langTypeInfo) GetUnderlyingType(typ string) string {
 	if s, ok := strings.CutSuffix(typ, " | null"); ok {
 		return s
 	} else {
@@ -84,20 +87,20 @@ func (ti *typeInfo) GetUnderlyingType(typ string) string {
 	}
 }
 
-func (ti *typeInfo) IsNullable(typ string) bool {
+func (lti *langTypeInfo) IsNullableType(typ string) bool {
 	return strings.HasSuffix(typ, " | null") || strings.HasSuffix(typ, "|null")
 }
 
-func (ti *typeInfo) IsListType(typ string) bool {
+func (lti *langTypeInfo) IsListType(typ string) bool {
 	return strings.HasPrefix(typ, "~lib/array/Array<")
 }
 
-func (ti *typeInfo) IsBooleanType(typ string) bool {
+func (lti *langTypeInfo) IsBooleanType(typ string) bool {
 	return typ == "bool"
 }
 
-func (ti *typeInfo) IsByteSequenceType(typ string) bool {
-	typ = ti.GetUnderlyingType(typ)
+func (lti *langTypeInfo) IsByteSequenceType(typ string) bool {
+	typ = lti.GetUnderlyingType(typ)
 	switch typ {
 	case
 		"~lib/arraybuffer/ArrayBuffer",
@@ -110,7 +113,7 @@ func (ti *typeInfo) IsByteSequenceType(typ string) bool {
 	}
 }
 
-func (ti *typeInfo) IsFloatType(typ string) bool {
+func (lti *langTypeInfo) IsFloatType(typ string) bool {
 	switch typ {
 	case "f32", "f64":
 		return true
@@ -119,7 +122,7 @@ func (ti *typeInfo) IsFloatType(typ string) bool {
 	}
 }
 
-func (ti *typeInfo) IsIntegerType(typ string) bool {
+func (lti *langTypeInfo) IsIntegerType(typ string) bool {
 	switch typ {
 	case "i8", "i16", "i32", "i64",
 		"u8", "u16", "u32", "u64",
@@ -130,16 +133,30 @@ func (ti *typeInfo) IsIntegerType(typ string) bool {
 	}
 }
 
-func (ti *typeInfo) IsMapType(typ string) bool {
-	typ = ti.GetUnderlyingType(typ)
+func (lti *langTypeInfo) IsMapType(typ string) bool {
+	typ = lti.GetUnderlyingType(typ)
 	return strings.HasPrefix(typ, "~lib/map/Map<")
 }
 
-func (ti *typeInfo) IsPrimitiveType(typ string) bool {
-	return ti.IsBooleanType(typ) || ti.IsIntegerType(typ) || ti.IsFloatType(typ)
+func (lti *langTypeInfo) IsObjectType(typ string) bool {
+	return !lti.IsPrimitiveType(typ) &&
+		!lti.IsListType(typ) &&
+		!lti.IsMapType(typ) &&
+		!lti.IsStringType(typ) &&
+		!lti.IsTimestampType(typ) &&
+		!lti.IsArrayBufferType(typ) &&
+		!lti.IsTypedArrayType(typ)
 }
 
-func (ti *typeInfo) IsSignedIntegerType(typ string) bool {
+func (lti *langTypeInfo) IsPointerType(typ string) bool {
+	return false // assemblyscript does not have pointer types
+}
+
+func (lti *langTypeInfo) IsPrimitiveType(typ string) bool {
+	return lti.IsBooleanType(typ) || lti.IsIntegerType(typ) || lti.IsFloatType(typ)
+}
+
+func (lti *langTypeInfo) IsSignedIntegerType(typ string) bool {
 	switch typ {
 	case "i8", "i16", "i32", "i64", "isize":
 		return true
@@ -148,20 +165,20 @@ func (ti *typeInfo) IsSignedIntegerType(typ string) bool {
 	}
 }
 
-func (ti *typeInfo) IsStringType(typ string) bool {
-	return ti.GetUnderlyingType(typ) == "~lib/string/String"
+func (lti *langTypeInfo) IsStringType(typ string) bool {
+	return lti.GetUnderlyingType(typ) == "~lib/string/String"
 }
 
-func (ti *typeInfo) IsArrayBufferType(typ string) bool {
-	return ti.GetUnderlyingType(typ) == "~lib/arraybuffer/ArrayBuffer"
+func (lti *langTypeInfo) IsArrayBufferType(typ string) bool {
+	return lti.GetUnderlyingType(typ) == "~lib/arraybuffer/ArrayBuffer"
 }
 
-func (ti *typeInfo) IsTypedArrayType(typ string) bool {
+func (lti *langTypeInfo) IsTypedArrayType(typ string) bool {
 	return strings.HasPrefix(typ, "~lib/typedarray/")
 }
 
-func (ti *typeInfo) IsTimestampType(typ string) bool {
-	typ = ti.GetUnderlyingType(typ)
+func (lti *langTypeInfo) IsTimestampType(typ string) bool {
+	typ = lti.GetUnderlyingType(typ)
 	switch typ {
 	case "Date", "~lib/date/Date", "~lib/wasi_date/wasi_Date":
 		return true
@@ -170,7 +187,7 @@ func (ti *typeInfo) IsTimestampType(typ string) bool {
 	}
 }
 
-func (ti *typeInfo) GetSizeOfType(ctx context.Context, typ string) (uint32, error) {
+func (lti *langTypeInfo) GetSizeOfType(ctx context.Context, typ string) (uint32, error) {
 	switch typ {
 	case "u64", "i64", "f64":
 		return 8, nil
@@ -185,28 +202,52 @@ func (ti *typeInfo) GetSizeOfType(ctx context.Context, typ string) (uint32, erro
 	}
 }
 
-func (ti *typeInfo) GetAlignOfType(ctx context.Context, typ string) (uint32, error) {
-	return ti.GetSizeOfType(ctx, typ)
+func (lti *langTypeInfo) GetAlignmentOfType(ctx context.Context, typ string) (uint32, error) {
+	return lti.GetSizeOfType(ctx, typ)
 }
 
-// Deprecated: use metadata.Metadata.GetTypeDefinition instead
-func (ti *typeInfo) GetTypeDefinition(ctx context.Context, typ string) (*metadata.TypeDefinition, error) {
-	md := ctx.Value(utils.MetadataContextKey).(*metadata.Metadata)
-	return md.GetTypeDefinition(typ)
+func (lti *langTypeInfo) GetDataSizeOfType(ctx context.Context, typ string) (uint32, error) {
+	switch typ {
+	case "u64", "i64", "f64":
+		return 8, nil
+	case "u32", "i32", "f32", "isize", "usize":
+		return 4, nil
+	case "u16", "i16":
+		return 2, nil
+	case "u8", "i8", "bool":
+		return 1, nil
+	}
+
+	if lti.IsListType(typ) {
+		return 16, nil
+	} else if lti.IsMapType(typ) {
+		return 24, nil
+	} else if lti.IsTypedArrayType(typ) {
+		return 12, nil
+	} else if lti.IsTimestampType(typ) {
+		return 20, nil
+	}
+
+	// calculate dynamic size later
+	return 0, nil
 }
 
-func (ti *typeInfo) GetReflectedType(ctx context.Context, typ string) (reflect.Type, error) {
+func (lti *langTypeInfo) GetEncodingLengthOfType(ctx context.Context, typ string) (uint32, error) {
+	return 1, nil
+}
+
+func (lti *langTypeInfo) GetReflectedType(ctx context.Context, typ string) (reflect.Type, error) {
 	if customTypes, ok := ctx.Value(utils.CustomTypesContextKey).(map[string]reflect.Type); ok {
-		return ti.getReflectedType(typ, customTypes)
+		return lti.getReflectedType(typ, customTypes)
 	} else {
-		return ti.getReflectedType(typ, nil)
+		return lti.getReflectedType(typ, nil)
 	}
 }
 
-func (ti *typeInfo) getReflectedType(typ string, customTypes map[string]reflect.Type) (reflect.Type, error) {
+func (lti *langTypeInfo) getReflectedType(typ string, customTypes map[string]reflect.Type) (reflect.Type, error) {
 
-	if ti.IsNullable(typ) {
-		rt, err := ti.getReflectedType(ti.GetUnderlyingType(typ), customTypes)
+	if lti.IsNullableType(typ) {
+		rt, err := lti.getReflectedType(lti.GetUnderlyingType(typ), customTypes)
 		if err != nil {
 			return nil, err
 		}
@@ -227,30 +268,30 @@ func (ti *typeInfo) getReflectedType(typ string, customTypes map[string]reflect.
 		return rt, nil
 	}
 
-	if ti.IsListType(typ) {
-		et := ti.GetListSubtype(typ)
+	if lti.IsListType(typ) {
+		et := lti.GetListSubtype(typ)
 		if et == "" {
 			return nil, fmt.Errorf("invalid array type: %s", typ)
 		}
 
-		elementType, err := ti.getReflectedType(et, customTypes)
+		elementType, err := lti.getReflectedType(et, customTypes)
 		if err != nil {
 			return nil, err
 		}
 		return reflect.SliceOf(elementType), nil
 	}
 
-	if ti.IsMapType(typ) {
-		kt, vt := ti.GetMapSubtypes(typ)
+	if lti.IsMapType(typ) {
+		kt, vt := lti.GetMapSubtypes(typ)
 		if kt == "" || vt == "" {
 			return nil, fmt.Errorf("invalid map type: %s", typ)
 		}
 
-		keyType, err := ti.getReflectedType(kt, customTypes)
+		keyType, err := lti.getReflectedType(kt, customTypes)
 		if err != nil {
 			return nil, err
 		}
-		valType, err := ti.getReflectedType(vt, customTypes)
+		valType, err := lti.getReflectedType(vt, customTypes)
 		if err != nil {
 			return nil, err
 		}

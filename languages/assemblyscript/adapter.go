@@ -39,8 +39,8 @@ type wasmAdapter struct {
 	fnSetArgumentsLength wasm.Function
 }
 
-func (*wasmAdapter) TypeInfo() langsupport.TypeInfo {
-	return _typeInfo
+func (*wasmAdapter) TypeInfo() langsupport.LanguageTypeInfo {
+	return _langTypeInfo
 }
 
 func (wa *wasmAdapter) Memory() wasm.Memory {

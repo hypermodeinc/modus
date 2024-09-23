@@ -8,7 +8,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"reflect"
 
 	"hypruntime/langsupport"
 	"hypruntime/langsupport/primitives"
@@ -18,58 +17,50 @@ import (
 	"golang.org/x/exp/constraints"
 )
 
-func (p *planner) NewTypedArrayHandler(typ string, rt reflect.Type) (managedTypeHandler, error) {
-	info := langsupport.NewTypeHandlerInfo(typ, rt, 12, 1)
-	typ = _typeInfo.GetUnderlyingType(typ)
-	typeDef, err := p.metadata.GetTypeDefinition(typ)
+func (p *planner) NewTypedArrayHandler(ti langsupport.TypeInfo) (managedTypeHandler, error) {
+	typeDef, err := p.metadata.GetTypeDefinition(ti.Name())
 	if err != nil {
 		return nil, err
 	}
 
-	switch typ {
+	switch ti.Name() {
 	case "~lib/typedarray/Uint8Array", "~lib/typedarray/Uint8ClampedArray":
-		converter := primitives.NewPrimitiveTypeConverter[uint8]()
-		return &typedArrayHandler[uint8]{info, typeDef, converter}, nil
+		return newTypedArrayHandler[uint8](ti, typeDef), nil
 	case "~lib/typedarray/Uint16Array":
-		converter := primitives.NewPrimitiveTypeConverter[uint16]()
-		return &typedArrayHandler[uint16]{info, typeDef, converter}, nil
+		return newTypedArrayHandler[uint16](ti, typeDef), nil
 	case "~lib/typedarray/Uint32Array":
-		converter := primitives.NewPrimitiveTypeConverter[uint32]()
-		return &typedArrayHandler[uint32]{info, typeDef, converter}, nil
+		return newTypedArrayHandler[uint32](ti, typeDef), nil
 	case "~lib/typedarray/Uint64Array":
-		converter := primitives.NewPrimitiveTypeConverter[uint64]()
-		return &typedArrayHandler[uint64]{info, typeDef, converter}, nil
+		return newTypedArrayHandler[uint64](ti, typeDef), nil
 	case "~lib/typedarray/Int8Array":
-		converter := primitives.NewPrimitiveTypeConverter[int8]()
-		return &typedArrayHandler[int8]{info, typeDef, converter}, nil
+		return newTypedArrayHandler[int8](ti, typeDef), nil
 	case "~lib/typedarray/Int16Array":
-		converter := primitives.NewPrimitiveTypeConverter[int16]()
-		return &typedArrayHandler[int16]{info, typeDef, converter}, nil
+		return newTypedArrayHandler[int16](ti, typeDef), nil
 	case "~lib/typedarray/Int32Array":
-		converter := primitives.NewPrimitiveTypeConverter[int32]()
-		return &typedArrayHandler[int32]{info, typeDef, converter}, nil
+		return newTypedArrayHandler[int32](ti, typeDef), nil
 	case "~lib/typedarray/Int64Array":
-		converter := primitives.NewPrimitiveTypeConverter[int64]()
-		return &typedArrayHandler[int64]{info, typeDef, converter}, nil
+		return newTypedArrayHandler[int64](ti, typeDef), nil
 	case "~lib/typedarray/Float32Array":
-		converter := primitives.NewPrimitiveTypeConverter[float32]()
-		return &typedArrayHandler[float32]{info, typeDef, converter}, nil
+		return newTypedArrayHandler[float32](ti, typeDef), nil
 	case "~lib/typedarray/Float64Array":
-		converter := primitives.NewPrimitiveTypeConverter[float64]()
-		return &typedArrayHandler[float64]{info, typeDef, converter}, nil
+		return newTypedArrayHandler[float64](ti, typeDef), nil
 	default:
-		return nil, fmt.Errorf("unsupported typed array type: %s", typ)
+		return nil, fmt.Errorf("unsupported typed array type: %s", ti.Name())
+	}
+}
+
+func newTypedArrayHandler[T constraints.Integer | constraints.Float](ti langsupport.TypeInfo, typeDef *metadata.TypeDefinition) *typedArrayHandler[T] {
+	return &typedArrayHandler[T]{
+		*NewTypeHandler(ti),
+		typeDef,
+		primitives.NewPrimitiveTypeConverter[T](),
 	}
 }
 
 type typedArrayHandler[T constraints.Integer | constraints.Float] struct {
-	info      langsupport.TypeHandlerInfo
+	typeHandler
 	typeDef   *metadata.TypeDefinition
 	converter primitives.TypeConverter[T]
-}
-
-func (h *typedArrayHandler[T]) Info() langsupport.TypeHandlerInfo {
-	return h.info
 }
 
 func (h *typedArrayHandler[T]) Read(ctx context.Context, wa langsupport.WasmAdapter, offset uint32) (any, error) {
@@ -83,12 +74,12 @@ func (h *typedArrayHandler[T]) Read(ctx context.Context, wa langsupport.WasmAdap
 
 	dataStart, ok := wa.Memory().ReadUint32Le(offset + 4)
 	if !ok {
-		return nil, fmt.Errorf("failed to read data start address for %s", h.info.TypeName())
+		return nil, fmt.Errorf("failed to read data start address for %s", h.typeInfo.Name())
 	}
 
 	byteLen, ok := wa.Memory().ReadUint32Le(offset + 8)
 	if !ok {
-		return nil, fmt.Errorf("failed to read byte length for %s", h.info.TypeName())
+		return nil, fmt.Errorf("failed to read byte length for %s", h.typeInfo.Name())
 	} else if byteLen == 0 {
 		// empty typed array
 		return []T{}, nil
@@ -123,7 +114,7 @@ func (h *typedArrayHandler[T]) Write(ctx context.Context, wa langsupport.WasmAda
 
 	// write the buffer
 	if ok := wa.Memory().Write(ptr, bytes); !ok {
-		return cln, fmt.Errorf("failed to write typed array data for %s", h.info.TypeName())
+		return cln, fmt.Errorf("failed to write typed array data for %s", h.typeInfo.Name())
 	}
 
 	// write the typed array object

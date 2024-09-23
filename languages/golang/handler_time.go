@@ -8,7 +8,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"reflect"
 	"time"
 	"unsafe"
 
@@ -16,20 +15,14 @@ import (
 	"hypruntime/utils"
 )
 
-func (p *planner) NewTimeHandler(typ string, rt reflect.Type) (langsupport.TypeHandler, error) {
-	handler := NewTypeHandler[timeHandler](p, typ)
-
-	// time.Time has 3 fields: 8 byte uint64, 8 byte int64, 4 byte pointer
-	handler.info = langsupport.NewTypeHandlerInfo(typ, rt, 20, 3)
+func (p *planner) NewTimeHandler(ti langsupport.TypeInfo) (langsupport.TypeHandler, error) {
+	handler := &timeHandler{*NewTypeHandler(ti)}
+	p.AddHandler(handler)
 	return handler, nil
 }
 
 type timeHandler struct {
-	info langsupport.TypeHandlerInfo
-}
-
-func (h *timeHandler) Info() langsupport.TypeHandlerInfo {
-	return h.info
+	typeHandler
 }
 
 func (h *timeHandler) Read(ctx context.Context, wa langsupport.WasmAdapter, offset uint32) (any, error) {

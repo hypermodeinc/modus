@@ -8,7 +8,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"reflect"
 	"unsafe"
 
 	"hypruntime/langsupport"
@@ -17,20 +16,14 @@ import (
 	"github.com/spf13/cast"
 )
 
-func (p *planner) NewStringHandler(typ string, rt reflect.Type) (langsupport.TypeHandler, error) {
-	handler := NewTypeHandler[stringHandler](p, typ)
-
-	// string header is 2 fields: 4 byte pointer and 4 byte length
-	handler.info = langsupport.NewTypeHandlerInfo(typ, rt, 8, 2)
+func (p *planner) NewStringHandler(ti langsupport.TypeInfo) (langsupport.TypeHandler, error) {
+	handler := &stringHandler{*NewTypeHandler(ti)}
+	p.AddHandler(handler)
 	return handler, nil
 }
 
 type stringHandler struct {
-	info langsupport.TypeHandlerInfo
-}
-
-func (h *stringHandler) Info() langsupport.TypeHandlerInfo {
-	return h.info
+	typeHandler
 }
 
 func (h *stringHandler) Read(ctx context.Context, wa langsupport.WasmAdapter, offset uint32) (any, error) {

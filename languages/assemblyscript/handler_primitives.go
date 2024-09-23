@@ -7,7 +7,6 @@ package assemblyscript
 import (
 	"context"
 	"fmt"
-	"reflect"
 
 	"hypruntime/langsupport"
 	"hypruntime/langsupport/primitives"
@@ -20,84 +19,61 @@ type primitive interface {
 	constraints.Integer | constraints.Float | ~bool
 }
 
-func (p *planner) NewPrimitiveHandler(typ string, rt reflect.Type) (h langsupport.TypeHandler, err error) {
+func (p *planner) NewPrimitiveHandler(ti langsupport.TypeInfo) (h langsupport.TypeHandler, err error) {
 	defer func() {
 		if err == nil {
-			p.typeHandlers[typ] = h
+			p.typeHandlers[ti.Name()] = h
 		}
 	}()
 
-	switch typ {
+	switch ti.Name() {
 	case "bool":
-		info := langsupport.NewTypeHandlerInfo(typ, rt, 1, 1)
-		converter := primitives.NewPrimitiveTypeConverter[bool]()
-		return &primitiveHandler[bool]{info, converter}, nil
+		return newPrimitiveHandler[bool](ti), nil
 	case "u8":
-		info := langsupport.NewTypeHandlerInfo(typ, rt, 1, 1)
-		converter := primitives.NewPrimitiveTypeConverter[uint8]()
-		return &primitiveHandler[uint8]{info, converter}, nil
+		return newPrimitiveHandler[uint8](ti), nil
 	case "u16":
-		info := langsupport.NewTypeHandlerInfo(typ, rt, 2, 1)
-		converter := primitives.NewPrimitiveTypeConverter[uint16]()
-		return &primitiveHandler[uint16]{info, converter}, nil
+		return newPrimitiveHandler[uint16](ti), nil
 	case "u32":
-		info := langsupport.NewTypeHandlerInfo(typ, rt, 4, 1)
-		converter := primitives.NewPrimitiveTypeConverter[uint32]()
-		return &primitiveHandler[uint32]{info, converter}, nil
+		return newPrimitiveHandler[uint32](ti), nil
 	case "u64":
-		info := langsupport.NewTypeHandlerInfo(typ, rt, 8, 1)
-		converter := primitives.NewPrimitiveTypeConverter[uint64]()
-		return &primitiveHandler[uint64]{info, converter}, nil
+		return newPrimitiveHandler[uint64](ti), nil
 	case "i8":
-		info := langsupport.NewTypeHandlerInfo(typ, rt, 1, 1)
-		converter := primitives.NewPrimitiveTypeConverter[int8]()
-		return &primitiveHandler[int8]{info, converter}, nil
+		return newPrimitiveHandler[int8](ti), nil
 	case "i16":
-		info := langsupport.NewTypeHandlerInfo(typ, rt, 2, 1)
-		converter := primitives.NewPrimitiveTypeConverter[int16]()
-		return &primitiveHandler[int16]{info, converter}, nil
+		return newPrimitiveHandler[int16](ti), nil
 	case "i32":
-		info := langsupport.NewTypeHandlerInfo(typ, rt, 4, 1)
-		converter := primitives.NewPrimitiveTypeConverter[int32]()
-		return &primitiveHandler[int32]{info, converter}, nil
+		return newPrimitiveHandler[int32](ti), nil
 	case "i64":
-		info := langsupport.NewTypeHandlerInfo(typ, rt, 8, 1)
-		converter := primitives.NewPrimitiveTypeConverter[int64]()
-		return &primitiveHandler[int64]{info, converter}, nil
+		return newPrimitiveHandler[int64](ti), nil
 	case "f32":
-		info := langsupport.NewTypeHandlerInfo(typ, rt, 4, 1)
-		converter := primitives.NewPrimitiveTypeConverter[float32]()
-		return &primitiveHandler[float32]{info, converter}, nil
+		return newPrimitiveHandler[float32](ti), nil
 	case "f64":
-		info := langsupport.NewTypeHandlerInfo(typ, rt, 8, 1)
-		converter := primitives.NewPrimitiveTypeConverter[float64]()
-		return &primitiveHandler[float64]{info, converter}, nil
+		return newPrimitiveHandler[float64](ti), nil
 	case "isize":
-		info := langsupport.NewTypeHandlerInfo(typ, rt, 4, 1)
-		converter := primitives.NewPrimitiveTypeConverter[int]()
-		return &primitiveHandler[int]{info, converter}, nil
+		return newPrimitiveHandler[int](ti), nil
 	case "usize":
-		info := langsupport.NewTypeHandlerInfo(typ, rt, 4, 1)
-		converter := primitives.NewPrimitiveTypeConverter[uint]()
-		return &primitiveHandler[uint]{info, converter}, nil
+		return newPrimitiveHandler[uint](ti), nil
 	default:
-		return nil, fmt.Errorf("unsupported primitive type: %s", typ)
+		return nil, fmt.Errorf("unsupported primitive type: %s", ti.Name())
+	}
+}
+
+func newPrimitiveHandler[T primitive](ti langsupport.TypeInfo) *primitiveHandler[T] {
+	return &primitiveHandler[T]{
+		*NewTypeHandler(ti),
+		primitives.NewPrimitiveTypeConverter[T](),
 	}
 }
 
 type primitiveHandler[T primitive] struct {
-	info      langsupport.TypeHandlerInfo
+	typeHandler
 	converter primitives.TypeConverter[T]
-}
-
-func (h *primitiveHandler[T]) Info() langsupport.TypeHandlerInfo {
-	return h.info
 }
 
 func (h *primitiveHandler[T]) Read(ctx context.Context, wa langsupport.WasmAdapter, offset uint32) (any, error) {
 	val, ok := h.converter.Read(wa.Memory(), offset)
 	if !ok {
-		return 0, fmt.Errorf("failed to read %s from memory", h.info.TypeName())
+		return 0, fmt.Errorf("failed to read %s from memory", h.typeInfo.Name())
 	}
 
 	return val, nil
@@ -110,7 +86,7 @@ func (h *primitiveHandler[T]) Write(ctx context.Context, wa langsupport.WasmAdap
 	}
 
 	if ok := h.converter.Write(wa.Memory(), offset, val); !ok {
-		return nil, fmt.Errorf("failed to write %s to memory", h.info.TypeName())
+		return nil, fmt.Errorf("failed to write %s to memory", h.typeInfo.Name())
 	}
 
 	return nil, nil

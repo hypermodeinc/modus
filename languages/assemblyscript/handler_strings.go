@@ -8,7 +8,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"reflect"
 
 	"hypruntime/langsupport"
 	"hypruntime/utils"
@@ -16,25 +15,19 @@ import (
 	"github.com/spf13/cast"
 )
 
-func (p *planner) NewStringHandler(typ string, rt reflect.Type) (langsupport.TypeHandler, error) {
-	handler := NewTypeHandler[stringHandler](p, typ)
-	handler.info = langsupport.NewTypeHandlerInfo(typ, rt, 4, 1)
-	handler.nullable = _typeInfo.IsNullable(typ)
+func (p *planner) NewStringHandler(ti langsupport.TypeInfo) (langsupport.TypeHandler, error) {
+	handler := &stringHandler{*NewTypeHandler(ti)}
+	p.AddHandler(handler)
 	return handler, nil
 }
 
 type stringHandler struct {
-	info     langsupport.TypeHandlerInfo
-	nullable bool
-}
-
-func (h *stringHandler) Info() langsupport.TypeHandlerInfo {
-	return h.info
+	typeHandler
 }
 
 func (h *stringHandler) Read(ctx context.Context, wa langsupport.WasmAdapter, offset uint32) (any, error) {
 	if offset == 0 {
-		return nil, fmt.Errorf("unexpected address 0 reading managed object of type %s", h.info.TypeName())
+		return nil, fmt.Errorf("unexpected address 0 reading managed object of type %s", h.typeInfo.Name())
 	}
 
 	ptr, ok := wa.Memory().ReadUint32Le(offset)
@@ -77,7 +70,7 @@ func (h *stringHandler) Encode(ctx context.Context, wa langsupport.WasmAdapter, 
 
 func (h *stringHandler) doReadString(wa langsupport.WasmAdapter, offset uint32) (any, error) {
 	if offset == 0 {
-		if h.nullable {
+		if h.typeInfo.IsNullable() {
 			return nil, nil
 		} else {
 			return nil, errors.New("unexpected null pointer for non-nullable string")
@@ -108,7 +101,7 @@ func (h *stringHandler) doReadString(wa langsupport.WasmAdapter, offset uint32) 
 
 func (h *stringHandler) doWriteString(ctx context.Context, wa langsupport.WasmAdapter, obj any) (uint32, utils.Cleaner, error) {
 	if utils.HasNil(obj) {
-		if h.nullable {
+		if h.typeInfo.IsNullable() {
 			return 0, nil, nil
 		} else {
 			return 0, nil, errors.New("unexpected nil value for non-nullable string")

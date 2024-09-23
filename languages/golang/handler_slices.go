@@ -14,39 +14,35 @@ import (
 	"hypruntime/utils"
 )
 
-func (p *planner) NewSliceHandler(ctx context.Context, typ string, rt reflect.Type) (langsupport.TypeHandler, error) {
-	handler := NewTypeHandler[sliceHandler](p, typ)
+func (p *planner) NewSliceHandler(ctx context.Context, ti langsupport.TypeInfo) (langsupport.TypeHandler, error) {
+	handler := &sliceHandler{
+		typeHandler: *NewTypeHandler(ti),
+	}
+	p.AddHandler(handler)
 
-	// slice header is a 4 byte pointer, 4 byte length, 4 byte capacity
-	handler.info = langsupport.NewTypeHandlerInfo(typ, rt, 12, 3)
-
-	typeDef, err := p.metadata.GetTypeDefinition(typ)
+	typeDef, err := p.metadata.GetTypeDefinition(ti.Name())
 	if err != nil {
 		return nil, err
 	}
 	handler.typeDef = typeDef
 
-	elementType := _typeInfo.GetListSubtype(typ)
-	elementHandler, err := p.GetHandler(ctx, elementType)
+	elementHandler, err := p.GetHandler(ctx, ti.ListElementType().Name())
 	if err != nil {
 		return nil, err
 	}
 	handler.elementHandler = elementHandler
 
-	handler.emptyValue = reflect.MakeSlice(rt, 0, 0).Interface()
+	// an empty slice (not nil)
+	handler.emptyValue = reflect.MakeSlice(ti.ReflectedType(), 0, 0).Interface()
 
 	return handler, nil
 }
 
 type sliceHandler struct {
-	info           langsupport.TypeHandlerInfo
+	typeHandler
 	typeDef        *metadata.TypeDefinition
 	elementHandler langsupport.TypeHandler
 	emptyValue     any
-}
-
-func (h *sliceHandler) Info() langsupport.TypeHandlerInfo {
-	return h.info
 }
 
 func (h *sliceHandler) Read(ctx context.Context, wa langsupport.WasmAdapter, offset uint32) (any, error) {
@@ -110,8 +106,8 @@ func (h *sliceHandler) doReadSlice(ctx context.Context, wa langsupport.WasmAdapt
 		return h.emptyValue, nil
 	}
 
-	elementSize := h.elementHandler.Info().TypeSize()
-	items := reflect.MakeSlice(h.Info().RuntimeType(), int(size), int(size))
+	elementSize := h.elementHandler.TypeInfo().Size()
+	items := reflect.MakeSlice(h.typeInfo.ReflectedType(), int(size), int(size))
 	for i := uint32(0); i < size; i++ {
 		itemOffset := data + i*elementSize
 		item, err := h.elementHandler.Read(ctx, wa, itemOffset)
@@ -158,7 +154,7 @@ func (h *sliceHandler) doWriteSlice(ctx context.Context, wa langsupport.WasmAdap
 		}
 	}()
 
-	elementSize := h.elementHandler.Info().TypeSize()
+	elementSize := h.elementHandler.TypeInfo().Size()
 	for _, val := range slice {
 		if !utils.HasNil(val) {
 			c, err := h.elementHandler.Write(ctx, wa, offset, val)

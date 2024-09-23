@@ -8,7 +8,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"reflect"
+	"time"
 
 	"hypruntime/langsupport"
 	"hypruntime/langsupport/primitives"
@@ -16,76 +16,66 @@ import (
 	"hypruntime/utils"
 )
 
-func (p *planner) NewPrimitiveSliceHandler(typ string, rt reflect.Type) (langsupport.TypeHandler, error) {
-	typeDef, err := p.metadata.GetTypeDefinition(typ)
+func (p *planner) NewPrimitiveSliceHandler(ti langsupport.TypeInfo) (h langsupport.TypeHandler, err error) {
+	defer func() {
+		if err == nil {
+			p.typeHandlers[ti.Name()] = h
+		}
+	}()
+
+	typeDef, err := p.metadata.GetTypeDefinition(ti.Name())
 	if err != nil {
 		return nil, err
 	}
 
-	// slice header is a 4 byte pointer, 4 byte length, 4 byte capacity
-	info := langsupport.NewTypeHandlerInfo(typ, rt, 12, 3)
-
-	var handler langsupport.TypeHandler
-
-	switch rt.Elem().Kind() {
-	case reflect.Bool:
-		converter := primitives.NewPrimitiveTypeConverter[bool]()
-		handler = &primitiveSliceHandler[bool]{info, typeDef, converter}
-	case reflect.Int8:
-		converter := primitives.NewPrimitiveTypeConverter[int8]()
-		handler = &primitiveSliceHandler[int8]{info, typeDef, converter}
-	case reflect.Int16:
-		converter := primitives.NewPrimitiveTypeConverter[int16]()
-		handler = &primitiveSliceHandler[int16]{info, typeDef, converter}
-	case reflect.Int32:
-		converter := primitives.NewPrimitiveTypeConverter[int32]()
-		handler = &primitiveSliceHandler[int32]{info, typeDef, converter}
-	case reflect.Int64:
-		converter := primitives.NewPrimitiveTypeConverter[int64]()
-		handler = &primitiveSliceHandler[int64]{info, typeDef, converter}
-	case reflect.Uint8:
-		converter := primitives.NewPrimitiveTypeConverter[uint8]()
-		handler = &primitiveSliceHandler[uint8]{info, typeDef, converter}
-	case reflect.Uint16:
-		converter := primitives.NewPrimitiveTypeConverter[uint16]()
-		handler = &primitiveSliceHandler[uint16]{info, typeDef, converter}
-	case reflect.Uint32:
-		converter := primitives.NewPrimitiveTypeConverter[uint32]()
-		handler = &primitiveSliceHandler[uint32]{info, typeDef, converter}
-	case reflect.Uint64:
-		converter := primitives.NewPrimitiveTypeConverter[uint64]()
-		handler = &primitiveSliceHandler[uint64]{info, typeDef, converter}
-	case reflect.Float32:
-		converter := primitives.NewPrimitiveTypeConverter[float32]()
-		handler = &primitiveSliceHandler[float32]{info, typeDef, converter}
-	case reflect.Float64:
-		converter := primitives.NewPrimitiveTypeConverter[float64]()
-		handler = &primitiveSliceHandler[float64]{info, typeDef, converter}
-	case reflect.Int:
-		converter := primitives.NewPrimitiveTypeConverter[int]()
-		handler = &primitiveSliceHandler[int]{info, typeDef, converter}
-	case reflect.Uint:
-		converter := primitives.NewPrimitiveTypeConverter[uint]()
-		handler = &primitiveSliceHandler[uint]{info, typeDef, converter}
-	case reflect.Uintptr:
-		converter := primitives.NewPrimitiveTypeConverter[uintptr]()
-		handler = &primitiveSliceHandler[uintptr]{info, typeDef, converter}
+	switch ti.ListElementType().Name() {
+	case "bool":
+		return newPrimitiveSliceHandler[bool](ti, typeDef), nil
+	case "uint8", "byte":
+		return newPrimitiveSliceHandler[uint8](ti, typeDef), nil
+	case "uint16":
+		return newPrimitiveSliceHandler[uint16](ti, typeDef), nil
+	case "uint32":
+		return newPrimitiveSliceHandler[uint32](ti, typeDef), nil
+	case "uint64":
+		return newPrimitiveSliceHandler[uint64](ti, typeDef), nil
+	case "int8":
+		return newPrimitiveSliceHandler[int8](ti, typeDef), nil
+	case "int16":
+		return newPrimitiveSliceHandler[int16](ti, typeDef), nil
+	case "int32", "rune":
+		return newPrimitiveSliceHandler[int32](ti, typeDef), nil
+	case "int64":
+		return newPrimitiveSliceHandler[int64](ti, typeDef), nil
+	case "float32":
+		return newPrimitiveSliceHandler[float32](ti, typeDef), nil
+	case "float64":
+		return newPrimitiveSliceHandler[float64](ti, typeDef), nil
+	case "int":
+		return newPrimitiveSliceHandler[int](ti, typeDef), nil
+	case "uint":
+		return newPrimitiveSliceHandler[uint](ti, typeDef), nil
+	case "uintptr":
+		return newPrimitiveSliceHandler[uintptr](ti, typeDef), nil
+	case "time.Duration":
+		return newPrimitiveSliceHandler[time.Duration](ti, typeDef), nil
 	default:
-		return nil, fmt.Errorf("unsupported primitive slice type: %s", typ)
+		return nil, fmt.Errorf("unsupported primitive slice type: %s", ti.Name())
 	}
+}
 
-	p.typeHandlers[typ] = handler
-	return handler, nil
+func newPrimitiveSliceHandler[T primitive](ti langsupport.TypeInfo, typeDef *metadata.TypeDefinition) *primitiveSliceHandler[T] {
+	return &primitiveSliceHandler[T]{
+		*NewTypeHandler(ti),
+		typeDef,
+		primitives.NewPrimitiveTypeConverter[T](),
+	}
 }
 
 type primitiveSliceHandler[T primitive] struct {
-	info      langsupport.TypeHandlerInfo
+	typeHandler
 	typeDef   *metadata.TypeDefinition
 	converter primitives.TypeConverter[T]
-}
-
-func (h *primitiveSliceHandler[T]) Info() langsupport.TypeHandlerInfo {
-	return h.info
 }
 
 func (h *primitiveSliceHandler[T]) Read(ctx context.Context, wa langsupport.WasmAdapter, offset uint32) (any, error) {

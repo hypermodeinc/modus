@@ -7,7 +7,6 @@ package golang
 import (
 	"context"
 	"fmt"
-	"reflect"
 
 	"hypruntime/langsupport"
 	"hypruntime/plugins/metadata"
@@ -17,83 +16,79 @@ import (
 
 func NewPlanner(metadata *metadata.Metadata) langsupport.Planner {
 	return &planner{
+		typeCache:    make(map[string]langsupport.TypeInfo),
 		typeHandlers: make(map[string]langsupport.TypeHandler),
 		metadata:     metadata,
 	}
 }
 
 type planner struct {
+	typeCache    map[string]langsupport.TypeInfo
 	typeHandlers map[string]langsupport.TypeHandler
 	metadata     *metadata.Metadata
 }
 
-func NewTypeHandler[T any](p *planner, typ string) *T {
-	handler := new(T)
-	p.typeHandlers[typ] = any(handler).(langsupport.TypeHandler)
-	return handler
+func (p *planner) AddHandler(h langsupport.TypeHandler) {
+	p.typeHandlers[h.TypeInfo().Name()] = h
 }
 
 func (p *planner) AllHandlers() map[string]langsupport.TypeHandler {
 	return p.typeHandlers
 }
 
-func (p *planner) GetHandler(ctx context.Context, typ string) (langsupport.TypeHandler, error) {
-	if handler, ok := p.typeHandlers[typ]; ok {
+func NewTypeHandler(ti langsupport.TypeInfo) *typeHandler {
+	return &typeHandler{
+		typeInfo: ti,
+	}
+}
+
+type typeHandler struct {
+	typeInfo langsupport.TypeInfo
+}
+
+func (h *typeHandler) TypeInfo() langsupport.TypeInfo {
+	return h.typeInfo
+}
+
+func (p *planner) GetHandler(ctx context.Context, typeName string) (langsupport.TypeHandler, error) {
+	if handler, ok := p.typeHandlers[typeName]; ok {
 		return handler, nil
 	}
 
-	rt, err := _typeInfo.GetReflectedType(ctx, typ)
+	ti, err := GetTypeInfo(ctx, typeName, p.typeCache)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get type info for %s: %w", typeName, err)
 	}
 
-	switch rt.Kind() {
-
-	case reflect.Bool,
-		reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
-		reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64,
-		reflect.Float32, reflect.Float64,
-		reflect.Uintptr, reflect.UnsafePointer:
-
-		return p.NewPrimitiveHandler(typ, rt)
-
-	case reflect.String:
-		return p.NewStringHandler(typ, rt)
-
-	case reflect.Pointer:
-		return p.NewPointerHandler(ctx, typ, rt)
-
-	case reflect.Slice:
-		if _typeInfo.IsPrimitiveType(_typeInfo.GetListSubtype(typ)) {
-			return p.NewPrimitiveSliceHandler(typ, rt)
-		} else {
-			return p.NewSliceHandler(ctx, typ, rt)
+	if ti.IsPrimitive() {
+		return p.NewPrimitiveHandler(ti)
+	} else if ti.IsString() {
+		return p.NewStringHandler(ti)
+	} else if ti.IsPointer() {
+		return p.NewPointerHandler(ctx, ti)
+	} else if ti.IsList() {
+		if _langTypeInfo.IsSliceType(typeName) {
+			if ti.ListElementType().IsPrimitive() {
+				return p.NewPrimitiveSliceHandler(ti)
+			} else {
+				return p.NewSliceHandler(ctx, ti)
+			}
+		} else if _langTypeInfo.IsArrayType(typeName) {
+			if ti.ListElementType().IsPrimitive() {
+				return p.NewPrimitiveArrayHandler(ti)
+			} else {
+				return p.NewArrayHandler(ctx, ti)
+			}
 		}
-
-	case reflect.Array:
-		if _typeInfo.IsPrimitiveType(_typeInfo.GetListSubtype(typ)) {
-			return p.NewPrimitiveArrayHandler(typ, rt)
-		} else {
-			return p.NewArrayHandler(ctx, typ, rt)
-		}
-
-	case reflect.Map:
-		if _typeInfo.IsMapType(typ) {
-			return p.NewMapHandler(ctx, typ, rt)
-		} else {
-			// This is a struct that is being passed as a map.
-			return p.NewStructHandler(ctx, typ, rt)
-		}
-
-	case reflect.Struct:
-		if _typeInfo.IsTimestampType(typ) {
-			return p.NewTimeHandler(typ, rt)
-		} else {
-			return p.NewStructHandler(ctx, typ, rt)
-		}
+	} else if ti.IsMap() {
+		return p.NewMapHandler(ctx, ti)
+	} else if ti.IsTimestamp() {
+		return p.NewTimeHandler(ti)
+	} else if ti.IsObject() {
+		return p.NewStructHandler(ctx, ti)
 	}
 
-	return nil, fmt.Errorf("can't determine plan for type: %s", typ)
+	return nil, fmt.Errorf("can't determine plan for type: %s", typeName)
 }
 
 func (p *planner) GetPlan(ctx context.Context, fnMeta *metadata.Function, fnDef wasm.FunctionDefinition) (langsupport.ExecutionPlan, error) {
@@ -148,7 +143,7 @@ func (p *planner) getIndirectResultSize(ctx context.Context, fnMeta *metadata.Fu
 
 	totalSize := uint32(0)
 	for _, r := range fnMeta.Results {
-		size, err := _typeInfo.GetSizeOfType(ctx, r.Type)
+		size, err := _langTypeInfo.GetSizeOfType(ctx, r.Type)
 		if err != nil {
 			return 0, err
 		}

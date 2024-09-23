@@ -95,9 +95,12 @@ func NewWasmTestFixture(wasmFilePath string, hostOpts ...func(wasmhost.WasmHost)
 	if err != nil {
 		panic(err)
 	}
+	ctx = context.WithValue(ctx, utils.MetadataContextKey, md)
 
 	filename := filepath.Base(wasmFilePath)
 	plugin := plugins.NewPlugin(cm, filename, md)
+	ctx = context.WithValue(ctx, utils.PluginContextKey, plugin)
+
 	registry := host.GetFunctionRegistry()
 	registry.RegisterImports(ctx, plugin)
 
@@ -107,8 +110,6 @@ func NewWasmTestFixture(wasmFilePath string, hostOpts ...func(wasmhost.WasmHost)
 		customTypes: make(map[string]reflect.Type),
 	}
 
-	ctx = context.WithValue(ctx, utils.PluginContextKey, plugin)
-	ctx = context.WithValue(ctx, utils.MetadataContextKey, md)
 	ctx = context.WithValue(ctx, utils.CustomTypesContextKey, f.customTypes)
 	f.Context = ctx
 

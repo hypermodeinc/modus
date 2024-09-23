@@ -18,19 +18,23 @@ import (
 	"hypruntime/utils"
 )
 
-var _typeInfo = &typeInfo{}
+var _langTypeInfo = &langTypeInfo{}
 
-func TypeInfo() langsupport.TypeInfo {
-	return _typeInfo
+func LanguageTypeInfo() langsupport.LanguageTypeInfo {
+	return _langTypeInfo
 }
 
-type typeInfo struct{}
+func GetTypeInfo(ctx context.Context, typeName string, typeCache map[string]langsupport.TypeInfo) (langsupport.TypeInfo, error) {
+	return langsupport.GetTypeInfo(ctx, _langTypeInfo, typeName, typeCache)
+}
 
-func (ti *typeInfo) GetListSubtype(typ string) string {
+type langTypeInfo struct{}
+
+func (lti *langTypeInfo) GetListSubtype(typ string) string {
 	return typ[strings.Index(typ, "]")+1:]
 }
 
-func (ti *typeInfo) GetMapSubtypes(typ string) (string, string) {
+func (lti *langTypeInfo) GetMapSubtypes(typ string) (string, string) {
 	const prefix = "map["
 	if !strings.HasPrefix(typ, prefix) {
 		return "", ""
@@ -52,43 +56,52 @@ func (ti *typeInfo) GetMapSubtypes(typ string) (string, string) {
 	return "", ""
 }
 
-func (ti *typeInfo) GetNameForType(typ string) string {
+func (lti *langTypeInfo) GetNameForType(typ string) string {
 	// "github.com/hypermodeAI/functions-go/examples/simple.Person" -> "Person"
 
-	if ti.IsPointerType(typ) {
-		return "*" + ti.GetNameForType(ti.GetUnderlyingType(typ))
+	if lti.IsPointerType(typ) {
+		return "*" + lti.GetNameForType(lti.GetUnderlyingType(typ))
 	}
 
-	if ti.IsListType(typ) {
-		return "[]" + ti.GetNameForType(ti.GetListSubtype(typ))
+	if lti.IsListType(typ) {
+		return "[]" + lti.GetNameForType(lti.GetListSubtype(typ))
 	}
 
-	if ti.IsMapType(typ) {
-		kt, vt := ti.GetMapSubtypes(typ)
-		return "map[" + ti.GetNameForType(kt) + "]" + ti.GetNameForType(vt)
+	if lti.IsMapType(typ) {
+		kt, vt := lti.GetMapSubtypes(typ)
+		return "map[" + lti.GetNameForType(kt) + "]" + lti.GetNameForType(vt)
 	}
 
 	return typ[strings.LastIndex(typ, ".")+1:]
 }
 
-func (ti *typeInfo) GetUnderlyingType(typ string) string {
+func (lti *langTypeInfo) IsObjectType(typ string) bool {
+	return !lti.IsPrimitiveType(typ) &&
+		!lti.IsListType(typ) &&
+		!lti.IsMapType(typ) &&
+		!lti.IsStringType(typ) &&
+		!lti.IsTimestampType(typ) &&
+		!lti.IsPointerType(typ)
+}
+
+func (lti *langTypeInfo) GetUnderlyingType(typ string) string {
 	return strings.TrimPrefix(typ, "*")
 }
 
-func (ti *typeInfo) IsListType(typ string) bool {
+func (lti *langTypeInfo) IsListType(typ string) bool {
 	// covers both slices and arrays
 	return len(typ) > 2 && typ[0] == '['
 }
 
-func (ti *typeInfo) IsSliceType(typ string) bool {
+func (lti *langTypeInfo) IsSliceType(typ string) bool {
 	return len(typ) > 2 && typ[0] == '[' && typ[1] == ']'
 }
 
-func (ti *typeInfo) IsArrayType(typ string) bool {
+func (lti *langTypeInfo) IsArrayType(typ string) bool {
 	return len(typ) > 2 && typ[0] == '[' && typ[1] != ']'
 }
 
-func (ti *typeInfo) ArrayLength(typ string) (int, error) {
+func (lti *langTypeInfo) ArrayLength(typ string) (int, error) {
 	i := strings.Index(typ, "]")
 	if i == -1 {
 		return -1, fmt.Errorf("invalid array type: %s", typ)
@@ -102,18 +115,18 @@ func (ti *typeInfo) ArrayLength(typ string) (int, error) {
 	return strconv.Atoi(size)
 }
 
-func (ti *typeInfo) IsBooleanType(typ string) bool {
+func (lti *langTypeInfo) IsBooleanType(typ string) bool {
 	return typ == "bool"
 }
 
-func (ti *typeInfo) IsByteSequenceType(typ string) bool {
+func (lti *langTypeInfo) IsByteSequenceType(typ string) bool {
 	switch typ {
 	case "[]byte", "[]uint8":
 		return true
 	}
 
-	if ti.IsArrayType(typ) {
-		switch ti.GetListSubtype(typ) {
+	if lti.IsArrayType(typ) {
+		switch lti.GetListSubtype(typ) {
 		case "byte", "uint8":
 			return true
 		}
@@ -122,7 +135,7 @@ func (ti *typeInfo) IsByteSequenceType(typ string) bool {
 	return false
 }
 
-func (ti *typeInfo) IsFloatType(typ string) bool {
+func (lti *langTypeInfo) IsFloatType(typ string) bool {
 	switch typ {
 	case "float32", "float64":
 		return true
@@ -131,7 +144,7 @@ func (ti *typeInfo) IsFloatType(typ string) bool {
 	}
 }
 
-func (ti *typeInfo) IsIntegerType(typ string) bool {
+func (lti *langTypeInfo) IsIntegerType(typ string) bool {
 	switch typ {
 	case "int", "int8", "int16", "int32", "int64",
 		"uint", "uint8", "uint16", "uint32", "uint64",
@@ -142,23 +155,23 @@ func (ti *typeInfo) IsIntegerType(typ string) bool {
 	}
 }
 
-func (ti *typeInfo) IsMapType(typ string) bool {
+func (lti *langTypeInfo) IsMapType(typ string) bool {
 	return strings.HasPrefix(typ, "map[")
 }
 
-func (ti *typeInfo) IsNullable(typ string) bool {
-	return ti.IsPointerType(typ) || ti.IsSliceType(typ) || ti.IsMapType(typ)
+func (lti *langTypeInfo) IsNullableType(typ string) bool {
+	return lti.IsPointerType(typ) || lti.IsSliceType(typ) || lti.IsMapType(typ)
 }
 
-func (ti *typeInfo) IsPointerType(typ string) bool {
+func (lti *langTypeInfo) IsPointerType(typ string) bool {
 	return strings.HasPrefix(typ, "*")
 }
 
-func (ti *typeInfo) IsPrimitiveType(typ string) bool {
-	return ti.IsBooleanType(typ) || ti.IsIntegerType(typ) || ti.IsFloatType(typ)
+func (lti *langTypeInfo) IsPrimitiveType(typ string) bool {
+	return lti.IsBooleanType(typ) || lti.IsIntegerType(typ) || lti.IsFloatType(typ)
 }
 
-func (ti *typeInfo) IsSignedIntegerType(typ string) bool {
+func (lti *langTypeInfo) IsSignedIntegerType(typ string) bool {
 	switch typ {
 	case "int", "int8", "int16", "int32", "int64", "rune", "time.Duration":
 		return true
@@ -167,15 +180,15 @@ func (ti *typeInfo) IsSignedIntegerType(typ string) bool {
 	}
 }
 
-func (ti *typeInfo) IsStringType(typ string) bool {
+func (lti *langTypeInfo) IsStringType(typ string) bool {
 	return typ == "string"
 }
 
-func (ti *typeInfo) IsTimestampType(typ string) bool {
+func (lti *langTypeInfo) IsTimestampType(typ string) bool {
 	return typ == "time.Time"
 }
 
-func (ti *typeInfo) GetSizeOfType(ctx context.Context, typ string) (uint32, error) {
+func (lti *langTypeInfo) GetSizeOfType(ctx context.Context, typ string) (uint32, error) {
 	switch typ {
 	case "int8", "uint8", "bool", "byte":
 		return 1, nil
@@ -186,40 +199,42 @@ func (ti *typeInfo) GetSizeOfType(ctx context.Context, typ string) (uint32, erro
 		return 4, nil
 	case "int64", "uint64", "float64", "time.Duration":
 		return 8, nil
-	case "string":
+	}
+
+	if lti.IsStringType(typ) {
 		// string header is a 4 byte pointer and 4 byte length
 		return 8, nil
 	}
 
-	if ti.IsPointerType(typ) {
+	if lti.IsPointerType(typ) {
 		return 4, nil
 	}
 
-	if ti.IsMapType(typ) {
+	if lti.IsMapType(typ) {
 		// maps are passed by reference using a 4 byte pointer
 		return 4, nil
 	}
 
-	if ti.IsSliceType(typ) {
+	if lti.IsSliceType(typ) {
 		// slice header is a 4 byte pointer, 4 byte length, 4 byte capacity
 		return 12, nil
 	}
 
-	if ti.IsTimestampType(typ) {
+	if lti.IsTimestampType(typ) {
 		// time.Time has 3 fields: 8 byte uint64, 8 byte int64, 4 byte pointer
 		return 20, nil
 	}
 
-	if ti.IsArrayType(typ) {
-		return ti.getSizeOfArray(ctx, typ)
+	if lti.IsArrayType(typ) {
+		return lti.getSizeOfArray(ctx, typ)
 	}
 
-	return ti.getSizeOfStruct(ctx, typ)
+	return lti.getSizeOfStruct(ctx, typ)
 }
 
-func (ti *typeInfo) getSizeOfArray(ctx context.Context, typ string) (uint32, error) {
+func (lti *langTypeInfo) getSizeOfArray(ctx context.Context, typ string) (uint32, error) {
 	// array size is the element size times the number of elements, aligned to the element size
-	arrSize, err := ti.ArrayLength(typ)
+	arrSize, err := lti.ArrayLength(typ)
 	if err != nil {
 		return 0, err
 	}
@@ -227,12 +242,12 @@ func (ti *typeInfo) getSizeOfArray(ctx context.Context, typ string) (uint32, err
 		return 0, nil
 	}
 
-	t := ti.GetListSubtype(typ)
-	elementAlignment, err := ti.GetAlignOfType(ctx, t)
+	t := lti.GetListSubtype(typ)
+	elementAlignment, err := lti.GetAlignmentOfType(ctx, t)
 	if err != nil {
 		return 0, err
 	}
-	elementSize, err := ti.GetSizeOfType(ctx, t)
+	elementSize, err := lti.GetSizeOfType(ctx, t)
 	if err != nil {
 		return 0, err
 	}
@@ -241,8 +256,8 @@ func (ti *typeInfo) getSizeOfArray(ctx context.Context, typ string) (uint32, err
 	return size, nil
 }
 
-func (ti *typeInfo) getSizeOfStruct(ctx context.Context, typ string) (uint32, error) {
-	def, err := ti.GetTypeDefinition(ctx, typ)
+func (lti *langTypeInfo) getSizeOfStruct(ctx context.Context, typ string) (uint32, error) {
+	def, err := lti.GetTypeDefinition(ctx, typ)
 	if err != nil {
 		return 0, err
 	}
@@ -253,11 +268,11 @@ func (ti *typeInfo) getSizeOfStruct(ctx context.Context, typ string) (uint32, er
 	offset := uint32(0)
 	maxAlign := uint32(1)
 	for _, field := range def.Fields {
-		size, err := ti.GetSizeOfType(ctx, field.Type)
+		size, err := lti.GetSizeOfType(ctx, field.Type)
 		if err != nil {
 			return 0, err
 		}
-		alignment, err := ti.GetAlignOfType(ctx, field.Type)
+		alignment, err := lti.GetAlignmentOfType(ctx, field.Type)
 		if err != nil {
 			return 0, err
 		}
@@ -272,44 +287,44 @@ func (ti *typeInfo) getSizeOfStruct(ctx context.Context, typ string) (uint32, er
 	return size, nil
 }
 
-func (ti *typeInfo) GetAlignOfType(ctx context.Context, typ string) (uint32, error) {
+func (lti *langTypeInfo) GetAlignmentOfType(ctx context.Context, typ string) (uint32, error) {
 
 	// reference: https://github.com/tinygo-org/tinygo/blob/release/compiler/sizes.go
 
 	// primitives align to their natural size
-	if ti.IsPrimitiveType(typ) {
-		return ti.GetSizeOfType(ctx, typ)
+	if lti.IsPrimitiveType(typ) {
+		return lti.GetSizeOfType(ctx, typ)
 	}
 
 	// arrays align to the alignment of their element type
-	if ti.IsArrayType(typ) {
-		t := ti.GetListSubtype(typ)
-		return ti.GetAlignOfType(ctx, t)
+	if lti.IsArrayType(typ) {
+		t := lti.GetListSubtype(typ)
+		return lti.GetAlignmentOfType(ctx, t)
 	}
 
 	// reference types align to the pointer size (4 bytes on 32-bit wasm)
-	if ti.IsPointerType(typ) || ti.IsSliceType(typ) || ti.IsStringType(typ) || ti.IsMapType(typ) {
+	if lti.IsPointerType(typ) || lti.IsSliceType(typ) || lti.IsStringType(typ) || lti.IsMapType(typ) {
 		return 4, nil
 	}
 
 	// time.Time has 3 fields, the maximum alignment is 8 bytes
-	if ti.IsTimestampType(typ) {
+	if lti.IsTimestampType(typ) {
 		return 8, nil
 	}
 
 	// structs align to the maximum alignment of their fields
-	return ti.getAlignOfStruct(ctx, typ)
+	return lti.getAlignmentOfStruct(ctx, typ)
 }
 
-func (ti *typeInfo) getAlignOfStruct(ctx context.Context, typ string) (uint32, error) {
-	def, err := ti.GetTypeDefinition(ctx, typ)
+func (lti *langTypeInfo) getAlignmentOfStruct(ctx context.Context, typ string) (uint32, error) {
+	def, err := lti.GetTypeDefinition(ctx, typ)
 	if err != nil {
 		return 0, err
 	}
 
 	max := uint32(1)
 	for _, field := range def.Fields {
-		align, err := ti.GetAlignOfType(ctx, field.Type)
+		align, err := lti.GetAlignmentOfType(ctx, field.Type)
 		if err != nil {
 			return 0, err
 		}
@@ -321,20 +336,76 @@ func (ti *typeInfo) getAlignOfStruct(ctx context.Context, typ string) (uint32, e
 	return max, nil
 }
 
-func (ti *typeInfo) GetTypeDefinition(ctx context.Context, typ string) (*metadata.TypeDefinition, error) {
+func (lti *langTypeInfo) GetDataSizeOfType(ctx context.Context, typ string) (uint32, error) {
+	return lti.GetSizeOfType(ctx, typ)
+}
+
+func (lti *langTypeInfo) GetEncodingLengthOfType(ctx context.Context, typ string) (uint32, error) {
+	if lti.IsPrimitiveType(typ) || lti.IsPointerType(typ) || lti.IsMapType(typ) {
+		return 1, nil
+	} else if lti.IsStringType(typ) {
+		return 2, nil
+	} else if lti.IsSliceType(typ) || lti.IsTimestampType(typ) {
+		return 3, nil
+	} else if lti.IsArrayType(typ) {
+		return lti.getEncodingLengthOfArray(ctx, typ)
+	} else if lti.IsObjectType(typ) {
+		return lti.getEncodingLengthOfStruct(ctx, typ)
+	}
+
+	return 0, fmt.Errorf("unable to determine encoding length for type: %s", typ)
+}
+
+func (lti *langTypeInfo) getEncodingLengthOfArray(ctx context.Context, typ string) (uint32, error) {
+	arrSize, err := lti.ArrayLength(typ)
+	if err != nil {
+		return 0, err
+	}
+	if arrSize == 0 {
+		return 0, nil
+	}
+
+	t := lti.GetListSubtype(typ)
+	elementLen, err := lti.GetEncodingLengthOfType(ctx, t)
+	if err != nil {
+		return 0, err
+	}
+
+	return uint32(arrSize) * elementLen, nil
+}
+
+func (lti *langTypeInfo) getEncodingLengthOfStruct(ctx context.Context, typ string) (uint32, error) {
+	def, err := lti.GetTypeDefinition(ctx, typ)
+	if err != nil {
+		return 0, err
+	}
+
+	total := uint32(0)
+	for _, field := range def.Fields {
+		len, err := lti.GetEncodingLengthOfType(ctx, field.Type)
+		if err != nil {
+			return 0, err
+		}
+		total += len
+	}
+
+	return total, nil
+}
+
+func (lti *langTypeInfo) GetTypeDefinition(ctx context.Context, typ string) (*metadata.TypeDefinition, error) {
 	md := ctx.Value(utils.MetadataContextKey).(*metadata.Metadata)
 	return md.GetTypeDefinition(typ)
 }
 
-func (ti *typeInfo) GetReflectedType(ctx context.Context, typ string) (reflect.Type, error) {
+func (lti *langTypeInfo) GetReflectedType(ctx context.Context, typ string) (reflect.Type, error) {
 	if customTypes, ok := ctx.Value(utils.CustomTypesContextKey).(map[string]reflect.Type); ok {
-		return ti.getReflectedType(typ, customTypes)
+		return lti.getReflectedType(typ, customTypes)
 	} else {
-		return ti.getReflectedType(typ, nil)
+		return lti.getReflectedType(typ, nil)
 	}
 }
 
-func (ti *typeInfo) getReflectedType(typ string, customTypes map[string]reflect.Type) (reflect.Type, error) {
+func (lti *langTypeInfo) getReflectedType(typ string, customTypes map[string]reflect.Type) (reflect.Type, error) {
 	if customTypes != nil {
 		if rt, ok := customTypes[typ]; ok {
 			return rt, nil
@@ -345,57 +416,57 @@ func (ti *typeInfo) getReflectedType(typ string, customTypes map[string]reflect.
 		return rt, nil
 	}
 
-	if ti.IsPointerType(typ) {
-		tt := ti.GetUnderlyingType(typ)
-		targetType, err := ti.getReflectedType(tt, customTypes)
+	if lti.IsPointerType(typ) {
+		tt := lti.GetUnderlyingType(typ)
+		targetType, err := lti.getReflectedType(tt, customTypes)
 		if err != nil {
 			return nil, err
 		}
 		return reflect.PointerTo(targetType), nil
 	}
 
-	if ti.IsSliceType(typ) {
-		et := ti.GetListSubtype(typ)
+	if lti.IsSliceType(typ) {
+		et := lti.GetListSubtype(typ)
 		if et == "" {
 			return nil, fmt.Errorf("invalid slice type: %s", typ)
 		}
 
-		elementType, err := ti.getReflectedType(et, customTypes)
+		elementType, err := lti.getReflectedType(et, customTypes)
 		if err != nil {
 			return nil, err
 		}
 		return reflect.SliceOf(elementType), nil
 	}
 
-	if ti.IsArrayType(typ) {
-		et := ti.GetListSubtype(typ)
+	if lti.IsArrayType(typ) {
+		et := lti.GetListSubtype(typ)
 		if et == "" {
 			return nil, fmt.Errorf("invalid array type: %s", typ)
 		}
 
-		size, err := ti.ArrayLength(typ)
+		size, err := lti.ArrayLength(typ)
 		if err != nil {
 			return nil, err
 		}
 
-		elementType, err := ti.getReflectedType(et, customTypes)
+		elementType, err := lti.getReflectedType(et, customTypes)
 		if err != nil {
 			return nil, err
 		}
 		return reflect.ArrayOf(size, elementType), nil
 	}
 
-	if ti.IsMapType(typ) {
-		kt, vt := ti.GetMapSubtypes(typ)
+	if lti.IsMapType(typ) {
+		kt, vt := lti.GetMapSubtypes(typ)
 		if kt == "" || vt == "" {
 			return nil, fmt.Errorf("invalid map type: %s", typ)
 		}
 
-		keyType, err := ti.getReflectedType(kt, customTypes)
+		keyType, err := lti.getReflectedType(kt, customTypes)
 		if err != nil {
 			return nil, err
 		}
-		valType, err := ti.getReflectedType(vt, customTypes)
+		valType, err := lti.getReflectedType(vt, customTypes)
 		if err != nil {
 			return nil, err
 		}

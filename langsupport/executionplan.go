@@ -190,7 +190,7 @@ func (plan *executionPlan) interpretWasmResults(ctx context.Context, wa WasmAdap
 			return handler.Decode(ctx, wa, vals)
 		} else {
 			// no actual result value, but we need to return a zero value of the expected type
-			return handler.Info().ZeroValue(), nil
+			return handler.TypeInfo().ZeroValue(), nil
 		}
 	}
 
@@ -207,10 +207,10 @@ func (plan *executionPlan) readIndirectResults(ctx context.Context, wa WasmAdapt
 
 	fieldOffset := uint32(0)
 	for i, handler := range handlers {
-		size := handler.Info().TypeSize()
+		size := handler.TypeInfo().Size()
 
-		fieldType := handler.Info().TypeName()
-		alignment, err := wa.TypeInfo().GetAlignOfType(ctx, fieldType)
+		fieldType := handler.TypeInfo().Name()
+		alignment, err := wa.TypeInfo().GetAlignmentOfType(ctx, fieldType)
 		if err != nil {
 			return nil, err
 		}
