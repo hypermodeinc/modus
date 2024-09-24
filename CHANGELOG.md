@@ -6,6 +6,7 @@
 - Add FunctionExecutionDurationMillisecondsSummary metric [#377](https://github.com/hypermodeAI/runtime/pull/377)
 - Fix field alignment issue [#378](https://github.com/hypermodeAI/runtime/pull/378)
 - Improve execution plan creation [#379](https://github.com/hypermodeAI/runtime/pull/379)
+- Fix plan creation / registration bug [#380](https://github.com/hypermodeAI/runtime/pull/380)
 
 ## 2024-09-18 - Version 0.12.1
 
