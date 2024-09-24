@@ -105,16 +105,16 @@ func TestHostFn_echoObject(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	expected := map[string]any{
-		"A": int32(2),
-		"B": false,
-		"C": "hello!",
+	expected := &TestHostObject{
+		A: 2,
+		B: false,
+		C: "hello!",
 	}
 
 	if result == nil {
 		t.Error("expected a result")
-	} else if r, ok := result.(map[string]any); !ok {
-		t.Errorf("expected a map[string]any, got %T", result)
+	} else if r, ok := result.(TestHostObject); !ok {
+		t.Errorf("expected %T, got %T", expected, result)
 	} else if reflect.DeepEqual(expected, r) {
 		t.Errorf("expected %+v, got %+v", expected, r)
 	}

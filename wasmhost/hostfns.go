@@ -12,9 +12,9 @@ import (
 	"runtime/debug"
 	"time"
 
-	"hypruntime/functions"
 	"hypruntime/langsupport"
 	"hypruntime/logger"
+	"hypruntime/plugins"
 	"hypruntime/utils"
 
 	wasm "github.com/tetratelabs/wazero/api"
@@ -208,17 +208,23 @@ func (host *wasmHost) newHostFunction(modName, funcName string, fn any, opts ...
 			}
 		}()
 
+		// Get the plugin of the function that invoked this host function
+		plugin, ok := plugins.GetPluginFromContext(ctx)
+		if !ok {
+			logger.Error(ctx).Str("host_function", fullName).Msg("Plugin not found in context.")
+			return
+		}
+
+		// Get the execution plan for the host function
+		plan, ok := plugin.ExecutionPlans[fullName]
+		if !ok {
+			logger.Error(ctx).Str("host_function", fullName).Msg("Execution plan not found.")
+		}
+
 		// Get the Wasm adapter
 		wa, err := langsupport.GetWasmAdapter(ctx)
 		if err != nil {
 			logger.Err(ctx, err).Msg("Error getting Wasm adapter.")
-			return
-		}
-
-		// Get the host function's info
-		fnInfo, err := host.GetFunctionInfo(fullName)
-		if err != nil {
-			logger.Err(ctx, err).Str("host_function", fullName).Msg("Error getting info for imported function.")
 			return
 		}
 
@@ -232,7 +238,7 @@ func (host *wasmHost) newHostFunction(modName, funcName string, fn any, opts ...
 			rvParam := reflect.New(rtParam).Elem()
 			params = append(params, rvParam.Interface())
 		}
-		if err := decodeParams(ctx, wa, fnInfo, stack, params); err != nil {
+		if err := decodeParams(ctx, wa, plan, stack, params); err != nil {
 			logger.Err(ctx, err).Str("host_function", fullName).Any("data", params).Msg("Error decoding input parameters.")
 			return
 		}
@@ -290,7 +296,7 @@ func (host *wasmHost) newHostFunction(modName, funcName string, fn any, opts ...
 
 		// Encode the results (if there are any)
 		if len(results) > 0 {
-			if err := encodeResults(ctx, wa, fnInfo, stack, results); err != nil {
+			if err := encodeResults(ctx, wa, plan, stack, results); err != nil {
 				logger.Err(ctx, err).Str("host_function", fullName).Any("data", results).Msg("Error encoding results.")
 			}
 		}
@@ -324,7 +330,7 @@ func (host *wasmHost) instantiateHostFunctions(ctx context.Context) error {
 	return nil
 }
 
-func decodeParams(ctx context.Context, wa langsupport.WasmAdapter, fnInfo functions.FunctionInfo, stack []uint64, params []any) error {
+func decodeParams(ctx context.Context, wa langsupport.WasmAdapter, plan langsupport.ExecutionPlan, stack []uint64, params []any) error {
 
 	// regardless of the outcome, ensure parameter values are cleared from the stack before returning
 	indirect := false
@@ -338,7 +344,6 @@ func decodeParams(ctx context.Context, wa langsupport.WasmAdapter, fnInfo functi
 		}
 	}()
 
-	plan := fnInfo.ExecutionPlan()
 	expected := len(plan.ParamHandlers())
 	if len(params) != expected {
 		return fmt.Errorf("expected %d parameters, but got %d", expected, len(params))
@@ -384,15 +389,20 @@ func decodeParams(ctx context.Context, wa langsupport.WasmAdapter, fnInfo functi
 			continue
 		}
 
+		// special case for non-pointers that need to be converted to pointers
+		if handler.TypeInfo().ReflectedType().Kind() != reflect.Ptr && reflect.TypeOf(params[i]).Kind() == reflect.Ptr {
+			params[i] = utils.MakePointer(data)
+			continue
+		}
+
 		params[i] = data
 	}
 
 	return nil
 }
 
-func encodeResults(ctx context.Context, wa langsupport.WasmAdapter, fnInfo functions.FunctionInfo, stack []uint64, results []any) error {
+func encodeResults(ctx context.Context, wa langsupport.WasmAdapter, plan langsupport.ExecutionPlan, stack []uint64, results []any) error {
 
-	plan := fnInfo.ExecutionPlan()
 	expected := len(plan.ResultHandlers())
 	if len(results) != expected {
 		return fmt.Errorf("expected %d results, but got %d", expected, len(results))

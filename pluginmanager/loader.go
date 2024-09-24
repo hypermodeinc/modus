@@ -78,7 +78,10 @@ func loadPlugin(ctx context.Context, filename string) error {
 	}
 
 	// Make the plugin object.
-	plugin := plugins.NewPlugin(cm, filename, md)
+	plugin, err := plugins.NewPlugin(ctx, cm, filename, md)
+	if err != nil {
+		return err
+	}
 
 	// Write the plugin info to the database.
 	// Note, this may update the ID if a plugin with the same BuildID is in the db already.

@@ -21,7 +21,7 @@ func Initialize(ctx context.Context) {
 func configureLogger() {
 	logger.AddAdapter(func(ctx context.Context, lc zerolog.Context) zerolog.Context {
 
-		if plugin := plugins.GetPlugin(ctx); plugin != nil {
+		if plugin, ok := plugins.GetPluginFromContext(ctx); ok {
 			if buildId := plugin.BuildId(); buildId != "" {
 				lc = lc.Str("build_id", buildId)
 			}

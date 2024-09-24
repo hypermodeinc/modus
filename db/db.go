@@ -257,7 +257,7 @@ func WriteInferenceHistory(ctx context.Context, model *manifest.ModelInfo, input
 	defer span.Finish()
 
 	var pluginId *string
-	if plugin, ok := ctx.Value(utils.PluginContextKey).(*plugins.Plugin); ok {
+	if plugin, ok := plugins.GetPluginFromContext(ctx); ok {
 		pluginId = &plugin.Id
 	}
 
