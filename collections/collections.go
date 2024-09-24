@@ -17,7 +17,6 @@ import (
 	collection_utils "hypruntime/collections/utils"
 	"hypruntime/functions"
 	"hypruntime/manifestdata"
-	"hypruntime/plugins"
 	"hypruntime/utils"
 	"hypruntime/wasmhost"
 )
@@ -690,7 +689,7 @@ func validateEmbedder(ctx context.Context, embedder string) error {
 		return errInvalidEmbedderSignature
 	}
 
-	lti := plugins.GetPlugin(ctx).Language.TypeInfo()
+	lti := info.Plugin().Language.TypeInfo()
 
 	p := fn.Parameters[0]
 	if !lti.IsListType(p.Type) || !lti.IsStringType(lti.GetListSubtype(p.Type)) {

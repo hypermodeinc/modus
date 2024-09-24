@@ -7,9 +7,7 @@ package functions
 import (
 	"context"
 	"fmt"
-	"strings"
 
-	"hypruntime/hostfunctions/compatibility"
 	"hypruntime/logger"
 	"hypruntime/plugins"
 	"hypruntime/utils"
@@ -59,88 +57,33 @@ func (fr *functionRegistry) RegisterAllFunctions(ctx context.Context, plugins ..
 func (fr *functionRegistry) RegisterExports(ctx context.Context, plugin *plugins.Plugin) []string {
 	fnExports := plugin.Module.ExportedFunctions()
 	names := make([]string, 0, len(fnExports))
-	for fnName, fnDef := range fnExports {
-		if fnMeta, ok := plugin.Metadata.FnExports[fnName]; ok {
-
-			plan, err := plugin.Planner.GetPlan(ctx, fnMeta, fnDef)
-			if err != nil {
-				logger.Err(ctx, err).
-					Str("function", fnName).
-					Str("plugin", plugin.Name()).
-					Str("build_id", plugin.BuildId()).
-					Msg("Error creating execution plan.")
-				continue
-			}
-
-			fr.functions[fnName] = NewFunctionInfo(plugin, plan)
+	for fnName := range fnExports {
+		info, ok := NewFunctionInfo(fnName, plugin, false)
+		if ok {
+			fr.functions[fnName] = info
 			names = append(names, fnName)
 
 			logger.Info(ctx).
 				Str("function", fnName).
 				Str("plugin", plugin.Name()).
 				Str("build_id", plugin.BuildId()).
-				Msg("Registered exported function.")
+				Msg("Registered function.")
 		}
 	}
 	return names
 }
 
 func (fr *functionRegistry) RegisterImports(ctx context.Context, plugin *plugins.Plugin) []string {
-	gaveCompatibilityWarning := false
 	fnImports := plugin.Module.ImportedFunctions()
 	names := make([]string, 0, len(fnImports))
 	for _, fnDef := range fnImports {
 		modName, fnName, _ := fnDef.Import()
 		impName := fmt.Sprintf("%s.%s", modName, fnName)
-		if _, ok := fr.functions[impName]; ok {
+		info, ok := NewFunctionInfo(impName, plugin, true)
+		if ok {
+			fr.functions[impName] = info
 			names = append(names, impName)
-			continue // already registered
 		}
-
-		fnMeta, found := plugin.Metadata.FnImports[impName]
-		if !found {
-			if modName == "hypermode" {
-				if !gaveCompatibilityWarning {
-					logger.Warn(ctx).
-						Str("plugin", plugin.Name()).
-						Str("build_id", plugin.BuildId()).
-						Msg("Hypermode function imports are missing from the metadata. Using compatibility shims. Please update your SDK to the latest version.")
-					gaveCompatibilityWarning = true
-				}
-				if m, err := compatibility.GetImportMetadataShim(impName); err == nil {
-					fnMeta = m
-				} else {
-					logger.Err(ctx, err).
-						Str("function", impName).
-						Str("plugin", plugin.Name()).
-						Str("build_id", plugin.BuildId()).
-						Msg("Error creating compatibility shim.")
-					continue
-				}
-			} else if fr.shouldIgnoreModule(modName) {
-				continue
-			} else {
-				logger.Warn(ctx).
-					Str("function", impName).
-					Str("plugin", plugin.Name()).
-					Str("build_id", plugin.BuildId()).
-					Msg("Function is not registered in metadata imports.  The plugin may not work as expected.")
-				continue
-			}
-		}
-
-		plan, err := plugin.Planner.GetPlan(ctx, fnMeta, fnDef)
-		if err != nil {
-			logger.Err(ctx, err).
-				Str("function", impName).
-				Str("plugin", plugin.Name()).
-				Str("build_id", plugin.BuildId()).
-				Msg("Error creating execution plan.")
-			continue
-		}
-
-		fr.functions[impName] = NewFunctionInfo(plugin, plan)
-		names = append(names, impName)
 	}
 	return names
 }
@@ -154,20 +97,14 @@ func (fr *functionRegistry) cleanup(ctx context.Context, registeredNames []strin
 	for name, fnInfo := range fr.functions {
 		if !m[name] {
 			delete(fr.functions, name)
-			logger.Info(ctx).
-				Str("function", name).
-				Str("plugin", fnInfo.Plugin().Name()).
-				Str("build_id", fnInfo.Plugin().BuildId()).
-				Msg("Unregistered function.")
+
+			if !fnInfo.IsImport() {
+				logger.Info(ctx).
+					Str("function", name).
+					Str("plugin", fnInfo.Plugin().Name()).
+					Str("build_id", fnInfo.Plugin().BuildId()).
+					Msg("Unregistered function.")
+			}
 		}
 	}
-}
-
-func (fr *functionRegistry) shouldIgnoreModule(name string) bool {
-	switch name {
-	case "wasi_snapshot_preview1", "wasi", "env", "runtime", "syscall", "test":
-		return true
-	}
-
-	return strings.HasPrefix(name, "wasi_")
 }

@@ -140,12 +140,12 @@ func TestMapLookup_string_string(t *testing.T) {
 	}
 }
 
-type testClassWithMap struct {
+type TestClassWithMap struct {
 	M map[string]string
 }
 
 func TestClassContainingMapInput_string_string(t *testing.T) {
-	s := testClassWithMap{M: map[string]string{
+	s := TestClassWithMap{M: map[string]string{
 		"a": "1",
 		"b": "2",
 		"c": "3",
@@ -162,7 +162,7 @@ func TestClassContainingMapOutput_string_string(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	expected := testClassWithMap{M: map[string]string{
+	expected := TestClassWithMap{M: map[string]string{
 		"a": "1",
 		"b": "2",
 		"c": "3",
@@ -170,7 +170,7 @@ func TestClassContainingMapOutput_string_string(t *testing.T) {
 
 	if result == nil {
 		t.Error("expected a result")
-	} else if r, ok := result.(testClassWithMap); !ok {
+	} else if r, ok := result.(TestClassWithMap); !ok {
 		t.Errorf("expected %T, got %T", expected, result)
 	} else if !reflect.DeepEqual(expected, r) {
 		t.Errorf("expected %v, got %v", expected, r)

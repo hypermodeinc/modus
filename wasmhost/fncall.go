@@ -55,7 +55,7 @@ func CallFunction(ctx context.Context, fnName string, paramValues ...any) (Execu
 }
 
 func (host *wasmHost) CallFunctionByName(ctx context.Context, fnName string, paramValues ...any) (ExecutionInfo, error) {
-	info, err := host.fnRegistry.GetFunctionInfo(fnName)
+	info, err := host.GetFunctionInfo(fnName)
 	if err != nil {
 		return nil, err
 	}
