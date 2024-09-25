@@ -240,6 +240,9 @@ func SearchCollection(ctx context.Context, collectionName string, namespaces []s
 			if err != nil {
 				return nil, err
 			}
+			if labels == nil {
+				labels = []string{}
+			}
 			mergedObjects = append(mergedObjects, &CollectionSearchResultObject{
 				Namespace: ns,
 				Key:       object.GetIndex(),
@@ -305,6 +308,9 @@ func SearchCollectionByVector(ctx context.Context, collectionName string, namesp
 			labels, err := collNs.GetLabels(ctx, object.GetIndex())
 			if err != nil {
 				return nil, err
+			}
+			if labels == nil {
+				labels = []string{}
 			}
 			mergedObjects = append(mergedObjects, &CollectionSearchResultObject{
 				Namespace: ns,
@@ -423,6 +429,9 @@ func NnClassify(ctx context.Context, collectionName, namespace, searchMethod, te
 			if err != nil {
 				return nil, err
 			}
+			if labels == nil {
+				labels = []string{}
+			}
 			for _, label := range labels {
 				labelCounts[label]++
 				totalLabels++
@@ -499,6 +508,9 @@ func GetLabels(ctx context.Context, collectionName, namespace, key string) ([]st
 	labels, err := collNs.GetLabels(ctx, key)
 	if err != nil {
 		return nil, err
+	}
+	if labels == nil {
+		labels = []string{}
 	}
 
 	return labels, nil
