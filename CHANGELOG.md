@@ -1,5 +1,7 @@
 # Change Log
 
+- Increase AWS retry settings [#383](https://github.com/hypermodeAI/runtime/pull/383)
+
 ## 2024-09-24 - Version 0.12.2
 
 - Fix missing GraphQL type schema [#376](https://github.com/hypermodeAI/runtime/pull/376)

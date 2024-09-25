@@ -93,6 +93,7 @@
     "ptrs",
     "reindex",
     "renameio",
+    "retryer",
     "rtti",
     "schemagen",
     "sqlclient",
