@@ -129,13 +129,7 @@ func UpsertToCollection(ctx context.Context, collectionName, namespace string, k
 		}
 	}
 
-	return &CollectionMutationResult{
-		Collection: collectionName,
-		Operation:  "upsert",
-		Status:     "success",
-		Keys:       keys,
-		Error:      "",
-	}, nil
+	return NewCollectionMutationResult(collectionName, "upsert", "success", keys, ""), nil
 }
 
 func DeleteFromCollection(ctx context.Context, collectionName, namespace, key string) (*CollectionMutationResult, error) {
@@ -170,13 +164,7 @@ func DeleteFromCollection(ctx context.Context, collectionName, namespace, key st
 
 	keys := []string{key}
 
-	return &CollectionMutationResult{
-		Collection: collectionName,
-		Operation:  "delete",
-		Status:     "success",
-		Keys:       keys,
-		Error:      "",
-	}, nil
+	return NewCollectionMutationResult(collectionName, "delete", "success", keys, ""), nil
 }
 
 func SearchCollection(ctx context.Context, collectionName string, namespaces []string, searchMethod, text string, limit int32, returnText bool) (*CollectionSearchResult, error) {
@@ -240,14 +228,7 @@ func SearchCollection(ctx context.Context, collectionName string, namespaces []s
 			if err != nil {
 				return nil, err
 			}
-			mergedObjects = append(mergedObjects, &CollectionSearchResultObject{
-				Namespace: ns,
-				Key:       object.GetIndex(),
-				Text:      text,
-				Labels:    labels,
-				Distance:  object.GetValue(),
-				Score:     1 - object.GetValue(),
-			})
+			mergedObjects = append(mergedObjects, NewCollectionSearchResultObject(ns, object.GetIndex(), text, labels, object.GetValue(), 1-object.GetValue()))
 		}
 	}
 
@@ -260,12 +241,7 @@ func SearchCollection(ctx context.Context, collectionName string, namespaces []s
 		mergedObjects = mergedObjects[:int(limit)]
 	}
 
-	return &CollectionSearchResult{
-		Collection:   collectionName,
-		SearchMethod: searchMethod,
-		Status:       "success",
-		Objects:      mergedObjects,
-	}, nil
+	return NewCollectionSearchResult(collectionName, searchMethod, "success", mergedObjects, ""), nil
 }
 
 func SearchCollectionByVector(ctx context.Context, collectionName string, namespaces []string, searchMethod string, vector []float32, limit int32, returnText bool) (*CollectionSearchResult, error) {
@@ -306,14 +282,7 @@ func SearchCollectionByVector(ctx context.Context, collectionName string, namesp
 			if err != nil {
 				return nil, err
 			}
-			mergedObjects = append(mergedObjects, &CollectionSearchResultObject{
-				Namespace: ns,
-				Key:       object.GetIndex(),
-				Text:      text,
-				Labels:    labels,
-				Distance:  object.GetValue(),
-				Score:     1 - object.GetValue(),
-			})
+			mergedObjects = append(mergedObjects, NewCollectionSearchResultObject(ns, object.GetIndex(), text, labels, object.GetValue(), 1-object.GetValue()))
 		}
 	}
 
@@ -326,12 +295,7 @@ func SearchCollectionByVector(ctx context.Context, collectionName string, namesp
 		mergedObjects = mergedObjects[:int(limit)]
 	}
 
-	return &CollectionSearchResult{
-		Collection:   collectionName,
-		SearchMethod: searchMethod,
-		Status:       "success",
-		Objects:      mergedObjects,
-	}, nil
+	return NewCollectionSearchResult(collectionName, searchMethod, "success", mergedObjects, ""), nil
 }
 
 func NnClassify(ctx context.Context, collectionName, namespace, searchMethod, text string) (*CollectionClassificationResult, error) {
@@ -407,13 +371,7 @@ func NnClassify(ctx context.Context, collectionName, namespace, searchMethod, te
 	// remove elements with score out of first standard deviation and return the most frequent label
 	labelCounts := make(map[string]int)
 
-	res := &CollectionClassificationResult{
-		Collection:   collectionName,
-		LabelsResult: make([]*CollectionClassificationLabelObject, 0),
-		SearchMethod: searchMethod,
-		Status:       "success",
-		Cluster:      make([]*CollectionClassificationResultObject, 0),
-	}
+	res := NewCollectionClassificationResult(collectionName, searchMethod, "success", []*CollectionClassificationLabelObject{}, []*CollectionClassificationResultObject{}, "")
 
 	totalLabels := 0
 
@@ -428,22 +386,14 @@ func NnClassify(ctx context.Context, collectionName, namespace, searchMethod, te
 				totalLabels++
 			}
 
-			res.Cluster = append(res.Cluster, &CollectionClassificationResultObject{
-				Key:      nn.GetIndex(),
-				Labels:   labels,
-				Score:    1 - nn.GetValue(),
-				Distance: nn.GetValue(),
-			})
+			res.Cluster = append(res.Cluster, NewCollectionClassificationResultObject(nn.GetIndex(), labels, nn.GetValue(), 1-nn.GetValue()))
 		}
 	}
 
 	// Create a slice of pairs
 	labelsResult := make([]*CollectionClassificationLabelObject, 0, len(labelCounts))
 	for label, count := range labelCounts {
-		labelsResult = append(labelsResult, &CollectionClassificationLabelObject{
-			Label:      label,
-			Confidence: float64(count) / float64(totalLabels),
-		})
+		labelsResult = append(labelsResult, NewCollectionClassificationLabelObject(label, float64(count)/float64(totalLabels)))
 	}
 
 	// Sort the pairs by count in descending order
@@ -548,14 +498,7 @@ func ComputeDistance(ctx context.Context, collectionName, namespace, searchMetho
 		return nil, err
 	}
 
-	return &CollectionSearchResultObject{
-		Namespace: namespace,
-		Key:       "",
-		Text:      "",
-		Labels:    []string{},
-		Distance:  distance,
-		Score:     1 - distance,
-	}, nil
+	return NewCollectionSearchResultObject(namespace, "", "", []string{}, distance, 1-distance), nil
 }
 
 func RecomputeSearchMethod(ctx context.Context, collectionName, namespace, searchMethod string) (*SearchMethodMutationResult, error) {
@@ -584,12 +527,7 @@ func RecomputeSearchMethod(ctx context.Context, collectionName, namespace, searc
 		return nil, err
 	}
 
-	return &SearchMethodMutationResult{
-		Collection: collectionName,
-		Operation:  "recompute",
-		Status:     "success",
-		Error:      "",
-	}, nil
+	return NewSearchMethodMutationResult(collectionName, searchMethod, "recompute", "success", ""), nil
 }
 
 func GetTextFromCollection(ctx context.Context, collectionName, namespace, key string) (string, error) {
@@ -630,6 +568,9 @@ func GetTextsFromCollection(ctx context.Context, collectionName, namespace strin
 	textMap, err := collNs.GetTextMap(ctx)
 	if err != nil {
 		return nil, err
+	}
+	if textMap == nil {
+		return make(map[string]string), nil
 	}
 
 	return textMap, nil
