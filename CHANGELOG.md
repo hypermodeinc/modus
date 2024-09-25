@@ -1,5 +1,9 @@
 # Change Log
 
+## UNRELEASED
+
+- catch nil labels and output as empty in collections [#384](https://github.com/hypermodeAI/runtime/pull/384)
+
 ## 2024-09-24 - Version 0.12.2
 
 - Fix missing GraphQL type schema [#376](https://github.com/hypermodeAI/runtime/pull/376)
