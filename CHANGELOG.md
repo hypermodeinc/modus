@@ -1,6 +1,6 @@
 # Change Log
 
-## UNRELEASED
+## 2024-09-24 - Version 0.12.2
 
 - Fix missing GraphQL type schema [#376](https://github.com/hypermodeAI/runtime/pull/376)
 - Add FunctionExecutionDurationMillisecondsSummary metric [#377](https://github.com/hypermodeAI/runtime/pull/377)
