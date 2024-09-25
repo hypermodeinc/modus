@@ -569,6 +569,9 @@ func GetTextsFromCollection(ctx context.Context, collectionName, namespace strin
 	if err != nil {
 		return nil, err
 	}
+	if textMap == nil {
+		return make(map[string]string), nil
+	}
 
 	return textMap, nil
 }
