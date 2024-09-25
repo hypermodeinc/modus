@@ -121,14 +121,29 @@ func (host *wasmHost) CallFunction(ctx context.Context, fnInfo functions.Functio
 			Bool("user_visible", true).
 			Msg("Function completed successfully.")
 	} else if errors.As(err, &exitErr) {
+		// NOTE: This can occur if the function calls `exit` or `abort` in the WASM code, or if they throw an exception or panic.
+		// In those cases, the message of the exception or panic will have already been logged via the `log` host function.
 		exitCode := int32(exitErr.ExitCode())
-		logger.Error(ctx).
-			Str("function", fnName).
-			Dur("duration_ms", duration).
-			Bool("user_visible", true).
-			Int32("exit_code", exitCode).
-			Msgf("Function ended prematurely with exit code %d.", exitCode)
+		if exitCode == 0 {
+			// exit code 0 is a non-error exit, so we log it as a warning
+			logger.Warn(ctx).
+				Str("function", fnName).
+				Dur("duration_ms", duration).
+				Bool("user_visible", true).
+				Int32("exit_code", exitCode).
+				Msgf("Function ended prematurely with exit code %d.  It is generally better to return properly than to exit abruptly.", exitCode)
+		} else {
+			// any other exit code is an error exit, so we log it as an error
+			logger.Error(ctx).
+				Str("function", fnName).
+				Dur("duration_ms", duration).
+				Bool("user_visible", true).
+				Int32("exit_code", exitCode).
+				Msgf("Function ended prematurely with exit code %d.  This may have been intentional, or caused by an exception or panic in your code.", exitCode)
+		}
 	} else if errors.Is(err, context.Canceled) {
+		// Cancellation is not an error, but we still want to log it.
+		// This can occur if the function takes too long to execute, or if the user cancels the request.
 		logger.Warn(ctx).
 			Str("function", fnName).
 			Dur("duration_ms", duration).
@@ -138,10 +153,11 @@ func (host *wasmHost) CallFunction(ctx context.Context, fnInfo functions.Functio
 		if utils.HypermodeDebugEnabled() {
 			fmt.Fprintln(os.Stderr, err)
 		}
+		// NOTE: Errors of this type should not be user-visible, as they were caused by some Runtime issue, not the user's code.
+		// This will also ensure the error is reported to Sentry.
 		logger.Err(ctx, err).
 			Str("function", fnName).
 			Dur("duration_ms", duration).
-			Bool("user_visible", true).
 			Msg("Error while executing function.")
 	}
 
