@@ -58,7 +58,7 @@ func InvokeModel(ctx context.Context, modelName string, input string) (string, e
 }
 
 func PostToModelEndpoint[TResult any](ctx context.Context, model *manifest.ModelInfo, payload any) (TResult, error) {
-	span := utils.NewSentrySpanForCurrentFunc(ctx)
+	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
 
 	endpoint, host, err := getModelEndpointAndHost(model)

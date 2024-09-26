@@ -126,7 +126,7 @@ func (host *wasmHost) GetModuleInstance(ctx context.Context, plugin *plugins.Plu
 }
 
 func (host *wasmHost) CompileModule(ctx context.Context, bytes []byte) (wazero.CompiledModule, error) {
-	span := utils.NewSentrySpanForCurrentFunc(ctx)
+	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
 
 	cm, err := host.runtime.CompileModule(ctx, bytes)

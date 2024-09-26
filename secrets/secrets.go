@@ -27,7 +27,7 @@ type secretsProvider interface {
 }
 
 func Initialize(ctx context.Context) {
-	span := utils.NewSentrySpanForCurrentFunc(ctx)
+	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
 
 	if config.UseAwsSecrets {

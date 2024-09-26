@@ -71,7 +71,7 @@ func (sp *awsSecretsProvider) getHostSecrets(ctx context.Context, host manifest.
 }
 
 func (sp *awsSecretsProvider) getSecrets(ctx context.Context, prefix string) (map[string]string, error) {
-	span := utils.NewSentrySpanForCurrentFunc(ctx)
+	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
 
 	results := make(map[string]string)
@@ -86,7 +86,7 @@ func (sp *awsSecretsProvider) getSecrets(ctx context.Context, prefix string) (ma
 }
 
 func (sp *awsSecretsProvider) getSecretValue(ctx context.Context, name string) (string, error) {
-	span := utils.NewSentrySpanForCurrentFunc(ctx)
+	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
 
 	val, ok := sp.cache[name]
@@ -98,8 +98,8 @@ func (sp *awsSecretsProvider) getSecretValue(ctx context.Context, name string) (
 }
 
 func (sp *awsSecretsProvider) populateSecretsCache(ctx context.Context) error {
-	transaction, ctx := utils.NewSentryTransactionForCurrentFunc(ctx)
-	defer transaction.Finish()
+	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+	defer span.Finish()
 
 	p := secretsmanager.NewBatchGetSecretValuePaginator(sp.client, &secretsmanager.BatchGetSecretValueInput{
 		Filters: []types.Filter{{
@@ -142,8 +142,8 @@ func (sp *awsSecretsProvider) monitorForUpdates(ctx context.Context) {
 	defer ticker.Stop()
 
 	for {
-		transaction, ctx := utils.NewSentryTransactionForCurrentFunc(ctx)
-		defer transaction.Finish()
+		span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+		defer span.Finish()
 
 		secrets, err := sp.listSecrets(ctx)
 		if err != nil {
@@ -210,8 +210,8 @@ func (sp *awsSecretsProvider) getCurrentVersionId(s types.SecretListEntry) strin
 }
 
 func (sp *awsSecretsProvider) listSecrets(ctx context.Context) ([]types.SecretListEntry, error) {
-	transaction, ctx := utils.NewSentryTransactionForCurrentFunc(ctx)
-	defer transaction.Finish()
+	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+	defer span.Finish()
 
 	p := secretsmanager.NewListSecretsPaginator(sp.client, &secretsmanager.ListSecretsInput{
 		Filters: []types.Filter{{

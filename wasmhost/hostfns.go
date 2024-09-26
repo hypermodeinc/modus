@@ -306,7 +306,7 @@ func (host *wasmHost) newHostFunction(modName, funcName string, fn any, opts ...
 }
 
 func (host *wasmHost) instantiateHostFunctions(ctx context.Context) error {
-	span := utils.NewSentrySpanForCurrentFunc(ctx)
+	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
 
 	hostFnsByModule := make(map[string][]*hostFunction)

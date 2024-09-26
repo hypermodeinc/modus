@@ -35,7 +35,7 @@ func Initialize(ctx context.Context) {
 }
 
 func initialize(ctx context.Context) error {
-	span := utils.NewSentrySpanForCurrentFunc(ctx)
+	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
 
 	cfg, err := config.LoadDefaultConfig(ctx)

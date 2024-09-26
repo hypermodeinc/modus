@@ -51,8 +51,8 @@ func monitorPlugins(ctx context.Context) {
 }
 
 func loadPlugin(ctx context.Context, filename string) error {
-	transaction, ctx := utils.NewSentryTransactionForCurrentFunc(ctx)
-	defer transaction.Finish()
+	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+	defer span.Finish()
 
 	// Load the binary content of the plugin.
 	bytes, err := storage.GetFileContents(ctx, filename)
@@ -100,7 +100,7 @@ func loadPlugin(ctx context.Context, filename string) error {
 }
 
 func logPluginLoaded(ctx context.Context, plugin *plugins.Plugin) {
-	span := utils.NewSentrySpanForCurrentFunc(ctx)
+	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
 
 	evt := logger.Info(ctx)
@@ -147,8 +147,8 @@ func logPluginLoaded(ctx context.Context, plugin *plugins.Plugin) {
 }
 
 func unloadPlugin(ctx context.Context, filename string) error {
-	transaction, ctx := utils.NewSentryTransactionForCurrentFunc(ctx)
-	defer transaction.Finish()
+	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+	defer span.Finish()
 
 	p := globalPluginRegistry.GetByFile(filename)
 	if p == nil {
