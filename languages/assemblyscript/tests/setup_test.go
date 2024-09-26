@@ -31,7 +31,7 @@ func TestMain(m *testing.M) {
 	customTypes["assembly/classes/TestClass4"] = reflect.TypeFor[TestClass4]()
 	customTypes["assembly/classes/TestClass5"] = reflect.TypeFor[TestClass5]()
 	customTypes["assembly/hostfns/TestHostObject"] = reflect.TypeFor[TestHostObject]()
-	customTypes["assembly/maps/TestClassWithMap"] = reflect.TypeFor[TestClassWithMap]()
+	customTypes["assembly/maps/TestClassWithMap"] = reflect.TypeFor[TestClassWithMap1]()
 
 	registrations := getTestHostFunctionRegistrations()
 	fixture = testutils.NewWasmTestFixture(path, customTypes, registrations)
