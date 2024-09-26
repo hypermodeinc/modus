@@ -1,7 +1,7 @@
 package main
 
 func TestArrayInput0_byte(val [0]byte) {
-	var expected = [0]byte{}
+	expected := [0]byte{}
 	assertEqual(expected, val)
 }
 
@@ -10,7 +10,7 @@ func TestArrayOutput0_byte() [0]byte {
 }
 
 func TestArrayInput0_string(val [0]string) {
-	var expected = [0]string{}
+	expected := [0]string{}
 	assertEqual(expected, val)
 }
 
@@ -19,7 +19,7 @@ func TestArrayOutput0_string() [0]string {
 }
 
 func TestArrayInput0_stringPtr(val [0]*string) {
-	var expected = [0]*string{}
+	expected := [0]*string{}
 	assertEqual(expected, val)
 }
 
@@ -28,7 +28,7 @@ func TestArrayOutput0_stringPtr() [0]*string {
 }
 
 func TestArrayInput0_intPtr(val [0]*int) {
-	var expected = getIntPtrArray0()
+	expected := getIntPtrArray0()
 	assertEqual(expected, val)
 }
 
@@ -41,7 +41,7 @@ func getIntPtrArray0() [0]*int {
 }
 
 func TestArrayInput1_byte(val [1]byte) {
-	var expected = [1]byte{1}
+	expected := [1]byte{1}
 	assertEqual(expected, val)
 }
 
@@ -50,7 +50,7 @@ func TestArrayOutput1_byte() [1]byte {
 }
 
 func TestArrayInput1_string(val [1]string) {
-	var expected = [1]string{"abc"}
+	expected := [1]string{"abc"}
 	assertEqual(expected, val)
 }
 
@@ -59,7 +59,7 @@ func TestArrayOutput1_string() [1]string {
 }
 
 func TestArrayInput1_stringPtr(val [1]*string) {
-	var expected = getStringPtrArray1()
+	expected := getStringPtrArray1()
 	assertEqual(expected, val)
 }
 
@@ -73,7 +73,7 @@ func getStringPtrArray1() [1]*string {
 }
 
 func TestArrayInput1_intPtr(val [1]*int) {
-	var expected = getIntPtrArray1()
+	expected := getIntPtrArray1()
 	assertEqual(expected, val)
 }
 
@@ -87,7 +87,7 @@ func getIntPtrArray1() [1]*int {
 }
 
 func TestArrayInput2_byte(val [2]byte) {
-	var expected = [2]byte{1, 2}
+	expected := [2]byte{1, 2}
 	assertEqual(expected, val)
 }
 
@@ -96,7 +96,7 @@ func TestArrayOutput2_byte() [2]byte {
 }
 
 func TestArrayInput2_string(val [2]string) {
-	var expected = [2]string{"abc", "def"}
+	expected := [2]string{"abc", "def"}
 	assertEqual(expected, val)
 }
 
@@ -105,7 +105,7 @@ func TestArrayOutput2_string() [2]string {
 }
 
 func TestArrayInput2_stringPtr(val [2]*string) {
-	var expected = getStringPtrArray2()
+	expected := getStringPtrArray2()
 	assertEqual(expected, val)
 }
 
@@ -120,7 +120,7 @@ func getStringPtrArray2() [2]*string {
 }
 
 func TestArrayInput2_intPtr(val [2]*int) {
-	var expected = getIntPtrArray2()
+	expected := getIntPtrArray2()
 	assertEqual(expected, val)
 }
 
@@ -135,7 +135,7 @@ func getIntPtrArray2() [2]*int {
 }
 
 func TestArrayInput2_struct(val [2]TestStruct2) {
-	var expected = getStructArray2()
+	expected := getStructArray2()
 	assertEqual(expected, val)
 }
 
@@ -144,7 +144,7 @@ func TestArrayOutput2_struct() [2]TestStruct2 {
 }
 
 func TestArrayInput2_structPtr(val [2]*TestStruct2) {
-	var expected = getStructPtrArray2()
+	expected := getStructPtrArray2()
 	assertEqual(expected, val)
 }
 
@@ -167,7 +167,7 @@ func getStructPtrArray2() [2]*TestStruct2 {
 }
 
 func TestArrayInput2_map(val [2]map[string]string) {
-	var expected = getMapArray2()
+	expected := getMapArray2()
 	assertEqual(expected, val)
 }
 
@@ -176,7 +176,7 @@ func TestArrayOutput2_map() [2]map[string]string {
 }
 
 func TestArrayInput2_mapPtr(val [2]*map[string]string) {
-	var expected = getMapPtrArray2()
+	expected := getMapPtrArray2()
 	assertEqual(expected, val)
 }
 
@@ -199,7 +199,7 @@ func getMapPtrArray2() [2]*map[string]string {
 }
 
 func TestPtrArrayInput1_int(val *[1]int) {
-	var expected = getPtrIntArray1()
+	expected := getPtrIntArray1()
 	assertEqual(expected, val)
 }
 
@@ -213,7 +213,7 @@ func getPtrIntArray1() *[1]int {
 }
 
 func TestPtrArrayInput2_int(val *[2]int) {
-	var expected = getPtrIntArray2()
+	expected := getPtrIntArray2()
 	assertEqual(expected, val)
 }
 
@@ -228,7 +228,7 @@ func getPtrIntArray2() *[2]int {
 }
 
 func TestPtrArrayInput1_string(val *[1]string) {
-	var expected = getPtrStringArray1()
+	expected := getPtrStringArray1()
 	assertEqual(expected, val)
 }
 
@@ -248,7 +248,7 @@ func getPtrStringArray2() *[2]string {
 }
 
 func TestPtrArrayInput2_string(val *[2]string) {
-	var expected = getPtrStringArray2()
+	expected := getPtrStringArray2()
 	assertEqual(expected, val)
 }
 

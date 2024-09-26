@@ -107,7 +107,8 @@ func hostEncodeStrings2(items *[]*string) *string {
 }
 
 func TestHostFn_add(t *testing.T) {
-	result, err := fixture.CallFunction(t, "add", 1, 2)
+	fnName := "add"
+	result, err := fixture.CallFunction(t, fnName, 1, 2)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -122,7 +123,8 @@ func TestHostFn_add(t *testing.T) {
 }
 
 func TestHostFn_echo1_string(t *testing.T) {
-	result, err := fixture.CallFunction(t, "echo1", "hello")
+	fnName := "echo1"
+	result, err := fixture.CallFunction(t, fnName, "hello")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -138,8 +140,10 @@ func TestHostFn_echo1_string(t *testing.T) {
 }
 
 func TestHostFn_echo1_stringPtr(t *testing.T) {
+	fnName := "echo1"
 	s := "hello"
-	result, err := fixture.CallFunction(t, "echo1", &s)
+
+	result, err := fixture.CallFunction(t, fnName, &s)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -155,7 +159,8 @@ func TestHostFn_echo1_stringPtr(t *testing.T) {
 }
 
 func TestHostFn_echo2_string(t *testing.T) {
-	result, err := fixture.CallFunction(t, "echo2", "hello")
+	fnName := "echo2"
+	result, err := fixture.CallFunction(t, fnName, "hello")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -171,8 +176,10 @@ func TestHostFn_echo2_string(t *testing.T) {
 }
 
 func TestHostFn_echo2_stringPtr(t *testing.T) {
+	fnName := "echo2"
 	s := "hello"
-	result, err := fixture.CallFunction(t, "echo2", &s)
+
+	result, err := fixture.CallFunction(t, fnName, &s)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -188,7 +195,8 @@ func TestHostFn_echo2_stringPtr(t *testing.T) {
 }
 
 func TestHostFn_echo3_string(t *testing.T) {
-	result, err := fixture.CallFunction(t, "echo3", "hello")
+	fnName := "echo3"
+	result, err := fixture.CallFunction(t, fnName, "hello")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -204,8 +212,10 @@ func TestHostFn_echo3_string(t *testing.T) {
 }
 
 func TestHostFn_echo3_stringPtr(t *testing.T) {
+	fnName := "echo3"
 	s := "hello"
-	result, err := fixture.CallFunction(t, "echo3", &s)
+
+	result, err := fixture.CallFunction(t, fnName, &s)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -221,7 +231,8 @@ func TestHostFn_echo3_stringPtr(t *testing.T) {
 }
 
 func TestHostFn_echo4_string(t *testing.T) {
-	result, err := fixture.CallFunction(t, "echo4", "hello")
+	fnName := "echo4"
+	result, err := fixture.CallFunction(t, fnName, "hello")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -237,8 +248,10 @@ func TestHostFn_echo4_string(t *testing.T) {
 }
 
 func TestHostFn_echo4_stringPtr(t *testing.T) {
+	fnName := "echo4"
 	s := "hello"
-	result, err := fixture.CallFunction(t, "echo4", &s)
+
+	result, err := fixture.CallFunction(t, fnName, &s)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -254,8 +267,10 @@ func TestHostFn_echo4_stringPtr(t *testing.T) {
 }
 
 func TestHostFn_encodeStrings1(t *testing.T) {
+	fnName := "encodeStrings1"
 	s := []string{"hello", "world"}
-	result, err := fixture.CallFunction(t, "encodeStrings1", s)
+
+	result, err := fixture.CallFunction(t, fnName, s)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -271,10 +286,12 @@ func TestHostFn_encodeStrings1(t *testing.T) {
 }
 
 func TestHostFn_encodeStrings2(t *testing.T) {
+	fnName := "encodeStrings2"
 	e0 := "hello"
 	e1 := "world"
 	s := []*string{&e0, &e1}
-	result, err := fixture.CallFunction(t, "encodeStrings2", s)
+
+	result, err := fixture.CallFunction(t, fnName, s)
 	if err != nil {
 		t.Fatal(err)
 	}

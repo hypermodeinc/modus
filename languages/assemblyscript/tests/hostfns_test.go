@@ -63,7 +63,8 @@ type TestHostObject struct {
 }
 
 func TestHostFn_add(t *testing.T) {
-	result, err := fixture.CallFunction(t, "add", 1, 2)
+	fnName := "add"
+	result, err := fixture.CallFunction(t, fnName, 1, 2)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -78,7 +79,8 @@ func TestHostFn_add(t *testing.T) {
 }
 
 func TestHostFn_echo(t *testing.T) {
-	result, err := fixture.CallFunction(t, "echo", "hello")
+	fnName := "echo"
+	result, err := fixture.CallFunction(t, fnName, "hello")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -94,13 +96,14 @@ func TestHostFn_echo(t *testing.T) {
 }
 
 func TestHostFn_echoObject(t *testing.T) {
+	fnName := "echoObject"
 	o := &TestHostObject{
 		A: 1,
 		B: true,
 		C: "hello",
 	}
 
-	result, err := fixture.CallFunction(t, "echoObject", o)
+	result, err := fixture.CallFunction(t, fnName, o)
 	if err != nil {
 		t.Fatal(err)
 	}

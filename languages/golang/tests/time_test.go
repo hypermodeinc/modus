@@ -15,28 +15,32 @@ var testTime, _ = time.Parse(time.RFC3339, "2024-12-31T23:59:59.999999999Z")
 var testDuration = time.Duration(5 * time.Second)
 
 func TestTimeInput(t *testing.T) {
-	if _, err := fixture.CallFunction(t, "testTimeInput", testTime); err != nil {
-		t.Fatal(err)
+	fnName := "testTimeInput"
+	if _, err := fixture.CallFunction(t, fnName, testTime); err != nil {
+		t.Error(err)
 	}
 }
 
 func TestTimePtrInput(t *testing.T) {
-	if _, err := fixture.CallFunction(t, "testTimePtrInput", testTime); err != nil {
-		t.Fatal(err)
+	fnName := "testTimePtrInput"
+	if _, err := fixture.CallFunction(t, fnName, testTime); err != nil {
+		t.Error(err)
 	}
-	if _, err := fixture.CallFunction(t, "testTimePtrInput", &testTime); err != nil {
-		t.Fatal(err)
+	if _, err := fixture.CallFunction(t, fnName, &testTime); err != nil {
+		t.Error(err)
 	}
 }
 
 func TestTimePtrInput_nil(t *testing.T) {
-	if _, err := fixture.CallFunction(t, "testTimePtrInput_nil", nil); err != nil {
-		t.Fatal(err)
+	fnName := "testTimePtrInput_nil"
+	if _, err := fixture.CallFunction(t, fnName, nil); err != nil {
+		t.Error(err)
 	}
 }
 
 func TestTimeOutput(t *testing.T) {
-	result, err := fixture.CallFunction(t, "testTimeOutput")
+	fnName := "testTimeOutput"
+	result, err := fixture.CallFunction(t, fnName)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -51,7 +55,8 @@ func TestTimeOutput(t *testing.T) {
 }
 
 func TestTimePtrOutput(t *testing.T) {
-	result, err := fixture.CallFunction(t, "testTimePtrOutput")
+	fnName := "testTimePtrOutput"
+	result, err := fixture.CallFunction(t, fnName)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -66,7 +71,8 @@ func TestTimePtrOutput(t *testing.T) {
 }
 
 func TestTimePtrOutput_nil(t *testing.T) {
-	result, err := fixture.CallFunction(t, "testTimePtrOutput_nil")
+	fnName := "testTimePtrOutput_nil"
+	result, err := fixture.CallFunction(t, fnName)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -77,28 +83,32 @@ func TestTimePtrOutput_nil(t *testing.T) {
 }
 
 func TestDurationInput(t *testing.T) {
-	if _, err := fixture.CallFunction(t, "testDurationInput", testDuration); err != nil {
-		t.Fatal(err)
+	fnName := "testDurationInput"
+	if _, err := fixture.CallFunction(t, fnName, testDuration); err != nil {
+		t.Error(err)
 	}
 }
 
 func TestDurationPtrInput(t *testing.T) {
-	if _, err := fixture.CallFunction(t, "testDurationPtrInput", testDuration); err != nil {
-		t.Fatal(err)
+	fnName := "testDurationPtrInput"
+	if _, err := fixture.CallFunction(t, fnName, testDuration); err != nil {
+		t.Error(err)
 	}
-	if _, err := fixture.CallFunction(t, "testDurationPtrInput", &testDuration); err != nil {
-		t.Fatal(err)
+	if _, err := fixture.CallFunction(t, fnName, &testDuration); err != nil {
+		t.Error(err)
 	}
 }
 
 func TestDurationPtrInput_nil(t *testing.T) {
-	if _, err := fixture.CallFunction(t, "testDurationPtrInput_nil", nil); err != nil {
-		t.Fatal(err)
+	fnName := "testDurationPtrInput_nil"
+	if _, err := fixture.CallFunction(t, fnName, nil); err != nil {
+		t.Error(err)
 	}
 }
 
 func TestDurationOutput(t *testing.T) {
-	result, err := fixture.CallFunction(t, "testDurationOutput")
+	fnName := "testDurationOutput"
+	result, err := fixture.CallFunction(t, fnName)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -113,7 +123,8 @@ func TestDurationOutput(t *testing.T) {
 }
 
 func TestDurationPtrOutput(t *testing.T) {
-	result, err := fixture.CallFunction(t, "testDurationPtrOutput")
+	fnName := "testDurationPtrOutput"
+	result, err := fixture.CallFunction(t, fnName)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -128,7 +139,8 @@ func TestDurationPtrOutput(t *testing.T) {
 }
 
 func TestDurationPtrOutput_nil(t *testing.T) {
-	result, err := fixture.CallFunction(t, "testDurationPtrOutput_nil")
+	fnName := "testDurationPtrOutput_nil"
+	result, err := fixture.CallFunction(t, fnName)
 	if err != nil {
 		t.Fatal(err)
 	}

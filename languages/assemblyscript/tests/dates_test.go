@@ -13,14 +13,15 @@ import (
 var testTime, _ = time.Parse(time.RFC3339, "2024-12-31T23:59:59.999Z")
 
 func TestDateInput(t *testing.T) {
-	_, err := fixture.CallFunction(t, "testDateInput", testTime)
-	if err != nil {
-		t.Fatal(err)
+	fnName := "testDateInput"
+	if _, err := fixture.CallFunction(t, fnName, testTime); err != nil {
+		t.Error(err)
 	}
 }
 
 func TestDateOutput(t *testing.T) {
-	result, err := fixture.CallFunction(t, "testDateOutput")
+	fnName := "testDateOutput"
+	result, err := fixture.CallFunction(t, fnName)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -35,16 +36,17 @@ func TestDateOutput(t *testing.T) {
 }
 
 func TestNullDateInput(t *testing.T) {
+	fnName := "testNullDateInput"
 	dt := testTime
 
-	_, err := fixture.CallFunction(t, "testNullDateInput", &dt)
-	if err != nil {
-		t.Fatal(err)
+	if _, err := fixture.CallFunction(t, fnName, &dt); err != nil {
+		t.Error(err)
 	}
 }
 
 func TestNullDateOutput(t *testing.T) {
-	result, err := fixture.CallFunction(t, "testNullDateOutput")
+	fnName := "testNullDateOutput"
+	result, err := fixture.CallFunction(t, fnName)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -59,14 +61,15 @@ func TestNullDateOutput(t *testing.T) {
 }
 
 func TestNullDateInput_null(t *testing.T) {
-	_, err := fixture.CallFunction(t, "testNullDateInput_null", nil)
-	if err != nil {
-		t.Fatal(err)
+	fnName := "testNullDateInput_null"
+	if _, err := fixture.CallFunction(t, fnName, nil); err != nil {
+		t.Error(err)
 	}
 }
 
 func TestNullDateOutput_null(t *testing.T) {
-	result, err := fixture.CallFunction(t, "testNullDateOutput_null")
+	fnName := "testNullDateOutput_null"
+	result, err := fixture.CallFunction(t, fnName)
 	if err != nil {
 		t.Fatal(err)
 	}

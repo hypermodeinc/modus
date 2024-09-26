@@ -111,8 +111,19 @@ func (h *arrayBufferHandler) doWriteBytes(ctx context.Context, wa langsupport.Wa
 		bytes = obj
 	case string:
 		bytes = []byte(obj)
+	case []any:
+		for _, item := range obj {
+			if item == nil {
+				return 0, nil, errors.New("unexpected nil value in ArrayBuffer data")
+			}
+			if b, ok := item.(byte); !ok {
+				return 0, nil, errors.New("unexpected non-byte value in ArrayBuffer data")
+			} else {
+				bytes = append(bytes, b)
+			}
+		}
 	default:
-		return 0, nil, errors.New("input value cannot be used as an ArrayBuffer")
+		return 0, nil, fmt.Errorf("input is invalid for type %s", h.typeInfo.Name())
 	}
 
 	size := uint32(len(bytes))

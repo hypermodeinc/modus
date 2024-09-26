@@ -10,10 +10,11 @@ import (
 )
 
 func Test_DateNow(t *testing.T) {
+	fnName := "now"
 	startTs := time.Now().UnixMilli()
 	time.Sleep(1 * time.Millisecond)
 
-	result, err := fixture.CallFunction(t, "now")
+	result, err := fixture.CallFunction(t, fnName)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -25,9 +26,10 @@ func Test_DateNow(t *testing.T) {
 }
 
 func Test_PerformanceNow(t *testing.T) {
+	fnName := "spin"
 	const expectedDuration = 100 // ms
 
-	result, err := fixture.CallFunction(t, "spin", expectedDuration)
+	result, err := fixture.CallFunction(t, fnName, expectedDuration)
 	if err != nil {
 		t.Fatal(err)
 	}

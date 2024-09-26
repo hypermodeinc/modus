@@ -10,14 +10,15 @@ import (
 )
 
 func TestBoolInput_false(t *testing.T) {
-	_, err := fixture.CallFunction(t, "testBoolInput_false", false)
-	if err != nil {
-		t.Fatal(err)
+	fnName := "testBoolInput_false"
+	if _, err := fixture.CallFunction(t, fnName, false); err != nil {
+		t.Error(err)
 	}
 }
 
 func TestBoolOutput_false(t *testing.T) {
-	result, err := fixture.CallFunction(t, "testBoolOutput_false")
+	fnName := "testBoolOutput_false"
+	result, err := fixture.CallFunction(t, fnName)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -33,14 +34,15 @@ func TestBoolOutput_false(t *testing.T) {
 }
 
 func TestBoolInput_true(t *testing.T) {
-	_, err := fixture.CallFunction(t, "testBoolInput_true", true)
-	if err != nil {
-		t.Fatal(err)
+	fnName := "testBoolInput_true"
+	if _, err := fixture.CallFunction(t, fnName, true); err != nil {
+		t.Error(err)
 	}
 }
 
 func TestBoolOutput_true(t *testing.T) {
-	result, err := fixture.CallFunction(t, "testBoolOutput_true")
+	fnName := "testBoolOutput_true"
+	result, err := fixture.CallFunction(t, fnName)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -56,14 +58,15 @@ func TestBoolOutput_true(t *testing.T) {
 }
 
 func TestI8Input_min(t *testing.T) {
-	_, err := fixture.CallFunction(t, "testI8Input_min", int8(math.MinInt8))
-	if err != nil {
-		t.Fatal(err)
+	fnName := "testI8Input_min"
+	if _, err := fixture.CallFunction(t, fnName, int8(math.MinInt8)); err != nil {
+		t.Error(err)
 	}
 }
 
 func TestI8Output_min(t *testing.T) {
-	result, err := fixture.CallFunction(t, "testI8Output_min")
+	fnName := "testI8Output_min"
+	result, err := fixture.CallFunction(t, fnName)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -79,14 +82,15 @@ func TestI8Output_min(t *testing.T) {
 }
 
 func TestI8Input_max(t *testing.T) {
-	_, err := fixture.CallFunction(t, "testI8Input_max", int8(math.MaxInt8))
-	if err != nil {
-		t.Fatal(err)
+	fnName := "testI8Input_max"
+	if _, err := fixture.CallFunction(t, fnName, int8(math.MaxInt8)); err != nil {
+		t.Error(err)
 	}
 }
 
 func TestI8Output_max(t *testing.T) {
-	result, err := fixture.CallFunction(t, "testI8Output_max")
+	fnName := "testI8Output_max"
+	result, err := fixture.CallFunction(t, fnName)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -102,14 +106,15 @@ func TestI8Output_max(t *testing.T) {
 }
 
 func TestI16Input_min(t *testing.T) {
-	_, err := fixture.CallFunction(t, "testI16Input_min", int16(math.MinInt16))
-	if err != nil {
-		t.Fatal(err)
+	fnName := "testI16Input_min"
+	if _, err := fixture.CallFunction(t, fnName, int16(math.MinInt16)); err != nil {
+		t.Error(err)
 	}
 }
 
 func TestI16Output_min(t *testing.T) {
-	result, err := fixture.CallFunction(t, "testI16Output_min")
+	fnName := "testI16Output_min"
+	result, err := fixture.CallFunction(t, fnName)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -125,14 +130,15 @@ func TestI16Output_min(t *testing.T) {
 }
 
 func TestI16Input_max(t *testing.T) {
-	_, err := fixture.CallFunction(t, "testI16Input_max", int16(math.MaxInt16))
-	if err != nil {
-		t.Fatal(err)
+	fnName := "testI16Input_max"
+	if _, err := fixture.CallFunction(t, fnName, int16(math.MaxInt16)); err != nil {
+		t.Error(err)
 	}
 }
 
 func TestI16Output_max(t *testing.T) {
-	result, err := fixture.CallFunction(t, "testI16Output_max")
+	fnName := "testI16Output_max"
+	result, err := fixture.CallFunction(t, fnName)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -148,14 +154,15 @@ func TestI16Output_max(t *testing.T) {
 }
 
 func TestI32Input_min(t *testing.T) {
-	_, err := fixture.CallFunction(t, "testI32Input_min", int32(math.MinInt32))
-	if err != nil {
-		t.Fatal(err)
+	fnName := "testI32Input_min"
+	if _, err := fixture.CallFunction(t, fnName, int32(math.MinInt32)); err != nil {
+		t.Error(err)
 	}
 }
 
 func TestI32Output_min(t *testing.T) {
-	result, err := fixture.CallFunction(t, "testI32Output_min")
+	fnName := "testI32Output_min"
+	result, err := fixture.CallFunction(t, fnName)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -171,14 +178,15 @@ func TestI32Output_min(t *testing.T) {
 }
 
 func TestI32Input_max(t *testing.T) {
-	_, err := fixture.CallFunction(t, "testI32Input_max", int32(math.MaxInt32))
-	if err != nil {
-		t.Fatal(err)
+	fnName := "testI32Input_max"
+	if _, err := fixture.CallFunction(t, fnName, int32(math.MaxInt32)); err != nil {
+		t.Error(err)
 	}
 }
 
 func TestI32Output_max(t *testing.T) {
-	result, err := fixture.CallFunction(t, "testI32Output_max")
+	fnName := "testI32Output_max"
+	result, err := fixture.CallFunction(t, fnName)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -194,14 +202,15 @@ func TestI32Output_max(t *testing.T) {
 }
 
 func TestI64Input_min(t *testing.T) {
-	_, err := fixture.CallFunction(t, "testI64Input_min", int64(math.MinInt64))
-	if err != nil {
-		t.Fatal(err)
+	fnName := "testI64Input_min"
+	if _, err := fixture.CallFunction(t, fnName, int64(math.MinInt64)); err != nil {
+		t.Error(err)
 	}
 }
 
 func TestI64Output_min(t *testing.T) {
-	result, err := fixture.CallFunction(t, "testI64Output_min")
+	fnName := "testI64Output_min"
+	result, err := fixture.CallFunction(t, fnName)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -217,14 +226,15 @@ func TestI64Output_min(t *testing.T) {
 }
 
 func TestI64Input_max(t *testing.T) {
-	_, err := fixture.CallFunction(t, "testI64Input_max", int64(math.MaxInt64))
-	if err != nil {
-		t.Fatal(err)
+	fnName := "testI64Input_max"
+	if _, err := fixture.CallFunction(t, fnName, int64(math.MaxInt64)); err != nil {
+		t.Error(err)
 	}
 }
 
 func TestI64Output_max(t *testing.T) {
-	result, err := fixture.CallFunction(t, "testI64Output_max")
+	fnName := "testI64Output_max"
+	result, err := fixture.CallFunction(t, fnName)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -240,14 +250,15 @@ func TestI64Output_max(t *testing.T) {
 }
 
 func TestISizeInput_min(t *testing.T) {
-	_, err := fixture.CallFunction(t, "testISizeInput_min", int(math.MinInt32))
-	if err != nil {
-		t.Fatal(err)
+	fnName := "testISizeInput_min"
+	if _, err := fixture.CallFunction(t, fnName, int(math.MinInt32)); err != nil {
+		t.Error(err)
 	}
 }
 
 func TestISizeOutput_min(t *testing.T) {
-	result, err := fixture.CallFunction(t, "testISizeOutput_min")
+	fnName := "testISizeOutput_min"
+	result, err := fixture.CallFunction(t, fnName)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -263,14 +274,15 @@ func TestISizeOutput_min(t *testing.T) {
 }
 
 func TestISizeInput_max(t *testing.T) {
-	_, err := fixture.CallFunction(t, "testISizeInput_max", int(math.MaxInt32))
-	if err != nil {
-		t.Fatal(err)
+	fnName := "testISizeInput_max"
+	if _, err := fixture.CallFunction(t, fnName, int(math.MaxInt32)); err != nil {
+		t.Error(err)
 	}
 }
 
 func TestISizeOutput_max(t *testing.T) {
-	result, err := fixture.CallFunction(t, "testISizeOutput_max")
+	fnName := "testISizeOutput_max"
+	result, err := fixture.CallFunction(t, fnName)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -286,14 +298,15 @@ func TestISizeOutput_max(t *testing.T) {
 }
 
 func TestU8Input_min(t *testing.T) {
-	_, err := fixture.CallFunction(t, "testU8Input_min", uint8(0))
-	if err != nil {
-		t.Fatal(err)
+	fnName := "testU8Input_min"
+	if _, err := fixture.CallFunction(t, fnName, uint8(0)); err != nil {
+		t.Error(err)
 	}
 }
 
 func TestU8Output_min(t *testing.T) {
-	result, err := fixture.CallFunction(t, "testU8Output_min")
+	fnName := "testU8Output_min"
+	result, err := fixture.CallFunction(t, fnName)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -309,14 +322,15 @@ func TestU8Output_min(t *testing.T) {
 }
 
 func TestU8Input_max(t *testing.T) {
-	_, err := fixture.CallFunction(t, "testU8Input_max", uint8(math.MaxUint8))
-	if err != nil {
-		t.Fatal(err)
+	fnName := "testU8Input_max"
+	if _, err := fixture.CallFunction(t, fnName, uint8(math.MaxUint8)); err != nil {
+		t.Error(err)
 	}
 }
 
 func TestU8Output_max(t *testing.T) {
-	result, err := fixture.CallFunction(t, "testU8Output_max")
+	fnName := "testU8Output_max"
+	result, err := fixture.CallFunction(t, fnName)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -332,14 +346,15 @@ func TestU8Output_max(t *testing.T) {
 }
 
 func TestU16Input_min(t *testing.T) {
-	_, err := fixture.CallFunction(t, "testU16Input_min", uint16(0))
-	if err != nil {
-		t.Fatal(err)
+	fnName := "testU16Input_min"
+	if _, err := fixture.CallFunction(t, fnName, uint16(0)); err != nil {
+		t.Error(err)
 	}
 }
 
 func TestU16Output_min(t *testing.T) {
-	result, err := fixture.CallFunction(t, "testU16Output_min")
+	fnName := "testU16Output_min"
+	result, err := fixture.CallFunction(t, fnName)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -355,14 +370,15 @@ func TestU16Output_min(t *testing.T) {
 }
 
 func TestU16Input_max(t *testing.T) {
-	_, err := fixture.CallFunction(t, "testU16Input_max", uint16(math.MaxUint16))
-	if err != nil {
-		t.Fatal(err)
+	fnName := "testU16Input_max"
+	if _, err := fixture.CallFunction(t, fnName, uint16(math.MaxUint16)); err != nil {
+		t.Error(err)
 	}
 }
 
 func TestU16Output_max(t *testing.T) {
-	result, err := fixture.CallFunction(t, "testU16Output_max")
+	fnName := "testU16Output_max"
+	result, err := fixture.CallFunction(t, fnName)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -378,14 +394,15 @@ func TestU16Output_max(t *testing.T) {
 }
 
 func TestU32Input_min(t *testing.T) {
-	_, err := fixture.CallFunction(t, "testU32Input_min", uint32(0))
-	if err != nil {
-		t.Fatal(err)
+	fnName := "testU32Input_min"
+	if _, err := fixture.CallFunction(t, fnName, uint32(0)); err != nil {
+		t.Error(err)
 	}
 }
 
 func TestU32Output_min(t *testing.T) {
-	result, err := fixture.CallFunction(t, "testU32Output_min")
+	fnName := "testU32Output_min"
+	result, err := fixture.CallFunction(t, fnName)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -401,14 +418,15 @@ func TestU32Output_min(t *testing.T) {
 }
 
 func TestU32Input_max(t *testing.T) {
-	_, err := fixture.CallFunction(t, "testU32Input_max", uint32(math.MaxUint32))
-	if err != nil {
-		t.Fatal(err)
+	fnName := "testU32Input_max"
+	if _, err := fixture.CallFunction(t, fnName, uint32(math.MaxUint32)); err != nil {
+		t.Error(err)
 	}
 }
 
 func TestU32Output_max(t *testing.T) {
-	result, err := fixture.CallFunction(t, "testU32Output_max")
+	fnName := "testU32Output_max"
+	result, err := fixture.CallFunction(t, fnName)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -424,14 +442,15 @@ func TestU32Output_max(t *testing.T) {
 }
 
 func TestU64Input_min(t *testing.T) {
-	_, err := fixture.CallFunction(t, "testU64Input_min", uint64(0))
-	if err != nil {
-		t.Fatal(err)
+	fnName := "testU64Input_min"
+	if _, err := fixture.CallFunction(t, fnName, uint64(0)); err != nil {
+		t.Error(err)
 	}
 }
 
 func TestU64Output_min(t *testing.T) {
-	result, err := fixture.CallFunction(t, "testU64Output_min")
+	fnName := "testU64Output_min"
+	result, err := fixture.CallFunction(t, fnName)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -447,14 +466,15 @@ func TestU64Output_min(t *testing.T) {
 }
 
 func TestU64Input_max(t *testing.T) {
-	_, err := fixture.CallFunction(t, "testU64Input_max", uint64(math.MaxUint64))
-	if err != nil {
-		t.Fatal(err)
+	fnName := "testU64Input_max"
+	if _, err := fixture.CallFunction(t, fnName, uint64(math.MaxUint64)); err != nil {
+		t.Error(err)
 	}
 }
 
 func TestU64Output_max(t *testing.T) {
-	result, err := fixture.CallFunction(t, "testU64Output_max")
+	fnName := "testU64Output_max"
+	result, err := fixture.CallFunction(t, fnName)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -470,14 +490,15 @@ func TestU64Output_max(t *testing.T) {
 }
 
 func TestUSizeInput_min(t *testing.T) {
-	_, err := fixture.CallFunction(t, "testUSizeInput_min", uint(0))
-	if err != nil {
-		t.Fatal(err)
+	fnName := "testUSizeInput_min"
+	if _, err := fixture.CallFunction(t, fnName, uint(0)); err != nil {
+		t.Error(err)
 	}
 }
 
 func TestUSizeOutput_min(t *testing.T) {
-	result, err := fixture.CallFunction(t, "testUSizeOutput_min")
+	fnName := "testUSizeOutput_min"
+	result, err := fixture.CallFunction(t, fnName)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -493,14 +514,15 @@ func TestUSizeOutput_min(t *testing.T) {
 }
 
 func TestUSizeInput_max(t *testing.T) {
-	_, err := fixture.CallFunction(t, "testUSizeInput_max", uint(math.MaxUint32))
-	if err != nil {
-		t.Fatal(err)
+	fnName := "testUSizeInput_max"
+	if _, err := fixture.CallFunction(t, fnName, uint(math.MaxUint32)); err != nil {
+		t.Error(err)
 	}
 }
 
 func TestUSizeOutput_max(t *testing.T) {
-	result, err := fixture.CallFunction(t, "testUSizeOutput_max")
+	fnName := "testUSizeOutput_max"
+	result, err := fixture.CallFunction(t, fnName)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -516,14 +538,15 @@ func TestUSizeOutput_max(t *testing.T) {
 }
 
 func TestF32Input_min(t *testing.T) {
-	_, err := fixture.CallFunction(t, "testF32Input_min", float32(math.SmallestNonzeroFloat32))
-	if err != nil {
-		t.Fatal(err)
+	fnName := "testF32Input_min"
+	if _, err := fixture.CallFunction(t, fnName, float32(math.SmallestNonzeroFloat32)); err != nil {
+		t.Error(err)
 	}
 }
 
 func TestF32Output_min(t *testing.T) {
-	result, err := fixture.CallFunction(t, "testF32Output_min")
+	fnName := "testF32Output_min"
+	result, err := fixture.CallFunction(t, fnName)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -539,14 +562,15 @@ func TestF32Output_min(t *testing.T) {
 }
 
 func TestF32Input_max(t *testing.T) {
-	_, err := fixture.CallFunction(t, "testF32Input_max", float32(math.MaxFloat32))
-	if err != nil {
-		t.Fatal(err)
+	fnName := "testF32Input_max"
+	if _, err := fixture.CallFunction(t, fnName, float32(math.MaxFloat32)); err != nil {
+		t.Error(err)
 	}
 }
 
 func TestF32Output_max(t *testing.T) {
-	result, err := fixture.CallFunction(t, "testF32Output_max")
+	fnName := "testF32Output_max"
+	result, err := fixture.CallFunction(t, fnName)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -562,14 +586,15 @@ func TestF32Output_max(t *testing.T) {
 }
 
 func TestF64Input_min(t *testing.T) {
-	_, err := fixture.CallFunction(t, "testF64Input_min", float64(math.SmallestNonzeroFloat64))
-	if err != nil {
-		t.Fatal(err)
+	fnName := "testF64Input_min"
+	if _, err := fixture.CallFunction(t, fnName, float64(math.SmallestNonzeroFloat64)); err != nil {
+		t.Error(err)
 	}
 }
 
 func TestF64Output_min(t *testing.T) {
-	result, err := fixture.CallFunction(t, "testF64Output_min")
+	fnName := "testF64Output_min"
+	result, err := fixture.CallFunction(t, fnName)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -585,14 +610,15 @@ func TestF64Output_min(t *testing.T) {
 }
 
 func TestF64Input_max(t *testing.T) {
-	_, err := fixture.CallFunction(t, "testF64Input_max", float64(math.MaxFloat64))
-	if err != nil {
-		t.Fatal(err)
+	fnName := "testF64Input_max"
+	if _, err := fixture.CallFunction(t, fnName, float64(math.MaxFloat64)); err != nil {
+		t.Error(err)
 	}
 }
 
 func TestF64Output_max(t *testing.T) {
-	result, err := fixture.CallFunction(t, "testF64Output_max")
+	fnName := "testF64Output_max"
+	result, err := fixture.CallFunction(t, fnName)
 	if err != nil {
 		t.Fatal(err)
 	}

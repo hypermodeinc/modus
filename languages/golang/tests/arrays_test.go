@@ -7,31 +7,46 @@ package golang_test
 import (
 	"reflect"
 	"testing"
+
+	"hypruntime/utils"
 )
 
 func TestArrayInput0_string(t *testing.T) {
-	var val = [0]string{}
+	fnName := "testArrayInput0_string"
+	arr := [0]string{}
 
-	if _, err := fixture.CallFunction(t, "testArrayInput0_string", val); err != nil {
-		t.Fatal(err)
+	if _, err := fixture.CallFunction(t, fnName, arr); err != nil {
+		t.Error(err)
+	}
+	if arr, ok := utils.ConvertToSliceOf[any](arr); !ok {
+		t.Error("failed conversion to interface slice")
+	} else if _, err := fixture.CallFunction(t, fnName, arr); err != nil {
+		t.Error(err)
 	}
 }
 
 func TestArrayInput0_stringPtr(t *testing.T) {
-	var val = [0]*string{}
+	fnName := "testArrayInput0_stringPtr"
+	arr := [0]*string{}
 
-	if _, err := fixture.CallFunction(t, "testArrayInput0_stringPtr", val); err != nil {
-		t.Fatal(err)
+	if _, err := fixture.CallFunction(t, fnName, arr); err != nil {
+		t.Error(err)
+	}
+	if arr, ok := utils.ConvertToSliceOf[any](arr); !ok {
+		t.Error("failed conversion to interface slice")
+	} else if _, err := fixture.CallFunction(t, fnName, arr); err != nil {
+		t.Error(err)
 	}
 }
 
 func TestArrayOutput0_string(t *testing.T) {
-	result, err := fixture.CallFunction(t, "testArrayOutput0_string")
+	fnName := "testArrayOutput0_string"
+	result, err := fixture.CallFunction(t, fnName)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	var expected = [0]string{}
+	expected := [0]string{}
 	if result == nil {
 		t.Error("expected a result")
 	} else if r, ok := result.([0]string); !ok {
@@ -42,12 +57,13 @@ func TestArrayOutput0_string(t *testing.T) {
 }
 
 func TestArrayOutput0_stringPtr(t *testing.T) {
-	result, err := fixture.CallFunction(t, "testArrayOutput0_stringPtr")
+	fnName := "testArrayOutput0_stringPtr"
+	result, err := fixture.CallFunction(t, fnName)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	var expected = [0]*string{}
+	expected := [0]*string{}
 	if result == nil {
 		t.Error("expected a result")
 	} else if r, ok := result.([0]*string); !ok {
@@ -58,20 +74,27 @@ func TestArrayOutput0_stringPtr(t *testing.T) {
 }
 
 func TestArrayInput0_intPtr(t *testing.T) {
-	var val = [0]*int{}
+	fnName := "testArrayInput0_intPtr"
+	arr := [0]*int{}
 
-	if _, err := fixture.CallFunction(t, "testArrayInput0_intPtr", val); err != nil {
-		t.Fatal(err)
+	if _, err := fixture.CallFunction(t, fnName, arr); err != nil {
+		t.Error(err)
+	}
+	if arr, ok := utils.ConvertToSliceOf[any](arr); !ok {
+		t.Error("failed conversion to interface slice")
+	} else if _, err := fixture.CallFunction(t, fnName, arr); err != nil {
+		t.Error(err)
 	}
 }
 
 func TestArrayOutput0_intPtr(t *testing.T) {
-	result, err := fixture.CallFunction(t, "testArrayOutput0_intPtr")
+	fnName := "testArrayOutput0_intPtr"
+	result, err := fixture.CallFunction(t, fnName)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	var expected = [0]*int{}
+	expected := [0]*int{}
 	if result == nil {
 		t.Error("expected a result")
 	} else if r, ok := result.([0]*int); !ok {
@@ -82,28 +105,41 @@ func TestArrayOutput0_intPtr(t *testing.T) {
 }
 
 func TestArrayInput1_string(t *testing.T) {
-	var val = [1]string{"abc"}
+	fnName := "testArrayInput1_string"
+	arr := [1]string{"abc"}
 
-	if _, err := fixture.CallFunction(t, "testArrayInput1_string", val); err != nil {
-		t.Fatal(err)
+	if _, err := fixture.CallFunction(t, fnName, arr); err != nil {
+		t.Error(err)
+	}
+	if arr, ok := utils.ConvertToSliceOf[any](arr); !ok {
+		t.Error("failed conversion to interface slice")
+	} else if _, err := fixture.CallFunction(t, fnName, arr); err != nil {
+		t.Error(err)
 	}
 }
 
 func TestArrayInput1_stringPtr(t *testing.T) {
-	var val = getStringPtrArray1()
+	fnName := "testArrayInput1_stringPtr"
+	arr := getStringPtrArray1()
 
-	if _, err := fixture.CallFunction(t, "testArrayInput1_stringPtr", val); err != nil {
-		t.Fatal(err)
+	if _, err := fixture.CallFunction(t, fnName, arr); err != nil {
+		t.Error(err)
+	}
+	if arr, ok := utils.ConvertToSliceOf[any](arr); !ok {
+		t.Error("failed conversion to interface slice")
+	} else if _, err := fixture.CallFunction(t, fnName, arr); err != nil {
+		t.Error(err)
 	}
 }
 
 func TestArrayOutput1_string(t *testing.T) {
-	result, err := fixture.CallFunction(t, "testArrayOutput1_string")
+	fnName := "testArrayOutput1_string"
+	result, err := fixture.CallFunction(t, fnName)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	var expected = [1]string{"abc"}
+	expected := [1]string{"abc"}
 	if result == nil {
 		t.Error("expected a result")
 	} else if r, ok := result.([1]string); !ok {
@@ -114,12 +150,13 @@ func TestArrayOutput1_string(t *testing.T) {
 }
 
 func TestArrayOutput1_stringPtr(t *testing.T) {
-	result, err := fixture.CallFunction(t, "testArrayOutput1_stringPtr")
+	fnName := "testArrayOutput1_stringPtr"
+	result, err := fixture.CallFunction(t, fnName)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	var expected = getStringPtrArray1()
+	expected := getStringPtrArray1()
 	if result == nil {
 		t.Error("expected a result")
 	} else if r, ok := result.([1]*string); !ok {
@@ -130,20 +167,27 @@ func TestArrayOutput1_stringPtr(t *testing.T) {
 }
 
 func TestArrayInput1_intPtr(t *testing.T) {
-	var val = getIntPtrArray1()
+	fnName := "testArrayInput1_intPtr"
+	arr := getIntPtrArray1()
 
-	if _, err := fixture.CallFunction(t, "testArrayInput1_intPtr", val); err != nil {
-		t.Fatal(err)
+	if _, err := fixture.CallFunction(t, fnName, arr); err != nil {
+		t.Error(err)
+	}
+	if arr, ok := utils.ConvertToSliceOf[any](arr); !ok {
+		t.Error("failed conversion to interface slice")
+	} else if _, err := fixture.CallFunction(t, fnName, arr); err != nil {
+		t.Error(err)
 	}
 }
 
 func TestArrayOutput1_intPtr(t *testing.T) {
-	result, err := fixture.CallFunction(t, "testArrayOutput1_intPtr")
+	fnName := "testArrayOutput1_intPtr"
+	result, err := fixture.CallFunction(t, fnName)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	var expected = getIntPtrArray1()
+	expected := getIntPtrArray1()
 	if result == nil {
 		t.Error("expected a result")
 	} else if r, ok := result.([1]*int); !ok {
@@ -154,68 +198,111 @@ func TestArrayOutput1_intPtr(t *testing.T) {
 }
 
 func TestArrayInput2_string(t *testing.T) {
-	var val = [2]string{"abc", "def"}
+	fnName := "testArrayInput2_string"
+	arr := [2]string{"abc", "def"}
 
-	if _, err := fixture.CallFunction(t, "testArrayInput2_string", val); err != nil {
-		t.Fatal(err)
+	if _, err := fixture.CallFunction(t, fnName, arr); err != nil {
+		t.Error(err)
+	}
+	if arr, ok := utils.ConvertToSliceOf[any](arr); !ok {
+		t.Error("failed conversion to interface slice")
+	} else if _, err := fixture.CallFunction(t, fnName, arr); err != nil {
+		t.Error(err)
 	}
 }
 
 func TestArrayInput2_stringPtr(t *testing.T) {
-	var val = getStringPtrArray2()
+	fnName := "testArrayInput2_stringPtr"
+	arr := getStringPtrArray2()
 
-	if _, err := fixture.CallFunction(t, "testArrayInput2_stringPtr", val); err != nil {
-		t.Fatal(err)
+	if _, err := fixture.CallFunction(t, fnName, arr); err != nil {
+		t.Error(err)
+	}
+	if arr, ok := utils.ConvertToSliceOf[any](arr); !ok {
+		t.Error("failed conversion to interface slice")
+	} else if _, err := fixture.CallFunction(t, fnName, arr); err != nil {
+		t.Error(err)
 	}
 }
 
 func TestArrayInput2_struct(t *testing.T) {
-	var val = getStructArray2()
+	fnName := "testArrayInput2_struct"
+	arr := getStructArray2()
 
-	if _, err := fixture.CallFunction(t, "testArrayInput2_struct", val); err != nil {
-		t.Fatal(err)
+	if _, err := fixture.CallFunction(t, fnName, arr); err != nil {
+		t.Error(err)
+	}
+	if arr, ok := utils.ConvertToSliceOf[any](arr); !ok {
+		t.Error("failed conversion to interface slice")
+	} else if _, err := fixture.CallFunction(t, fnName, arr); err != nil {
+		t.Error(err)
 	}
 }
 
 func TestArrayInput2_structPtr(t *testing.T) {
-	var val = getStructPtrArray2()
+	fnName := "testArrayInput2_structPtr"
+	arr := getStructPtrArray2()
 
-	if _, err := fixture.CallFunction(t, "testArrayInput2_structPtr", val); err != nil {
-		t.Fatal(err)
+	if _, err := fixture.CallFunction(t, fnName, arr); err != nil {
+		t.Error(err)
+	}
+	if arr, ok := utils.ConvertToSliceOf[any](arr); !ok {
+		t.Error("failed conversion to interface slice")
+	} else if _, err := fixture.CallFunction(t, fnName, arr); err != nil {
+		t.Error(err)
 	}
 }
 
 func TestArrayInput2_map(t *testing.T) {
-	var val = getMapArray2()
+	fnName := "testArrayInput2_map"
+	arr := getMapArray2()
 
-	if _, err := fixture.CallFunction(t, "testArrayInput2_map", val); err != nil {
-		t.Fatal(err)
+	if _, err := fixture.CallFunction(t, fnName, arr); err != nil {
+		t.Error(err)
+	}
+	if arr, ok := utils.ConvertToSliceOf[any](arr); !ok {
+		t.Error("failed conversion to interface slice")
+	} else if _, err := fixture.CallFunction(t, fnName, arr); err != nil {
+		t.Error(err)
 	}
 }
 
 func TestArrayInput2_mapPtr(t *testing.T) {
-	var val = getMapPtrArray2()
+	fnName := "testArrayInput2_mapPtr"
+	arr := getMapPtrArray2()
 
-	if _, err := fixture.CallFunction(t, "testArrayInput2_mapPtr", val); err != nil {
-		t.Fatal(err)
+	if _, err := fixture.CallFunction(t, fnName, arr); err != nil {
+		t.Error(err)
+	}
+	if arr, ok := utils.ConvertToSliceOf[any](arr); !ok {
+		t.Error("failed conversion to interface slice")
+	} else if _, err := fixture.CallFunction(t, fnName, arr); err != nil {
+		t.Error(err)
 	}
 }
 
 func TestArrayInput2_intPtr(t *testing.T) {
-	var val = getIntPtrArray2()
+	fnName := "testArrayInput2_intPtr"
+	arr := getIntPtrArray2()
 
-	if _, err := fixture.CallFunction(t, "testArrayInput2_intPtr", val); err != nil {
-		t.Fatal(err)
+	if _, err := fixture.CallFunction(t, fnName, arr); err != nil {
+		t.Error(err)
+	}
+	if arr, ok := utils.ConvertToSliceOf[any](arr); !ok {
+		t.Error("failed conversion to interface slice")
+	} else if _, err := fixture.CallFunction(t, fnName, arr); err != nil {
+		t.Error(err)
 	}
 }
 
 func TestArrayOutput2_intPtr(t *testing.T) {
-	result, err := fixture.CallFunction(t, "testArrayOutput2_intPtr")
+	fnName := "testArrayOutput2_intPtr"
+	result, err := fixture.CallFunction(t, fnName)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	var expected = getIntPtrArray2()
+	expected := getIntPtrArray2()
 	if result == nil {
 		t.Error("expected a result")
 	} else if r, ok := result.([2]*int); !ok {
@@ -226,12 +313,13 @@ func TestArrayOutput2_intPtr(t *testing.T) {
 }
 
 func TestArrayOutput2_string(t *testing.T) {
-	result, err := fixture.CallFunction(t, "testArrayOutput2_string")
+	fnName := "testArrayOutput2_string"
+	result, err := fixture.CallFunction(t, fnName)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	var expected = [2]string{"abc", "def"}
+	expected := [2]string{"abc", "def"}
 	if result == nil {
 		t.Error("expected a result")
 	} else if r, ok := result.([2]string); !ok {
@@ -242,12 +330,13 @@ func TestArrayOutput2_string(t *testing.T) {
 }
 
 func TestArrayOutput2_stringPtr(t *testing.T) {
-	result, err := fixture.CallFunction(t, "testArrayOutput2_stringPtr")
+	fnName := "testArrayOutput2_stringPtr"
+	result, err := fixture.CallFunction(t, fnName)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	var expected = getStringPtrArray2()
+	expected := getStringPtrArray2()
 	if result == nil {
 		t.Error("expected a result")
 	} else if r, ok := result.([2]*string); !ok {
@@ -258,12 +347,13 @@ func TestArrayOutput2_stringPtr(t *testing.T) {
 }
 
 func TestArrayOutput2_struct(t *testing.T) {
-	result, err := fixture.CallFunction(t, "testArrayOutput2_struct")
+	fnName := "testArrayOutput2_struct"
+	result, err := fixture.CallFunction(t, fnName)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	var expected = getStructArray2()
+	expected := getStructArray2()
 	if result == nil {
 		t.Error("expected a result")
 	} else if r, ok := result.([2]TestStruct2); !ok {
@@ -274,12 +364,13 @@ func TestArrayOutput2_struct(t *testing.T) {
 }
 
 func TestArrayOutput2_structPtr(t *testing.T) {
-	result, err := fixture.CallFunction(t, "testArrayOutput2_structPtr")
+	fnName := "testArrayOutput2_structPtr"
+	result, err := fixture.CallFunction(t, fnName)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	var expected = getStructPtrArray2()
+	expected := getStructPtrArray2()
 	if result == nil {
 		t.Error("expected a result")
 	} else if r, ok := result.([2]*TestStruct2); !ok {
@@ -290,12 +381,13 @@ func TestArrayOutput2_structPtr(t *testing.T) {
 }
 
 func TestArrayOutput2_map(t *testing.T) {
-	result, err := fixture.CallFunction(t, "testArrayOutput2_map")
+	fnName := "testArrayOutput2_map"
+	result, err := fixture.CallFunction(t, fnName)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	var expected = getMapArray2()
+	expected := getMapArray2()
 	if result == nil {
 		t.Error("expected a result")
 	} else if r, ok := result.([2]map[string]string); !ok {
@@ -306,12 +398,13 @@ func TestArrayOutput2_map(t *testing.T) {
 }
 
 func TestArrayOutput2_mapPtr(t *testing.T) {
-	result, err := fixture.CallFunction(t, "testArrayOutput2_mapPtr")
+	fnName := "testArrayOutput2_mapPtr"
+	result, err := fixture.CallFunction(t, fnName)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	var expected = getMapPtrArray2()
+	expected := getMapPtrArray2()
 	if result == nil {
 		t.Error("expected a result")
 	} else if r, ok := result.([2]*map[string]string); !ok {
@@ -322,44 +415,69 @@ func TestArrayOutput2_mapPtr(t *testing.T) {
 }
 
 func TestPtrArrayInput1_int(t *testing.T) {
-	var val = getPtrIntArray1()
+	fnName := "testPtrArrayInput1_int"
+	arr := getPtrIntArray1()
 
-	if _, err := fixture.CallFunction(t, "testPtrArrayInput1_int", val); err != nil {
-		t.Fatal(err)
+	if _, err := fixture.CallFunction(t, fnName, arr); err != nil {
+		t.Error(err)
+	}
+	if arr, ok := utils.ConvertToSliceOf[any](*arr); !ok {
+		t.Error("failed conversion to interface slice")
+	} else if _, err := fixture.CallFunction(t, fnName, &arr); err != nil {
+		t.Error(err)
 	}
 }
 
 func TestPtrArrayInput2_int(t *testing.T) {
-	var val = getPtrIntArray2()
+	fnName := "testPtrArrayInput2_int"
+	arr := getPtrIntArray2()
 
-	if _, err := fixture.CallFunction(t, "testPtrArrayInput2_int", val); err != nil {
-		t.Fatal(err)
+	if _, err := fixture.CallFunction(t, fnName, arr); err != nil {
+		t.Error(err)
+	}
+	if arr, ok := utils.ConvertToSliceOf[any](*arr); !ok {
+		t.Error("failed conversion to interface slice")
+	} else if _, err := fixture.CallFunction(t, fnName, &arr); err != nil {
+		t.Error(err)
 	}
 }
 
 func TestPtrArrayInput1_string(t *testing.T) {
-	var val = getPtrStringArray1()
+	fnName := "testPtrArrayInput1_string"
+	arr := getPtrStringArray1()
 
-	if _, err := fixture.CallFunction(t, "testPtrArrayInput1_string", val); err != nil {
-		t.Fatal(err)
+	if _, err := fixture.CallFunction(t, fnName, arr); err != nil {
+		t.Error(err)
+	}
+	if arr, ok := utils.ConvertToSliceOf[any](*arr); !ok {
+		t.Error("failed conversion to interface slice")
+	} else if _, err := fixture.CallFunction(t, fnName, &arr); err != nil {
+		t.Error(err)
 	}
 }
 
 func TestPtrArrayInput2_string(t *testing.T) {
-	var val = getPtrStringArray2()
+	fnName := "testPtrArrayInput2_string"
+	arr := getPtrStringArray2()
 
-	if _, err := fixture.CallFunction(t, "testPtrArrayInput2_string", val); err != nil {
-		t.Fatal(err)
+	if _, err := fixture.CallFunction(t, fnName, arr); err != nil {
+		t.Error(err)
+	}
+	if arr, ok := utils.ConvertToSliceOf[any](*arr); !ok {
+		t.Error("failed conversion to interface slice")
+	} else if _, err := fixture.CallFunction(t, fnName, &arr); err != nil {
+		t.Error(err)
 	}
 }
 
 func TestPtrArrayOutput1_int(t *testing.T) {
-	result, err := fixture.CallFunction(t, "testPtrArrayOutput1_int")
+	fnName := "testPtrArrayOutput1_int"
+	result, err := fixture.CallFunction(t, fnName)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	var expected = getPtrIntArray1()
+	expected := getPtrIntArray1()
 	if result == nil {
 		t.Error("expected a result")
 	} else if r, ok := result.(*[1]int); !ok {
@@ -370,12 +488,13 @@ func TestPtrArrayOutput1_int(t *testing.T) {
 }
 
 func TestPtrArrayOutput2_int(t *testing.T) {
-	result, err := fixture.CallFunction(t, "testPtrArrayOutput2_int")
+	fnName := "testPtrArrayOutput2_int"
+	result, err := fixture.CallFunction(t, fnName)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	var expected = getPtrIntArray2()
+	expected := getPtrIntArray2()
 	if result == nil {
 		t.Error("expected a result")
 	} else if r, ok := result.(*[2]int); !ok {
@@ -386,12 +505,13 @@ func TestPtrArrayOutput2_int(t *testing.T) {
 }
 
 func TestPtrArrayOutput1_string(t *testing.T) {
-	result, err := fixture.CallFunction(t, "testPtrArrayOutput1_string")
+	fnName := "testPtrArrayOutput1_string"
+	result, err := fixture.CallFunction(t, fnName)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	var expected = getPtrStringArray1()
+	expected := getPtrStringArray1()
 	if result == nil {
 		t.Error("expected a result")
 	} else if r, ok := result.(*[1]string); !ok {
@@ -402,12 +522,13 @@ func TestPtrArrayOutput1_string(t *testing.T) {
 }
 
 func TestPtrArrayOutput2_string(t *testing.T) {
-	result, err := fixture.CallFunction(t, "testPtrArrayOutput2_string")
+	fnName := "testPtrArrayOutput2_string"
+	result, err := fixture.CallFunction(t, fnName)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	var expected = getPtrStringArray2()
+	expected := getPtrStringArray2()
 	if result == nil {
 		t.Error("expected a result")
 	} else if r, ok := result.(*[2]string); !ok {
@@ -418,36 +539,55 @@ func TestPtrArrayOutput2_string(t *testing.T) {
 }
 
 func TestArrayInput0_byte(t *testing.T) {
-	var val = [0]byte{}
+	fnName := "testArrayInput0_byte"
+	arr := [0]byte{}
 
-	if _, err := fixture.CallFunction(t, "testArrayInput0_byte", val); err != nil {
-		t.Fatal(err)
+	if _, err := fixture.CallFunction(t, fnName, arr); err != nil {
+		t.Error(err)
+	}
+	if arr, ok := utils.ConvertToSliceOf[any](arr); !ok {
+		t.Error("failed conversion to interface slice")
+	} else if _, err := fixture.CallFunction(t, fnName, arr); err != nil {
+		t.Error(err)
 	}
 }
 
 func TestArrayInput1_byte(t *testing.T) {
-	var val = [1]byte{1}
+	fnName := "testArrayInput1_byte"
+	arr := [1]byte{1}
 
-	if _, err := fixture.CallFunction(t, "testArrayInput1_byte", val); err != nil {
-		t.Fatal(err)
+	if _, err := fixture.CallFunction(t, fnName, arr); err != nil {
+		t.Error(err)
+	}
+	if arr, ok := utils.ConvertToSliceOf[any](arr); !ok {
+		t.Error("failed conversion to interface slice")
+	} else if _, err := fixture.CallFunction(t, fnName, arr); err != nil {
+		t.Error(err)
 	}
 }
 
 func TestArrayInput2_byte(t *testing.T) {
-	var val = [2]byte{1, 2}
+	fnName := "testArrayInput2_byte"
+	arr := [2]byte{1, 2}
 
-	if _, err := fixture.CallFunction(t, "testArrayInput2_byte", val); err != nil {
-		t.Fatal(err)
+	if _, err := fixture.CallFunction(t, fnName, arr); err != nil {
+		t.Error(err)
+	}
+	if arr, ok := utils.ConvertToSliceOf[any](arr); !ok {
+		t.Error("failed conversion to interface slice")
+	} else if _, err := fixture.CallFunction(t, fnName, arr); err != nil {
+		t.Error(err)
 	}
 }
 
 func TestArrayOutput0_byte(t *testing.T) {
-	result, err := fixture.CallFunction(t, "testArrayOutput0_byte")
+	fnName := "testArrayOutput0_byte"
+	result, err := fixture.CallFunction(t, fnName)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	var expected = [0]byte{}
+	expected := [0]byte{}
 	if result == nil {
 		t.Error("expected a result")
 	} else if r, ok := result.([0]byte); !ok {
@@ -458,12 +598,13 @@ func TestArrayOutput0_byte(t *testing.T) {
 }
 
 func TestArrayOutput1_byte(t *testing.T) {
-	result, err := fixture.CallFunction(t, "testArrayOutput1_byte")
+	fnName := "testArrayOutput1_byte"
+	result, err := fixture.CallFunction(t, fnName)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	var expected = [1]byte{1}
+	expected := [1]byte{1}
 	if result == nil {
 		t.Error("expected a result")
 	} else if r, ok := result.([1]byte); !ok {
@@ -474,12 +615,13 @@ func TestArrayOutput1_byte(t *testing.T) {
 }
 
 func TestArrayOutput2_byte(t *testing.T) {
-	result, err := fixture.CallFunction(t, "testArrayOutput2_byte")
+	fnName := "testArrayOutput2_byte"
+	result, err := fixture.CallFunction(t, fnName)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	var expected = [2]byte{1, 2}
+	expected := [2]byte{1, 2}
 	if result == nil {
 		t.Error("expected a result")
 	} else if r, ok := result.([2]byte); !ok {
