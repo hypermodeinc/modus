@@ -170,8 +170,6 @@ func Stop(ctx context.Context) {
 }
 
 func WritePluginInfo(ctx context.Context, plugin *plugins.Plugin) {
-	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
-	defer span.Finish()
 
 	err := WithTx(ctx, func(tx pgx.Tx) error {
 
@@ -253,9 +251,6 @@ func getPluginId(ctx context.Context, tx pgx.Tx, buildId string) (string, error)
 }
 
 func WriteInferenceHistory(ctx context.Context, model *manifest.ModelInfo, input, output any, start, end time.Time) {
-	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
-	defer span.Finish()
-
 	var pluginId *string
 	if plugin, ok := plugins.GetPluginFromContext(ctx); ok {
 		pluginId = &plugin.Id
@@ -608,8 +603,7 @@ func WriteInferenceHistoryToDB(ctx context.Context, batch []inferenceHistory) {
 	if len(batch) == 0 {
 		return
 	}
-	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
-	defer span.Finish()
+
 	err := WithTx(ctx, func(tx pgx.Tx) error {
 		b := &pgx.Batch{}
 		for _, data := range batch {
@@ -671,6 +665,9 @@ func GetTx(ctx context.Context) (pgx.Tx, error) {
 }
 
 func WithTx(ctx context.Context, fn func(pgx.Tx) error) error {
+	span, ctx := utils.NewSentrySpanForCallingFunc(ctx)
+	defer span.Finish()
+
 	tx, err := GetTx(ctx)
 	if err != nil {
 		return err
