@@ -144,7 +144,7 @@ func makeEngine(ctx context.Context, schema *gql.Schema, datasourceConfig plan.D
 }
 
 func getAllQueryFields(ctx context.Context, s *gql.Schema) []string {
-	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+	span, _ := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
 
 	doc := s.Document()
