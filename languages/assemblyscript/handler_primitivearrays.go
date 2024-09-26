@@ -98,9 +98,9 @@ func (h *primitiveArrayHandler[T]) Read(ctx context.Context, wa langsupport.Wasm
 }
 
 func (h *primitiveArrayHandler[T]) Write(ctx context.Context, wa langsupport.WasmAdapter, offset uint32, obj any) (utils.Cleaner, error) {
-	items, ok := obj.([]T)
+	items, ok := utils.ConvertToSliceOf[T](obj)
 	if !ok {
-		return nil, fmt.Errorf("expected a %T, got %T", []T{}, obj)
+		return nil, fmt.Errorf("input is invalid for type %s", h.typeInfo.Name())
 	}
 
 	arrayLen := uint32(len(items))
