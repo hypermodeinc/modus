@@ -30,7 +30,7 @@ func TestMain(m *testing.M) {
 	customTypes["testdata.TestStruct3"] = reflect.TypeFor[TestStruct3]()
 	customTypes["testdata.TestStruct4"] = reflect.TypeFor[TestStruct4]()
 	customTypes["testdata.TestStruct5"] = reflect.TypeFor[TestStruct5]()
-	customTypes["testdata.TestStructWithMap"] = reflect.TypeFor[TestStructWithMap]()
+	customTypes["testdata.TestStructWithMap"] = reflect.TypeFor[TestStructWithMap1]()
 	customTypes["testdata.TestRecursiveStruct"] = reflect.TypeFor[TestRecursiveStruct]()
 
 	registrations := getTestHostFunctionRegistrations()

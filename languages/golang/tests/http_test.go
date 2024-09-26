@@ -5,11 +5,13 @@
 package golang_test
 
 import (
-	"hypruntime/httpclient"
 	"testing"
+
+	"hypruntime/httpclient"
 )
 
 func TestHttpResponseHeaders(t *testing.T) {
+	fnName := "testHttpResponseHeaders"
 	r := &httpclient.HttpResponse{
 		Status:     200,
 		StatusText: "OK",
@@ -24,12 +26,13 @@ func TestHttpResponseHeaders(t *testing.T) {
 		Body: []byte("Hello, world!"),
 	}
 
-	if _, err := fixture.CallFunction(t, "testHttpResponseHeaders", r); err != nil {
-		t.Fatal(err)
+	if _, err := fixture.CallFunction(t, fnName, r); err != nil {
+		t.Error(err)
 	}
 }
 
 func TestHttpHeaders(t *testing.T) {
+	fnName := "testHttpHeaders"
 	h := &httpclient.HttpHeaders{
 		Data: map[string]*httpclient.HttpHeader{
 			"content-type": {
@@ -39,12 +42,13 @@ func TestHttpHeaders(t *testing.T) {
 		},
 	}
 
-	if _, err := fixture.CallFunction(t, "testHttpHeaders", h); err != nil {
-		t.Fatal(err)
+	if _, err := fixture.CallFunction(t, fnName, h); err != nil {
+		t.Error(err)
 	}
 }
 
 func TestHttpHeaderMap(t *testing.T) {
+	fnName := "testHttpHeaderMap"
 	m := map[string]*httpclient.HttpHeader{
 		"content-type": {
 			Name:   "Content-Type",
@@ -52,18 +56,19 @@ func TestHttpHeaderMap(t *testing.T) {
 		},
 	}
 
-	if _, err := fixture.CallFunction(t, "testHttpHeaderMap", m); err != nil {
-		t.Fatal(err)
+	if _, err := fixture.CallFunction(t, fnName, m); err != nil {
+		t.Error(err)
 	}
 }
 
 func TestHttpHeader(t *testing.T) {
+	fnName := "testHttpHeader"
 	h := httpclient.HttpHeader{
 		Name:   "Content-Type",
 		Values: []string{"text/plain"},
 	}
 
-	if _, err := fixture.CallFunction(t, "testHttpHeader", h); err != nil {
-		t.Fatal(err)
+	if _, err := fixture.CallFunction(t, fnName, h); err != nil {
+		t.Error(err)
 	}
 }

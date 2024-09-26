@@ -7,7 +7,7 @@ import (
 
 func TestMapInput_string_string(m map[string]string) {
 
-	var expected = map[string]string{
+	expected := map[string]string{
 		"a": "1",
 		"b": "2",
 		"c": "3",
@@ -17,7 +17,7 @@ func TestMapInput_string_string(m map[string]string) {
 }
 
 func TestMapPtrInput_string_string(m *map[string]string) {
-	var expected = map[string]string{
+	expected := map[string]string{
 		"a": "1",
 		"b": "2",
 		"c": "3",
@@ -60,7 +60,7 @@ type TestStructWithMap struct {
 }
 
 func TestStructContainingMapInput_string_string(s TestStructWithMap) {
-	var expected = map[string]string{
+	expected := map[string]string{
 		"a": "1",
 		"b": "2",
 		"c": "3",
@@ -80,7 +80,7 @@ func TestStructContainingMapOutput_string_string() TestStructWithMap {
 }
 
 func TestMapInput_int_float32(m map[int]float32) {
-	var expected = map[int]float32{
+	expected := map[int]float32{
 		1: 1.1,
 		2: 2.2,
 		3: 3.3,

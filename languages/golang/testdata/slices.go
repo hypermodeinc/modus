@@ -1,7 +1,7 @@
 package main
 
 func TestSliceInput_byte(val []byte) {
-	var expected = []byte{1, 2, 3, 4}
+	expected := []byte{1, 2, 3, 4}
 	assertSlicesEqual(expected, val)
 }
 
@@ -10,7 +10,7 @@ func TestSliceOutput_byte() []byte {
 }
 
 func TestSliceInput_string(val []string) {
-	var expected = []string{"abc", "def", "ghi"}
+	expected := []string{"abc", "def", "ghi"}
 	assertSlicesEqual(expected, val)
 }
 
@@ -27,7 +27,7 @@ func TestSliceOutput_string_nil() []string {
 }
 
 func TestSliceInput_string_empty(val []string) {
-	var expected = []string{}
+	expected := []string{}
 	assertSlicesEqual(expected, val)
 }
 
@@ -36,7 +36,7 @@ func TestSliceOutput_string_empty() []string {
 }
 
 func TestSliceInput_int32_empty(val []int32) {
-	var expected = []int32{}
+	expected := []int32{}
 	assertSlicesEqual(expected, val)
 }
 
@@ -45,7 +45,7 @@ func TestSliceOutput_int32_empty() []int32 {
 }
 
 func TestSliceInput_stringPtr(val []*string) {
-	var expected = getStringPtrSlice()
+	expected := getStringPtrSlice()
 	assertPtrSlicesEqual(expected, val)
 }
 
@@ -61,7 +61,7 @@ func getStringPtrSlice() []*string {
 }
 
 func TestSliceInput_intPtr(val []*int) {
-	var expected = getIntPtrSlice()
+	expected := getIntPtrSlice()
 	assertPtrSlicesEqual(expected, val)
 }
 
@@ -77,7 +77,7 @@ func getIntPtrSlice() []*int {
 }
 
 func Test2DSliceInput_string(val [][]string) {
-	var expected = [][]string{
+	expected := [][]string{
 		{"abc", "def", "ghi"},
 		{"jkl", "mno", "pqr"},
 		{"stu", "vwx", "yz"},
@@ -102,7 +102,7 @@ func Test2DSliceOutput_string_nil() [][]string {
 }
 
 func Test2DSliceInput_string_empty(val [][]string) {
-	var expected = [][]string{}
+	expected := [][]string{}
 	assertEqual(expected, val)
 }
 
@@ -111,7 +111,7 @@ func Test2DSliceOutput_string_empty() [][]string {
 }
 
 func Test2DSliceInput_string_innerNil(val [][]string) {
-	var expected = [][]string{nil}
+	expected := [][]string{nil}
 	assertEqual(expected, val)
 }
 
