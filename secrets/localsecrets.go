@@ -19,7 +19,7 @@ type localSecretsProvider struct {
 func (sp *localSecretsProvider) initialize(ctx context.Context) {
 }
 
-func (sp *localSecretsProvider) getHostSecrets(ctx context.Context, host manifest.HostInfo) (map[string]string, error) {
+func (sp *localSecretsProvider) getHostSecrets(host manifest.HostInfo) (map[string]string, error) {
 	prefix := "HYPERMODE_" + strings.ToUpper(strings.ReplaceAll(host.HostName(), "-", "_")) + "_"
 	secrets := make(map[string]string)
 	for _, e := range os.Environ() {
@@ -32,7 +32,7 @@ func (sp *localSecretsProvider) getHostSecrets(ctx context.Context, host manifes
 	return secrets, nil
 }
 
-func (sp *localSecretsProvider) getSecretValue(ctx context.Context, name string) (string, error) {
+func (sp *localSecretsProvider) getSecretValue(name string) (string, error) {
 	v := os.Getenv(name)
 	if v == "" {
 		return "", fmt.Errorf("environment variable %s was not found", name)

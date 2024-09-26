@@ -22,14 +22,11 @@ var provider secretsProvider
 
 type secretsProvider interface {
 	initialize(ctx context.Context)
-	getSecretValue(ctx context.Context, name string) (string, error)
-	getHostSecrets(ctx context.Context, host manifest.HostInfo) (map[string]string, error)
+	getSecretValue(name string) (string, error)
+	getHostSecrets(host manifest.HostInfo) (map[string]string, error)
 }
 
 func Initialize(ctx context.Context) {
-	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
-	defer span.Finish()
-
 	if config.UseAwsSecrets {
 		provider = &awsSecretsProvider{}
 	} else {
@@ -39,16 +36,16 @@ func Initialize(ctx context.Context) {
 	provider.initialize(ctx)
 }
 
-func GetSecretValue(ctx context.Context, name string) (string, error) {
-	return provider.getSecretValue(ctx, name)
+func GetSecretValue(name string) (string, error) {
+	return provider.getSecretValue(name)
 }
 
-func GetHostSecrets(ctx context.Context, host manifest.HostInfo) (map[string]string, error) {
-	return provider.getHostSecrets(ctx, host)
+func GetHostSecrets(host manifest.HostInfo) (map[string]string, error) {
+	return provider.getHostSecrets(host)
 }
 
-func GetHostSecret(ctx context.Context, host manifest.HostInfo, secretName string) (string, error) {
-	secrets, err := GetHostSecrets(ctx, host)
+func GetHostSecret(host manifest.HostInfo, secretName string) (string, error) {
+	secrets, err := GetHostSecrets(host)
 	if err != nil {
 		return "", err
 	}
@@ -63,9 +60,11 @@ func GetHostSecret(ctx context.Context, host manifest.HostInfo, secretName strin
 // ApplyHostSecretsToHttpRequest evaluates the given request and replaces any placeholders
 // present in the query parameters and headers with their secret values for the given host.
 func ApplyHostSecretsToHttpRequest(ctx context.Context, host *manifest.HTTPHostInfo, req *http.Request) error {
+	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+	defer span.Finish()
 
 	// get secrets for the host
-	secrets, err := GetHostSecrets(ctx, host)
+	secrets, err := GetHostSecrets(host)
 	if err != nil {
 		return err
 	}
@@ -88,7 +87,10 @@ func ApplyHostSecretsToHttpRequest(ctx context.Context, host *manifest.HTTPHostI
 // ApplyHostSecretsToString evaluates the given string and replaces any placeholders
 // present in the string with their secret values for the given host.
 func ApplyHostSecretsToString(ctx context.Context, host manifest.HostInfo, str string) (string, error) {
-	secrets, err := GetHostSecrets(ctx, host)
+	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+	defer span.Finish()
+
+	secrets, err := GetHostSecrets(host)
 	if err != nil {
 		return "", err
 	}

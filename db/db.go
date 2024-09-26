@@ -66,7 +66,7 @@ func (w *runtimePostgresWriter) GetPool(ctx context.Context) (*pgxpool.Pool, err
 
 	w.mu.Lock()
 	defer w.mu.Unlock()
-	connStr, err := secrets.GetSecretValue(ctx, "HYPERMODE_METADATA_DB")
+	connStr, err := secrets.GetSecretValue("HYPERMODE_METADATA_DB")
 	if connStr == "" {
 		if err != nil {
 			return nil, fmt.Errorf("%w: %w", errDbNotConfigured, err)
