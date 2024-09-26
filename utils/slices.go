@@ -87,7 +87,11 @@ func ConvertToSliceOf[T any](obj any) ([]T, bool) {
 	case []any:
 		out := make([]T, len(obj))
 		for i, v := range obj {
-			out[i] = v.(T)
+			if t, err := Cast[T](v); err != nil {
+				return nil, false
+			} else {
+				out[i] = t
+			}
 		}
 		return out, true
 	case [0]T:
