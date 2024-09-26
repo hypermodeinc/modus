@@ -19,7 +19,7 @@ type predictionResult[T any] struct {
 }
 
 func postToModelEndpoint[TResult any](ctx context.Context, model *manifest.ModelInfo, sentenceMap map[string]string) (map[string]TResult, error) {
-	span := utils.NewSentrySpanForCurrentFunc(ctx)
+	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
 
 	// self hosted models takes in array, can optimize for parallelizing later

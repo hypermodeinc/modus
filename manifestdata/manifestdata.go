@@ -60,8 +60,8 @@ func MonitorManifestFile(ctx context.Context) {
 }
 
 func loadManifest(ctx context.Context) error {
-	transaction, ctx := utils.NewSentryTransactionForCurrentFunc(ctx)
-	defer transaction.Finish()
+	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+	defer span.Finish()
 
 	bytes, err := storage.GetFileContents(ctx, manifestFileName)
 	if err != nil {

@@ -70,6 +70,8 @@ func (host *wasmHost) CallFunctionByName(ctx context.Context, fnName string, par
 }
 
 func (host *wasmHost) CallFunction(ctx context.Context, fnInfo functions.FunctionInfo, parameters map[string]any) (ExecutionInfo, error) {
+	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+	defer span.Finish()
 
 	execInfo := &executionInfo{
 		executionId: xid.New().String(),
