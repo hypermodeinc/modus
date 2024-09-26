@@ -7,6 +7,7 @@
 - Fix array-like types passed via interface wrappers [#386](https://github.com/hypermodeAI/runtime/pull/386)
 - Cast slice values to handle json.Number and others [#387](https://github.com/hypermodeAI/runtime/pull/387)
 - Trap JSON unsupported value errors [#388](https://github.com/hypermodeAI/runtime/pull/388)
+- Adjust Sentry transactions [#390](https://github.com/hypermodeAI/runtime/pull/390)
 
 ## 2024-09-24 - Version 0.12.2
 
