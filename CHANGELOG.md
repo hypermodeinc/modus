@@ -1,6 +1,7 @@
 # Change Log
 
 - Fix field alignment issue [#393](https://github.com/hypermodeAI/runtime/pull/393)
+- Improve error logging and debugging [#394](https://github.com/hypermodeAI/runtime/pull/394)
 
 ## 2024-09-26 - Version 0.12.3
 
