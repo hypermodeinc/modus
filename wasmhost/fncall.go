@@ -152,6 +152,7 @@ func (host *wasmHost) CallFunction(ctx context.Context, fnInfo functions.Functio
 			Bool("user_visible", true).
 			Msg("Function execution was canceled.")
 	} else {
+		// While debugging, it helps if we can see the error in the console without escaped newlines and other json formatting.
 		if utils.HypermodeDebugEnabled() {
 			fmt.Fprintln(os.Stderr, err)
 		}
@@ -161,6 +162,13 @@ func (host *wasmHost) CallFunction(ctx context.Context, fnInfo functions.Functio
 			Str("function", fnName).
 			Dur("duration_ms", duration).
 			Msg("Error while executing function.")
+
+		// However, we should still log _something_ that is user visible, so that the user knows something went wrong when they look at the function run logs.
+		logger.Error(ctx).
+			Str("function", fnName).
+			Dur("duration_ms", duration).
+			Bool("user_visible", true).
+			Msg("An internal runtime error occurred while executing the function.")
 	}
 
 	// Update metrics
