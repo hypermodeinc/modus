@@ -1,6 +1,6 @@
 # Change Log
 
-## UNRELEASED
+## 2024-09-26 - Version 0.12.3
 
 - Arrays in collections host functions should be non-nil [#384](https://github.com/hypermodeAI/runtime/pull/384)
 - Update error handling for function calls [#385](https://github.com/hypermodeAI/runtime/pull/385)
