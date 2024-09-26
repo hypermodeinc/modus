@@ -136,7 +136,6 @@ func GetTypeInfo(ctx context.Context, lti LanguageTypeInfo, typeName string, typ
 		}
 
 		offset := uint32(0)
-		maxAlignment := uint32(0)
 		info.fieldTypes = make([]TypeInfo, len(def.Fields))
 		info.fieldOffsets = make([]uint32, len(def.Fields))
 		for i, field := range def.Fields {
@@ -151,13 +150,20 @@ func GetTypeInfo(ctx context.Context, lti LanguageTypeInfo, typeName string, typ
 			offset = AlignOffset(offset, alignment)
 			info.fieldOffsets[i] = offset
 			offset += size
-
-			if alignment > maxAlignment {
-				maxAlignment = alignment
-			}
 		}
-		info.dataSize = AlignOffset(offset, maxAlignment)
-		info.alignment = maxAlignment
+
+		if size, err := lti.GetDataSizeOfType(ctx, typeName); err != nil {
+			return nil, err
+		} else {
+			info.dataSize = size
+		}
+
+		if alignment, err := lti.GetAlignmentOfType(ctx, typeName); err != nil {
+			return nil, err
+		} else {
+			info.alignment = alignment
+		}
+
 	}
 
 	info.flags = flags

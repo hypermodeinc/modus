@@ -1,5 +1,7 @@
 # Change Log
 
+- Fix field alignment issue [#393](https://github.com/hypermodeAI/runtime/pull/393)
+
 ## 2024-09-26 - Version 0.12.3
 
 - Arrays in collections host functions should be non-nil [#384](https://github.com/hypermodeAI/runtime/pull/384)
