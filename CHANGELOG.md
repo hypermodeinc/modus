@@ -6,7 +6,7 @@
 - Update error handling for function calls [#385](https://github.com/hypermodeAI/runtime/pull/385)
 - Fix array-like types passed via interface wrappers [#386](https://github.com/hypermodeAI/runtime/pull/386)
 - Cast slice values to handle json.Number and others [#387](https://github.com/hypermodeAI/runtime/pull/387)
-
+- Trap JSON unsupported value errors [#388](https://github.com/hypermodeAI/runtime/pull/388)
 
 ## 2024-09-24 - Version 0.12.2
 

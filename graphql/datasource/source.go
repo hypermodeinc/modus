@@ -7,6 +7,7 @@ package datasource
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -44,7 +45,7 @@ func (ds *HypermodeDataSource) Load(ctx context.Context, input []byte, out *byte
 	result, gqlErrors, err := ds.callFunction(ctx, ci)
 
 	// Write the response
-	err = writeGraphQLResponse(out, result, gqlErrors, err, ci)
+	err = writeGraphQLResponse(ctx, out, result, gqlErrors, err, ci)
 	if err != nil {
 		logger.Error(ctx).Err(err).Msg("Error creating GraphQL response.")
 	}
@@ -100,7 +101,7 @@ func (ds *HypermodeDataSource) callFunction(ctx context.Context, callInfo callIn
 	return result, gqlErrors, err
 }
 
-func writeGraphQLResponse(writer io.Writer, result any, gqlErrors []resolve.GraphQLError, fnErr error, ci callInfo) error {
+func writeGraphQLResponse(ctx context.Context, writer io.Writer, result any, gqlErrors []resolve.GraphQLError, fnErr error, ci callInfo) error {
 
 	// Include the function error
 	if fnErr != nil {
@@ -132,6 +133,16 @@ func writeGraphQLResponse(writer io.Writer, result any, gqlErrors []resolve.Grap
 	// Get the data as json from the result
 	jsonResult, err := utils.JsonSerialize(result)
 	if err != nil {
+		if err, ok := err.(*json.UnsupportedValueError); ok {
+			msg := fmt.Sprintf("Function completed successfully, but the result contains a %v value that cannot be serialized to JSON.", err.Value)
+			logger.Warn(ctx).
+				Bool("user_visible", true).
+				Str("function", ci.Function.Name).
+				Str("result", fmt.Sprintf("%+v", result)).
+				Msg(msg)
+			fmt.Fprintf(writer, `{"errors":[{"message":"%s","path":["%s"],"extensions":{"level":"error"}}]}`, msg, ci.Function.AliasOrName())
+			return nil
+		}
 		return err
 	}
 
