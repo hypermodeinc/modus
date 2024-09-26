@@ -93,6 +93,8 @@ func (host *wasmHost) GetFunctionRegistry() functions.FunctionRegistry {
 
 // Gets a module instance for the given plugin, used for a single invocation.
 func (host *wasmHost) GetModuleInstance(ctx context.Context, plugin *plugins.Plugin, buffers utils.OutputBuffers) (wasm.Module, error) {
+	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+	defer span.Finish()
 
 	// Get the logger and writers for the plugin's stdout and stderr.
 	log := logger.Get(ctx).With().Bool("user_visible", true).Logger()

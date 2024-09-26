@@ -100,9 +100,6 @@ func loadPlugin(ctx context.Context, filename string) error {
 }
 
 func logPluginLoaded(ctx context.Context, plugin *plugins.Plugin) {
-	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
-	defer span.Finish()
-
 	evt := logger.Info(ctx)
 	evt.Str("filename", plugin.FileName)
 

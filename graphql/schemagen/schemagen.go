@@ -25,7 +25,7 @@ type GraphQLSchema struct {
 }
 
 func GetGraphQLSchema(ctx context.Context, md *metadata.Metadata) (*GraphQLSchema, error) {
-	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+	span, _ := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
 
 	lti := languages.GetLanguageForSDK(md.SDK).TypeInfo()

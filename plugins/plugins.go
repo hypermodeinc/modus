@@ -29,6 +29,8 @@ type Plugin struct {
 }
 
 func NewPlugin(ctx context.Context, cm wazero.CompiledModule, filename string, md *metadata.Metadata) (*Plugin, error) {
+	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+	defer span.Finish()
 
 	language := languages.GetLanguageForSDK(md.SDK)
 	planner := language.NewPlanner(md)

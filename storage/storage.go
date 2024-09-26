@@ -40,9 +40,6 @@ func Initialize(ctx context.Context) {
 }
 
 func ListFiles(ctx context.Context, extension string) ([]FileInfo, error) {
-	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
-	defer span.Finish()
-
 	return provider.listFiles(ctx, extension)
 }
 
