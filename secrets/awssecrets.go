@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"maps"
 	"strings"
+	"sync"
 	"time"
 
 	"hypruntime/aws"
@@ -24,6 +25,7 @@ type awsSecretsProvider struct {
 	prefix string
 	client *secretsmanager.Client
 	cache  map[string]*types.SecretValueEntry
+	mu     sync.RWMutex
 }
 
 func (sp *awsSecretsProvider) initialize(ctx context.Context) {
@@ -57,6 +59,9 @@ func (sp *awsSecretsProvider) getHostSecrets(host manifest.HostInfo) (map[string
 }
 
 func (sp *awsSecretsProvider) getSecrets(prefix string) (map[string]string, error) {
+	sp.mu.RLock()
+	defer sp.mu.RUnlock()
+
 	results := make(map[string]string)
 	for key, secret := range sp.cache {
 		if strings.HasPrefix(key, prefix) {
@@ -69,6 +74,9 @@ func (sp *awsSecretsProvider) getSecrets(prefix string) (map[string]string, erro
 }
 
 func (sp *awsSecretsProvider) getSecretValue(name string) (string, error) {
+	sp.mu.RLock()
+	defer sp.mu.RUnlock()
+
 	val, ok := sp.cache[name]
 	if !ok {
 		return "", fmt.Errorf("secret %s not found", name)
@@ -78,6 +86,9 @@ func (sp *awsSecretsProvider) getSecretValue(name string) (string, error) {
 }
 
 func (sp *awsSecretsProvider) populateSecretsCache(ctx context.Context) error {
+	sp.mu.Lock()
+	defer sp.mu.Unlock()
+
 	p := secretsmanager.NewBatchGetSecretValuePaginator(sp.client, &secretsmanager.BatchGetSecretValueInput{
 		Filters: []types.Filter{{
 			Key:    types.FilterNameStringTypeName,
@@ -144,6 +155,7 @@ func (sp *awsSecretsProvider) monitorForUpdates(ctx context.Context) {
 					continue
 				}
 
+				sp.mu.Lock()
 				sp.cache[key] = &types.SecretValueEntry{
 					ARN:           secretValue.ARN,
 					CreatedDate:   secretValue.CreatedDate,
@@ -153,14 +165,19 @@ func (sp *awsSecretsProvider) monitorForUpdates(ctx context.Context) {
 					VersionId:     secretValue.VersionId,
 					VersionStages: secretValue.VersionStages,
 				}
+				sp.mu.Unlock()
 
 				logger.Info(ctx).Str("key", key).Msg("Secret updated.")
 			}
 
 			// Remove secrets that were deleted
-			for key := range remainder {
-				delete(sp.cache, key)
-				logger.Info(ctx).Str("key", key).Msg("Secret removed.")
+			if len(remainder) > 0 {
+				sp.mu.Lock()
+				for key := range remainder {
+					delete(sp.cache, key)
+					logger.Info(ctx).Str("key", key).Msg("Secret removed.")
+				}
+				sp.mu.Unlock()
 			}
 		}
 
