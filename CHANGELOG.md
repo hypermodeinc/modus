@@ -1,6 +1,6 @@
 # Change Log
 
-## UNRELEASED
+## 2024-09-26 - Version 0.12.6
 
 - Revert #393 and #396, then apply correct fix for field alignment issue [#397](https://github.com/hypermodeAI/runtime/pull/397)
 
