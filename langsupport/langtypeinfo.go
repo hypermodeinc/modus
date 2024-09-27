@@ -15,6 +15,7 @@ type LanguageTypeInfo interface {
 	GetAlignmentOfType(ctx context.Context, typ string) (uint32, error)
 	GetDataSizeOfType(ctx context.Context, typ string) (uint32, error)
 	GetEncodingLengthOfType(ctx context.Context, typ string) (uint32, error)
+	ObjectsUseMaxFieldAlignment() bool
 
 	GetListSubtype(typ string) string
 	GetMapSubtypes(typ string) (string, string)

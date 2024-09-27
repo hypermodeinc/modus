@@ -316,6 +316,11 @@ func (lti *langTypeInfo) GetAlignmentOfType(ctx context.Context, typ string) (ui
 	return lti.getAlignmentOfStruct(ctx, typ)
 }
 
+func (lti *langTypeInfo) ObjectsUseMaxFieldAlignment() bool {
+	// Go structs are aligned to the maximum alignment of their fields
+	return true
+}
+
 func (lti *langTypeInfo) getAlignmentOfStruct(ctx context.Context, typ string) (uint32, error) {
 	def, err := lti.GetTypeDefinition(ctx, typ)
 	if err != nil {

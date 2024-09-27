@@ -1,5 +1,9 @@
 # Change Log
 
+## UNRELEASED
+
+- Revert #393 and #396, then apply correct fix for field alignment issue [#397](https://github.com/hypermodeAI/runtime/pull/397)
+
 ## 2024-09-26 - Version 0.12.5
 
 - Fix AssemblyScript error unpinning objects from memory [#396](https://github.com/hypermodeAI/runtime/pull/396)

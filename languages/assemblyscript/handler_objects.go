@@ -186,14 +186,12 @@ func (h *managedObjectHandler) doWrite(ctx context.Context, wa langsupport.WasmA
 		return 0, cln, err
 	}
 
-	// TODO: the following should work, but it in some cases we are finding that the inner objects fail to unpin even though they were successfully pinned
-
 	// we can unpin the inner objects early, since they are now referenced by the managed object
-	// if c != nil {
-	// 	if err := c.Clean(); err != nil {
-	// 		return 0, cln, err
-	// 	}
-	// }
+	if c != nil {
+		if err := c.Clean(); err != nil {
+			return 0, cln, err
+		}
+	}
 
 	return ptr, cln, nil
 }
