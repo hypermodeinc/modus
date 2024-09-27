@@ -157,7 +157,10 @@ func GetTypeInfo(ctx context.Context, lti LanguageTypeInfo, typeName string, typ
 			}
 		}
 		info.dataSize = AlignOffset(offset, maxAlignment)
-		info.alignment = maxAlignment
+
+		if lti.ObjectsUseMaxFieldAlignment() {
+			info.alignment = maxAlignment
+		}
 	}
 
 	info.flags = flags

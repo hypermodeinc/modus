@@ -206,6 +206,11 @@ func (lti *langTypeInfo) GetAlignmentOfType(ctx context.Context, typ string) (ui
 	return lti.GetSizeOfType(ctx, typ)
 }
 
+func (lti *langTypeInfo) ObjectsUseMaxFieldAlignment() bool {
+	// AssemblyScript classes are aligned to the pointer size (4 bytes), not the max field alignment.
+	return false
+}
+
 func (lti *langTypeInfo) GetDataSizeOfType(ctx context.Context, typ string) (uint32, error) {
 	switch typ {
 	case "u64", "i64", "f64":
