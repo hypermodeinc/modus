@@ -1,6 +1,6 @@
 # Change Log
 
-## UNRELEASED
+## 2024-09-26 - Version 0.12.5
 
 - Fix AssemblyScript error unpinning objects from memory [#396](https://github.com/hypermodeAI/runtime/pull/396)
 
