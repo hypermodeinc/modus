@@ -69,7 +69,7 @@ var (
 		},
 	)
 	// FunctionExecutionDurationMilliseconds is a histogram of latencies for wasm function executions of user plugins.
-	// # of series = # of handlers x 49
+	// # of series = # of functions x 49
 	FunctionExecutionDurationMilliseconds = prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
 			Name: "runtime_function_execution_duration_milliseconds",
