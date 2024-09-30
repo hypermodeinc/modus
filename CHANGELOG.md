@@ -3,6 +3,7 @@
 ## UNRELEASED
 
 - Use reader-writer lock on AWS secrets cache [#400](https://github.com/hypermodeAI/runtime/pull/400)
+- Improve bucket layout for FunctionExecutionDurationMilliseconds metric and add function_name label [#401](https://github.com/hypermodeAI/runtime/pull/401)
 
 ## 2024-09-26 - Version 0.12.6
 
@@ -25,7 +26,6 @@
 - Cast slice values to handle json.Number and others [#387](https://github.com/hypermodeAI/runtime/pull/387)
 - Trap JSON unsupported value errors [#388](https://github.com/hypermodeAI/runtime/pull/388)
 - Adjust Sentry transactions [#390](https://github.com/hypermodeAI/runtime/pull/390)
-- Improve bucket layout for FunctionExecutionDurationMilliseconds metric and add function_name label [#401](https://github.com/hypermodeAI/runtime/pull/401)
 
 ## 2024-09-24 - Version 0.12.2
 
