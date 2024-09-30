@@ -3,6 +3,7 @@
 ## UNRELEASED
 
 - Use reader-writer lock on AWS secrets cache [#400](https://github.com/hypermodeAI/runtime/pull/400)
+- Improve bucket layout for FunctionExecutionDurationMilliseconds metric and add function_name label [#401](https://github.com/hypermodeAI/runtime/pull/401)
 
 ## 2024-09-26 - Version 0.12.6
 
