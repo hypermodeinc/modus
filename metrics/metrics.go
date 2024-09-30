@@ -69,22 +69,29 @@ var (
 		},
 	)
 	// FunctionExecutionDurationMilliseconds is a histogram of latencies for wasm function executions of user plugins.
-	// # of series = 5
-	FunctionExecutionDurationMilliseconds = prometheus.NewHistogram(
+	// # of series = # of handlers x 49
+	FunctionExecutionDurationMilliseconds = prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
-			Name:    "runtime_function_execution_duration_milliseconds",
-			Help:    "A histogram of latencies for wasm function executions of user plugins",
-			Buckets: []float64{1, 10, 100, 1000},
+			Name: "runtime_function_execution_duration_milliseconds",
+			Help: "A histogram of latencies for wasm function executions of user plugins",
+			Buckets: []float64{
+				10, 15, 20, 30, 40, 60, 80, 100, 125, 150, 175, 200, 225, 250, 275, 300,
+				350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 950, 1000,
+				1100, 1200, 1300, 1400, 1500, 1600, 1700, 1800, 1900, 2000,
+				2500, 3000, 3500, 4000, 5000, 10000, 20000, 40000, 60000,
+			},
 		},
+		[]string{"function_name"},
 	)
 
 	// FunctionExecutionDurationMillisecondsSummary is a summary of latencies for wasm function executions of user plugins.
-	FunctionExecutionDurationMillisecondsSummary = prometheus.NewSummary(
+	FunctionExecutionDurationMillisecondsSummary = prometheus.NewSummaryVec(
 		prometheus.SummaryOpts{
 			Name:       "runtime_function_execution_duration_milliseconds_summary",
 			Help:       "A summary of latencies for wasm function executions of user plugins",
 			Objectives: map[float64]float64{0.5: 0.05, 0.75: 0.025, 0.9: 0.01, 0.99: 0.001},
 		},
+		[]string{"function_name"},
 	)
 
 	DroppedInferencesNum = prometheus.NewCounter(
