@@ -27,7 +27,7 @@ type FileInfo struct {
 }
 
 func Initialize(ctx context.Context) {
-	span := utils.NewSentrySpanForCurrentFunc(ctx)
+	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
 
 	if config.UseAwsStorage {
@@ -40,14 +40,11 @@ func Initialize(ctx context.Context) {
 }
 
 func ListFiles(ctx context.Context, extension string) ([]FileInfo, error) {
-	span := utils.NewSentrySpanForCurrentFunc(ctx)
-	defer span.Finish()
-
 	return provider.listFiles(ctx, extension)
 }
 
 func GetFileContents(ctx context.Context, name string) ([]byte, error) {
-	span := utils.NewSentrySpanForCurrentFunc(ctx)
+	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
 
 	return provider.getFileContents(ctx, name)

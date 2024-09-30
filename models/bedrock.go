@@ -19,6 +19,9 @@ import (
 
 func invokeAwsBedrockModel(ctx context.Context, model *manifest.ModelInfo, input string) (output string, err error) {
 
+	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+	defer span.Finish()
+
 	// NOTE: Bedrock support is experimental, and not advertised to users.
 	// It currently uses the same AWS credentials as the Runtime.
 	// In the future, we will support user-provided credentials for Bedrock.

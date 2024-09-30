@@ -9,13 +9,12 @@ import (
 	"fmt"
 	"maps"
 	"strings"
+	"sync"
 	"time"
 
 	"hypruntime/aws"
 	"hypruntime/config"
 	"hypruntime/logger"
-	"hypruntime/manifestdata"
-	"hypruntime/utils"
 
 	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
 	"github.com/aws/aws-sdk-go-v2/service/secretsmanager/types"
@@ -26,6 +25,7 @@ type awsSecretsProvider struct {
 	prefix string
 	client *secretsmanager.Client
 	cache  map[string]*types.SecretValueEntry
+	mu     sync.RWMutex
 }
 
 func (sp *awsSecretsProvider) initialize(ctx context.Context) {
@@ -48,31 +48,19 @@ func (sp *awsSecretsProvider) initialize(ctx context.Context) {
 	go sp.monitorForUpdates(ctx)
 }
 
-func (sp *awsSecretsProvider) getHostSecrets(ctx context.Context, host manifest.HostInfo) (map[string]string, error) {
+func (sp *awsSecretsProvider) getHostSecrets(host manifest.HostInfo) (map[string]string, error) {
 	hostName := host.HostName()
-	secrets, err := sp.getSecrets(ctx, hostName+"/")
+	secrets, err := sp.getSecrets(hostName + "/")
 	if err != nil {
 		return nil, err
-	}
-
-	// Migrate old auth header secret to the new location
-	// TODO: Remove this when we no longer need to support the old manifest format
-	oldAuthHeaderSecret, ok := sp.cache[hostName]
-	if ok {
-		if manifestdata.GetManifest().Version == 1 {
-			secrets[manifest.V1AuthHeaderVariableName] = *oldAuthHeaderSecret.SecretString
-			logger.Warn(ctx).Msg("Used deprecated auth header secret.  Please update the manifest to use a template such as {{SECRET_NAME}} and migrate the old secret in Secrets Manager.")
-		} else {
-			logger.Warn(ctx).Msg("The manifest is current, but the deprecated auth header secret was found.  Please remove the old secret in Secrets Manager.")
-		}
 	}
 
 	return secrets, nil
 }
 
-func (sp *awsSecretsProvider) getSecrets(ctx context.Context, prefix string) (map[string]string, error) {
-	span := utils.NewSentrySpanForCurrentFunc(ctx)
-	defer span.Finish()
+func (sp *awsSecretsProvider) getSecrets(prefix string) (map[string]string, error) {
+	sp.mu.RLock()
+	defer sp.mu.RUnlock()
 
 	results := make(map[string]string)
 	for key, secret := range sp.cache {
@@ -85,9 +73,9 @@ func (sp *awsSecretsProvider) getSecrets(ctx context.Context, prefix string) (ma
 	return results, nil
 }
 
-func (sp *awsSecretsProvider) getSecretValue(ctx context.Context, name string) (string, error) {
-	span := utils.NewSentrySpanForCurrentFunc(ctx)
-	defer span.Finish()
+func (sp *awsSecretsProvider) getSecretValue(name string) (string, error) {
+	sp.mu.RLock()
+	defer sp.mu.RUnlock()
 
 	val, ok := sp.cache[name]
 	if !ok {
@@ -98,8 +86,8 @@ func (sp *awsSecretsProvider) getSecretValue(ctx context.Context, name string) (
 }
 
 func (sp *awsSecretsProvider) populateSecretsCache(ctx context.Context) error {
-	transaction, ctx := utils.NewSentryTransactionForCurrentFunc(ctx)
-	defer transaction.Finish()
+	sp.mu.Lock()
+	defer sp.mu.Unlock()
 
 	p := secretsmanager.NewBatchGetSecretValuePaginator(sp.client, &secretsmanager.BatchGetSecretValueInput{
 		Filters: []types.Filter{{
@@ -142,9 +130,6 @@ func (sp *awsSecretsProvider) monitorForUpdates(ctx context.Context) {
 	defer ticker.Stop()
 
 	for {
-		transaction, ctx := utils.NewSentryTransactionForCurrentFunc(ctx)
-		defer transaction.Finish()
-
 		secrets, err := sp.listSecrets(ctx)
 		if err != nil {
 			logger.Err(ctx, err).Msg("Failed to list secrets.")
@@ -170,6 +155,7 @@ func (sp *awsSecretsProvider) monitorForUpdates(ctx context.Context) {
 					continue
 				}
 
+				sp.mu.Lock()
 				sp.cache[key] = &types.SecretValueEntry{
 					ARN:           secretValue.ARN,
 					CreatedDate:   secretValue.CreatedDate,
@@ -179,14 +165,19 @@ func (sp *awsSecretsProvider) monitorForUpdates(ctx context.Context) {
 					VersionId:     secretValue.VersionId,
 					VersionStages: secretValue.VersionStages,
 				}
+				sp.mu.Unlock()
 
 				logger.Info(ctx).Str("key", key).Msg("Secret updated.")
 			}
 
 			// Remove secrets that were deleted
-			for key := range remainder {
-				delete(sp.cache, key)
-				logger.Info(ctx).Str("key", key).Msg("Secret removed.")
+			if len(remainder) > 0 {
+				sp.mu.Lock()
+				for key := range remainder {
+					delete(sp.cache, key)
+					logger.Info(ctx).Str("key", key).Msg("Secret removed.")
+				}
+				sp.mu.Unlock()
 			}
 		}
 
@@ -210,9 +201,6 @@ func (sp *awsSecretsProvider) getCurrentVersionId(s types.SecretListEntry) strin
 }
 
 func (sp *awsSecretsProvider) listSecrets(ctx context.Context) ([]types.SecretListEntry, error) {
-	transaction, ctx := utils.NewSentryTransactionForCurrentFunc(ctx)
-	defer transaction.Finish()
-
 	p := secretsmanager.NewListSecretsPaginator(sp.client, &secretsmanager.ListSecretsInput{
 		Filters: []types.Filter{{
 			Key:    types.FilterNameStringTypeName,

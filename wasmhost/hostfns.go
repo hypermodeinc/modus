@@ -197,6 +197,8 @@ func (host *wasmHost) newHostFunction(modName, funcName string, fn any, opts ...
 
 	// Make the host function wrapper
 	hf.function = wasm.GoFunc(func(ctx context.Context, stack []uint64) {
+		span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+		defer span.Finish()
 
 		// Log any panics that occur in the host function
 		defer func() {
@@ -306,7 +308,7 @@ func (host *wasmHost) newHostFunction(modName, funcName string, fn any, opts ...
 }
 
 func (host *wasmHost) instantiateHostFunctions(ctx context.Context) error {
-	span := utils.NewSentrySpanForCurrentFunc(ctx)
+	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
 
 	hostFnsByModule := make(map[string][]*hostFunction)

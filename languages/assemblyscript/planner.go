@@ -10,6 +10,7 @@ import (
 
 	"hypruntime/langsupport"
 	"hypruntime/plugins/metadata"
+	"hypruntime/utils"
 
 	wasm "github.com/tetratelabs/wazero/api"
 )
@@ -72,6 +73,8 @@ func (p *planner) GetHandler(ctx context.Context, typeName string) (langsupport.
 }
 
 func (p *planner) GetPlan(ctx context.Context, fnMeta *metadata.Function, fnDef wasm.FunctionDefinition) (langsupport.ExecutionPlan, error) {
+	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+	defer span.Finish()
 
 	paramHandlers := make([]langsupport.TypeHandler, len(fnMeta.Parameters))
 	for i, param := range fnMeta.Parameters {

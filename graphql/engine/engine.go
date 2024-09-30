@@ -42,7 +42,7 @@ func setEngine(engine *engine.ExecutionEngine) {
 }
 
 func Activate(ctx context.Context, md *metadata.Metadata) error {
-	span := utils.NewSentrySpanForCurrentFunc(ctx)
+	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
 
 	schema, cfg, err := generateSchema(ctx, md)
@@ -65,7 +65,7 @@ func Activate(ctx context.Context, md *metadata.Metadata) error {
 }
 
 func generateSchema(ctx context.Context, md *metadata.Metadata) (*gql.Schema, *datasource.HypDSConfig, error) {
-	span := utils.NewSentrySpanForCurrentFunc(ctx)
+	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
 
 	generated, err := schemagen.GetGraphQLSchema(ctx, md)
@@ -95,7 +95,7 @@ func generateSchema(ctx context.Context, md *metadata.Metadata) (*gql.Schema, *d
 }
 
 func getDatasourceConfig(ctx context.Context, schema *gql.Schema, cfg *datasource.HypDSConfig) (plan.DataSourceConfiguration[datasource.HypDSConfig], error) {
-	span := utils.NewSentrySpanForCurrentFunc(ctx)
+	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
 
 	queryTypeName := schema.QueryTypeName()
@@ -127,7 +127,7 @@ func getDatasourceConfig(ctx context.Context, schema *gql.Schema, cfg *datasourc
 }
 
 func makeEngine(ctx context.Context, schema *gql.Schema, datasourceConfig plan.DataSourceConfiguration[datasource.HypDSConfig]) (*engine.ExecutionEngine, error) {
-	span := utils.NewSentrySpanForCurrentFunc(ctx)
+	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
 
 	engineConfig := engine.NewConfiguration(schema)
@@ -144,7 +144,7 @@ func makeEngine(ctx context.Context, schema *gql.Schema, datasourceConfig plan.D
 }
 
 func getAllQueryFields(ctx context.Context, s *gql.Schema) []string {
-	span := utils.NewSentrySpanForCurrentFunc(ctx)
+	span, _ := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
 
 	doc := s.Document()
