@@ -7,6 +7,7 @@
 - Fix array-like types passed via interface wrappers [#386](https://github.com/hypermodeAI/runtime/pull/386)
 - Cast slice values to handle json.Number and others [#387](https://github.com/hypermodeAI/runtime/pull/387)
 - Trap JSON unsupported value errors [#388](https://github.com/hypermodeAI/runtime/pull/388)
+- Improve bucket layout for FunctionExecutionDurationMilliseconds metric and add function_name label [#401](https://github.com/hypermodeAI/runtime/pull/401)
 
 ## 2024-09-24 - Version 0.12.2
 
