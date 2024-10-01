@@ -5,10 +5,12 @@ import { createInterface } from "node:readline";
 import ora from "ora";
 
 import { CLI_VERSION, SDK } from "../../custom/globals.js";
-import { ask, clearLine, cloneRepo, expandHomeDir, getAvailablePackageManagers, isGitInstalled } from "../../util/index.js";
+import { ask, clearLine, cloneRepo, expandHomeDir, getAvailablePackageManagers, isGitInstalled, isRunnable } from "../../util/index.js";
 import path from "node:path";
 import { Metadata } from "../../util/metadata.js";
 import { copyFileSync, existsSync, mkdirSync } from "node:fs";
+import { execSync, spawnSync } from "node:child_process";
+import { arch, platform } from "node:os";
 
 const PKGMGRS = getAvailablePackageManagers();
 
@@ -49,10 +51,10 @@ export default class NewCommand extends Command {
     const dir = flags.dir ? path.join(process.cwd(), flags.dir) : await this.promptInstallPath(rl);
     const sdk = flags.sdk
       ? Object.values(SDK)[
-          Object.keys(SDK)
-            .map((v) => v.toLowerCase())
-            .indexOf(flags.sdk?.trim().toLowerCase())
-        ]
+      Object.keys(SDK)
+        .map((v) => v.toLowerCase())
+        .indexOf(flags.sdk?.trim().toLowerCase())
+      ]
       : await this.promptSdkSelection(rl); // Use the enum
 
     if (!flags.force && !(await this.confirmAction(rl, "[3/4] Continue? [y/n]"))) clearLine(), clearLine(), process.exit(0);
@@ -70,7 +72,7 @@ export default class NewCommand extends Command {
   }
 
   private async promptInstallPath(rl: ReturnType<typeof createInterface>): Promise<string> {
-    this.log("[2/4] Install Dir:");
+    this.log("[2/4] Install Dir: " + chalk.dim("(./)"));
     const dir = ((await ask(chalk.dim(" -> "), rl)) || "./").trim();
     clearLine();
     clearLine();
@@ -105,15 +107,44 @@ export default class NewCommand extends Command {
 
     if (!isGitInstalled()) {
       this.logError("Could not find valid Git installation! Please download Git or ensure it is in your PATH!");
-      return;
+      process.exit(0);
     }
+
+    if (sdk === SDK.AssemblyScript && !isRunnable("npm")) {
+      this.logError("Could not locate NPM! Please install npm and try again!");
+      process.exit(0);
+    }
+
+    const depsSpinner = ora({
+      color: "white",
+      indent: 2,
+      text: "Installing dependencies",
+    }).start();
+
+    if (sdk === SDK.AssemblyScript) {
+      const sh = spawnSync("npm install", { cwd: dir, stdio: "inherit" });
+      if (!sh) {
+        this.logError("Failed to install dependencies with NPM! Please try again");
+        process.exit(0);
+      }
+    } else if (sdk === SDK.Go) {
+      const sh = spawnSync("go install", { cwd: dir, stdio: "inherit" });
+      if (!sh) {
+        this.logError("Failed to install dependencies via go install! Please try again");
+        process.exit(0);
+      }
+    }
+
+    depsSpinner.stop();
+    this.log("- Installed Dependencies")
 
     const gitSpinner = ora({
       color: "white",
       indent: 2,
       text: "Cloning template repository",
     }).start();
-    const clone = cloneRepo("https://github.com/HypermodeAI/template-project", dir);
+
+    const clone = await cloneRepo("https://github.com/HypermodeAI/template-project", dir);
 
     if (!clone) {
       gitSpinner.stop();
@@ -160,7 +191,7 @@ export default class NewCommand extends Command {
 
       const outDir = expandHomeDir("~/.hypermode/sdk/" + latest_runtime.replace("v", ""));
       mkdirSync(outDir, { recursive: true });
-      copyFileSync(path.join(process.cwd(), "./runtime-bin/" + latest_runtime.replace("v", "")), outDir + "/runtime");
+      copyFileSync(path.join(path.dirname(import.meta.url), "./runtime-bin/modus-runtime-v" + latest_runtime + "-" + platform() + "-" + arch() + (platform() === "win32" ? ".exe" : "")), outDir + "/runtime" + (platform() === "win32" ? ".exe" : ""));
     }
     this.log(`  - Installed Runtime ${chalk.dim(`(${latest_runtime})`)}`);
   }

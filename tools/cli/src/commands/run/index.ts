@@ -6,6 +6,7 @@ import path from "path";
 import { copyFileSync, existsSync, readFileSync, watch as watchFolder } from "fs";
 import chalk from "chalk";
 import { spawn } from "child_process";
+import os from "node:os";
 
 export default class Run extends Command {
   static args = {
@@ -53,7 +54,7 @@ export default class Run extends Command {
     const deploy_wasm = expandHomeDir("~/.hypermode/" + project_name + ".wasm");
     copyFileSync(build_wasm, deploy_wasm);
 
-    spawn(expandHomeDir("~/.hypermode/sdk/" + Metadata.runtime_version + "/runtime"), { stdio: "inherit" });
+    spawn(expandHomeDir("~/.hypermode/sdk/" + Metadata.runtime_version + "/runtime" + (os.platform() === "win32" ? ".exe" : "")), { stdio: "inherit" });
 
     if (watch) {
       const delay = 3000; // Max build frequency every 3000ms

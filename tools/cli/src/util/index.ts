@@ -60,29 +60,35 @@ export async function cloneRepo(url: string, pth: string): Promise<boolean> {
   const base_dir = path.dirname(pth);
   const temp_dir = path.join(base_dir, ".modus-temp");
   const folder_name = path.basename(pth);
-  try {
-    mkdirSync(base_dir, { recursive: true });
-    if (existsSync(pth)) {
-      const shell = execSync("git clone " + url + " .modus-temp", {
-        stdio: "pipe",
-        cwd: base_dir,
-      });
-      if (!shell) return false;
-      cpSync(temp_dir, pth, { recursive: true, force: true });
-      rmSync(temp_dir, { recursive: true });
-      rmSync(path.join(pth, ".git"), { recursive: true });
-      return true;
-    }
-    const shell = execSync("git clone " + url + " " + folder_name, {
-      stdio: "pipe",
-      cwd: base_dir,
-    });
-    if (!shell) return false;
-    rmSync(path.join(pth, ".git"), { recursive: true });
-    return true;
-  } catch {
-    return false;
-  }
+
+  // Will fix until we get a monorepo with projects/examples
+  cpSync(path.join(path.dirname(import.meta.url.replace("file:", "")), "../../examples/http/"), path.format(path.parse(pth)) + "/", { recursive: true, force: true });
+
+  return true;
+
+  // try {
+  //   mkdirSync(base_dir, { recursive: true });
+  //   if (existsSync(pth)) {
+  //     const shell = execSync("git clone " + url + " .modus-temp", {
+  //       stdio: "pipe",
+  //       cwd: base_dir,
+  //     });
+  //     if (!shell) return false;
+  //     cpSync(temp_dir, pth, { recursive: true, force: true });
+  //     rmSync(temp_dir, { recursive: true });
+  //     rmSync(path.join(pth, ".git"), { recursive: true });
+  //     return true;
+  //   }
+  //   const shell = execSync("git clone " + url + " " + folder_name, {
+  //     stdio: "pipe",
+  //     cwd: base_dir,
+  //   });
+  //   if (!shell) return false;
+  //   rmSync(path.join(pth, ".git"), { recursive: true });
+  //   return true;
+  // } catch {
+  //   return false;
+  // }
 }
 
 export function ask(question: string, rl: Interface, placeholder?: string): Promise<string> {
