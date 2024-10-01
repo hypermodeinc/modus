@@ -1,26 +1,26 @@
 {
-    "bin": "white",
-    "command": "blue",
-    "commandSummary": "blackBright",
-    "dollarSign": "white",
-    "flag": "white",
-    "flagDefaultValue": "blue",
-    "flagOptions": "white",
-    "flagRequired": "red",
-    "flagSeparator": "white",
-    "json": {
-      "brace": "magenta",
-      "bracket": "magenta",
-      "colon": "dim",
-      "comma": "dim",
-      "key": "yellow",
-      "string": "green",
-      "number": "green",
-      "boolean": "green",
-      "null": "red"
-    },
-    "sectionDescription": "white",
-    "sectionHeader": "bold",
-    "topic": "white",
-    "version": "white"
-  }
+  "bin": "white",
+  "command": "blue",
+  "commandSummary": "blackBright",
+  "dollarSign": "white",
+  "flag": "white",
+  "flagDefaultValue": "blue",
+  "flagOptions": "white",
+  "flagRequired": "red",
+  "flagSeparator": "white",
+  "json": {
+    "brace": "magenta",
+    "bracket": "magenta",
+    "colon": "dim",
+    "comma": "dim",
+    "key": "yellow",
+    "string": "green",
+    "number": "green",
+    "boolean": "green",
+    "null": "red"
+  },
+  "sectionDescription": "white",
+  "sectionHeader": "bold",
+  "topic": "white",
+  "version": "white"
+}

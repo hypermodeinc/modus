@@ -1,13 +1,13 @@
 {
-  "name": "@hypermode/cli",
-  "description": "The Hypermode CLI",
+  "name": "@modus/cli",
+  "description": "The Modus CLI",
   "version": "0.0.0",
   "author": "Hypermode, Inc.",
   "bin": {
     "hyp": "bin/run.js"
   },
   "bugs": {
-    "url": "https://github.com/HypermodeAI/cli/issues"
+    "url": "https://github.com/HypermodeAI/modus/issues"
   },
   "dependencies": {
     "@oclif/core": "^4",
@@ -45,7 +45,7 @@
     "/dist",
     "/oclif.manifest.json"
   ],
-  "homepage": "https://github.com/HypermodeAI/cli",
+  "homepage": "https://github.com/HypermodeAI/modus",
   "keywords": [
     "oclif"
   ],
@@ -53,12 +53,16 @@
   "main": "dist/index.js",
   "type": "module",
   "oclif": {
-    "bin": "hyp",
+    "bin": "modus",
     "helpClass": "./dist/custom/help",
-    "dirname": "hyp",
+    "dirname": "modus",
     "commands": "./dist/commands",
     "topicSeparator": " ",
-    "topics": {},
+    "topics": {
+      "sdk": {
+        "description": "Manage SDK versions"
+      }
+    },
     "theme": "./theme.json",
     "plugins": [
       "@oclif/plugin-autocomplete"
@@ -66,9 +70,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/HypermodeAI/cli.git"
+    "url": "git+https://github.com/HypermodeAI/modus.git"
   },
   "scripts": {
+    "build:tarball": "oclif pack tarballs",
     "build": "shx rm -rf dist && tsc -b",
     "lint": "eslint . --ext .ts",
     "postpack": "shx rm -f oclif.manifest.json",

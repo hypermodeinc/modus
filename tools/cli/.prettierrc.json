@@ -1,1 +1,4 @@
-"@oclif/prettier-config"
+{
+  "singleQuote": false,
+  "printWidth": 1024
+}

@@ -1,0 +1,17 @@
+{
+  "$schema": "https://manifest.hypermode.com/hypermode.json",
+  "models": {
+    // Models used by your Hypermode project are defined here.
+    // As an example, the particular model below is Meta's Llama 3.1 8B LLM from Hugging Face,
+    // which is hosted on Hypermode and used in the starter function in this repository.
+    // You can update or remove this model as needed.
+    "text-generator": {
+      "sourceModel": "meta-llama/Meta-Llama-3.1-8B-Instruct",
+      "provider": "hugging-face",
+      "host": "hypermode"
+    }
+  },
+  "hosts": {
+    // If you use any external hosts in your project, specify them here.
+  }
+}
