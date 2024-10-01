@@ -41,10 +41,10 @@ func (ds *HypermodeDataSource) Load(ctx context.Context, input []byte, out *byte
 	}
 
 	// Load the data
-	result, gqlErrors, err := ds.callFunction(ctx, ci)
+	result, gqlErrors, err := ds.callFunction(ctx, &ci)
 
 	// Write the response
-	err = writeGraphQLResponse(ctx, out, result, gqlErrors, err, ci)
+	err = writeGraphQLResponse(ctx, out, result, gqlErrors, err, &ci)
 	if err != nil {
 		logger.Error(ctx).Err(err).Msg("Error creating GraphQL response.")
 	}
@@ -57,7 +57,7 @@ func (*HypermodeDataSource) LoadWithFiles(ctx context.Context, input []byte, fil
 	panic("not implemented")
 }
 
-func (ds *HypermodeDataSource) callFunction(ctx context.Context, callInfo callInfo) (any, []resolve.GraphQLError, error) {
+func (ds *HypermodeDataSource) callFunction(ctx context.Context, callInfo *callInfo) (any, []resolve.GraphQLError, error) {
 
 	// Get the function info
 	fnInfo, err := ds.WasmHost.GetFunctionInfo(callInfo.Function.Name)
@@ -100,7 +100,7 @@ func (ds *HypermodeDataSource) callFunction(ctx context.Context, callInfo callIn
 	return result, gqlErrors, err
 }
 
-func writeGraphQLResponse(ctx context.Context, out *bytes.Buffer, result any, gqlErrors []resolve.GraphQLError, fnErr error, ci callInfo) error {
+func writeGraphQLResponse(ctx context.Context, out *bytes.Buffer, result any, gqlErrors []resolve.GraphQLError, fnErr error, ci *callInfo) error {
 
 	fieldName := ci.Function.AliasOrName()
 
@@ -241,7 +241,7 @@ func transformObject(data []byte, tf *fieldInfo) ([]byte, error) {
 				// but will be missing outer quotes.  So we need to add them back.
 				v = []byte(`"` + string(v) + `"`)
 			}
-			val, err = transformValue(v, f)
+			val, err = transformValue(v, &f)
 			if err != nil {
 				return nil, err
 			}
@@ -382,7 +382,7 @@ func transformPseudoMap(data []byte, tf *fieldInfo) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func transformErrors(messages []utils.LogMessage, ci callInfo) []resolve.GraphQLError {
+func transformErrors(messages []utils.LogMessage, ci *callInfo) []resolve.GraphQLError {
 	errors := make([]resolve.GraphQLError, 0, len(messages))
 	for _, msg := range messages {
 		// Only include errors.  Other messages will be captured later and
