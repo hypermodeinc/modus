@@ -6,7 +6,6 @@ import (
 	"hypruntime/logger"
 	"hypruntime/utils"
 	"net/http"
-	"os"
 	"strings"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -18,6 +17,7 @@ const JWTClaims JWTClaimsKey = "jwt_claims"
 
 func HandleJWT(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var ctx context.Context = r.Context()
 		tokenStr := r.Header.Get("Authorization")
 
 		tokenStr = strings.TrimPrefix(tokenStr, "Bearer ")
@@ -39,12 +39,15 @@ func HandleJWT(next http.Handler) http.Handler {
 				http.Error(w, "Internal server error", http.StatusInternalServerError)
 				return
 			}
-			os.Setenv("JWT_CLAIMS", string(claimsJson))
+			ctx = context.WithValue(ctx, JWTClaims, string(claimsJson))
 		}
-		next.ServeHTTP(w, r)
+		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
 
 func GetJWTClaims(ctx context.Context) string {
-	return os.Getenv("JWT_CLAIMS")
+	if claims, ok := ctx.Value(JWTClaims).(string); ok {
+		return claims
+	}
+	return ""
 }
