@@ -241,7 +241,7 @@ func transformObject(data []byte, tf *fieldInfo) ([]byte, error) {
 				// but will be missing outer quotes.  So we need to add them back.
 				v = []byte(`"` + string(v) + `"`)
 			}
-			val, err = transformValue(v, f)
+			val, err = transformValue(v, &f)
 			if err != nil {
 				return nil, err
 			}

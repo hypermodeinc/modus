@@ -23,7 +23,7 @@ type HypDSPlanner struct {
 	config    HypDSConfig
 	visitor   *plan.Visitor
 	variables resolve.Variables
-	fields    map[int]*fieldInfo
+	fields    map[int]fieldInfo
 	template  struct {
 		function *fieldInfo
 		data     []byte
@@ -31,13 +31,13 @@ type HypDSPlanner struct {
 }
 
 type fieldInfo struct {
-	ref       int          `json:"-"`
-	Name      string       `json:"name"`
-	Alias     string       `json:"alias,omitempty"`
-	TypeName  string       `json:"type,omitempty"`
-	Fields    []*fieldInfo `json:"fields,omitempty"`
-	IsMapType bool         `json:"isMapType,omitempty"`
-	fieldRefs []int        `json:"-"`
+	ref       int         `json:"-"`
+	Name      string      `json:"name"`
+	Alias     string      `json:"alias,omitempty"`
+	TypeName  string      `json:"type,omitempty"`
+	Fields    []fieldInfo `json:"fields,omitempty"`
+	IsMapType bool        `json:"isMapType,omitempty"`
+	fieldRefs []int       `json:"-"`
 }
 
 func (t *fieldInfo) AliasOrName() string {
@@ -82,14 +82,14 @@ func (p *HypDSPlanner) Register(visitor *plan.Visitor, configuration plan.DataSo
 }
 
 func (p *HypDSPlanner) EnterDocument(operation, definition *ast.Document) {
-	p.fields = make(map[int]*fieldInfo, len(operation.Fields))
+	p.fields = make(map[int]fieldInfo, len(operation.Fields))
 }
 
 func (p *HypDSPlanner) EnterField(ref int) {
 
 	// Capture information about every field in the query.
 	f := p.captureField(ref)
-	p.fields[ref] = f
+	p.fields[ref] = *f
 
 	// If the field is enclosed by a root node, then it represents the function we want to call.
 	if p.enclosingTypeIsRootNode() {
@@ -116,11 +116,11 @@ func (p *HypDSPlanner) stitchFields(f *fieldInfo) {
 		return
 	}
 
-	f.Fields = make([]*fieldInfo, len(f.fieldRefs))
+	f.Fields = make([]fieldInfo, len(f.fieldRefs))
 	for i, ref := range f.fieldRefs {
 		field := p.fields[ref]
 		f.Fields[i] = field
-		p.stitchFields(field)
+		p.stitchFields(&field)
 	}
 }
 
@@ -139,7 +139,7 @@ func (p *HypDSPlanner) captureField(ref int) *fieldInfo {
 	definition := p.visitor.Definition
 	walker := p.visitor.Walker
 
-	f := fieldInfo{
+	f := &fieldInfo{
 		ref:   ref,
 		Name:  operation.FieldNameString(ref),
 		Alias: operation.FieldAliasString(ref),
@@ -158,7 +158,7 @@ func (p *HypDSPlanner) captureField(ref int) *fieldInfo {
 		}
 	}
 
-	return &f
+	return f
 }
 
 func (p *HypDSPlanner) captureInputData(fieldRef int) error {
