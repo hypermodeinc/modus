@@ -6,14 +6,13 @@ package metadata
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
 
 	"hypruntime/utils"
 
-	"github.com/buger/jsonparser"
+	"github.com/tidwall/gjson"
 )
 
 const MetadataVersion = 2
@@ -68,43 +67,22 @@ func (p *Parameter) UnmarshalJSON(data []byte) error {
 	// We need to manually unmarshal the JSON to distinguish between a null default
 	// value and the absence of a default value.
 
-	name, err := jsonparser.GetString(data, "name")
-	if err != nil {
-		return err
-	}
-	p.Name = name
-
-	typ, err := jsonparser.GetString(data, "type")
-	if err != nil {
-		return err
-	}
-	p.Type = typ
-
-	defaultData, dt, _, err := jsonparser.Get(data, "default")
-	switch dt {
-	case jsonparser.NotExist:
-		// no default value
-		p.Default = nil
-	case jsonparser.Null:
-		// an explicit null default value
-		p.Default = new(any)
-	case jsonparser.String:
-		// a default value that is a string
-		s, err := jsonparser.ParseString(defaultData)
-		if err != nil {
-			return err
+	gjson.ParseBytes(data).ForEach(func(key, value gjson.Result) bool {
+		switch key.String() {
+		case "name":
+			p.Name = value.String()
+		case "type":
+			p.Type = value.String()
+		case "default":
+			val := value.Value()
+			if val == nil {
+				p.Default = new(any)
+			} else {
+				p.Default = &val
+			}
 		}
-		def := any(s)
-		p.Default = &def
-	default:
-		// some other non-null default value
-		if err != nil {
-			return err
-		}
-		if err := json.Unmarshal(defaultData, &p.Default); err != nil {
-			return err
-		}
-	}
+		return true
+	})
 
 	return nil
 }

@@ -10,7 +10,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 
 	"hypruntime/logger"
 	"hypruntime/utils"
@@ -101,13 +100,15 @@ func (ds *HypermodeDataSource) callFunction(ctx context.Context, callInfo callIn
 	return result, gqlErrors, err
 }
 
-func writeGraphQLResponse(ctx context.Context, writer io.Writer, result any, gqlErrors []resolve.GraphQLError, fnErr error, ci callInfo) error {
+func writeGraphQLResponse(ctx context.Context, out *bytes.Buffer, result any, gqlErrors []resolve.GraphQLError, fnErr error, ci callInfo) error {
+
+	fieldName := ci.Function.AliasOrName()
 
 	// Include the function error
 	if fnErr != nil {
 		gqlErrors = append(gqlErrors, resolve.GraphQLError{
 			Message: fnErr.Error(),
-			Path:    []any{ci.Function.AliasOrName()},
+			Path:    []any{fieldName},
 			Extensions: map[string]interface{}{
 				"level": "error",
 			},
@@ -122,56 +123,54 @@ func writeGraphQLResponse(ctx context.Context, writer io.Writer, result any, gql
 		if err != nil {
 			return err
 		}
-
-		// If there are no other results, return only the errors
-		if result == nil {
-			fmt.Fprintf(writer, `{"errors":%s}`, jsonErrors)
-			return nil
-		}
 	}
 
 	// Get the data as json from the result
-	jsonResult, err := utils.JsonSerialize(result)
-	if err != nil {
-		if err, ok := err.(*json.UnsupportedValueError); ok {
-			msg := fmt.Sprintf("Function completed successfully, but the result contains a %v value that cannot be serialized to JSON.", err.Value)
-			logger.Warn(ctx).
-				Bool("user_visible", true).
-				Str("function", ci.Function.Name).
-				Str("result", fmt.Sprintf("%+v", result)).
-				Msg(msg)
-			fmt.Fprintf(writer, `{"errors":[{"message":"%s","path":["%s"],"extensions":{"level":"error"}}]}`, msg, ci.Function.AliasOrName())
-			return nil
+	var jsonData []byte
+	if result != nil {
+		jsonResult, err := utils.JsonSerialize(result)
+		if err != nil {
+			if err, ok := err.(*json.UnsupportedValueError); ok {
+				msg := fmt.Sprintf("Function completed successfully, but the result contains a %v value that cannot be serialized to JSON.", err.Value)
+				logger.Warn(ctx).
+					Bool("user_visible", true).
+					Str("function", ci.Function.Name).
+					Str("result", fmt.Sprintf("%+v", result)).
+					Msg(msg)
+				fmt.Fprintf(out, `{"errors":[{"message":"%s","path":["%s"],"extensions":{"level":"error"}}]}`, msg, fieldName)
+				return nil
+			}
+			return err
 		}
-		return err
+
+		// Transform the data
+		if r, err := transformValue(jsonResult, &ci.Function); err != nil {
+			return err
+		} else {
+			jsonData = r
+		}
 	}
 
-	// Transform the data
-	jsonData, err := transformData(jsonResult, &ci.Function)
-	if err != nil {
-		return err
+	// Write the response.  This should be as efficient as possible, as it is called for every function invocation.
+	out.Grow(len(jsonData) + len(jsonErrors) + len(fieldName) + 26)
+	out.WriteByte('{')
+	if len(jsonData) > 0 {
+		out.WriteString(`"data":{"`)
+		out.WriteString(fieldName)
+		out.WriteString(`":`)
+		out.Write(jsonData)
+		out.WriteByte('}')
 	}
-
-	// Build and write the response, including errors if there are any
-	if len(gqlErrors) == 0 {
-		fmt.Fprintf(writer, `{"data":%s}`, jsonData)
-	} else if result == nil {
-		fmt.Fprintf(writer, `{"errors":%s}`, jsonErrors)
-	} else {
-		fmt.Fprintf(writer, `{"data":%s,"errors":%s}`, jsonData, jsonErrors)
+	if len(jsonErrors) > 0 {
+		if len(jsonData) > 0 {
+			out.WriteByte(',')
+		}
+		out.WriteString(`"errors":`)
+		out.Write(jsonErrors)
 	}
+	out.WriteByte('}')
 
 	return nil
-}
-
-func transformData(data []byte, tf *fieldInfo) ([]byte, error) {
-	val, err := transformValue(data, tf)
-	if err != nil {
-		return nil, err
-	}
-
-	out := []byte(`{}`)
-	return jsonparser.Set(out, val, tf.AliasOrName())
 }
 
 var nullWord = []byte("null")
