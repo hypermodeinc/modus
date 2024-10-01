@@ -12,7 +12,7 @@ import (
 	"hypruntime/logger"
 	"hypruntime/utils"
 
-	"github.com/buger/jsonparser"
+	"github.com/tidwall/gjson"
 )
 
 type graphqlRequestPayload struct {
@@ -43,18 +43,19 @@ func Execute(ctx context.Context, hostName string, stmt string, varsJson string)
 		return "", fmt.Errorf("error posting GraphQL statement: %w", err)
 	}
 
-	// Check for errors in the response so we can log them.
-	response := result.Data
-	gqlErrors, dataType, _, err := jsonparser.Get(response, "errors")
-	if err != nil && err != jsonparser.KeyPathNotFoundError {
-		return "", fmt.Errorf("error parsing GraphQL response: %w", err)
+	// Check if the response is valid JSON.
+	if !gjson.ValidBytes(result.Data) {
+		return "", fmt.Errorf("response from GraphQL API is not valid JSON: %s", string(result.Data))
 	}
-	if dataType == jsonparser.Array && len(gqlErrors) > 0 {
+
+	// Check for errors in the response so we can log them.
+	errorRes := gjson.GetBytes(result.Data, "errors")
+	if errorRes.Exists() && errorRes.IsArray() && len(errorRes.Array()) > 0 {
 		logger.Warn(ctx).
 			Bool("user_visible", true).
-			Str("errors", string(gqlErrors)).
+			Str("errors", errorRes.String()).
 			Msg("GraphQL API call returned errors.")
 	}
 
-	return string(response), nil
+	return string(result.Data), nil
 }

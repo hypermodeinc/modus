@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"hypruntime/graphql/engine"
 	"hypruntime/logger"
@@ -16,7 +17,7 @@ import (
 	"hypruntime/utils"
 	"hypruntime/wasmhost"
 
-	"github.com/buger/jsonparser"
+	"github.com/tidwall/sjson"
 	eng "github.com/wundergraph/graphql-go-tools/execution/engine"
 	gql "github.com/wundergraph/graphql-go-tools/execution/graphql"
 	"github.com/wundergraph/graphql-go-tools/v2/pkg/engine/resolve"
@@ -131,57 +132,53 @@ func HandleGraphQLRequest(w http.ResponseWriter, r *http.Request) {
 
 func addOutputToResponse(response []byte, output map[string]wasmhost.ExecutionInfo) ([]byte, error) {
 
-	type invocationInfo struct {
-		ExecutionId string             `json:"executionId"`
-		Logs        []utils.LogMessage `json:"logs,omitempty"`
+	// NOTE: JSON serialization should be as efficient as possible, as it is called on every GraphQL response.
+
+	jsonOptions := &sjson.Options{
+		Optimistic:     true,
+		ReplaceInPlace: true,
 	}
 
-	invocations := make(map[string]invocationInfo, len(output))
+	var invocations []byte
+
 	for key, item := range output {
-		invocation := invocationInfo{
-			ExecutionId: item.ExecutionId(),
+
+		if b, err := sjson.SetBytesOptions(invocations, key+".executionId", item.ExecutionId(), jsonOptions); err != nil {
+			return nil, err
+		} else {
+			invocations = b
 		}
 
-		l := utils.TransformConsoleOutput(item.Buffers())
-		a := make([]utils.LogMessage, 0, len(l))
-		for _, m := range l {
+		logMessages := utils.TransformConsoleOutput(item.Buffers())
+		if len(logMessages) == 0 {
+			continue
+		}
+
+		i := 0
+		for _, logMessage := range logMessages {
 			// Only include non-error messages here.
 			// Error messages are already included in the response as GraphQL errors.
-			if !m.IsError() {
-				a = append(a, m)
+			if !logMessage.IsError() {
+				path := key + ".logs." + strconv.Itoa(i)
+				if len(logMessage.Level) > 0 {
+					if b, err := sjson.SetBytesOptions(invocations, path+".level", logMessage.Level, jsonOptions); err != nil {
+						return nil, err
+					} else {
+						invocations = b
+					}
+				}
+				if b, err := sjson.SetBytesOptions(invocations, path+".message", logMessage.Message, jsonOptions); err != nil {
+					return nil, err
+				} else {
+					invocations = b
+				}
+				i++
 			}
 		}
-		if len(a) > 0 {
-			invocation.Logs = a
-		}
-
-		invocations[key] = invocation
 	}
 
-	if len(invocations) == 0 {
-		return response, nil
-	}
-
-	extensions, jsonType, _, err := jsonparser.Get(response, "extensions")
-	if jsonType == jsonparser.NotExist {
-		extensions = []byte("{}")
-	} else if err != nil {
-		return nil, err
-	}
-
-	invocationData, err := utils.JsonSerialize(invocations)
-	if err != nil {
-		return nil, err
-	}
-
-	extensions, err = jsonparser.Set(extensions, invocationData, "invocations")
-	if err != nil {
-		return nil, err
-	}
-
-	response, err = jsonparser.Set(response, extensions, "extensions")
-	if err != nil {
-		return nil, err
+	if len(invocations) > 0 {
+		return sjson.SetRawBytesOptions(response, "extensions.invocations", invocations, jsonOptions)
 	}
 
 	return response, nil

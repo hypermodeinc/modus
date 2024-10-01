@@ -18,6 +18,7 @@ require (
 	github.com/docker/go-connections v0.5.0
 	github.com/getsentry/sentry-go v0.29.0
 	github.com/go-viper/mapstructure/v2 v2.2.1
+	github.com/goccy/go-json v0.10.3
 	github.com/google/renameio v1.0.1
 	github.com/google/uuid v1.6.0
 	github.com/hypermodeAI/manifest v0.2.13
@@ -32,6 +33,8 @@ require (
 	github.com/spf13/cast v1.7.0
 	github.com/stretchr/testify v1.9.0
 	github.com/tetratelabs/wazero v1.8.0
+	github.com/tidwall/gjson v1.17.3
+	github.com/tidwall/sjson v1.2.5
 	github.com/viterin/vek v0.4.2
 	github.com/wundergraph/graphql-go-tools/execution v1.0.5
 	github.com/wundergraph/graphql-go-tools/v2 v2.0.0-rc.87
@@ -68,7 +71,6 @@ require (
 	github.com/go-logr/logr v1.4.2 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-sourcemap/sourcemap v2.1.4+incompatible // indirect
-	github.com/goccy/go-json v0.10.3 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/google/pprof v0.0.0-20240925223930-fa3061bff0bc // indirect
 	github.com/hashicorp/golang-lru v1.0.2 // indirect
@@ -95,10 +97,8 @@ require (
 	github.com/santhosh-tekuri/jsonschema/v5 v5.3.1 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/tailscale/hujson v0.0.0-20221223112325-20486734a56a // indirect
-	github.com/tidwall/gjson v1.17.3 // indirect
 	github.com/tidwall/match v1.1.1 // indirect
 	github.com/tidwall/pretty v1.2.1 // indirect
-	github.com/tidwall/sjson v1.2.5 // indirect
 	github.com/viterin/partial v1.1.0 // indirect
 	github.com/wundergraph/astjson v0.0.0-20240910140849-bb15f94bd362 // indirect
 	github.com/wundergraph/cosmo/composition-go v0.0.0-20240926091419-7c3781f4f507 // indirect
