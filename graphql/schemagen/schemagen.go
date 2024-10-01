@@ -25,7 +25,7 @@ type GraphQLSchema struct {
 }
 
 func GetGraphQLSchema(ctx context.Context, md *metadata.Metadata) (*GraphQLSchema, error) {
-	span := utils.NewSentrySpanForCurrentFunc(ctx)
+	span, _ := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
 
 	lti := languages.GetLanguageForSDK(md.SDK).TypeInfo()
@@ -69,7 +69,7 @@ func (e *TransformError) String() string {
 	return fmt.Sprintf("source: %+v, error: %v", e.Source, e.Error)
 }
 
-func transformTypes(types metadata.TypeMap, lti langsupport.TypeInfo, forInput bool) (map[string]*TypeDefinition, []*TransformError) {
+func transformTypes(types metadata.TypeMap, lti langsupport.LanguageTypeInfo, forInput bool) (map[string]*TypeDefinition, []*TransformError) {
 	typeDefs := make(map[string]*TypeDefinition, len(types))
 	errors := make([]*TransformError, 0)
 	for _, t := range types {
@@ -132,7 +132,7 @@ type ParameterSignature struct {
 	Default *any
 }
 
-func transformFunctions(functions metadata.FunctionMap, inputTypeDefs, resultTypeDefs map[string]*TypeDefinition, lti langsupport.TypeInfo) ([]*FunctionSignature, []*TransformError) {
+func transformFunctions(functions metadata.FunctionMap, inputTypeDefs, resultTypeDefs map[string]*TypeDefinition, lti langsupport.LanguageTypeInfo) ([]*FunctionSignature, []*TransformError) {
 	output := make([]*FunctionSignature, len(functions))
 	errors := make([]*TransformError, 0)
 
@@ -348,7 +348,7 @@ func writeSchema(buf *bytes.Buffer, functions []*FunctionSignature, scalarTypes 
 	buf.WriteByte('\n')
 }
 
-func convertParameters(parameters []*metadata.Parameter, lti langsupport.TypeInfo, typeDefs map[string]*TypeDefinition) ([]*ParameterSignature, error) {
+func convertParameters(parameters []*metadata.Parameter, lti langsupport.LanguageTypeInfo, typeDefs map[string]*TypeDefinition) ([]*ParameterSignature, error) {
 	if len(parameters) == 0 {
 		return nil, nil
 	}
@@ -379,7 +379,7 @@ func convertParameters(parameters []*metadata.Parameter, lti langsupport.TypeInf
 	return output, nil
 }
 
-func convertResults(results []*metadata.Result, lti langsupport.TypeInfo, typeDefs map[string]*TypeDefinition) (string, error) {
+func convertResults(results []*metadata.Result, lti langsupport.LanguageTypeInfo, typeDefs map[string]*TypeDefinition) (string, error) {
 	switch len(results) {
 	case 0:
 		return newScalar("Void", typeDefs), nil
@@ -442,7 +442,7 @@ func getTypeForFields(fields []*NameTypePair, typeDefs map[string]*TypeDefinitio
 	return newType(name, fields, typeDefs)
 }
 
-func convertFields(fields []*metadata.Field, lti langsupport.TypeInfo, typeDefs map[string]*TypeDefinition, forInput bool) ([]*NameTypePair, error) {
+func convertFields(fields []*metadata.Field, lti langsupport.LanguageTypeInfo, typeDefs map[string]*TypeDefinition, forInput bool) ([]*NameTypePair, error) {
 	if len(fields) == 0 {
 		return nil, nil
 	}
@@ -461,7 +461,7 @@ func convertFields(fields []*metadata.Field, lti langsupport.TypeInfo, typeDefs 
 	return results, nil
 }
 
-func convertType(typ string, lti langsupport.TypeInfo, typeDefs map[string]*TypeDefinition, firstPass, forInput bool) (string, error) {
+func convertType(typ string, lti langsupport.LanguageTypeInfo, typeDefs map[string]*TypeDefinition, firstPass, forInput bool) (string, error) {
 
 	// Unwrap parentheses if present
 	if strings.HasPrefix(typ, "(") && strings.HasSuffix(typ, ")") {
@@ -472,12 +472,12 @@ func convertType(typ string, lti langsupport.TypeInfo, typeDefs map[string]*Type
 	// In GraphQL, types are nullable by default,
 	// and non-nullable types are indicated by a "!" suffix
 	var n string
-	if !lti.IsNullable(typ) {
+	if !lti.IsNullableType(typ) {
 		n = "!"
 	}
 
 	// unwrap nullable types (and dereference pointers)
-	for lti.IsNullable(typ) {
+	for lti.IsNullableType(typ) {
 		t := lti.GetUnderlyingType(typ)
 		if t == typ {
 			break

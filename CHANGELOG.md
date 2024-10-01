@@ -2,9 +2,40 @@
 
 ## UNRELEASED
 
+- Use reader-writer lock on AWS secrets cache [#400](https://github.com/hypermodeAI/runtime/pull/400)
+- Improve bucket layout for FunctionExecutionDurationMilliseconds metric and add function_name label [#401](https://github.com/hypermodeAI/runtime/pull/401)
+- Improve JSON performance [#402](https://github.com/hypermodeAI/runtime/pull/402)
+- Misc performance improvements [#403](https://github.com/hypermodeAI/runtime/pull/403)
+
+## 2024-09-26 - Version 0.12.6
+
+- Revert #393 and #396, then apply correct fix for field alignment issue [#397](https://github.com/hypermodeAI/runtime/pull/397)
+
+## 2024-09-26 - Version 0.12.5
+
+- Fix AssemblyScript error unpinning objects from memory [#396](https://github.com/hypermodeAI/runtime/pull/396)
+
+## 2024-09-26 - Version 0.12.4
+
+- Fix field alignment issue [#393](https://github.com/hypermodeAI/runtime/pull/393)
+- Improve error logging and debugging [#394](https://github.com/hypermodeAI/runtime/pull/394)
+
+## 2024-09-26 - Version 0.12.3
+
+- Arrays in collections host functions should be non-nil [#384](https://github.com/hypermodeAI/runtime/pull/384)
+- Update error handling for function calls [#385](https://github.com/hypermodeAI/runtime/pull/385)
+- Fix array-like types passed via interface wrappers [#386](https://github.com/hypermodeAI/runtime/pull/386)
+- Cast slice values to handle json.Number and others [#387](https://github.com/hypermodeAI/runtime/pull/387)
+- Trap JSON unsupported value errors [#388](https://github.com/hypermodeAI/runtime/pull/388)
+- Adjust Sentry transactions [#390](https://github.com/hypermodeAI/runtime/pull/390)
+
+## 2024-09-24 - Version 0.12.2
+
 - Fix missing GraphQL type schema [#376](https://github.com/hypermodeAI/runtime/pull/376)
 - Add FunctionExecutionDurationMillisecondsSummary metric [#377](https://github.com/hypermodeAI/runtime/pull/377)
 - Fix field alignment issue [#378](https://github.com/hypermodeAI/runtime/pull/378)
+- Improve execution plan creation [#379](https://github.com/hypermodeAI/runtime/pull/379)
+- Fix plan creation / registration bug [#380](https://github.com/hypermodeAI/runtime/pull/380)
 
 ## 2024-09-18 - Version 0.12.1
 

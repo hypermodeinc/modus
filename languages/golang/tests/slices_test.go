@@ -12,44 +12,49 @@ import (
 )
 
 func TestSliceInput_byte(t *testing.T) {
-	var val = []byte{0x01, 0x02, 0x03, 0x04}
+	fnName := "testSliceInput_byte"
+	s := []byte{1, 2, 3, 4}
 
-	if _, err := fixture.CallFunction(t, "testSliceInput_byte", val); err != nil {
-		t.Fatal(err)
+	if _, err := fixture.CallFunction(t, fnName, s); err != nil {
+		t.Error(err)
 	}
 }
 
 func TestSliceInput_intPtr(t *testing.T) {
-	var val = getIntPtrSlice()
+	fnName := "testSliceInput_intPtr"
+	s := getIntPtrSlice()
 
-	if _, err := fixture.CallFunction(t, "testSliceInput_intPtr", val); err != nil {
-		t.Fatal(err)
+	if _, err := fixture.CallFunction(t, fnName, s); err != nil {
+		t.Error(err)
 	}
 }
 
 func TestSliceInput_string(t *testing.T) {
-	var val = []string{"abc", "def", "ghi"}
+	fnName := "testSliceInput_string"
+	s := []string{"abc", "def", "ghi"}
 
-	if _, err := fixture.CallFunction(t, "testSliceInput_string", val); err != nil {
-		t.Fatal(err)
+	if _, err := fixture.CallFunction(t, fnName, s); err != nil {
+		t.Error(err)
 	}
 }
 
 func TestSliceInput_stringPtr(t *testing.T) {
-	var val = getStringPtrSlice()
+	fnName := "testSliceInput_stringPtr"
+	s := getStringPtrSlice()
 
-	if _, err := fixture.CallFunction(t, "testSliceInput_stringPtr", val); err != nil {
-		t.Fatal(err)
+	if _, err := fixture.CallFunction(t, fnName, s); err != nil {
+		t.Error(err)
 	}
 }
 
 func TestSliceOutput_byte(t *testing.T) {
-	result, err := fixture.CallFunction(t, "testSliceOutput_byte")
+	fnName := "testSliceOutput_byte"
+	result, err := fixture.CallFunction(t, fnName)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	var expected = []byte{0x01, 0x02, 0x03, 0x04}
+	expected := []byte{0x01, 0x02, 0x03, 0x04}
 
 	if result == nil {
 		t.Error("expected a result")
@@ -61,12 +66,13 @@ func TestSliceOutput_byte(t *testing.T) {
 }
 
 func TestSliceOutput_intPtr(t *testing.T) {
-	result, err := fixture.CallFunction(t, "testSliceOutput_intPtr")
+	fnName := "testSliceOutput_intPtr"
+	result, err := fixture.CallFunction(t, fnName)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	var expected = getIntPtrSlice()
+	expected := getIntPtrSlice()
 	if result == nil {
 		t.Error("expected a result")
 	} else if r, ok := result.([]*int); !ok {
@@ -77,12 +83,13 @@ func TestSliceOutput_intPtr(t *testing.T) {
 }
 
 func TestSliceOutput_string(t *testing.T) {
-	result, err := fixture.CallFunction(t, "testSliceOutput_string")
+	fnName := "testSliceOutput_string"
+	result, err := fixture.CallFunction(t, fnName)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	var expected = []string{"abc", "def", "ghi"}
+	expected := []string{"abc", "def", "ghi"}
 	if result == nil {
 		t.Error("expected a result")
 	} else if r, ok := result.([]string); !ok {
@@ -93,12 +100,13 @@ func TestSliceOutput_string(t *testing.T) {
 }
 
 func TestSliceOutput_stringPtr(t *testing.T) {
-	result, err := fixture.CallFunction(t, "testSliceOutput_stringPtr")
+	fnName := "testSliceOutput_stringPtr"
+	result, err := fixture.CallFunction(t, fnName)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	var expected = getStringPtrSlice()
+	expected := getStringPtrSlice()
 	if result == nil {
 		t.Error("expected a result")
 	} else if r, ok := result.([]*string); !ok {
@@ -123,13 +131,15 @@ func getStringPtrSlice() []*string {
 }
 
 func TestSliceInput_string_nil(t *testing.T) {
-	if _, err := fixture.CallFunction(t, "testSliceInput_string_nil", nil); err != nil {
-		t.Fatal(err)
+	fnName := "testSliceInput_string_nil"
+	if _, err := fixture.CallFunction(t, fnName, nil); err != nil {
+		t.Error(err)
 	}
 }
 
 func TestSliceOutput_string_nil(t *testing.T) {
-	result, err := fixture.CallFunction(t, "testSliceOutput_string_nil")
+	fnName := "testSliceOutput_string_nil"
+	result, err := fixture.CallFunction(t, fnName)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -139,20 +149,22 @@ func TestSliceOutput_string_nil(t *testing.T) {
 }
 
 func TestSliceInput_string_empty(t *testing.T) {
-	var val = []string{}
+	fnName := "testSliceInput_string_empty"
+	s := []string{}
 
-	if _, err := fixture.CallFunction(t, "testSliceInput_string_empty", val); err != nil {
-		t.Fatal(err)
+	if _, err := fixture.CallFunction(t, fnName, s); err != nil {
+		t.Error(err)
 	}
 }
 
 func TestSliceOutput_string_empty(t *testing.T) {
-	result, err := fixture.CallFunction(t, "testSliceOutput_string_empty")
+	fnName := "testSliceOutput_string_empty"
+	result, err := fixture.CallFunction(t, fnName)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	var expected = []string{}
+	expected := []string{}
 	if result == nil {
 		t.Error("expected a result")
 	} else if r, ok := result.([]string); !ok {
@@ -163,20 +175,22 @@ func TestSliceOutput_string_empty(t *testing.T) {
 }
 
 func TestSliceInput_int32_empty(t *testing.T) {
-	var val = []int32{}
+	fnName := "testSliceInput_int32_empty"
+	s := []int32{}
 
-	if _, err := fixture.CallFunction(t, "testSliceInput_int32_empty", val); err != nil {
-		t.Fatal(err)
+	if _, err := fixture.CallFunction(t, fnName, s); err != nil {
+		t.Error(err)
 	}
 }
 
 func TestSliceOutput_int32_empty(t *testing.T) {
-	result, err := fixture.CallFunction(t, "testSliceOutput_int32_empty")
+	fnName := "testSliceOutput_int32_empty"
+	result, err := fixture.CallFunction(t, fnName)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	var expected = []int32{}
+	expected := []int32{}
 	if result == nil {
 		t.Error("expected a result")
 	} else if r, ok := result.([]int32); !ok {
@@ -187,24 +201,26 @@ func TestSliceOutput_int32_empty(t *testing.T) {
 }
 
 func Test2DSliceInput_string(t *testing.T) {
-	var val = [][]string{
+	fnName := "test2DSliceInput_string"
+	s := [][]string{
 		{"abc", "def", "ghi"},
 		{"jkl", "mno", "pqr"},
 		{"stu", "vwx", "yz"},
 	}
 
-	if _, err := fixture.CallFunction(t, "test2DSliceInput_string", val); err != nil {
-		t.Fatal(err)
+	if _, err := fixture.CallFunction(t, fnName, s); err != nil {
+		t.Error(err)
 	}
 }
 
 func Test2DSliceOutput_string(t *testing.T) {
-	result, err := fixture.CallFunction(t, "test2DSliceOutput_string")
+	fnName := "test2DSliceOutput_string"
+	result, err := fixture.CallFunction(t, fnName)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	var expected = [][]string{
+	expected := [][]string{
 		{"abc", "def", "ghi"},
 		{"jkl", "mno", "pqr"},
 		{"stu", "vwx", "yz"},
@@ -220,13 +236,15 @@ func Test2DSliceOutput_string(t *testing.T) {
 }
 
 func Test2DSliceInput_string_nil(t *testing.T) {
-	if _, err := fixture.CallFunction(t, "test2DSliceInput_string_nil", nil); err != nil {
-		t.Fatal(err)
+	fnName := "test2DSliceInput_string_nil"
+	if _, err := fixture.CallFunction(t, fnName, nil); err != nil {
+		t.Error(err)
 	}
 }
 
 func Test2DSliceOutput_string_nil(t *testing.T) {
-	result, err := fixture.CallFunction(t, "test2DSliceOutput_string_nil")
+	fnName := "test2DSliceOutput_string_nil"
+	result, err := fixture.CallFunction(t, fnName)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -236,20 +254,22 @@ func Test2DSliceOutput_string_nil(t *testing.T) {
 }
 
 func Test2DSliceInput_string_empty(t *testing.T) {
-	var val = [][]string{}
+	fnName := "test2DSliceInput_string_empty"
+	s := [][]string{}
 
-	if _, err := fixture.CallFunction(t, "test2DSliceInput_string_empty", val); err != nil {
-		t.Fatal(err)
+	if _, err := fixture.CallFunction(t, fnName, s); err != nil {
+		t.Error(err)
 	}
 }
 
 func Test2DSliceOutput_string_empty(t *testing.T) {
-	result, err := fixture.CallFunction(t, "test2DSliceOutput_string_empty")
+	fnName := "test2DSliceOutput_string_empty"
+	result, err := fixture.CallFunction(t, fnName)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	var expected = [][]string{}
+	expected := [][]string{}
 
 	if result == nil {
 		t.Error("expected a result")
@@ -261,20 +281,22 @@ func Test2DSliceOutput_string_empty(t *testing.T) {
 }
 
 func Test2DSliceInput_string_innerNil(t *testing.T) {
-	var val = [][]string{nil}
+	fnName := "test2DSliceInput_string_innerNil"
+	s := [][]string{nil}
 
-	if _, err := fixture.CallFunction(t, "test2DSliceInput_string_innerNil", val); err != nil {
-		t.Fatal(err)
+	if _, err := fixture.CallFunction(t, fnName, s); err != nil {
+		t.Error(err)
 	}
 }
 
 func Test2DSliceOutput_string_innerNil(t *testing.T) {
-	result, err := fixture.CallFunction(t, "test2DSliceOutput_string_innerNil")
+	fnName := "test2DSliceOutput_string_innerNil"
+	result, err := fixture.CallFunction(t, fnName)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	var expected = [][]string{nil}
+	expected := [][]string{nil}
 
 	if result == nil {
 		t.Error("expected a result")

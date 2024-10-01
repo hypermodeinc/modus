@@ -18,36 +18,33 @@ import (
 
 // Reference: https://github.com/AssemblyScript/assemblyscript/blob/main/std/assembly/map.ts
 
-func (p *planner) NewMapHandler(ctx context.Context, typ string, rt reflect.Type) (managedTypeHandler, error) {
-	handler := new(mapHandler)
-	handler.info = langsupport.NewTypeHandlerInfo(typ, rt, 24, 0)
+func (p *planner) NewMapHandler(ctx context.Context, ti langsupport.TypeInfo) (managedTypeHandler, error) {
+	handler := &mapHandler{
+		typeHandler: *NewTypeHandler(ti),
+	}
 
-	typ = _typeInfo.GetUnderlyingType(typ)
-	typeDef, err := p.metadata.GetTypeDefinition(typ)
+	typeDef, err := p.metadata.GetTypeDefinition(ti.Name())
 	if err != nil {
 		return nil, err
 	}
 	handler.typeDef = typeDef
 
-	keyType, valueType := _typeInfo.GetMapSubtypes(typ)
-	if keyType == "" || valueType == "" {
-		return nil, errors.New("map type must have key and value subtypes")
-	}
-
-	keyHandler, err := p.GetHandler(ctx, keyType)
+	keyType := ti.MapKeyType()
+	keyHandler, err := p.GetHandler(ctx, keyType.Name())
 	if err != nil {
 		return nil, err
 	}
 	handler.keyHandler = keyHandler
 
-	valueHandler, err := p.GetHandler(ctx, valueType)
+	valueType := ti.MapValueType()
+	valueHandler, err := p.GetHandler(ctx, valueType.Name())
 	if err != nil {
 		return nil, err
 	}
 	handler.valueHandler = valueHandler
 
-	rtKey := keyHandler.Info().RuntimeType()
-	rtValue := valueHandler.Info().RuntimeType()
+	rtKey := keyType.ReflectedType()
+	rtValue := valueType.ReflectedType()
 	if !rtKey.Comparable() {
 		handler.usePseudoMap = true
 		handler.rtPseudoMapSlice = reflect.SliceOf(reflect.StructOf([]reflect.StructField{
@@ -76,17 +73,13 @@ func (p *planner) NewMapHandler(ctx context.Context, typ string, rt reflect.Type
 }
 
 type mapHandler struct {
-	info             langsupport.TypeHandlerInfo
+	typeHandler
 	typeDef          *metadata.TypeDefinition
 	keyHandler       langsupport.TypeHandler
 	valueHandler     langsupport.TypeHandler
 	usePseudoMap     bool
 	rtPseudoMap      reflect.Type
 	rtPseudoMapSlice reflect.Type
-}
-
-func (h *mapHandler) Info() langsupport.TypeHandlerInfo {
-	return h.info
 }
 
 func (h *mapHandler) Read(ctx context.Context, wa langsupport.WasmAdapter, offset uint32) (any, error) {
@@ -132,12 +125,12 @@ func (h *mapHandler) Read(ctx context.Context, wa langsupport.WasmAdapter, offse
 
 	mapSize := int(entriesCount)
 	entrySize := byteLength / entriesCapacity
-	keySize := h.keyHandler.Info().TypeSize()
+	keySize := h.keyHandler.TypeInfo().Size()
 	valueOffset := max(keySize, 4)
 
 	if !h.usePseudoMap {
 		// return a map
-		m := reflect.MakeMapWithSize(h.info.RuntimeType(), mapSize)
+		m := reflect.MakeMapWithSize(h.typeInfo.ReflectedType(), mapSize)
 		for i := uint32(0); i < entriesCount; i++ {
 			p := entries + (i * entrySize)
 
@@ -211,8 +204,8 @@ func (h *mapHandler) Write(ctx context.Context, wa langsupport.WasmAdapter, offs
 
 	// write entries array buffer
 	// note: unlike arrays, an empty map DOES have array buffers
-	keySize := h.keyHandler.Info().TypeSize()
-	valueSize := h.valueHandler.Info().TypeSize()
+	keySize := h.keyHandler.TypeInfo().Size()
+	valueSize := h.valueHandler.TypeInfo().Size()
 	valueOffset := max(keySize, 4)
 
 	const taggedNextSize = 4

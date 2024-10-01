@@ -71,13 +71,13 @@ func TestRuntimeMetrics(t *testing.T) {
 func BenchmarkSummary(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		metrics.FunctionExecutionDurationMillisecondsSummary.Observe(float64(i))
+		metrics.FunctionExecutionDurationMillisecondsSummary.WithLabelValues("test").Observe(float64(i))
 	}
 }
 
 func BenchmarkHistogram(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		metrics.FunctionExecutionDurationMilliseconds.Observe(float64(i))
+		metrics.FunctionExecutionDurationMilliseconds.WithLabelValues("test").Observe(float64(i))
 	}
 }

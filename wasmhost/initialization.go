@@ -14,7 +14,7 @@ import (
 )
 
 func InitWasmHost(ctx context.Context, registrations ...func(WasmHost) error) WasmHost {
-	span := utils.NewSentrySpanForCurrentFunc(ctx)
+	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
 
 	configureLogger()

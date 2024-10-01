@@ -7,24 +7,32 @@ package assemblyscript_test
 import (
 	"bytes"
 	"testing"
+
+	"hypruntime/utils"
 )
 
-var testBytes = []byte{0x01, 0x02, 0x03, 0x04}
-
 func TestArrayBufferInput(t *testing.T) {
-	_, err := fixture.CallFunction(t, "testArrayBufferInput", testBytes)
-	if err != nil {
-		t.Fatal(err)
+	arr := []byte{1, 2, 3, 4}
+	fnName := "testArrayBufferInput"
+
+	if _, err := fixture.CallFunction(t, fnName, arr); err != nil {
+		t.Error(err)
+	}
+	if arr, ok := utils.ConvertToSliceOf[any](arr); !ok {
+		t.Error("failed conversion to interface slice")
+	} else if _, err := fixture.CallFunction(t, fnName, arr); err != nil {
+		t.Error(err)
 	}
 }
 
 func TestArrayBufferOutput(t *testing.T) {
-	result, err := fixture.CallFunction(t, "testArrayBufferOutput")
+	fnName := "testArrayBufferOutput"
+	result, err := fixture.CallFunction(t, fnName)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	expected := testBytes
+	expected := []byte{1, 2, 3, 4}
 	if result == nil {
 		t.Error("expected a result")
 	} else if r, ok := result.([]byte); !ok {

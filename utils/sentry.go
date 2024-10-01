@@ -62,18 +62,28 @@ func FlushSentryEvents() {
 	}
 }
 
-func NewSentryTransactionForCurrentFunc(ctx context.Context) (*sentry.Span, context.Context) {
-	transaction := sentry.StartTransaction(ctx, GetFuncName(2), sentry.WithOpName("function"))
-	return transaction, transaction.Context()
+func NewSentrySpanForCallingFunc(ctx context.Context) (*sentry.Span, context.Context) {
+	funcName := getFuncName(3)
+	return NewSentrySpan(ctx, funcName)
 }
 
-func NewSentrySpanForCurrentFunc(ctx context.Context) *sentry.Span {
-	span := sentry.StartSpan(ctx, "function")
-	span.Description = GetFuncName(2)
-	return span
+func NewSentrySpanForCurrentFunc(ctx context.Context) (*sentry.Span, context.Context) {
+	funcName := getFuncName(2)
+	return NewSentrySpan(ctx, funcName)
 }
 
-func GetFuncName(skip int) string {
+func NewSentrySpan(ctx context.Context, funcName string) (*sentry.Span, context.Context) {
+	if tx := sentry.TransactionFromContext(ctx); tx == nil {
+		tx = sentry.StartTransaction(ctx, funcName, sentry.WithOpName("function"))
+		return tx, tx.Context()
+	} else {
+		span := sentry.StartSpan(ctx, "function")
+		span.Description = funcName
+		return span, span.Context()
+	}
+}
+
+func getFuncName(skip int) string {
 	pc, _, _, ok := runtime.Caller(skip)
 	if !ok {
 		return "?"

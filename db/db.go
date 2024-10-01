@@ -66,7 +66,7 @@ func (w *runtimePostgresWriter) GetPool(ctx context.Context) (*pgxpool.Pool, err
 
 	w.mu.Lock()
 	defer w.mu.Unlock()
-	connStr, err := secrets.GetSecretValue(ctx, "HYPERMODE_METADATA_DB")
+	connStr, err := secrets.GetSecretValue("HYPERMODE_METADATA_DB")
 	if connStr == "" {
 		if err != nil {
 			return nil, fmt.Errorf("%w: %w", errDbNotConfigured, err)
@@ -170,8 +170,6 @@ func Stop(ctx context.Context) {
 }
 
 func WritePluginInfo(ctx context.Context, plugin *plugins.Plugin) {
-	span := utils.NewSentrySpanForCurrentFunc(ctx)
-	defer span.Finish()
 
 	err := WithTx(ctx, func(tx pgx.Tx) error {
 
@@ -253,11 +251,8 @@ func getPluginId(ctx context.Context, tx pgx.Tx, buildId string) (string, error)
 }
 
 func WriteInferenceHistory(ctx context.Context, model *manifest.ModelInfo, input, output any, start, end time.Time) {
-	span := utils.NewSentrySpanForCurrentFunc(ctx)
-	defer span.Finish()
-
 	var pluginId *string
-	if plugin, ok := ctx.Value(utils.PluginContextKey).(*plugins.Plugin); ok {
+	if plugin, ok := plugins.GetPluginFromContext(ctx); ok {
 		pluginId = &plugin.Id
 	}
 
@@ -608,8 +603,7 @@ func WriteInferenceHistoryToDB(ctx context.Context, batch []inferenceHistory) {
 	if len(batch) == 0 {
 		return
 	}
-	transaction, ctx := utils.NewSentryTransactionForCurrentFunc(ctx)
-	defer transaction.Finish()
+
 	err := WithTx(ctx, func(tx pgx.Tx) error {
 		b := &pgx.Batch{}
 		for _, data := range batch {
@@ -671,6 +665,9 @@ func GetTx(ctx context.Context) (pgx.Tx, error) {
 }
 
 func WithTx(ctx context.Context, fn func(pgx.Tx) error) error {
+	span, ctx := utils.NewSentrySpanForCallingFunc(ctx)
+	defer span.Finish()
+
 	tx, err := GetTx(ctx)
 	if err != nil {
 		return err

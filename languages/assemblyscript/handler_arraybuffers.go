@@ -8,31 +8,24 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"reflect"
 
 	"hypruntime/langsupport"
 	"hypruntime/utils"
 )
 
-func (p *planner) NewArrayBufferHandler(typ string, rt reflect.Type) (langsupport.TypeHandler, error) {
-	handler := NewTypeHandler[arrayBufferHandler](p, typ)
-	handler.info = langsupport.NewTypeHandlerInfo(typ, rt, 4, 1)
-	handler.nullable = _typeInfo.IsNullable(typ)
+func (p *planner) NewArrayBufferHandler(ti langsupport.TypeInfo) (langsupport.TypeHandler, error) {
+	handler := &arrayBufferHandler{*NewTypeHandler(ti)}
+	p.AddHandler(handler)
 	return handler, nil
 }
 
 type arrayBufferHandler struct {
-	info     langsupport.TypeHandlerInfo
-	nullable bool
-}
-
-func (h *arrayBufferHandler) Info() langsupport.TypeHandlerInfo {
-	return h.info
+	typeHandler
 }
 
 func (h *arrayBufferHandler) Read(ctx context.Context, wa langsupport.WasmAdapter, offset uint32) (any, error) {
 	if offset == 0 {
-		return nil, fmt.Errorf("unexpected address 0 reading managed object of type %s", h.info.TypeName())
+		return nil, fmt.Errorf("unexpected address 0 reading managed object of type %s", h.typeInfo.Name())
 	}
 
 	ptr, ok := wa.Memory().ReadUint32Le(offset)
@@ -75,7 +68,7 @@ func (h *arrayBufferHandler) Encode(ctx context.Context, wa langsupport.WasmAdap
 
 func (h *arrayBufferHandler) doReadBytes(wa langsupport.WasmAdapter, offset uint32) ([]byte, error) {
 	if offset == 0 {
-		if h.nullable {
+		if h.typeInfo.IsNullable() {
 			return nil, nil
 		} else {
 			return nil, errors.New("unexpected null pointer for non-nullable ArrayBuffer")
@@ -105,7 +98,7 @@ func (h *arrayBufferHandler) doReadBytes(wa langsupport.WasmAdapter, offset uint
 
 func (h *arrayBufferHandler) doWriteBytes(ctx context.Context, wa langsupport.WasmAdapter, obj any) (uint32, utils.Cleaner, error) {
 	if utils.HasNil(obj) {
-		if h.nullable {
+		if h.typeInfo.IsNullable() {
 			return 0, nil, nil
 		} else {
 			return 0, nil, errors.New("unexpected nil value for non-nullable ArrayBuffer")
@@ -118,8 +111,19 @@ func (h *arrayBufferHandler) doWriteBytes(ctx context.Context, wa langsupport.Wa
 		bytes = obj
 	case string:
 		bytes = []byte(obj)
+	case []any:
+		for _, item := range obj {
+			if item == nil {
+				return 0, nil, errors.New("unexpected nil value in ArrayBuffer data")
+			}
+			if b, ok := item.(byte); !ok {
+				return 0, nil, errors.New("unexpected non-byte value in ArrayBuffer data")
+			} else {
+				bytes = append(bytes, b)
+			}
+		}
 	default:
-		return 0, nil, errors.New("input value cannot be used as an ArrayBuffer")
+		return 0, nil, fmt.Errorf("input is invalid for type %s", h.typeInfo.Name())
 	}
 
 	size := uint32(len(bytes))

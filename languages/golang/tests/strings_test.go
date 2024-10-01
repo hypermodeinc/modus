@@ -14,29 +14,34 @@ import (
 const testString = "こんにちは、世界"
 
 func TestStringInput(t *testing.T) {
-	if _, err := fixture.CallFunction(t, "testStringInput", testString); err != nil {
-		t.Fatal(err)
+	fnName := "testStringInput"
+	if _, err := fixture.CallFunction(t, fnName, testString); err != nil {
+		t.Error(err)
 	}
 }
 
 func TestStringPtrInput(t *testing.T) {
+	fnName := "testStringPtrInput"
 	s := testString
-	if _, err := fixture.CallFunction(t, "testStringPtrInput", s); err != nil {
-		t.Fatal(err)
+
+	if _, err := fixture.CallFunction(t, fnName, s); err != nil {
+		t.Error(err)
 	}
-	if _, err := fixture.CallFunction(t, "testStringPtrInput", &s); err != nil {
-		t.Fatal(err)
+	if _, err := fixture.CallFunction(t, fnName, &s); err != nil {
+		t.Error(err)
 	}
 }
 
 func TestStringPtrInput_nil(t *testing.T) {
-	if _, err := fixture.CallFunction(t, "testStringPtrInput_nil", nil); err != nil {
-		t.Fatal(err)
+	fnName := "testStringPtrInput_nil"
+	if _, err := fixture.CallFunction(t, fnName, nil); err != nil {
+		t.Error(err)
 	}
 }
 
 func TestStringOutput(t *testing.T) {
-	result, err := fixture.CallFunction(t, "testStringOutput")
+	fnName := "testStringOutput"
+	result, err := fixture.CallFunction(t, fnName)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -51,7 +56,8 @@ func TestStringOutput(t *testing.T) {
 }
 
 func TestStringPtrOutput(t *testing.T) {
-	result, err := fixture.CallFunction(t, "testStringPtrOutput")
+	fnName := "testStringPtrOutput"
+	result, err := fixture.CallFunction(t, fnName)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -66,7 +72,8 @@ func TestStringPtrOutput(t *testing.T) {
 }
 
 func TestStringPtrOutput_nil(t *testing.T) {
-	result, err := fixture.CallFunction(t, "testStringPtrOutput_nil")
+	fnName := "testStringPtrOutput_nil"
+	result, err := fixture.CallFunction(t, fnName)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -9,7 +9,7 @@ type TestRecursiveStruct struct {
 	B *TestRecursiveStruct
 }
 
-// var testRecursiveStruct = func() TestRecursiveStruct {
+// testRecursiveStruct := func() TestRecursiveStruct {
 // 	r := TestRecursiveStruct{
 // 		A: true,
 // 	}
@@ -17,7 +17,7 @@ type TestRecursiveStruct struct {
 // 	return r
 // }()
 
-// var testRecursiveStructAsMap = func() map[string]any {
+// testRecursiveStructAsMap := func() map[string]any {
 // 	r1 := map[string]any{
 // 		"a": true,
 // 	}

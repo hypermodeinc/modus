@@ -101,79 +101,68 @@ var testClass5AsMap = map[string]any{
 }
 
 func TestClassInput1(t *testing.T) {
-	if _, err := fixture.CallFunction(t, "testClassInput1", testClass1); err != nil {
-		t.Fatal(err)
+	fnName := "testClassInput1"
+	if _, err := fixture.CallFunction(t, fnName, testClass1); err != nil {
+		t.Error(err)
+	}
+	if _, err := fixture.CallFunction(t, fnName, testClass1AsMap); err != nil {
+		t.Error(err)
 	}
 }
 
 func TestClassInput2(t *testing.T) {
-	if _, err := fixture.CallFunction(t, "testClassInput2", testClass2); err != nil {
-		t.Fatal(err)
+	fnName := "testClassInput2"
+	if _, err := fixture.CallFunction(t, fnName, testClass2); err != nil {
+		t.Error(err)
+	}
+	if _, err := fixture.CallFunction(t, fnName, testClass2AsMap); err != nil {
+		t.Error(err)
 	}
 }
 
 func TestClassInput3(t *testing.T) {
-	if _, err := fixture.CallFunction(t, "testClassInput3", testClass3); err != nil {
-		t.Fatal(err)
+	fnName := "testClassInput3"
+	if _, err := fixture.CallFunction(t, fnName, testClass3); err != nil {
+		t.Error(err)
+	}
+	if _, err := fixture.CallFunction(t, fnName, testClass3AsMap); err != nil {
+		t.Error(err)
 	}
 }
 
 func TestClassInput4(t *testing.T) {
-	if _, err := fixture.CallFunction(t, "testClassInput4", testClass4); err != nil {
-		t.Fatal(err)
+	fnName := "testClassInput4"
+	if _, err := fixture.CallFunction(t, fnName, testClass4); err != nil {
+		t.Error(err)
+	}
+	if _, err := fixture.CallFunction(t, fnName, testClass4AsMap); err != nil {
+		t.Error(err)
 	}
 }
 
 func TestClassInput4_withNull(t *testing.T) {
-	if _, err := fixture.CallFunction(t, "testClassInput4_withNull", testClass4_withNull); err != nil {
-		t.Fatal(err)
+	fnName := "testClassInput4_withNull"
+	if _, err := fixture.CallFunction(t, fnName, testClass4_withNull); err != nil {
+		t.Error(err)
+	}
+	if _, err := fixture.CallFunction(t, fnName, testClass4AsMap_withNull); err != nil {
+		t.Error(err)
 	}
 }
 
 func TestClassInput5(t *testing.T) {
-	if _, err := fixture.CallFunction(t, "testClassInput5", testClass5); err != nil {
-		t.Fatal(err)
+	fnName := "testClassInput5"
+	if _, err := fixture.CallFunction(t, fnName, testClass5); err != nil {
+		t.Error(err)
 	}
-}
-
-func TestClassInput1_map(t *testing.T) {
-	if _, err := fixture.CallFunction(t, "testClassInput1", testClass1AsMap); err != nil {
-		t.Fatal(err)
-	}
-}
-
-func TestClassInput2_map(t *testing.T) {
-	if _, err := fixture.CallFunction(t, "testClassInput2", testClass2AsMap); err != nil {
-		t.Fatal(err)
-	}
-}
-
-func TestClassInput3_map(t *testing.T) {
-	if _, err := fixture.CallFunction(t, "testClassInput3", testClass3AsMap); err != nil {
-		t.Fatal(err)
-	}
-}
-
-func TestClassInput4_map(t *testing.T) {
-	if _, err := fixture.CallFunction(t, "testClassInput4", testClass4AsMap); err != nil {
-		t.Fatal(err)
-	}
-}
-
-func TestClassInput4_map_withNull(t *testing.T) {
-	if _, err := fixture.CallFunction(t, "testClassInput4_withNull", testClass4AsMap_withNull); err != nil {
-		t.Fatal(err)
-	}
-}
-
-func TestClassInput5_map(t *testing.T) {
-	if _, err := fixture.CallFunction(t, "testClassInput5", testClass5AsMap); err != nil {
-		t.Fatal(err)
+	if _, err := fixture.CallFunction(t, fnName, testClass5AsMap); err != nil {
+		t.Error(err)
 	}
 }
 
 func TestClassOutput1(t *testing.T) {
-	result, err := fixture.CallFunction(t, "testClassOutput1")
+	fnName := "testClassOutput1"
+	result, err := fixture.CallFunction(t, fnName)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -188,7 +177,8 @@ func TestClassOutput1(t *testing.T) {
 }
 
 func TestClassOutput2(t *testing.T) {
-	result, err := fixture.CallFunction(t, "testClassOutput2")
+	fnName := "testClassOutput2"
+	result, err := fixture.CallFunction(t, fnName)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -203,7 +193,8 @@ func TestClassOutput2(t *testing.T) {
 }
 
 func TestClassOutput3(t *testing.T) {
-	result, err := fixture.CallFunction(t, "testClassOutput3")
+	fnName := "testClassOutput3"
+	result, err := fixture.CallFunction(t, fnName)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -218,7 +209,8 @@ func TestClassOutput3(t *testing.T) {
 }
 
 func TestClassOutput4(t *testing.T) {
-	result, err := fixture.CallFunction(t, "testClassOutput4")
+	fnName := "testClassOutput4"
+	result, err := fixture.CallFunction(t, fnName)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -233,7 +225,8 @@ func TestClassOutput4(t *testing.T) {
 }
 
 func TestClassOutput4_withNull(t *testing.T) {
-	result, err := fixture.CallFunction(t, "testClassOutput4_withNull")
+	fnName := "testClassOutput4_withNull"
+	result, err := fixture.CallFunction(t, fnName)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -248,7 +241,8 @@ func TestClassOutput4_withNull(t *testing.T) {
 }
 
 func TestClassOutput5(t *testing.T) {
-	result, err := fixture.CallFunction(t, "testClassOutput5")
+	fnName := "testClassOutput5"
+	result, err := fixture.CallFunction(t, fnName)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -263,7 +257,8 @@ func TestClassOutput5(t *testing.T) {
 }
 
 func TestClassOutput1_map(t *testing.T) {
-	result, err := fixture.CallFunction(t, "testClassOutput1_map")
+	fnName := "testClassOutput1_map"
+	result, err := fixture.CallFunction(t, fnName)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -278,7 +273,8 @@ func TestClassOutput1_map(t *testing.T) {
 }
 
 func TestClassOutput2_map(t *testing.T) {
-	result, err := fixture.CallFunction(t, "testClassOutput2_map")
+	fnName := "testClassOutput2_map"
+	result, err := fixture.CallFunction(t, fnName)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -293,7 +289,8 @@ func TestClassOutput2_map(t *testing.T) {
 }
 
 func TestClassOutput3_map(t *testing.T) {
-	result, err := fixture.CallFunction(t, "testClassOutput3_map")
+	fnName := "testClassOutput3_map"
+	result, err := fixture.CallFunction(t, fnName)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -308,7 +305,8 @@ func TestClassOutput3_map(t *testing.T) {
 }
 
 func TestClassOutput4_map(t *testing.T) {
-	result, err := fixture.CallFunction(t, "testClassOutput4_map")
+	fnName := "testClassOutput4_map"
+	result, err := fixture.CallFunction(t, fnName)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -323,7 +321,8 @@ func TestClassOutput4_map(t *testing.T) {
 }
 
 func TestClassOutput4_map_withNull(t *testing.T) {
-	result, err := fixture.CallFunction(t, "testClassOutput4_map_withNull")
+	fnName := "testClassOutput4_map_withNull"
+	result, err := fixture.CallFunction(t, fnName)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -338,7 +337,8 @@ func TestClassOutput4_map_withNull(t *testing.T) {
 }
 
 func TestClassOutput5_map(t *testing.T) {
-	result, err := fixture.CallFunction(t, "testClassOutput5_map")
+	fnName := "testClassOutput5_map"
+	result, err := fixture.CallFunction(t, fnName)
 	if err != nil {
 		t.Fatal(err)
 	}

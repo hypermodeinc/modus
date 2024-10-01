@@ -10,7 +10,8 @@ import (
 )
 
 func TestMultiOutput(t *testing.T) {
-	result, err := fixture.CallFunction(t, "testMultiOutput")
+	fnName := "testMultiOutput"
+	result, err := fixture.CallFunction(t, fnName)
 	if err != nil {
 		t.Fatal(err)
 	}

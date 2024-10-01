@@ -13,14 +13,15 @@ import (
 const testString = "こんにちは、世界"
 
 func TestStringInput(t *testing.T) {
-	_, err := fixture.CallFunction(t, "testStringInput", testString)
-	if err != nil {
-		t.Fatal(err)
+	fnName := "testStringInput"
+	if _, err := fixture.CallFunction(t, fnName, testString); err != nil {
+		t.Error(err)
 	}
 }
 
 func TestStringOutput(t *testing.T) {
-	result, err := fixture.CallFunction(t, "testStringOutput")
+	fnName := "testStringOutput"
+	result, err := fixture.CallFunction(t, fnName)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -35,14 +36,15 @@ func TestStringOutput(t *testing.T) {
 }
 
 func TestStringInput_empty(t *testing.T) {
-	_, err := fixture.CallFunction(t, "testStringInput_empty", "")
-	if err != nil {
-		t.Fatal(err)
+	fnName := "testStringInput_empty"
+	if _, err := fixture.CallFunction(t, fnName, ""); err != nil {
+		t.Error(err)
 	}
 }
 
 func TestStringOutput_empty(t *testing.T) {
-	result, err := fixture.CallFunction(t, "testStringOutput_empty")
+	fnName := "testStringOutput_empty"
+	result, err := fixture.CallFunction(t, fnName)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -57,16 +59,17 @@ func TestStringOutput_empty(t *testing.T) {
 }
 
 func TestNullStringInput(t *testing.T) {
+	fnName := "testNullStringInput"
 	s := testString
 
-	_, err := fixture.CallFunction(t, "testNullStringInput", &s)
-	if err != nil {
-		t.Fatal(err)
+	if _, err := fixture.CallFunction(t, fnName, &s); err != nil {
+		t.Error(err)
 	}
 }
 
 func TestNullStringOutput(t *testing.T) {
-	result, err := fixture.CallFunction(t, "testNullStringOutput")
+	fnName := "testNullStringOutput"
+	result, err := fixture.CallFunction(t, fnName)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -81,15 +84,17 @@ func TestNullStringOutput(t *testing.T) {
 }
 
 func TestNullStringInput_empty(t *testing.T) {
+	fnName := "testNullStringInput_empty"
 	s := ""
-	_, err := fixture.CallFunction(t, "testNullStringInput_empty", &s)
-	if err != nil {
-		t.Fatal(err)
+
+	if _, err := fixture.CallFunction(t, fnName, &s); err != nil {
+		t.Error(err)
 	}
 }
 
 func TestNullStringOutput_empty(t *testing.T) {
-	result, err := fixture.CallFunction(t, "testNullStringOutput_empty")
+	fnName := "testNullStringOutput_empty"
+	result, err := fixture.CallFunction(t, fnName)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -105,14 +110,15 @@ func TestNullStringOutput_empty(t *testing.T) {
 }
 
 func TestNullStringInput_null(t *testing.T) {
-	_, err := fixture.CallFunction(t, "testNullStringInput_null", nil)
-	if err != nil {
-		t.Fatal(err)
+	fnName := "testNullStringInput_null"
+	if _, err := fixture.CallFunction(t, fnName, nil); err != nil {
+		t.Error(err)
 	}
 }
 
 func TestNullStringOutput_null(t *testing.T) {
-	result, err := fixture.CallFunction(t, "testNullStringOutput_null")
+	fnName := "testNullStringOutput_null"
+	result, err := fixture.CallFunction(t, fnName)
 	if err != nil {
 		t.Fatal(err)
 	}

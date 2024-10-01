@@ -7,9 +7,9 @@ package datasource
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 
 	"hypruntime/logger"
 	"hypruntime/utils"
@@ -41,10 +41,10 @@ func (ds *HypermodeDataSource) Load(ctx context.Context, input []byte, out *byte
 	}
 
 	// Load the data
-	result, gqlErrors, err := ds.callFunction(ctx, ci)
+	result, gqlErrors, err := ds.callFunction(ctx, &ci)
 
 	// Write the response
-	err = writeGraphQLResponse(out, result, gqlErrors, err, ci)
+	err = writeGraphQLResponse(ctx, out, result, gqlErrors, err, &ci)
 	if err != nil {
 		logger.Error(ctx).Err(err).Msg("Error creating GraphQL response.")
 	}
@@ -57,7 +57,7 @@ func (*HypermodeDataSource) LoadWithFiles(ctx context.Context, input []byte, fil
 	panic("not implemented")
 }
 
-func (ds *HypermodeDataSource) callFunction(ctx context.Context, callInfo callInfo) (any, []resolve.GraphQLError, error) {
+func (ds *HypermodeDataSource) callFunction(ctx context.Context, callInfo *callInfo) (any, []resolve.GraphQLError, error) {
 
 	// Get the function info
 	fnInfo, err := ds.WasmHost.GetFunctionInfo(callInfo.Function.Name)
@@ -100,13 +100,15 @@ func (ds *HypermodeDataSource) callFunction(ctx context.Context, callInfo callIn
 	return result, gqlErrors, err
 }
 
-func writeGraphQLResponse(writer io.Writer, result any, gqlErrors []resolve.GraphQLError, fnErr error, ci callInfo) error {
+func writeGraphQLResponse(ctx context.Context, out *bytes.Buffer, result any, gqlErrors []resolve.GraphQLError, fnErr error, ci *callInfo) error {
+
+	fieldName := ci.Function.AliasOrName()
 
 	// Include the function error
 	if fnErr != nil {
 		gqlErrors = append(gqlErrors, resolve.GraphQLError{
 			Message: fnErr.Error(),
-			Path:    []any{ci.Function.AliasOrName()},
+			Path:    []any{fieldName},
 			Extensions: map[string]interface{}{
 				"level": "error",
 			},
@@ -121,46 +123,54 @@ func writeGraphQLResponse(writer io.Writer, result any, gqlErrors []resolve.Grap
 		if err != nil {
 			return err
 		}
-
-		// If there are no other results, return only the errors
-		if result == nil {
-			fmt.Fprintf(writer, `{"errors":%s}`, jsonErrors)
-			return nil
-		}
 	}
 
 	// Get the data as json from the result
-	jsonResult, err := utils.JsonSerialize(result)
-	if err != nil {
-		return err
+	var jsonData []byte
+	if result != nil {
+		jsonResult, err := utils.JsonSerialize(result)
+		if err != nil {
+			if err, ok := err.(*json.UnsupportedValueError); ok {
+				msg := fmt.Sprintf("Function completed successfully, but the result contains a %v value that cannot be serialized to JSON.", err.Value)
+				logger.Warn(ctx).
+					Bool("user_visible", true).
+					Str("function", ci.Function.Name).
+					Str("result", fmt.Sprintf("%+v", result)).
+					Msg(msg)
+				fmt.Fprintf(out, `{"errors":[{"message":"%s","path":["%s"],"extensions":{"level":"error"}}]}`, msg, fieldName)
+				return nil
+			}
+			return err
+		}
+
+		// Transform the data
+		if r, err := transformValue(jsonResult, &ci.Function); err != nil {
+			return err
+		} else {
+			jsonData = r
+		}
 	}
 
-	// Transform the data
-	jsonData, err := transformData(jsonResult, &ci.Function)
-	if err != nil {
-		return err
+	// Write the response.  This should be as efficient as possible, as it is called for every function invocation.
+	out.Grow(len(jsonData) + len(jsonErrors) + len(fieldName) + 26)
+	out.WriteByte('{')
+	if len(jsonData) > 0 {
+		out.WriteString(`"data":{"`)
+		out.WriteString(fieldName)
+		out.WriteString(`":`)
+		out.Write(jsonData)
+		out.WriteByte('}')
 	}
-
-	// Build and write the response, including errors if there are any
-	if len(gqlErrors) == 0 {
-		fmt.Fprintf(writer, `{"data":%s}`, jsonData)
-	} else if result == nil {
-		fmt.Fprintf(writer, `{"errors":%s}`, jsonErrors)
-	} else {
-		fmt.Fprintf(writer, `{"data":%s,"errors":%s}`, jsonData, jsonErrors)
+	if len(jsonErrors) > 0 {
+		if len(jsonData) > 0 {
+			out.WriteByte(',')
+		}
+		out.WriteString(`"errors":`)
+		out.Write(jsonErrors)
 	}
+	out.WriteByte('}')
 
 	return nil
-}
-
-func transformData(data []byte, tf *fieldInfo) ([]byte, error) {
-	val, err := transformValue(data, tf)
-	if err != nil {
-		return nil, err
-	}
-
-	out := []byte(`{}`)
-	return jsonparser.Set(out, val, tf.AliasOrName())
 }
 
 var nullWord = []byte("null")
@@ -231,7 +241,7 @@ func transformObject(data []byte, tf *fieldInfo) ([]byte, error) {
 				// but will be missing outer quotes.  So we need to add them back.
 				v = []byte(`"` + string(v) + `"`)
 			}
-			val, err = transformValue(v, f)
+			val, err = transformValue(v, &f)
 			if err != nil {
 				return nil, err
 			}
@@ -372,7 +382,7 @@ func transformPseudoMap(data []byte, tf *fieldInfo) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func transformErrors(messages []utils.LogMessage, ci callInfo) []resolve.GraphQLError {
+func transformErrors(messages []utils.LogMessage, ci *callInfo) []resolve.GraphQLError {
 	errors := make([]resolve.GraphQLError, 0, len(messages))
 	for _, msg := range messages {
 		// Only include errors.  Other messages will be captured later and

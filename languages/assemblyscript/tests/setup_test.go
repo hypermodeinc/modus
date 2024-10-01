@@ -23,16 +23,18 @@ var fixture *testutils.WasmTestFixture
 
 func TestMain(m *testing.M) {
 	path := filepath.Join(basePath, "..", "testdata", "build", "testdata.wasm")
-	registrations := getTestHostFunctionRegistrations()
-	fixture = testutils.NewWasmTestFixture(path, registrations...)
 
-	fixture.AddCustomType("assembly/classes/TestClass1", reflect.TypeFor[TestClass1]())
-	fixture.AddCustomType("assembly/classes/TestClass2", reflect.TypeFor[TestClass2]())
-	fixture.AddCustomType("assembly/classes/TestClass3", reflect.TypeFor[TestClass3]())
-	fixture.AddCustomType("assembly/classes/TestClass4", reflect.TypeFor[TestClass4]())
-	fixture.AddCustomType("assembly/classes/TestClass5", reflect.TypeFor[TestClass5]())
-	fixture.AddCustomType("assembly/hostfns/TestHostObject", reflect.TypeFor[TestHostObject]())
-	fixture.AddCustomType("assembly/maps/TestClassWithMap", reflect.TypeFor[testClassWithMap]())
+	customTypes := make(map[string]reflect.Type)
+	customTypes["assembly/classes/TestClass1"] = reflect.TypeFor[TestClass1]()
+	customTypes["assembly/classes/TestClass2"] = reflect.TypeFor[TestClass2]()
+	customTypes["assembly/classes/TestClass3"] = reflect.TypeFor[TestClass3]()
+	customTypes["assembly/classes/TestClass4"] = reflect.TypeFor[TestClass4]()
+	customTypes["assembly/classes/TestClass5"] = reflect.TypeFor[TestClass5]()
+	customTypes["assembly/hostfns/TestHostObject"] = reflect.TypeFor[TestHostObject]()
+	customTypes["assembly/maps/TestClassWithMap"] = reflect.TypeFor[TestClassWithMap1]()
+
+	registrations := getTestHostFunctionRegistrations()
+	fixture = testutils.NewWasmTestFixture(path, customTypes, registrations)
 
 	exitVal := m.Run()
 

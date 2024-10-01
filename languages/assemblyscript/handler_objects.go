@@ -18,55 +18,58 @@ import (
 
 const maxDepth = 5 // TODO: make this based on the depth requested in the query
 
-func (p *planner) NewManagedObjectHandler(ctx context.Context, typ string, rt reflect.Type) (langsupport.TypeHandler, error) {
-	handler := NewTypeHandler[managedObjectHandler](p, typ)
-	handler.info = langsupport.NewTypeHandlerInfo(typ, rt, 4, 1)
-	handler.nullable = _typeInfo.IsNullable(typ)
+func (p *planner) NewManagedObjectHandler(ctx context.Context, ti langsupport.TypeInfo) (langsupport.TypeHandler, error) {
 
-	typ = _typeInfo.GetUnderlyingType(typ)
-	if typeDef, err := p.metadata.GetTypeDefinition(typ); err != nil {
-		return nil, err
-	} else {
-		handler.typeDef = typeDef
+	handler := &managedObjectHandler{
+		typeHandler: *NewTypeHandler(ti),
 	}
+	p.AddHandler(handler)
+
+	ut := ti.UnderlyingType()
+	if ut != nil {
+		ti = ut
+	}
+
+	typeDef, err := p.metadata.GetTypeDefinition(ti.Name())
+	if err != nil {
+		return nil, err
+	}
+	handler.typeDef = typeDef
 
 	newInnerHandler := func() (managedTypeHandler, error) {
 
 		// nullable types use the same handler as the underlying type,
 		// but are passed as a pointer on the runtime side
-		kind := rt.Kind()
-		if handler.nullable && rt.Kind() == reflect.Ptr {
-			kind = rt.Elem().Kind()
+		kind := ti.ReflectedType().Kind()
+		if ti.IsNullable() && kind == reflect.Ptr {
+			kind = ti.ReflectedType().Elem().Kind()
 		}
 
 		switch kind {
 		case reflect.Slice, reflect.Array:
-			if _typeInfo.IsTypedArrayType(typ) {
-				return p.NewTypedArrayHandler(typ, rt)
+			if _langTypeInfo.IsTypedArrayType(ti.Name()) {
+				return p.NewTypedArrayHandler(ti)
+			} else if ti.ListElementType().IsPrimitive() {
+				return p.NewPrimitiveArrayHandler(ti)
 			} else {
-				elementType := _typeInfo.GetListSubtype(typ)
-				if _typeInfo.IsPrimitiveType(elementType) {
-					return p.NewPrimitiveArrayHandler(ctx, typ, rt)
-				} else {
-					return p.NewArrayHandler(ctx, typ, rt)
-				}
+				return p.NewArrayHandler(ctx, ti)
 			}
 		case reflect.Map:
-			if _typeInfo.IsMapType(typ) {
-				return p.NewMapHandler(ctx, typ, rt)
+			if ti.IsMap() {
+				return p.NewMapHandler(ctx, ti)
 			} else {
 				// This is a class that is being passed as a map.
-				return p.NewClassHandler(ctx, typ, rt)
+				return p.NewClassHandler(ctx, ti)
 			}
 		case reflect.Struct:
-			if _typeInfo.IsTimestampType(typ) {
-				return p.NewDateHandler(typ, rt)
+			if ti.IsTimestamp() {
+				return p.NewDateHandler(ti)
 			} else {
-				return p.NewClassHandler(ctx, typ, rt)
+				return p.NewClassHandler(ctx, ti)
 			}
 		}
 
-		return nil, fmt.Errorf("unsupported type for managed object: %s", rt)
+		return nil, fmt.Errorf("unsupported type for managed object: %s", ti.Name())
 	}
 	if h, err := newInnerHandler(); err != nil {
 		return nil, err
@@ -78,31 +81,25 @@ func (p *planner) NewManagedObjectHandler(ctx context.Context, typ string, rt re
 }
 
 type managedTypeHandler interface {
-	Info() langsupport.TypeHandlerInfo
 	Read(ctx context.Context, wa langsupport.WasmAdapter, offset uint32) (any, error)
 	Write(ctx context.Context, wa langsupport.WasmAdapter, offset uint32, obj any) (utils.Cleaner, error)
 }
 
 type managedObjectHandler struct {
-	info         langsupport.TypeHandlerInfo
+	typeHandler
 	typeDef      *metadata.TypeDefinition
 	innerHandler managedTypeHandler
-	nullable     bool
-}
-
-func (h *managedObjectHandler) Info() langsupport.TypeHandlerInfo {
-	return h.info
 }
 
 func (h *managedObjectHandler) Read(ctx context.Context, wa langsupport.WasmAdapter, offset uint32) (any, error) {
 	if offset == 0 {
-		return nil, fmt.Errorf("unexpected address 0 reading managed object of type %s", h.info.TypeName())
+		return nil, fmt.Errorf("unexpected address 0 reading managed object of type %s", h.typeInfo.Name())
 	}
 
 	// Check for recursion
 	visitedPtrs := wa.(*wasmAdapter).visitedPtrs
 	if visitedPtrs[offset] >= maxDepth {
-		logger.Warn(ctx).Bool("user_visible", true).Msgf("Excessive recursion detected in %s. Stopping at depth %d.", h.info.TypeName(), maxDepth)
+		logger.Warn(ctx).Bool("user_visible", true).Msgf("Excessive recursion detected in %s. Stopping at depth %d.", h.typeInfo.Name(), maxDepth)
 		return nil, nil
 	}
 	visitedPtrs[offset]++
@@ -155,10 +152,10 @@ func (h *managedObjectHandler) Encode(ctx context.Context, wa langsupport.WasmAd
 
 func (h *managedObjectHandler) doRead(ctx context.Context, wa langsupport.WasmAdapter, offset uint32) (any, error) {
 	if offset == 0 {
-		if h.nullable {
+		if h.typeInfo.IsNullable() {
 			return nil, nil
 		} else {
-			return nil, fmt.Errorf("unexpected null pointer for non-nullable type %s", h.info.TypeName())
+			return nil, fmt.Errorf("unexpected null pointer for non-nullable type %s", h.typeInfo.Name())
 		}
 	}
 
@@ -167,21 +164,18 @@ func (h *managedObjectHandler) doRead(ctx context.Context, wa langsupport.WasmAd
 
 func (h *managedObjectHandler) doWrite(ctx context.Context, wa langsupport.WasmAdapter, obj any) (uint32, utils.Cleaner, error) {
 	if utils.HasNil(obj) {
-		if h.nullable {
+		if h.typeInfo.IsNullable() {
 			return 0, nil, nil
 		} else {
-			return 0, nil, fmt.Errorf("unexpected nil value for non-nullable type %s", h.info.TypeName())
+			return 0, nil, fmt.Errorf("unexpected nil value for non-nullable type %s", h.typeInfo.Name())
 		}
 	}
 
-	if h.nullable {
+	if h.typeInfo.IsNullable() {
 		obj = utils.DereferencePointer(obj)
 	}
 
-	id := h.typeDef.Id
-	size := h.innerHandler.Info().TypeSize()
-
-	ptr, cln, err := wa.(*wasmAdapter).allocateAndPinMemory(ctx, size, id)
+	ptr, cln, err := wa.(*wasmAdapter).allocateAndPinMemory(ctx, h.typeInfo.DataSize(), h.typeDef.Id)
 	if err != nil {
 		return 0, cln, err
 	}
@@ -192,10 +186,12 @@ func (h *managedObjectHandler) doWrite(ctx context.Context, wa langsupport.WasmA
 		return 0, cln, err
 	}
 
-	// we can unpin the inner objects early, since they are part of the managed object
-	// if err := c.Clean(); err != nil {
-	// 	return 0, cln, err
-	// }
+	// we can unpin the inner objects early, since they are now referenced by the managed object
+	if c != nil {
+		if err := c.Clean(); err != nil {
+			return 0, cln, err
+		}
+	}
 
 	return ptr, cln, nil
 }

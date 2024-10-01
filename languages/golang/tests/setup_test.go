@@ -23,16 +23,18 @@ var fixture *testutils.WasmTestFixture
 
 func TestMain(m *testing.M) {
 	path := filepath.Join(basePath, "..", "testdata", "build", "testdata.wasm")
-	registrations := getTestHostFunctionRegistrations()
-	fixture = testutils.NewWasmTestFixture(path, registrations...)
 
-	fixture.AddCustomType("testdata.TestStruct1", reflect.TypeFor[TestStruct1]())
-	fixture.AddCustomType("testdata.TestStruct2", reflect.TypeFor[TestStruct2]())
-	fixture.AddCustomType("testdata.TestStruct3", reflect.TypeFor[TestStruct3]())
-	fixture.AddCustomType("testdata.TestStruct4", reflect.TypeFor[TestStruct4]())
-	fixture.AddCustomType("testdata.TestStruct5", reflect.TypeFor[TestStruct5]())
-	fixture.AddCustomType("testdata.TestStructWithMap", reflect.TypeFor[testStructWithMap]())
-	fixture.AddCustomType("testdata.TestRecursiveStruct", reflect.TypeFor[TestRecursiveStruct]())
+	customTypes := make(map[string]reflect.Type)
+	customTypes["testdata.TestStruct1"] = reflect.TypeFor[TestStruct1]()
+	customTypes["testdata.TestStruct2"] = reflect.TypeFor[TestStruct2]()
+	customTypes["testdata.TestStruct3"] = reflect.TypeFor[TestStruct3]()
+	customTypes["testdata.TestStruct4"] = reflect.TypeFor[TestStruct4]()
+	customTypes["testdata.TestStruct5"] = reflect.TypeFor[TestStruct5]()
+	customTypes["testdata.TestStructWithMap"] = reflect.TypeFor[TestStructWithMap1]()
+	customTypes["testdata.TestRecursiveStruct"] = reflect.TypeFor[TestRecursiveStruct]()
+
+	registrations := getTestHostFunctionRegistrations()
+	fixture = testutils.NewWasmTestFixture(path, customTypes, registrations)
 
 	exitVal := m.Run()
 

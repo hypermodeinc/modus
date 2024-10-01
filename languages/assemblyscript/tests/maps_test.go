@@ -6,30 +6,38 @@ package assemblyscript_test
 
 import (
 	"fmt"
+	"hypruntime/utils"
 	"maps"
 	"reflect"
 	"testing"
 )
 
 func TestMapInput_u8_string(t *testing.T) {
-	var val = map[uint8]string{
+	fnName := "testMapInput_u8_string"
+	m := map[uint8]string{
 		1: "a",
 		2: "b",
 		3: "c",
 	}
 
-	if _, err := fixture.CallFunction(t, "testMapInput_u8_string", val); err != nil {
-		t.Fatal(err)
+	if _, err := fixture.CallFunction(t, fnName, m); err != nil {
+		t.Error(err)
+	}
+	if m, err := utils.ConvertToMap(m); err != nil {
+		t.Error(fmt.Errorf("failed conversion to interface map: %w", err))
+	} else if _, err := fixture.CallFunction(t, fnName, m); err != nil {
+		t.Error(err)
 	}
 }
 
 func TestMapOutput_u8_string(t *testing.T) {
-	result, err := fixture.CallFunction(t, "testMapOutput_u8_string")
+	fnName := "testMapOutput_u8_string"
+	result, err := fixture.CallFunction(t, fnName)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	var expected = map[uint8]string{
+	expected := map[uint8]string{
 		1: "a",
 		2: "b",
 		3: "c",
@@ -45,24 +53,31 @@ func TestMapOutput_u8_string(t *testing.T) {
 }
 
 func TestMapInput_string_string(t *testing.T) {
-	var val = map[string]string{
+	fnName := "testMapInput_string_string"
+	m := map[string]string{
 		"a": "1",
 		"b": "2",
 		"c": "3",
 	}
 
-	if _, err := fixture.CallFunction(t, "testMapInput_string_string", val); err != nil {
-		t.Fatal(err)
+	if _, err := fixture.CallFunction(t, fnName, m); err != nil {
+		t.Error(err)
+	}
+	if m, err := utils.ConvertToMap(m); err != nil {
+		t.Error(fmt.Errorf("failed conversion to interface map: %w", err))
+	} else if _, err := fixture.CallFunction(t, fnName, m); err != nil {
+		t.Error(err)
 	}
 }
 
 func TestMapOutput_string_string(t *testing.T) {
-	result, err := fixture.CallFunction(t, "testMapOutput_string_string")
+	fnName := "testMapOutput_string_string"
+	result, err := fixture.CallFunction(t, fnName)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	var expected = map[string]string{
+	expected := map[string]string{
 		"a": "1",
 		"b": "2",
 		"c": "3",
@@ -78,27 +93,36 @@ func TestMapOutput_string_string(t *testing.T) {
 }
 
 func TestNullableMapInput_string_string(t *testing.T) {
-	var val = map[string]string{
+	fnName := "testNullableMapInput_string_string"
+	m := map[string]string{
 		"a": "1",
 		"b": "2",
 		"c": "3",
 	}
 
-	if _, err := fixture.CallFunction(t, "testNullableMapInput_string_string", val); err != nil {
-		t.Fatal(err)
+	if _, err := fixture.CallFunction(t, fnName, m); err != nil {
+		t.Error(err)
 	}
-	if _, err := fixture.CallFunction(t, "testNullableMapInput_string_string", &val); err != nil {
-		t.Fatal(err)
+	if _, err := fixture.CallFunction(t, fnName, &m); err != nil {
+		t.Error(err)
+	}
+	if m, err := utils.ConvertToMap(m); err != nil {
+		t.Error(fmt.Errorf("failed conversion to interface map: %w", err))
+	} else if _, err := fixture.CallFunction(t, fnName, m); err != nil {
+		t.Error(err)
+	} else if _, err := fixture.CallFunction(t, fnName, &m); err != nil {
+		t.Error(err)
 	}
 }
 
 func TestNullableMapOutput_string_string(t *testing.T) {
-	result, err := fixture.CallFunction(t, "testNullableMapOutput_string_string")
+	fnName := "testNullableMapOutput_string_string"
+	result, err := fixture.CallFunction(t, fnName)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	var expected = map[string]string{
+	expected := map[string]string{
 		"a": "1",
 		"b": "2",
 		"c": "3",
@@ -114,17 +138,19 @@ func TestNullableMapOutput_string_string(t *testing.T) {
 }
 
 func TestIterateMap_string_string(t *testing.T) {
-	var m = makeTestMap(100)
+	fnName := "testIterateMap_string_string"
+	m := makeTestMap(100)
 
-	if _, err := fixture.CallFunction(t, "testIterateMap_string_string", m); err != nil {
-		t.Fatal(err)
+	if _, err := fixture.CallFunction(t, fnName, m); err != nil {
+		t.Error(err)
 	}
 }
 
 func TestMapLookup_string_string(t *testing.T) {
-	var m = makeTestMap(100)
+	fnName := "testMapLookup_string_string"
+	m := makeTestMap(100)
 
-	result, err := fixture.CallFunction(t, "testMapLookup_string_string", m, "key_047")
+	result, err := fixture.CallFunction(t, fnName, m, "key_047")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -140,29 +166,43 @@ func TestMapLookup_string_string(t *testing.T) {
 	}
 }
 
-type testClassWithMap struct {
+type TestClassWithMap1 struct {
 	M map[string]string
 }
 
+type TestClassWithMap2 struct {
+	M map[string]any
+}
+
 func TestClassContainingMapInput_string_string(t *testing.T) {
-	s := testClassWithMap{M: map[string]string{
+	fnName := "testClassContainingMapInput_string_string"
+	s1 := TestClassWithMap1{M: map[string]string{
 		"a": "1",
 		"b": "2",
 		"c": "3",
 	}}
+	if _, err := fixture.CallFunction(t, fnName, s1); err != nil {
+		t.Error(err)
+	}
 
-	if _, err := fixture.CallFunction(t, "testClassContainingMapInput_string_string", s); err != nil {
-		t.Fatal(err)
+	s2 := TestClassWithMap2{M: map[string]any{
+		"a": any("1"),
+		"b": any("2"),
+		"c": any("3"),
+	}}
+	if _, err := fixture.CallFunction(t, fnName, s2); err != nil {
+		t.Error(err)
 	}
 }
 
 func TestClassContainingMapOutput_string_string(t *testing.T) {
-	result, err := fixture.CallFunction(t, "testClassContainingMapOutput_string_string")
+	fnName := "testClassContainingMapOutput_string_string"
+	result, err := fixture.CallFunction(t, fnName)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	expected := testClassWithMap{M: map[string]string{
+	expected := TestClassWithMap1{M: map[string]string{
 		"a": "1",
 		"b": "2",
 		"c": "3",
@@ -170,7 +210,7 @@ func TestClassContainingMapOutput_string_string(t *testing.T) {
 
 	if result == nil {
 		t.Error("expected a result")
-	} else if r, ok := result.(testClassWithMap); !ok {
+	} else if r, ok := result.(TestClassWithMap1); !ok {
 		t.Errorf("expected %T, got %T", expected, result)
 	} else if !reflect.DeepEqual(expected, r) {
 		t.Errorf("expected %v, got %v", expected, r)
@@ -178,7 +218,7 @@ func TestClassContainingMapOutput_string_string(t *testing.T) {
 }
 
 func makeTestMap(size int) map[string]string {
-	var m = make(map[string]string, size)
+	m := make(map[string]string, size)
 	for i := 0; i < size; i++ {
 		key := fmt.Sprintf("key_%03d", i)
 		val := fmt.Sprintf("val_%03d", i)

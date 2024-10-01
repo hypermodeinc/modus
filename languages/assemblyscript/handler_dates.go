@@ -8,7 +8,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"reflect"
 	"time"
 
 	"hypruntime/langsupport"
@@ -18,27 +17,24 @@ import (
 
 // Reference: https://github.com/AssemblyScript/assemblyscript/blob/main/std/assembly/date.ts
 
-func (p *planner) NewDateHandler(typ string, rt reflect.Type) (managedTypeHandler, error) {
-	handler := new(dateHandler)
-	handler.info = langsupport.NewTypeHandlerInfo(typ, rt, 20, 0)
+func (p *planner) NewDateHandler(ti langsupport.TypeInfo) (managedTypeHandler, error) {
 
-	typ = _typeInfo.GetUnderlyingType(typ)
-	typeDef, err := p.metadata.GetTypeDefinition(typ)
+	typeDef, err := p.metadata.GetTypeDefinition(ti.Name())
 	if err != nil {
 		return nil, err
 	}
-	handler.typeDef = typeDef
+
+	handler := &dateHandler{
+		*NewTypeHandler(ti),
+		typeDef,
+	}
 
 	return handler, nil
 }
 
 type dateHandler struct {
-	info    langsupport.TypeHandlerInfo
+	typeHandler
 	typeDef *metadata.TypeDefinition
-}
-
-func (h *dateHandler) Info() langsupport.TypeHandlerInfo {
-	return h.info
 }
 
 func (h *dateHandler) Read(ctx context.Context, wa langsupport.WasmAdapter, offset uint32) (any, error) {

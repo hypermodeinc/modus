@@ -87,7 +87,11 @@ func ConvertToSliceOf[T any](obj any) ([]T, bool) {
 	case []any:
 		out := make([]T, len(obj))
 		for i, v := range obj {
-			out[i] = v.(T)
+			if t, err := Cast[T](v); err != nil {
+				return nil, false
+			} else {
+				out[i] = t
+			}
 		}
 		return out, true
 	case [0]T:
@@ -160,7 +164,17 @@ func ConvertToSliceOf[T any](obj any) ([]T, bool) {
 
 	rv := reflect.ValueOf(obj)
 	switch rv.Kind() {
-	case reflect.Slice, reflect.Array:
+	case reflect.Array:
+		out := make([]T, rv.Len())
+		for i := 0; i < rv.Len(); i++ {
+			out[i] = rv.Index(i).Interface().(T)
+		}
+		return out, true
+	case reflect.Slice:
+		if rv.IsNil() {
+			var out []T = nil
+			return out, true
+		}
 		out := make([]T, rv.Len())
 		for i := 0; i < rv.Len(); i++ {
 			out[i] = rv.Index(i).Interface().(T)

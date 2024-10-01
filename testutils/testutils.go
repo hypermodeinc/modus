@@ -39,20 +39,12 @@ func (f *WasmTestFixture) AddCustomType(name string, typ reflect.Type) {
 func (f *WasmTestFixture) CallFunction(t *testing.T, name string, paramValues ...any) (any, error) {
 	ctx := context.WithValue(f.Context, testContextKey{}, t)
 
-	fnMeta, ok := f.Plugin.Metadata.FnExports[name]
+	fnInfo, ok := functions.NewFunctionInfo(name, f.Plugin, false)
 	if !ok {
-		return nil, fmt.Errorf("function %s not found", name)
+		return nil, fmt.Errorf("no function registered named %s", name)
 	}
 
-	fnDef := f.Plugin.Module.ExportedFunctions()[name]
-	plan, err := f.Plugin.Planner.GetPlan(ctx, fnMeta, fnDef)
-	if err != nil {
-		return nil, err
-	}
-
-	fnInfo := functions.NewFunctionInfo(f.Plugin, plan)
-
-	params, err := functions.CreateParametersMap(fnMeta, paramValues...)
+	params, err := functions.CreateParametersMap(fnInfo.Metadata(), paramValues...)
 	if err != nil {
 		return nil, err
 	}
@@ -75,7 +67,7 @@ func GetTestT(ctx context.Context) *testing.T {
 	return ctx.Value(testContextKey{}).(*testing.T)
 }
 
-func NewWasmTestFixture(wasmFilePath string, hostOpts ...func(wasmhost.WasmHost) error) *WasmTestFixture {
+func NewWasmTestFixture(wasmFilePath string, customTypes map[string]reflect.Type, registrations []func(wasmhost.WasmHost) error) *WasmTestFixture {
 	logger.Initialize()
 
 	content, err := os.ReadFile(wasmFilePath)
@@ -84,7 +76,7 @@ func NewWasmTestFixture(wasmFilePath string, hostOpts ...func(wasmhost.WasmHost)
 	}
 
 	ctx := context.Background()
-	host := wasmhost.NewWasmHost(ctx, hostOpts...)
+	host := wasmhost.NewWasmHost(ctx, registrations...)
 
 	cm, err := host.CompileModule(ctx, content)
 	if err != nil {
@@ -95,22 +87,24 @@ func NewWasmTestFixture(wasmFilePath string, hostOpts ...func(wasmhost.WasmHost)
 	if err != nil {
 		panic(err)
 	}
+	ctx = context.WithValue(ctx, utils.MetadataContextKey, md)
+	ctx = context.WithValue(ctx, utils.CustomTypesContextKey, customTypes)
 
 	filename := filepath.Base(wasmFilePath)
-	plugin := plugins.NewPlugin(cm, filename, md)
-	registry := host.GetFunctionRegistry()
-	registry.RegisterImports(ctx, plugin)
-
-	f := &WasmTestFixture{
-		WasmHost:    host,
-		Plugin:      plugin,
-		customTypes: make(map[string]reflect.Type),
+	plugin, err := plugins.NewPlugin(ctx, cm, filename, md)
+	if err != nil {
+		panic(err)
 	}
 
 	ctx = context.WithValue(ctx, utils.PluginContextKey, plugin)
-	ctx = context.WithValue(ctx, utils.MetadataContextKey, md)
-	ctx = context.WithValue(ctx, utils.CustomTypesContextKey, f.customTypes)
-	f.Context = ctx
 
-	return f
+	registry := host.GetFunctionRegistry()
+	registry.RegisterImports(ctx, plugin)
+
+	return &WasmTestFixture{
+		Context:     ctx,
+		WasmHost:    host,
+		Plugin:      plugin,
+		customTypes: customTypes,
+	}
 }

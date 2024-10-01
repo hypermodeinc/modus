@@ -63,7 +63,8 @@ type TestHostObject struct {
 }
 
 func TestHostFn_add(t *testing.T) {
-	result, err := fixture.CallFunction(t, "add", 1, 2)
+	fnName := "add"
+	result, err := fixture.CallFunction(t, fnName, 1, 2)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -78,7 +79,8 @@ func TestHostFn_add(t *testing.T) {
 }
 
 func TestHostFn_echo(t *testing.T) {
-	result, err := fixture.CallFunction(t, "echo", "hello")
+	fnName := "echo"
+	result, err := fixture.CallFunction(t, fnName, "hello")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -94,27 +96,28 @@ func TestHostFn_echo(t *testing.T) {
 }
 
 func TestHostFn_echoObject(t *testing.T) {
+	fnName := "echoObject"
 	o := &TestHostObject{
 		A: 1,
 		B: true,
 		C: "hello",
 	}
 
-	result, err := fixture.CallFunction(t, "echoObject", o)
+	result, err := fixture.CallFunction(t, fnName, o)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	expected := map[string]any{
-		"A": int32(2),
-		"B": false,
-		"C": "hello!",
+	expected := &TestHostObject{
+		A: 2,
+		B: false,
+		C: "hello!",
 	}
 
 	if result == nil {
 		t.Error("expected a result")
-	} else if r, ok := result.(map[string]any); !ok {
-		t.Errorf("expected a map[string]any, got %T", result)
+	} else if r, ok := result.(TestHostObject); !ok {
+		t.Errorf("expected %T, got %T", expected, result)
 	} else if reflect.DeepEqual(expected, r) {
 		t.Errorf("expected %+v, got %+v", expected, r)
 	}
