@@ -131,6 +131,8 @@ export default class NewCommand extends Command {
     this.log(chalk.dim(`$ ${dir == process.cwd() ? "" : "cd " + path.basename(dir)} && modus run`));
   }
 
+  // TODO: install deps
+
   private async installRuntime() {
     const latest_runtime = await Metadata.getLatestRuntime();
 

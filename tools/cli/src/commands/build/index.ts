@@ -32,10 +32,10 @@ export default class BuildCommand extends Command {
       return;
     }
 
-    if (!existsSync(path.join(cwd, "/node_modules"))) {
-      this.logError("Dependencies are not installed! Please install dependencies with npm i");
-      process.exit(0);
-    }
+    // if (!existsSync(path.join(cwd, "/node_modules"))) {
+    //   this.logError("Dependencies are not installed! Please install dependencies with npm i");
+    //   process.exit(0);
+    // }
 
     if (sdk === SDK.AssemblyScript) {
       execSync("npm run build", { cwd, stdio: "inherit" });

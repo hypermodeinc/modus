@@ -56,6 +56,7 @@ export function getTinyGoVersion(): null | string {
 }
 
 export async function cloneRepo(url: string, pth: string): Promise<boolean> {
+  // https://github.com/hypermodeAI/tempalte-project/archive/refs/heads/main.zip instead
   const base_dir = path.dirname(pth);
   const temp_dir = path.join(base_dir, ".modus-temp");
   const folder_name = path.basename(pth);
