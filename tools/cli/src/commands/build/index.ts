@@ -5,6 +5,7 @@ import path from "node:path";
 
 import { SDK } from "../../custom/globals.js";
 import { isRunnable } from "../../util/index.js";
+import { existsSync } from "node:fs";
 
 export default class BuildCommand extends Command {
   static args = {
@@ -31,13 +32,14 @@ export default class BuildCommand extends Command {
       return;
     }
 
-    if (sdk === SDK.AssemblyScript) {
-      this.runCommand(cwd, "npm run build");
+    if (!existsSync(path.join(cwd, "/node_modules"))) {
+      this.logError("Dependencies are not installed! Please install dependencies with npm i");
+      process.exit(0);
     }
-  }
 
-  runCommand(cwd: string, cmd: string): void {
-    execSync(cmd, { cwd, stdio: "inherit" });
+    if (sdk === SDK.AssemblyScript) {
+      execSync("npm run build", { cwd, stdio: "inherit" });
+    }
   }
 
   private logError(message: string) {

@@ -6,7 +6,7 @@ export default class SDKInstallCommand extends Command {
     version: Args.string({
       description: "v0.0.0-|-SDK version to install",
       hidden: false,
-      required: true,
+      required: false,
     }),
   };
 
@@ -18,6 +18,7 @@ export default class SDKInstallCommand extends Command {
 
   async run(): Promise<void> {
     const { args } = await this.parse(SDKInstallCommand);
+    if (!args.version) this.logError("No version specified! Run modus sdk install <version>")
   }
 
   private logError(message: string) {
