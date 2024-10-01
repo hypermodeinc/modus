@@ -125,9 +125,9 @@ func writeGraphQLResponse(ctx context.Context, out *bytes.Buffer, result any, gq
 		}
 	}
 
-	// Get the data as json from the result
+	// If there is any result data, or if the data is null without errors, serialize the data as json
 	var jsonData []byte
-	if result != nil {
+	if result != nil || len(gqlErrors) == 0 {
 		jsonResult, err := utils.JsonSerialize(result)
 		if err != nil {
 			if err, ok := err.(*json.UnsupportedValueError); ok {
