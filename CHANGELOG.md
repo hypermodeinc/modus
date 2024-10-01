@@ -6,6 +6,7 @@
 - Improve bucket layout for FunctionExecutionDurationMilliseconds metric and add function_name label [#401](https://github.com/hypermodeAI/runtime/pull/401)
 - Improve JSON performance [#402](https://github.com/hypermodeAI/runtime/pull/402)
 - Misc performance improvements [#403](https://github.com/hypermodeAI/runtime/pull/403)
+- Fix error on void response [#404](https://github.com/hypermodeAI/runtime/pull/404)
 
 ## 2024-09-26 - Version 0.12.6
 
