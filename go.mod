@@ -72,6 +72,7 @@ require (
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-sourcemap/sourcemap v2.1.4+incompatible // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
+	github.com/golang-jwt/jwt/v5 v5.2.1 // indirect
 	github.com/google/pprof v0.0.0-20240925223930-fa3061bff0bc // indirect
 	github.com/hashicorp/golang-lru v1.0.2 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect

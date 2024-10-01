@@ -19,6 +19,7 @@ import (
 	"hypruntime/graphql"
 	"hypruntime/logger"
 	"hypruntime/metrics"
+	"hypruntime/middleware"
 	"hypruntime/utils"
 
 	"github.com/rs/cors"
@@ -107,7 +108,7 @@ func GetHandlerMux() http.Handler {
 	mux := http.NewServeMux()
 
 	// Register our main endpoints with instrumentation.
-	mux.Handle("/graphql", metrics.InstrumentHandler(graphql.HandleGraphQLRequest, "graphql"))
+	mux.Handle("/graphql", middleware.HandleJWT(metrics.InstrumentHandler(graphql.HandleGraphQLRequest, "graphql")))
 	mux.Handle("/admin", metrics.InstrumentHandler(handleAdminRequest, "admin"))
 
 	// Register metrics endpoint which uses the Prometheus scraping protocol.
