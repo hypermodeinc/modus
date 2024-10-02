@@ -1,6 +1,9 @@
-/hypruntime
-/hypruntime.exe
-*.env
-__debug_bin*
+.env
+.env.*
 .DS_Store
+__debug_bin*
+*.exe
+*.wasm
+*.wat
 *.generated.go
+*_generated.go
