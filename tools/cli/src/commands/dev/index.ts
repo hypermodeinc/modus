@@ -83,15 +83,19 @@ export default class Run extends Command {
       process.exit(0);
     }
 
-    if (flags.build) await BuildCommand.run(args.path ? [args.path] : []);
+    try {
+      if (flags.build) await BuildCommand.run(args.path ? [args.path] : []);
+    } catch { }
     const build_wasm = path.join(cwd, "/build/" + project_name + ".wasm");
     const deploy_wasm = expandHomeDir("~/.hypermode/" + project_name + ".wasm");
     copyFileSync(build_wasm, deploy_wasm);
 
-    spawn(runtimePath, { stdio: "inherit", env: {
-      ...process.env,
-      ENVIRONMENT: "dev"
-    }});
+    spawn(runtimePath, {
+      stdio: "inherit", env: {
+        ...process.env,
+        ENVIRONMENT: "dev"
+      }
+    });
 
     if (watch) {
       const delay = 3000; // Max build frequency every 3000ms
@@ -108,7 +112,9 @@ export default class Run extends Command {
         }
         if (Date.now() - lastModified > delay * 2) paused = true;
         lastBuild = Date.now();
-        await BuildCommand.run(args.path ? [args.path] : []);
+        try {
+          await BuildCommand.run(args.path ? [args.path] : []);
+        } catch { }
         copyFileSync(build_wasm, deploy_wasm);
       }, delay);
 
