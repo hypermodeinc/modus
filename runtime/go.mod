@@ -1,6 +1,6 @@
 module github.com/hypermodeinc/modus/runtime
 
-go 1.23.0
+go 1.23
 
 require (
 	github.com/OneOfOne/xxhash v1.2.8
