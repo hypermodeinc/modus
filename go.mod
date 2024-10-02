@@ -37,14 +37,13 @@ require (
 	github.com/tidwall/sjson v1.2.5
 	github.com/viterin/vek v0.4.2
 	github.com/wundergraph/graphql-go-tools/execution v1.0.5
-	github.com/wundergraph/graphql-go-tools/v2 v2.0.0-rc.87
+	github.com/wundergraph/graphql-go-tools/v2 v2.0.0-rc.94
 	golang.org/x/exp v0.0.0-20240909161429-701f63a606c0
 	google.golang.org/grpc v1.67.1
 )
 
 require (
 	github.com/Microsoft/go-winio v0.6.2 // indirect
-	github.com/alitto/pond v1.9.2 // indirect
 	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.6.5 // indirect
 	github.com/aws/aws-sdk-go-v2/credentials v1.17.37 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.16.14 // indirect
