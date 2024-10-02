@@ -107,7 +107,7 @@ func GetHandlerMux() http.Handler {
 	mux := http.NewServeMux()
 
 	// Register our main endpoint with instrumentation.
-	mux.Handle("/graphql", metrics.InstrumentHandler(graphql.HandleGraphQLRequest, "graphql"))
+	mux.Handle("/graphql", metrics.InstrumentHandler(graphql.GraphQLRequestHandler, "graphql"))
 
 	// Register metrics endpoint which uses the Prometheus scraping protocol.
 	// We do not instrument it with the InstrumentHandler so that any scraper (eg. OTel)
