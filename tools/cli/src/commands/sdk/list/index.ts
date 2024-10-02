@@ -31,7 +31,6 @@ export default class SDKListCommand extends Command {
     for (const version of versions) {
       this.log(version);
     }
-
   }
 
   private logError(message: string) {

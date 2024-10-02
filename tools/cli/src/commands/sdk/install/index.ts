@@ -6,7 +6,7 @@ import path from "node:path";
 import { expandHomeDir } from "../../../util/index.js";
 import { Metadata } from "../../../util/metadata.js";
 
-const versions = ["0.12.0", "0.12.1","0.12.2","0.12.3","0.12.4","0.12.5","0.12.6"];
+const versions = ["0.12.0", "0.12.1", "0.12.2", "0.12.3", "0.12.4", "0.12.5", "0.12.6"];
 export default class SDKInstallCommand extends Command {
   static args = {
     version: Args.string({
@@ -29,7 +29,7 @@ export default class SDKInstallCommand extends Command {
     const platform = os.platform();
     const arch = os.arch();
     const file = "modus-runtime-v" + version + "-" + platform + "-" + arch + (platform === "win32" ? ".exe" : "");
-    
+
     if (version === "all") {
       for (const version of versions) {
         cpSync(path.join(path.dirname(import.meta.url.replace("file:", "")), "../../../../runtime-bin/" + "modus-runtime-v" + version + "-" + platform + "-" + arch + (platform === "win32" ? ".exe" : "")), expandHomeDir("~/.hypermode/sdk/" + version + "/runtime" + (platform === "win32" ? ".exe" : "")));

@@ -31,18 +31,18 @@ export default class CustomHelp extends Help {
       const args =
         Object.keys(command.args).length > 0
           ? Object.entries(command.args)
-            .map((v) => {
-              if (!v[1].hidden && v[1].required) {
-                if (v[1].description && v[1].description.indexOf("-|-") > 0) {
-                  return v[1].description.split("-|-")[0];
+              .map((v) => {
+                if (!v[1].hidden && v[1].required) {
+                  if (v[1].description && v[1].description.indexOf("-|-") > 0) {
+                    return v[1].description.split("-|-")[0];
+                  }
+
+                  return v[0];
                 }
 
-                return v[0];
-              }
-
-              return "";
-            })
-            .join(" ")
+                return "";
+              })
+              .join(" ")
           : "";
       const postPadding = " ".repeat(Math.max(20 - args.length, 1));
       const description = command.description!;
@@ -128,16 +128,16 @@ export default class CustomHelp extends Help {
     const args =
       Object.keys(command.args).length > 0
         ? Object.entries(command.args)
-          .map((v) => {
-            if (!v[1].hidden && v[1].required) {
-              if (v[1].description && v[1].description.indexOf("-|-") > 0) {
-                return v[1].description.split("-|-")[0];
+            .map((v) => {
+              if (!v[1].hidden && v[1].required) {
+                if (v[1].description && v[1].description.indexOf("-|-") > 0) {
+                  return v[1].description.split("-|-")[0];
+                }
+                return v[0];
               }
-              return v[0];
-            }
-            return "";
-          })
-          .join(" ")
+              return "";
+            })
+            .join(" ")
         : "";
     const flags = Object.keys(command.flags);
 

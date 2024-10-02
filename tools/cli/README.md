@@ -38,7 +38,7 @@ USAGE
 * [`modus run [PATH]`](#modus-run-path)
 * [`modus sdk install [VERSION]`](#modus-sdk-install-version)
 * [`modus sdk list`](#modus-sdk-list)
-* [`modus sdk remove install [VERSION]`](#modus-sdk-remove-install-version)
+* [`modus sdk remove [VERSION]`](#modus-sdk-remove-version)
 * [`modus upgrade`](#modus-upgrade)
 
 ## `modus autocomplete [SHELL]`
@@ -46,7 +46,7 @@ USAGE
 Display autocomplete installation instructions.
 
 ```
-[1mUsage:[22m [1m[94mmodus[39m[22m autocomplete
+Usage: modus autocomplete
 ```
 
 _See code: [@oclif/plugin-autocomplete](https://github.com/oclif/plugin-autocomplete/blob/v3.2.5/src/commands/autocomplete/index.ts)_
@@ -56,7 +56,7 @@ _See code: [@oclif/plugin-autocomplete](https://github.com/oclif/plugin-autocomp
 Build a Modus project
 
 ```
-[1mUsage:[22m [1m[94mmodus[39m[22m build
+Usage: modus build
 ```
 
 _See code: [src/commands/build/index.ts](https://github.com/HypermodeAI/modus/blob/v0.0.0/src/commands/build/index.ts)_
@@ -66,7 +66,7 @@ _See code: [src/commands/build/index.ts](https://github.com/HypermodeAI/modus/bl
 Deploy a Modus app to Hypermode
 
 ```
-[1mUsage:[22m [1m[94mmodus[39m[22m deploy
+Usage: modus deploy
 ```
 
 _See code: [src/commands/deploy/index.ts](https://github.com/HypermodeAI/modus/blob/v0.0.0/src/commands/deploy/index.ts)_
@@ -76,7 +76,7 @@ _See code: [src/commands/deploy/index.ts](https://github.com/HypermodeAI/modus/b
 Create a new Modus project
 
 ```
-[1mUsage:[22m [1m[94mmodus[39m[22m new
+Usage: modus new
 ```
 
 _See code: [src/commands/new/index.ts](https://github.com/HypermodeAI/modus/blob/v0.0.0/src/commands/new/index.ts)_
@@ -86,7 +86,7 @@ _See code: [src/commands/new/index.ts](https://github.com/HypermodeAI/modus/blob
 Run a Modus app locally
 
 ```
-[1mUsage:[22m [1m[94mmodus[39m[22m run
+Usage: modus run
 ```
 
 _See code: [src/commands/run/index.ts](https://github.com/HypermodeAI/modus/blob/v0.0.0/src/commands/run/index.ts)_
@@ -96,7 +96,7 @@ _See code: [src/commands/run/index.ts](https://github.com/HypermodeAI/modus/blob
 Install a specific SDK version
 
 ```
-[1mUsage:[22m [1m[94mmodus[39m[22m sdk:install
+Usage: modus sdk:install
 ```
 
 _See code: [src/commands/sdk/install/index.ts](https://github.com/HypermodeAI/modus/blob/v0.0.0/src/commands/sdk/install/index.ts)_
@@ -106,27 +106,27 @@ _See code: [src/commands/sdk/install/index.ts](https://github.com/HypermodeAI/mo
 List installed SDK versions
 
 ```
-[1mUsage:[22m [1m[94mmodus[39m[22m sdk:list
+Usage: modus sdk:list
 ```
 
 _See code: [src/commands/sdk/list/index.ts](https://github.com/HypermodeAI/modus/blob/v0.0.0/src/commands/sdk/list/index.ts)_
 
-## `modus sdk remove install [VERSION]`
+## `modus sdk remove [VERSION]`
 
-Uninstall a specific SDK version
+Remove a specific SDK version
 
 ```
-[1mUsage:[22m [1m[94mmodus[39m[22m sdk:remove:install
+Usage: modus sdk:remove
 ```
 
-_See code: [src/commands/sdk/remove/install.ts](https://github.com/HypermodeAI/modus/blob/v0.0.0/src/commands/sdk/remove/install.ts)_
+_See code: [src/commands/sdk/remove/index.ts](https://github.com/HypermodeAI/modus/blob/v0.0.0/src/commands/sdk/remove/index.ts)_
 
 ## `modus upgrade`
 
 Upgrade a Modus component
 
 ```
-[1mUsage:[22m [1m[94mmodus[39m[22m upgrade
+Usage: modus upgrade
 ```
 
 _See code: [src/commands/upgrade/index.ts](https://github.com/HypermodeAI/modus/blob/v0.0.0/src/commands/upgrade/index.ts)_

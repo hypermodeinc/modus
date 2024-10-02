@@ -4,7 +4,7 @@ import os from "node:os";
 import { expandHomeDir } from "../../../util/index.js";
 import { readdirSync, rmSync } from "node:fs";
 
-const versions = ["0.12.0", "0.12.1","0.12.2","0.12.3","0.12.4","0.12.5","0.12.6"];
+const versions = ["0.12.0", "0.12.1", "0.12.2", "0.12.3", "0.12.4", "0.12.5", "0.12.6"];
 export default class SDKRemoveCommand extends Command {
   static args = {
     version: Args.string({

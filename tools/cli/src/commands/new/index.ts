@@ -1,5 +1,4 @@
 import { Command, Flags } from "@oclif/core";
-import sleep from "atomic-sleep";
 import chalk from "chalk";
 import { createInterface } from "node:readline";
 import ora from "ora";
@@ -9,7 +8,7 @@ import { ask, clearLine, cloneRepo, expandHomeDir, getAvailablePackageManagers, 
 import path from "node:path";
 import { Metadata } from "../../util/metadata.js";
 import { copyFileSync, existsSync, mkdirSync } from "node:fs";
-import { execSync, spawnSync } from "node:child_process";
+import { execSync } from "node:child_process";
 import { arch, platform } from "node:os";
 
 const PKGMGRS = getAvailablePackageManagers();
@@ -51,10 +50,10 @@ export default class NewCommand extends Command {
     const dir = flags.dir ? path.join(process.cwd(), flags.dir) : await this.promptInstallPath(rl);
     const sdk = flags.sdk
       ? Object.values(SDK)[
-      Object.keys(SDK)
-        .map((v) => v.toLowerCase())
-        .indexOf(flags.sdk?.trim().toLowerCase())
-      ]
+          Object.keys(SDK)
+            .map((v) => v.toLowerCase())
+            .indexOf(flags.sdk?.trim().toLowerCase())
+        ]
       : await this.promptSdkSelection(rl); // Use the enum
 
     if (!flags.force && !(await this.confirmAction(rl, "[3/4] Continue? [y/n]"))) clearLine(), clearLine(), process.exit(0);
@@ -98,7 +97,7 @@ export default class NewCommand extends Command {
   }
 
   private async installProject(name: string, dir: string, sdk: string, force: boolean, rl: ReturnType<typeof createInterface>) {
-    if (!force && !existsSync(dir)) {
+    if (!force && existsSync(dir)) {
       if (!(await this.confirmAction(rl, "Attempting to overwrite a folder that already exists.\nAre you sure you want to continue? [y/n]"))) clearLine(), process.exit(0);
       else clearLine(), clearLine(), clearLine();
     }
@@ -115,33 +114,10 @@ export default class NewCommand extends Command {
       process.exit(0);
     }
 
-    const depsSpinner = ora({
-      color: "white",
-      indent: 2,
-      text: "Installing dependencies",
-    }).start();
-
-    if (sdk === SDK.AssemblyScript) {
-      const sh = spawnSync("npm install", { cwd: dir, stdio: "inherit" });
-      if (!sh) {
-        this.logError("Failed to install dependencies with NPM! Please try again");
-        process.exit(0);
-      }
-    } else if (sdk === SDK.Go) {
-      const sh = spawnSync("go install", { cwd: dir, stdio: "inherit" });
-      if (!sh) {
-        this.logError("Failed to install dependencies via go install! Please try again");
-        process.exit(0);
-      }
-    }
-
-    depsSpinner.stop();
-    this.log("- Installed Dependencies")
-
     const gitSpinner = ora({
       color: "white",
       indent: 2,
-      text: "Cloning template repository",
+      text: "Downloading Template",
     }).start();
 
     const clone = await cloneRepo("https://github.com/HypermodeAI/template-project", dir);
@@ -153,7 +129,26 @@ export default class NewCommand extends Command {
     }
 
     gitSpinner.stop();
-    this.log("- Cloned template repository");
+    this.log("- Downloaded Template");
+
+    const depsSpinner = ora({
+      color: "white",
+      indent: 2,
+      text: "Installing dependencies",
+    }).start();
+
+    if (sdk === "AssemblyScript") {
+      execSync("npm install", { cwd: dir, stdio: "ignore" });
+    } else if (sdk === "Go (Beta)") {
+      const sh = execSync("go install", { cwd: dir, stdio: "ignore" });
+      if (!sh) {
+        this.logError("Failed to install dependencies via go install! Please try again");
+        process.exit(0);
+      }
+    }
+
+    depsSpinner.stop();
+    this.log("- Installed Dependencies");
 
     await this.installRuntime();
 
@@ -178,7 +173,6 @@ export default class NewCommand extends Command {
         indent: 2,
         text: `Downloading Runtime ${chalk.dim(`(${latest_runtime})`)}`,
       }).start();
-      sleep(2000); // Runtime is private on gh, soooo can't really do anything w/o ssh
       runtimeDlSpinner.stop();
 
       const runtimeInstSpinner = ora({
@@ -186,14 +180,13 @@ export default class NewCommand extends Command {
         indent: 2,
         text: `Installing Runtime ${chalk.dim(`(${latest_runtime})`)}`,
       }).start();
-      sleep(2000);
       runtimeInstSpinner.stop();
 
       const outDir = expandHomeDir("~/.hypermode/sdk/" + latest_runtime.replace("v", ""));
       mkdirSync(outDir, { recursive: true });
-      copyFileSync(path.join(path.dirname(import.meta.url), "./runtime-bin/modus-runtime-v" + latest_runtime + "-" + platform() + "-" + arch() + (platform() === "win32" ? ".exe" : "")), outDir + "/runtime" + (platform() === "win32" ? ".exe" : ""));
+      copyFileSync(path.join(path.dirname(import.meta.url).replace("file:", ""), "../../../runtime-bin/modus-runtime-v" + latest_runtime + "-" + platform() + "-" + arch() + (platform() === "win32" ? ".exe" : "")), outDir + "/runtime" + (platform() === "win32" ? ".exe" : ""));
     }
-    this.log(`  - Installed Runtime ${chalk.dim(`(${latest_runtime})`)}`);
+    this.log(`- Installed Runtime ${chalk.dim(`(${latest_runtime})`)}`);
   }
 
   private logError(message: string) {

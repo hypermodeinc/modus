@@ -21,9 +21,9 @@ export default class Run extends Command {
     watch: Flags.boolean({
       description: "Watch project and rebuild continually",
       hidden: false,
-      required: false
-    })
-  }
+      required: false,
+    }),
+  };
 
   static description = "Run a Modus app locally";
 
