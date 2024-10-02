@@ -1,5 +1,5 @@
 # build hypruntime binary
-FROM --platform=$BUILDPLATFORM golang:alpine as builder
+FROM --platform=$BUILDPLATFORM golang:alpine AS builder
 WORKDIR /src
 
 # install git
