@@ -5,6 +5,7 @@ import os from "node:os";
 import path from "node:path";
 import { expandHomeDir } from "../../../util/index.js";
 import { Metadata } from "../../../util/metadata.js";
+import { execSync } from "node:child_process";
 
 const versions = ["0.12.0", "0.12.1", "0.12.2", "0.12.3", "0.12.4", "0.12.5", "0.12.6"];
 export default class SDKInstallCommand extends Command {
@@ -40,7 +41,13 @@ export default class SDKInstallCommand extends Command {
       version = (await Metadata.getLatestRuntime())!;
     }
 
-    cpSync(path.join(path.dirname(import.meta.url.replace("file:", "")), "../../../../runtime-bin/" + file), expandHomeDir("~/.hypermode/sdk/" + version + "/runtime" + (platform === "win32" ? ".exe" : "")));
+    const runtimePath = expandHomeDir("~/.hypermode/sdk/" + version + "/runtime" + (platform === "win32" ? ".exe" : ""));
+    cpSync(path.join(path.dirname(import.meta.url.replace("file:", "")), "../../../../runtime-bin/" + file), runtimePath);
+
+    if (platform === "linux" || platform === "darwin") {
+      execSync("chmod +x " + runtimePath, { stdio: "ignore" });
+    }
+
     this.log("Installed Modus v" + version);
   }
 

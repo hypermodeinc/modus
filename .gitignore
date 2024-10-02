@@ -5,3 +5,4 @@ __debug_bin*
 .DS_Store
 *.generated.go
 node_modules/
+*.wasm

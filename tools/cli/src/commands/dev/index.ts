@@ -55,8 +55,23 @@ export default class Run extends Command {
     const cwd = args.path ? path.join(process.cwd(), args.path) : process.cwd();
     const watch = flags.watch;
 
+    if (!existsSync(path.join(cwd))) {
+      this.logError("Could not target folder! Please try again");
+      process.exit(0);
+    }
+
+    if (!existsSync(path.join(cwd, "/node_modules"))) {
+      this.logError("Dependencies not installed! Please install dependencies by running `npm i` and try again");
+      process.exit(0);
+    }
+
     if (!existsSync(path.join(cwd, "/package.json"))) {
       this.logError("Could not locate package.json! Please try again");
+      process.exit(0);
+    }
+
+    if (!existsSync(runtimePath)) {
+      this.logError("Modus Runtime v" + Metadata.runtime_version + " not installed! Run `modus sdk install " + Metadata.runtime_version + "` and try again!");
       process.exit(0);
     }
 
@@ -68,12 +83,15 @@ export default class Run extends Command {
       process.exit(0);
     }
 
-    // await BuildCommand.run(args.path ? [args.path] : []);
+    if (flags.build) await BuildCommand.run(args.path ? [args.path] : []);
     const build_wasm = path.join(cwd, "/build/" + project_name + ".wasm");
     const deploy_wasm = expandHomeDir("~/.hypermode/" + project_name + ".wasm");
     copyFileSync(build_wasm, deploy_wasm);
 
-    spawn("ENVIRONMENT=dev " + runtimePath, { stdio: "inherit" });
+    spawn(runtimePath, { stdio: "inherit", env: {
+      ...process.env,
+      ENVIRONMENT: "dev"
+    }});
 
     if (watch) {
       const delay = 3000; // Max build frequency every 3000ms
