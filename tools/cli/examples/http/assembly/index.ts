@@ -3,7 +3,7 @@ import { Quote, Image, Issue } from "./classes";
 
 // This function makes a simple HTTP GET request to example.com,
 // and returns the HTML text of the response.
-export function getExampleHtmlFooBAr(): string {
+export function getExampleHtml(): string {
   const response = http.fetch("https://example.com/");
   return response.text();
 }
