@@ -21,7 +21,7 @@ import (
 	"github.com/getsentry/sentry-go"
 )
 
-// The Sentry DSN for the Hypermode Runtime project (not a secret)
+// The Sentry DSN for the Modus Runtime project (not a secret)
 const sentryDsn = "https://d0de28f77651b88c22af84598882d60a@o4507057700470784.ingest.us.sentry.io/4507153498636288"
 
 var rootSourcePath string
