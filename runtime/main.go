@@ -12,11 +12,11 @@ import (
 	"path/filepath"
 	"runtime"
 
-	"hypruntime/config"
-	"hypruntime/httpserver"
-	"hypruntime/logger"
-	"hypruntime/services"
-	"hypruntime/utils"
+	"github.com/hypermodeinc/modus/runtime/config"
+	"github.com/hypermodeinc/modus/runtime/httpserver"
+	"github.com/hypermodeinc/modus/runtime/logger"
+	"github.com/hypermodeinc/modus/runtime/services"
+	"github.com/hypermodeinc/modus/runtime/utils"
 
 	"github.com/joho/godotenv"
 )

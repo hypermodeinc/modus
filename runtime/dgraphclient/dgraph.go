@@ -7,7 +7,8 @@ package dgraphclient
 import (
 	"context"
 	"fmt"
-	"hypruntime/logger"
+
+	"github.com/hypermodeinc/modus/runtime/logger"
 
 	"github.com/dgraph-io/dgo/v230"
 	"github.com/dgraph-io/dgo/v230/protos/api"

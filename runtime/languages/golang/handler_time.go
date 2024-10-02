@@ -11,8 +11,8 @@ import (
 	"time"
 	"unsafe"
 
-	"hypruntime/langsupport"
-	"hypruntime/utils"
+	"github.com/hypermodeinc/modus/runtime/langsupport"
+	"github.com/hypermodeinc/modus/runtime/utils"
 )
 
 func (p *planner) NewTimeHandler(ti langsupport.TypeInfo) (langsupport.TypeHandler, error) {

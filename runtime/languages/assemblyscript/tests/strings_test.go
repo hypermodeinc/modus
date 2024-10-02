@@ -5,8 +5,9 @@
 package assemblyscript_test
 
 import (
-	"hypruntime/utils"
 	"testing"
+
+	"github.com/hypermodeinc/modus/runtime/utils"
 )
 
 // "Hello World" in Japanese

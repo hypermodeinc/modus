@@ -5,7 +5,7 @@
 package datasource
 
 import (
-	"hypruntime/wasmhost"
+	"github.com/hypermodeinc/modus/runtime/wasmhost"
 )
 
 type HypDSConfig struct {

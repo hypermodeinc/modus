@@ -8,7 +8,7 @@ import (
 	"context"
 	"errors"
 
-	"hypruntime/models"
+	"github.com/hypermodeinc/modus/runtime/models"
 )
 
 func ComputeEmbedding(ctx context.Context, modelName string, sentenceMap map[string]string) (map[string][]float64, error) {

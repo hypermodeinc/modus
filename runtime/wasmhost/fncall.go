@@ -11,10 +11,10 @@ import (
 	"os"
 	"time"
 
-	"hypruntime/functions"
-	"hypruntime/logger"
-	"hypruntime/metrics"
-	"hypruntime/utils"
+	"github.com/hypermodeinc/modus/runtime/functions"
+	"github.com/hypermodeinc/modus/runtime/logger"
+	"github.com/hypermodeinc/modus/runtime/metrics"
+	"github.com/hypermodeinc/modus/runtime/utils"
 
 	"github.com/rs/xid"
 	"github.com/tetratelabs/wazero/sys"

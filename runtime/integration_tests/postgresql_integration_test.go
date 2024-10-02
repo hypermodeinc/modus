@@ -16,9 +16,9 @@ import (
 	"testing"
 	"time"
 
-	"hypruntime/config"
-	"hypruntime/httpserver"
-	"hypruntime/services"
+	"github.com/hypermodeinc/modus/runtime/config"
+	"github.com/hypermodeinc/modus/runtime/httpserver"
+	"github.com/hypermodeinc/modus/runtime/services"
 
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/image"

@@ -9,12 +9,12 @@ import (
 	"fmt"
 	"strings"
 
-	"hypruntime/hostfunctions/compatibility"
-	"hypruntime/langsupport"
-	"hypruntime/languages"
-	"hypruntime/logger"
-	"hypruntime/plugins/metadata"
-	"hypruntime/utils"
+	"github.com/hypermodeinc/modus/runtime/hostfunctions/compatibility"
+	"github.com/hypermodeinc/modus/runtime/langsupport"
+	"github.com/hypermodeinc/modus/runtime/languages"
+	"github.com/hypermodeinc/modus/runtime/logger"
+	"github.com/hypermodeinc/modus/runtime/plugins/metadata"
+	"github.com/hypermodeinc/modus/runtime/utils"
 
 	"github.com/tetratelabs/wazero"
 )

@@ -4,7 +4,7 @@
 
 package hostfunctions
 
-import "hypruntime/wasmhost"
+import "github.com/hypermodeinc/modus/runtime/wasmhost"
 
 var registrations []func(wasmhost.WasmHost) error
 

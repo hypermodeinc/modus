@@ -12,13 +12,13 @@ import (
 	"reflect"
 	"testing"
 
-	"hypruntime/functions"
-	"hypruntime/langsupport"
-	"hypruntime/logger"
-	"hypruntime/plugins"
-	"hypruntime/plugins/metadata"
-	"hypruntime/utils"
-	"hypruntime/wasmhost"
+	"github.com/hypermodeinc/modus/runtime/functions"
+	"github.com/hypermodeinc/modus/runtime/langsupport"
+	"github.com/hypermodeinc/modus/runtime/logger"
+	"github.com/hypermodeinc/modus/runtime/plugins"
+	"github.com/hypermodeinc/modus/runtime/plugins/metadata"
+	"github.com/hypermodeinc/modus/runtime/utils"
+	"github.com/hypermodeinc/modus/runtime/wasmhost"
 )
 
 type WasmTestFixture struct {

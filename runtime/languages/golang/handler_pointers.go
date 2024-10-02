@@ -9,9 +9,9 @@ import (
 	"errors"
 	"fmt"
 
-	"hypruntime/langsupport"
-	"hypruntime/plugins/metadata"
-	"hypruntime/utils"
+	"github.com/hypermodeinc/modus/runtime/langsupport"
+	"github.com/hypermodeinc/modus/runtime/plugins/metadata"
+	"github.com/hypermodeinc/modus/runtime/utils"
 )
 
 func (p *planner) NewPointerHandler(ctx context.Context, ti langsupport.TypeInfo) (langsupport.TypeHandler, error) {

@@ -13,9 +13,9 @@ import (
 	"time"
 	"unsafe"
 
-	"hypruntime/langsupport"
-	"hypruntime/plugins/metadata"
-	"hypruntime/utils"
+	"github.com/hypermodeinc/modus/runtime/langsupport"
+	"github.com/hypermodeinc/modus/runtime/plugins/metadata"
+	"github.com/hypermodeinc/modus/runtime/utils"
 )
 
 var _langTypeInfo = &langTypeInfo{}

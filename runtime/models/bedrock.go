@@ -8,9 +8,9 @@ import (
 	"context"
 	"fmt"
 
-	hyp_aws "hypruntime/aws"
-	"hypruntime/db"
-	"hypruntime/utils"
+	hyp_aws "github.com/hypermodeinc/modus/runtime/aws"
+	"github.com/hypermodeinc/modus/runtime/db"
+	"github.com/hypermodeinc/modus/runtime/utils"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/bedrockruntime"

@@ -11,8 +11,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"hypruntime/httpserver"
-	"hypruntime/metrics"
+	"github.com/hypermodeinc/modus/runtime/httpserver"
+	"github.com/hypermodeinc/modus/runtime/metrics"
 
 	"github.com/prometheus/common/expfmt"
 )

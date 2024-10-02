@@ -10,10 +10,10 @@ import (
 	"fmt"
 	"reflect"
 
-	"hypruntime/langsupport"
-	"hypruntime/languages/assemblyscript/hash"
-	"hypruntime/plugins/metadata"
-	"hypruntime/utils"
+	"github.com/hypermodeinc/modus/runtime/langsupport"
+	"github.com/hypermodeinc/modus/runtime/languages/assemblyscript/hash"
+	"github.com/hypermodeinc/modus/runtime/plugins/metadata"
+	"github.com/hypermodeinc/modus/runtime/utils"
 )
 
 // Reference: https://github.com/AssemblyScript/assemblyscript/blob/main/std/assembly/map.ts

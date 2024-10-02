@@ -11,8 +11,8 @@ import (
 	"strings"
 	"time"
 
-	"hypruntime/langsupport"
-	"hypruntime/utils"
+	"github.com/hypermodeinc/modus/runtime/langsupport"
+	"github.com/hypermodeinc/modus/runtime/utils"
 )
 
 var _langTypeInfo = &langTypeInfo{}

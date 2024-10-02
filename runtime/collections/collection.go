@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"sync"
 
-	"hypruntime/collections/index/interfaces"
+	"github.com/hypermodeinc/modus/runtime/collections/index/interfaces"
 )
 
 type collection struct {

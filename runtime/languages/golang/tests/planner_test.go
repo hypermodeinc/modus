@@ -5,11 +5,12 @@
 package golang_test
 
 import (
-	"hypruntime/langsupport"
 	"reflect"
 	"testing"
 	"time"
 	"unsafe"
+
+	"github.com/hypermodeinc/modus/runtime/langsupport"
 )
 
 func TestGetHandler_int(t *testing.T) {

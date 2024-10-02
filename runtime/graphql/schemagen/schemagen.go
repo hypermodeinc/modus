@@ -13,10 +13,10 @@ import (
 	"sort"
 	"strings"
 
-	"hypruntime/langsupport"
-	"hypruntime/languages"
-	"hypruntime/plugins/metadata"
-	"hypruntime/utils"
+	"github.com/hypermodeinc/modus/runtime/langsupport"
+	"github.com/hypermodeinc/modus/runtime/languages"
+	"github.com/hypermodeinc/modus/runtime/plugins/metadata"
+	"github.com/hypermodeinc/modus/runtime/utils"
 )
 
 type GraphQLSchema struct {

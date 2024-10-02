@@ -8,7 +8,7 @@ import (
 	"slices"
 	"testing"
 
-	"hypruntime/utils"
+	"github.com/hypermodeinc/modus/runtime/utils"
 )
 
 func TestInt8ArrayInput(t *testing.T) {

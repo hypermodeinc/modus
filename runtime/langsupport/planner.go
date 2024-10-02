@@ -7,7 +7,7 @@ package langsupport
 import (
 	"context"
 
-	"hypruntime/plugins/metadata"
+	"github.com/hypermodeinc/modus/runtime/plugins/metadata"
 
 	wasm "github.com/tetratelabs/wazero/api"
 )

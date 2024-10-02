@@ -5,9 +5,9 @@
 package functions
 
 import (
-	"hypruntime/langsupport"
-	"hypruntime/plugins"
-	"hypruntime/plugins/metadata"
+	"github.com/hypermodeinc/modus/runtime/langsupport"
+	"github.com/hypermodeinc/modus/runtime/plugins"
+	"github.com/hypermodeinc/modus/runtime/plugins/metadata"
 )
 
 type FunctionInfo interface {

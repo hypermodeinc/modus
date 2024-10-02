@@ -8,7 +8,7 @@ import (
 	"context"
 	"errors"
 
-	"hypruntime/models"
+	"github.com/hypermodeinc/modus/runtime/models"
 )
 
 func InvokeClassifier(ctx context.Context, modelName string, sentenceMap map[string]string) (map[string]map[string]float32, error) {

@@ -1,4 +1,4 @@
-module hypruntime
+module github.com/hypermodeinc/modus/runtime
 
 go 1.23.0
 

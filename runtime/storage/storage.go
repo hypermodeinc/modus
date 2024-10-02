@@ -6,10 +6,11 @@ package storage
 
 import (
 	"context"
-	"hypruntime/config"
 	"time"
 
-	"hypruntime/utils"
+	"github.com/hypermodeinc/modus/runtime/config"
+
+	"github.com/hypermodeinc/modus/runtime/utils"
 )
 
 var provider storageProvider

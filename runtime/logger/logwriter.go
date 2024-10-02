@@ -5,8 +5,9 @@
 package logger
 
 import (
-	"hypruntime/utils"
 	"strings"
+
+	"github.com/hypermodeinc/modus/runtime/utils"
 
 	"github.com/rs/zerolog"
 )

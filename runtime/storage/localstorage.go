@@ -7,11 +7,12 @@ package storage
 import (
 	"context"
 	"fmt"
-	"hypruntime/config"
-	"hypruntime/logger"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/hypermodeinc/modus/runtime/config"
+	"github.com/hypermodeinc/modus/runtime/logger"
 )
 
 type localStorageProvider struct {

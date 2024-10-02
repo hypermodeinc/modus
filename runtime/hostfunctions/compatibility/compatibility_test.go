@@ -8,12 +8,12 @@ import (
 	"context"
 	"testing"
 
-	"hypruntime/functions"
-	"hypruntime/hostfunctions"
-	"hypruntime/hostfunctions/compatibility"
-	"hypruntime/plugins"
-	"hypruntime/utils"
-	"hypruntime/wasmhost"
+	"github.com/hypermodeinc/modus/runtime/functions"
+	"github.com/hypermodeinc/modus/runtime/hostfunctions"
+	"github.com/hypermodeinc/modus/runtime/hostfunctions/compatibility"
+	"github.com/hypermodeinc/modus/runtime/plugins"
+	"github.com/hypermodeinc/modus/runtime/utils"
+	"github.com/hypermodeinc/modus/runtime/wasmhost"
 
 	"github.com/tetratelabs/wazero"
 	wasm "github.com/tetratelabs/wazero/api"

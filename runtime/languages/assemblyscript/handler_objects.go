@@ -10,10 +10,10 @@ import (
 	"fmt"
 	"reflect"
 
-	"hypruntime/langsupport"
-	"hypruntime/logger"
-	"hypruntime/plugins/metadata"
-	"hypruntime/utils"
+	"github.com/hypermodeinc/modus/runtime/langsupport"
+	"github.com/hypermodeinc/modus/runtime/logger"
+	"github.com/hypermodeinc/modus/runtime/plugins/metadata"
+	"github.com/hypermodeinc/modus/runtime/utils"
 )
 
 const maxDepth = 5 // TODO: make this based on the depth requested in the query

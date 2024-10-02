@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"hypruntime/collections"
+	"github.com/hypermodeinc/modus/runtime/collections"
 )
 
 func init() {

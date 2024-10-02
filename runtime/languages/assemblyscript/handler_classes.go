@@ -10,9 +10,9 @@ import (
 	"reflect"
 	"strings"
 
-	"hypruntime/langsupport"
-	"hypruntime/plugins/metadata"
-	"hypruntime/utils"
+	"github.com/hypermodeinc/modus/runtime/langsupport"
+	"github.com/hypermodeinc/modus/runtime/plugins/metadata"
+	"github.com/hypermodeinc/modus/runtime/utils"
 )
 
 func (p *planner) NewClassHandler(ctx context.Context, ti langsupport.TypeInfo) (managedTypeHandler, error) {

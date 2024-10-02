@@ -10,9 +10,9 @@ import (
 	"fmt"
 	"sync"
 
-	"hypruntime/collections/index"
-	"hypruntime/collections/utils"
-	"hypruntime/db"
+	"github.com/hypermodeinc/modus/runtime/collections/index"
+	"github.com/hypermodeinc/modus/runtime/collections/utils"
+	"github.com/hypermodeinc/modus/runtime/db"
 )
 
 const (

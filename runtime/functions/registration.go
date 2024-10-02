@@ -8,9 +8,9 @@ import (
 	"context"
 	"fmt"
 
-	"hypruntime/logger"
-	"hypruntime/plugins"
-	"hypruntime/utils"
+	"github.com/hypermodeinc/modus/runtime/logger"
+	"github.com/hypermodeinc/modus/runtime/plugins"
+	"github.com/hypermodeinc/modus/runtime/utils"
 )
 
 func NewFunctionRegistry() FunctionRegistry {

@@ -7,8 +7,8 @@ package pluginmanager
 import (
 	"context"
 
-	"hypruntime/logger"
-	"hypruntime/plugins"
+	"github.com/hypermodeinc/modus/runtime/logger"
+	"github.com/hypermodeinc/modus/runtime/plugins"
 
 	"github.com/rs/zerolog"
 )

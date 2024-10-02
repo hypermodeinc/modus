@@ -10,10 +10,10 @@ import (
 	"strings"
 	"testing"
 
-	"hypruntime/languages"
-	"hypruntime/manifestdata"
-	"hypruntime/plugins/metadata"
-	"hypruntime/utils"
+	"github.com/hypermodeinc/modus/runtime/languages"
+	"github.com/hypermodeinc/modus/runtime/manifestdata"
+	"github.com/hypermodeinc/modus/runtime/plugins/metadata"
+	"github.com/hypermodeinc/modus/runtime/utils"
 
 	"github.com/hypermodeAI/manifest"
 	"github.com/stretchr/testify/require"

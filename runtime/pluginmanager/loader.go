@@ -8,13 +8,13 @@ import (
 	"context"
 	"fmt"
 
-	"hypruntime/db"
-	"hypruntime/logger"
-	"hypruntime/plugins"
-	"hypruntime/plugins/metadata"
-	"hypruntime/storage"
-	"hypruntime/utils"
-	"hypruntime/wasmhost"
+	"github.com/hypermodeinc/modus/runtime/db"
+	"github.com/hypermodeinc/modus/runtime/logger"
+	"github.com/hypermodeinc/modus/runtime/plugins"
+	"github.com/hypermodeinc/modus/runtime/plugins/metadata"
+	"github.com/hypermodeinc/modus/runtime/storage"
+	"github.com/hypermodeinc/modus/runtime/utils"
+	"github.com/hypermodeinc/modus/runtime/wasmhost"
 )
 
 func monitorPlugins(ctx context.Context) {

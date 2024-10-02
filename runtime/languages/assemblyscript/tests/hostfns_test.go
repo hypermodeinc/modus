@@ -9,10 +9,10 @@ import (
 	"reflect"
 	"testing"
 
-	"hypruntime/hostfunctions"
-	"hypruntime/testutils"
-	"hypruntime/utils"
-	"hypruntime/wasmhost"
+	"github.com/hypermodeinc/modus/runtime/hostfunctions"
+	"github.com/hypermodeinc/modus/runtime/testutils"
+	"github.com/hypermodeinc/modus/runtime/utils"
+	"github.com/hypermodeinc/modus/runtime/wasmhost"
 )
 
 func getTestHostFunctionRegistrations() []func(wasmhost.WasmHost) error {

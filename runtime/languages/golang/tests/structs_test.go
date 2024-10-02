@@ -8,7 +8,7 @@ import (
 	"reflect"
 	"testing"
 
-	"hypruntime/utils"
+	"github.com/hypermodeinc/modus/runtime/utils"
 )
 
 type TestStruct1 struct {

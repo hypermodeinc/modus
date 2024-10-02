@@ -7,7 +7,7 @@ package hostfunctions
 import (
 	"fmt"
 
-	"hypruntime/graphqlclient"
+	"github.com/hypermodeinc/modus/runtime/graphqlclient"
 )
 
 func init() {

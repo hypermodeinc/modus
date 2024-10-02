@@ -7,9 +7,9 @@ package languages
 import (
 	"strings"
 
-	"hypruntime/langsupport"
-	"hypruntime/languages/assemblyscript"
-	"hypruntime/languages/golang"
+	"github.com/hypermodeinc/modus/runtime/langsupport"
+	"github.com/hypermodeinc/modus/runtime/languages/assemblyscript"
+	"github.com/hypermodeinc/modus/runtime/languages/golang"
 )
 
 var lang_AssemblyScript = langsupport.NewLanguage(

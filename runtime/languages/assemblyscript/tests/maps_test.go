@@ -6,10 +6,11 @@ package assemblyscript_test
 
 import (
 	"fmt"
-	"hypruntime/utils"
 	"maps"
 	"reflect"
 	"testing"
+
+	"github.com/hypermodeinc/modus/runtime/utils"
 )
 
 func TestMapInput_u8_string(t *testing.T) {

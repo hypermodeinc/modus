@@ -7,7 +7,7 @@ package golang_test
 import (
 	"testing"
 
-	"hypruntime/httpclient"
+	"github.com/hypermodeinc/modus/runtime/httpclient"
 )
 
 func TestHttpResponseHeaders(t *testing.T) {

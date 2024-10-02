@@ -8,8 +8,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"hypruntime/langsupport"
-	"hypruntime/utils"
+
+	"github.com/hypermodeinc/modus/runtime/langsupport"
+	"github.com/hypermodeinc/modus/runtime/utils"
 
 	wasm "github.com/tetratelabs/wazero/api"
 )

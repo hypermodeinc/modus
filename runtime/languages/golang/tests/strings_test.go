@@ -7,7 +7,7 @@ package golang_test
 import (
 	"testing"
 
-	"hypruntime/utils"
+	"github.com/hypermodeinc/modus/runtime/utils"
 )
 
 // "Hello World" in Japanese

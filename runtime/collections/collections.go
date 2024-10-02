@@ -11,14 +11,14 @@ import (
 	"math"
 	"sort"
 
-	"hypruntime/collections/in_mem"
-	"hypruntime/collections/index"
-	"hypruntime/collections/index/interfaces"
-	collection_utils "hypruntime/collections/utils"
-	"hypruntime/functions"
-	"hypruntime/manifestdata"
-	"hypruntime/utils"
-	"hypruntime/wasmhost"
+	"github.com/hypermodeinc/modus/runtime/collections/in_mem"
+	"github.com/hypermodeinc/modus/runtime/collections/index"
+	"github.com/hypermodeinc/modus/runtime/collections/index/interfaces"
+	collection_utils "github.com/hypermodeinc/modus/runtime/collections/utils"
+	"github.com/hypermodeinc/modus/runtime/functions"
+	"github.com/hypermodeinc/modus/runtime/manifestdata"
+	"github.com/hypermodeinc/modus/runtime/utils"
+	"github.com/hypermodeinc/modus/runtime/wasmhost"
 )
 
 var errInvalidEmbedderSignature = errors.New("invalid embedder function signature")

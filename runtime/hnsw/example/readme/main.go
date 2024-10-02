@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"hypruntime/hnsw"
+	"github.com/hypermodeinc/modus/runtime/hnsw"
 )
 
 func main() {

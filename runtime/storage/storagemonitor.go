@@ -6,9 +6,10 @@ package storage
 
 import (
 	"context"
-	"hypruntime/config"
-	"hypruntime/logger"
 	"time"
+
+	"github.com/hypermodeinc/modus/runtime/config"
+	"github.com/hypermodeinc/modus/runtime/logger"
 )
 
 type StorageMonitor struct {

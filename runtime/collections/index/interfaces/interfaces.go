@@ -9,9 +9,9 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"hypruntime/collections/in_mem/sequential"
-	"hypruntime/collections/index"
-	"hypruntime/collections/utils"
+	"github.com/hypermodeinc/modus/runtime/collections/in_mem/sequential"
+	"github.com/hypermodeinc/modus/runtime/collections/index"
+	"github.com/hypermodeinc/modus/runtime/collections/utils"
 )
 
 var (

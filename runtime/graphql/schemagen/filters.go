@@ -4,7 +4,7 @@
 
 package schemagen
 
-import "hypruntime/manifestdata"
+import "github.com/hypermodeinc/modus/runtime/manifestdata"
 
 func getFnFilter() func(*FunctionSignature) bool {
 	embedders := make(map[string]bool)

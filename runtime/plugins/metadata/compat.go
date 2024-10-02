@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"strings"
 
-	v1 "hypruntime/plugins/metadata/legacy/v1"
+	v1 "github.com/hypermodeinc/modus/runtime/plugins/metadata/legacy/v1"
 )
 
 const timeFormat = "2006-01-02T15:04:05.000Z"

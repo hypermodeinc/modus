@@ -8,7 +8,7 @@ import (
 	"context"
 	"reflect"
 
-	"hypruntime/plugins/metadata"
+	"github.com/hypermodeinc/modus/runtime/plugins/metadata"
 )
 
 type TypeInfo interface {

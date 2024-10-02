@@ -15,11 +15,11 @@ import (
 	"syscall"
 	"time"
 
-	"hypruntime/config"
-	"hypruntime/graphql"
-	"hypruntime/logger"
-	"hypruntime/metrics"
-	"hypruntime/utils"
+	"github.com/hypermodeinc/modus/runtime/config"
+	"github.com/hypermodeinc/modus/runtime/graphql"
+	"github.com/hypermodeinc/modus/runtime/logger"
+	"github.com/hypermodeinc/modus/runtime/metrics"
+	"github.com/hypermodeinc/modus/runtime/utils"
 
 	"github.com/rs/cors"
 )

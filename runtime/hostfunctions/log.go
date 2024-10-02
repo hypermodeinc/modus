@@ -9,8 +9,8 @@ import (
 	"fmt"
 	"os"
 
-	"hypruntime/logger"
-	"hypruntime/utils"
+	"github.com/hypermodeinc/modus/runtime/logger"
+	"github.com/hypermodeinc/modus/runtime/utils"
 )
 
 func init() {

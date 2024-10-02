@@ -8,10 +8,11 @@ import (
 	"context"
 	"crypto/x509"
 	"fmt"
-	"hypruntime/manifestdata"
-	"hypruntime/secrets"
 	"strings"
 	"sync"
+
+	"github.com/hypermodeinc/modus/runtime/manifestdata"
+	"github.com/hypermodeinc/modus/runtime/secrets"
 
 	"github.com/hypermodeAI/manifest"
 	"google.golang.org/grpc"

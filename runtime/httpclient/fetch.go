@@ -11,9 +11,9 @@ import (
 	"net/http"
 	"strings"
 
-	"hypruntime/hosts"
-	"hypruntime/secrets"
-	"hypruntime/utils"
+	"github.com/hypermodeinc/modus/runtime/hosts"
+	"github.com/hypermodeinc/modus/runtime/secrets"
+	"github.com/hypermodeinc/modus/runtime/utils"
 )
 
 func HttpFetch(ctx context.Context, request *HttpRequest) (*HttpResponse, error) {

@@ -6,7 +6,8 @@ package hostfunctions
 
 import (
 	"fmt"
-	"hypruntime/httpclient"
+
+	"github.com/hypermodeinc/modus/runtime/httpclient"
 )
 
 func init() {

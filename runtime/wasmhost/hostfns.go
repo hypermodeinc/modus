@@ -12,10 +12,10 @@ import (
 	"runtime/debug"
 	"time"
 
-	"hypruntime/langsupport"
-	"hypruntime/logger"
-	"hypruntime/plugins"
-	"hypruntime/utils"
+	"github.com/hypermodeinc/modus/runtime/langsupport"
+	"github.com/hypermodeinc/modus/runtime/logger"
+	"github.com/hypermodeinc/modus/runtime/plugins"
+	"github.com/hypermodeinc/modus/runtime/utils"
 
 	wasm "github.com/tetratelabs/wazero/api"
 )

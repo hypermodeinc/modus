@@ -10,8 +10,8 @@ import (
 	"os"
 	"time"
 
-	"hypruntime/config"
-	"hypruntime/utils"
+	"github.com/hypermodeinc/modus/runtime/config"
+	"github.com/hypermodeinc/modus/runtime/utils"
 
 	zls "github.com/archdx/zerolog-sentry"
 	"github.com/getsentry/sentry-go"

@@ -7,7 +7,7 @@ package compatibility
 import (
 	"fmt"
 
-	"hypruntime/plugins/metadata"
+	"github.com/hypermodeinc/modus/runtime/plugins/metadata"
 )
 
 // This is a compatibility shim for Hypermode host functions that are not in the metadata.

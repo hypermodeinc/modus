@@ -8,9 +8,9 @@ import (
 	"context"
 	"fmt"
 
-	"hypruntime/hosts"
-	"hypruntime/logger"
-	"hypruntime/utils"
+	"github.com/hypermodeinc/modus/runtime/hosts"
+	"github.com/hypermodeinc/modus/runtime/logger"
+	"github.com/hypermodeinc/modus/runtime/utils"
 
 	"github.com/tidwall/gjson"
 )

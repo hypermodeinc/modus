@@ -10,7 +10,7 @@ import (
 	"sync"
 	"testing"
 
-	"hypruntime/collections/utils"
+	"github.com/hypermodeinc/modus/runtime/collections/utils"
 )
 
 func TestMultipleSequentialVectorIndexes(t *testing.T) {

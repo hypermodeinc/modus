@@ -7,7 +7,8 @@ package sqlclient
 import (
 	"context"
 	"fmt"
-	"hypruntime/logger"
+
+	"github.com/hypermodeinc/modus/runtime/logger"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"

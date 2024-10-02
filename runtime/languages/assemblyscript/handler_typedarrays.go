@@ -9,10 +9,10 @@ import (
 	"errors"
 	"fmt"
 
-	"hypruntime/langsupport"
-	"hypruntime/langsupport/primitives"
-	"hypruntime/plugins/metadata"
-	"hypruntime/utils"
+	"github.com/hypermodeinc/modus/runtime/langsupport"
+	"github.com/hypermodeinc/modus/runtime/langsupport/primitives"
+	"github.com/hypermodeinc/modus/runtime/plugins/metadata"
+	"github.com/hypermodeinc/modus/runtime/utils"
 
 	"golang.org/x/exp/constraints"
 )

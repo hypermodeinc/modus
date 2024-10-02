@@ -8,7 +8,7 @@ import (
 	"math"
 	"testing"
 
-	"hypruntime/utils"
+	"github.com/hypermodeinc/modus/runtime/utils"
 )
 
 func TestBoolInput_false(t *testing.T) {

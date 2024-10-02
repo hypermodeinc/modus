@@ -5,9 +5,10 @@
 package assemblyscript_test
 
 import (
-	"hypruntime/utils"
 	"testing"
 	"time"
+
+	"github.com/hypermodeinc/modus/runtime/utils"
 )
 
 var testTime, _ = time.Parse(time.RFC3339, "2024-12-31T23:59:59.999Z")

@@ -7,7 +7,7 @@ package hostfunctions
 import (
 	"fmt"
 
-	"hypruntime/dgraphclient"
+	"github.com/hypermodeinc/modus/runtime/dgraphclient"
 )
 
 func init() {

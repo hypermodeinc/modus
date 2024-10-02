@@ -8,9 +8,9 @@ import (
 	"context"
 	"fmt"
 
-	hmConfig "hypruntime/config"
-	"hypruntime/logger"
-	"hypruntime/utils"
+	hmConfig "github.com/hypermodeinc/modus/runtime/config"
+	"github.com/hypermodeinc/modus/runtime/logger"
+	"github.com/hypermodeinc/modus/runtime/utils"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"

@@ -6,8 +6,9 @@ package engine
 
 import (
 	"context"
-	"hypruntime/logger"
 	"unsafe"
+
+	"github.com/hypermodeinc/modus/runtime/logger"
 
 	"github.com/jensneuse/abstractlogger"
 	"github.com/rs/zerolog"

@@ -10,12 +10,12 @@ import (
 	"net/http"
 	"strconv"
 
-	"hypruntime/graphql/engine"
-	"hypruntime/logger"
-	"hypruntime/manifestdata"
-	"hypruntime/pluginmanager"
-	"hypruntime/utils"
-	"hypruntime/wasmhost"
+	"github.com/hypermodeinc/modus/runtime/graphql/engine"
+	"github.com/hypermodeinc/modus/runtime/logger"
+	"github.com/hypermodeinc/modus/runtime/manifestdata"
+	"github.com/hypermodeinc/modus/runtime/pluginmanager"
+	"github.com/hypermodeinc/modus/runtime/utils"
+	"github.com/hypermodeinc/modus/runtime/wasmhost"
 
 	"github.com/tidwall/sjson"
 	eng "github.com/wundergraph/graphql-go-tools/execution/engine"

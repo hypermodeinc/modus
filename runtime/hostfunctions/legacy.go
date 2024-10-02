@@ -7,7 +7,7 @@ package hostfunctions
 import (
 	"fmt"
 
-	"hypruntime/models/legacymodels"
+	"github.com/hypermodeinc/modus/runtime/models/legacymodels"
 )
 
 func init() {

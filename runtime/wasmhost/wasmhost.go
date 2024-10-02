@@ -10,10 +10,10 @@ import (
 	"fmt"
 	"io"
 
-	"hypruntime/functions"
-	"hypruntime/logger"
-	"hypruntime/plugins"
-	"hypruntime/utils"
+	"github.com/hypermodeinc/modus/runtime/functions"
+	"github.com/hypermodeinc/modus/runtime/logger"
+	"github.com/hypermodeinc/modus/runtime/plugins"
+	"github.com/hypermodeinc/modus/runtime/utils"
 
 	"github.com/rs/zerolog"
 	"github.com/tetratelabs/wazero"

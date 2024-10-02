@@ -10,7 +10,7 @@ import (
 	"fmt"
 	"strings"
 
-	"hypruntime/utils"
+	"github.com/hypermodeinc/modus/runtime/utils"
 
 	"github.com/tidwall/gjson"
 )

@@ -9,8 +9,8 @@ import (
 	"errors"
 	"reflect"
 
-	"hypruntime/langsupport"
-	"hypruntime/utils"
+	"github.com/hypermodeinc/modus/runtime/langsupport"
+	"github.com/hypermodeinc/modus/runtime/utils"
 )
 
 func (p *planner) NewArrayHandler(ctx context.Context, ti langsupport.TypeInfo) (langsupport.TypeHandler, error) {

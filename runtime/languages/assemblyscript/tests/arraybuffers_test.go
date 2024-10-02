@@ -8,7 +8,7 @@ import (
 	"bytes"
 	"testing"
 
-	"hypruntime/utils"
+	"github.com/hypermodeinc/modus/runtime/utils"
 )
 
 func TestArrayBufferInput(t *testing.T) {

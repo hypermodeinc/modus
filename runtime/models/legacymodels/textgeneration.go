@@ -8,9 +8,9 @@ import (
 	"context"
 	"fmt"
 
-	"hypruntime/hosts"
-	"hypruntime/models"
-	"hypruntime/utils"
+	"github.com/hypermodeinc/modus/runtime/hosts"
+	"github.com/hypermodeinc/modus/runtime/models"
+	"github.com/hypermodeinc/modus/runtime/utils"
 )
 
 type outputFormat string

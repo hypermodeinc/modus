@@ -11,9 +11,9 @@ import (
 	"sync"
 	"time"
 
-	"hypruntime/collections/index/interfaces"
-	"hypruntime/db"
-	"hypruntime/logger"
+	"github.com/hypermodeinc/modus/runtime/collections/index/interfaces"
+	"github.com/hypermodeinc/modus/runtime/db"
+	"github.com/hypermodeinc/modus/runtime/logger"
 )
 
 const collectionFactoryWriteInterval = 1
