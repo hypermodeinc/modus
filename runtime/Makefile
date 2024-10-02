@@ -1,47 +1,46 @@
-# Variables
 EXECUTABLE := modus_runtime
-RACE_FLAG := # Empty by default
 
-# Get the OS name
 ifneq ($(OS), Windows_NT)
 	OS := $(shell uname -s)
 endif
 
-# If on Windows, set the executable extension to .exe
 ifeq ($(OS), Windows_NT)
 	EXECUTABLE := $(EXECUTABLE).exe
 endif
 
-# Check if the '-race' argument is passed
-ifneq (,$(findstring -race,$(MAKECMDGOALS)))
-    RACE_FLAG := -race
-    # Remove the '-race' argument from MAKECMDGOALS
-    MAKECMDGOALS := $(filter-out -race,$(MAKECMDGOALS))
-endif
-
-# PHONY targets to avoid name conflicts with files
-.PHONY: all generate build clean test integration
-
-# Default target
+.PHONY: all
 all: build
 
-# Go generate before building
+.PHONY: tidy
+tidy:
+	go mod tidy -v
+	go fmt ./...
+
+.PHONY: generate
 generate:
 	go generate ./...
 
-# Build the binary
+.PHONY: build
 build: generate
 	go build -o $(EXECUTABLE)
 
-# Run unit tests with optional race flag
+.PHONY: run
+run: generate
+	go run .
+
+.PHONY: test
 test:
-	go test $(RACE_FLAG) ./...
+	go test ./...
 
-# Run integration tests with the 'integration' build tag and optional race flag
-integration:
-	go test $(RACE_FLAG) -tags=integration ./...
+.PHONY: test-race
+test-race:
+	go test -race ./...
 
-# Clean the build artifacts
+.PHONY: test-integration
+test-integration:
+	go test -race -tags=integration ./integration_tests/...
+
+.PHONY: clean
 clean:
 	go clean
 	rm -f $(EXECUTABLE)
