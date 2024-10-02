@@ -7,6 +7,7 @@
 - Improve JSON performance [#402](https://github.com/hypermodeAI/runtime/pull/402)
 - Misc performance improvements [#403](https://github.com/hypermodeAI/runtime/pull/403)
 - Fix error on void response [#404](https://github.com/hypermodeAI/runtime/pull/404)
+- Remove unused admin endpoint [#406](https://github.com/hypermodeAI/runtime/pull/406)
 
 ## 2024-09-26 - Version 0.12.6
 
