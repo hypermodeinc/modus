@@ -35,6 +35,15 @@ const version = "` + version + `"
 }
 
 func getVersion() string {
+
+	// If the environment variable is set at build time, use it.
+	// This is primarily for the docker build.
+	v := os.Getenv("MODUS_BUILD_VERSION")
+	if v != "" {
+		return v
+	}
+
+	// Otherwise, get a version based on the git tag and commit hash.
 	result, err := exec.Command("git", "describe", "--tags", "--always").Output()
 	if err != nil {
 		log.Fatal(err)

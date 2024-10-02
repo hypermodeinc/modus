@@ -1,28 +1,20 @@
-# build hypruntime binary
+# build the application binary
 FROM --platform=$BUILDPLATFORM golang:alpine AS builder
 WORKDIR /src
 
-# install git
-RUN apk add git
-
-# copy go.mod and go.sum files separately so that
-# it is only run when the dependencies change
+# copy go.mod and go.sum files separately so that the download step
+# is only run when the dependencies change
 COPY go.mod go.sum ./
 RUN go mod download
 
-# copy the .git folder so we can get the git tag
-# for the hypermode version string
-COPY .git/ .git/
-RUN git describe --tags --always
-
 COPY ./ ./
-ARG TARGETOS TARGETARCH
-RUN go generate ./...
-RUN GOOS=$TARGETOS GOARCH=$TARGETARCH go build .
+ARG TARGETOS TARGETARCH MODUS_BUILD_VERSION
+RUN MODUS_BUILD_VERSION=$MODUS_BUILD_VERSION go generate ./...
+RUN GOOS=$TARGETOS GOARCH=$TARGETARCH go build -o modus_runtime
 
-# build runtime image
+# build the container image
 FROM ubuntu:22.04
-LABEL maintainer="Hypermode <hello@hypermode.com>"
+LABEL maintainer="Hypermode, Inc. <hello@hypermode.com>"
 
 # add common tools
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -32,10 +24,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     less 
 
 # copy runtime binary from the build phase
-COPY --from=builder /src/hypruntime /usr/bin/hypruntime
+COPY --from=builder /src/modus_runtime /usr/bin/modus_runtime
 
-# create a link to the old name for backwards compatibility
-RUN ln -s /usr/bin/hypruntime /usr/bin/hmruntime
+# create a link to the old name(s) for backwards compatibility
+RUN ln -s /usr/bin/modus_runtime /usr/bin/hmruntime
+RUN ln -s /usr/bin/modus_runtime /usr/bin/hypruntime
 
 # update certificates every build
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -43,4 +36,4 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # set the default entrypoint and options
-ENTRYPOINT ["hypruntime", "--jsonlogs"]
+ENTRYPOINT ["modus_runtime", "--jsonlogs"]

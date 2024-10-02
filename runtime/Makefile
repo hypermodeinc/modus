@@ -45,3 +45,7 @@ clean:
 	go clean
 	rm -f $(EXECUTABLE)
 	rm -f **/*_generated.go
+
+.PHONY: docker-build
+docker-build:
+	docker build --build-arg MODUS_BUILD_VERSION="$(shell git describe --tags --always)" -t modus_runtime .
