@@ -116,7 +116,7 @@ func init() {
 }
 
 // InstrumentHandler wraps the provided http.Handler with metrics instrumentation.
-func InstrumentHandler(handler http.HandlerFunc, handlerName string) http.Handler {
+func InstrumentHandler(handler http.Handler, handlerName string) http.Handler {
 	return promhttp.InstrumentHandlerInFlight(
 		httpRequestsInFlightNum,
 		promhttp.InstrumentHandlerCounter(

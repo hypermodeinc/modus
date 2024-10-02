@@ -25,6 +25,8 @@ import (
 	"github.com/wundergraph/graphql-go-tools/v2/pkg/operationreport"
 )
 
+var GraphQLRequestHandler = http.HandlerFunc(handleGraphQLRequest)
+
 func Initialize() {
 	// The GraphQL engine's Activate function should be called when a plugin is loaded.
 	pluginmanager.RegisterPluginLoadedCallback(engine.Activate)
@@ -47,7 +49,7 @@ func Initialize() {
 	})
 }
 
-func HandleGraphQLRequest(w http.ResponseWriter, r *http.Request) {
+func handleGraphQLRequest(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	// Read the incoming GraphQL request

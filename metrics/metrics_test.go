@@ -19,7 +19,6 @@ import (
 
 const (
 	graphqlEndpoint = "/graphql"
-	adminEndpoint   = "/admin"
 	healthEndpoint  = "/health"
 	metricsEndpoint = "/metrics"
 )
@@ -58,14 +57,14 @@ func TestRuntimeMetrics(t *testing.T) {
 	s := httptest.NewServer(mux)
 	defer s.Close()
 
-	_ = httpGet(t, s, adminEndpoint)
+	_ = httpGet(t, s, graphqlEndpoint)
 	ensureValidMetrics(t, s, 1)
 
-	_ = httpGet(t, s, graphqlEndpoint)
-	ensureValidMetrics(t, s, 2)
-
 	_ = httpGet(t, s, healthEndpoint)
-	ensureValidMetrics(t, s, 2)
+	ensureValidMetrics(t, s, 1)
+
+	_ = httpGet(t, s, metricsEndpoint)
+	ensureValidMetrics(t, s, 1)
 }
 
 func BenchmarkSummary(b *testing.B) {
