@@ -4,7 +4,5 @@
 
 .dockerignore
 .gitignore
-.vscode
-.github
 # .git     # Don't ignore the .git directory. We need it to get the git tag when building the Docker image.
 README.md

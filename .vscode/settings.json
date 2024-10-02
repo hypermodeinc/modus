@@ -3,7 +3,8 @@
   "files.insertFinalNewline": true,
   "files.trimFinalNewlines": true,
   "files.associations": {
-    "CODEOWNERS": "plaintext"
+    "CODEOWNERS": "plaintext",
+    "LICENSE": "plaintext"
   },
   "go.lintTool": "golangci-lint",
   "go.testEnvVars": {
