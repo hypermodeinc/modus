@@ -5,5 +5,4 @@ __debug_bin*
 *.exe
 *.wasm
 *.wat
-*.generated.go
 *_generated.go

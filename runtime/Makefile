@@ -44,3 +44,4 @@ test-integration:
 clean:
 	go clean
 	rm -f $(EXECUTABLE)
+	rm -f **/*_generated.go
