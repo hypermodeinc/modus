@@ -11,27 +11,46 @@ import os from "node:os";
 export default class Run extends Command {
   static args = {
     path: Args.string({
-      description: "./my-project-|-Directory to run",
+      description: "./my-project-|-Path to project directory",
       hidden: false,
-      required: false,
+      required: false
     }),
   };
 
   static flags = {
     watch: Flags.boolean({
+      char: "w",
       description: "Watch project and rebuild continually",
+      hidden: false,
+      required: false,
+    }),
+    build: Flags.boolean({
+      char: "b",
+      description: "Build the latest before running",
+      hidden: false,
+      required: false,
+    }),
+    silent: Flags.boolean({
+      char: "s",
+      description: "Suppress output logs from cluttering terminal",
+      hidden: false,
+      required: false,
+    }),
+    verbose: Flags.boolean({
+      char: "v",
+      description: "Enable descriptive logging",
       hidden: false,
       required: false,
     }),
   };
 
-  static description = "Run a Modus app locally";
+  static description = "Launch a Modus app to local development";
 
   static examples = [`<%= config.bin %> <%= command.id %> run ./project-path --watch`];
 
   async run(): Promise<void> {
     const { args, flags } = await this.parse(Run);
-    const runtimePath = expandHomeDir("~/.hypermode/sdk/" + Metadata.runtime_version + "/runtime");
+    const runtimePath = expandHomeDir("~/.hypermode/sdk/" + Metadata.runtime_version + "/runtime") + (os.platform() === "win32" ? ".exe" : "");
 
     const cwd = args.path ? path.join(process.cwd(), args.path) : process.cwd();
     const watch = flags.watch;
@@ -49,12 +68,12 @@ export default class Run extends Command {
       process.exit(0);
     }
 
-    await BuildCommand.run(args.path ? [args.path] : []);
+    // await BuildCommand.run(args.path ? [args.path] : []);
     const build_wasm = path.join(cwd, "/build/" + project_name + ".wasm");
     const deploy_wasm = expandHomeDir("~/.hypermode/" + project_name + ".wasm");
     copyFileSync(build_wasm, deploy_wasm);
 
-    spawn(expandHomeDir("~/.hypermode/sdk/" + Metadata.runtime_version + "/runtime" + (os.platform() === "win32" ? ".exe" : "")), { stdio: "inherit" });
+    spawn("ENVIRONMENT=dev " + runtimePath, { stdio: "inherit" });
 
     if (watch) {
       const delay = 3000; // Max build frequency every 3000ms

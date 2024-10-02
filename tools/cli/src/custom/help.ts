@@ -31,20 +31,20 @@ export default class CustomHelp extends Help {
       const args =
         Object.keys(command.args).length > 0
           ? Object.entries(command.args)
-              .map((v) => {
-                if (!v[1].hidden && v[1].required) {
-                  if (v[1].description && v[1].description.indexOf("-|-") > 0) {
-                    return v[1].description.split("-|-")[0];
-                  }
-
-                  return v[0];
+            .map((v) => {
+              if (!v[1].hidden && v[1].required) {
+                if (v[1].description && v[1].description.indexOf("-|-") > 0) {
+                  return v[1].description.split("-|-")[0];
                 }
 
-                return "";
-              })
-              .join(" ")
+                return v[0];
+              }
+
+              return "";
+            })
+            .join(" ")
           : "";
-      const postPadding = " ".repeat(Math.max(20 - args.length, 1));
+      const postPadding = " ".repeat(Math.max(12 - args.length, 1));
       const description = command.description!;
       const aliases = command.aliases.length > 0 ? chalk.dim(" (" + command.aliases.join("/") + ")") : "";
 
@@ -63,7 +63,7 @@ export default class CustomHelp extends Help {
   }
 
   formatTopics(topics: Interfaces.Topic[]): string {
-    const padding = 30;
+    const padding = 22;
     let out = "";
     if (topics.find((v) => !v.hidden)) out += chalk.bold("Tools:") + "\n";
     else return out;
@@ -77,8 +77,8 @@ export default class CustomHelp extends Help {
 
   formatRootFooter(): string {
     let out = "";
-    out += "View the docs:                  " + chalk.blueBright("https://docs.hypermode.com/introduction") + "\n";
-    out += "View the repo:                  " + chalk.blueBright("https://github.com/HypermodeAI/modus") + "\n";
+    out += "View the docs:          " + chalk.blueBright("https://docs.hypermode.com/introduction") + "\n";
+    out += "View the repo:          " + chalk.blueBright("https://github.com/HypermodeAI/modus") + "\n";
 
     out += "\n";
     out += "Made with 💖 by " + chalk.magentaBright("https://hypermode.ai");
@@ -123,22 +123,9 @@ export default class CustomHelp extends Help {
   }
 
   async showCommandHelp(command: Command.Loadable): Promise<void> {
+    const margin = 20;
     const name = command.id.replaceAll(":", " ");
-
-    const args =
-      Object.keys(command.args).length > 0
-        ? Object.entries(command.args)
-            .map((v) => {
-              if (!v[1].hidden && v[1].required) {
-                if (v[1].description && v[1].description.indexOf("-|-") > 0) {
-                  return v[1].description.split("-|-")[0];
-                }
-                return v[0];
-              }
-              return "";
-            })
-            .join(" ")
-        : "";
+    const args = Object.keys(command.args);
     const flags = Object.keys(command.flags);
 
     this.log(chalk.bold.blueBright("Modus") + " Help " + chalk.dim("(v0.0.0)") + "\n");
@@ -153,15 +140,22 @@ export default class CustomHelp extends Help {
     // }
 
     if (flags.length) {
-      const flag_margin = 16;
       this.log(chalk.bold("Flags:"));
-      for (const flag of Object.values(command.flags)) this.log("  " + chalk.bold.blueBright("--" + flag.name) + " ".repeat(flag_margin - flag.name.length) + flag.description);
+      for (const flag of Object.values(command.flags)) this.log("  " + chalk.bold.blueBright("--" + flag.name) + " ".repeat(margin - flag.name.length) + flag.description);
     }
 
     if (args) {
-      const flag_margin = 16;
       this.log(chalk.bold("Args:"));
-      for (const flag of Object.values(command.args)) this.log("  " + chalk.bold.blueBright(flag.name) + " ".repeat(flag_margin - flag.name.length) + flag.description);
+      for (let arg of Object.values(command.args)) {
+        let usage = "";
+        let desc = arg.description;
+        if (arg.description?.includes("-|-")) {
+          usage = arg.description.split("-|-")[0];
+          desc = arg.description.split("-|-")[1];
+        }
+
+        this.log("  " + chalk.bold.blueBright(arg.name) + " ".repeat(margin + 2 - arg.name.length) + desc);
+      }
     }
   }
 }

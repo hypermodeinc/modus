@@ -5,11 +5,8 @@ import { expandHomeDir } from "../../../util/index.js";
 
 export default class SDKListCommand extends Command {
   static args = {};
-
   static description = "List installed SDK versions";
-
   static examples = ["modus sdk list"];
-
   static flags = {};
 
   async run(): Promise<void> {
