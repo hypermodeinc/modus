@@ -6,6 +6,9 @@
       "label": "go: generate code",
       "command": "go",
       "args": ["generate", "./..."],
+      "options": {
+        "cwd": "${workspaceFolder}/runtime"
+      },
       "presentation": {
         "reveal": "silent"
       }
