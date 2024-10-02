@@ -1,3 +1,13 @@
+/*
+ * The code in this file originates from https://github.com/coder/hnsw
+ * and is licensed under the terms of the Creative Commons Zero v1.0 Universal license
+ * See the LICENSE file in the "hnsw" directory that accompanied this code for further details.
+ * See also: https://github.com/coder/hnsw/blob/main/LICENSE
+ *
+ * SPDX-FileCopyrightText: Ammar Bandukwala <ammar@ammar.io>
+ * SPDX-License-Identifier: CC0-1.0
+ */
+
 package heap
 
 import (

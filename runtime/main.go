@@ -1,5 +1,10 @@
 /*
- * Copyright 2023 Hypermode, Inc.
+ * Copyright 2024 Hypermode, Inc.
+ * Licensed under the terms of the Apache License, Version 2.0
+ * See the LICENSE file that accompanied this code for further details.
+ *
+ * SPDX-FileCopyrightText: 2024 Hypermode, Inc. <hello@hypermode.com>
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 //go:generate go run ./tools/generate_version
@@ -30,7 +35,7 @@ func main() {
 	log := logger.Initialize()
 	log.Info().
 		Str("version", config.GetVersionNumber()).
-		Msg("Starting Hypermode Runtime.")
+		Msg("Starting Modus Runtime.")
 
 	// Load environment variables from plugins path
 	// note: .env file is optional, so don't log if it's not found
