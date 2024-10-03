@@ -11,13 +11,15 @@ jobs:
     name: test
     runs-on: warp-ubuntu-latest-x64-4x
     if: github.event.pull_request.draft == false
+    defaults:
+      run:
+        working-directory: runtime
     steps:
       - uses: actions/checkout@v4
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version-file: "go.mod"
-          check-latest: true
+          go-version: 1.23
       - name: Generate Code
         run: go generate ./...
       - name: Run Integration Tests
@@ -28,4 +30,4 @@ jobs:
         if: always()
         uses: test-summary/action@v2
         with:
-          paths: "report.xml"
+          paths: "runtime/report.xml"

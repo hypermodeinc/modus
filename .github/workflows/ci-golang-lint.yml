@@ -11,6 +11,9 @@ jobs:
     if: github.event_name == 'pull_request'
     name: lint
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: runtime
     steps:
       - uses: actions/checkout@v4
       - name: Setup Go
@@ -23,5 +26,5 @@ jobs:
       - name: golang-lint
         uses: golangci/golangci-lint-action@v6
         with:
-          version: latest
+          version: v1.61.0
           args: --timeout=10m
