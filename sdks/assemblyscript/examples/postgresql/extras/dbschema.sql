@@ -1,0 +1,6 @@
+CREATE TABLE people (
+  id SERIAL PRIMARY KEY,
+  name TEXT NOT NULL,
+  age INT NOT NULL,
+  home POINT NULL
+);

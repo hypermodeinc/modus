@@ -1,0 +1,20 @@
+{
+  "input": ["./assembly/__tests__/*.spec.ts"],
+  "outDir": "./build",
+  "config": "./asconfig.json",
+  "plugins": {
+    "coverage": true
+  },
+  "buildOptions": {
+    "args": [
+      "--config ./node_modules/@hypermode/functions-as/plugin.asconfig.json"
+    ],
+    "target": "bindings"
+  },
+  "runOptions": {
+    "runtime": {
+      "name": "node",
+      "run": "node ./build/<name>.run.js"
+    }
+  }
+}

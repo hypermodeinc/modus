@@ -1,0 +1,56 @@
+{
+  "editor.formatOnSave": true,
+  "files.insertFinalNewline": true,
+  "files.trimFinalNewlines": true,
+  "files.associations": {
+    "hypermode.json": "jsonc"
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[json]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[jsonc]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "cSpell.words": [
+    "Albus",
+    "apikey",
+    "asconfig",
+    "aseslint",
+    "assemblyscript",
+    "binaryen",
+    "CODEOWNERS",
+    "dbname",
+    "dgraph",
+    "distilbert",
+    "embedder",
+    "estree",
+    "Hermione",
+    "Hypermode",
+    "idof",
+    "Jairus",
+    "Lovegood",
+    "millis",
+    "minilm",
+    "nanos",
+    "npmjs",
+    "offsetof",
+    "openai",
+    "picsum",
+    "sslmode",
+    "Tanaka",
+    "textgeneration",
+    "tseslint",
+    "uids",
+    "upserting",
+    "upserts",
+    "versionless",
+    "Weasley",
+    "zenquotes"
+  ]
+}

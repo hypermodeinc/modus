@@ -1,0 +1,22 @@
+# This mutation will create some sample data in Dgraph.
+# It can be used for the queries in this Hypermode example.
+
+mutation {
+  # Clear any existing people first
+  deletePerson(filter: {}) {
+    deleted: numUids
+  }
+
+  # Add some people
+  addPerson(
+    input: [
+      { firstName: "Harry", lastName: "Potter" }
+      { firstName: "Hermione", lastName: "Granger" }
+      { firstName: "Ron", lastName: "Weasley" }
+      { firstName: "Albus", lastName: "Dumbledore" }
+      { firstName: "Luna", lastName: "Lovegood" }
+    ]
+  ) {
+    added: numUids
+  }
+}

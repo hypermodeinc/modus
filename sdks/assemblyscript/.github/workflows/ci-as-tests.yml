@@ -1,0 +1,26 @@
+name: ci-as-tests
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
+jobs:
+  as-tests:
+    if: github.event_name == 'pull_request'
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: "src"
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ">=20"
+      - name: Install dependencies
+        run: npm install
+      - name: Run Unit Tests
+        run: npm run test

@@ -1,0 +1,10 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ES2020",
+    "moduleResolution": "Node",
+    "removeComments": true,
+    "outDir": "./lib",
+    "sourceMap": true
+  }
+}

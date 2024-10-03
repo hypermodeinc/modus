@@ -1,0 +1,7 @@
+node_modules/
+build/
+
+.DS_Store
+
+src/logs/
+bun.lockb

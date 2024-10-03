@@ -1,0 +1,33 @@
+{
+  "name": "dgraph-example",
+  "private": true,
+  "description": "Hypermode Functions Dgraph Example",
+  "author": "Hypermode, Inc.",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "build": "node ./node_modules/@hypermode/functions-as/bin/build-plugin.js",
+    "lint": "eslint .",
+    "pretty": "prettier --write .",
+    "pretty:check": "prettier --check ."
+  },
+  "dependencies": {
+    "@hypermode/functions-as": "../../src",
+    "json-as": "^0.9.21"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.11.1",
+    "@types/eslint__js": "^8.42.3",
+    "@typescript-eslint/parser": "^8.8.0",
+    "assemblyscript": "^0.27.29",
+    "assemblyscript-prettier": "^3.0.1",
+    "eslint": "^9.11.1",
+    "prettier": "^3.3.3",
+    "typescript": "^5.6.2",
+    "typescript-eslint": "^8.7.0",
+    "visitor-as": "^0.11.4"
+  },
+  "overrides": {
+    "assemblyscript": "$assemblyscript"
+  }
+}
