@@ -1,0 +1,20 @@
+{
+  "$schema": "https://manifest.hypermode.com/hypermode.json",
+  "models": {
+    // No models are used by this example, but if you add any, they would go here.
+  },
+  "hosts": {
+    // This example shows how you can set a host that references a PostgreSQL database.
+    // The connection string can be anything that is allowed by the PostgreSQL driver,
+    // and your database provider.  See the PostgreSQL documentation for more information:
+    // https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNSTRING-URIS
+    //
+    // Where secrets are required, {{SECRET_NAME}} templates are replaced with the values
+    // specified in the Hypermode Console.  Do not include actual secret values in this file.
+
+    "my-database": {
+      "type": "postgresql",
+      "connString": "postgresql://{{USERNAME}}:{{PASSWORD}}@database.example.com:5432/dbname?sslmode=require"
+    }
+  }
+}

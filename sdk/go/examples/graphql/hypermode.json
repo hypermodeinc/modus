@@ -1,0 +1,16 @@
+{
+  "$schema": "https://manifest.hypermode.com/hypermode.json",
+  "models": {
+    // No models are used by this example, but if you add any, they would go here.
+  },
+  "hosts": {
+    // This defines the dgraph host that is used by the example functions.
+    // The {{API_KEY}} will be replaced by the secret provided in the Hypermode Console.
+    "dgraphGraphql": {
+      "endpoint": "https://frozen-mango.aws.cloud.dgraph.io/graphql",
+      "headers": {
+        "X-Auth-Token": "{{AUTH_TOKEN}}"
+      }
+    }
+  }
+}
