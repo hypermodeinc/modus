@@ -10,7 +10,7 @@
       "program": "${workspaceFolder}/runtime",
       "env": {
         "MODUS_DEBUG": "true",
-        "HYPERMODE_METADATA_DB": "postgresql://postgres:postgres@localhost:5433/my-runtime-db?sslmode=disable"
+        "MODUS_DB": "postgresql://postgres:postgres@localhost:5433/my-runtime-db?sslmode=disable"
       },
       "args": ["--refresh=1s"]
     },
@@ -26,7 +26,7 @@
         "AWS_REGION": "us-west-2",
         "AWS_PROFILE": "sandbox",
         "AWS_SDK_LOAD_CONFIG": "true",
-        "HYPERMODE_METADATA_DB": "postgresql://postgres:postgres@localhost:5433/my-runtime-db?sslmode=disable"
+        "MODUS_DB": "postgresql://postgres:postgres@localhost:5433/my-runtime-db?sslmode=disable"
       },
       "args": [
         "--useAwsSecrets",

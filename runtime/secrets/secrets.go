@@ -27,6 +27,7 @@ var provider secretsProvider
 
 type secretsProvider interface {
 	initialize(ctx context.Context)
+	hasSecret(name string) bool
 	getSecretValue(name string) (string, error)
 	getHostSecrets(host manifest.HostInfo) (map[string]string, error)
 }
@@ -39,6 +40,10 @@ func Initialize(ctx context.Context) {
 	}
 
 	provider.initialize(ctx)
+}
+
+func HasSecret(name string) bool {
+	return provider.hasSecret(name)
 }
 
 func GetSecretValue(name string) (string, error) {

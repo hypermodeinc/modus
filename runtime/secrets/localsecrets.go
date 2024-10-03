@@ -45,3 +45,7 @@ func (sp *localSecretsProvider) getSecretValue(name string) (string, error) {
 
 	return v, nil
 }
+
+func (sp *localSecretsProvider) hasSecret(name string) bool {
+	return os.Getenv(name) != ""
+}

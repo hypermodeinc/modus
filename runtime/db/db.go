@@ -75,23 +75,28 @@ func (w *runtimePostgresWriter) GetPool(ctx context.Context) (*pgxpool.Pool, err
 
 	w.mu.Lock()
 	defer w.mu.Unlock()
-	connStr, err := secrets.GetSecretValue("HYPERMODE_METADATA_DB")
-	if connStr == "" {
-		if err != nil {
-			return nil, fmt.Errorf("%w: %w", errDbNotConfigured, err)
-		} else {
-			return nil, errDbNotConfigured
-		}
-	} else if err != nil {
-		return nil, err
-	}
 
-	pool, err := pgxpool.New(ctx, connStr)
+	var connStr string
+	var err error
+	if secrets.HasSecret("MODUS_DB") {
+		connStr, err = secrets.GetSecretValue("MODUS_DB")
+	} else if secrets.HasSecret("HYPERMODE_METADATA_DB") {
+		// fallback to old secret name
+		// TODO: remove this after the transition is complete
+		connStr, err = secrets.GetSecretValue("HYPERMODE_METADATA_DB")
+	} else {
+		return nil, errDbNotConfigured
+	}
 	if err != nil {
 		return nil, err
 	}
-	w.dbpool = pool
-	return pool, nil
+
+	if pool, err := pgxpool.New(ctx, connStr); err != nil {
+		return nil, err
+	} else {
+		w.dbpool = pool
+		return pool, nil
+	}
 }
 
 func (w *runtimePostgresWriter) Write(data inferenceHistory) {

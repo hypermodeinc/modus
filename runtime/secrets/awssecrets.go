@@ -78,6 +78,14 @@ func (sp *awsSecretsProvider) getSecrets(prefix string) (map[string]string, erro
 	return results, nil
 }
 
+func (sp *awsSecretsProvider) hasSecret(name string) bool {
+	sp.mu.RLock()
+	defer sp.mu.RUnlock()
+
+	_, ok := sp.cache[name]
+	return ok
+}
+
 func (sp *awsSecretsProvider) getSecretValue(name string) (string, error) {
 	sp.mu.RLock()
 	defer sp.mu.RUnlock()
