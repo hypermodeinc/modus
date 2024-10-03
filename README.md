@@ -1,4 +1,6 @@
-# Hypermode Runtime
+# Modus
+
+## TODO - rewrite this whole file in the context of Modus
 
 This repository contains the source code for the _Hypermode Runtime_.
 The Runtime loads and executes _plugins_ containing _Hypermode Functions_.
