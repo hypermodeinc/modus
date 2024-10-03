@@ -129,6 +129,7 @@
     "wasi",
     "wasip1",
     "wasip2",
+    "wasmextractor",
     "wasmhost",
     "wasmimport",
     "wazero",
