@@ -1,5 +1,5 @@
-This is a Hypermode project that is used for testing the Runtime's AssemblyScript language features.
+# AssemblyScript language test project
 
-If you make changes, please build using `npm install` and `npm run build`.
+This is a Modus project that is used for testing the runtime's AssemblyScript language features.
 
-Commit the resulting `testdata.wasm` file, along with the source code changes.
+It will compile automatically when tests are run with `make test` and similar targets.

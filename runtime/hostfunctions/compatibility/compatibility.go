@@ -15,7 +15,7 @@ import (
 	"github.com/hypermodeinc/modus/runtime/plugins/metadata"
 )
 
-// This is a compatibility shim for Hypermode host functions that are not in the metadata.
+// This is a compatibility shim for host functions that are not referenced in the metadata.
 // It is only needed to allow previous AssemblyScript SDK versions to work with the latest runtime.
 // This should be removed when all plugins are updated to the latest SDK version that uses the V2 metadata format.
 

@@ -174,7 +174,7 @@ func Test_GetGraphQLSchema_AssemblyScript(t *testing.T) {
 	t.Log(result.Schema)
 
 	expectedSchema := `
-# Hypermode GraphQL Schema (auto-generated)
+# Modus GraphQL Schema (auto-generated)
 
 type Query {
   add(a: Int!, b: Int!): Int!

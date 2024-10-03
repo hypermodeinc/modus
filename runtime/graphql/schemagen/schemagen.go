@@ -261,7 +261,7 @@ func getBaseType(name string) string {
 func writeSchema(buf *bytes.Buffer, functions []*FunctionSignature, scalarTypes []string, inputTypeDefs, resultTypeDefs []*TypeDefinition) {
 
 	// write header
-	buf.WriteString("# Hypermode GraphQL Schema (auto-generated)\n\n")
+	buf.WriteString("# Modus GraphQL Schema (auto-generated)\n\n")
 
 	// sort everything
 	slices.SortFunc(functions, func(a, b *FunctionSignature) int {

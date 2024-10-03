@@ -71,7 +71,7 @@ func handleGraphQLRequest(w http.ResponseWriter, r *http.Request) {
 	// Get the active GraphQL engine, if there is one.
 	engine := engine.GetEngine()
 	if engine == nil {
-		msg := "There is no active GraphQL schema.  Please load a Hypermode plugin."
+		msg := "There is no active GraphQL schema.  Please load a Modus plugin."
 		logger.Warn(ctx).Msg(msg)
 		utils.WriteJsonContentHeader(w)
 		if ok, _ := gqlRequest.IsIntrospectionQuery(); ok {

@@ -76,7 +76,7 @@ func loadPlugin(ctx context.Context, filename string) error {
 	if err == metadata.ErrMetadataNotFound {
 		logger.Error(ctx).
 			Bool("user_visible", true).
-			Msg("Metadata not found.  Please recompile your plugin using the latest version of the Hypermode Functions library.")
+			Msg("Metadata not found.  Please recompile using the latest version of the Modus SDK.")
 		return err
 	} else if err != nil {
 		return err

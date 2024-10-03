@@ -1,5 +1,5 @@
-This is a Hypermode project that is used for testing the Runtime's Go language features.
+# Go language test project
 
-If you make changes, please build using `./build.sh` (or `./build.cmd` on Windows).
+This is a Modus project that is used for testing the runtime's Go language features.
 
-Commit the resulting `testdata.wasm` file, along with the source code changes.
+It will compile automatically when tests are run with `make test` and similar targets.

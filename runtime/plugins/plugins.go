@@ -101,7 +101,7 @@ func getImportMetadata(ctx context.Context, modName, fnName string, md *metadata
 			logger.Warn(ctx).
 				Str("plugin", md.Name()).
 				Str("build_id", md.BuildId).
-				Msg("Hypermode function imports are missing from the metadata. Using compatibility shims. Please update your SDK to the latest version.")
+				Msg("Function imports are missing from the metadata. Using compatibility shims. Please update your SDK to the latest version.")
 		}
 		if fnMeta, err := compatibility.GetImportMetadataShim(impName); err != nil {
 			return nil, fmt.Errorf("error creating compatibility shim for %s: %w", impName, err)
