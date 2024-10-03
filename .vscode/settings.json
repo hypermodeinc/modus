@@ -4,7 +4,8 @@
   "files.trimFinalNewlines": true,
   "files.associations": {
     "CODEOWNERS": "plaintext",
-    "LICENSE": "plaintext"
+    "LICENSE": "plaintext",
+    "pkg/manifest/test/*.json": "jsonc"
   },
   "go.lintTool": "golangci-lint",
   "go.testEnvVars": {
