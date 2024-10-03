@@ -10,21 +10,19 @@ jobs:
   golang-lint:
     if: github.event_name == 'pull_request'
     name: lint
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: runtime
+    runs-on: warp-ubuntu-latest-x64-4x
     steps:
       - uses: actions/checkout@v4
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version-file: "go.mod"
-          check-latest: true
+          go-version: 1.23
       - name: Generate Code
-        run: go generate ./...
+        working-directory: runtime
+        run: make generate
       - name: golang-lint
         uses: golangci/golangci-lint-action@v6
         with:
           version: v1.61.0
+          working-directory: runtime
           args: --timeout=10m

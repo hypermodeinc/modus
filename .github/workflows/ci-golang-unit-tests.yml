@@ -10,21 +10,15 @@ jobs:
   golang-tests:
     name: test
     runs-on: warp-ubuntu-latest-x64-4x
-    defaults:
-      run:
-        working-directory: runtime
     steps:
       - uses: actions/checkout@v4
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
           go-version: 1.23
-      - name: Generate Code
-        run: go generate ./...
       - name: Run Unit Tests
-        run: |
-          go install github.com/jstemmer/go-junit-report/v2@latest
-          go test -v -race 2>&1 ./... | go-junit-report -set-exit-code -iocopy -out report.xml
+        working-directory: runtime
+        run: make test-ci
       - name: Generate Test Summary
         if: always()
         uses: test-summary/action@v2
