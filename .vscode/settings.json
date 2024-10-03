@@ -3,11 +3,12 @@
   "files.insertFinalNewline": true,
   "files.trimFinalNewlines": true,
   "files.associations": {
-    "CODEOWNERS": "plaintext"
+    "CODEOWNERS": "plaintext",
+    "LICENSE": "plaintext"
   },
   "go.lintTool": "golangci-lint",
   "go.testEnvVars": {
-    "HYPERMODE_DEBUG": "true"
+    "MODUS_DEBUG": "true"
   },
   "[json]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
@@ -19,6 +20,7 @@
     "abstractlogger",
     "alloc",
     "allocs",
+    "Ammar",
     "APPDATA",
     "archdx",
     "arraybuffer",
@@ -26,6 +28,7 @@
     "assemblyscript",
     "AWSCURRENT",
     "backlink",
+    "Bandukwala",
     "bedrockruntime",
     "buger",
     "cconf",
@@ -63,6 +66,7 @@
     "hostfunctions",
     "httpclient",
     "hypermode",
+    "hypermodeinc",
     "hypruntime",
     "iface",
     "isize",
