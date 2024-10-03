@@ -1,0 +1,94 @@
+{
+  // Test valid Hypermode manifest file
+  "$schema": "https://manifest.hypermode.com/hypermode.json",
+  "models": {
+    "model-1": {
+      "sourceModel": "example/source-model-1",
+      "provider": "hugging-face",
+      "host": "hypermode"
+    },
+    "model-2": {
+      "sourceModel": "source-model-2",
+      "host": "my-model-host",
+      "path": "path/to/model-2"
+    },
+    "model-3": {
+      "sourceModel": "source-model-3",
+      "host": "my-model-host"
+    },
+    "model-4": {
+      "sourceModel": "example/source-model-4",
+      "provider": "hugging-face",
+      "host": "hypermode",
+      "dedicated": true
+    }
+  },
+  "hosts": {
+    "my-model-host": {
+      "baseUrl": "https://models.example.com/",
+      "headers": {
+        "X-API-Key": "{{API_KEY}}"
+      }
+    },
+    "another-model-host": {
+      "endpoint": "https://models.example.com/full/path/to/model-3",
+      "headers": {
+        "X-API-Key": "{{API_KEY}}"
+      }
+    },
+    "my-graphql-api": {
+      "endpoint": "https://api.example.com/graphql",
+      "headers": {
+        "Authorization": "Bearer {{AUTH_TOKEN}}"
+      }
+    },
+    "my-rest-api": {
+      "baseUrl": "https://api.example.com/v1/",
+      "queryParameters": {
+        "api_token": "{{API_TOKEN}}"
+      }
+    },
+    "another-rest-api": {
+      "baseUrl": "https://api.example.com/v2/",
+      "headers": {
+        "Authorization": "Basic {{base64(USERNAME:PASSWORD)}}"
+      }
+    },
+    "api-with-type": {
+      "type": "http",
+      "baseUrl": "https://api.example.com/v2/"
+    },
+    "neon": {
+      "type": "postgresql",
+      "connString": "postgresql://{{POSTGRESQL_USERNAME}}:{{POSTGRESQL_PASSWORD}}@1.2.3.4:5432/data?sslmode=disable"
+    },
+    "my-dgraph-cloud": {
+      "type": "dgraph",
+      "grpcTarget": "frozen-mango.grpc.eu-central-1.aws.cloud.dgraph.io:443",
+      "key": "{{DGRAPH_KEY}}"
+    },
+    "local-dgraph": {
+      "type": "dgraph",
+      "grpcTarget": "localhost:9080"
+    }
+  },
+  "collections": {
+    "collection1": {
+      "searchMethods": {
+        "searchMethod1": {
+          "embedder": "embedder1"
+        },
+        "searchMethod2": {
+          "embedder": "embedder1",
+          "index": {
+            "type": "hnsw",
+            "options": {
+              "efConstruction": 100,
+              "maxLevels": 3
+            }
+          }
+        }
+      }
+    }
+  }
+}
