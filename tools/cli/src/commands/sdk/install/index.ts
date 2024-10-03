@@ -1,4 +1,4 @@
-import { Args, Command } from "@oclif/core";
+import { Args, Command, Flags } from "@oclif/core";
 import chalk from "chalk";
 import { cpSync } from "node:fs";
 import os from "node:os";
@@ -21,10 +21,16 @@ export default class SDKInstallCommand extends Command {
 
   static examples = ["modus sdk install v0.0.0", "modus sdk install latest"];
 
-  static flags = {};
+  static flags = {
+    silent: Flags.boolean({
+      description: "Suppress output logs",
+      hidden: false,
+      required: false
+    })
+  };
 
   async run(): Promise<void> {
-    const { args } = await this.parse(SDKInstallCommand);
+    const { args, flags } = await this.parse(SDKInstallCommand);
     if (!args.version) this.logError("No version specified! Run modus sdk install <version>");
     let version = args.version?.trim().toLowerCase().replace("v", "");
     const platform = os.platform();
@@ -35,7 +41,7 @@ export default class SDKInstallCommand extends Command {
       for (const version of versions) {
         cpSync(path.join(path.dirname(import.meta.url.replace("file:", "")), "../../../../runtime-bin/" + "modus-runtime-v" + version + "-" + platform + "-" + arch + (platform === "win32" ? ".exe" : "")), expandHomeDir("~/.hypermode/sdk/" + version + "/runtime" + (platform === "win32" ? ".exe" : "")));
       }
-      this.log("Installed versions 0.12.0-0.12.6");
+      if (!flags.silent) this.log("Installed versions 0.12.0-0.12.6");
       return;
     } else if (version === "latest") {
       version = (await Metadata.getLatestRuntime())!;
@@ -48,7 +54,7 @@ export default class SDKInstallCommand extends Command {
       execSync("chmod +x " + runtimePath, { stdio: "ignore" });
     }
 
-    this.log("Installed Modus v" + version);
+    if (!flags.silent) this.log("Installed Modus v" + version);
   }
 
   private logError(message: string) {
