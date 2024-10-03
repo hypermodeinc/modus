@@ -16,7 +16,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/hypermodeAI/functions-go/tools/hypbuild/config"
+	"github.com/hypermodeinc/modus/sdk/go/tools/hypbuild/config"
 
 	"github.com/hashicorp/go-version"
 )

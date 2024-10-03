@@ -2,6 +2,6 @@ module testdata
 
 go 1.23.0
 
-require github.com/hypermodeAI/functions-go v0.0.0
+require github.com/hypermodeinc/modus/sdk/go v0.0.0
 
-replace github.com/hypermodeAI/functions-go => ../../../../../functions-go/
+replace github.com/hypermodeinc/modus/sdk/go => ../../../../sdk/go/

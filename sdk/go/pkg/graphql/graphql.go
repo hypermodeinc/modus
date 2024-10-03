@@ -13,8 +13,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/hypermodeAI/functions-go/pkg/console"
-	"github.com/hypermodeAI/functions-go/pkg/utils"
+	"github.com/hypermodeinc/modus/sdk/go/pkg/console"
+	"github.com/hypermodeinc/modus/sdk/go/pkg/utils"
 )
 
 func Execute[T any](hostName, statement string, variables map[string]any) (*Response[T], error) {

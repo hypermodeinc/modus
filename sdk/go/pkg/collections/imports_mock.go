@@ -11,7 +11,7 @@
 
 package collections
 
-import "github.com/hypermodeAI/functions-go/pkg/testutils"
+import "github.com/hypermodeinc/modus/sdk/go/pkg/testutils"
 
 var UpsertCallStack = testutils.NewCallStack()
 var DeleteCallStack = testutils.NewCallStack()

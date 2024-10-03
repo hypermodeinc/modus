@@ -7,9 +7,9 @@
 package main
 
 import (
-	"github.com/hypermodeAI/functions-go/pkg/collections"
-	"github.com/hypermodeAI/functions-go/pkg/models"
-	"github.com/hypermodeAI/functions-go/pkg/models/experimental"
+	"github.com/hypermodeinc/modus/sdk/go/pkg/collections"
+	"github.com/hypermodeinc/modus/sdk/go/pkg/models"
+	"github.com/hypermodeinc/modus/sdk/go/pkg/models/experimental"
 )
 
 const (

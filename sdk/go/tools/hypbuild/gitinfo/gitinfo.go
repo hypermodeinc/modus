@@ -13,8 +13,8 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/hypermodeAI/functions-go/tools/hypbuild/config"
-	"github.com/hypermodeAI/functions-go/tools/hypbuild/metadata"
+	"github.com/hypermodeinc/modus/sdk/go/tools/hypbuild/config"
+	"github.com/hypermodeinc/modus/sdk/go/tools/hypbuild/metadata"
 )
 
 func TryCollectGitInfo(config *config.Config, meta *metadata.Metadata) {

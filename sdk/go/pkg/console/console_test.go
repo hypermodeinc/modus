@@ -14,7 +14,7 @@ package console_test
 import (
 	"testing"
 
-	"github.com/hypermodeAI/functions-go/pkg/console"
+	"github.com/hypermodeinc/modus/sdk/go/pkg/console"
 )
 
 func Test_Log(t *testing.T) {

@@ -1,4 +1,4 @@
-module github.com/hypermodeAI/functions-go
+module github.com/hypermodeinc/modus/sdk/go
 
 go 1.23.0
 

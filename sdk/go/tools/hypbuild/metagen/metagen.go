@@ -16,12 +16,12 @@ import (
 
 	"os"
 
-	"github.com/hypermodeAI/functions-go/tools/hypbuild/config"
-	"github.com/hypermodeAI/functions-go/tools/hypbuild/extractor"
-	"github.com/hypermodeAI/functions-go/tools/hypbuild/gitinfo"
-	"github.com/hypermodeAI/functions-go/tools/hypbuild/metadata"
-	"github.com/hypermodeAI/functions-go/tools/hypbuild/modinfo"
-	"github.com/hypermodeAI/functions-go/tools/hypbuild/wasm"
+	"github.com/hypermodeinc/modus/sdk/go/tools/hypbuild/config"
+	"github.com/hypermodeinc/modus/sdk/go/tools/hypbuild/extractor"
+	"github.com/hypermodeinc/modus/sdk/go/tools/hypbuild/gitinfo"
+	"github.com/hypermodeinc/modus/sdk/go/tools/hypbuild/metadata"
+	"github.com/hypermodeinc/modus/sdk/go/tools/hypbuild/modinfo"
+	"github.com/hypermodeinc/modus/sdk/go/tools/hypbuild/wasm"
 )
 
 const sdkName = "functions-go"

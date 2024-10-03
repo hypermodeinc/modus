@@ -13,7 +13,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/hypermodeAI/functions-go/pkg/collections"
+	"github.com/hypermodeinc/modus/sdk/go/pkg/collections"
 )
 
 var (

@@ -9,7 +9,7 @@
 
 package postgresql
 
-import "github.com/hypermodeAI/functions-go/pkg/db"
+import "github.com/hypermodeinc/modus/sdk/go/pkg/db"
 
 const dbType = "postgresql"
 

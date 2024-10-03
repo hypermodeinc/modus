@@ -11,7 +11,7 @@
 
 package http
 
-import "github.com/hypermodeAI/functions-go/pkg/testutils"
+import "github.com/hypermodeinc/modus/sdk/go/pkg/testutils"
 
 var FetchCallStack = testutils.NewCallStack()
 

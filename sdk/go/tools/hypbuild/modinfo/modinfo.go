@@ -15,13 +15,13 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/hypermodeAI/functions-go/tools/hypbuild/config"
+	"github.com/hypermodeinc/modus/sdk/go/tools/hypbuild/config"
 
 	"github.com/hashicorp/go-version"
 	"golang.org/x/mod/modfile"
 )
 
-const sdkModulePath = "github.com/hypermodeAI/functions-go"
+const sdkModulePath = "github.com/hypermodeinc/modus/sdk/go"
 
 type ModuleInfo struct {
 	ModulePath          string

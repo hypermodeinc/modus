@@ -62,7 +62,7 @@ func (lti *langTypeInfo) GetMapSubtypes(typ string) (string, string) {
 }
 
 func (lti *langTypeInfo) GetNameForType(typ string) string {
-	// "github.com/hypermodeAI/functions-go/examples/simple.Person" -> "Person"
+	// "github.com/hypermodeinc/modus/sdk/go/examples/simple.Person" -> "Person"
 
 	if lti.IsPointerType(typ) {
 		return "*" + lti.GetNameForType(lti.GetUnderlyingType(typ))

@@ -15,7 +15,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/hypermodeAI/functions-go/pkg/console"
+	"github.com/hypermodeinc/modus/sdk/go/pkg/console"
 )
 
 func TestLogMessage(t *testing.T) {

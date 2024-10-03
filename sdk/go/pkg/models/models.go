@@ -13,8 +13,8 @@ package models
 import (
 	"fmt"
 
-	"github.com/hypermodeAI/functions-go/pkg/console"
-	"github.com/hypermodeAI/functions-go/pkg/utils"
+	"github.com/hypermodeinc/modus/sdk/go/pkg/console"
+	"github.com/hypermodeinc/modus/sdk/go/pkg/utils"
 )
 
 // Provides information about a model.

@@ -9,7 +9,7 @@ package main
 import (
 	"errors"
 
-	"github.com/hypermodeAI/functions-go/pkg/graphql"
+	"github.com/hypermodeinc/modus/sdk/go/pkg/graphql"
 )
 
 const hostName = "dgraphGraphql"

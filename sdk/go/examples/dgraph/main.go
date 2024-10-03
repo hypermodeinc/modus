@@ -10,7 +10,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/hypermodeAI/functions-go/pkg/dgraph"
+	"github.com/hypermodeinc/modus/sdk/go/pkg/dgraph"
 )
 
 const hostName = "dgraph"

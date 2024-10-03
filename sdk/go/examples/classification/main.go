@@ -10,8 +10,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/hypermodeAI/functions-go/pkg/models"
-	"github.com/hypermodeAI/functions-go/pkg/models/experimental"
+	"github.com/hypermodeinc/modus/sdk/go/pkg/models"
+	"github.com/hypermodeinc/modus/sdk/go/pkg/models/experimental"
 )
 
 const modelName = "my-classifier"

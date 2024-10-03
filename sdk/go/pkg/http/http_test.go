@@ -15,7 +15,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/hypermodeAI/functions-go/pkg/http"
+	"github.com/hypermodeinc/modus/sdk/go/pkg/http"
 )
 
 func TestFetchWithUrl(t *testing.T) {

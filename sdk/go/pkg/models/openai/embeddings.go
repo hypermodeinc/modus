@@ -12,7 +12,7 @@ package openai
 import (
 	"fmt"
 
-	"github.com/hypermodeAI/functions-go/pkg/models"
+	"github.com/hypermodeinc/modus/sdk/go/pkg/models"
 )
 
 // Provides input and output types that conform to the OpenAI Embeddings API,

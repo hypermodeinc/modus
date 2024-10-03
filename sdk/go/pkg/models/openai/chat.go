@@ -12,8 +12,8 @@ package openai
 import (
 	"encoding/json"
 
-	"github.com/hypermodeAI/functions-go/pkg/models"
-	"github.com/hypermodeAI/functions-go/pkg/utils"
+	"github.com/hypermodeinc/modus/sdk/go/pkg/models"
+	"github.com/hypermodeinc/modus/sdk/go/pkg/utils"
 	"github.com/tidwall/sjson"
 )
 

@@ -9,7 +9,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/hypermodeAI/functions-go/pkg/postgresql"
+	"github.com/hypermodeinc/modus/sdk/go/pkg/postgresql"
 )
 
 // The name of the PostgreSQL host, as specified in the hypermode.json manifest

@@ -1,4 +1,4 @@
-module github.com/hypermodeAI/functions-go/tools/hypbuild
+module github.com/hypermodeinc/modus/sdk/go/tools/hypbuild
 
 go 1.23.0
 

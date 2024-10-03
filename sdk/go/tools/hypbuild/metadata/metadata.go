@@ -15,7 +15,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/hypermodeAI/functions-go/tools/hypbuild/utils"
+	"github.com/hypermodeinc/modus/sdk/go/tools/hypbuild/utils"
 	"github.com/rs/xid"
 )
 

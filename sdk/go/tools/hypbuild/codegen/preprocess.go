@@ -20,7 +20,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/hypermodeAI/functions-go/tools/hypbuild/config"
+	"github.com/hypermodeinc/modus/sdk/go/tools/hypbuild/config"
 	"golang.org/x/tools/go/packages"
 )
 
@@ -251,7 +251,7 @@ func writeFuncWrappers(b *bytes.Buffer, pkg *packages.Package, imports map[strin
 		}
 
 		if hasErrorReturn {
-			imports["github.com/hypermodeAI/functions-go/pkg/console"] = "console"
+			imports["github.com/hypermodeinc/modus/sdk/go/pkg/console"] = "console"
 
 			// remove the error return value from the function signature
 			results.List = results.List[:len(results.List)-1]

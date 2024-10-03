@@ -16,9 +16,9 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/hypermodeAI/functions-go/tools/hypbuild/config"
-	"github.com/hypermodeAI/functions-go/tools/hypbuild/metadata"
-	"github.com/hypermodeAI/functions-go/tools/hypbuild/utils"
+	"github.com/hypermodeinc/modus/sdk/go/tools/hypbuild/config"
+	"github.com/hypermodeinc/modus/sdk/go/tools/hypbuild/metadata"
+	"github.com/hypermodeinc/modus/sdk/go/tools/hypbuild/utils"
 )
 
 func PostProcess(config *config.Config, meta *metadata.Metadata) error {

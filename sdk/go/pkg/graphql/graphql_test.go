@@ -15,8 +15,8 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/hypermodeAI/functions-go/pkg/graphql"
-	"github.com/hypermodeAI/functions-go/pkg/utils"
+	"github.com/hypermodeinc/modus/sdk/go/pkg/graphql"
+	"github.com/hypermodeinc/modus/sdk/go/pkg/utils"
 )
 
 func TestExecuteGQL(t *testing.T) {
