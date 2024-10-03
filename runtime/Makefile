@@ -57,8 +57,8 @@ test-integration:
 
 .PHONY: test-ci
 test-race: build-testdata
-    go install github.com/jstemmer/go-junit-report/v2@latest
-    go test -v -race 2>&1 ./... | go-junit-report -set-exit-code -iocopy -out report.xml
+	go install github.com/jstemmer/go-junit-report/v2@latest
+	go test -v -race 2>&1 ./... | go-junit-report -set-exit-code -iocopy -out report.xml
 
 .PHONY: test-integration-ci
 test-integration:
