@@ -32,7 +32,7 @@ func LogFunctionMessage(ctx context.Context, level, message string) {
 	})
 
 	// If debugging, write debug messages to stderr instead of the logger
-	if level == "debug" && utils.HypermodeDebugEnabled() {
+	if level == "debug" && utils.DebugModeEnabled() {
 		fmt.Fprintln(os.Stderr, message)
 		return
 	}

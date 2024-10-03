@@ -222,7 +222,7 @@ func (p *HypDSPlanner) ConfigureFetch() resolve.FetchConfiguration {
 	return resolve.FetchConfiguration{
 		Input:     inputTemplate,
 		Variables: p.variables,
-		DataSource: &HypermodeDataSource{
+		DataSource: &ModusDataSource{
 			WasmHost: p.config.WasmHost,
 		},
 		PostProcessing: resolve.PostProcessingConfiguration{

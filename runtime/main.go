@@ -54,7 +54,7 @@ func main() {
 	defer services.Stop(ctx)
 
 	// Set local mode if debugging is enabled
-	local := utils.HypermodeDebugEnabled()
+	local := utils.DebugModeEnabled()
 
 	// Start the HTTP server to listen for requests.
 	// Note, this function blocks, and handles shutdown gracefully.

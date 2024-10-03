@@ -38,12 +38,12 @@ func EnvVarFlagEnabled(envVarName string) bool {
 	return err == nil && b
 }
 
-func HypermodeDebugEnabled() bool {
-	return EnvVarFlagEnabled("HYPERMODE_DEBUG")
+func DebugModeEnabled() bool {
+	return EnvVarFlagEnabled("MODUS_DEBUG")
 }
 
-func HypermodeTraceEnabled() bool {
-	return EnvVarFlagEnabled("HYPERMODE_TRACE")
+func TraceModeEnabled() bool {
+	return EnvVarFlagEnabled("MODUS_TRACE")
 }
 
 func TrimStringBefore(s string, sep string) string {

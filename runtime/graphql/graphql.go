@@ -88,7 +88,7 @@ func handleGraphQLRequest(w http.ResponseWriter, r *http.Request) {
 
 	// Set tracing options
 	var options = []eng.ExecutionOptions{}
-	if utils.HypermodeTraceEnabled() {
+	if utils.TraceModeEnabled() {
 		var traceOpts resolve.TraceOptions
 		traceOpts.Enable = true
 		traceOpts.IncludeTraceOutputInResponseExtensions = true

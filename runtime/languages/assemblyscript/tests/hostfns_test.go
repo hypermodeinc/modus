@@ -38,7 +38,7 @@ func getTestHostFunctionRegistrations() []func(wasmhost.WasmHost) error {
 }
 
 func hostLog(ctx context.Context, level, message string) {
-	if utils.HypermodeDebugEnabled() {
+	if utils.DebugModeEnabled() {
 		hostfunctions.LogFunctionMessage(ctx, level, message)
 	}
 	t := testutils.GetTestT(ctx)

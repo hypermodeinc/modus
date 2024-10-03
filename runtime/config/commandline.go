@@ -54,6 +54,9 @@ func parseCommandLineFlags() {
 
 func getDefaultStoragePath() string {
 
+	// TODO: this logic needs to change.  The storage path should be passed in always, by the modus CLI. It should not be inferred.
+	// See https://linear.app/hypermode/issue/HYP-2323/runtime-instancing-storage-paths
+
 	// On Windows, the default is %APPDATA%\Hypermode
 	if runtime.GOOS == "windows" {
 		appData := os.Getenv("APPDATA")

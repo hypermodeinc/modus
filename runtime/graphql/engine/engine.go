@@ -78,7 +78,7 @@ func generateSchema(ctx context.Context, md *metadata.Metadata) (*gql.Schema, *d
 		return nil, nil, err
 	}
 
-	if utils.HypermodeDebugEnabled() {
+	if utils.DebugModeEnabled() {
 		if config.UseJsonLogging {
 			logger.Debug(ctx).Str("schema", generated.Schema).Msg("Generated schema")
 		} else {

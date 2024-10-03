@@ -30,7 +30,7 @@ var sentryInitialized bool
 func InitSentry(rootPath string) {
 
 	// Don't initialize Sentry when running in debug mode.
-	if HypermodeDebugEnabled() {
+	if DebugModeEnabled() {
 		return
 	}
 

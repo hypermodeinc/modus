@@ -158,7 +158,7 @@ func (host *wasmHost) CallFunction(ctx context.Context, fnInfo functions.Functio
 			Msg("Function execution was canceled.")
 	} else {
 		// While debugging, it helps if we can see the error in the console without escaped newlines and other json formatting.
-		if utils.HypermodeDebugEnabled() {
+		if utils.DebugModeEnabled() {
 			fmt.Fprintln(os.Stderr, err)
 		}
 		// NOTE: Errors of this type should not be user-visible, as they were caused by some Runtime issue, not the user's code.

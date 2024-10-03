@@ -209,7 +209,7 @@ func (host *wasmHost) newHostFunction(modName, funcName string, fn any, opts ...
 		defer func() {
 			if r := recover(); r != nil {
 				logger.Err(ctx, utils.ConvertToError(r)).Str("host_function", fullName).Msg("Panic in host function.")
-				if utils.HypermodeDebugEnabled() {
+				if utils.DebugModeEnabled() {
 					debug.PrintStack()
 				}
 			}

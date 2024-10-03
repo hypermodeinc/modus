@@ -25,18 +25,18 @@ import (
 	"github.com/wundergraph/graphql-go-tools/v2/pkg/engine/resolve"
 )
 
-const DataSourceName = "HypermodeFunctionsDataSource"
+const DataSourceName = "ModusDataSource"
 
 type callInfo struct {
 	Function   fieldInfo      `json:"fn"`
 	Parameters map[string]any `json:"data"`
 }
 
-type HypermodeDataSource struct {
+type ModusDataSource struct {
 	WasmHost wasmhost.WasmHost
 }
 
-func (ds *HypermodeDataSource) Load(ctx context.Context, input []byte, out *bytes.Buffer) error {
+func (ds *ModusDataSource) Load(ctx context.Context, input []byte, out *bytes.Buffer) error {
 
 	// Parse the input to get the function call info
 	var ci callInfo
@@ -57,12 +57,12 @@ func (ds *HypermodeDataSource) Load(ctx context.Context, input []byte, out *byte
 	return err
 }
 
-func (*HypermodeDataSource) LoadWithFiles(ctx context.Context, input []byte, files []httpclient.File, out *bytes.Buffer) (err error) {
+func (*ModusDataSource) LoadWithFiles(ctx context.Context, input []byte, files []httpclient.File, out *bytes.Buffer) (err error) {
 	// See https://github.com/wundergraph/graphql-go-tools/pull/758
 	panic("not implemented")
 }
 
-func (ds *HypermodeDataSource) callFunction(ctx context.Context, callInfo *callInfo) (any, []resolve.GraphQLError, error) {
+func (ds *ModusDataSource) callFunction(ctx context.Context, callInfo *callInfo) (any, []resolve.GraphQLError, error) {
 
 	// Get the function info
 	fnInfo, err := ds.WasmHost.GetFunctionInfo(callInfo.Function.Name)
