@@ -56,12 +56,12 @@ test-integration:
 	go test -race -tags=integration ./integration_tests/...
 
 .PHONY: test-ci
-test-race: build-testdata
+test-ci: build-testdata
 	go install github.com/jstemmer/go-junit-report/v2@latest
 	go test -v -race 2>&1 ./... | go-junit-report -set-exit-code -iocopy -out report.xml
 
 .PHONY: test-integration-ci
-test-integration:
+test-integration-ci:
 	go install github.com/jstemmer/go-junit-report/v2@latest
 	go test -tags integration -v -race 2>&1 ./integration_tests/... | go-junit-report -set-exit-code -iocopy -out report.xml
 

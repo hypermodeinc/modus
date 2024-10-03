@@ -1,11 +1,11 @@
 name: ci-golang-unit-tests
 on:
   pull_request:
-    # types:
-    #   - opened
-    #   - synchronize
-    #   - reopened
-    #   - ready_for_review
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
 jobs:
   golang-tests:
     name: test
