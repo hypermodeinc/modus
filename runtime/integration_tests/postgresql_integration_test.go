@@ -279,7 +279,7 @@ func (ps *postgresqlSuite) setupPostgresContainer() error {
 	cconf := &container.Config{Image: "docker.io/postgres:16-alpine", ExposedPorts: nat.PortSet{"5432": {}}, Env: pgEnv}
 	portBindings := nat.PortMap(map[nat.Port][]nat.PortBinding{"5432": {{HostPort: "5499"}}})
 	hconf := &container.HostConfig{PortBindings: portBindings, AutoRemove: true}
-	resp, err := ps.dcli.ContainerCreate(ctx, cconf, hconf, nil, nil, "postgres_hypermode_integration_test")
+	resp, err := ps.dcli.ContainerCreate(ctx, cconf, hconf, nil, nil, "postgres_modus_integration_test")
 	if err != nil {
 		return err
 	}
