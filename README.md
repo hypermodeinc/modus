@@ -1,3 +1,7 @@
+<a href="https://discord.hypermode.com" >
+    <img height=20 src="https://img.shields.io/discord/1267579648657850441" />
+</a>
+
 # Modus
 
 ## TODO - rewrite this whole file in the context of Modus
