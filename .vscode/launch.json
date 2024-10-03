@@ -2,31 +2,31 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Hypermode Runtime (local)",
+      "name": "Modus Runtime (local)",
       "type": "go",
       "request": "launch",
       "mode": "auto",
       "preLaunchTask": "go: generate code",
-      "program": "${workspaceFolder}",
+      "program": "${workspaceFolder}/runtime",
       "env": {
-        "HYPERMODE_DEBUG": "true",
-        "HYPERMODE_METADATA_DB": "postgresql://postgres:postgres@localhost:5433/my-runtime-db?sslmode=disable"
+        "MODUS_DEBUG": "true",
+        "MODUS_DB": "postgresql://postgres:postgres@localhost:5433/my-runtime-db?sslmode=disable"
       },
       "args": ["--refresh=1s"]
     },
     {
-      "name": "Hypermode Runtime (AWS)",
+      "name": "Modus Runtime (AWS)",
       "type": "go",
       "request": "launch",
       "mode": "auto",
       "preLaunchTask": "go: generate code",
-      "program": "${workspaceFolder}",
+      "program": "${workspaceFolder}/runtime",
       "env": {
-        "HYPERMODE_DEBUG": "true",
+        "MODUS_DEBUG": "true",
         "AWS_REGION": "us-west-2",
         "AWS_PROFILE": "sandbox",
         "AWS_SDK_LOAD_CONFIG": "true",
-        "HYPERMODE_METADATA_DB": "postgresql://postgres:postgres@localhost:5433/my-runtime-db?sslmode=disable"
+        "MODUS_DB": "postgresql://postgres:postgres@localhost:5433/my-runtime-db?sslmode=disable"
       },
       "args": [
         "--useAwsSecrets",
