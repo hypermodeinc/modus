@@ -2,7 +2,7 @@
 
 ## UNRELEASED
 
-- Migrate from Hypermode Runtime to Modus
+- Migrate from Hypermode to Modus [#412](https://github.com/hypermodeinc/modus/pull/412)
 
 ## 2024-10-02 - Version 0.12.7
 
