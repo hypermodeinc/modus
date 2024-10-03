@@ -6,3 +6,6 @@ __debug_bin*
 *.wasm
 *.wat
 *_generated.go
+
+node_modules/
+build/

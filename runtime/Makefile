@@ -28,12 +28,27 @@ build: generate
 run: generate
 	go run .
 
+.PHONY: build-testdata
+build-testdata: generate build-testdata-assemblyscript build-testdata-golang
+
+.PHONY: build-testdata-assemblyscript
+build-testdata-assemblyscript:
+	cd languages/assemblyscript/testdata && npm install && npm run build
+
+.PHONY: build-testdata-golang
+build-testdata-golang:
+	cd languages/golang/testdata && ./build.sh
+
 .PHONY: test
-test:
+test: build-testdata
 	go test ./...
 
+.PHONY: test-no-cache
+test-no-cache: build-testdata
+	go test -count=1 ./...
+
 .PHONY: test-race
-test-race:
+test-race: build-testdata
 	go test -race ./...
 
 .PHONY: test-integration
