@@ -3,6 +3,7 @@
 ## UNRELEASED
 
 - Migrate from Hypermode to Modus [#412](https://github.com/hypermodeinc/modus/pull/412)
+- Import WasmExtractor code [#415](https://github.com/hypermodeinc/modus/pull/415)
 
 ## 2024-10-02 - Version 0.12.7
 
