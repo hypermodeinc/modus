@@ -40,15 +40,15 @@ build-testdata-golang:
 	cd languages/golang/testdata && ./build.sh
 
 .PHONY: test
-test: build-testdata
+test: generate
 	go test ./...
 
 .PHONY: test-no-cache
-test-no-cache: build-testdata
+test-no-cache: generate
 	go test -count=1 ./...
 
 .PHONY: test-race
-test-race: build-testdata
+test-race: generate
 	go test -race ./...
 
 .PHONY: test-integration
@@ -56,12 +56,12 @@ test-integration:
 	go test -race -tags=integration ./integration_tests/...
 
 .PHONY: test-ci
-test-ci: build-testdata
+test-ci: generate
 	go install github.com/jstemmer/go-junit-report/v2@latest
 	go test -v -race 2>&1 ./... | go-junit-report -set-exit-code -iocopy -out report.xml
 
 .PHONY: test-integration-ci
-test-integration-ci:
+test-integration-ci: generate
 	go install github.com/jstemmer/go-junit-report/v2@latest
 	go test -tags integration -v -race 2>&1 ./integration_tests/... | go-junit-report -set-exit-code -iocopy -out report.xml
 

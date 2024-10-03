@@ -37,6 +37,7 @@ jobs:
         with:
           go-version: 1.23
           check-latest: true
+          cache-dependency-path: runtime/go.sum
       - name: Set Runtime Release Version
         run: |
           #!/bin/bash
