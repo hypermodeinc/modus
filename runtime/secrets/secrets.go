@@ -14,6 +14,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"net/http"
+	"os"
 	"regexp"
 
 	"github.com/hypermodeinc/modus/pkg/manifest"
@@ -89,6 +90,19 @@ func ApplyHostSecretsToHttpRequest(ctx context.Context, host *manifest.HTTPHostI
 	for k, v := range host.Headers {
 		req.Header.Add(k, applySecretsToString(ctx, secrets, v))
 	}
+
+	return nil
+}
+
+func ApplyAuthToLocalModelRequest(ctx context.Context, host manifest.HostInfo, req *http.Request) error {
+	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+	defer span.Finish()
+
+	jwt := os.Getenv("HYP_JWT")
+	orgId := os.Getenv("HYP_ORG_ID")
+
+	req.Header.Set("Authorization", "Bearer "+jwt)
+	req.Header.Set("HYP-ORG-ID", orgId)
 
 	return nil
 }
