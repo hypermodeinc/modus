@@ -65,6 +65,10 @@ jobs:
         with:
           cache-dependency-path: "${{ matrix.dir }}/go.sum"
           go-version-file: "${{ matrix.dir }}/go.mod"
+      - name: Setup TinyGo
+        uses: acifani/setup-tinygo@v2
+        with:
+          tinygo-version: "0.33.0"
       - name: Generate Code
         run: go generate ./...
       - name: Build Program
