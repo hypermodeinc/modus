@@ -104,6 +104,7 @@
     "operationreport",
     "pgconn",
     "pgxpool",
+    "picsum",
     "pluginmanager",
     "promhttp",
     "ptrs",
@@ -149,6 +150,7 @@
     "Weaviate",
     "wundergraph",
     "xxhash",
+    "zenquotes",
     "zerolog"
   ]
 }
