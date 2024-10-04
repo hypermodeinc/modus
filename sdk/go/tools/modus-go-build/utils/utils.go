@@ -19,7 +19,7 @@ import (
 )
 
 func IsDebugModeEnabled() bool {
-	b, _ := strconv.ParseBool(os.Getenv("HYPERMODE_DEBUG"))
+	b, _ := strconv.ParseBool(os.Getenv("MODUS_DEBUG"))
 	return b
 }
 

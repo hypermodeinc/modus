@@ -24,8 +24,8 @@ import (
 const sdkModulePath = "github.com/hypermodeinc/modus/sdk/go"
 
 type ModuleInfo struct {
-	ModulePath          string
-	HypermodeSDKVersion *version.Version
+	ModulePath      string
+	ModusSDKVersion *version.Version
 }
 
 func CollectModuleInfo(config *config.Config) (*ModuleInfo, error) {
@@ -52,7 +52,7 @@ func CollectModuleInfo(config *config.Config) (*ModuleInfo, error) {
 		if mod.Path == sdkModulePath {
 			sVer := strings.TrimPrefix(mod.Version, "v")
 			if ver, err := version.NewVersion(sVer); err == nil {
-				result.HypermodeSDKVersion = ver
+				result.ModusSDKVersion = ver
 			}
 		}
 	}

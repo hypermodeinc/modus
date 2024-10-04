@@ -36,8 +36,8 @@ func GenerateMetadata(config *config.Config, mod *modinfo.ModuleInfo) (*metadata
 	meta.Plugin = path.Base(mod.ModulePath)
 
 	meta.SDK = sdkName
-	if mod.HypermodeSDKVersion != nil {
-		meta.SDK += "@" + mod.HypermodeSDKVersion.String()
+	if mod.ModusSDKVersion != nil {
+		meta.SDK += "@" + mod.ModusSDKVersion.String()
 	}
 
 	wasmFilePath := filepath.Join(config.OutputDir, config.WasmFileName)
