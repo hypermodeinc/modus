@@ -1,8 +1,11 @@
 {
   "recommendations": [
-    "amazonwebservices.aws-toolkit-vscode",
+    "dbaeumer.vscode-eslint",
+    "DavidAnson.vscode-markdownlint",
     "esbenp.prettier-vscode",
     "golang.go",
+    "GraphQL.vscode-graphql",
+    "ms-vscode.makefile-tools",
     "streetsidesoftware.code-spell-checker"
   ]
 }
