@@ -1,7 +1,7 @@
 {
   "name": "classification-example",
   "private": true,
-  "description": "Hypermode Functions Classification Example",
+  "description": "Modus AssemblyScript Classification Example",
   "author": "Hypermode, Inc.",
   "license": "Apache-2.0",
   "type": "module",

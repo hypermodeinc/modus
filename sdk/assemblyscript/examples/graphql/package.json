@@ -1,7 +1,7 @@
 {
   "name": "graphql-example",
   "private": true,
-  "description": "Hypermode Functions GraphQL Example",
+  "description": "Modus AssemblyScript GraphQL Example",
   "author": "Hypermode, Inc.",
   "license": "Apache-2.0",
   "type": "module",

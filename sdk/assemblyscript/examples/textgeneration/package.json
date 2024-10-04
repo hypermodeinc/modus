@@ -1,7 +1,7 @@
 {
   "name": "text-generation-example",
   "private": true,
-  "description": "Hypermode Functions Text Generation Example",
+  "description": "Modus AssemblyScript Text Generation Example",
   "author": "Hypermode, Inc.",
   "license": "Apache-2.0",
   "type": "module",

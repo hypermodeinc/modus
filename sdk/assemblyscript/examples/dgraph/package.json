@@ -1,7 +1,7 @@
 {
   "name": "dgraph-example",
   "private": true,
-  "description": "Hypermode Functions Dgraph Example",
+  "description": "Modus AssemblyScript Dgraph Example",
   "author": "Hypermode, Inc.",
   "license": "Apache-2.0",
   "type": "module",
