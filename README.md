@@ -10,7 +10,7 @@ This repository contains the source code for the _Hypermode Runtime_.
 The Runtime loads and executes _plugins_ containing _Hypermode Functions_.
 
 To get started with Hypermode Functions written in AssemblyScript, visit the
-[`functions-as`](https://github.com/hypermodeAI/functions-as) repository.
+`functions-as` repository.
 
 ## Command Line Parameters
 
