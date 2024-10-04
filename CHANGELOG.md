@@ -7,6 +7,7 @@
 - Import Manifest code [#416](https://github.com/hypermodeinc/modus/pull/416)
 - Update the runtime's manifest usage [#417](https://github.com/hypermodeinc/modus/pull/417)
 - Add Modus Go SDK [#418](https://github.com/hypermodeinc/modus/pull/418)
+- Add Local Model Invocation Support [#421](https://github.com/hypermodeinc/modus/pull/421)
 
 ## 2024-10-02 - Version 0.12.7
 
