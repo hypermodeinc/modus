@@ -7,4 +7,6 @@
 SET "PROJECTDIR=%~dp0"
 pushd ..\..\tools\modus-go-build > nul
 go run . "%PROJECTDIR%"
+set "exit_code=%ERRORLEVEL%"
 popd > nul
+exit /b %exit_code%
