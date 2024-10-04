@@ -16,10 +16,10 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/hypermodeinc/modus/pkg/manifest"
 	"github.com/hypermodeinc/modus/runtime/manifestdata"
 	"github.com/hypermodeinc/modus/runtime/secrets"
 
-	"github.com/hypermodeAI/manifest"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"

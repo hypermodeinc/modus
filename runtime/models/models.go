@@ -15,14 +15,13 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/hypermodeinc/modus/pkg/manifest"
 	"github.com/hypermodeinc/modus/runtime/config"
 	"github.com/hypermodeinc/modus/runtime/db"
 	"github.com/hypermodeinc/modus/runtime/hosts"
 	"github.com/hypermodeinc/modus/runtime/manifestdata"
 	"github.com/hypermodeinc/modus/runtime/secrets"
 	"github.com/hypermodeinc/modus/runtime/utils"
-
-	"github.com/hypermodeAI/manifest"
 )
 
 func GetModel(modelName string) (*manifest.ModelInfo, error) {

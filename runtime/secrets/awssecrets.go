@@ -17,13 +17,13 @@ import (
 	"sync"
 	"time"
 
+	"github.com/hypermodeinc/modus/pkg/manifest"
 	"github.com/hypermodeinc/modus/runtime/aws"
 	"github.com/hypermodeinc/modus/runtime/config"
 	"github.com/hypermodeinc/modus/runtime/logger"
 
 	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
 	"github.com/aws/aws-sdk-go-v2/service/secretsmanager/types"
-	"github.com/hypermodeAI/manifest"
 )
 
 type awsSecretsProvider struct {

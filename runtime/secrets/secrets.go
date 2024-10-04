@@ -16,11 +16,10 @@ import (
 	"net/http"
 	"regexp"
 
+	"github.com/hypermodeinc/modus/pkg/manifest"
 	"github.com/hypermodeinc/modus/runtime/config"
 	"github.com/hypermodeinc/modus/runtime/logger"
 	"github.com/hypermodeinc/modus/runtime/utils"
-
-	"github.com/hypermodeAI/manifest"
 )
 
 var provider secretsProvider

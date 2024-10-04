@@ -14,18 +14,18 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/hypermodeinc/modus/pkg/manifest"
 	"github.com/hypermodeinc/modus/runtime/languages"
 	"github.com/hypermodeinc/modus/runtime/manifestdata"
 	"github.com/hypermodeinc/modus/runtime/plugins/metadata"
 	"github.com/hypermodeinc/modus/runtime/utils"
 
-	"github.com/hypermodeAI/manifest"
 	"github.com/stretchr/testify/require"
 )
 
 func Test_GetGraphQLSchema_Go(t *testing.T) {
 
-	manifest := &manifest.HypermodeManifest{
+	manifest := &manifest.Manifest{
 		Models: map[string]manifest.ModelInfo{},
 		Hosts:  map[string]manifest.HostInfo{},
 		Collections: map[string]manifest.CollectionInfo{
