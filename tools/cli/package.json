@@ -6,12 +6,8 @@
   "bin": {
     "hyp": "bin/run.js"
   },
-  "bugs": {
-    "url": "https://github.com/HypermodeAI/modus/issues"
-  },
   "dependencies": {
     "@oclif/core": "^4",
-    "@oclif/plugin-autocomplete": "^3.2.3",
     "@oclif/plugin-help": "^6",
     "@oclif/plugin-plugins": "^5",
     "chalk": "^5.3.0",
@@ -20,7 +16,6 @@
   "devDependencies": {
     "@oclif/prettier-config": "^0.2.1",
     "@oclif/test": "^4",
-    "@types/atomic-sleep": "^1.0.1",
     "@types/chai": "^4",
     "@types/mocha": "^10",
     "@types/node": "^18",
@@ -58,20 +53,20 @@
     "topicSeparator": " ",
     "topics": {
       "sdk": {
-        "description": "Manage SDK versions"
+        "description": "Modus SDK version manager"
       }
     },
-    "theme": "./theme.json",
-    "plugins": [
-      "@oclif/plugin-autocomplete"
-    ]
+    "plugins": []
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/HypermodeAI/modus.git"
   },
+  "bugs": {
+    "url": "https://github.com/HypermodeAI/modus/issues"
+  },
   "scripts": {
-    "build:tarball": "oclif pack tarballs",
+    "pack": "oclif pack tarballs --parallel --no-xz",
     "build": "shx rm -rf dist && tsc -b",
     "lint": "eslint . --ext .ts",
     "postpack": "shx rm -f oclif.manifest.json",

@@ -13,11 +13,8 @@ export default class SDKRemoveCommand extends Command {
       required: false,
     }),
   };
-
   static description = "Remove a specific SDK version";
-
   static examples = ["modus sdk remove v0.0.0", "modus sdk remove all"];
-
   static flags = {};
 
   async run(): Promise<void> {
@@ -27,16 +24,22 @@ export default class SDKRemoveCommand extends Command {
     const platform = os.platform();
     const arch = os.arch();
     const file = "modus-runtime-v" + version + "-" + platform + "-" + arch + (platform === "win32" ? ".exe" : "");
-
+    const versions = readdirSync(expandHomeDir("~/.hypermode/sdk/"));
+    if (!versions.length) {
+      this.log("No versions installed!");
+      process.exit(0);
+    }
     if (version === "all") {
-      for (const version of readdirSync(expandHomeDir("~/.hypermode/sdk/"))) {
+      for (const version of versions) {
         rmSync(expandHomeDir("~/.hypermode/sdk" + version), { recursive: true, force: true });
       }
-      console.log("Removed all versions");
+      this.log("Removed all SDK versions");
+      process.exit(0);
       return;
     } else {
       rmSync(expandHomeDir("~/.hypermode/sdk" + version), { recursive: true, force: true });
-      console.log("Removed Modus v" + version);
+      this.log("Removed Modus v" + version);
+      process.exit(0);
     }
   }
 

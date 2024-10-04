@@ -2,14 +2,12 @@ import { Command, Flags } from "@oclif/core";
 import chalk from "chalk";
 import { createInterface } from "node:readline";
 import ora from "ora";
-
 import { CLI_VERSION, SDK } from "../../custom/globals.js";
-import { ask, clearLine, cloneRepo, expandHomeDir, getAvailablePackageManagers, isGitInstalled, isRunnable } from "../../util/index.js";
+import { ask, clearLine, cloneRepo, getAvailablePackageManagers, isRunnable } from "../../util/index.js";
 import path from "node:path";
 import { Metadata } from "../../util/metadata.js";
-import { copyFileSync, existsSync, mkdirSync } from "node:fs";
+import { existsSync } from "node:fs";
 import { execSync } from "node:child_process";
-import { arch, platform } from "node:os";
 import SDKInstallCommand from "../sdk/install/index.js";
 
 const PKGMGRS = getAvailablePackageManagers();
@@ -105,7 +103,7 @@ export default class NewCommand extends Command {
 
     this.log("[3/4] Installing");
 
-    if (!isGitInstalled()) {
+    if (!isRunnable("git")) {
       this.logError("Could not find valid Git installation! Please download Git or ensure it is in your PATH!");
       process.exit(0);
     }
@@ -155,7 +153,7 @@ export default class NewCommand extends Command {
 
     this.log("\nSuccessfully installed Modus SDK!");
     this.log("To start, run the following command:");
-    this.log(chalk.dim(`$ ${dir == process.cwd() ? "" : "cd " + path.basename(dir)} && modus run`));
+    this.log(chalk.dim(`$ ${dir == process.cwd() ? "" : "cd " + path.basename(dir)} && modus dev --build`));
   }
 
   // TODO: install deps

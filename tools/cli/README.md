@@ -31,26 +31,14 @@ USAGE
 # Commands
 
 <!-- commands -->
-* [`modus autocomplete [SHELL]`](#modus-autocomplete-shell)
 * [`modus build [PATH]`](#modus-build-path)
 * [`modus deploy`](#modus-deploy)
-* [`modus ls`](#modus-ls)
+* [`modus dev [PATH]`](#modus-dev-path)
 * [`modus new`](#modus-new)
-* [`modus run [PATH]`](#modus-run-path)
 * [`modus sdk install [VERSION]`](#modus-sdk-install-version)
 * [`modus sdk list`](#modus-sdk-list)
 * [`modus sdk remove [VERSION]`](#modus-sdk-remove-version)
 * [`modus upgrade`](#modus-upgrade)
-
-## `modus autocomplete [SHELL]`
-
-Display autocomplete installation instructions.
-
-```
-Usage: modus autocomplete
-```
-
-_See code: [@oclif/plugin-autocomplete](https://github.com/oclif/plugin-autocomplete/blob/v3.2.5/src/commands/autocomplete/index.ts)_
 
 ## `modus build [PATH]`
 
@@ -72,13 +60,15 @@ Usage: modus deploy
 
 _See code: [src/commands/deploy/index.ts](https://github.com/HypermodeAI/modus/blob/v0.0.0/src/commands/deploy/index.ts)_
 
-## `modus ls`
+## `modus dev [PATH]`
 
-List installed SDK versions
+Launch a Modus app to local development
 
 ```
-Usage: modus ls
+Usage: modus dev
 ```
+
+_See code: [src/commands/dev/index.ts](https://github.com/HypermodeAI/modus/blob/v0.0.0/src/commands/dev/index.ts)_
 
 ## `modus new`
 
@@ -89,16 +79,6 @@ Usage: modus new
 ```
 
 _See code: [src/commands/new/index.ts](https://github.com/HypermodeAI/modus/blob/v0.0.0/src/commands/new/index.ts)_
-
-## `modus run [PATH]`
-
-Run a Modus app locally
-
-```
-Usage: modus run
-```
-
-_See code: [src/commands/run/index.ts](https://github.com/HypermodeAI/modus/blob/v0.0.0/src/commands/run/index.ts)_
 
 ## `modus sdk install [VERSION]`
 

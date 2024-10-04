@@ -37,9 +37,10 @@ export default class SDKInstallCommand extends Command {
     const arch = os.arch();
     const file = "modus-runtime-v" + version + "-" + platform + "-" + arch + (platform === "win32" ? ".exe" : "");
 
+    const src = path.join(path.dirname(import.meta.url.replace("file:", "")), "../../../../runtime-bin/" + "modus-runtime-v0.12.6-" + platform + "-" + arch + (platform === "win32" ? ".exe" : ""));
     if (version === "all") {
       for (const version of versions) {
-        cpSync(path.join(path.dirname(import.meta.url.replace("file:", "")), "../../../../runtime-bin/" + "modus-runtime-v" + version + "-" + platform + "-" + arch + (platform === "win32" ? ".exe" : "")), expandHomeDir("~/.hypermode/sdk/" + version + "/runtime" + (platform === "win32" ? ".exe" : "")));
+        cpSync(src, expandHomeDir("~/.hypermode/sdk/" + version + "/runtime" + (platform === "win32" ? ".exe" : "")));
       }
       if (!flags.silent) this.log("Installed versions 0.12.0-0.12.6");
       return;
@@ -48,7 +49,7 @@ export default class SDKInstallCommand extends Command {
     }
 
     const runtimePath = expandHomeDir("~/.hypermode/sdk/" + version + "/runtime" + (platform === "win32" ? ".exe" : ""));
-    cpSync(path.join(path.dirname(import.meta.url.replace("file:", "")), "../../../../runtime-bin/" + file), runtimePath);
+    cpSync(src, runtimePath);
 
     if (platform === "linux" || platform === "darwin") {
       execSync("chmod +x " + runtimePath, { stdio: "ignore" });

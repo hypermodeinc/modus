@@ -93,7 +93,7 @@ export default class Run extends Command {
     spawn(runtimePath, {
       stdio: "inherit", env: {
         ...process.env,
-        ENVIRONMENT: "dev"
+        MODUS_ENV: "dev"
       }
     });
 

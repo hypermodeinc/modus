@@ -3,6 +3,8 @@ import { cpSync, existsSync, mkdirSync, rmSync } from "node:fs";
 import path from "node:path";
 import { Interface } from "node:readline";
 import { CLI_VERSION } from "../custom/globals.js";
+import { Command } from "@oclif/core";
+import chalk from "chalk";
 
 export async function ensureDir(dir: string): Promise<void> {
   if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
@@ -17,42 +19,10 @@ export function expandHomeDir(filePath: string): string {
   return filePath;
 }
 
-const PkgManagers = new Map<string, string>([
-  ["bun", "bun i"],
-  ["go", "go install"],
-  ["npm", "npm i"],
-  ["pnpm", "pnpm i"],
-  ["yarn", "yarn install"],
-]);
-
 export function isRunnable(cmd: string): boolean {
   const shell = spawnSync(cmd);
   if (!shell) return false;
   return true;
-}
-
-export function isGoInstalled(): boolean {
-  return isRunnable("go");
-}
-
-export function isTinyGoInstalled(): boolean {
-  return isRunnable("tinygo");
-}
-
-export function isGitInstalled(): boolean {
-  return isRunnable("git");
-}
-
-export function getGoVersion(): null | string {
-  if (!isGoInstalled()) return null;
-  const sh = execSync("go version").toString();
-  return sh.split(" ")[2].slice(2);
-}
-
-export function getTinyGoVersion(): null | string {
-  if (!isTinyGoInstalled()) return null;
-  const sh = execSync("tinygo version").toString();
-  return sh.split(" ")[2];
 }
 
 export async function cloneRepo(url: string, pth: string): Promise<boolean> {
@@ -117,4 +87,11 @@ export function getAvailablePackageManagers(): string[] {
 export function getLatestCLI(): string {
   // implement logic later
   return CLI_VERSION;
+}
+
+export function checkVersion(instance: Command) {
+  const outdated = false;
+  if (outdated) {
+    console.log(chalk.bgBlueBright(" INFO ") + chalk.dim(": You are running an outdated version of the Modus SDK! Please set your sdk version to stable"))
+  }
 }
