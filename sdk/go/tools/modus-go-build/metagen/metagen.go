@@ -24,7 +24,7 @@ import (
 	"github.com/hypermodeinc/modus/sdk/go/tools/modus-go-build/wasm"
 )
 
-const sdkName = "functions-go"
+const sdkName = "modus-sdk-go"
 
 func GenerateMetadata(config *config.Config, mod *modinfo.ModuleInfo) (*metadata.Metadata, error) {
 	if _, err := os.Stat(config.SourceDir); err != nil {

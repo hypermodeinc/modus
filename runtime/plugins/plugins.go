@@ -37,7 +37,11 @@ func NewPlugin(ctx context.Context, cm wazero.CompiledModule, filename string, m
 	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
 
-	language := languages.GetLanguageForSDK(md.SDK)
+	language, err := languages.GetLanguageForSDK(md.SDK)
+	if err != nil {
+		return nil, err
+	}
+
 	planner := language.NewPlanner(md)
 	imports := cm.ImportedFunctions()
 	exports := cm.ExportedFunctions()

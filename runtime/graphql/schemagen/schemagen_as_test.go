@@ -42,7 +42,7 @@ func Test_GetGraphQLSchema_AssemblyScript(t *testing.T) {
 	manifestdata.SetManifest(manifest)
 
 	md := metadata.NewPluginMetadata()
-	md.SDK = "functions-as" // AssemblyScript
+	md.SDK = "modus-sdk-as" // AssemblyScript
 
 	md.FnExports.AddFunction("add").
 		WithParameter("a", "i32").

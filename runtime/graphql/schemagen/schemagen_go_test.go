@@ -41,7 +41,7 @@ func Test_GetGraphQLSchema_Go(t *testing.T) {
 	manifestdata.SetManifest(manifest)
 
 	md := metadata.NewPluginMetadata()
-	md.SDK = "functions-go"
+	md.SDK = "modus-sdk-go"
 
 	md.FnExports.AddFunction("add").
 		WithParameter("a", "int32").
