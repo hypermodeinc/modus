@@ -3,7 +3,7 @@
   "version": "0.12.0",
   "description": "Modus SDK for AssemblyScript",
   "author": "Hypermode, Inc.",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "type": "module",
   "scripts": {
     "test": "ast run",

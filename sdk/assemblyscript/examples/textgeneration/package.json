@@ -3,7 +3,7 @@
   "private": true,
   "description": "Hypermode Functions Text Generation Example",
   "author": "Hypermode, Inc.",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "type": "module",
   "scripts": {
     "build": "node ./node_modules/@hypermode/modus-sdk-as/bin/build-plugin.js",
