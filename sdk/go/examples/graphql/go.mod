@@ -1,6 +1,6 @@
 module graphql-example
 
-go 1.23.0
+go 1.23
 
 require github.com/hypermodeinc/modus/sdk/go v0.0.0
 

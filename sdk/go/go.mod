@@ -1,6 +1,6 @@
 module github.com/hypermodeinc/modus/sdk/go
 
-go 1.23.0
+go 1.23
 
 require github.com/tidwall/sjson v1.2.5
 

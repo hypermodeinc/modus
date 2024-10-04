@@ -1,11 +1,14 @@
 module github.com/hypermodeinc/modus/sdk/go/tools/hypbuild
 
-go 1.23.0
+go 1.23
+
+require github.com/hypermodeinc/modus v0.0.0
+
+replace github.com/hypermodeinc/modus => ../../../../
 
 require (
 	github.com/fatih/color v1.17.0
 	github.com/hashicorp/go-version v1.7.0
-	github.com/hypermodeinc/modus v0.0.0
 	github.com/mattn/go-isatty v0.0.20
 	github.com/rs/xid v1.6.0
 	golang.org/x/mod v0.21.0
@@ -22,5 +25,3 @@ require (
 	golang.org/x/sync v0.8.0 // indirect
 	golang.org/x/sys v0.25.0 // indirect
 )
-
-replace github.com/hypermodeinc/modus => ../../../../
