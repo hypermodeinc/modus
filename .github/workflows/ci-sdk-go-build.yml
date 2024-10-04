@@ -1,0 +1,75 @@
+name: ci-sdk-go-build
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
+jobs:
+  get-dirs:
+    if: github.event_name == 'pull_request'
+    name: find tools and examples
+    runs-on: ubuntu-latest
+    outputs:
+      tools_dirs: ${{ steps.get-tools-dirs.outputs.dirs }}
+      examples_dirs: ${{ steps.get-examples-dirs.outputs.dirs }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Find tools
+        id: get-tools-dirs
+        run: echo "dirs=$(find ./sdk/go/tools -name 'go.mod' -exec dirname {} \; | jq -Rsc 'split("\n")[:-1]')" >> ${GITHUB_OUTPUT}
+      - name: Find examples
+        id: get-examples-dirs
+        run: echo "dirs=$(find ./sdk/go/examples -name 'go.mod' -exec dirname {} \; | jq -Rsc 'split("\n")[:-1]')" >> ${GITHUB_OUTPUT}
+
+  sdk-go-build-tools:
+    needs: get-dirs
+    if: github.event_name == 'pull_request'
+    name: build
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        dir: ${{ fromJson(needs.get-dirs.outputs.tools_dirs) }}
+    defaults:
+      run:
+        working-directory: ${{ matrix.dir }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          cache-dependency-path: "${{ matrix.dir }}/go.sum"
+          go-version-file: "${{ matrix.dir }}/go.mod"
+      - name: Generate Code
+        run: go generate ./...
+      - name: Build Program
+        run: go build .
+
+  sdk-go-build-examples:
+    needs: get-dirs
+    if: github.event_name == 'pull_request'
+    name: build
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        dir: ${{ fromJson(needs.get-dirs.outputs.examples_dirs) }}
+    defaults:
+      run:
+        working-directory: ${{ matrix.dir }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          cache-dependency-path: "${{ matrix.dir }}/go.sum"
+          go-version-file: "${{ matrix.dir }}/go.mod"
+      - name: Setup TinyGo
+        uses: acifani/setup-tinygo@v2
+        with:
+          tinygo-version: "0.33.0"
+      - name: Generate Code
+        run: go generate ./...
+      - name: Build Program
+        run: ./build.sh

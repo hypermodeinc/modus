@@ -1,0 +1,15 @@
+{
+  "$schema": "https://manifest.hypermode.com/hypermode.json",
+  "models": {
+    // No models are used by this example, but if you add any, they would go here.
+  },
+  "hosts": {
+    // This defines the dgraph host that is used by the example functions.
+    // The {{API_KEY}} will be replaced by the secret's value at run time.
+    "dgraph": {
+      "type": "dgraph",
+      "grpcTarget": "frozen-mango.grpc.eu-central-1.aws.cloud.dgraph.io:443",
+      "key": "{{API_KEY}}"
+    }
+  }
+}
