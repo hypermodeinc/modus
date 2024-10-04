@@ -4,7 +4,9 @@
   "files.trimFinalNewlines": true,
   "files.associations": {
     "CODEOWNERS": "plaintext",
-    "LICENSE": "plaintext"
+    "LICENSE": "plaintext",
+    "*hypermode.json": "jsonc",
+    "*modus.json": "jsonc"
   },
   "go.lintTool": "golangci-lint",
   "go.testEnvVars": {
@@ -65,6 +67,7 @@
     "hostfns",
     "hostfunctions",
     "httpclient",
+    "hujson",
     "hypermode",
     "hypermodeinc",
     "hypruntime",
@@ -75,6 +78,7 @@
     "joho",
     "jsonlogs",
     "jsonparser",
+    "jsonschema",
     "langsupport",
     "legacymodels",
     "Lessable",
@@ -100,6 +104,7 @@
     "reindex",
     "renameio",
     "rtti",
+    "santhosh",
     "schemagen",
     "sjson",
     "sqlclient",
@@ -108,6 +113,8 @@
     "strs",
     "sublicensable",
     "submatches",
+    "tailscale",
+    "tekuri",
     "testdata",
     "testutils",
     "tetratelabs",
