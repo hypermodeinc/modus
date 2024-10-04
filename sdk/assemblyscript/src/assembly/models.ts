@@ -21,7 +21,7 @@ declare function hostInvokeModel(
   input: string,
 ): string | null;
 
-class HypermodeModelFactory implements ModelFactory {
+class ModusModelFactory implements ModelFactory {
   constructor() {
     // Note, we assign this to a static property on the base Model class so that it can be accessed
     // from the `invoke` method.  It would be preferable to use an instance private or protected
@@ -45,5 +45,5 @@ class HypermodeModelFactory implements ModelFactory {
   }
 }
 
-const factory = new HypermodeModelFactory();
+const factory = new ModusModelFactory();
 export default factory;
