@@ -16,12 +16,12 @@ import (
 	"time"
 
 	"github.com/hypermodeinc/modus/pkg/manifest"
-	"github.com/hypermodeinc/modus/sdk/go/tools/hypbuild/codegen"
-	"github.com/hypermodeinc/modus/sdk/go/tools/hypbuild/compiler"
-	"github.com/hypermodeinc/modus/sdk/go/tools/hypbuild/config"
-	"github.com/hypermodeinc/modus/sdk/go/tools/hypbuild/metagen"
-	"github.com/hypermodeinc/modus/sdk/go/tools/hypbuild/modinfo"
-	"github.com/hypermodeinc/modus/sdk/go/tools/hypbuild/wasm"
+	"github.com/hypermodeinc/modus/sdk/go/tools/modus-go-build/codegen"
+	"github.com/hypermodeinc/modus/sdk/go/tools/modus-go-build/compiler"
+	"github.com/hypermodeinc/modus/sdk/go/tools/modus-go-build/config"
+	"github.com/hypermodeinc/modus/sdk/go/tools/modus-go-build/metagen"
+	"github.com/hypermodeinc/modus/sdk/go/tools/modus-go-build/modinfo"
+	"github.com/hypermodeinc/modus/sdk/go/tools/modus-go-build/wasm"
 
 	"github.com/fatih/color"
 	"github.com/mattn/go-isatty"

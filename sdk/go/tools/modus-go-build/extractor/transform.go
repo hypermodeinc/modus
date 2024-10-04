@@ -12,8 +12,8 @@ package extractor
 import (
 	"go/types"
 
-	"github.com/hypermodeinc/modus/sdk/go/tools/hypbuild/metadata"
-	"github.com/hypermodeinc/modus/sdk/go/tools/hypbuild/utils"
+	"github.com/hypermodeinc/modus/sdk/go/tools/modus-go-build/metadata"
+	"github.com/hypermodeinc/modus/sdk/go/tools/modus-go-build/utils"
 )
 
 func transformStruct(name string, s *types.Struct) *metadata.TypeDefinition {

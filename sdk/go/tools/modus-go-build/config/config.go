@@ -43,8 +43,8 @@ func GetConfig() (*Config, error) {
 	flag.Usage = func() {
 		color.NoColor = !isatty.IsTerminal(os.Stderr.Fd())
 		color.Set(color.FgCyan)
-		fmt.Fprintln(os.Stderr, "HypBuild - The Hypermode Go Build Tool")
-		fmt.Fprintln(os.Stderr, "Usage: hypbuild [options] <source directory> [... additional compiler options ...]")
+		fmt.Fprintln(os.Stderr, "modus-go-build - The Hypermode Go Build Tool")
+		fmt.Fprintln(os.Stderr, "Usage: modus-go-build [options] <source directory> [... additional compiler options ...]")
 		fmt.Fprintln(os.Stderr, "Options:")
 		flag.PrintDefaults()
 		color.Unset()

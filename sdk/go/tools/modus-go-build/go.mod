@@ -1,4 +1,4 @@
-module github.com/hypermodeinc/modus/sdk/go/tools/hypbuild
+module github.com/hypermodeinc/modus/sdk/go/tools/modus-go-build
 
 go 1.23
 

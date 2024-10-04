@@ -18,9 +18,9 @@ import (
 	"strings"
 
 	"github.com/hypermodeinc/modus/pkg/wasmextractor"
-	"github.com/hypermodeinc/modus/sdk/go/tools/hypbuild/config"
-	"github.com/hypermodeinc/modus/sdk/go/tools/hypbuild/metadata"
-	"github.com/hypermodeinc/modus/sdk/go/tools/hypbuild/utils"
+	"github.com/hypermodeinc/modus/sdk/go/tools/modus-go-build/config"
+	"github.com/hypermodeinc/modus/sdk/go/tools/modus-go-build/metadata"
+	"github.com/hypermodeinc/modus/sdk/go/tools/modus-go-build/utils"
 )
 
 func WriteMetadata(config *config.Config, meta *metadata.Metadata) error {

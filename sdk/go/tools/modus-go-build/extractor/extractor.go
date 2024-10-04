@@ -13,10 +13,10 @@ import (
 	"go/types"
 	"sort"
 
-	"github.com/hypermodeinc/modus/sdk/go/tools/hypbuild/config"
-	"github.com/hypermodeinc/modus/sdk/go/tools/hypbuild/metadata"
-	"github.com/hypermodeinc/modus/sdk/go/tools/hypbuild/utils"
-	"github.com/hypermodeinc/modus/sdk/go/tools/hypbuild/wasm"
+	"github.com/hypermodeinc/modus/sdk/go/tools/modus-go-build/config"
+	"github.com/hypermodeinc/modus/sdk/go/tools/modus-go-build/metadata"
+	"github.com/hypermodeinc/modus/sdk/go/tools/modus-go-build/utils"
+	"github.com/hypermodeinc/modus/sdk/go/tools/modus-go-build/wasm"
 )
 
 func CollectProgramInfo(config *config.Config, meta *metadata.Metadata, wasmFunctions *wasm.WasmFunctions) error {

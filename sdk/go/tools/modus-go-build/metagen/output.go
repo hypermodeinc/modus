@@ -17,8 +17,8 @@ import (
 	"strings"
 
 	"github.com/fatih/color"
-	"github.com/hypermodeinc/modus/sdk/go/tools/hypbuild/metadata"
-	"github.com/hypermodeinc/modus/sdk/go/tools/hypbuild/utils"
+	"github.com/hypermodeinc/modus/sdk/go/tools/modus-go-build/metadata"
+	"github.com/hypermodeinc/modus/sdk/go/tools/modus-go-build/utils"
 	"github.com/mattn/go-isatty"
 )
 
