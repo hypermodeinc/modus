@@ -1,5 +1,18 @@
 version: 2
 updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "wednesday"
+      time: "16:00"
+    groups:
+      actions:
+        update-types:
+          - "patch"
+          - "minor"
+          - "major"
+
   - package-ecosystem: "gomod"
     directories:
       - "/"
@@ -19,15 +32,19 @@ updates:
           - "minor"
           - "patch"
 
-  - package-ecosystem: "github-actions"
-    directory: "/"
+  - package-ecosystem: "npm"
+    versioning-strategy: increase
+    directories:
+      - "/sdk/assemblyscript/src"
+      - "/sdk/assemblyscript/examples/*"
+      - "/runtime/languages/assemblyscript/testdata"
     schedule:
       interval: "weekly"
       day: "wednesday"
       time: "16:00"
     groups:
-      actions:
+      minor-and-patch:
+        applies-to: version-updates
         update-types:
-          - "patch"
           - "minor"
-          - "major"
+          - "patch"
