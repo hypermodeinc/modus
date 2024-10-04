@@ -25,6 +25,8 @@ func CollectProgramInfo(config *config.Config, meta *metadata.Metadata, wasmFunc
 		return err
 	}
 
+	loadPackages(config.SourceDir)
+
 	requiredTypes := make(map[string]types.Type)
 
 	for name, f := range getExportedFunctions(pkgs) {
