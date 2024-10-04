@@ -1,9 +1,11 @@
 <!-- This readme will display with the repository on GitHub. -->
 
+# Modus SDK for AssemblyScript
+
+## TODO: Rewrite this file in the context of Modus
+
 ![NPM Version](https://img.shields.io/npm/v/%40hypermode%2Ffunctions-as)
 ![NPM Downloads](https://img.shields.io/npm/dw/%40hypermode%2Ffunctions-as)
-
-# Hypermode Functions SDK for AssemblyScript
 
 This repository contains the SDK used by [Hypermode](https://hypermode.com)
 Functions written in [AssemblyScript](https://www.assemblyscript.org/).

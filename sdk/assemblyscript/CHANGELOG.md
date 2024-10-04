@@ -1,8 +1,9 @@
 # Change Log
 
-## UNRELEASED
+## *NOTICE*
 
-- Lock version of `xid-ts` library to resolve build issues [#189](https://github.com/hypermodeinc/functions-as/pull/189)
+This change log is retained for historical reference only, and is no longer updated.
+See the [root-level change log](../../CHANGELOG.md) for current versions.
 
 ## 2024-09-16 - Version 0.12.0
 
