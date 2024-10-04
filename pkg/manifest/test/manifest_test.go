@@ -13,7 +13,7 @@ var validManifest []byte
 
 func TestReadManifest(t *testing.T) {
 	// This should match the content of valid_hypermode.json
-	expectedManifest := manifest.HypermodeManifest{
+	expectedManifest := &manifest.HypermodeManifest{
 		Version: 2,
 		Models: map[string]manifest.ModelInfo{
 			"model-1": {

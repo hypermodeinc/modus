@@ -81,19 +81,19 @@ func ValidateManifest(content []byte) error {
 	return nil
 }
 
-func ReadManifest(content []byte) (HypermodeManifest, error) {
-	var manifest HypermodeManifest
+func ReadManifest(content []byte) (*HypermodeManifest, error) {
 	data, err := standardizeJSON(content)
 	if err != nil {
-		return manifest, err
+		return nil, err
 	}
 
+	var manifest HypermodeManifest
 	errParse := parseManifestJson(data, &manifest)
 	if errParse == nil {
-		return manifest, nil
+		return &manifest, nil
 	}
 
-	return manifest, fmt.Errorf("failed to parse manifest: %w", errParse)
+	return nil, fmt.Errorf("failed to parse manifest: %w", errParse)
 }
 
 func parseManifestJson(data []byte, manifest *HypermodeManifest) error {
