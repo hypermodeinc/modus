@@ -1,4 +1,4 @@
-name: ci-golang-lint
+name: ci-runtime-lint
 on:
   pull_request:
     types:
@@ -7,7 +7,7 @@ on:
       - reopened
       - ready_for_review
 jobs:
-  golang-lint:
+  runtime-lint:
     if: github.event_name == 'pull_request'
     name: lint
     runs-on: warp-ubuntu-latest-x64-4x
@@ -21,7 +21,7 @@ jobs:
       - name: Generate Code
         working-directory: runtime
         run: make generate
-      - name: golang-lint
+      - name: Run Linter
         uses: golangci/golangci-lint-action@v6
         with:
           version: v1.61.0
