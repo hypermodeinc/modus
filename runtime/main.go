@@ -43,6 +43,12 @@ func main() {
 	if err != nil && !os.IsNotExist(err) {
 		log.Warn().Err(err).Msg("Error reading .env file.  Ignoring.")
 	}
+	if config.IsDevEnvironment() {
+		err = godotenv.Load(filepath.Join(config.StoragePath, ".env.local"))
+		if err != nil && !os.IsNotExist(err) {
+			log.Warn().Err(err).Msg("Error reading .env.local file.  Ignoring.")
+		}
+	}
 
 	// Initialize Sentry
 	rootSourcePath := getRootSourcePath()

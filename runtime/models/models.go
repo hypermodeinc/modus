@@ -24,6 +24,8 @@ import (
 	"github.com/hypermodeinc/modus/runtime/utils"
 )
 
+var localHypermodeModels = map[string]bool{"meta-llama/meta-llama-3.1-8b-instruct": true, "sentence-transformers/all-minilm-l6-v2": true, "antoinemc/distilbart-mnli-github-issues": true, "distilbert/distilbert-base-uncased-finetuned-sst-2-english": true}
+
 func GetModel(modelName string) (*manifest.ModelInfo, error) {
 	model, ok := manifestdata.GetManifest().Models[modelName]
 	if !ok {
@@ -76,7 +78,9 @@ func PostToModelEndpoint[TResult any](ctx context.Context, model *manifest.Model
 		if host.Name != hosts.HypermodeHost {
 			return secrets.ApplyHostSecretsToHttpRequest(ctx, host, req)
 		}
-
+		if config.IsDevEnvironment() {
+			return secrets.ApplyAuthToLocalModelRequest(ctx, host, req)
+		}
 		return nil
 	}
 
@@ -99,6 +103,13 @@ func getModelEndpointAndHost(model *manifest.ModelInfo) (string, *manifest.HTTPH
 	}
 
 	if host.Name == hosts.HypermodeHost {
+		if config.IsDevEnvironment() {
+			if !isValidLocalHypermodeModel(model.SourceModel) {
+				return "", host, fmt.Errorf("model %s is not available in the local Hypermode environment", model.SourceModel)
+			}
+			endpoint := fmt.Sprintf("https://models.hypermode.host/%s", strings.ToLower(model.SourceModel))
+			return endpoint, host, nil
+		}
 		// Compose the Hypermode hosted model endpoint URL.
 		// Example: http://modelname.bckid.svc.cluster.local/v1/models/modelname:predict
 		endpoint := fmt.Sprintf("http://%s.%s/%[1]s:predict", strings.ToLower(model.Name), config.ModelHost)
@@ -122,4 +133,9 @@ func getModelEndpointAndHost(model *manifest.ModelInfo) (string, *manifest.HTTPH
 	}
 
 	return host.Endpoint, host, nil
+}
+
+func isValidLocalHypermodeModel(modelName string) bool {
+	_, ok := localHypermodeModels[strings.ToLower(modelName)]
+	return ok
 }
