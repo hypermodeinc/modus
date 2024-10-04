@@ -7,7 +7,7 @@ package manifest
 import (
 	"encoding/json"
 
-	v1_manifest "github.com/hypermodeinc/manifest/compat/v1"
+	v1_manifest "github.com/hypermodeinc/modus/pkg/manifest/compat/v1"
 )
 
 const (
