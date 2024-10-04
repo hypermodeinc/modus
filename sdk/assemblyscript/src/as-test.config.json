@@ -7,7 +7,7 @@
   },
   "buildOptions": {
     "args": [
-      "--config ./node_modules/@hypermode/functions-as/plugin.asconfig.json"
+      "--config ./node_modules/@hypermode/modus-sdk-as/plugin.asconfig.json"
     ],
     "target": "bindings"
   },

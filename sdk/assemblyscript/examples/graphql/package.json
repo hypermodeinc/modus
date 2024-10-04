@@ -6,13 +6,13 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
-    "build": "node ./node_modules/@hypermode/functions-as/bin/build-plugin.js",
+    "build": "node ./node_modules/@hypermode/modus-sdk-as/bin/build-plugin.js",
     "lint": "eslint .",
     "pretty": "prettier --write .",
     "pretty:check": "prettier --check ."
   },
   "dependencies": {
-    "@hypermode/functions-as": "../../src",
+    "@hypermode/modus-sdk-as": "../../src",
     "json-as": "^0.9.21"
   },
   "devDependencies": {

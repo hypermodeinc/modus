@@ -1,4 +1,4 @@
-import { models } from "@hypermode/functions-as";
+import { models } from "@hypermode/modus-sdk-as";
 import { EmbeddingsModel } from "@hypermode/models-as/models/experimental/embeddings";
 import { OpenAIEmbeddingsModel } from "@hypermode/models-as/models/openai/embeddings";
 

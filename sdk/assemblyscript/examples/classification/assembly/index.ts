@@ -1,4 +1,4 @@
-import { models } from "@hypermode/functions-as";
+import { models } from "@hypermode/modus-sdk-as";
 import {
   ClassificationModel,
   ClassifierResult,

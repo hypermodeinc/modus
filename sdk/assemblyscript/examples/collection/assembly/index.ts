@@ -1,5 +1,5 @@
-import { collections } from "@hypermode/functions-as";
-import { models } from "@hypermode/functions-as";
+import { collections } from "@hypermode/modus-sdk-as";
+import { models } from "@hypermode/modus-sdk-as";
 import { OpenAIEmbeddingsModel } from "@hypermode/models-as/models/openai/embeddings";
 
 // These names should match the ones defined in the hypermode.json manifest file.

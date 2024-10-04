@@ -87,7 +87,7 @@ async function validateAsJson() {
 
   const config = JSON.parse(await readFile(file));
 
-  const p = "./node_modules/@hypermode/functions-as/plugin.asconfig.json";
+  const p = "./node_modules/@hypermode/modus-sdk-as/plugin.asconfig.json";
   if (config.extends !== p) {
     const msg = `${file} must contain the following:
 {
@@ -99,7 +99,7 @@ async function validateAsJson() {
   }
 
   const requiredTransforms = [
-    "@hypermode/functions-as/transform",
+    "@hypermode/modus-sdk-as/transform",
     "json-as/transform",
   ];
   const transforms = config?.options?.transform || [];

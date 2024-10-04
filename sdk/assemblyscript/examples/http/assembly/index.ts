@@ -1,4 +1,4 @@
-import { http } from "@hypermode/functions-as";
+import { http } from "@hypermode/modus-sdk-as";
 import { Quote, Image, Issue } from "./classes";
 
 // This function makes a simple HTTP GET request to example.com,

@@ -1,4 +1,4 @@
-import { http, models } from "@hypermode/functions-as";
+import { http, models } from "@hypermode/modus-sdk-as";
 import { JSON } from "json-as";
 
 import {

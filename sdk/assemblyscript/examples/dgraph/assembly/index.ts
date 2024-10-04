@@ -1,4 +1,4 @@
-import { dgraph } from "@hypermode/functions-as";
+import { dgraph } from "@hypermode/modus-sdk-as";
 import { PeopleData, Person } from "./classes";
 import { JSON } from "json-as";
 

@@ -1,4 +1,4 @@
-import { graphql } from "@hypermode/functions-as";
+import { graphql } from "@hypermode/modus-sdk-as";
 import {
   AddPersonPayload,
   AggregatePersonResult,
