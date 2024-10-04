@@ -5,7 +5,6 @@ go 1.23.0
 require (
 	github.com/fatih/color v1.17.0
 	github.com/hashicorp/go-version v1.7.0
-	github.com/hypermodeAI/wasmextractor v1.0.1
 	github.com/hypermodeinc/modus v0.0.0
 	github.com/mattn/go-isatty v0.0.20
 	github.com/rs/xid v1.6.0

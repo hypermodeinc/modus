@@ -17,7 +17,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/hypermodeAI/wasmextractor"
+	"github.com/hypermodeinc/modus/pkg/wasmextractor"
 	"github.com/hypermodeinc/modus/sdk/go/tools/hypbuild/config"
 	"github.com/hypermodeinc/modus/sdk/go/tools/hypbuild/metadata"
 	"github.com/hypermodeinc/modus/sdk/go/tools/hypbuild/utils"
