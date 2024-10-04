@@ -4,6 +4,8 @@
 
 - Migrate from Hypermode to Modus [#412](https://github.com/hypermodeinc/modus/pull/412)
 - Import WasmExtractor code [#415](https://github.com/hypermodeinc/modus/pull/415)
+- Import Manifest code [#416](https://github.com/hypermodeinc/modus/pull/416)
+- Update the runtime's manifest usage [#417](https://github.com/hypermodeinc/modus/pull/417)
 
 ## 2024-10-02 - Version 0.12.7
 
