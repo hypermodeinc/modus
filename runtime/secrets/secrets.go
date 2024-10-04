@@ -95,8 +95,6 @@ func ApplyHostSecretsToHttpRequest(ctx context.Context, host *manifest.HTTPHostI
 }
 
 func ApplyAuthToLocalModelRequest(ctx context.Context, host manifest.HostInfo, req *http.Request) error {
-	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
-	defer span.Finish()
 
 	jwt := os.Getenv("HYP_JWT")
 	orgId := os.Getenv("HYP_ORG_ID")
