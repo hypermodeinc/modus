@@ -82,25 +82,17 @@ func ValidateManifest(content []byte) error {
 }
 
 func ReadManifest(content []byte) (HypermodeManifest, error) {
-	// Create standard JSON before attempting to parse
 	var manifest HypermodeManifest
 	data, err := standardizeJSON(content)
 	if err != nil {
 		return manifest, err
 	}
 
-	// Try to parse using the current format first
 	errParse := parseManifestJson(data, &manifest)
 	if errParse == nil {
 		return manifest, nil
 	}
 
-	// Try the older format if that failed
-	if err := parseManifestJsonV1(data, &manifest); err == nil {
-		return manifest, nil
-	}
-
-	// We should return the error from parsing using the current format
 	return manifest, fmt.Errorf("failed to parse manifest: %w", errParse)
 }
 
