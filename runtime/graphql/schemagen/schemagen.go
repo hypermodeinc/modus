@@ -33,7 +33,12 @@ func GetGraphQLSchema(ctx context.Context, md *metadata.Metadata) (*GraphQLSchem
 	span, _ := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
 
-	lti := languages.GetLanguageForSDK(md.SDK).TypeInfo()
+	lang, err := languages.GetLanguageForSDK(md.SDK)
+	if err != nil {
+		return nil, err
+	}
+
+	lti := lang.TypeInfo()
 	inputTypeDefs, errors := transformTypes(md.Types, lti, true)
 	resultTypeDefs, errs := transformTypes(md.Types, lti, false)
 	errors = append(errors, errs...)

@@ -9,6 +9,7 @@
 - Add Modus Go SDK [#418](https://github.com/hypermodeinc/modus/pull/418)
 - Add Local Model Invocation Support [#421](https://github.com/hypermodeinc/modus/pull/421)
 - Remove HTTP Timeout, Add Context Timeout on Collections [#422](https://github.com/hypermodeinc/modus/pull/422)
+- Add Modus AssemblyScript SDK [#423](https://github.com/hypermodeinc/modus/pull/423)
 
 ## 2024-10-02 - Version 0.12.7
 

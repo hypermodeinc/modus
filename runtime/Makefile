@@ -53,7 +53,7 @@ test-race: generate
 
 .PHONY: test-integration
 test-integration:
-	go test -race -tags=integration ./integration_tests/...
+	go test -race -tags=integration -count=1 ./integration_tests/...
 
 .PHONY: test-ci
 test-ci: generate

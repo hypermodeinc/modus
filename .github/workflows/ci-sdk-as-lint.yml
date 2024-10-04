@@ -1,0 +1,71 @@
+name: ci-sdk-as-lint
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
+jobs:
+  get-dirs:
+    if: github.event_name == 'pull_request'
+    name: find examples
+    runs-on: ubuntu-latest
+    outputs:
+      dirs: ${{ steps.get-dirs.outputs.dirs }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Find Examples
+        id: get-dirs
+        # we need to lint all the examples
+        run: echo "dirs=$(ls -d sdk/assemblyscript/examples/* | jq -Rsc 'split("\n")[:-1]' )" >> ${GITHUB_OUTPUT}
+
+  sdk-as-lint-src:
+    if: github.event_name == 'pull_request'
+    name: lint
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: sdk/assemblyscript/src
+    steps:
+      - name: Checkout Source
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ">=20"
+      - name: Install dependencies
+        run: npm install
+      - name: Check formatting
+        run: npm run pretty:check
+      - name: Lint project
+        run: npm run lint
+
+  sdk-as-lint-examples:
+    needs: get-dirs
+    if: github.event_name == 'pull_request'
+    name: lint
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        dir: ${{ fromJson(needs.get-dirs.outputs.dirs) }}
+    defaults:
+      run:
+        working-directory: ${{ matrix.dir }}
+    steps:
+      - name: Checkout Source
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ">=20"
+      - name: Install source dependencies
+        working-directory: sdk/assemblyscript/src
+        run: npm install
+      - name: Install example dependencies
+        run: npm install
+      - name: Check formatting
+        run: npm run pretty:check
+      - name: Lint project
+        run: npm run lint

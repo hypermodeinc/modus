@@ -1,0 +1,32 @@
+{
+  "options": {
+    "lib": [
+      "./assembly/overrides",
+      "../../@assemblyscript/wasi-shim/assembly",
+      "./node_modules/@assemblyscript/wasi-shim/assembly"
+    ],
+    "use": [
+      "console=modus_console",
+      "abort=modus_abort",
+      "trace=modus_trace",
+      "seed=wasi_seed",
+      "crypto=wasi_crypto",
+      "performance=wasi_performance",
+      "process=wasi_process",
+      "Date=wasi_Date"
+    ],
+    "exportStart": "_start",
+    "exportRuntime": true
+  },
+  "targets": {
+    "debug": {
+      "debug": true
+    },
+    "release": {
+      "optimizeLevel": 3,
+      "shrinkLevel": 0,
+      "converge": false,
+      "noAssert": false
+    }
+  }
+}

@@ -10,6 +10,7 @@
 package languages
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/hypermodeinc/modus/runtime/langsupport"
@@ -39,20 +40,21 @@ func GoLang() langsupport.Language {
 	return lang_Go
 }
 
-func GetLanguageForSDK(sdk string) langsupport.Language {
+func GetLanguageForSDK(sdk string) (langsupport.Language, error) {
 
 	// strip version if present
-	if i := strings.Index(sdk, "@"); i != -1 {
-		sdk = sdk[:i]
+	sdkName := sdk
+	if i := strings.Index(sdkName, "@"); i != -1 {
+		sdkName = sdkName[:i]
 	}
 
 	// each SDK has a corresponding language implementation
-	switch sdk {
-	case "functions-as":
-		return AssemblyScript()
-	case "functions-go":
-		return GoLang()
+	switch sdkName {
+	case "modus-sdk-as":
+		return AssemblyScript(), nil
+	case "modus-sdk-go":
+		return GoLang(), nil
 	}
 
-	return nil
+	return nil, fmt.Errorf("unsupported SDK: %s", sdk)
 }
