@@ -14,6 +14,7 @@ import (
 	"errors"
 	"fmt"
 	"slices"
+	"time"
 
 	"github.com/hypermodeinc/modus/pkg/manifest"
 	"github.com/hypermodeinc/modus/runtime/collections/in_mem"
@@ -218,7 +219,9 @@ func processTexts(ctx context.Context, col interfaces.CollectionNamespace, vecto
 		keysBatch := keys[i:end]
 		textsBatch := texts[i:end]
 
-		executionInfo, err := wasmhost.CallFunction(ctx, vectorIndex.GetEmbedderName(), textsBatch)
+		callCtx, cancel := context.WithTimeout(ctx, 60*time.Second)
+		defer cancel()
+		executionInfo, err := wasmhost.CallFunction(callCtx, vectorIndex.GetEmbedderName(), textsBatch)
 		if err != nil {
 			return err
 		}

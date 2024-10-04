@@ -15,6 +15,7 @@ import (
 	"fmt"
 	"math"
 	"sort"
+	"time"
 
 	"github.com/hypermodeinc/modus/runtime/collections/in_mem"
 	"github.com/hypermodeinc/modus/runtime/collections/index"
@@ -101,7 +102,9 @@ func UpsertToCollection(ctx context.Context, collectionName, namespace string, k
 			return nil, err
 		}
 
-		executionInfo, err := wasmhost.CallFunction(ctx, embedder, texts)
+		callCtx, cancel := context.WithTimeout(ctx, 60*time.Second)
+		defer cancel()
+		executionInfo, err := wasmhost.CallFunction(callCtx, embedder, texts)
 		if err != nil {
 			return nil, err
 		}
@@ -190,7 +193,9 @@ func SearchCollection(ctx context.Context, collectionName string, namespaces []s
 
 	texts := []string{text}
 
-	executionInfo, err := wasmhost.CallFunction(ctx, embedder, texts)
+	callCtx, cancel := context.WithTimeout(ctx, 60*time.Second)
+	defer cancel()
+	executionInfo, err := wasmhost.CallFunction(callCtx, embedder, texts)
 	if err != nil {
 		return nil, err
 	}
@@ -331,7 +336,9 @@ func NnClassify(ctx context.Context, collectionName, namespace, searchMethod, te
 
 	texts := []string{text}
 
-	executionInfo, err := wasmhost.CallFunction(ctx, embedder, texts)
+	callCtx, cancel := context.WithTimeout(ctx, 60*time.Second)
+	defer cancel()
+	executionInfo, err := wasmhost.CallFunction(callCtx, embedder, texts)
 	if err != nil {
 		return nil, err
 	}

@@ -18,9 +18,7 @@ import (
 	"time"
 )
 
-var httpClient = &http.Client{
-	Timeout: 10 * time.Second,
-}
+var httpClient = &http.Client{}
 
 func HttpClient() *http.Client {
 	return httpClient
