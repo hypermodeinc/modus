@@ -23,15 +23,15 @@ import {
   TypeDefinition,
   typeMap,
 } from "./types.js";
-import HypermodeTransform from "./index.js";
+import ModusTransform from "./index.js";
 
 export class Extractor {
   binaryen: typeof binaryen;
   module: binaryen.Module;
   program: Program;
-  transform: HypermodeTransform;
+  transform: ModusTransform;
 
-  constructor(transform: HypermodeTransform, module: binaryen.Module) {
+  constructor(transform: ModusTransform, module: binaryen.Module) {
     this.program = transform.program;
     this.binaryen = transform.binaryen;
     this.module = module;

@@ -7,7 +7,7 @@ declare function log(level: string, message: string): void;
 @external("wasi_snapshot_preview1", "proc_exit")
 declare function exit(rval: u32): void;
 
-export default function hypermode_abort(
+export default function modus_abort(
   message: string | null = null,
   fileName: string | null = null,
   lineNumber: u32 = 0,

@@ -6,9 +6,9 @@
       "./node_modules/@assemblyscript/wasi-shim/assembly"
     ],
     "use": [
-      "console=hypermode_console",
-      "abort=hypermode_abort",
-      "trace=hypermode_trace",
+      "console=modus_console",
+      "abort=modus_abort",
+      "trace=modus_trace",
       "seed=wasi_seed",
       "crypto=wasi_crypto",
       "performance=wasi_performance",

@@ -12,7 +12,7 @@ import writeLogo from "./logo.js";
 
 const METADATA_VERSION = 2;
 
-export class HypermodeMetadata {
+export class Metadata {
   public plugin: string;
   public module: string;
   public sdk: string;
@@ -24,8 +24,8 @@ export class HypermodeMetadata {
   public fnImports: { [key: string]: FunctionSignature } = {};
   public types: { [key: string]: TypeDefinition } = {};
 
-  static generate(): HypermodeMetadata {
-    const m = new HypermodeMetadata();
+  static generate(): Metadata {
+    const m = new Metadata();
 
     m.buildId = new Xid().toString();
     m.buildTs = new Date().toISOString();
@@ -133,7 +133,7 @@ export class HypermodeMetadata {
     writeHeader("Metadata:");
     writeTable([
       ["Plugin Name", this.plugin],
-      ["Hypermode SDK", this.sdk],
+      ["Modus SDK", this.sdk],
       ["Build ID", this.buildId],
       ["Build Timestamp", this.buildTs],
       this.gitRepo ? ["Git Repository", this.gitRepo] : undefined,
@@ -152,7 +152,7 @@ export class HypermodeMetadata {
       stream.write("\n");
     }
 
-    if (process.env.HYPERMODE_DEBUG) {
+    if (process.env.MODUS_DEBUG) {
       writeHeader("Metadata JSON:");
       stream.write(JSON.stringify(this, undefined, 2));
       stream.write("\n\n");

@@ -28,9 +28,7 @@ export function fetch<T>(
 
   const response = fetchFromHost(request);
   if (!response) {
-    throw new Error(
-      "HTTP fetch failed. Check the Hypermode Runtime logs for more information.",
-    );
+    throw new Error("HTTP fetch failed. Check the logs for more information.");
   }
 
   return response;

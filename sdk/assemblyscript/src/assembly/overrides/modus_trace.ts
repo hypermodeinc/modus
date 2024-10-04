@@ -4,7 +4,7 @@ declare function log(level: string, message: string): void;
 
 const traceLevel = "trace";
 
-export default function hypermode_trace(
+export default function modus_trace(
   message: string,
   n: i32 = 0,
   a0: f64 = 0,
