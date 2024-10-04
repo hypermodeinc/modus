@@ -24,7 +24,7 @@ import (
 	"github.com/hypermodeinc/modus/runtime/utils"
 )
 
-var localHypermodeModels = []string{"meta-llama/Meta-Llama-3.1-8B-Instruct", "sentence-transformers/all-MiniLM-L6-v2", "AntoineMC/distilbart-mnli-github-issues", "distilbert/distilbert-base-uncased-finetuned-sst-2-english"}
+var localHypermodeModels = map[string]bool{"meta-llama/meta-llama-3.1-8b-instruct": true, "sentence-transformers/all-minilm-l6-v2": true, "antoinemc/distilbart-mnli-github-issues": true, "distilbert/distilbert-base-uncased-finetuned-sst-2-english": true}
 
 func GetModel(modelName string) (*manifest.ModelInfo, error) {
 	model, ok := manifestdata.GetManifest().Models[modelName]
@@ -77,12 +77,11 @@ func PostToModelEndpoint[TResult any](ctx context.Context, model *manifest.Model
 		req.Header.Set("Content-Type", "application/json")
 		if host.Name != hosts.HypermodeHost {
 			return secrets.ApplyHostSecretsToHttpRequest(ctx, host, req)
-		} else {
-			if config.IsDevEnvironment() {
-				return secrets.ApplyAuthToLocalModelRequest(ctx, host, req)
-			}
-			return nil
 		}
+		if config.IsDevEnvironment() {
+			return secrets.ApplyAuthToLocalModelRequest(ctx, host, req)
+		}
+		return nil
 	}
 
 	res, err := utils.PostHttp[TResult](ctx, endpoint, payload, bs)
@@ -137,10 +136,6 @@ func getModelEndpointAndHost(model *manifest.ModelInfo) (string, *manifest.HTTPH
 }
 
 func isValidLocalHypermodeModel(modelName string) bool {
-	for _, m := range localHypermodeModels {
-		if strings.EqualFold(m, modelName) {
-			return true
-		}
-	}
-	return false
+	_, ok := localHypermodeModels[strings.ToLower(modelName)]
+	return ok
 }

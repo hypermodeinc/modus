@@ -100,7 +100,7 @@ func ApplyAuthToLocalModelRequest(ctx context.Context, host manifest.HostInfo, r
 	orgId := os.Getenv("HYP_ORG_ID")
 
 	if jwt == "" || orgId == "" {
-		return fmt.Errorf("missing JWT or ORG_ID environment variables, login to Hypermode using 'hyp login'")
+		return fmt.Errorf("missing HYP_JWT or HYP_ORG_ID environment variables, login to Hypermode using 'hyp login'")
 	}
 
 	req.Header.Set("Authorization", "Bearer "+jwt)
