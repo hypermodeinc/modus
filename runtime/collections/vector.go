@@ -15,6 +15,7 @@ import (
 	"fmt"
 	"slices"
 
+	"github.com/hypermodeinc/modus/pkg/manifest"
 	"github.com/hypermodeinc/modus/runtime/collections/in_mem"
 	"github.com/hypermodeinc/modus/runtime/collections/in_mem/sequential"
 	"github.com/hypermodeinc/modus/runtime/collections/index"
@@ -24,8 +25,6 @@ import (
 	"github.com/hypermodeinc/modus/runtime/logger"
 	"github.com/hypermodeinc/modus/runtime/manifestdata"
 	"github.com/hypermodeinc/modus/runtime/wasmhost"
-
-	"github.com/hypermodeAI/manifest"
 )
 
 const batchSize = 25
@@ -80,7 +79,7 @@ func createIndexObject(searchMethod manifest.SearchMethodInfo, searchMethodName 
 	return vectorIndex, nil
 }
 
-func deleteIndexesNotInManifest(ctx context.Context, man *manifest.HypermodeManifest) {
+func deleteIndexesNotInManifest(ctx context.Context, man *manifest.Manifest) {
 	for collectionName := range globalNamespaceManager.getNamespaceCollectionFactoryMap() {
 		if _, ok := man.Collections[collectionName]; !ok {
 			err := globalNamespaceManager.removeCollection(collectionName)
@@ -116,7 +115,7 @@ func deleteIndexesNotInManifest(ctx context.Context, man *manifest.HypermodeMani
 	}
 }
 
-func deleteVectorIndexesNotInManifest(ctx context.Context, man *manifest.HypermodeManifest, col interfaces.CollectionNamespace, collectionName, searchMethodName string) error {
+func deleteVectorIndexesNotInManifest(ctx context.Context, man *manifest.Manifest, col interfaces.CollectionNamespace, collectionName, searchMethodName string) error {
 	_, ok := man.Collections[collectionName].SearchMethods[searchMethodName]
 	if !ok {
 		err := col.DeleteVectorIndex(ctx, searchMethodName)
@@ -127,7 +126,7 @@ func deleteVectorIndexesNotInManifest(ctx context.Context, man *manifest.Hypermo
 	return nil
 }
 
-func processManifestCollections(ctx context.Context, man *manifest.HypermodeManifest) {
+func processManifestCollections(ctx context.Context, man *manifest.Manifest) {
 	for collectionName, collectionInfo := range man.Collections {
 		col, err := globalNamespaceManager.findCollection(collectionName)
 		if err == errCollectionNotFound {

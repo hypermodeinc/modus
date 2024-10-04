@@ -13,10 +13,9 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/hypermodeinc/modus/pkg/manifest"
 	"github.com/hypermodeinc/modus/runtime/manifestdata"
 	"github.com/hypermodeinc/modus/runtime/utils"
-
-	"github.com/hypermodeAI/manifest"
 )
 
 func Initialize() {

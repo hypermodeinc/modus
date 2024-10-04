@@ -13,10 +13,9 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/hypermodeinc/modus/pkg/manifest"
 	"github.com/hypermodeinc/modus/runtime/models"
 	"github.com/hypermodeinc/modus/runtime/utils"
-
-	"github.com/hypermodeAI/manifest"
 )
 
 type predictionResult[T any] struct {

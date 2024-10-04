@@ -13,25 +13,24 @@ import (
 	"context"
 	"sync"
 
+	"github.com/hypermodeinc/modus/pkg/manifest"
 	"github.com/hypermodeinc/modus/runtime/logger"
 	"github.com/hypermodeinc/modus/runtime/storage"
 	"github.com/hypermodeinc/modus/runtime/utils"
-
-	"github.com/hypermodeAI/manifest"
 )
 
 const manifestFileName = "hypermode.json"
 
 var mu sync.RWMutex
-var man = &manifest.HypermodeManifest{}
+var man = &manifest.Manifest{}
 
-func GetManifest() *manifest.HypermodeManifest {
+func GetManifest() *manifest.Manifest {
 	mu.RLock()
 	defer mu.RUnlock()
 	return man
 }
 
-func SetManifest(m *manifest.HypermodeManifest) {
+func SetManifest(m *manifest.Manifest) {
 	mu.Lock()
 	defer mu.Unlock()
 	man = m
@@ -86,7 +85,7 @@ func loadManifest(ctx context.Context) error {
 	}
 
 	// Only update the Manifest global when we have successfully read the manifest.
-	SetManifest(&m)
+	SetManifest(m)
 
 	// Trigger the manifest loaded event.
 	err = triggerManifestLoaded(ctx)

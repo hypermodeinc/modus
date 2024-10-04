@@ -13,13 +13,13 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/hypermodeinc/modus/pkg/manifest"
 	hyp_aws "github.com/hypermodeinc/modus/runtime/aws"
 	"github.com/hypermodeinc/modus/runtime/db"
 	"github.com/hypermodeinc/modus/runtime/utils"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/bedrockruntime"
-	"github.com/hypermodeAI/manifest"
 )
 
 func invokeAwsBedrockModel(ctx context.Context, model *manifest.ModelInfo, input string) (output string, err error) {

@@ -8,10 +8,10 @@ import (
 	"os"
 	"testing"
 
+	"github.com/hypermodeinc/modus/pkg/manifest"
 	"github.com/hypermodeinc/modus/runtime/manifestdata"
 	"github.com/hypermodeinc/modus/runtime/secrets"
 
-	"github.com/hypermodeAI/manifest"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -30,7 +30,7 @@ type mockModelResponse struct {
 // TestMain runs in the main goroutine and can do whatever setup and teardown is necessary around a call to m.Run
 func TestMain(m *testing.M) {
 	secrets.Initialize(context.Background())
-	manifestdata.SetManifest(&manifest.HypermodeManifest{
+	manifestdata.SetManifest(&manifest.Manifest{
 		Models: map[string]manifest.ModelInfo{
 			testModelName: {
 				Name:        testModelName,

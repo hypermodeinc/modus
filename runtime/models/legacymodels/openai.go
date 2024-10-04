@@ -14,11 +14,10 @@ import (
 	"fmt"
 	"regexp"
 
+	"github.com/hypermodeinc/modus/pkg/manifest"
 	"github.com/hypermodeinc/modus/runtime/db"
 	"github.com/hypermodeinc/modus/runtime/hosts"
 	"github.com/hypermodeinc/modus/runtime/manifestdata"
-
-	"github.com/hypermodeAI/manifest"
 )
 
 var authHeaderRegex = regexp.MustCompile(`^Bearer {{\s*\w+?\s*}}$`)

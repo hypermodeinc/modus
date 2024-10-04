@@ -2,6 +2,10 @@ module github.com/hypermodeinc/modus/runtime
 
 go 1.23
 
+require github.com/hypermodeinc/modus v0.0.0
+
+replace github.com/hypermodeinc/modus => ../
+
 require (
 	github.com/OneOfOne/xxhash v1.2.8
 	github.com/archdx/zerolog-sentry v1.8.4
@@ -21,7 +25,6 @@ require (
 	github.com/goccy/go-json v0.10.3
 	github.com/google/renameio v1.0.1
 	github.com/google/uuid v1.6.0
-	github.com/hypermodeAI/manifest v0.2.13
 	github.com/jackc/pgx/v5 v5.7.1
 	github.com/jensneuse/abstractlogger v0.0.4
 	github.com/joho/godotenv v1.5.1

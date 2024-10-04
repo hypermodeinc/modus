@@ -13,10 +13,10 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/hypermodeinc/modus/pkg/manifest"
 	"github.com/hypermodeinc/modus/runtime/manifestdata"
 	"github.com/hypermodeinc/modus/runtime/secrets"
 
-	"github.com/hypermodeAI/manifest"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
