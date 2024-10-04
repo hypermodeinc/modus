@@ -1,4 +1,4 @@
-name: ci-as-lint
+name: ci-sdk-as-build
 on:
   pull_request:
     types:
@@ -18,13 +18,13 @@ jobs:
         uses: actions/checkout@v4
       - name: Get subdirectories
         id: get-dirs
-        # we need to lint the src directory and all the examples
-        run: echo "dirs=$(ls -d examples/*/ | jq -Rsc '["src/"] + split("\n")[:-1]' )" >> ${GITHUB_OUTPUT}
+        # we need to build all the examples
+        run: echo "dirs=$(ls -d sdk/assemblyscript/examples/* | jq -Rsc 'split("\n")[:-1]' )" >> ${GITHUB_OUTPUT}
 
-  as-lint:
+  sdk-as-build:
     needs: get-dirs
     if: github.event_name == 'pull_request'
-    name: Lint
+    name: Build
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -40,12 +40,9 @@ jobs:
         with:
           node-version: ">=20"
       - name: Install dependencies
-        working-directory: src/
+        working-directory: sdk/assemblyscript/src
         run: npm install
       - name: Install additional dependencies
-        if: ${{ matrix.dir != 'src/' }}
         run: npm install
-      - name: Validate code is formatted
-        run: npm run pretty:check
-      - name: Valid code is linted
-        run: npm run lint
+      - name: Build project
+        run: npm run build

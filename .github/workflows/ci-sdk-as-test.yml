@@ -1,4 +1,4 @@
-name: ci-as-tests
+name: ci-sdk-as-test
 on:
   pull_request:
     types:
@@ -7,13 +7,13 @@ on:
       - reopened
       - ready_for_review
 jobs:
-  as-tests:
+  sdk-as-test:
     if: github.event_name == 'pull_request'
-    name: Unit Tests
+    name: AssemblyScript SDK Unit Tests
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: "src"
+        working-directory: sdk/assemblyscript/src
     steps:
       - uses: actions/checkout@v4
       - name: Setup Node

@@ -1,4 +1,5 @@
-name: ci-as-build
+# This workflow will lint all NPM-based projects in the repository that have a "lint" script defined in their package.json file.
+name: ci-npm-lint
 on:
   pull_request:
     types:
@@ -9,22 +10,21 @@ on:
 jobs:
   get-dirs:
     if: github.event_name == 'pull_request'
-    name: Get Directories
+    name: find lintable npm projects
     runs-on: ubuntu-latest
     outputs:
       dirs: ${{ steps.get-dirs.outputs.dirs }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      - name: Get subdirectories
+      - name: Search for package.json files with a lint script
         id: get-dirs
-        # we need to build all the examples
-        run: echo "dirs=$(ls -d examples/*/ | jq -Rsc 'split("\n")[:-1]' )" >> ${GITHUB_OUTPUT}
+        run: echo "dirs=$(find . -name 'package.json' ! -path '*node_modules*' -exec sh -c 'jq -e ".scripts.lint" {} > /dev/null && dirname {}' \; | jq -Rsc 'split("\n")[:-1]')" >> ${GITHUB_OUTPUT}
 
-  as-build:
+  npm-lint:
     needs: get-dirs
     if: github.event_name == 'pull_request'
-    name: Build
+    name: Lint
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -40,9 +40,13 @@ jobs:
         with:
           node-version: ">=20"
       - name: Install dependencies
-        working-directory: src/
         run: npm install
-      - name: Install additional dependencies
-        run: npm install
-      - name: Build project
-        run: npm run build
+      - name: Check code formatting (if configured)
+        run: |
+          if jq -e '.scripts["pretty:check"]' package.json > /dev/null; then
+            npm run pretty:check
+          else
+            echo "Prettier not configured, skipping..."
+          fi
+      - name: Run the lint script
+        run: npm run lint
