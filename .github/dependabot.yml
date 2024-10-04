@@ -1,7 +1,13 @@
 version: 2
 updates:
   - package-ecosystem: "gomod"
-    directory: "/"
+    directories:
+      - "/"
+      - "/runtime"
+      - "/runtime/languages/golang/testdata"
+      - "/sdk/go"
+      - "/sdk/go/examples/*"
+      - "/sdk/go/tools/modus-go-build"
     schedule:
       interval: "weekly"
       day: "wednesday"
