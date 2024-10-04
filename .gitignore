@@ -1,11 +1,27 @@
+# Ignore macOS system files
+.DS_Store
+
+# Ignore environment variable files
 .env
 .env.*
-.DS_Store
-__debug_bin*
+
+# Ignore output files
 *.exe
 *.wasm
 *.wat
+
+# Ignore Go debuger and generated files
+__debug_bin*
 *_generated.go
 
-node_modules/
+# Ignore build output directories
 build/
+
+# Ignore node_modules folders
+node_modules/
+
+# For now, our JS/TS/AS projects use NPM with package-lock.json files only.
+# Ignore lockfiles for other package managers.
+pnpm-lock.yaml
+yarn.lock
+bun.lockb
