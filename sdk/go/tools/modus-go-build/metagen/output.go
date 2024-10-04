@@ -48,7 +48,7 @@ func LogToConsole(meta *metadata.Metadata) {
 	writeTable(w, mode, [][]string{
 		{"Plugin Name", meta.Plugin},
 		{"Go Module", meta.Module},
-		{"Hypermode SDK", meta.SDK},
+		{"Modus SDK", meta.SDK},
 		{"Build ID", meta.BuildId},
 		{"Build Timestamp", meta.BuildTime},
 		{"Git Repository", meta.GitRepo},

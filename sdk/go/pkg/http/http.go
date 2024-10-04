@@ -34,7 +34,7 @@ func Fetch[T *Request | string](requestOrUrl T, options ...*RequestOptions) (*Re
 
 	response := fetch(request)
 	if response == nil {
-		msg := "HTTP fetch failed. Check the Hypermode logs for more information."
+		msg := "HTTP fetch failed. Check the logs for more information."
 		return nil, errors.New(msg)
 	}
 

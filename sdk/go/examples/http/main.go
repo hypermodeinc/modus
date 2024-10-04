@@ -66,11 +66,12 @@ It makes a POST request to the GitHub API to create an issue.
 
 See https://docs.github.com/en/rest/issues/issues?apiVersion=2022-11-28#create-an-issue
 
-To use it, you must add a GitHub personal access token to your Hypermode secrets.
+To use it, you must add a GitHub personal access token to your secrets.
 Create a fine-grained token at https://github.com/settings/tokens?type=beta with access
-to write issues to the repository you want to use.
+to write issues to the repository you want to use, then add it to the appropriate secret
+store for your environment.  (See the modus documentation for details.)
 
-NOTE: Do not pass the Authorization header when creating the request in code.
+NOTE: Do not pass the Authorization header in code when creating the request.
 That would be a security risk, as the token could be exposed in the source code repository.
 
 Instead, configure the headers in the hypermode.json manifest as follows:
@@ -84,9 +85,7 @@ Instead, configure the headers in the hypermode.json manifest as follows:
 	  }
 	}
 
-The Hypermode Runtime will retrieve the token from your secrets and add it to the request.
-To set the secret, after committing the changes to your code and manifest file, go to the
-Hypermode Console UI, find the "github" host and add your token to the AUTH_TOKEN secret.
+The Modus runtime will retrieve the token from your secrets and add it to the request.
 */
 func CreateGithubIssue(owner, repo, title, body string) (*Issue, error) {
 

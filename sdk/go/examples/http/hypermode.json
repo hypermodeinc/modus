@@ -5,10 +5,8 @@
   },
   "hosts": {
     // These are the hosts used by the functions in this example project.
-    // Where secrets are required, {{SECRET_NAME}} templates are replaced with
-    // the values specified in the Hypermode Console.
-    // Note that "baseUrl" is specified instead of "endpoint", to allow for
-    // customization of the URL in the function code.
+    // Where secrets are required, {{SECRET_NAME}} templates are replaced with the secret's value at run time.
+    // Note that "baseUrl" is specified instead of "endpoint", to allow for customization of the URL path in code.
     "example": {
       "baseUrl": "https://example.com/"
     },

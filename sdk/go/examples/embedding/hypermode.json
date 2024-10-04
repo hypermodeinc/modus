@@ -16,7 +16,7 @@
   },
   "hosts": {
     // This defines the OpenAI host, which is used by the OpenAI embeddings model above.
-    // The {{API_KEY}} will be replaced by the secret provided in the Hypermode Console.
+    // The {{API_KEY}} will be replaced by the secret's value at run time.
     "openai": {
       "baseUrl": "https://api.openai.com/",
       "headers": {
