@@ -35,18 +35,18 @@ type HostInfo interface {
 	Hash() string
 }
 
-type HypermodeManifest struct {
+type Manifest struct {
 	Version     int                       `json:"-"`
 	Models      map[string]ModelInfo      `json:"models"`
 	Hosts       map[string]HostInfo       `json:"hosts"`
 	Collections map[string]CollectionInfo `json:"collections"`
 }
 
-func (m *HypermodeManifest) IsCurrentVersion() bool {
+func (m *Manifest) IsCurrentVersion() bool {
 	return m.Version == currentVersion
 }
 
-func (m *HypermodeManifest) GetHostVariables() map[string][]string {
+func (m *Manifest) GetHostVariables() map[string][]string {
 	results := make(map[string][]string, len(m.Hosts))
 
 	for _, host := range m.Hosts {
@@ -86,13 +86,13 @@ func ValidateManifest(content []byte) error {
 	return nil
 }
 
-func ReadManifest(content []byte) (*HypermodeManifest, error) {
+func ReadManifest(content []byte) (*Manifest, error) {
 	data, err := standardizeJSON(content)
 	if err != nil {
 		return nil, err
 	}
 
-	var manifest HypermodeManifest
+	var manifest Manifest
 	errParse := parseManifestJson(data, &manifest)
 	if errParse == nil {
 		return &manifest, nil
@@ -101,7 +101,7 @@ func ReadManifest(content []byte) (*HypermodeManifest, error) {
 	return nil, fmt.Errorf("failed to parse manifest: %w", errParse)
 }
 
-func parseManifestJson(data []byte, manifest *HypermodeManifest) error {
+func parseManifestJson(data []byte, manifest *Manifest) error {
 	var m struct {
 		Models      map[string]ModelInfo       `json:"models"`
 		Hosts       map[string]json.RawMessage `json:"hosts"`

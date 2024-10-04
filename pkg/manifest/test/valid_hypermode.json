@@ -1,5 +1,5 @@
 {
-  // Test valid Hypermode manifest file
+  // Test valid manifest file
   "$schema": "https://manifest.hypermode.com/hypermode.json",
   "models": {
     "model-1": {
