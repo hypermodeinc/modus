@@ -16,7 +16,6 @@
   },
   "dependencies": {
     "@assemblyscript/wasi-shim": "^0.1.0",
-    "@hypermode/models-as": "^0.2.4",
     "json-as": "^0.9.21",
     "semver": "^7.6.3",
     "xid-ts": "^1.1.4"
@@ -45,6 +44,8 @@
     "index.ts",
     "assembly/**/*.ts",
     "!assembly/**/__tests__",
+    "models/**/*.ts",
+    "!models/**/__tests__",
     "bin/build-plugin.js",
     "plugin.asconfig.json",
     "transform/lib/*.js",

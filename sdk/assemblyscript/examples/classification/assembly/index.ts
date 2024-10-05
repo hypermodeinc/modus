@@ -8,7 +8,7 @@ import { models } from "@hypermode/modus-sdk-as";
 import {
   ClassificationModel,
   ClassifierResult,
-} from "@hypermode/models-as/models/experimental/classification";
+} from "@hypermode/modus-sdk-as/models/experimental/classification";
 
 // This model name should match one defined in the hypermode.json manifest file.
 const modelName: string = "my-classifier";

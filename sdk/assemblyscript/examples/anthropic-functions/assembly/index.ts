@@ -12,7 +12,7 @@ import {
   Message,
   UserMessage,
   ToolChoiceTool,
-} from "@hypermode/models-as/models/anthropic/messages";
+} from "@hypermode/modus-sdk-as/models/anthropic/messages";
 
 
 @json
