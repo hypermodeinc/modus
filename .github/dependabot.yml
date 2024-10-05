@@ -1,18 +1,5 @@
 version: 2
 updates:
-  - package-ecosystem: "gomod"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-      day: "wednesday"
-      time: "16:00"
-    groups:
-      minor-and-patch:
-        applies-to: version-updates
-        update-types:
-          - "minor"
-          - "patch"
-
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
@@ -25,3 +12,43 @@ updates:
           - "patch"
           - "minor"
           - "major"
+
+  - package-ecosystem: "gomod"
+    directories:
+      - "/"
+      - "/runtime"
+      - "/runtime/languages/golang/testdata"
+      - "/sdk/go"
+      - "/sdk/go/examples/*"
+      - "/sdk/go/tools/modus-go-build"
+    schedule:
+      interval: "weekly"
+      day: "wednesday"
+      time: "16:00"
+    groups:
+      minor-and-patch:
+        applies-to: version-updates
+        update-types:
+          - "minor"
+          - "patch"
+
+  - package-ecosystem: "npm"
+    versioning-strategy: increase
+    directories:
+      - "/sdk/assemblyscript/src"
+      - "/sdk/assemblyscript/examples/*"
+      - "/runtime/languages/assemblyscript/testdata"
+    schedule:
+      interval: "weekly"
+      day: "wednesday"
+      time: "16:00"
+    groups:
+      minor-and-patch:
+        applies-to: version-updates
+        update-types:
+          - "minor"
+          - "patch"
+    ignore:
+      # We target Node.js 20
+      - dependency-name: "@types/node"
+        versions: [">= 21.0.0"]

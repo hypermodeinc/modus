@@ -1,10 +1,16 @@
-# Hypermode Runtime
+<a href="https://discord.hypermode.com" >
+    <img height=20 src="https://img.shields.io/discord/1267579648657850441" />
+</a>
+
+# Modus
+
+## TODO - rewrite this whole file in the context of Modus
 
 This repository contains the source code for the _Hypermode Runtime_.
 The Runtime loads and executes _plugins_ containing _Hypermode Functions_.
 
 To get started with Hypermode Functions written in AssemblyScript, visit the
-[`functions-as`](https://github.com/hypermodeAI/functions-as) repository.
+`functions-as` repository.
 
 ## Command Line Parameters
 

@@ -1,0 +1,6 @@
+{
+  "options": {
+    "bindings": "raw",
+    "transform": ["json-as/transform"]
+  }
+}

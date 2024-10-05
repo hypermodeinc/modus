@@ -1,0 +1,49 @@
+# This workflow will lint all Go projects in the repository
+name: ci-go-lint
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
+jobs:
+  get-dirs:
+    if: github.event_name == 'pull_request'
+    name: find go projects
+    runs-on: ubuntu-latest
+    outputs:
+      dirs: ${{ steps.get-dirs.outputs.dirs }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Search for go.mod files
+        id: get-dirs
+        run: echo "dirs=$(find . -name 'go.mod' -exec dirname {} \; | jq -Rsc 'split("\n")[:-1]')" >> ${GITHUB_OUTPUT}
+
+  go-lint:
+    needs: get-dirs
+    if: github.event_name == 'pull_request'
+    name: lint
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        dir: ${{ fromJson(needs.get-dirs.outputs.dirs) }}
+    defaults:
+      run:
+        working-directory: ${{ matrix.dir }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          cache-dependency-path: "${{ matrix.dir }}/go.sum"
+          go-version-file: "${{ matrix.dir }}/go.mod"
+      - name: Generate Code
+        run: go generate ./...
+      - name: Run Linter
+        uses: golangci/golangci-lint-action@v6
+        with:
+          working-directory: ${{ matrix.dir }}
+          version: latest
+          args: --timeout=10m

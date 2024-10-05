@@ -1,0 +1,48 @@
+name: ci-sdk-as-build
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
+jobs:
+  get-dirs:
+    if: github.event_name == 'pull_request'
+    name: find examples
+    runs-on: ubuntu-latest
+    outputs:
+      dirs: ${{ steps.get-dirs.outputs.dirs }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Find Examples
+        id: get-dirs
+        # we need to build all the examples
+        run: echo "dirs=$(ls -d sdk/assemblyscript/examples/* | jq -Rsc 'split("\n")[:-1]' )" >> ${GITHUB_OUTPUT}
+
+  sdk-as-build-examples:
+    needs: get-dirs
+    if: github.event_name == 'pull_request'
+    name: build
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        dir: ${{ fromJson(needs.get-dirs.outputs.dirs) }}
+    defaults:
+      run:
+        working-directory: ${{ matrix.dir }}
+    steps:
+      - name: Checkout Source
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ">=20"
+      - name: Install source dependencies
+        working-directory: sdk/assemblyscript/src
+        run: npm install
+      - name: Install example dependencies
+        run: npm install
+      - name: Build project
+        run: npm run build

@@ -1,0 +1,27 @@
+{
+  "$schema": "https://manifest.hypermode.com/hypermode.json",
+  "models": {
+    // This defines a model hosted on Hypermode that can be used for vector embeddings.
+    "minilm": {
+      "sourceModel": "sentence-transformers/all-MiniLM-L6-v2",
+      "provider": "hugging-face",
+      "host": "hypermode"
+    },
+    // This defines a model hosted on OpenAI that can be used for vector embeddings.
+    "openai-embeddings": {
+      "sourceModel": "text-embedding-3-large",
+      "host": "openai",
+      "path": "v1/embeddings"
+    }
+  },
+  "hosts": {
+    // This defines the OpenAI host, which is used by the OpenAI embeddings model above.
+    // The {{API_KEY}} will be replaced by the secret's value at run time.
+    "openai": {
+      "baseUrl": "https://api.openai.com/",
+      "headers": {
+        "Authorization": "Bearer {{API_KEY}}"
+      }
+    }
+  }
+}
