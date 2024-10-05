@@ -20,7 +20,7 @@ $ npm install -g @modus/cli
 $ modus COMMAND
 running command...
 $ modus (--version)
-@modus/cli/0.0.0 linux-x64 node-v22.4.0
+@modus/cli/0.0.0 linux-x64 node-v22.8.0
 $ modus --help [COMMAND]
 USAGE
   $ modus COMMAND
@@ -32,7 +32,7 @@ USAGE
 
 <!-- commands -->
 * [`modus build [PATH]`](#modus-build-path)
-* [`modus deploy`](#modus-deploy)
+* [`modus deploy [PATH]`](#modus-deploy-path)
 * [`modus dev [PATH]`](#modus-dev-path)
 * [`modus new`](#modus-new)
 * [`modus sdk install [VERSION]`](#modus-sdk-install-version)
@@ -50,7 +50,7 @@ Usage: modus build
 
 _See code: [src/commands/build/index.ts](https://github.com/HypermodeAI/modus/blob/v0.0.0/src/commands/build/index.ts)_
 
-## `modus deploy`
+## `modus deploy [PATH]`
 
 Deploy a Modus app to Hypermode
 

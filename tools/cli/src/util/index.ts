@@ -32,7 +32,7 @@ export async function cloneRepo(url: string, pth: string): Promise<boolean> {
   const folder_name = path.basename(pth);
 
   // Will fix until we get a monorepo with projects/examples
-  cpSync(path.join(path.dirname(import.meta.url.replace("file:", "")), "../../examples/http/"), path.format(path.parse(pth)) + "/", { recursive: true, force: true });
+  cpSync(path.join(path.dirname(import.meta.url.replace("file:", "")), "../../examples/assemblyscript/"), path.format(path.parse(pth)) + "/", { recursive: true, force: true });
 
   return true;
 
