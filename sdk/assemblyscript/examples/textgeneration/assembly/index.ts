@@ -78,8 +78,6 @@ ${sampleProductJson}`;
 
 // This function generates multiple products.
 export function generateProducts(category: string, quantity: i32): Product[] {
-  // const instruction = `Generate ${quantity} products for the category provided.`;
-
   // Similar to the previous example above, we can tailor the instruction and prompt
   // to guide the model in generating the desired output.  Note that understanding the behavior
   // of the model is important to get the desired results.  In this case, we need the model
