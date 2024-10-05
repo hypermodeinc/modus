@@ -13,7 +13,7 @@ import {
   ResponseFormat,
   SystemMessage,
   UserMessage,
-} from "@hypermode/models-as/models/openai/chat";
+} from "@hypermode/modus-sdk-as/models/openai/chat";
 
 // In this example, we will generate text using the OpenAI Chat model.
 // See https://platform.openai.com/docs/api-reference/chat/create for more details

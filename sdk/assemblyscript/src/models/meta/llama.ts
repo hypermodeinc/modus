@@ -1,4 +1,4 @@
-import { Model } from "../../models";
+import { Model } from "../../assembly/models";
 
 export class TextGenerationModel extends Model<
   TextGenerationInput,

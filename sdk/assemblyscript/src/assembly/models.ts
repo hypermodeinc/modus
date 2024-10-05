@@ -10,6 +10,8 @@
 import { JSON } from "json-as";
 import * as utils from "./utils";
 
+type ModelInvoker = (modelName: string, inputJson: string) => string | null;
+
 // @ts-expect-error: decorator
 @external("hypermode", "lookupModel")
 declare function hostLookupModel(modelName: string): ModelInfo;
@@ -44,11 +46,6 @@ class ModusModelFactory implements ModelFactory {
     return instantiate<T>(info);
   }
 }
-
-const factory = new ModusModelFactory();
-export default factory;
-
-type ModelInvoker = (modelName: string, inputJson: string) => string | null;
 
 export class ModelInfo {
   constructor(
@@ -95,3 +92,6 @@ export abstract class Model<TInput = unknown, TOutput = unknown> {
     return JSON.parse<TOutput>(outputJson);
   }
 }
+
+const factory = new ModusModelFactory();
+export default factory;

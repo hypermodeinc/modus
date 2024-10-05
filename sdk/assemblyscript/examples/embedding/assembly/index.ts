@@ -5,8 +5,8 @@
  */
 
 import { models } from "@hypermode/modus-sdk-as";
-import { EmbeddingsModel } from "@hypermode/models-as/models/experimental/embeddings";
-import { OpenAIEmbeddingsModel } from "@hypermode/models-as/models/openai/embeddings";
+import { EmbeddingsModel } from "@hypermode/modus-sdk-as/models/experimental/embeddings";
+import { OpenAIEmbeddingsModel } from "@hypermode/modus-sdk-as/models/openai/embeddings";
 
 // In this example, we will create embedding vectors from input text strings.
 // For comparison, we'll do this with two different models.

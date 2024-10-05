@@ -1,5 +1,4 @@
-import { Model } from "../../models";
-
+import { Model } from "../../assembly/models";
 /**
  * A model that returns embeddings for a list of text strings.
  *

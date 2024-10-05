@@ -1,4 +1,4 @@
-import { Model } from "../../models";
+import { Model } from "../../assembly/models";
 
 /**
  * Provides input and output types that conform to the OpenAI Embeddings API.

@@ -1,4 +1,4 @@
-import { Model } from "../../models";
+import { Model } from "../../assembly/models";
 import { JSON } from "json-as";
 
 /**
