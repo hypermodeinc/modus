@@ -44,6 +44,8 @@
     "index.ts",
     "assembly/**/*.ts",
     "!assembly/**/__tests__",
+    "models/**/*.ts",
+    "!models/**/__tests__",
     "bin/build-plugin.js",
     "plugin.asconfig.json",
     "transform/lib/*.js",
