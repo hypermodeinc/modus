@@ -13,7 +13,6 @@
   },
   "dependencies": {
     "@hypermode/modus-sdk-as": "../../src",
-    "@hypermode/models-as": "^0.2.4",
     "json-as": "^0.9.21"
   },
   "devDependencies": {
