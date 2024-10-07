@@ -394,8 +394,10 @@ query AddPerson {
     }
 }`
 	_, err := runGraphqlQuery(graphQLRequest{Query: query})
+
+	// Note, the expected error is related to query input validation, not function execution.
 	ps.Assert().NotNil(err)
-	ps.Assert().Contains(err.Error(), expectedError)
+	ps.Assert().EqualError(err, `Int cannot represent non-integer value: "abc"`)
 }
 
 func TestPostgresqlSuite(t *testing.T) {
