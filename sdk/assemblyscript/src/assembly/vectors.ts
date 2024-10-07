@@ -237,9 +237,9 @@ export function dot<T extends number>(a: T[], b: T[]): T {
  * @param a: The vector
  * @returns: The magnitude of the vector
  */
-export function magnitude<T extends number>(a: T[]): f64 {
+export function magnitude<T extends number>(a: T[]): T {
   checkValidArray(a);
-  return sqrt<f64>(dot(a, a));
+  return sqrt<number>(dot(a, a)) as T;
 }
 
 /**
@@ -299,9 +299,9 @@ export function product<T extends number>(a: T[]): T {
  * @param a: The vector
  * @returns: The mean of the vector
  */
-export function mean<T extends number>(a: T[]): f64 {
+export function mean<T extends number>(a: T[]): T {
   checkValidArray(a);
-  return sum(a) / a.length;
+  return (sum(a) / a.length) as T;
 }
 
 /**
@@ -372,11 +372,11 @@ export function absInPlace<T extends number>(a: T[]): void {
  * @param b: The second vector
  * @returns: The euclidian distance between the two vectors
  */
-export function euclidianDistance<T extends number>(a: T[], b: T[]): f64 {
+export function euclidianDistance<T extends number>(a: T[], b: T[]): T {
   checkValidArray(a);
   let sum = 0;
   for (let i = 0; i < a.length; i++) {
     sum += (a[i] - b[i]) ** 2;
   }
-  return sqrt<f64>(sum);
+  return sqrt<number>(sum) as T;
 }
