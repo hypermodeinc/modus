@@ -1,5 +1,5 @@
 <!-- markdownlint-disable first-line-heading -->
-[![chat](https://img.shields.io/discord/1267579648657850441)](https://discord.com/channels/1267579648657850441/1292948253796466730)
+[![chat](https://img.shields.io/discord/1267579648657850441)](https://discord.gg/NJQ4bJpffF)
 
 # Modus
 
