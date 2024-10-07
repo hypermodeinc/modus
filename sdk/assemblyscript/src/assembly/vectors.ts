@@ -7,12 +7,25 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-export function checkEqualLength<T extends number>(a: T[], b: T[]): void {
+function assertEqualLength<T extends number>(a: T[], b: T[]): void {
   if (a.length !== b.length) {
     throw new Error("Vectors must be the same length.");
   }
 }
 
+function checkValidArray<T extends number>(a: T[]): void {
+  if (a.length === 0) {
+    throw new Error("Vector must not be empty.");
+  }
+
+  checkValidNumber(a[0]);
+}
+
+export function checkValidNumber<T extends number>(a: T): void {
+  if (!isInteger(a) && !isFloat(a) && !isSigned(a)) {
+    throw new Error("Vector must contain numbers.");
+  }
+}
 /**
  *
  * Add two vectors together, returning a new vector.
@@ -21,7 +34,9 @@ export function checkEqualLength<T extends number>(a: T[], b: T[]): void {
  * @returns: The sum of the two vectors
  */
 export function add<T extends number>(a: T[], b: T[]): T[] {
-  checkEqualLength(a, b);
+  assertEqualLength(a, b);
+  checkValidArray(a);
+  checkValidArray(b);
   const result = new Array<T>(a.length);
   for (let i = 0; i < a.length; i++) {
     result[i] = (a[i] + b[i]) as T;
@@ -35,8 +50,10 @@ export function add<T extends number>(a: T[], b: T[]): T[] {
  * @param a: The first vector
  * @param b: The second vector
  */
-export function addInplace<T extends number>(a: T[], b: T[]): void {
-  checkEqualLength(a, b);
+export function addInPlace<T extends number>(a: T[], b: T[]): void {
+  assertEqualLength(a, b);
+  checkValidArray(a);
+  checkValidArray(b);
   for (let i = 0; i < a.length; i++) {
     a[i] = (a[i] + b[i]) as T;
   }
@@ -50,7 +67,9 @@ export function addInplace<T extends number>(a: T[], b: T[]): void {
  * @returns: The difference of the two vectors
  */
 export function subtract<T extends number>(a: T[], b: T[]): T[] {
-  checkEqualLength(a, b);
+  assertEqualLength(a, b);
+  checkValidArray(a);
+  checkValidArray(b);
   const result = new Array<T>(a.length);
   for (let i = 0; i < a.length; i++) {
     result[i] = (a[i] - b[i]) as T;
@@ -64,8 +83,10 @@ export function subtract<T extends number>(a: T[], b: T[]): T[] {
  * @param a: The first vector
  * @param b: The second vector
  */
-export function subtractInplace<T extends number>(a: T[], b: T[]): void {
-  checkEqualLength(a, b);
+export function subtractInPlace<T extends number>(a: T[], b: T[]): void {
+  assertEqualLength(a, b);
+  checkValidArray(a);
+  checkValidArray(b);
   for (let i = 0; i < a.length; i++) {
     a[i] = (a[i] - b[i]) as T;
   }
@@ -79,6 +100,8 @@ export function subtractInplace<T extends number>(a: T[], b: T[]): void {
  * @returns: the result vector, with the number added to each element
  */
 export function addNumber<T extends number>(a: T[], b: T): T[] {
+  checkValidArray(a);
+  checkValidNumber(b);
   const result = new Array<T>(a.length);
   for (let i = 0; i < a.length; i++) {
     result[i] = (a[i] + b) as T;
@@ -92,7 +115,9 @@ export function addNumber<T extends number>(a: T[], b: T): T[] {
  * @param a: The first vector
  * @param b: The number to add
  */
-export function addNumberInplace<T extends number>(a: T[], b: T): void {
+export function addNumberInPlace<T extends number>(a: T[], b: T): void {
+  checkValidArray(a);
+  checkValidNumber(b);
   for (let i = 0; i < a.length; i++) {
     a[i] = (a[i] + b) as T;
   }
@@ -106,6 +131,8 @@ export function addNumberInplace<T extends number>(a: T[], b: T): void {
  * @returns: the result vector, with the number subtracted from each element
  */
 export function subtractNumber<T extends number>(a: T[], b: T): T[] {
+  checkValidArray(a);
+  checkValidNumber(b);
   const result = new Array<T>(a.length);
   for (let i = 0; i < a.length; i++) {
     result[i] = (a[i] - b) as T;
@@ -119,7 +146,9 @@ export function subtractNumber<T extends number>(a: T[], b: T): T[] {
  * @param a: The first vector
  * @param b: The number to subtract
  */
-export function subtractNumberInplace<T extends number>(a: T[], b: T): void {
+export function subtractNumberInPlace<T extends number>(a: T[], b: T): void {
+  checkValidArray(a);
+  checkValidNumber(b);
   for (let i = 0; i < a.length; i++) {
     a[i] = (a[i] - b) as T;
   }
@@ -132,6 +161,8 @@ export function subtractNumberInplace<T extends number>(a: T[], b: T): void {
  * @returns: the result vector, with the number multiplied to each element
  */
 export function multiplyNumber<T extends number>(a: T[], b: T): T[] {
+  checkValidArray(a);
+  checkValidNumber(b);
   const result = new Array<T>(a.length);
   for (let i = 0; i < a.length; i++) {
     result[i] = (a[i] * b) as T;
@@ -145,7 +176,9 @@ export function multiplyNumber<T extends number>(a: T[], b: T): T[] {
  * @param a: The first vector
  * @param b: The number to multiply
  */
-export function multiplyNumberInplace<T extends number>(a: T[], b: T): void {
+export function multiplyNumberInPlace<T extends number>(a: T[], b: T): void {
+  checkValidArray(a);
+  checkValidNumber(b);
   for (let i = 0; i < a.length; i++) {
     a[i] = (a[i] * b) as T;
   }
@@ -159,6 +192,8 @@ export function multiplyNumberInplace<T extends number>(a: T[], b: T): void {
  * @returns: the result vector, with the number divided from each element
  */
 export function divideNumber<T extends number>(a: T[], b: T): T[] {
+  checkValidArray(a);
+  checkValidNumber(b);
   const result = new Array<T>(a.length);
   for (let i = 0; i < a.length; i++) {
     result[i] = (a[i] / b) as T;
@@ -172,7 +207,9 @@ export function divideNumber<T extends number>(a: T[], b: T): T[] {
  * @param a: The first vector
  * @param b: The number to divide
  */
-export function divideNumberInplace<T extends number>(a: T[], b: T): void {
+export function divideNumberInPlace<T extends number>(a: T[], b: T): void {
+  checkValidArray(a);
+  checkValidNumber(b);
   for (let i = 0; i < a.length; i++) {
     a[i] = (a[i] / b) as T;
   }
@@ -185,7 +222,9 @@ export function divideNumberInplace<T extends number>(a: T[], b: T): void {
  * @returns: The dot product of the two vectors
  */
 export function dot<T extends number>(a: T[], b: T[]): T {
-  checkEqualLength(a, b);
+  checkValidArray(a);
+  checkValidArray(b);
+  assertEqualLength(a, b);
   let result = 0;
   for (let i = 0; i < a.length; i++) {
     result += a[i] * b[i];
@@ -199,6 +238,7 @@ export function dot<T extends number>(a: T[], b: T[]): T {
  * @returns: The magnitude of the vector
  */
 export function magnitude<T extends number>(a: T[]): f64 {
+  checkValidArray(a);
   return sqrt<f64>(dot(a, a));
 }
 
@@ -209,6 +249,7 @@ export function magnitude<T extends number>(a: T[]): f64 {
  * @returns: The cross product of the two vectors
  */
 export function normalize<T extends number>(a: T[]): T[] {
+  checkValidArray(a);
   return divideNumber(a, magnitude(a)) as T[];
 }
 
@@ -217,8 +258,9 @@ export function normalize<T extends number>(a: T[]): T[] {
  * Normalize a vector, modifying the first vector.
  * @param a: The vector to normalize
  */
-export function normalizeInplace<T extends number>(a: T[]): void {
-  divideNumberInplace(a, magnitude(a) as T);
+export function normalizeInPlace<T extends number>(a: T[]): void {
+  checkValidArray(a);
+  divideNumberInPlace(a, magnitude(a) as T);
 }
 
 /**
@@ -228,6 +270,7 @@ export function normalizeInplace<T extends number>(a: T[]): void {
  * @returns: The sum of the vector
  */
 export function sum<T extends number>(a: T[]): T {
+  checkValidArray(a);
   let result = 0;
   for (let i = 0; i < a.length; i++) {
     result += a[i];
@@ -242,6 +285,7 @@ export function sum<T extends number>(a: T[]): T {
  * @returns: The product of the vector
  */
 export function product<T extends number>(a: T[]): T {
+  checkValidArray(a);
   let result = 1;
   for (let i = 0; i < a.length; i++) {
     result *= a[i];
@@ -256,6 +300,7 @@ export function product<T extends number>(a: T[]): T {
  * @returns: The mean of the vector
  */
 export function mean<T extends number>(a: T[]): f64 {
+  checkValidArray(a);
   return sum(a) / a.length;
 }
 
@@ -266,6 +311,7 @@ export function mean<T extends number>(a: T[]): f64 {
  * @returns: The median of the vector
  */
 export function min<T extends number>(a: T[]): T {
+  checkValidArray(a);
   let result = a[0];
   for (let i = 1; i < a.length; i++) {
     if (a[i] < result) {
@@ -282,6 +328,7 @@ export function min<T extends number>(a: T[]): T {
  * @returns: The maximum of the vector
  */
 export function max<T extends number>(a: T[]): T {
+  checkValidArray(a);
   let result = a[0];
   for (let i = 1; i < a.length; i++) {
     if (a[i] > result) {
@@ -298,6 +345,7 @@ export function max<T extends number>(a: T[]): T {
  * @returns: The absolute value of the vector
  */
 export function abs<T extends number>(a: T[]): T[] {
+  checkValidArray(a);
   const result = new Array<T>(a.length);
   for (let i = 0; i < a.length; i++) {
     result[i] = a[i] < 0 ? (-a[i] as T) : a[i];
@@ -310,7 +358,8 @@ export function abs<T extends number>(a: T[]): T[] {
  * Calculate the absolute value of a vector, modifying the first vector.
  * @param a: The vector
  */
-export function absInplace<T extends number>(a: T[]): void {
+export function absInPlace<T extends number>(a: T[]): void {
+  checkValidArray(a);
   for (let i = 0; i < a.length; i++) {
     a[i] = a[i] < 0 ? (-a[i] as T) : a[i];
   }
@@ -324,6 +373,7 @@ export function absInplace<T extends number>(a: T[]): void {
  * @returns: The euclidian distance between the two vectors
  */
 export function euclidianDistance<T extends number>(a: T[], b: T[]): f64 {
+  checkValidArray(a);
   let sum = 0;
   for (let i = 0; i < a.length; i++) {
     sum += (a[i] - b[i]) ** 2;
