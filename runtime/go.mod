@@ -35,12 +35,12 @@ require (
 	github.com/rs/zerolog v1.33.0
 	github.com/spf13/cast v1.7.0
 	github.com/stretchr/testify v1.9.0
-	github.com/tetratelabs/wazero v1.8.0
+	github.com/tetratelabs/wazero v1.8.1
 	github.com/tidwall/gjson v1.18.0
 	github.com/tidwall/sjson v1.2.5
 	github.com/viterin/vek v0.4.2
-	github.com/wundergraph/graphql-go-tools/execution v1.0.5
-	github.com/wundergraph/graphql-go-tools/v2 v2.0.0-rc.95
+	github.com/wundergraph/graphql-go-tools/execution v1.0.6
+	github.com/wundergraph/graphql-go-tools/v2 v2.0.0-rc.100
 	golang.org/x/exp v0.0.0-20240909161429-701f63a606c0
 	google.golang.org/grpc v1.67.1
 )

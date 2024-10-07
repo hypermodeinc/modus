@@ -236,8 +236,8 @@ github.com/stretchr/testify v1.9.0 h1:HtqpIVDClZ4nwg75+f6Lvsy/wHu+3BoSGCbBAcpTsT
 github.com/stretchr/testify v1.9.0/go.mod h1:r2ic/lqez/lEtzL7wO/rwa5dbSLXVDPFyf8C91i36aY=
 github.com/tailscale/hujson v0.0.0-20221223112325-20486734a56a h1:SJy1Pu0eH1C29XwJucQo73FrleVK6t4kYz4NVhp34Yw=
 github.com/tailscale/hujson v0.0.0-20221223112325-20486734a56a/go.mod h1:DFSS3NAGHthKo1gTlmEcSBiZrRJXi28rLNd/1udP1c8=
-github.com/tetratelabs/wazero v1.8.0 h1:iEKu0d4c2Pd+QSRieYbnQC9yiFlMS9D+Jr0LsRmcF4g=
-github.com/tetratelabs/wazero v1.8.0/go.mod h1:yAI0XTsMBhREkM/YDAK/zNou3GoiAce1P6+rp/wQhjs=
+github.com/tetratelabs/wazero v1.8.1 h1:NrcgVbWfkWvVc4UtT4LRLDf91PsOzDzefMdwhLfA550=
+github.com/tetratelabs/wazero v1.8.1/go.mod h1:yAI0XTsMBhREkM/YDAK/zNou3GoiAce1P6+rp/wQhjs=
 github.com/tidwall/gjson v1.14.2/go.mod h1:/wbyibRr2FHMks5tjHJ5F8dMZh3AcwJEMf5vlfC0lxk=
 github.com/tidwall/gjson v1.18.0 h1:FIDeeyB800efLX89e5a8Y0BNH+LOngJyGrIWxG2FKQY=
 github.com/tidwall/gjson v1.18.0/go.mod h1:/wbyibRr2FHMks5tjHJ5F8dMZh3AcwJEMf5vlfC0lxk=
@@ -260,10 +260,10 @@ github.com/wundergraph/cosmo/composition-go v0.0.0-20240926091419-7c3781f4f507 h
 github.com/wundergraph/cosmo/composition-go v0.0.0-20240926091419-7c3781f4f507/go.mod h1:fUuOAUAXUFB/mlSkAaImGeE4A841AKR5dTMWhV4ibxI=
 github.com/wundergraph/cosmo/router v0.0.0-20240926091419-7c3781f4f507 h1:uojstbUpR4s6uO3+PJCU/nJ8CT5rq1L7Q94jdf+OiG4=
 github.com/wundergraph/cosmo/router v0.0.0-20240926091419-7c3781f4f507/go.mod h1:44kgNdnRaJVugapwUGRCbO27ziXNQTITJusRMmbl08c=
-github.com/wundergraph/graphql-go-tools/execution v1.0.5 h1:3MiArNTyrudf5Sp1a/YBSKNtTd35Zl1BPDymjGRIDuU=
-github.com/wundergraph/graphql-go-tools/execution v1.0.5/go.mod h1:sb+EyLG8bsKe8HVSU1tnTwWZSdhD8tFNvKH+1wllVuM=
-github.com/wundergraph/graphql-go-tools/v2 v2.0.0-rc.95 h1:YHC24JJVRkJmjVloYx+0+5blctgn/sJaCWrs0X3aPL4=
-github.com/wundergraph/graphql-go-tools/v2 v2.0.0-rc.95/go.mod h1:zkPVYJu1iQd0y1fBNj+oXe9uMI/33TSoiXEsKSAESZY=
+github.com/wundergraph/graphql-go-tools/execution v1.0.6 h1:Y8pzegICEhn7f6G94bjvZ1amUP6bdgHsImSkm/xuapA=
+github.com/wundergraph/graphql-go-tools/execution v1.0.6/go.mod h1:sb+EyLG8bsKe8HVSU1tnTwWZSdhD8tFNvKH+1wllVuM=
+github.com/wundergraph/graphql-go-tools/v2 v2.0.0-rc.100 h1:AJ/X5UYkQha3F6mOV/YXJAhMN3FWWL2OXgYdPnJJhhg=
+github.com/wundergraph/graphql-go-tools/v2 v2.0.0-rc.100/go.mod h1:zkPVYJu1iQd0y1fBNj+oXe9uMI/33TSoiXEsKSAESZY=
 github.com/yuin/goldmark v1.1.27/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
 github.com/yuin/goldmark v1.2.1/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
 go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.55.0 h1:ZIg3ZT/aQ7AfKqdwp7ECpOK6vHqquXXuyTjIO8ZdmPs=
