@@ -1,3 +1,12 @@
+/*
+ * Copyright 2024 Hypermode, Inc.
+ * Licensed under the terms of the Apache License, Version 2.0
+ * See the LICENSE file that accompanied this code for further details.
+ *
+ * SPDX-FileCopyrightText: 2024 Hypermode, Inc. <hello@hypermode.com>
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import { Command, Flags } from "@oclif/core";
 
 export default class Upgrade extends Command {
@@ -7,23 +16,12 @@ export default class Upgrade extends Command {
 
   static description = "Upgrade a Modus component";
 
-  static examples = [
-    `<%= config.bin %> <%= command.id %> friend --from oclif
-hello friend from oclif! (./src/commands/hello/index.ts)
-`,
-  ];
+  static examples = [];
 
-  static flags = {
-    from: Flags.string({
-      char: "f",
-      description: "Who is saying hello",
-      required: true,
-    }),
-  };
+  static flags = {};
 
   async run(): Promise<void> {
     const { args, flags } = await this.parse(Upgrade);
 
-    this.log(`hello ${args.person} from ${flags.from}! (./src/commands/hello/index.ts)`);
   }
 }

@@ -1,13 +1,3 @@
-*-debug.log
-*-error.log
-**/.DS_Store
-/.idea
-/dist
-/tmp
-/node_modules
+# Ignore output files
 oclif.manifest.json
-
-yarn.lock
-pnpm-lock.yaml
-bun.lockb
-rt/
+tsconfig.tsbuildinfo

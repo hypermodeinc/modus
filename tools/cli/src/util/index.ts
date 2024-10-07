@@ -1,5 +1,14 @@
-import { execSync, spawnSync } from "node:child_process";
-import { cpSync, existsSync, mkdirSync, rmSync } from "node:fs";
+/*
+ * Copyright 2024 Hypermode, Inc.
+ * Licensed under the terms of the Apache License, Version 2.0
+ * See the LICENSE file that accompanied this code for further details.
+ *
+ * SPDX-FileCopyrightText: 2024 Hypermode, Inc. <hello@hypermode.com>
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+import { spawnSync } from "node:child_process";
+import { existsSync, mkdirSync } from "node:fs";
 import path from "node:path";
 import { Interface } from "node:readline";
 import { CLI_VERSION } from "../custom/globals.js";
@@ -26,39 +35,9 @@ export function isRunnable(cmd: string): boolean {
 }
 
 export async function cloneRepo(url: string, pth: string): Promise<boolean> {
-  // https://github.com/hypermodeAI/tempalte-project/archive/refs/heads/main.zip instead
-  const base_dir = path.dirname(pth);
-  const temp_dir = path.join(base_dir, ".modus-temp");
-  const folder_name = path.basename(pth);
-
-  // Will fix until we get a monorepo with projects/examples
-  cpSync(path.join(path.dirname(import.meta.url.replace("file:", "")), "../../examples/assemblyscript/"), path.format(path.parse(pth)) + "/", { recursive: true, force: true });
-
+  // should download .zip curl https://github.com/<org>/<repo>/archive/refs/heads/<branch>.zip
+  // or download a release
   return true;
-
-  // try {
-  //   mkdirSync(base_dir, { recursive: true });
-  //   if (existsSync(pth)) {
-  //     const shell = execSync("git clone " + url + " .modus-temp", {
-  //       stdio: "pipe",
-  //       cwd: base_dir,
-  //     });
-  //     if (!shell) return false;
-  //     cpSync(temp_dir, pth, { recursive: true, force: true });
-  //     rmSync(temp_dir, { recursive: true });
-  //     rmSync(path.join(pth, ".git"), { recursive: true });
-  //     return true;
-  //   }
-  //   const shell = execSync("git clone " + url + " " + folder_name, {
-  //     stdio: "pipe",
-  //     cwd: base_dir,
-  //   });
-  //   if (!shell) return false;
-  //   rmSync(path.join(pth, ".git"), { recursive: true });
-  //   return true;
-  // } catch {
-  //   return false;
-  // }
 }
 
 export function ask(question: string, rl: Interface, placeholder?: string): Promise<string> {

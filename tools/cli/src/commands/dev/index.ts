@@ -1,3 +1,12 @@
+/*
+ * Copyright 2024 Hypermode, Inc.
+ * Licensed under the terms of the Apache License, Version 2.0
+ * See the LICENSE file that accompanied this code for further details.
+ *
+ * SPDX-FileCopyrightText: 2024 Hypermode, Inc. <hello@hypermode.com>
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import { Args, Command, Flags } from "@oclif/core";
 import { expandHomeDir } from "../../util/index.js";
 import { Metadata } from "../../util/metadata.js";
@@ -41,6 +50,13 @@ export default class Run extends Command {
       description: "Enable descriptive logging",
       hidden: false,
       required: false,
+    }),
+    freq: Flags.integer({
+      char: "f",
+      description: "Frequency to check for changes",
+      hidden: false,
+      required: false,
+      default: 3000
     }),
   };
 
@@ -98,12 +114,11 @@ export default class Run extends Command {
     });
 
     if (watch) {
-      const delay = 3000; // Max build frequency every 3000ms
+      const delay = flags.freq;
       let lastModified = 0;
       let lastBuild = 0;
       let paused = true;
 
-      // Its a bit jank. I'll refactor it in a bit
       setInterval(async () => {
         if (paused) return;
         if (lastBuild > lastModified) {
