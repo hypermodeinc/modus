@@ -27,6 +27,8 @@ func CollectProgramInfo(config *config.Config, meta *metadata.Metadata, wasmFunc
 
 	requiredTypes := make(map[string]types.Type)
 
+	generateFunctions(config.SourceDir, pkgs)
+
 	for name, f := range getExportedFunctions(pkgs) {
 		if _, ok := wasmFunctions.Exports[name]; ok {
 			meta.FnExports[name] = transformFunc(name, f)

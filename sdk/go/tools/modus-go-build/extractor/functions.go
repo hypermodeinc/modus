@@ -80,6 +80,18 @@ func getImportedFunctions(pkgs map[string]*packages.Package) map[string]*types.F
 	return results
 }
 
+func getHypGenTypeName(genDecl *ast.GenDecl) (string, bool) {
+	if genDecl.Doc == nil {
+		return "", false
+	}
+	for _, c := range genDecl.Doc.List {
+		if strings.HasPrefix(c.Text, "//hyp:generate") {
+			return strings.TrimSpace(strings.TrimPrefix(c.Text, "//hyp:generate")), true
+		}
+	}
+	return "", false
+}
+
 func getExportedFuncName(fn *ast.FuncDecl) string {
 	/*
 		Exported functions must have a body, and are decorated in one of the following forms:
