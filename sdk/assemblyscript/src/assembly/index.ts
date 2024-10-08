@@ -27,3 +27,6 @@ export { collections };
 
 import models from "./models";
 export { models };
+
+import * as vectors from "./vectors";
+export { vectors };

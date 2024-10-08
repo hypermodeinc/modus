@@ -225,7 +225,7 @@ export function dot<T extends number>(a: T[], b: T[]): T {
   checkValidArray(a);
   checkValidArray(b);
   assertEqualLength(a, b);
-  let result = 0;
+  let result: number = 0;
   for (let i = 0; i < a.length; i++) {
     result += a[i] * b[i];
   }
@@ -237,9 +237,9 @@ export function dot<T extends number>(a: T[], b: T[]): T {
  * @param a: The vector
  * @returns: The magnitude of the vector
  */
-export function magnitude<T extends number>(a: T[]): T {
+export function magnitude<T extends number>(a: T[]): f64 {
   checkValidArray(a);
-  return sqrt<number>(dot(a, a)) as T;
+  return sqrt<f64>(dot(a, a));
 }
 
 /**
@@ -248,19 +248,14 @@ export function magnitude<T extends number>(a: T[]): T {
  * @param b: The second vector
  * @returns: The cross product of the two vectors
  */
-export function normalize<T extends number>(a: T[]): T[] {
+export function normalize<T extends number>(a: T[]): f64[] {
   checkValidArray(a);
-  return divideNumber(a, magnitude(a)) as T[];
-}
-
-/**
- *
- * Normalize a vector, modifying the first vector.
- * @param a: The vector to normalize
- */
-export function normalizeInPlace<T extends number>(a: T[]): void {
-  checkValidArray(a);
-  divideNumberInPlace(a, magnitude(a) as T);
+  const magnitudeValue = magnitude(a);
+  const result: f64[] = new Array<f64>(a.length);
+  for (let i = 0; i < a.length; i++) {
+    result[i] = (a[i] as f64) / magnitudeValue;
+  }
+  return result;
 }
 
 /**
@@ -299,9 +294,9 @@ export function product<T extends number>(a: T[]): T {
  * @param a: The vector
  * @returns: The mean of the vector
  */
-export function mean<T extends number>(a: T[]): T {
+export function mean<T extends number>(a: T[]): f64 {
   checkValidArray(a);
-  return (sum(a) / a.length) as T;
+  return f64(sum(a)) / f64(a.length);
 }
 
 /**
@@ -372,11 +367,11 @@ export function absInPlace<T extends number>(a: T[]): void {
  * @param b: The second vector
  * @returns: The euclidian distance between the two vectors
  */
-export function euclidianDistance<T extends number>(a: T[], b: T[]): T {
+export function euclidianDistance<T extends number>(a: T[], b: T[]): f64 {
   checkValidArray(a);
   let sum = 0;
   for (let i = 0; i < a.length; i++) {
     sum += (a[i] - b[i]) ** 2;
   }
-  return sqrt<number>(sum) as T;
+  return sqrt<f64>(sum);
 }
