@@ -12,7 +12,7 @@ package vectors
 import "math"
 
 type Numeric interface {
-	uint8 | uint16 | uint32 | uint64 | float32 | float64
+	uint8 | uint16 | uint32 | uint64 | int8 | int16 | int32 | int64 | float32 | float64
 }
 
 // Add adds two vectors together and returns the result.
