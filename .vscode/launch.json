@@ -2,31 +2,33 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Hypermode Runtime (local)",
+      "name": "Modus Runtime (local)",
       "type": "go",
       "request": "launch",
       "mode": "auto",
       "preLaunchTask": "go: generate code",
-      "program": "${workspaceFolder}",
+      "program": "${workspaceFolder}/runtime",
       "env": {
-        "HYPERMODE_DEBUG": "true",
-        "HYPERMODE_METADATA_DB": "postgresql://postgres:postgres@localhost:5433/my-runtime-db?sslmode=disable"
+        "MODUS_ENV": "dev",
+        "MODUS_DEBUG": "true",
+        "MODUS_DB": "postgresql://postgres:postgres@localhost:5433/my-runtime-db?sslmode=disable"
       },
       "args": ["--refresh=1s"]
     },
     {
-      "name": "Hypermode Runtime (AWS)",
+      "name": "Modus Runtime (AWS)",
       "type": "go",
       "request": "launch",
       "mode": "auto",
       "preLaunchTask": "go: generate code",
-      "program": "${workspaceFolder}",
+      "program": "${workspaceFolder}/runtime",
       "env": {
-        "HYPERMODE_DEBUG": "true",
+        "MODUS_ENV": "dev",
+        "MODUS_DEBUG": "true",
         "AWS_REGION": "us-west-2",
         "AWS_PROFILE": "sandbox",
         "AWS_SDK_LOAD_CONFIG": "true",
-        "HYPERMODE_METADATA_DB": "postgresql://postgres:postgres@localhost:5433/my-runtime-db?sslmode=disable"
+        "MODUS_DB": "postgresql://postgres:postgres@localhost:5433/my-runtime-db?sslmode=disable"
       },
       "args": [
         "--useAwsSecrets",
@@ -35,6 +37,28 @@
         "--s3path=${input:s3folder}",
         "--refresh=1s"
       ]
+    },
+    {
+      "name": "modus-go-build simple example",
+      "type": "go",
+      "request": "launch",
+      "mode": "auto",
+      "program": "${workspaceFolder}/sdk/go/tools/modus-go-build",
+      "args": ["${workspaceFolder}/sdk/go/examples/simple"],
+      "env": {
+        "MODUS_DEBUG": "true"
+      }
+    },
+    {
+      "name": "hypbumodus-go-buildild http example",
+      "type": "go",
+      "request": "launch",
+      "mode": "auto",
+      "program": "${workspaceFolder}/sdk/go/tools/modus-go-build",
+      "args": ["${workspaceFolder}/sdk/go/examples/http"],
+      "env": {
+        "MODUS_DEBUG": "true"
+      }
     }
   ],
   "inputs": [

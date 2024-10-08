@@ -1,0 +1,7 @@
+# This schema is used for the queries in this Hypermode example.
+
+type Person {
+  id: ID!
+  firstName: String! @search(by: [hash])
+  lastName: String! @search(by: [hash])
+}
