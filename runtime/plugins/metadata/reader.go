@@ -26,8 +26,6 @@ func GetMetadata(wasmCustomSections map[string][]byte) (*Metadata, error) {
 	switch ver {
 	case MetadataVersion: // current version
 		return getPluginMetadata(wasmCustomSections)
-	case 1:
-		return getPluginMetadata_v1(wasmCustomSections)
 	default:
 		return nil, fmt.Errorf("unsupported plugin metadata version: %d", ver)
 	}
@@ -35,11 +33,7 @@ func GetMetadata(wasmCustomSections map[string][]byte) (*Metadata, error) {
 
 func getPluginMetadataVersion(wasmCustomSections map[string][]byte) (byte, error) {
 	verData, found := wasmCustomSections["hypermode_version"]
-	if !found {
-		return 1, nil // version 1 did not have a version section
-	}
-
-	if len(verData) != 1 {
+	if !found || len(verData) != 1 {
 		return 0, errors.New("failed to parse plugin metadata version")
 	}
 
