@@ -266,7 +266,7 @@ export function normalize<T extends number>(a: T[]): f64[] {
  */
 export function sum<T extends number>(a: T[]): T {
   checkValidArray(a);
-  let result = 0;
+  let result: number = 0;
   for (let i = 0; i < a.length; i++) {
     result += a[i];
   }
@@ -281,7 +281,7 @@ export function sum<T extends number>(a: T[]): T {
  */
 export function product<T extends number>(a: T[]): T {
   checkValidArray(a);
-  let result = 1;
+  let result: number = 1;
   for (let i = 0; i < a.length; i++) {
     result *= a[i];
   }
@@ -369,7 +369,7 @@ export function absInPlace<T extends number>(a: T[]): void {
  */
 export function euclidianDistance<T extends number>(a: T[], b: T[]): f64 {
   checkValidArray(a);
-  let sum = 0;
+  let sum: number = 0;
   for (let i = 0; i < a.length; i++) {
     sum += (a[i] - b[i]) ** 2;
   }
