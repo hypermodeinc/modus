@@ -22,7 +22,7 @@ function checkValidArray<T extends number>(a: T[]): void {
 }
 
 export function checkValidNumber<T extends number>(a: T): void {
-  if (!isInteger(a) && !isFloat(a) && !isSigned(a)) {
+  if (!isInteger(a) && !isFloat(a)) {
     throw new Error("Vector must contain numbers.");
   }
 }
