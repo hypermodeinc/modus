@@ -1,9 +1,11 @@
 # Copyright 2024 Hypermode, Inc.
 # Licensed under the terms of the Apache License, Version 2.0
 # See the LICENSE file that accompanied this code for further details.
-#
+
 # SPDX-FileCopyrightText: 2024 Hypermode, Inc. <hello@hypermode.com>
 # SPDX-License-Identifier: Apache-2.0
+
+# Run with: iwr install.hypermode.com/modus.ps1 -UseBasicP | iex
 
 # Config
 $GIT_REPO = "JairusSW/modus-cli"
@@ -114,6 +116,21 @@ function Clear-Line {
     Write-Host "${ESC}[F${ESC}[K" -NoNewLine
 }
 
+function Clear-Banner {
+    # Define the path to the install.cmd file
+    $installCmdPath = "./install.cmd"
+    
+    # Check if the install.cmd file exists
+    if (Test-Path $installCmdPath) {
+        # If it exists, clear the line 3 times
+        for ($i = 0; $i -lt 7; $i++) {
+            Clear-Line
+        }
+    } else {
+        Write-Host "install.cmd does not exist."
+    }
+}
+
 # ANSII codes
 $ESC = [char]27
 $BOLD = "${ESC}[1m"
@@ -122,6 +139,7 @@ $DIM = "${ESC}[2m"
 $RESET = "${ESC}[0m"
 
 # This is the entry point
+Clear-Banner
 Install-Version
 Write-Host "`nThe Modus CLI has been installed! " -NoNewLine
 $(Write-Host ([System.char]::ConvertFromUtf32(127881)))
