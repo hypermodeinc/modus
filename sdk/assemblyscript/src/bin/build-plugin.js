@@ -7,7 +7,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { execSync } from "child_process";
+import { execFileSync } from "child_process";
 import { readFile } from "fs/promises";
 import { existsSync } from "fs";
 import process from "process";
@@ -37,9 +37,19 @@ await validatePackageJson();
 await validateAsJson();
 
 console.log(`Building ${pkg}.wasm ...`);
-const cmd = `node "${npmPath}" exec -- asc assembly/index.ts -o build/${pkg}.wasm --target ${target}`;
+const cmdArgs = [
+  npmPath,
+  "exec",
+  "--",
+  "asc",
+  "assembly/index.ts",
+  "-o",
+  `build/${pkg}.wasm`,
+  "--target",
+  target,
+];
 try {
-  execSync(cmd, { stdio: "inherit" });
+  execFileSync("node", cmdArgs, { stdio: "inherit" });
 } catch {
   console.error("Build failed.\n");
   process.exit(1);
