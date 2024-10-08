@@ -1,6 +1,6 @@
 module github.com/hypermodeinc/modus/runtime
 
-go 1.23
+go 1.23.0
 
 require github.com/hypermodeinc/modus v0.0.0
 
