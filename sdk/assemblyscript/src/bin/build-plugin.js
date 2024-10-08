@@ -37,9 +37,19 @@ await validatePackageJson();
 await validateAsJson();
 
 console.log(`Building ${pkg}.wasm ...`);
-const cmdArgs = [npmPath, 'exec', '--', 'asc', 'assembly/index.ts', '-o', `build/${pkg}.wasm`, '--target', target];
+const cmdArgs = [
+  npmPath,
+  "exec",
+  "--",
+  "asc",
+  "assembly/index.ts",
+  "-o",
+  `build/${pkg}.wasm`,
+  "--target",
+  target,
+];
 try {
-  execFileSync('node', cmdArgs, { stdio: "inherit" });
+  execFileSync("node", cmdArgs, { stdio: "inherit" });
 } catch {
   console.error("Build failed.\n");
   process.exit(1);
