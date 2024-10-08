@@ -1,13 +1,13 @@
 /*
- * Copyright 2024 Hypermode, Inc.
+ * Copyright 2024 Hypermode Inc.
  * Licensed under the terms of the Apache License, Version 2.0
  * See the LICENSE file that accompanied this code for further details.
  *
- * SPDX-FileCopyrightText: 2024 Hypermode, Inc. <hello@hypermode.com>
+ * SPDX-FileCopyrightText: 2024 Hypermode Inc. <hello@hypermode.com>
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { execSync } from "child_process";
+import { execFileSync } from "child_process";
 import { readFile } from "fs/promises";
 import { existsSync } from "fs";
 import process from "process";
@@ -37,9 +37,19 @@ await validatePackageJson();
 await validateAsJson();
 
 console.log(`Building ${pkg}.wasm ...`);
-const cmd = `node "${npmPath}" exec -- asc assembly/index.ts -o build/${pkg}.wasm --target ${target}`;
+const cmdArgs = [
+  npmPath,
+  "exec",
+  "--",
+  "asc",
+  "assembly/index.ts",
+  "-o",
+  `build/${pkg}.wasm`,
+  "--target",
+  target,
+];
 try {
-  execSync(cmd, { stdio: "inherit" });
+  execFileSync("node", cmdArgs, { stdio: "inherit" });
 } catch {
   console.error("Build failed.\n");
   process.exit(1);

@@ -1,6 +1,6 @@
 module github.com/hypermodeinc/modus
 
-go 1.23
+go 1.23.0
 
 require (
 	github.com/santhosh-tekuri/jsonschema/v5 v5.3.1

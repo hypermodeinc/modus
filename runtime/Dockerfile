@@ -14,7 +14,7 @@ RUN GOOS=$TARGETOS GOARCH=$TARGETARCH go build -o modus_runtime
 
 # build the container image
 FROM ubuntu:22.04
-LABEL maintainer="Hypermode, Inc. <hello@hypermode.com>"
+LABEL maintainer="Hypermode Inc. <hello@hypermode.com>"
 
 # add common tools
 RUN apt-get update && apt-get install -y --no-install-recommends \
