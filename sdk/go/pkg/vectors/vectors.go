@@ -9,14 +9,14 @@
 
 package vectors
 
-import "math"
+import (
+	"math"
 
-type Numeric interface {
-	uint8 | uint16 | uint32 | uint64 | int8 | int16 | int32 | int64 | float32 | float64
-}
+	"golang.org/x/exp/constraints"
+)
 
 // Add adds two vectors together and returns the result.
-func Add[T Numeric](a, b []T) []T {
+func Add[T constraints.Integer | constraints.Float](a, b []T) []T {
 	assertEqualLength(a, b)
 	result := make([]T, len(a))
 	for i := range a {
@@ -26,7 +26,7 @@ func Add[T Numeric](a, b []T) []T {
 }
 
 // AddInPlace adds two vectors together and stores the result in the first vector.
-func AddInPlace[T Numeric](a, b []T) {
+func AddInPlace[T constraints.Integer | constraints.Float](a, b []T) {
 	assertEqualLength(a, b)
 	for i := range a {
 		a[i] += b[i]
@@ -34,7 +34,7 @@ func AddInPlace[T Numeric](a, b []T) {
 }
 
 // Subtract subtracts one vector from another and returns the result.
-func Subtract[T Numeric](a, b []T) []T {
+func Subtract[T constraints.Integer | constraints.Float](a, b []T) []T {
 	assertEqualLength(a, b)
 	result := make([]T, len(a))
 	for i := range a {
@@ -44,7 +44,7 @@ func Subtract[T Numeric](a, b []T) []T {
 }
 
 // SubtractInPlace subtracts one vector from another and stores the result in the first vector.
-func SubtractInPlace[T Numeric](a, b []T) {
+func SubtractInPlace[T constraints.Integer | constraints.Float](a, b []T) {
 	assertEqualLength(a, b)
 	for i := range a {
 		a[i] -= b[i]
@@ -52,7 +52,7 @@ func SubtractInPlace[T Numeric](a, b []T) {
 }
 
 // AddNumber adds a number to each element of a vector and returns the result.
-func AddNumber[T Numeric](a []T, b T) []T {
+func AddNumber[T constraints.Integer | constraints.Float](a []T, b T) []T {
 	result := make([]T, len(a))
 	for i := range a {
 		result[i] = a[i] + b
@@ -61,14 +61,14 @@ func AddNumber[T Numeric](a []T, b T) []T {
 }
 
 // AddNumberInPlace adds a number to each element of a vector and stores the result in the vector.
-func AddNumberInPlace[T Numeric](a []T, b T) {
+func AddNumberInPlace[T constraints.Integer | constraints.Float](a []T, b T) {
 	for i := range a {
 		a[i] += b
 	}
 }
 
 // SubtractNumber subtracts a number from each element of a vector and returns the result.
-func SubtractNumber[T Numeric](a []T, b T) []T {
+func SubtractNumber[T constraints.Integer | constraints.Float](a []T, b T) []T {
 	result := make([]T, len(a))
 	for i := range a {
 		result[i] = a[i] - b
@@ -77,14 +77,14 @@ func SubtractNumber[T Numeric](a []T, b T) []T {
 }
 
 // SubtractNumberInPlace subtracts a number from each element of a vector and stores the result in the vector.
-func SubtractNumberInPlace[T Numeric](a []T, b T) {
+func SubtractNumberInPlace[T constraints.Integer | constraints.Float](a []T, b T) {
 	for i := range a {
 		a[i] -= b
 	}
 }
 
 // MultiplyNumber multiplies each element of a vector by a number and returns the result.
-func MultiplyNumber[T Numeric](a []T, b T) []T {
+func MultiplyNumber[T constraints.Integer | constraints.Float](a []T, b T) []T {
 	result := make([]T, len(a))
 	for i := range a {
 		result[i] = a[i] * b
@@ -93,14 +93,14 @@ func MultiplyNumber[T Numeric](a []T, b T) []T {
 }
 
 // MultiplyNumberInPlace multiplies each element of a vector by a number and stores the result in the vector.
-func MultiplyNumberInPlace[T Numeric](a []T, b T) {
+func MultiplyNumberInPlace[T constraints.Integer | constraints.Float](a []T, b T) {
 	for i := range a {
 		a[i] *= b
 	}
 }
 
 // DivideNumber divides each element of a vector by a number and returns the result.
-func DivideNumber[T Numeric](a []T, b T) []T {
+func DivideNumber[T constraints.Integer | constraints.Float](a []T, b T) []T {
 	result := make([]T, len(a))
 	for i := range a {
 		result[i] = a[i] / b
@@ -109,14 +109,14 @@ func DivideNumber[T Numeric](a []T, b T) []T {
 }
 
 // DivideNumberInPlace divides each element of a vector by a number and stores the result in the vector.
-func DivideNumberInPlace[T Numeric](a []T, b T) {
+func DivideNumberInPlace[T constraints.Integer | constraints.Float](a []T, b T) {
 	for i := range a {
 		a[i] /= b
 	}
 }
 
 // Dot computes the dot product of two vectors.
-func Dot[T Numeric](a, b []T) T {
+func Dot[T constraints.Integer | constraints.Float](a, b []T) T {
 	assertEqualLength(a, b)
 	var result T = 0
 	for i := 0; i < len(a); i++ {
@@ -126,18 +126,18 @@ func Dot[T Numeric](a, b []T) T {
 }
 
 // Magnitude computes the magnitude of a vector.
-func Magnitude[T Numeric](a []T) float64 {
+func Magnitude[T constraints.Integer | constraints.Float](a []T) float64 {
 	return math.Sqrt(float64(Dot(a, a)))
 }
 
 // Normalize normalizes a vector to have a magnitude of 1.
-func Normalize[T Numeric](a []T) []float64 {
+func Normalize[T constraints.Integer | constraints.Float](a []T) []float64 {
 	mag := Magnitude(a)
 	return DivideNumber(convertToFloat64Slice(a), mag)
 }
 
 // Sum computes the sum of all elements in a vector.
-func Sum[T Numeric](a []T) T {
+func Sum[T constraints.Integer | constraints.Float](a []T) T {
 	var result T = 0
 	for i := range a {
 		result += a[i]
@@ -146,7 +146,7 @@ func Sum[T Numeric](a []T) T {
 }
 
 // Product computes the product of all elements in a vector.
-func Product[T Numeric](a []T) T {
+func Product[T constraints.Integer | constraints.Float](a []T) T {
 	var result T = 1
 	for i := 0; i < len(a); i++ {
 		result *= a[i]
@@ -155,13 +155,13 @@ func Product[T Numeric](a []T) T {
 }
 
 // func Mean computes the mean of a vector.
-func Mean[T Numeric](a []T) float64 {
+func Mean[T constraints.Integer | constraints.Float](a []T) float64 {
 	assertNonEmpty(a)
 	return float64(Sum(a)) / float64(len(a))
 }
 
 // Min computes the minimum element in a vector.
-func Min[T Numeric](a []T) T {
+func Min[T constraints.Integer | constraints.Float](a []T) T {
 	assertNonEmpty(a)
 	var result T = a[0]
 	for i := 0; i < len(a); i++ {
@@ -173,7 +173,7 @@ func Min[T Numeric](a []T) T {
 }
 
 // Max computes the maximum element in a vector.
-func Max[T Numeric](a []T) T {
+func Max[T constraints.Integer | constraints.Float](a []T) T {
 	assertNonEmpty(a)
 	var result T = a[0]
 	for i := 0; i < len(a); i++ {
@@ -185,7 +185,7 @@ func Max[T Numeric](a []T) T {
 }
 
 // Abs computes the absolute value of each element in a vector.
-func Abs[T Numeric](a []T) []T {
+func Abs[T constraints.Integer | constraints.Float](a []T) []T {
 	result := make([]T, len(a))
 	for i := range a {
 		result[i] = a[i]
@@ -197,7 +197,7 @@ func Abs[T Numeric](a []T) []T {
 }
 
 // AbsInPlace computes the absolute value of each element in a vector and stores the result in the vector.
-func AbsInPlace[T Numeric](a []T) {
+func AbsInPlace[T constraints.Integer | constraints.Float](a []T) {
 	for i := range a {
 		if a[i] < 0 {
 			a[i] = -a[i]
@@ -206,7 +206,7 @@ func AbsInPlace[T Numeric](a []T) {
 }
 
 // EuclidianDistance computes the Euclidian distance between two vectors.
-func EuclidianDistance[T Numeric](a, b []T) float64 {
+func EuclidianDistance[T constraints.Integer | constraints.Float](a, b []T) float64 {
 	assertEqualLength(a, b)
 	var result float64 = 0
 	for i := 0; i < len(a); i++ {
@@ -215,14 +215,14 @@ func EuclidianDistance[T Numeric](a, b []T) float64 {
 	return math.Sqrt(result)
 }
 
-func assertEqualLength[T Numeric](a, b []T) {
+func assertEqualLength[T constraints.Integer | constraints.Float](a, b []T) {
 	if len(a) != len(b) {
 		panic("vectors must be the same length")
 	}
 }
 
 // convertToFloat64Slice converts a slice of type []T to type []float64.
-func convertToFloat64Slice[T Numeric](a []T) []float64 {
+func convertToFloat64Slice[T constraints.Integer | constraints.Float](a []T) []float64 {
 	result := make([]float64, len(a))
 	for i := range a {
 		result[i] = float64(a[i])
@@ -230,7 +230,7 @@ func convertToFloat64Slice[T Numeric](a []T) []float64 {
 	return result
 }
 
-func assertNonEmpty[T Numeric](a []T) {
+func assertNonEmpty[T constraints.Integer | constraints.Float](a []T) {
 	if len(a) == 0 {
 		panic("vector must be non-empty")
 	}
