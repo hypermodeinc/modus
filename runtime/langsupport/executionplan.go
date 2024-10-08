@@ -147,20 +147,12 @@ func (plan *executionPlan) getWasmParameters(ctx context.Context, wa WasmAdapter
 		cleaner = utils.NewCleanerN(len(plan.ParamHandlers()))
 	}
 
-	var mask uint64
-	var has_opt bool
 	handlers := plan.ParamHandlers()
 	for i, p := range plan.FnMetadata().Parameters {
 
 		val, found := parameters[p.Name]
-		if found {
-			mask |= 1 << i
-		} else if p.Default != nil {
+		if !found && p.Default != nil {
 			val = *p.Default
-			mask |= 1 << i
-		} else if p.Optional {
-			has_opt = true
-			continue
 		}
 
 		encVals, cln, err := handlers[i].Encode(ctx, wa, val)
@@ -170,10 +162,6 @@ func (plan *executionPlan) getWasmParameters(ctx context.Context, wa WasmAdapter
 		}
 
 		paramVals = append(paramVals, encVals...)
-	}
-
-	if has_opt {
-		paramVals = append(paramVals, mask)
 	}
 
 	return paramVals, cleaner, nil

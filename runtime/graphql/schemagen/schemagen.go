@@ -371,15 +371,6 @@ func convertParameters(parameters []*metadata.Parameter, lti langsupport.Languag
 			return nil, err
 		}
 
-		// maintain compatibility with the deprecated "optional" field
-		if p.Optional {
-			output[i] = &ParameterSignature{
-				Name: p.Name,
-				Type: strings.TrimSuffix(t, "!"),
-			}
-			continue
-		}
-
 		output[i] = &ParameterSignature{
 			Name:    p.Name,
 			Type:    t,
