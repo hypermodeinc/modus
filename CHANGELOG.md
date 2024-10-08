@@ -11,6 +11,7 @@
 - Remove HTTP Timeout, Add Context Timeout on Collections [#422](https://github.com/hypermodeinc/modus/pull/422)
 - Add Modus AssemblyScript SDK [#423](https://github.com/hypermodeinc/modus/pull/423)
 - Add models to Modus AssemblyScript SDK [#428](https://github.com/hypermodeinc/modus/pull/428)
+- Update Readme files [#432](https://github.com/hypermodeinc/modus/pull/432)
 
 ## 2024-10-02 - Version 0.12.7
 
