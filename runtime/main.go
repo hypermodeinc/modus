@@ -35,6 +35,7 @@ func main() {
 	log := logger.Initialize()
 	log.Info().
 		Str("version", config.GetVersionNumber()).
+		Str("environment", config.GetEnvironmentName()).
 		Msg("Starting Modus Runtime.")
 
 	// Load environment variables from plugins path
