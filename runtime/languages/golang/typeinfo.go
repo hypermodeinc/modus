@@ -12,6 +12,7 @@ package golang
 import (
 	"context"
 	"fmt"
+	"math"
 	"reflect"
 	"strconv"
 	"strings"
@@ -117,7 +118,15 @@ func (lti *langTypeInfo) ArrayLength(typ string) (int, error) {
 		return -1, fmt.Errorf("invalid array type: %s", typ)
 	}
 
-	return strconv.Atoi(size)
+	parsedSize, err := strconv.Atoi(size)
+	if err != nil {
+		return -1, err
+	}
+	if parsedSize < 0 || parsedSize > math.MaxUint32 {
+		return -1, fmt.Errorf("array size out of bounds: %s", size)
+	}
+
+	return parsedSize, nil
 }
 
 func (lti *langTypeInfo) IsBooleanType(typ string) bool {
