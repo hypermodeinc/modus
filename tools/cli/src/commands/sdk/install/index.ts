@@ -44,8 +44,6 @@ export default class SDKInstallCommand extends Command {
     let version = args.version?.trim().toLowerCase().replace("v", "");
     const platform = os.platform();
     const arch = os.arch();
-    const file = "modus-runtime-v" + version + "-" + platform + "-" + arch + (platform === "win32" ? ".exe" : "");
-
     const src = path.join(path.dirname(import.meta.url.replace("file:", "")), "../../../../runtime-bin/" + "modus-runtime-v0.12.6-" + platform + "-" + arch + (platform === "win32" ? ".exe" : ""));
     if (version === "all") {
       for (const version of versions) {
@@ -54,20 +52,34 @@ export default class SDKInstallCommand extends Command {
       if (!flags.silent) this.log("Installed versions 0.12.0-0.12.6");
       return;
     } else if (version === "latest") {
-      version = (await Metadata.getLatestRuntime())!;
+      version = (await get_latest_runtime()).replace("v", "");
+    } else if (version === "dev") {
+      version = "dev-" + (await get_latest_runtime()).replace("v", "");
     }
 
-    const runtimePath = expandHomeDir("~/.hypermode/sdk/" + version + "/runtime" + (platform === "win32" ? ".exe" : ""));
-    cpSync(src, runtimePath);
+    const file = "modus-runtime-v" + version + "-" + platform + "-" + arch + (platform === "win32" ? ".exe" : "");
 
-    if (platform === "linux" || platform === "darwin") {
-      execSync("chmod +x " + runtimePath, { stdio: "ignore" });
-    }
 
-    if (!flags.silent) this.log("Installed Modus v" + version);
+    // const runtimePath = expandHomeDir("~/.hypermode/sdk/" + version + "/runtime" + (platform === "win32" ? ".exe" : ""));
+    // cpSync(src, runtimePath);
+
+    // if (platform === "linux" || platform === "darwin") {
+    //   execSync("chmod +x " + runtimePath, { stdio: "ignore" });
+    // }
+
+    // if (!flags.silent) this.log("Installed Modus v" + version);
   }
 
   private logError(message: string) {
     this.log("\n" + chalk.red(" ERROR ") + chalk.dim(": " + message));
   }
+}
+
+async function get_latest_runtime(): Promise<string> {
+  const res = (await (await fetch("https://api.github.com/repos/hypermodeinc/modus/releases/latest")).json())["tag_name"];
+  if (!res) {
+    console.log(chalk.red(" ERROR ") + chalk.dim(": Could not find latest release! Please check your internet connection and try again."));
+    process.exit(0);
+  }
+  return res;
 }
