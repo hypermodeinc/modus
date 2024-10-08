@@ -12,16 +12,14 @@ package plugins
 import (
 	"context"
 	"fmt"
-	"strings"
 
-	"github.com/hypermodeinc/modus/runtime/hostfunctions/compatibility"
 	"github.com/hypermodeinc/modus/runtime/langsupport"
 	"github.com/hypermodeinc/modus/runtime/languages"
-	"github.com/hypermodeinc/modus/runtime/logger"
 	"github.com/hypermodeinc/modus/runtime/plugins/metadata"
 	"github.com/hypermodeinc/modus/runtime/utils"
 
 	"github.com/tetratelabs/wazero"
+	wasm "github.com/tetratelabs/wazero/api"
 )
 
 type Plugin struct {
@@ -62,23 +60,25 @@ func NewPlugin(ctx context.Context, cm wazero.CompiledModule, filename string, m
 		plans[fnName] = plan
 	}
 
-	warn := true
+	importsMap := make(map[string]wasm.FunctionDefinition, len(imports))
 	for _, fnDef := range imports {
-		modName, fnName, _ := fnDef.Import()
-		impName := fmt.Sprintf("%s.%s", modName, fnName)
+		if modName, fnName, ok := fnDef.Import(); ok {
+			importName := modName + "." + fnName
+			importsMap[importName] = fnDef
+		}
+	}
 
-		fnMeta, err := getImportMetadata(ctx, modName, fnName, md, &warn)
-		if err != nil {
-			return nil, err
-		} else if fnMeta == nil {
-			continue
+	for importName, fnMeta := range md.FnImports {
+		fnDef, ok := importsMap[importName]
+		if !ok {
+			return nil, fmt.Errorf("no wasm function definition found for %s", importName)
 		}
 
 		plan, err := planner.GetPlan(ctx, fnMeta, fnDef)
 		if err != nil {
-			return nil, fmt.Errorf("failed to get execution plan for %s: %w", impName, err)
+			return nil, fmt.Errorf("failed to get execution plan for %s: %w", importName, err)
 		}
-		plans[impName] = plan
+		plans[importName] = plan
 	}
 
 	plugin := &Plugin{
@@ -91,41 +91,6 @@ func NewPlugin(ctx context.Context, cm wazero.CompiledModule, filename string, m
 	}
 
 	return plugin, nil
-}
-
-func getImportMetadata(ctx context.Context, modName, fnName string, md *metadata.Metadata, warn *bool) (*metadata.Function, error) {
-	impName := fmt.Sprintf("%s.%s", modName, fnName)
-	if fnMeta, ok := md.FnImports[impName]; ok {
-		return fnMeta, nil
-	}
-
-	if modName == "hypermode" {
-		if *warn {
-			*warn = false
-			logger.Warn(ctx).
-				Str("plugin", md.Name()).
-				Str("build_id", md.BuildId).
-				Msg("Function imports are missing from the metadata. Using compatibility shims. Please update your SDK to the latest version.")
-		}
-		if fnMeta, err := compatibility.GetImportMetadataShim(impName); err != nil {
-			return nil, fmt.Errorf("error creating compatibility shim for %s: %w", impName, err)
-		} else {
-			return fnMeta, nil
-		}
-	} else if shouldIgnoreModule(modName) {
-		return nil, nil
-	}
-
-	return nil, fmt.Errorf("no metadata found for import %s", impName)
-}
-
-func shouldIgnoreModule(name string) bool {
-	switch name {
-	case "wasi_snapshot_preview1", "wasi", "env", "runtime", "syscall", "test":
-		return true
-	}
-
-	return strings.HasPrefix(name, "wasi_")
 }
 
 func (p *Plugin) NameAndVersion() (name string, version string) {
