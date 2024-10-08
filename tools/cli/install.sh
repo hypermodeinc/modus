@@ -218,7 +218,7 @@ clear_line() {
   echo -ne "\033[F\033[K"
 }
 
-
+# Colors
 BOLD="\e[1m"
 BLUE="\e[34;1m"
 DIM="\e[2m"
