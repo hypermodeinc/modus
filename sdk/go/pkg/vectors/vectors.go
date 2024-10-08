@@ -101,6 +101,7 @@ func MultiplyNumberInPlace[T constraints.Integer | constraints.Float](a []T, b T
 
 // DivideNumber divides each element of a vector by a number and returns the result.
 func DivideNumber[T constraints.Integer | constraints.Float](a []T, b T) []T {
+	assertNotZero(b)
 	result := make([]T, len(a))
 	for i := range a {
 		result[i] = a[i] / b
@@ -110,6 +111,7 @@ func DivideNumber[T constraints.Integer | constraints.Float](a []T, b T) []T {
 
 // DivideNumberInPlace divides each element of a vector by a number and stores the result in the vector.
 func DivideNumberInPlace[T constraints.Integer | constraints.Float](a []T, b T) {
+	assertNotZero(b)
 	for i := range a {
 		a[i] /= b
 	}
@@ -233,5 +235,11 @@ func convertToFloat64Slice[T constraints.Integer | constraints.Float](a []T) []f
 func assertNonEmpty[T constraints.Integer | constraints.Float](a []T) {
 	if len(a) == 0 {
 		panic("vector must be non-empty")
+	}
+}
+
+func assertNotZero[T constraints.Integer | constraints.Float](a T) {
+	if a == 0 {
+		panic("value must be non-zero")
 	}
 }
