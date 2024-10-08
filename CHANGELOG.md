@@ -12,6 +12,7 @@
 - Add Modus AssemblyScript SDK [#423](https://github.com/hypermodeinc/modus/pull/423)
 - Add models to Modus AssemblyScript SDK [#428](https://github.com/hypermodeinc/modus/pull/428)
 - Update Readme files [#432](https://github.com/hypermodeinc/modus/pull/432)
+- Fix vulnerability in AssemblyScript SDK install script [#435](https://github.com/hypermodeinc/modus/pull/435)
 
 ## 2024-10-02 - Version 0.12.7
 
