@@ -15,7 +15,7 @@ INSTALL_DIR="${MODUS_CLI:-"$HOME/.modus/cli"}"
 VERSION="latest"
 
 # Properties
-ARCH=""
+ARCH="$(uname -m)"
 OS="$(uname -s)"
 
 get_latest_release() {
@@ -37,7 +37,6 @@ download_release_from_repo() {
     --output "$download_file" && echo "$download_file"
 }
 
-# If file exists, echo it
 echo_fexists() {
   [ -f "$1" ] && echo "$1"
 }
@@ -53,11 +52,6 @@ detect_profile() {
 
   case "$shellname" in
   bash)
-    # Shells on macOS default to opening with a login shell, while Linuxes
-    # default to a *non*-login shell, so if this is macOS we look for
-    # `.bash_profile` first; if it's Linux, we look for `.bashrc` first. The
-    # `*` fallthrough covers more than just Linux: it's everything that is not
-    # macOS (Darwin). It can be made narrower later if need be.
     case $uname in
     Darwin)
       echo_fexists "$HOME/.bash_profile" || echo_fexists "$HOME/.bashrc"
@@ -74,8 +68,6 @@ detect_profile() {
     echo "$HOME/.config/fish/config.fish"
     ;;
   *)
-    # Fall back to checking for profile file existence. Once again, the order
-    # differs between macOS and everything else.
     local profiles
     case $uname in
     Darwin)
@@ -124,7 +116,7 @@ update_profile() {
   if ! grep -q 'MODUS_CLI' "$detected_profile"; then
     printf "%s\n" "$path_str" >>"$detected_profile"
   fi
-  echo "[3/4] Added modus to PATH"
+  echo "[3/5] Added modus to PATH"
 }
 
 install_version() {
@@ -144,43 +136,38 @@ install_version() {
   install_release
   if [ "$?" == 0 ]; then
     update_profile "$INSTALL_DIR" &&
-      echo "[4/4] Installed Modus CLI"
+      echo "[4/5] Installed Modus CLI"
   fi
-
-  echo -e "\nThe Modus CLI has been installed! 🎉"
 }
 
 install_release() {
-  echo "[1/4] Fetching archive for $OS $ARCH"
-  # add progress percent above this
+  echo -e "[1/5] Fetching archive for $OS $ARCH"
   download_archive="$(
     download_release
     exit "$?"
   )"
   exit_status="$?"
   if [ "$exit_status" != 0 ]; then
-    error "Could not download Modus version '$VERSION'. See $(release_url) for a list of available releases"
+    error "Could not download Modus version '$VERSION'. See https://github.com/$GIT_REPO/releases/ for a list of available releases"
     return "$exit_status"
   fi
 
   clear_line
   clear_line
 
-  echo "[1/4] Fetched archive for $OS $ARCH"
+  echo "[1/5] Fetched archive for $OS $ARCH"
 
   install_from_file "$download_archive"
 }
 
 download_release() {
-  local arch="$(get_architecture)"
-  local uname_str="$(uname -s)"
   if [ "$?" != 0 ]; then
-    error "The current operating system ($uname_str) does not appear to be supported by Modus."
+    error "The current operating system ($OS) does not appear to be supported by Modus."
     return 1
   fi
 
   local download_dir="$(mktemp -d)"
-  download_release_from_repo "$VERSION" "$arch" "$uname_str" "$download_dir"
+  download_release_from_repo "$VERSION" "$ARCH" "$OS" "$download_dir"
 }
 
 install_from_file() {
@@ -192,54 +179,38 @@ install_from_file() {
   rm -rf "$INSTALL_DIR"
   mkdir -p "$INSTALL_DIR"
   mv "$extract_to/modus/"* "$INSTALL_DIR"
-  echo "$extract_to -> $INSTALL_DIR"
   rm -rf "$extract_to"
   rm -f "$archive"
 
-  clear_line
-  echo "[2/4] Unpacked archive"
+  echo "[2/5] Unpacked archive"
 }
 
-get_architecture() {
-  case "$(uname -m)" in
-  aarch64) echo arm64 ;;
-  x86_64) echo x64 ;;
-  armv6l) echo arm ;;
-  *)
-    echo "Unsupported architecture"
-    exit 1
-    ;;
+check_platform() {
+  case $ARCH in
+  aarch64) ARCH="arm64" ;;
+  x86_64) ARCH="x64" ;;
+  armv6l) ARCH="arm" ;;
+  *) ;;
   esac
-}
 
-check_architecture() {
-  local os="$(uname)"
-  case "$ARCH/$os" in
+  case "$ARCH/$OS" in
   x64/Linux | arm64/Linux | arm/Linux | x64/Darwin | arm64/Darwin) return 0 ;;
   *)
-    error "Unsupported architecture."
+    echo -e "Unsupported os $OS $ARCH"
     return 1
     ;;
   esac
 }
 
 restart_shell() {
-  case "$(basename "$SHELL")" in
-  bash)
-    echo -e "Run ${DIM}modus${RESET} to get started"
-    exec bash
-    ;;
-  zsh)
-    echo -e "Run ${DIM}modus${RESET} to get started"
-    exec zsh
-    ;;
-  fish)
-    echo -e "Run ${DIM}modus${RESET} to get started"
-    exec fish
-    ;;
-  *)
-    echo "Please restart your shell for changes to take effect"
-    ;;
+  local shell_name="$(basename "$SHELL")"
+  echo -e "[5/5] Restarted shell ${DIM}($shell_name)${RESET}\n\nThe Modus CLI has been installed! 🎉\nRun ${DIM}modus${RESET} to get started"
+
+  case "$shell_name" in
+    bash|zsh|fish) exec "$shell_name" ;;
+    *)
+      echo -e "[5/5] Clean up\n\nPlease restart your shell for changes to take effect"
+      ;;
   esac
 }
 
@@ -247,16 +218,15 @@ clear_line() {
   echo -ne "\033[F\033[K"
 }
 
+
 BOLD="\e[1m"
 BLUE="\e[34;1m"
 DIM="\e[2m"
 RESET="\e[0m"
 
-ARCH="$(get_architecture)"
-
 # This is the entry point
 
-check_architecture || exit 1
+check_platform || exit 1
 
 install_version
 
