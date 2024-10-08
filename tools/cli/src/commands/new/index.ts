@@ -146,7 +146,7 @@ export default class NewCommand extends Command {
     }).start();
 
     if (sdk === "AssemblyScript") {
-      execSync("npm install", { cwd: dir, stdio: "ignore" });
+      if (isRunnable("npm")) execSync("npm install", { cwd: dir, stdio: "ignore" });
     } else if (sdk === "Go (Beta)") {
       const sh = execSync("go install", { cwd: dir, stdio: "ignore" });
       if (!sh) {
@@ -164,8 +164,6 @@ export default class NewCommand extends Command {
     this.log("To start, run the following command:");
     this.log(chalk.dim(`$ ${dir == process.cwd() ? "" : "cd " + path.basename(dir)} && modus dev --build`));
   }
-
-  // TODO: install deps
 
   private async installRuntime() {
     const latest_runtime = await Metadata.getLatestRuntime();

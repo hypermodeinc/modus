@@ -33,9 +33,11 @@ function Install-Version {
         $VERSION = Get-LatestRelease
     }
 
-    Write-Output "${BOLD}${BLUE}Modus${RESET} Installer ($VERSION)`n"
+    Write-Output "${BOLD}${BLUE}Modus${RESET} Installer ${DIM}($VERSION)${RESET}`n"
 
     Install-Release
+
+    echo "[4/5] Installed Modus CLI"
 }
 function Install-Release {
     Write-Host "[1/3] Fetching archive for Windows $ARCH"
@@ -53,12 +55,18 @@ function Install-Release {
     New-Item -Path $tmpDir -ItemType Directory | Out-Null
 
     $downloadArchive = Download-ReleaseFromRepo $tmpDir
+    Clear-Line
+    Clear-Line
+
+    Write-Host "[1/3] Fetched archive for Windows $ARCH"
 
     Write-Host "[2/3] Unpacking archive"
     
     tar -xf "$downloadArchive" -C "$tmpDir"
-    Remove-Item -PAth "$tmpDir/modus-$VERSION-win32-$ARCH.zip" -Force
+    Remove-Item -Path "$tmpDir/modus-$VERSION-win32-$ARCH.zip" -Force
+    Clear-Line
 
+    Write-Host "[2/3] Unpacked archive"
     if (Test-Path $INSTALL_DIR) {
         Remove-Item -Path $INSTALL_DIR -Recurse -Force
     }
@@ -69,8 +77,8 @@ function Install-Release {
 
     Write-Host "[3/3] Installed Modus CLI"
 
-    # Add it to path
-    # Uh, finalize, clean up, restart terminal
+    Add-ToPath
+    Restart-Shell
 }
 
 function Download-ReleaseFromRepo {
@@ -86,15 +94,35 @@ function Download-ReleaseFromRepo {
     return $downloadFile
 }
 
+function Add-ToPath {
+    $currentPath = [System.Environment]::GetEnvironmentVariable("Path", [System.EnvironmentVariableTarget]::User)
 
+    if ($currentPath -notlike "*$INSTALL_DIR*") {
+        $newPath = $currentPath + ";" + "$INSTALL_DIR\bin"
+        [System.Environment]::SetEnvironmentVariable("Path", $newPath, [System.EnvironmentVariableTarget]::User)
+        echo "[3/3] Added modus to PATH"
+    } else {
+        echo "[3/3] Modus already in PATH"
+    }
+}
+
+function Restart-Shell {
+    $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
+}
+
+function Clear-Line {
+    Write-Host "${ESC}[F${ESC}[K" -NoNewLine
+}
+
+# ANSII codes
 $ESC = [char]27
-
 $BOLD = "${ESC}[1m"
 $BLUE = "${ESC}[34;1m"
 $DIM = "${ESC}[2m"
 $RESET = "${ESC}[0m"
+
 # This is the entry point
 Install-Version
-# Update-Profile $INSTALL_DIR
-# Write-Host "The Modus CLI has been installed! 🎉"
-# Write-Host "Run 'modus' to get started."
+Write-Host "`nThe Modus CLI has been installed! " -NoNewLine
+$(Write-Host ([System.char]::ConvertFromUtf32(127881)))
+Write-Host "Run ${DIM}modus${RESET} to get started"

@@ -9,14 +9,15 @@
 
 import { Args, Command, Flags } from "@oclif/core";
 import chalk from "chalk";
-import { cpSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, readdirSync, rmdirSync, rmSync, statSync, symlinkSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { expandHomeDir } from "../../../util/index.js";
-import { Metadata } from "../../../util/metadata.js";
+import { ask, clearLine, downloadFile, expandHomeDir } from "../../../util/index.js";
 import { execSync } from "node:child_process";
+import { rm } from "node:fs/promises";
+import { createInterface } from "node:readline";
+import { ParserOutput } from "@oclif/core/interfaces";
 
-const versions = ["0.12.0", "0.12.1", "0.12.2", "0.12.3", "0.12.4", "0.12.5", "0.12.6"];
 export default class SDKInstallCommand extends Command {
   static args = {
     version: Args.string({
@@ -27,7 +28,6 @@ export default class SDKInstallCommand extends Command {
   };
 
   static description = "Install a specific SDK version";
-
   static examples = ["modus sdk install v0.0.0", "modus sdk install latest"];
 
   static flags = {
@@ -35,51 +35,159 @@ export default class SDKInstallCommand extends Command {
       description: "Suppress output logs",
       hidden: false,
       required: false
+    }),
+    // These are meant for maintainers
+    branch: Flags.string({
+      hidden: true,
+      char: "b",
+      description: "Install runtime from branch on GitHub",
+      required: false
+    }),
+    link: Flags.string({
+      hidden: true,
+      char: "l",
+      description: "Link an in-development runtime to CLI"
     })
   };
 
   async run(): Promise<void> {
-    const { args, flags } = await this.parse(SDKInstallCommand);
-    if (!args.version) this.logError("No version specified! Run modus sdk install <version>");
-    let version = args.version?.trim().toLowerCase().replace("v", "");
-    const platform = os.platform();
-    const arch = os.arch();
-    const src = path.join(path.dirname(import.meta.url.replace("file:", "")), "../../../../runtime-bin/" + "modus-runtime-v0.12.6-" + platform + "-" + arch + (platform === "win32" ? ".exe" : ""));
-    if (version === "all") {
-      for (const version of versions) {
-        cpSync(src, expandHomeDir("~/.hypermode/sdk/" + version + "/runtime" + (platform === "win32" ? ".exe" : "")));
-      }
-      if (!flags.silent) this.log("Installed versions 0.12.0-0.12.6");
-      return;
-    } else if (version === "latest") {
-      version = (await get_latest_runtime()).replace("v", "");
-    } else if (version === "dev") {
-      version = "dev-" + (await get_latest_runtime()).replace("v", "");
+    const ctx = await this.parse(SDKInstallCommand);
+    if (ctx.flags.branch) this.installBranch(ctx);
+    else if (ctx.flags.link) this.linkDir(ctx);
+  }
+
+  async installBranch(ctx: ParserCtx) {
+    const { args, flags } = ctx;
+
+    this.log("[1/4] Getting latest commit");
+    const { id, branch } = await get_branch_info("hypermodeinc", "modus", "main");
+    const version = branch + "/" + id;
+    clearLine();
+    this.log("[1/4] Found latest commit");
+
+    this.log("[2/4] Fetching Modus from latest commit" + " " + chalk.dim("(" + version + ")"));
+    const downloadLink = "https://github.com/hypermodeinc/modus/archive/refs/heads/" + branch + ".zip";
+    const archiveName = ("modus-" + version + ".zip").replaceAll("/", "-");
+    const tempDir = expandHomeDir("~/.modus/.modus-temp");
+    await downloadFile(downloadLink, archiveName);
+    clearLine();
+    this.log("[2/4] Fetched Modus");
+
+    this.log("[3/4] Unpacking archive");
+    mkdirSync(tempDir, { recursive: true });
+    const unpackedDir = tempDir + "/" + archiveName.replace(".zip", "");
+    await rm(unpackedDir, { recursive: true, force: true });
+    if (os.platform() === "win32") {
+      execSync("tar -xf " + archiveName + " -C " + unpackedDir);
+    } else {
+      execSync("unzip " + archiveName + " -d " + unpackedDir);
+    }
+    clearLine();
+    this.log("[3/4] Unpacked archive");
+
+    rmSync(archiveName);
+    this.log("[4/4] Installing");
+    const installDir = expandHomeDir("~/.modus/sdk/dev-" + branch + "-" + id) + "/";
+    cpSync(unpackedDir + "/modus-" + branch + "/", installDir, { recursive: true, force: true });
+    clearLine();
+    this.log("[4/4] Successfully installed Modus " + version)
+  }
+
+  async linkDir(ctx: ParserCtx) {
+    const { args, flags } = ctx;
+
+    const srcDir = path.join(process.cwd(), flags.link!);
+    if (!existsSync(srcDir)) {
+      this.logError("Cannot link to invalid directory! Please try again");
+      process.exit(0);
     }
 
-    const file = "modus-runtime-v" + version + "-" + platform + "-" + arch + (platform === "win32" ? ".exe" : "");
+    const installDir = expandHomeDir("~/.modus/sdk/link") + "/";
+    this.log("[1/4] Linking directories " + srcDir + " <-> " + installDir);
 
+    const rl = createInterface({
+      input: process.stdin,
+      output: process.stdout,
+    });
 
-    // const runtimePath = expandHomeDir("~/.hypermode/sdk/" + version + "/runtime" + (platform === "win32" ? ".exe" : ""));
-    // cpSync(src, runtimePath);
+    if (!(await this.confirmAction(rl, "[2/4] Continue? [y/n]"))) {
+      process.exit(0);
+    }
 
-    // if (platform === "linux" || platform === "darwin") {
-    //   execSync("chmod +x " + runtimePath, { stdio: "ignore" });
-    // }
+    linkDirectories(srcDir, installDir)
+    clearLine();
+    clearLine();
 
-    // if (!flags.silent) this.log("Installed Modus v" + version);
+    this.log("\nSuccessfully linked directories!");
+    process.exit(0);
   }
 
   private logError(message: string) {
     this.log("\n" + chalk.red(" ERROR ") + chalk.dim(": " + message));
   }
+
+  private async confirmAction(rl: ReturnType<typeof createInterface>, message: string): Promise<boolean> {
+    this.log(message);
+    const cont = ((await ask(chalk.dim(" -> "), rl)) || "n").toLowerCase().trim();
+    clearLine();
+    return cont === "yes" || cont === "y";
+  }
 }
 
-async function get_latest_runtime(): Promise<string> {
-  const res = (await (await fetch("https://api.github.com/repos/hypermodeinc/modus/releases/latest")).json())["tag_name"];
+async function get_latest_release(): Promise<string> {
+  const res = (await (await fetch("https://api.github.com/repos/hypermodeinc/modus/releases/latest")).json());
   if (!res) {
     console.log(chalk.red(" ERROR ") + chalk.dim(": Could not find latest release! Please check your internet connection and try again."));
     process.exit(0);
   }
   return res;
 }
+
+async function get_branch_info(owner: string, repo: string, branch: string): Promise<{
+  sha: string,
+  id: string,
+  branch: string
+}> {
+  const res = (await (await fetch(`https://api.github.com/repos/${owner}/${repo}/branches/${branch}`)).json());
+  if (!res) {
+    console.log(chalk.red(" ERROR ") + chalk.dim(": Could not find branch! Please check your internet connection and try again."));
+    process.exit(0);
+  }
+  return {
+    sha: res["commit"]["sha"],
+    id: res["commit"]["sha"].slice(0, 7),
+    branch: res["name"]
+  }
+}
+
+function linkDirectories(srcDir: string, destDir: string) {
+
+  rmSync(destDir, { recursive: true, force: true });
+  mkdirSync(destDir, { recursive: true });
+
+  const items = readdirSync(srcDir);
+
+  for (const item of items) {
+    const srcItem = path.join(srcDir, item);
+    const destItem = path.join(destDir, item);
+
+    if (statSync(srcItem).isDirectory()) {
+      if (!srcItem.endsWith(".git")) {
+        symlinkSync(srcItem, destItem, "dir");
+        linkDirectories(srcItem, destItem);
+      }
+    } else {
+      symlinkSync(srcItem, destItem);
+    }
+  }
+}
+
+type ParserCtx = ParserOutput<{
+  silent: boolean;
+  branch: string | undefined;
+  link: string | undefined;
+}, {
+  [flag: string]: any;
+}, {
+  version: string | undefined;
+}>

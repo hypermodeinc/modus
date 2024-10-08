@@ -174,14 +174,17 @@ install_from_file() {
   local archive="$1"
   local extract_to="$(dirname "$archive")"
 
+  echo "[2/5] Unpacking archive"
+
   tar -xf "$archive" -C "$extract_to"
 
   rm -rf "$INSTALL_DIR"
   mkdir -p "$INSTALL_DIR"
+  rm -f "$archive"
   mv "$extract_to/modus/"* "$INSTALL_DIR"
   rm -rf "$extract_to"
-  rm -f "$archive"
-
+  
+  clear_line
   echo "[2/5] Unpacked archive"
 }
 

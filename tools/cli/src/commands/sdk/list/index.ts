@@ -9,7 +9,7 @@
 
 import { Args, Command } from "@oclif/core";
 import chalk from "chalk";
-import { readdirSync } from "node:fs";
+import { existsSync, readdirSync } from "node:fs";
 import { expandHomeDir } from "../../../util/index.js";
 
 export default class SDKListCommand extends Command {
@@ -19,18 +19,21 @@ export default class SDKListCommand extends Command {
   static flags = {};
 
   async run(): Promise<void> {
-    const { args } = await this.parse(SDKListCommand);
-
     let versions: string[] = [];
 
+    if (!existsSync(expandHomeDir("~/.modus/sdk/"))) {
+      this.log("No versions installed!");
+      process.exit(0);
+    }
+
     try {
-      versions = readdirSync(expandHomeDir("~/.hypermode/sdk")).reverse();
+      versions = readdirSync(expandHomeDir("~/.modus/sdk")).reverse();
     } catch {
       versions = [];
     }
 
     if (!versions.length) {
-      this.log("No runtimes installed!");
+      this.log("No versions installed!");
       return;
     }
 

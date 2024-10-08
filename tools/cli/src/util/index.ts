@@ -8,12 +8,15 @@
  */
 
 import { spawnSync } from "node:child_process";
-import { existsSync, mkdirSync } from "node:fs";
+import { createWriteStream, existsSync, mkdir, mkdirSync } from "node:fs";
 import path from "node:path";
 import { Interface } from "node:readline";
 import { CLI_VERSION } from "../custom/globals.js";
 import { Command } from "@oclif/core";
 import chalk from "chalk";
+import { Readable } from "node:stream";
+import { finished } from "node:stream/promises";
+import { rm } from "node:fs/promises";
 
 export async function ensureDir(dir: string): Promise<void> {
   if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
@@ -74,3 +77,15 @@ export function checkVersion(instance: Command) {
     console.log(chalk.bgBlueBright(" INFO ") + chalk.dim(": You are running an outdated version of the Modus SDK! Please set your sdk version to stable"))
   }
 }
+
+export async function downloadFile(url: string, dest: string) {
+  const res = await fetch(url);
+  if (!res.ok) {
+    console.log(chalk.red(" ERROR ") + chalk.dim(": Could not download latest! Please check your internet connection and try again."));
+    process.exit(0);
+  }
+  if (existsSync(dest)) await rm(dest, { recursive: true });
+  const fileStream = createWriteStream(dest, { flags: 'wx' });
+  // @ts-ignore
+  await finished(Readable.fromWeb(res.body).pipe(fileStream));
+};

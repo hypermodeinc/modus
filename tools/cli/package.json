@@ -27,7 +27,6 @@
     "ora": "^8.1.0"
   },
   "devDependencies": {
-    "@oclif/prettier-config": "^0.2.1",
     "@oclif/test": "^4",
     "@types/node": "^18",
     "eslint": "^8",
