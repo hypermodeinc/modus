@@ -47,12 +47,6 @@ func HandleJWT(next http.Handler) http.Handler {
 		tokenStr := r.Header.Get("Authorization")
 		trimmedTokenStr := strings.TrimPrefix(tokenStr, "Bearer ")
 
-		if trimmedTokenStr == tokenStr {
-			logger.Error(ctx).Msg("Invalid JWT token format, Bearer required")
-			http.Error(w, "Invalid JWT token format, Bearer required", http.StatusUnauthorized)
-			return
-		}
-
 		if PrivKeys == nil {
 			if !config.IsDevEnvironment() || trimmedTokenStr == "" {
 				next.ServeHTTP(w, r)
@@ -70,6 +64,12 @@ func HandleJWT(next http.Handler) http.Handler {
 			next.ServeHTTP(w, r.WithContext(ctx))
 			return
 
+		}
+
+		if trimmedTokenStr == tokenStr {
+			logger.Error(ctx).Msg("Invalid JWT token format, Bearer required")
+			http.Error(w, "Invalid JWT token format, Bearer required", http.StatusUnauthorized)
+			return
 		}
 
 		var token *jwt.Token
