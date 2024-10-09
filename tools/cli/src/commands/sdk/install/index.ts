@@ -36,41 +36,61 @@ export default class SDKInstallCommand extends Command {
       hidden: false,
       required: false
     }),
-    // These are meant for maintainers
+    // These are meant for developers working on modus itself
     branch: Flags.string({
       hidden: true,
       char: "b",
       description: "Install runtime from branch on GitHub",
       required: false
     }),
+    commit: Flags.string({
+      hidden: true,
+      char: "c",
+      description: "Install runtime from specific commit on GitHub",
+      default: "latest",
+      required: false
+    }),
     link: Flags.string({
       hidden: true,
       char: "l",
-      description: "Link an in-development runtime to CLI"
+      description: "Link an in-development runtime to CLI",
+      required: false
     })
   };
 
   async run(): Promise<void> {
     const ctx = await this.parse(SDKInstallCommand);
-    if (ctx.flags.branch) this.installBranch(ctx);
+    if (ctx.flags.branch) this.installCommit(ctx);
     else if (ctx.flags.link) this.linkDir(ctx);
   }
 
-  async installBranch(ctx: ParserCtx) {
+  async installCommit(ctx: ParserCtx) {
     const { args, flags } = ctx;
 
-    this.log("[1/4] Getting latest commit");
-    const { id, branch } = await get_branch_info("hypermodeinc", "modus", "main");
+    flags.commit = flags.commit.slice(0, 7);
+
+    let sha = "";
+    if (!flags.commit) {
+      flags.commit = "latest";
+      this.log("[1/4] Getting latest commit");
+    } else {
+      const commit_info = await fetchCommit("hypermodeinc", "modus", flags.commit);
+      sha = commit_info.sha;
+      this.log("[1/4] Getting commit " + flags.commit);
+    }
+    let { id, branch } = await get_branch_info("hypermodeinc", "modus", "main");
+    if (sha) id = sha.slice(0, 7);
     const version = branch + "/" + id;
     clearLine();
     this.log("[1/4] Found latest commit");
 
     this.log("[2/4] Fetching Modus from latest commit" + " " + chalk.dim("(" + version + ")"));
-    const downloadLink = "https://github.com/hypermodeinc/modus/archive/refs/heads/" + branch + ".zip";
+    const downloadLink = flags.commit == "latest" ? "https://github.com/hypermodeinc/modus/archive/refs/heads/" + branch + ".zip" : "https://github.com/hypermodeinc/modus/archive/" + sha + ".zip";
+    console.log(downloadLink)
     const archiveName = ("modus-" + version + ".zip").replaceAll("/", "-");
     const tempDir = expandHomeDir("~/.modus/.modus-temp");
     await downloadFile(downloadLink, archiveName);
-    clearLine();
+    //clearLine();
     this.log("[2/4] Fetched Modus");
 
     this.log("[3/4] Unpacking archive");
@@ -88,7 +108,7 @@ export default class SDKInstallCommand extends Command {
     rmSync(archiveName);
     this.log("[4/4] Installing");
     const installDir = expandHomeDir("~/.modus/sdk/dev-" + branch + "-" + id) + "/";
-    cpSync(unpackedDir + "/modus-" + branch + "/", installDir, { recursive: true, force: true });
+    cpSync(unpackedDir + "/modus-" + (flags.commit == "latest" ? branch : sha) + "/", installDir, { recursive: true, force: true });
     clearLine();
     this.log("[4/4] Successfully installed Modus " + version)
   }
@@ -158,6 +178,17 @@ async function get_branch_info(owner: string, repo: string, branch: string): Pro
     id: res["commit"]["sha"].slice(0, 7),
     branch: res["name"]
   }
+}
+
+async function fetchCommit(owner: string, repo: string, commitSha: string): Promise<{
+  sha: string
+}> {
+  const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/commits/${commitSha}`);
+  if (!response.ok) {
+    console.log(chalk.red(" ERROR ") + chalk.dim(": Could not find commit! Please check your internet connection and try again."));
+    process.exit(0);
+  }
+  return response.json();
 }
 
 function linkDirectories(srcDir: string, destDir: string) {

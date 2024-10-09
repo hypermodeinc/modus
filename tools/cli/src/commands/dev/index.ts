@@ -21,7 +21,8 @@ export default class Run extends Command {
     path: Args.string({
       description: "./my-project-|-Path to project directory",
       hidden: false,
-      required: false
+      required: false,
+      default: "./"
     }),
   };
 
@@ -72,11 +73,16 @@ export default class Run extends Command {
 
   async run(): Promise<void> {
     const { args, flags } = await this.parse(Run);
-    const isDev = flags.runtime.startsWith("dev-") || flags.runtime.startsWith("link");
+    const isDev = flags.runtime && (flags.runtime.startsWith("dev-") || flags.runtime.startsWith("link"));
     const runtimePath = expandHomeDir("~/.modus/sdk/" + flags.runtime) + (isDev ? "" : "/runtime" + (os.platform() === "win32" ? ".exe" : ""));
 
-    const cwd = args.path ? path.join(process.cwd(), args.path) : process.cwd();
+    const cwd = path.join(process.cwd(), args.path);
     const watch = flags.watch;
+
+    if (!flags.runtime) {
+      this.logError("Modus Runtime is not installed!\n Run `modus sdk install latest` and try again!");
+      process.exit(0);
+    }
 
     if (!existsSync(path.join(cwd))) {
       this.logError("Could not target folder! Please try again");
@@ -117,10 +123,10 @@ export default class Run extends Command {
       process.exit(0);
     }
 
-    try {
-      if (flags.build) await BuildCommand.run(args.path ? [args.path] : []);
-    } catch { }
     const build_wasm = path.join(cwd, "/build/" + project_name + ".wasm");
+    try {
+      if (flags.build || !existsSync(build_wasm)) await BuildCommand.run(args.path ? [args.path] : []);
+    } catch { }
     const deploy_wasm = expandHomeDir("~/.modus/" + project_name + ".wasm");
     copyFileSync(build_wasm, deploy_wasm);
 
@@ -181,7 +187,7 @@ export default class Run extends Command {
 function getLatestRuntime(): string | undefined {
   let versions: string[] = [];
   try {
-    versions = readdirSync(expandHomeDir("~/.modus/sdk")).reverse().filter(v => !v.startsWith("dev-") && !v.startsWith("link"));
+    versions = readdirSync(expandHomeDir("~/.modus/sdk/")).reverse().filter(v => !v.startsWith("dev-") && !v.startsWith("link"));
   } catch { }
   if (!versions.length) return undefined;
   return versions[0];
