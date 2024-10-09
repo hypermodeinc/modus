@@ -79,17 +79,18 @@ func HandleJWT(next http.Handler) http.Handler {
 			token, err = jwt.Parse(trimmedTokenStr, func(token *jwt.Token) (interface{}, error) {
 				return jwt.ParseRSAPublicKeyFromPEM([]byte(privKey))
 			})
-			if err != nil {
-				if config.IsDevEnvironment() {
-					logger.Debug(r.Context()).Err(err).Msg("JWT parse error")
-					next.ServeHTTP(w, r)
-					return
-				}
-				logger.Error(r.Context()).Err(err).Msg("JWT parse error")
-				continue
-			} else {
+			if err == nil {
 				break
 			}
+		}
+		if err != nil {
+			if config.IsDevEnvironment() {
+				logger.Debug(r.Context()).Err(err).Msg("JWT parse error")
+				next.ServeHTTP(w, r)
+				return
+			}
+			logger.Error(r.Context()).Err(err).Msg("JWT parse error")
+			http.Error(w, "Invalid JWT token", http.StatusUnauthorized)
 		}
 
 		if claims, ok := token.Claims.(jwt.MapClaims); ok {
