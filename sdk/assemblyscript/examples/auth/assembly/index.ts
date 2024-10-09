@@ -6,9 +6,9 @@
 
 import { auth } from "@hypermode/modus-sdk-as";
 
-
+// This is a simple example of a claims class that can be used to parse the JWT claims.
 @json
-export class Claims {
+export class ExampleClaims {
   public exp!: i64;
   public iat!: i64;
   public iss!: string;
@@ -16,10 +16,12 @@ export class Claims {
   public nbf!: i64;
   public sub!: string;
 
-
+  // This is an example of a custom claim that can be used to parse the user ID.
   @alias("user-id")
   public userId!: string;
 }
-export function getJWTClaims(): Claims {
-  return auth.getJWTClaims<Claims>();
+
+// This function can be used to get the JWT claims, and parse them into the Claims class.
+export function getJWTClaims(): ExampleClaims {
+  return auth.getJWTClaims<ExampleClaims>();
 }

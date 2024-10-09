@@ -15,7 +15,7 @@ func GetJWTClaims[T any]() (T, error) {
 	if claimsStr == "" {
 		return claims, errors.New("JWT claims not found")
 	}
-	err := utils.JsonDeserialize([]byte(claimsStr), &claims) // Convert claimsStr to byte slice
+	err := utils.JsonDeserialize([]byte(claimsStr), &claims)
 	if err != nil {
 		return claims, err
 	}

@@ -1,3 +1,3 @@
-# Hypermode Simple Example Plugin
+# Modus Auth Example
 
-This is an example showing how to write a Hypermode plugin that uses auth.
+This is an example showing how to access auth claims from an incoming request.

@@ -10,7 +10,8 @@ import (
 	"github.com/hypermodeinc/modus/sdk/go/pkg/auth"
 )
 
-type Claims struct {
+// This is a sample struct that represents the claims in a JWT token.
+type ExampleClaims struct {
 	Exp    int64  `json:"exp"`
 	Iat    int64  `json:"iat"`
 	Iss    string `json:"iss"`
@@ -20,6 +21,7 @@ type Claims struct {
 	UserId string `json:"user-id"`
 }
 
-func GetJWTClaims() (*Claims, error) {
-	return auth.GetJWTClaims[*Claims]()
+// GetJWTClaims is a function that returns the claims in a JWT token, and parses them into the Claims struct.
+func GetJWTClaims() (*ExampleClaims, error) {
+	return auth.GetJWTClaims[*ExampleClaims]()
 }

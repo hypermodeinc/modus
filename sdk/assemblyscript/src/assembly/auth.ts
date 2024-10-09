@@ -11,7 +11,8 @@ import { JSON } from "json-as";
 export function getJWTClaims<T>(): T {
   const claims = process.env.get("JWT_CLAIMS");
   if (!claims) {
-    throw new Error("JWT claims not found.");
+    console.warn("No JWT claims found.");
+    return instantiate<T>();
   }
   return JSON.parse<T>(claims);
 }
