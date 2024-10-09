@@ -21,21 +21,14 @@
   "dependencies": {
     "@oclif/core": "^4",
     "chalk": "^5.3.0",
-    "ora": "^8.1.0",
-    "v8-compile-cache": "^2.4.0"
+    "ora": "^8.1.0"
   },
   "devDependencies": {
     "@oclif/test": "^4",
     "@types/node": "^20",
-    "bytenode": "^1.5.6",
     "oclif": "^4",
     "ts-node": "^10",
-    "typescript": "^5",
-    "webpack": "^5.95.0",
-    "webpack-cli": "^5.1.4"
-  },
-  "engines": {
-    "node": ">=20.0.0"
+    "typescript": "^5"
   },
   "files": [
     "/bin",

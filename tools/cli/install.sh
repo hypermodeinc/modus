@@ -25,13 +25,10 @@ get_latest_release() {
 }
 
 download_release_from_repo() {
-  local version="$1"
-  local arch="$2"
-  local os="$3"
-  local tmpdir="$4"
-  local filename="modus-$version-$os-$arch.tar.gz"
+  local tmpdir="$1"
+  local filename="modus-cli-$VERSION.tar.gz"
   local download_file="$tmpdir/$filename"
-  local archive_url="https://github.com/$GIT_REPO/releases/download/$version/$filename"
+  local archive_url="https://github.com/$GIT_REPO/releases/download/$VERSION/$filename"
 
   curl --progress-bar --show-error --location --fail "$archive_url" \
     --output "$download_file" && echo "$download_file"
@@ -88,17 +85,17 @@ detect_profile() {
 build_path_str() {
   local profile="$1" install_dir="$2"
   if [[ $profile == *.fish ]]; then
-    echo -e "set -gx MODUS_CLI \"$install_dir\"\nstring match -r \".modus\" \"\$PATH\" > /dev/null; or set -gx PATH \"\$MODUS_CLI/bin\" \$PATH"
+    echo -e "set -gx MODUS_CLI \"$install_dir\"\nstring match -r \".modus\" \"\$PATH\" > /dev/null; or set -gx PATH \"\$MODUS_CLI/script\" \$PATH"
   else
-    echo -e "\n# Modus CLI\nexport MODUS_CLI=\"$install_dir\"\nexport PATH=\"\$MODUS_CLI/bin:\$PATH\""
+    echo -e "\n# Modus CLI\nexport MODUS_CLI=\"$install_dir\"\nexport PATH=\"\$MODUS_CLI/script:\$PATH\""
   fi
 }
 
 cli_dir_valid() {
   if [ -n "${MODUS_CLI-}" ] && [ -e "$MODUS_CLI" ] && ! [ -d "$MODUS_CLI" ]; then
-    error "\$MODUS_CLI is set but is not a directory ($MODUS_CLI)."
-    eprintf "Please check your profile scripts and environment."
-    return 1
+    echo -e "\$MODUS_CLI is set but is not a directory ($MODUS_CLI)."
+    echo -e "Please check your profile scripts and environment."
+    exit 0
   fi
   return 0
 }
@@ -148,8 +145,11 @@ install_release() {
   )"
   exit_status="$?"
   if [ "$exit_status" != 0 ]; then
-    error "Could not download Modus version '$VERSION'. See https://github.com/$GIT_REPO/releases/ for a list of available releases"
-    return "$exit_status"
+    local filename="modus-cli-$VERSION.tar.gz"
+    local archive_url="https://github.com/$GIT_REPO/releases/download/$VERSION/$filename"
+
+    echo -e "Could not download Modus version '$VERSION' from\n$archive_url"
+    exit 0
   fi
 
   clear_line
@@ -162,12 +162,12 @@ install_release() {
 
 download_release() {
   if [ "$?" != 0 ]; then
-    error "The current operating system ($OS) does not appear to be supported by Modus."
-    return 1
+    echo "The current operating system ($OS) does not appear to be supported by Modus."
+    exit 0
   fi
 
   local download_dir="$(mktemp -d)"
-  download_release_from_repo "$VERSION" "$ARCH" "$OS" "$download_dir"
+  download_release_from_repo "$download_dir"
 }
 
 install_from_file() {
@@ -181,7 +181,7 @@ install_from_file() {
   rm -rf "$INSTALL_DIR"
   mkdir -p "$INSTALL_DIR"
   rm -f "$archive"
-  mv "$extract_to/modus/"* "$INSTALL_DIR"
+  mv "$extract_to/"* "$INSTALL_DIR"
   rm -rf "$extract_to"
 
   clear_line
@@ -200,7 +200,7 @@ check_platform() {
   x64/Linux | arm64/Linux | arm/Linux | x64/Darwin | arm64/Darwin) return 0 ;;
   *)
     echo -e "Unsupported os $OS $ARCH"
-    return 1
+    exit 0
     ;;
   esac
 }
@@ -232,5 +232,7 @@ RESET="\e[0m"
 check_platform || exit 1
 
 install_version
+
+chmod +x "$INSTALL_DIR/script/modus"
 
 restart_shell

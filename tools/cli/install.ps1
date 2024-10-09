@@ -74,7 +74,7 @@ function Install-Release {
     }
 
     New-Item -Path $INSTALL_DIR -ItemType Directory | Out-Null
-    Move-Item "$tmpDir/modus/*" $INSTALL_DIR
+    Move-Item "$tmpDir/*" $INSTALL_DIR
     Remove-Item -Path $tmpDir -Recurse -Force
 
     Write-Host "[3/3] Installed Modus CLI"
@@ -87,7 +87,7 @@ function Download-ReleaseFromRepo {
     param (
         [string]$tmpdir
     )
-    $filename = "modus-$VERSION-win32-$ARCH.zip"
+    $filename = "modus-cli-$VERSION.zip"
     $downloadFile = Join-Path -Path $tmpdir -ChildPath $filename
     $archiveUrl = "https://github.com/$GIT_REPO/releases/download/$VERSION/$filename"
 
