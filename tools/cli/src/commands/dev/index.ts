@@ -11,9 +11,9 @@ import { Args, Command, Flags } from "@oclif/core";
 import { expandHomeDir, isRunnable } from "../../util/index.js";
 import BuildCommand from "../build/index.js";
 import path from "path";
-import { copyFileSync, existsSync, readdirSync, readFileSync, watch as watchFolder } from "fs";
+import { copyFileSync, existsSync, fstat, readdirSync, readFileSync, watch as watchFolder, writeFileSync } from "fs";
 import chalk from "chalk";
-import { execSync, spawn, spawnSync } from "child_process";
+import { execSync, spawnSync } from "child_process";
 import os from "node:os";
 
 export default class Run extends Command {
@@ -64,6 +64,10 @@ export default class Run extends Command {
       hidden: false,
       required: false,
       default: getLatestRuntime()
+    }),
+    legacy: Flags.boolean({
+      description: "Run if you want a pre-modus release",
+      default: false
     })
   };
 
@@ -73,8 +77,8 @@ export default class Run extends Command {
 
   async run(): Promise<void> {
     const { args, flags } = await this.parse(Run);
-    const isDev = flags.runtime && (flags.runtime.startsWith("dev-") || flags.runtime.startsWith("link"));
-    const runtimePath = path.join(expandHomeDir("~/.modus/sdk/" + flags.runtime), (isDev ? "/runtime" : "/runtime" + (os.platform() === "win32" ? ".exe" : "")));
+    const isDev = flags.legacy || flags.runtime && (flags.runtime.startsWith("dev-") || flags.runtime.startsWith("link"));
+    const runtimePath = path.join(expandHomeDir("~/.modus/sdk/" + (isDev ? "" : "v") + flags.runtime), flags.legacy ? "" : (isDev ? "/runtime" : "/runtime" + (os.platform() === "win32" ? ".exe" : "")));
 
     const cwd = path.join(process.cwd(), args.path);
     const watch = flags.watch;
@@ -111,7 +115,7 @@ export default class Run extends Command {
     }
 
     if (!existsSync(runtimePath)) {
-      this.logError("Modus Runtime " + (isDev ? "" : "v") + flags.runtime + " not installed!\n Run `modus sdk install " + install_cmd + "` and try again!");
+      this.logError("Modus Runtime  " + runtimePath + "  " + (isDev ? "" : "v") + flags.runtime + " not installed!\n Run `modus sdk install v" + install_cmd + "` and try again!");
       process.exit(0);
     }
 
@@ -134,15 +138,27 @@ export default class Run extends Command {
       if (!isRunnable("go")) {
         this.logError("Cannot find any valid versions of Go! Please install go")
       }
-      execSync("go run ./tools/generate_version", {
-        cwd: runtimePath,
-        stdio: "ignore",
-        env: {
-          ...process.env,
-          MODUS_ENV: "dev",
-          MODUS_BUILD_VERSION: "modus-cli/" + flags.runtime
-        }
-      });
+      if (flags.legacy) {
+        writeFileSync(path.join(runtimePath, "config/version.go"), `package config
+
+func GetProductVersion() string {
+	return "Hypermode Runtime " + GetVersionNumber()
+}
+
+func GetVersionNumber() string {
+	return "modus-cli/${flags.runtime}"
+}`);
+      } else {
+        execSync("go run ./tools/generate_version", {
+          cwd: runtimePath,
+          stdio: "ignore",
+          env: {
+            ...process.env,
+            MODUS_ENV: "dev",
+            MODUS_BUILD_VERSION: "modus-cli/" + flags.runtime
+          }
+        });
+      }
 
       execSync("go run .", {
         cwd: runtimePath,

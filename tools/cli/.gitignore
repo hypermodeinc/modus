@@ -1,3 +1,6 @@
 # Ignore output files
 oclif.manifest.json
 tsconfig.tsbuildinfo
+
+# Ignore build folders
+tmp/
