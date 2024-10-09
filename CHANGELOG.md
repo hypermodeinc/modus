@@ -21,6 +21,7 @@ In previous releases, the name "Hypermode" was used for all three._
 - Fix potential array out of bounds in the runtime [#437](https://github.com/hypermodeinc/modus/pull/437)
 - Set minimum Go version to 1.23.0 [#438](https://github.com/hypermodeinc/modus/pull/438)
 - Change default for environment setting [#439](https://github.com/hypermodeinc/modus/pull/439)
+- Remove compatibility code for previous versions [#441](https://github.com/hypermodeinc/modus/pull/441)
 
 ## 2024-10-02 - Version 0.12.7
 
