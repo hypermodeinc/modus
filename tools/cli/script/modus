@@ -1,0 +1,103 @@
+#!/usr/bin/env bash
+
+# Copyright 2024 Hypermode, Inc.
+# Licensed under the terms of the Apache License, Version 2.0
+# See the LICENSE file that accompanied this code for further details.
+#
+# SPDX-FileCopyrightText: 2024 Hypermode, Inc. <hello@hypermode.com>
+# SPDX-License-Identifier: Apache-2.0
+
+# This ensures that node > $NODE_REQUIRED is installed
+# It first checks which node and if it is <= $NODE_REQUIRED, it installs node
+# It can use Node on PATH or a local build of node
+
+get_script_dir() {
+    SOURCE="${BASH_SOURCE[0]}"
+    DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
+    echo "$DIR"
+}
+
+# Config
+NODE_WANTED=20.18.0
+NODE_REQUIRED=18
+NODE_PATH="$(which node)"
+NODE_INSTALL_PATH="node-bin"
+
+# Properties
+ARCH="$(uname -m)"
+OS="$(uname -s | tr '[:upper:]' '[:lower:]')"
+DIR=$(get_script_dir)
+
+PATH_FILE="$DIR/scripts/modus-path"
+LOCAL_FILE="$DIR/scripts/modus-local"
+
+case $ARCH in
+aarch64) ARCH="arm64" ;;
+x86_64) ARCH="x64" ;;
+armv6l) ARCH="arm" ;;
+*) ;;
+esac
+
+fexists() {
+    [ -f "$1" ]
+}
+
+install_node() {
+    mkdir -p "$DIR/$NODE_INSTALL_PATH"
+
+    download_file="node-v$NODE_WANTED-$OS-$ARCH.tar.gz"
+    download_url="https://nodejs.org/dist/v$NODE_WANTED/$download_file"
+    temp_dir="$DIR/.temp"
+
+    rm -rf $temp_dir
+    mkdir $temp_dir
+    curl --silent --show-error --location --fail "$download_url" \
+        --output "$temp_dir/$download_file"
+
+    tar -xf "$temp_dir/$download_file" -C "$temp_dir"
+    rm -rf $download_file
+    rm -rf "$DIR/$NODE_INSTALL_PATH"
+    mkdir "$DIR/$NODE_INSTALL_PATH"
+    mv "$temp_dir/node-v$NODE_WANTED-$OS-$ARCH/"* "$DIR/$NODE_INSTALL_PATH/"
+    chmod +x "$DIR/$NODE_INSTALL_PATH/bin/node"
+    chmod +x "$DIR/$NODE_INSTALL_PATH/bin/npm"
+    rm -rf $temp_dir
+    NODE_PATH="$DIR/$NODE_INSTALL_PATH/bin/node"
+}
+
+check_node() {
+    if ! fexists "$DIR/$NODE_INSTALL_PATH/bin/node"; then
+        NODE_VERSION=$($NODE_PATH -v 2>/dev/null)
+        if [ $? -ne 0 ]; then
+            install_node
+            return 1
+        fi
+        NODE_VERSION=${NODE_VERSION#v}
+        MAJOR_VERSION=${NODE_VERSION%%.*}
+        if [ "$MAJOR_VERSION" -le $NODE_REQUIRED ]; then
+            install_node
+            return 1
+        fi
+    fi
+    return 0
+}
+
+if ! check_node; then
+    if ! fexists $LOCAL_FILE; then
+        mkdir -p "$DIR/scripts/"
+        echo "#!$DIR/node-bin/bin/node
+import { execute } from \"@oclif/core\";
+await execute({ dir: import.meta.url });" >$LOCAL_FILE
+        chmod +x $LOCAL_FILE
+    fi
+    env "$LOCAL_FILE" "$@"
+else
+    if ! fexists $PATH_FILE; then
+        mkdir -p "$DIR/scripts/"
+        echo "#!/usr/bin/env node
+import { execute } from \"@oclif/core\";
+await execute({ dir: import.meta.url });" >$PATH_FILE
+        chmod +x $PATH_FILE
+    fi
+    env "$PATH_FILE" "$@"
+fi
