@@ -7,9 +7,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-export * from "./compat";
-export * from "./inference";
-
 import * as postgresql from "./postgresql";
 export { postgresql };
 

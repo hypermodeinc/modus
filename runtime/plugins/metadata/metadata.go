@@ -51,10 +51,9 @@ type TypeDefinition struct {
 }
 
 type Parameter struct {
-	Name     string `json:"name"`
-	Type     string `json:"type"`
-	Default  *any   `json:"default,omitempty"`
-	Optional bool   `json:"-"` // deprecated
+	Name    string `json:"name"`
+	Type    string `json:"type"`
+	Default *any   `json:"default,omitempty"`
 }
 
 type Result struct {
