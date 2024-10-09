@@ -23,6 +23,7 @@ In previous releases, the name "Hypermode" was used for all three._
 - Change default for environment setting [#439](https://github.com/hypermodeinc/modus/pull/439)
 - Remove compatibility code for previous versions [#441](https://github.com/hypermodeinc/modus/pull/441)
 - Target Node 22 [#446](https://github.com/hypermodeinc/modus/pull/446)
+- Fix object/map field stitching [#447](https://github.com/hypermodeinc/modus/pull/447)
 
 ## 2024-10-02 - Version 0.12.7
 
