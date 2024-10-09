@@ -8,6 +8,7 @@
  */
 
 import { Args, Command, Flags } from "@oclif/core";
+import { quote } from "shell-quote";
 import chalk from "chalk";
 import { cpSync, existsSync, mkdirSync, readdirSync, rmdirSync, rmSync, statSync, symlinkSync } from "node:fs";
 import os from "node:os";
@@ -110,7 +111,7 @@ export default class SDKInstallCommand extends Command {
     this.log("[3/4] Unpacking release" + "tar -xf " + archivePath + " -C " + unpackedDir);
     await rm(unpackedDir, { recursive: true, force: true });
     mkdirSync(unpackedDir, { recursive: true })
-    execSync("tar -xf " + archivePath + " -C " + unpackedDir);
+    execSync("tar -xf " + quote([archivePath]) + " -C " + unpackedDir);
 
     clearLine();
     this.log("[3/4] Unpacked release");
@@ -156,9 +157,9 @@ export default class SDKInstallCommand extends Command {
     await rm(unpackedDir, { recursive: true, force: true });
     mkdirSync(unpackedDir, { recursive: true });
     if (os.platform() === "win32") {
-      execSync("tar -xf " + archivePath + " -C " + unpackedDir);
+      execSync("tar -xf " + quote([archivePath]) + " -C " + unpackedDir);
     } else {
-      execSync("unzip " + archivePath + " -d " + unpackedDir);
+      execSync("unzip " + quote([archivePath]) + " -d " + unpackedDir);
     }
     clearLine();
     this.log("[3/4] Unpacked archive");

@@ -21,11 +21,13 @@
   "dependencies": {
     "@oclif/core": "^4",
     "chalk": "^5.3.0",
-    "ora": "^8.1.0"
+    "ora": "^8.1.0",
+    "shell-quote": "^1.8.1"
   },
   "devDependencies": {
     "@oclif/test": "^4",
     "@types/node": "^20",
+    "@types/shell-quote": "^1.7.5",
     "oclif": "^4",
     "ts-node": "^10",
     "typescript": "^5"
