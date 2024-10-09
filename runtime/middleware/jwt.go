@@ -24,7 +24,7 @@ func HandleJWT(next http.Handler) http.Handler {
 		tokenStr := r.Header.Get("Authorization")
 		tokenStr = strings.TrimPrefix(tokenStr, "Bearer ")
 
-		privKeysStr := os.Getenv("MODUS_PRIV_KEYS")
+		privKeysStr := os.Getenv("MODUS_RSA_PEMS")
 		if privKeysStr == "" {
 			if tokenStr == "" {
 				next.ServeHTTP(w, r)
