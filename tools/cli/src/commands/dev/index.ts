@@ -149,6 +149,7 @@ func GetVersionNumber() string {
 	return "modus-cli/${flags.runtime}"
 }`);
       } else {
+        // use `make run` and set build version
         execSync("go run ./tools/generate_version", {
           cwd: runtimePath,
           stdio: "ignore",
@@ -166,7 +167,6 @@ func GetVersionNumber() string {
         env: {
           ...process.env,
           MODUS_ENV: "dev",
-          MODUS_BUILD_VERSION: "modus-cli/" + flags.runtime
         }
       });
     } else {

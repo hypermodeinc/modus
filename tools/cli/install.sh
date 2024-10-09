@@ -10,7 +10,8 @@
 # I'm hosting builds on my own fork until it goes live
 
 # Config
-GIT_REPO="JairusSW/modus-cli"
+PACKAGE_ORG=""
+PACKAGE_NAME="test-modus-cli"
 INSTALL_DIR="${MODUS_CLI:-"$HOME/.modus/cli"}"
 VERSION="latest"
 
@@ -18,17 +19,20 @@ VERSION="latest"
 ARCH="$(uname -m)"
 OS="$(uname -s)"
 
-get_latest_release() {
-  curl -w "%{stderr}" --silent "https://api.github.com/repos/$GIT_REPO/releases/latest" |
-    grep '"tag_name"' |
-    sed -E 's/.*"([^"]+)".*/\1/'
+get_latest_version() {
+  local url="https://registry.npmjs.org/${PACKAGE_ORG:+$PACKAGE_ORG/}$PACKAGE_NAME"
+  
+  curl --silent "$url" | grep -oP '"latest": *"\K[^"]*'
 }
 
-download_release_from_repo() {
+download_from_npm() {
   local tmpdir="$1"
-  local filename="modus-cli-$VERSION.tar.gz"
+  local filename="${PACKAGE_NAME}-${VERSION}.tgz"
   local download_file="$tmpdir/$filename"
-  local archive_url="https://github.com/$GIT_REPO/releases/download/$VERSION/$filename"
+
+  local archive_url="https://registry.npmjs.org/${PACKAGE_ORG:+$PACKAGE_ORG/}${PACKAGE_NAME}/-/${PACKAGE_NAME}-${VERSION}.tgz"
+
+  mkdir -p "$tmpdir"
 
   curl --progress-bar --show-error --location --fail "$archive_url" \
     --output "$download_file" && echo "$download_file"
@@ -85,9 +89,9 @@ detect_profile() {
 build_path_str() {
   local profile="$1" install_dir="$2"
   if [[ $profile == *.fish ]]; then
-    echo -e "set -gx MODUS_CLI \"$install_dir\"\nstring match -r \".modus\" \"\$PATH\" > /dev/null; or set -gx PATH \"\$MODUS_CLI/script\" \$PATH"
+    echo -e "set -gx MODUS_CLI \"$install_dir\"\nstring match -r \".modus\" \"\$PATH\" > /dev/null; or set -gx PATH \"\$MODUS_CLI/bin\" \$PATH"
   else
-    echo -e "\n# Modus CLI\nexport MODUS_CLI=\"$install_dir\"\nexport PATH=\"\$MODUS_CLI/script:\$PATH\""
+    echo -e "\n# Modus CLI\nexport MODUS_CLI=\"$install_dir\"\nexport PATH=\"\$MODUS_CLI/bin:\$PATH\""
   fi
 }
 
@@ -123,7 +127,7 @@ install_version() {
 
   case "$VERSION" in
   latest)
-    VERSION="$(get_latest_release)"
+    VERSION="$(get_latest_version)"
     ;;
   *) ;;
   esac
@@ -138,16 +142,15 @@ install_version() {
 }
 
 install_release() {
-  echo -e "[1/5] Fetching archive for $OS $ARCH"
+  echo -e "[1/5] Fetching release from NPM"
   download_archive="$(
     download_release
     exit "$?"
   )"
   exit_status="$?"
   if [ "$exit_status" != 0 ]; then
-    local filename="modus-cli-$VERSION.tar.gz"
-    local archive_url="https://github.com/$GIT_REPO/releases/download/$VERSION/$filename"
-
+    local filename="${PACKAGE_NAME}-${VERSION}.tgz"
+    local archive_url="https://registry.npmjs.org/${PACKAGE_ORG}/${PACKAGE_NAME}/-/${PACKAGE_NAME}-${VERSION}.tgz"
     echo -e "Could not download Modus version '$VERSION' from\n$archive_url"
     exit 0
   fi
@@ -155,7 +158,7 @@ install_release() {
   clear_line
   clear_line
 
-  echo "[1/5] Fetched archive for $OS $ARCH"
+  echo -e "[1/5] Fetched latest version ${DIM}$VERSION${RESET}"
 
   install_from_file "$download_archive"
 }
@@ -167,7 +170,7 @@ download_release() {
   fi
 
   local download_dir="$(mktemp -d)"
-  download_release_from_repo "$download_dir"
+  download_from_npm "$download_dir"
 }
 
 install_from_file() {
@@ -181,7 +184,7 @@ install_from_file() {
   rm -rf "$INSTALL_DIR"
   mkdir -p "$INSTALL_DIR"
   rm -f "$archive"
-  mv "$extract_to/"* "$INSTALL_DIR"
+  mv "$extract_to/package/"* "$INSTALL_DIR"
   rm -rf "$extract_to"
 
   clear_line
@@ -233,6 +236,8 @@ check_platform || exit 1
 
 install_version
 
-chmod +x "$INSTALL_DIR/script/modus"
+chmod +x "$INSTALL_DIR/bin/modus"
+
+mv "$INSTALL_DIR/nodemodules/" "$INSTALL_DIR/node_modules/"
 
 restart_shell

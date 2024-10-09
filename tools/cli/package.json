@@ -1,6 +1,6 @@
 {
-  "name": "@hypermode/modus-cli",
-  "version": "0.0.0",
+  "name": "test-modus-cli",
+  "version": "0.0.7",
   "description": "The Modus CLI",
   "author": "Hypermode, Inc.",
   "license": "Apache-2.0",
@@ -8,21 +8,21 @@
   "types": "dist/index.d.ts",
   "type": "module",
   "bin": {
-    "hyp": "bin/run.js"
+    "modus": "./run/index.js"
   },
   "scripts": {
-    "pack": "rm -rf node_modules/ && npm i --omit=dev && chmod +x ./build-process.sh && ./build-process.sh",
+    "pack": "npm pack",
     "build": "rm -rf dist && tsc -b",
-    "lint": "eslint . --ext .ts",
-    "postpack": "rm -f oclif.manifest.json",
+    "postpack": "rm -f oclif.manifest.json && mv nodemodules/ node_modules/",
     "posttest": "npm run lint",
-    "prepack": "npm i && npm run build && oclif manifest"
+    "prepack": "rm -rf node_modules && npm i && npm run build && oclif manifest && mv node_modules/ nodemodules/"
   },
   "dependencies": {
     "@oclif/core": "^4",
     "chalk": "^5.3.0",
     "ora": "^8.1.0",
-    "shell-quote": "^1.8.1"
+    "shell-quote": "^1.8.1",
+    "test-modus-cli": "^0.0.7"
   },
   "devDependencies": {
     "@oclif/test": "^4",
@@ -35,7 +35,8 @@
   "files": [
     "/bin",
     "/dist",
-    "/oclif.manifest.json"
+    "/oclif.manifest.json",
+    "nodemodules/"
   ],
   "keywords": [
     "Hypermode",
@@ -58,6 +59,9 @@
       }
     },
     "plugins": []
+  },
+  "engines": {
+    "node": ">=22"
   },
   "homepage": "https://github.com/hypermodeinc/modus",
   "repository": {
