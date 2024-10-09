@@ -2,7 +2,7 @@
   "name": "anthropic-functions-example",
   "private": true,
   "description": "Hypermode Function Calling Example using Anthropic",
-  "author": "Hypermode, Inc.",
+  "author": "Hypermode Inc.",
   "license": "Apache-2.0",
   "type": "module",
   "scripts": {

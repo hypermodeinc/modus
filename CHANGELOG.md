@@ -1,6 +1,10 @@
 # Change Log
 
-## UNRELEASED
+## UNRELEASED (work in progress)
+
+_NOTE: This is the first fully open-source release, using the name "Modus" for the framework.
+"Hypermode" still refers to the company and the commercial hosting platform - but not the framework.
+In previous releases, the name "Hypermode" was used for all three._
 
 - Migrate from Hypermode to Modus [#412](https://github.com/hypermodeinc/modus/pull/412)
 - Import WasmExtractor code [#415](https://github.com/hypermodeinc/modus/pull/415)
@@ -11,6 +15,12 @@
 - Remove HTTP Timeout, Add Context Timeout on Collections [#422](https://github.com/hypermodeinc/modus/pull/422)
 - Add Modus AssemblyScript SDK [#423](https://github.com/hypermodeinc/modus/pull/423)
 - Add models to Modus AssemblyScript SDK [#428](https://github.com/hypermodeinc/modus/pull/428)
+- Add Vectors SDK support [#431](https://github.com/hypermodeinc/modus/pull/431)
+- Update Readme files [#432](https://github.com/hypermodeinc/modus/pull/432)
+- Fix vulnerability in AssemblyScript SDK install script [#435](https://github.com/hypermodeinc/modus/pull/435)
+- Fix potential array out of bounds in the runtime [#437](https://github.com/hypermodeinc/modus/pull/437)
+- Set minimum Go version to 1.23.0 [#438](https://github.com/hypermodeinc/modus/pull/438)
+- Change default for environment setting [#439](https://github.com/hypermodeinc/modus/pull/439)
 
 ## 2024-10-02 - Version 0.12.7
 

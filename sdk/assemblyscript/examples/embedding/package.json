@@ -2,7 +2,7 @@
   "name": "embedding-example",
   "private": true,
   "description": "Modus AssemblyScript Embedding Example",
-  "author": "Hypermode, Inc.",
+  "author": "Hypermode Inc.",
   "license": "Apache-2.0",
   "type": "module",
   "scripts": {

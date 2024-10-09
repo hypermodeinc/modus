@@ -2,7 +2,7 @@
   "name": "simple-example",
   "private": true,
   "description": "Modus AssemblyScript Simple Example",
-  "author": "Hypermode, Inc.",
+  "author": "Hypermode Inc.",
   "license": "Apache-2.0",
   "type": "module",
   "scripts": {
