@@ -1,0 +1,8 @@
+# Folders and files for the packing process to ignore
+src
+scripts
+*.tar.gz
+*.zip
+yarn.lock
+package-lock.json
+tsconfig.tsbuildinfo

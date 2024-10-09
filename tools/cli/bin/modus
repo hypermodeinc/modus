@@ -1,5 +1,16 @@
 #!/usr/bin/env bash
 
+# Copyright 2024 Hypermode, Inc.
+# Licensed under the terms of the Apache License, Version 2.0
+# See the LICENSE file that accompanied this code for further details.
+#
+# SPDX-FileCopyrightText: 2024 Hypermode, Inc. <hello@hypermode.com>
+# SPDX-License-Identifier: Apache-2.0
+
+# This ensures that node > $NODE_REQUIRED is installed
+# It first checks which node and if it is <= $NODE_REQUIRED, it installs node
+# It can use Node on PATH or a local build of node
+
 get_script_dir() {
     SOURCE="${BASH_SOURCE[0]}"
     DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
@@ -27,8 +38,8 @@ armv6l) ARCH="arm" ;;
 *) ;;
 esac
 
-echo_fexists() {
-    [ -f "$1" ] && echo "$1"
+fexists() {
+    [ -f "$1" ]
 }
 
 install_node() {
@@ -55,40 +66,38 @@ install_node() {
 }
 
 check_node() {
-    if ! echo_fexists "./$NODE_INSTALL_PATH/bin/node"; then
+    if ! fexists "$DIR/$NODE_INSTALL_PATH/bin/node"; then
         NODE_VERSION=$($NODE_PATH -v 2>/dev/null)
-
         if [ $? -ne 0 ]; then
             install_node
+            return 1
         fi
-
         NODE_VERSION=${NODE_VERSION#v}
         MAJOR_VERSION=${NODE_VERSION%%.*}
-
         if [ "$MAJOR_VERSION" -le $NODE_REQUIRED ]; then
             install_node
+            return 1
         fi
     fi
+    return 0
 }
 
-if ! echo_fexists $LOCAL_FILE; then
-    mkdir -p "$DIR/scripts/"
-    echo "#!$DIR/node-bin/bin/node
+if ! check_node; then
+    if ! fexists $LOCAL_FILE; then
+        mkdir -p "$DIR/scripts/"
+        echo "#!$DIR/node-bin/bin/node
 import { execute } from \"@oclif/core\";
 await execute({ dir: import.meta.url });" >$LOCAL_FILE
-    chmod +x $LOCAL_FILE
+        chmod +x $LOCAL_FILE
+    fi
+    env "$LOCAL_FILE" "$@"
 else
-    $LOCAL_FILE
-    exit 0
-fi
-
-if ! echo_fexists $PATH_FILE; then
-    mkdir -p "$DIR/scripts/"
-    echo "#!/usr/bin/env node
+    if ! fexists $PATH_FILE; then
+        mkdir -p "$DIR/scripts/"
+        echo "#!/usr/bin/env node
 import { execute } from \"@oclif/core\";
 await execute({ dir: import.meta.url });" >$PATH_FILE
-    chmod +x $PATH_FILE
-else
-    check_node
-    $PATH_FILE
+        chmod +x $PATH_FILE
+    fi
+    env "$PATH_FILE" "$@"
 fi

@@ -4,3 +4,5 @@ tsconfig.tsbuildinfo
 
 # Ignore build folders
 tmp/
+scripts/
+node-bin/

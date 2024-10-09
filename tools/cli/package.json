@@ -11,32 +11,28 @@
     "hyp": "bin/run.js"
   },
   "scripts": {
-    "pack": "oclif pack tarballs --parallel --no-xz",
-    "build": "shx rm -rf dist && tsc -b",
+    "pack": "rm -rf node_modules/ && npm i --omit=dev && chmod +x ./build-process.sh && ./build-process.sh",
+    "build": "rm -rf dist && tsc -b",
     "lint": "eslint . --ext .ts",
-    "postpack": "shx rm -f oclif.manifest.json",
+    "postpack": "rm -f oclif.manifest.json",
     "posttest": "npm run lint",
-    "prepack": "oclif manifest",
-    "test": "mocha --forbid-only \"test/**/*.test.ts\""
+    "prepack": "npm i && npm run build && oclif manifest"
   },
   "dependencies": {
     "@oclif/core": "^4",
-    "@oclif/plugin-help": "^6",
-    "@oclif/plugin-plugins": "^5",
     "chalk": "^5.3.0",
-    "ora": "^8.1.0"
+    "ora": "^8.1.0",
+    "v8-compile-cache": "^2.4.0"
   },
   "devDependencies": {
     "@oclif/test": "^4",
-    "@types/node": "^18",
-    "eslint": "^8",
-    "eslint-config-oclif": "^5",
-    "eslint-config-oclif-typescript": "^3",
-    "eslint-config-prettier": "^9",
+    "@types/node": "^20",
+    "bytenode": "^1.5.6",
     "oclif": "^4",
-    "shx": "^0.3.3",
     "ts-node": "^10",
-    "typescript": "^5"
+    "typescript": "^5",
+    "webpack": "^5.95.0",
+    "webpack-cli": "^5.1.4"
   },
   "engines": {
     "node": ">=20.0.0"

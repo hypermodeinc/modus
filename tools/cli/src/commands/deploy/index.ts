@@ -20,14 +20,12 @@ export default class DeployCommand extends Command {
   static flags = {};
 
   async run(): Promise<void> {
-    const { args, flags } = await this.parse(DeployCommand);
+    // const { args, flags } = await this.parse(DeployCommand);
 
     if (!isHypCLIInstalled()) {
       this.logError("Hypermode CLI is not installed! Please run PLACEHOLDER to install and try again!");
       return;
     }
-
-    
   }
 
   private logError(message: string) {

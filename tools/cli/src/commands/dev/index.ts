@@ -11,7 +11,7 @@ import { Args, Command, Flags } from "@oclif/core";
 import { expandHomeDir, isRunnable } from "../../util/index.js";
 import BuildCommand from "../build/index.js";
 import path from "path";
-import { copyFileSync, existsSync, fstat, readdirSync, readFileSync, watch as watchFolder, writeFileSync } from "fs";
+import { copyFileSync, existsSync, readdirSync, readFileSync, watch, writeFileSync } from "fs";
 import chalk from "chalk";
 import { execSync, spawnSync } from "child_process";
 import os from "node:os";
@@ -81,7 +81,7 @@ export default class Run extends Command {
     const runtimePath = path.join(expandHomeDir("~/.modus/sdk/" + (isDev ? "" : "v") + flags.runtime), flags.legacy ? "" : (isDev ? "/runtime" : "/runtime" + (os.platform() === "win32" ? ".exe" : "")));
 
     const cwd = path.join(process.cwd(), args.path);
-    const watch = flags.watch;
+    const _watch = flags.watch;
 
     if (!flags.runtime) {
       this.logError("Modus Runtime is not installed!\n Run `modus sdk install latest` and try again!");
@@ -179,7 +179,7 @@ func GetVersionNumber() string {
       });
     }
 
-    if (watch) {
+    if (_watch) {
       const delay = flags.freq;
       let lastModified = 0;
       let lastBuild = 0;
@@ -199,7 +199,7 @@ func GetVersionNumber() string {
         copyFileSync(build_wasm, deploy_wasm);
       }, delay);
 
-      watchFolder(path.join(cwd, "/assembly"), () => {
+      watch(path.join(cwd, "/assembly"), () => {
         lastModified = Date.now();
         paused = false;
       });
