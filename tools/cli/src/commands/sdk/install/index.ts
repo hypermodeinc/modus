@@ -86,7 +86,6 @@ export default class SDKInstallCommand extends Command {
 
     this.log("[2/4] Fetching Modus from latest commit" + " " + chalk.dim("(" + version + ")"));
     const downloadLink = flags.commit == "latest" ? "https://github.com/hypermodeinc/modus/archive/refs/heads/" + branch + ".zip" : "https://github.com/hypermodeinc/modus/archive/" + sha + ".zip";
-    console.log(downloadLink)
     const archiveName = ("modus-" + version + ".zip").replaceAll("/", "-");
     const tempDir = expandHomeDir("~/.modus/.modus-temp");
     await downloadFile(downloadLink, archiveName);
@@ -110,6 +109,7 @@ export default class SDKInstallCommand extends Command {
     const installDir = expandHomeDir("~/.modus/sdk/dev-" + branch + "-" + id) + "/";
     cpSync(unpackedDir + "/modus-" + (flags.commit == "latest" ? branch : sha) + "/", installDir, { recursive: true, force: true });
     clearLine();
+
     this.log("[4/4] Successfully installed Modus " + version)
   }
 
@@ -133,7 +133,7 @@ export default class SDKInstallCommand extends Command {
     if (!(await this.confirmAction(rl, "[2/4] Continue? [y/n]"))) {
       process.exit(0);
     }
-
+    
     linkDirectories(srcDir, installDir)
     clearLine();
     clearLine();
@@ -203,10 +203,8 @@ function linkDirectories(srcDir: string, destDir: string) {
     const destItem = path.join(destDir, item);
 
     if (statSync(srcItem).isDirectory()) {
-      if (!srcItem.endsWith(".git")) {
-        symlinkSync(srcItem, destItem, "dir");
-        linkDirectories(srcItem, destItem);
-      }
+      symlinkSync(srcItem, destItem, "dir");
+      linkDirectories(srcItem, destItem);
     } else {
       symlinkSync(srcItem, destItem);
     }

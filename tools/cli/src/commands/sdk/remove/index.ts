@@ -13,7 +13,6 @@ import os from "node:os";
 import { expandHomeDir } from "../../../util/index.js";
 import { existsSync, readdirSync, rmSync } from "node:fs";
 
-const versions = ["0.12.0", "0.12.1", "0.12.2", "0.12.3", "0.12.4", "0.12.5", "0.12.6"];
 export default class SDKRemoveCommand extends Command {
   static args = {
     version: Args.string({
@@ -29,7 +28,8 @@ export default class SDKRemoveCommand extends Command {
   async run(): Promise<void> {
     const { args } = await this.parse(SDKRemoveCommand);
     if (!args.version) this.logError("No version specified! Run modus sdk remove <version>"), process.exit(0);
-    let version = args.version?.trim().toLowerCase().replace("v", "");
+    const isDev = args.version.startsWith("dev-") || args.version.startsWith("link");
+    let version = isDev ? args.version : args.version?.trim().toLowerCase().replace("v", "");
     if (!existsSync(expandHomeDir("~/.modus/sdk/"))) {
       this.log("No versions installed!");
       process.exit(0);
@@ -41,14 +41,13 @@ export default class SDKRemoveCommand extends Command {
     }
     if (version === "all") {
       for (const version of versions) {
-        rmSync(expandHomeDir("~/.modus/sdk" + version), { recursive: true, force: true });
+        rmSync(expandHomeDir("~/.modus/sdk/" + version), { recursive: true, force: true });
       }
       this.log("Removed all SDK versions");
       process.exit(0);
-      return;
     } else {
-      rmSync(expandHomeDir("~/.modus/sdk" + version), { recursive: true, force: true });
-      this.log("Removed Modus v" + version);
+      rmSync(expandHomeDir("~/.modus/sdk/" + version), { recursive: true, force: true });
+      this.log("Removed Modus " + (isDev ? "" : "v") + version);
       process.exit(0);
     }
   }

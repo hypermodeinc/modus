@@ -13,7 +13,7 @@ import BuildCommand from "../build/index.js";
 import path from "path";
 import { copyFileSync, existsSync, readdirSync, readFileSync, watch as watchFolder } from "fs";
 import chalk from "chalk";
-import { spawn } from "child_process";
+import { execSync, spawn, spawnSync } from "child_process";
 import os from "node:os";
 
 export default class Run extends Command {
@@ -74,7 +74,7 @@ export default class Run extends Command {
   async run(): Promise<void> {
     const { args, flags } = await this.parse(Run);
     const isDev = flags.runtime && (flags.runtime.startsWith("dev-") || flags.runtime.startsWith("link"));
-    const runtimePath = expandHomeDir("~/.modus/sdk/" + flags.runtime) + (isDev ? "" : "/runtime" + (os.platform() === "win32" ? ".exe" : ""));
+    const runtimePath = path.join(expandHomeDir("~/.modus/sdk/" + flags.runtime), (isDev ? "/runtime" : "/runtime" + (os.platform() === "win32" ? ".exe" : "")));
 
     const cwd = path.join(process.cwd(), args.path);
     const watch = flags.watch;
@@ -134,16 +134,27 @@ export default class Run extends Command {
       if (!isRunnable("go")) {
         this.logError("Cannot find any valid versions of Go! Please install go")
       }
-      spawn("go run .", {
+      execSync("go run ./tools/generate_version", {
+        cwd: runtimePath,
+        stdio: "ignore",
+        env: {
+          ...process.env,
+          MODUS_ENV: "dev",
+          MODUS_BUILD_VERSION: "modus-cli/" + flags.runtime
+        }
+      });
+
+      execSync("go run .", {
         cwd: runtimePath,
         stdio: "inherit",
         env: {
           ...process.env,
-          MODUS_ENV: "dev"
+          MODUS_ENV: "dev",
+          MODUS_BUILD_VERSION: "modus-cli/" + flags.runtime
         }
       });
     } else {
-      spawn(runtimePath, {
+      spawnSync(runtimePath, {
         stdio: "inherit",
         env: {
           ...process.env,

@@ -11,7 +11,6 @@ import { Args, Command } from "@oclif/core";
 import chalk from "chalk";
 import { execSync } from "node:child_process";
 import path from "node:path";
-
 import { SDK } from "../../custom/globals.js";
 import { isRunnable } from "../../util/index.js";
 
