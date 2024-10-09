@@ -1,7 +1,10 @@
 {
   "version": "0.2",
   "language": "en",
-  "flagWords": ["hte", "teh"],
+  "flagWords": [
+    "hte",
+    "teh"
+  ],
   "words": [
     "abstractlogger",
     "Albus",
@@ -153,6 +156,7 @@
     "typedarray",
     "uids",
     "uncategorized",
+    "Unmarshalled",
     "unmarshalling",
     "unnest",
     "upsert",
