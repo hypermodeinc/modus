@@ -21,5 +21,5 @@ export class Claims {
   public userId!: string;
 }
 export function getJWTClaims(): Claims {
-  return auth.jwt.getClaims<Claims>();
+  return auth.getJWTClaims<Claims>();
 }

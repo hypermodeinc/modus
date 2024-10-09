@@ -8,8 +8,10 @@
  */
 import { JSON } from "json-as";
 
-export class jwt {
-  public static getClaims<T>(): T {
-    return JSON.parse<T>(process.env.get("JWT_CLAIMS"));
+export function getJWTClaims<T>(): T {
+  const claims = process.env.get("JWT_CLAIMS");
+  if (!claims) {
+    throw new Error("JWT claims not found.");
   }
+  return JSON.parse<T>(claims);
 }
