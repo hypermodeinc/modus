@@ -22,7 +22,7 @@ covering the Hypermode platform, including this SDK.
 
 ### Prerequisites
 
-Ensure you have [Node.js](https://nodejs.org/) 20 or higher installed and activated.
+Ensure you have [Node.js](https://nodejs.org/) 22 or higher installed and activated.
 
 You can install Node.js with any supported method, including:
 
