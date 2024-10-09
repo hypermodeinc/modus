@@ -90,7 +90,7 @@ build_path_str() {
   if [[ $profile == *.fish ]]; then
     echo -e "set -gx MODUS_CLI \"$install_dir\"\nstring match -r \".modus\" \"\$PATH\" > /dev/null; or set -gx PATH \"\$MODUS_CLI/bin\" \$PATH"
   else
-    echo -e "# Modus CLI\nexport MODUS_CLI=\"$install_dir\"\nexport PATH=\"\$MODUS_CLI/bin:\$PATH\""
+    echo -e "\n# Modus CLI\nexport MODUS_CLI=\"$install_dir\"\nexport PATH=\"\$MODUS_CLI/bin:\$PATH\""
   fi
 }
 
@@ -183,7 +183,7 @@ install_from_file() {
   rm -f "$archive"
   mv "$extract_to/modus/"* "$INSTALL_DIR"
   rm -rf "$extract_to"
-  
+
   clear_line
   echo "[2/5] Unpacked archive"
 }
@@ -210,10 +210,10 @@ restart_shell() {
   echo -e "[5/5] Restarted shell ${DIM}($shell_name)${RESET}\n\nThe Modus CLI has been installed! 🎉\nRun ${DIM}modus${RESET} to get started"
 
   case "$shell_name" in
-    bash|zsh|fish) exec "$shell_name" ;;
-    *)
-      echo -e "[5/5] Clean up\n\nPlease restart your shell for changes to take effect"
-      ;;
+  bash | zsh | fish) exec "$shell_name" ;;
+  *)
+    echo -e "[5/5] Clean up\n\nPlease restart your shell for changes to take effect"
+    ;;
   esac
 }
 
