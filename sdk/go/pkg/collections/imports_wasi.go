@@ -14,10 +14,10 @@ package collections
 import "unsafe"
 
 //go:noescape
-//go:wasmimport hypermode upsertToCollection_v2
+//go:wasmimport hypermode upsertToCollection
 func _hostUpsertToCollection(collection, namespace *string, keys, texts, labels unsafe.Pointer) unsafe.Pointer
 
-//hypermode:import hypermode upsertToCollection_v2
+//hypermode:import hypermode upsertToCollection
 func hostUpsertToCollection(collection, namespace *string, keys, texts *[]string, labels *[][]string) *CollectionMutationResult {
 	keysPointer := unsafe.Pointer(keys)
 	textsPointer := unsafe.Pointer(texts)
@@ -30,10 +30,10 @@ func hostUpsertToCollection(collection, namespace *string, keys, texts *[]string
 }
 
 //go:noescape
-//go:wasmimport hypermode deleteFromCollection_v2
+//go:wasmimport hypermode deleteFromCollection
 func _hostDeleteFromCollection(collection, namespace, key *string) unsafe.Pointer
 
-//hypermode:import hypermode deleteFromCollection_v2
+//hypermode:import hypermode deleteFromCollection
 func hostDeleteFromCollection(collection, namespace, key *string) *CollectionMutationResult {
 	response := _hostDeleteFromCollection(collection, namespace, key)
 	if response == nil {
@@ -43,10 +43,10 @@ func hostDeleteFromCollection(collection, namespace, key *string) *CollectionMut
 }
 
 //go:noescape
-//go:wasmimport hypermode searchCollection_v2
+//go:wasmimport hypermode searchCollection
 func _hostSearchCollection(collection *string, namespaces unsafe.Pointer, searchMethod, text *string, limit int32, returnText bool) unsafe.Pointer
 
-//hypermode:import hypermode searchCollection_v2
+//hypermode:import hypermode searchCollection
 func hostSearchCollection(collection *string, namespaces *[]string, searchMethod, text *string, limit int32, returnText bool) *CollectionSearchResult {
 	namespacesPtr := unsafe.Pointer(namespaces)
 	response := _hostSearchCollection(collection, namespacesPtr, searchMethod, text, limit, returnText)
@@ -57,10 +57,10 @@ func hostSearchCollection(collection *string, namespaces *[]string, searchMethod
 }
 
 //go:noescape
-//go:wasmimport hypermode nnClassifyCollection_v2
+//go:wasmimport hypermode nnClassifyCollection
 func _hostNnClassifyCollection(collection, namespace, searchMethod, text *string) unsafe.Pointer
 
-//hypermode:import hypermode nnClassifyCollection_v2
+//hypermode:import hypermode nnClassifyCollection
 func hostNnClassifyCollection(collection, namespace, searchMethod, text *string) *CollectionClassificationResult {
 	response := _hostNnClassifyCollection(collection, namespace, searchMethod, text)
 	if response == nil {
@@ -70,10 +70,10 @@ func hostNnClassifyCollection(collection, namespace, searchMethod, text *string)
 }
 
 //go:noescape
-//go:wasmimport hypermode recomputeSearchMethod_v2
+//go:wasmimport hypermode recomputeSearchMethod
 func _hostRecomputeSearchMethod(collection, namespace, searchMethod *string) unsafe.Pointer
 
-//hypermode:import hypermode recomputeSearchMethod_v2
+//hypermode:import hypermode recomputeSearchMethod
 func hostRecomputeSearchMethod(collection, namespace, searchMethod *string) *SearchMethodMutationResult {
 	response := _hostRecomputeSearchMethod(collection, namespace, searchMethod)
 	if response == nil {
@@ -83,10 +83,10 @@ func hostRecomputeSearchMethod(collection, namespace, searchMethod *string) *Sea
 }
 
 //go:noescape
-//go:wasmimport hypermode computeDistance_v2
+//go:wasmimport hypermode computeDistance
 func _hostComputeDistance(collection, namespace, searchMethod, key1, key2 *string) unsafe.Pointer
 
-//hypermode:import hypermode computeDistance_v2
+//hypermode:import hypermode computeDistance
 func hostComputeDistance(collection, namespace, searchMethod, key1, key2 *string) *CollectionSearchResultObject {
 	response := _hostComputeDistance(collection, namespace, searchMethod, key1, key2)
 	if response == nil {
@@ -96,10 +96,10 @@ func hostComputeDistance(collection, namespace, searchMethod, key1, key2 *string
 }
 
 //go:noescape
-//go:wasmimport hypermode getTextFromCollection_v2
+//go:wasmimport hypermode getTextFromCollection
 func _hostGetTextFromCollection(collection, namespace, key *string) unsafe.Pointer
 
-//hypermode:import hypermode getTextFromCollection_v2
+//hypermode:import hypermode getTextFromCollection
 func hostGetTextFromCollection(collection, namespace, key *string) *string {
 	response := _hostGetTextFromCollection(collection, namespace, key)
 	if response == nil {
@@ -109,10 +109,10 @@ func hostGetTextFromCollection(collection, namespace, key *string) *string {
 }
 
 //go:noescape
-//go:wasmimport hypermode getTextsFromCollection_v2
+//go:wasmimport hypermode getTextsFromCollection
 func _hostGetTextsFromCollection(collection, namespace *string) unsafe.Pointer
 
-//hypermode:import hypermode getTextsFromCollection_v2
+//hypermode:import hypermode getTextsFromCollection
 func hostGetTextsFromCollection(collection, namespace *string) *map[string]string {
 	response := _hostGetTextsFromCollection(collection, namespace)
 	if response == nil {

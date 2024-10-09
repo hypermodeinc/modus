@@ -146,7 +146,7 @@ export class CollectionClassificationResultObject {
 }
 
 // @ts-expect-error: decorator
-@external("hypermode", "upsertToCollection_v2")
+@external("hypermode", "upsertToCollection")
 declare function hostUpsertToCollection(
   collection: string,
   namespace: string,
@@ -156,7 +156,7 @@ declare function hostUpsertToCollection(
 ): CollectionMutationResult;
 
 // @ts-expect-error: decorator
-@external("hypermode", "deleteFromCollection_v2")
+@external("hypermode", "deleteFromCollection")
 declare function hostDeleteFromCollection(
   collection: string,
   namespace: string,
@@ -164,7 +164,7 @@ declare function hostDeleteFromCollection(
 ): CollectionMutationResult;
 
 // @ts-expect-error: decorator
-@external("hypermode", "searchCollection_v2")
+@external("hypermode", "searchCollection")
 declare function hostSearchCollection(
   collection: string,
   namespaces: string[],
@@ -175,7 +175,7 @@ declare function hostSearchCollection(
 ): CollectionSearchResult;
 
 // @ts-expect-error: decorator
-@external("hypermode", "nnClassifyCollection_v2")
+@external("hypermode", "nnClassifyCollection")
 declare function hostNnClassifyCollection(
   collection: string,
   namespace: string,
@@ -184,7 +184,7 @@ declare function hostNnClassifyCollection(
 ): CollectionClassificationResult;
 
 // @ts-expect-error: decorator
-@external("hypermode", "recomputeSearchMethod_v2")
+@external("hypermode", "recomputeSearchMethod")
 declare function hostRecomputeSearchMethod(
   collection: string,
   namespace: string,
@@ -192,7 +192,7 @@ declare function hostRecomputeSearchMethod(
 ): SearchMethodMutationResult;
 
 // @ts-expect-error: decorator
-@external("hypermode", "computeDistance_v2")
+@external("hypermode", "computeDistance")
 declare function hostComputeDistance(
   collection: string,
   namespace: string,
@@ -202,7 +202,7 @@ declare function hostComputeDistance(
 ): CollectionSearchResultObject;
 
 // @ts-expect-error: decorator
-@external("hypermode", "getTextFromCollection_v2")
+@external("hypermode", "getTextFromCollection")
 declare function hostGetTextFromCollection(
   collection: string,
   namespace: string,
@@ -210,7 +210,7 @@ declare function hostGetTextFromCollection(
 ): string;
 
 // @ts-expect-error: decorator
-@external("hypermode", "getTextsFromCollection_v2")
+@external("hypermode", "getTextsFromCollection")
 declare function hostGetTextsFromCollection(
   collection: string,
   namespace: string,

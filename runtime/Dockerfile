@@ -26,10 +26,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # copy runtime binary from the build phase
 COPY --from=builder /src/modus_runtime /usr/bin/modus_runtime
 
-# create a link to the old name(s) for backwards compatibility
-RUN ln -s /usr/bin/modus_runtime /usr/bin/hmruntime
-RUN ln -s /usr/bin/modus_runtime /usr/bin/hypruntime
-
 # update certificates every build
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
