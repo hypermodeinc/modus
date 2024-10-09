@@ -2,11 +2,14 @@ package middleware
 
 import (
 	"context"
-	"hypruntime/config"
-	"hypruntime/logger"
-	"hypruntime/utils"
+	"encoding/json"
 	"net/http"
+	"os"
 	"strings"
+
+	"github.com/hypermodeinc/modus/runtime/config"
+	"github.com/hypermodeinc/modus/runtime/logger"
+	"github.com/hypermodeinc/modus/runtime/utils"
 
 	"github.com/golang-jwt/jwt/v5"
 )
@@ -20,16 +23,38 @@ func HandleJWT(next http.Handler) http.Handler {
 		var ctx context.Context = r.Context()
 		tokenStr := r.Header.Get("Authorization")
 
-		tokenStr = strings.TrimPrefix(tokenStr, "Bearer ")
+		privKeysStr := os.Getenv("MODUS_PRIV_KEYS")
+		if privKeysStr == "" {
+			next.ServeHTTP(w, r)
+			return
+		}
 
-		token, _, err := new(jwt.Parser).ParseUnverified(tokenStr, jwt.MapClaims{})
+		var privKeysUnmarshalled []string
+		err := json.Unmarshal([]byte(privKeysStr), &privKeysUnmarshalled)
 		if err != nil {
-			if config.IsDevEnvironment() {
-				logger.Debug(r.Context()).Err(err).Msg("JWT parse error")
-				next.ServeHTTP(w, r)
-				return
+			logger.Error(r.Context()).Err(err).Msg("JWT private keys unmarshalling error")
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			return
+		}
+
+		var token *jwt.Token
+
+		tokenStr = strings.TrimPrefix(tokenStr, "Bearer ")
+		for _, privKey := range privKeysUnmarshalled {
+			token, err = jwt.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
+				return jwt.ParseRSAPublicKeyFromPEM([]byte(privKey))
+			})
+			if err != nil {
+				if config.IsDevEnvironment() {
+					logger.Debug(r.Context()).Err(err).Msg("JWT parse error")
+					next.ServeHTTP(w, r)
+					return
+				}
+				logger.Error(r.Context()).Err(err).Msg("JWT parse error")
+				continue
+			} else {
+				break
 			}
-			logger.Error(r.Context()).Err(err).Msg("JWT parse error")
 		}
 
 		if claims, ok := token.Claims.(jwt.MapClaims); ok {

@@ -182,3 +182,7 @@ func TestLogging() {
 	//
 	// The console functions also allow you to better control the reported logging level.
 }
+
+func TestEnvVars() string {
+	return os.Getenv("JWT_CLAIMS")
+}
