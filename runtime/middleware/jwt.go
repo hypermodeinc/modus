@@ -34,7 +34,6 @@ func Init() {
 	if privKeysStr == "" {
 		return
 	}
-	var PrivKeys map[string]string
 	err := json.Unmarshal([]byte(privKeysStr), &PrivKeys)
 	if err != nil {
 		logger.Error(context.Background()).Err(err).Msg("JWT private keys unmarshalling error")
