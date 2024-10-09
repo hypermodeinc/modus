@@ -26,23 +26,22 @@ func HandleJWT(next http.Handler) http.Handler {
 
 		privKeysStr := os.Getenv("MODUS_RSA_PEMS")
 		if privKeysStr == "" {
-			if tokenStr == "" {
+			if !config.IsDevEnvironment() || tokenStr == "" {
 				next.ServeHTTP(w, r)
 				return
 			}
-			if config.IsDevEnvironment() {
-				token, _, err := new(jwt.Parser).ParseUnverified(tokenStr, jwt.MapClaims{})
-				if err != nil {
-					logger.Debug(r.Context()).Err(err).Msg("JWT parse error")
-					next.ServeHTTP(w, r)
-					return
-				}
-				if claims, ok := token.Claims.(jwt.MapClaims); ok {
-					ctx = AddClaimsToContext(ctx, claims)
-				}
-				next.ServeHTTP(w, r.WithContext(ctx))
+			token, _, err := new(jwt.Parser).ParseUnverified(tokenStr, jwt.MapClaims{})
+			if err != nil {
+				logger.Debug(r.Context()).Err(err).Msg("JWT parse error")
+				next.ServeHTTP(w, r)
 				return
 			}
+			if claims, ok := token.Claims.(jwt.MapClaims); ok {
+				ctx = AddClaimsToContext(ctx, claims)
+			}
+			next.ServeHTTP(w, r.WithContext(ctx))
+			return
+
 		}
 
 		var privKeysUnmarshalled map[string]string
