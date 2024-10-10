@@ -11,8 +11,9 @@ package middleware
 
 import (
 	"context"
-	"crypto/rsa"
+	"crypto/x509"
 	"encoding/json"
+	"encoding/pem"
 	"net/http"
 	"os"
 	"strings"
@@ -28,33 +29,38 @@ type jwtClaimsKey string
 
 const jwtClaims jwtClaimsKey = "jwt_claims"
 
-var rsaPublicKeys map[string]*rsa.PublicKey
+var jwtPublicKeys map[string]any
 
-func Init() {
-	privKeysStr := os.Getenv("MODUS_RSA_PEMS")
-	if privKeysStr == "" {
+func Init(ctx context.Context) {
+	privKeysJson := os.Getenv("MODUS_RSA_PEMS")
+	if privKeysJson == "" {
 		return
 	}
-	var publicKeysStr map[string]string
-	err := json.Unmarshal([]byte(privKeysStr), &publicKeysStr)
+	var publicKeyStrings map[string]string
+	err := json.Unmarshal([]byte(privKeysJson), &publicKeyStrings)
 	if err != nil {
-		logger.Error(context.Background()).Err(err).Msg("JWT private keys unmarshalling error")
+		logger.Error(ctx).Err(err).Msg("JWT private keys unmarshalling error")
 		return
 	}
-	rsaPublicKeys = make(map[string]*rsa.PublicKey)
-	for key, value := range publicKeysStr {
-		publicKey, err := jwt.ParseRSAPublicKeyFromPEM([]byte(value))
-		if err != nil {
-			logger.Error(context.Background()).Err(err).Msg("JWT public key parsing error")
+	jwtPublicKeys = make(map[string]any)
+	for key, value := range publicKeyStrings {
+		block, _ := pem.Decode([]byte(value))
+		if block == nil {
+			logger.Error(ctx).Msg("Invalid PEM block")
 			return
 		}
-		rsaPublicKeys[key] = publicKey
+
+		pubKey, err := x509.ParsePKIXPublicKey(block.Bytes)
+		if err != nil {
+			logger.Error(ctx).Err(err).Msg("JWT public key parsing error")
+			return
+		}
+		jwtPublicKeys[key] = pubKey
 	}
 }
 
-var jwtParser = new(jwt.Parser)
-
 func HandleJWT(next http.Handler) http.Handler {
+	var jwtParser = new(jwt.Parser)
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var ctx context.Context = r.Context()
 		tokenStr := r.Header.Get("Authorization")
@@ -68,7 +74,7 @@ func HandleJWT(next http.Handler) http.Handler {
 			}
 		}
 
-		if len(rsaPublicKeys) == 0 {
+		if len(jwtPublicKeys) == 0 {
 			if !config.IsDevEnvironment() || tokenStr == "" {
 				next.ServeHTTP(w, r)
 				return
@@ -90,7 +96,7 @@ func HandleJWT(next http.Handler) http.Handler {
 		var token *jwt.Token
 		var err error
 
-		for _, publicKey := range rsaPublicKeys {
+		for _, publicKey := range jwtPublicKeys {
 			token, err = jwtParser.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
 				return publicKey, nil
 			})
