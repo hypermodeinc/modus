@@ -1,6 +1,6 @@
 {
-  "name": "@hypermode/modus-cli",
-  "version": "0.0.0",
+  "name": "test-modus-cli",
+  "version": "0.0.14",
   "description": "The Modus CLI",
   "author": "Hypermode, Inc.",
   "license": "Apache-2.0",
@@ -31,6 +31,9 @@
     "typescript": "^5"
   },
   "files": [
+    "/bin",
+    "!/bin/node-bin",
+    "!/bin/scripts",
     "/run",
     "/dist",
     "/oclif.manifest.json"

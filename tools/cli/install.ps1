@@ -8,6 +8,8 @@
 # Run with: iwr install.hypermode.com/modus.ps1 -UseBasicP | iex
 
 # Config
+$PACKAGE_ORG=""
+$PACKAGE_NAME="test-modus-cli"
 $GIT_REPO = "JairusSW/modus-cli"
 $INSTALL_DIR = "${env:MODUS_CLI}"
 if (-not $INSTALL_DIR) {
@@ -25,14 +27,19 @@ elseif ($ARCH -eq "ARM") {
 }
 
 # Functions
-function Get-LatestRelease {
-    $response = Invoke-RestMethod -Uri "https://api.github.com/repos/$GIT_REPO/releases/latest"
-    return $response.tag_name
+function Get-LatestVersion {
+    $uri = if ($PACKAGE_ORG) {
+        "https://registry.npmjs.org/$PACKAGE_ORG/$PACKAGE_NAME"
+    } else {
+        "https://registry.npmjs.org/$PACKAGE_NAME"
+    }
+    $response = Invoke-RestMethod -Uri $uri
+    return $response."dist-tags".latest
 }
 
 function Install-Version {
     if ($VERSION -eq "latest") {
-        $VERSION = Get-LatestRelease
+        $VERSION = Get-LatestVersion
     }
 
     Write-Output "${BOLD}${BLUE}Modus${RESET} Installer ${DIM}($VERSION)${RESET}`n"
@@ -41,8 +48,9 @@ function Install-Version {
 
     echo "[4/5] Installed Modus CLI"
 }
+
 function Install-Release {
-    Write-Host "[1/3] Fetching archive for Windows $ARCH"
+    Write-Host "[1/3] Fetching release from NPM"
     # Create a temporary file and get its directory
 #     $tmpFile = New-TemporaryFile
 # $tempFile = New-TemporaryFile
@@ -50,32 +58,33 @@ function Install-Release {
 # New-Item -Path $tempDir -ItemType Directory -Force
 # Remove-Item $tempFile.FullName
     $tmpDir = "$HOME\.modus-temp"
+    $filename = "$PACKAGE_NAME-$VERSION.tgz"
 
     if (Test-Path $tmpDir) {
-        Remove-Item -Path $tmpDir -Recurse -Force
+        Remove-Item -Path $tmpDir -Recurse -Force -ErrorAction SilentlyContinue
     }
-    New-Item -Path $tmpDir -ItemType Directory | Out-Null
+    New-Item -Path $tmpDir -ItemType Directory -ErrorAction SilentlyContinue | Out-Null
 
     $downloadArchive = Download-ReleaseFromRepo $tmpDir
     Clear-Line
     Clear-Line
 
-    Write-Host "[1/3] Fetched archive for Windows $ARCH"
+    Write-Host "[1/3] Fetched latest version ${DIM}$VERSION${RESET}"
 
     Write-Host "[2/3] Unpacking archive"
     
     tar -xf "$downloadArchive" -C "$tmpDir"
-    Remove-Item -Path "$tmpDir/modus-$VERSION-win32-$ARCH.zip" -Force
+    Remove-Item -Path "$tmpDir/$filename" -Force -ErrorAction SilentlyContinue
     Clear-Line
 
     Write-Host "[2/3] Unpacked archive"
     if (Test-Path $INSTALL_DIR) {
-        Remove-Item -Path $INSTALL_DIR -Recurse -Force
+        Remove-Item -Path $INSTALL_DIR -Recurse -Force -ErrorAction SilentlyContinue
     }
 
-    New-Item -Path $INSTALL_DIR -ItemType Directory | Out-Null
-    Move-Item "$tmpDir/*" $INSTALL_DIR
-    Remove-Item -Path $tmpDir -Recurse -Force
+    New-Item -Path $INSTALL_DIR -ItemType Directory -ErrorAction SilentlyContinue | Out-Null
+    Move-Item "$tmpDir/package/*" $INSTALL_DIR -ErrorAction SilentlyContinue
+    Remove-Item -Path $tmpDir -Recurse -Force -ErrorAction SilentlyContinue
 
     Write-Host "[3/3] Installed Modus CLI"
 
@@ -87,10 +96,13 @@ function Download-ReleaseFromRepo {
     param (
         [string]$tmpdir
     )
-    $filename = "modus-cli-$VERSION.zip"
+    $filename = "$PACKAGE_NAME-$VERSION.tgz"
     $downloadFile = Join-Path -Path $tmpdir -ChildPath $filename
-    $archiveUrl = "https://github.com/$GIT_REPO/releases/download/$VERSION/$filename"
-
+    $archiveUrl = if ($PACKAGE_ORG) {
+        "https://registry.npmjs.org/$PACKAGE_ORG/$PACKAGE_NAME/-/$filename"
+    } else {
+        "https://registry.npmjs.org/$PACKAGE_NAME/-/$filename"
+    }
     cmd /c "curl --progress-bar --show-error --location --fail $archiveUrl --output $downloadFile"
 
     return $downloadFile
@@ -116,21 +128,6 @@ function Clear-Line {
     Write-Host "${ESC}[F${ESC}[K" -NoNewLine
 }
 
-function Clear-Banner {
-    # Define the path to the install.cmd file
-    $installCmdPath = "./install.cmd"
-    
-    # Check if the install.cmd file exists
-    if (Test-Path $installCmdPath) {
-        # If it exists, clear the line 3 times
-        for ($i = 0; $i -lt 7; $i++) {
-            Clear-Line
-        }
-    } else {
-        Write-Host "install.cmd does not exist."
-    }
-}
-
 # ANSII codes
 $ESC = [char]27
 $BOLD = "${ESC}[1m"
@@ -139,8 +136,16 @@ $DIM = "${ESC}[2m"
 $RESET = "${ESC}[0m"
 
 # This is the entry point
-Clear-Banner
+
+if ($env:MODUS_CLEAR_LINES) {
+    for ($i = 1; $i -le $env:MODUS_CLEAR_LINES; $i++) {
+        Clear-Line
+    }
+}
+
 Install-Version
+# Refresh Path
+Restart-Shell
 Write-Host "`nThe Modus CLI has been installed! " -NoNewLine
 $(Write-Host ([System.char]::ConvertFromUtf32(127881)))
 Write-Host "Run ${DIM}modus${RESET} to get started"

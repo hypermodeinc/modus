@@ -25,7 +25,7 @@ get_script_dir() {
 NODE_WANTED=22.9.0
 NODE_MIN=22
 NODE_PATH="$(which node)"
-NODE_INSTALL_PATH="node-bin"
+NODE_INSTALL_PATH="$DIR/node-bin"
 
 # Properties
 ARCH="$(uname -m)"
@@ -49,8 +49,6 @@ fexists() {
 }
 
 install_node() {
-    mkdir -p "$DIR/$NODE_INSTALL_PATH"
-
     download_file="node-v$NODE_WANTED-$OS-$ARCH.tar.gz"
     download_url="https://nodejs.org/dist/v$NODE_WANTED/$download_file"
     echo "Installing node from $download_url"
@@ -65,18 +63,18 @@ install_node() {
     echo "Unpacking archive"
     tar -xf "$temp_dir/$download_file" -C "$temp_dir"
     rm -rf $download_file
-    rm -rf "$DIR/$NODE_INSTALL_PATH"
-    mkdir "$DIR/$NODE_INSTALL_PATH"
-    mv "$temp_dir/node-v$NODE_WANTED-$OS-$ARCH/"* "$DIR/$NODE_INSTALL_PATH/"
-    chmod +x "$DIR/$NODE_INSTALL_PATH/bin/node"
-    chmod +x "$DIR/$NODE_INSTALL_PATH/bin/npm"
+    rm -rf $NODE_INSTALL_PATH
+    mkdir -p $NODE_INSTALL_PATH
+    mv "$temp_dir/node-v$NODE_WANTED-$OS-$ARCH/"* "$NODE_INSTALL_PATH/"
+    chmod +x "$NODE_INSTALL_PATH/bin/node"
+    chmod +x "$NODE_INSTALL_PATH/bin/npm"
     rm -rf $temp_dir
-    NODE_PATH="$DIR/$NODE_INSTALL_PATH/bin/node"
+    NODE_PATH="$NODE_INSTALL_PATH/bin/node"
     clear_line
 }
 
 check_node() {
-    if ! fexists "$DIR/$NODE_INSTALL_PATH/bin/node"; then
+    if ! fexists "$NODE_INSTALL_PATH/bin/node"; then
         NODE_VERSION=$($NODE_PATH -v 2>/dev/null)
         if [ $? -ne 0 ]; then
             install_node
@@ -100,7 +98,7 @@ install_deps() {
             clear_line
         else
             echo "Installing dependencies with npm"
-            $DIR/$NODE_INSTALL_PATH/bin/npm --prefix "$BASE_DIR" install >/dev/null 2>&1
+            $NODE_INSTALL_PATH/bin/npm --prefix "$BASE_DIR" install >/dev/null 2>&1
             clear_line
         fi
     fi
