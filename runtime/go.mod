@@ -2,9 +2,9 @@ module github.com/hypermodeinc/modus/runtime
 
 go 1.23.0
 
-require github.com/hypermodeinc/modus v0.0.0
+require github.com/hypermodeinc/modus/lib/manifest v0.0.0
 
-replace github.com/hypermodeinc/modus => ../
+replace github.com/hypermodeinc/modus/lib/manifest => ../lib/manifest
 
 require (
 	github.com/OneOfOne/xxhash v1.2.8

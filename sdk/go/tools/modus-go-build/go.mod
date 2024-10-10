@@ -2,9 +2,15 @@ module github.com/hypermodeinc/modus/sdk/go/tools/modus-go-build
 
 go 1.23.0
 
-require github.com/hypermodeinc/modus v0.0.0
+require (
+	github.com/hypermodeinc/modus/lib/manifest v0.0.0
+	github.com/hypermodeinc/modus/lib/wasmextractor v0.0.0
+)
 
-replace github.com/hypermodeinc/modus => ../../../../
+replace (
+	github.com/hypermodeinc/modus/lib/manifest => ../../../../lib/manifest
+	github.com/hypermodeinc/modus/lib/wasmextractor => ../../../../lib/wasmextractor
+)
 
 require (
 	github.com/fatih/color v1.17.0

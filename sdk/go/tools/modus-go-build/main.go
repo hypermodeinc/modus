@@ -15,7 +15,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/hypermodeinc/modus/pkg/manifest"
+	"github.com/hypermodeinc/modus/lib/manifest"
 	"github.com/hypermodeinc/modus/sdk/go/tools/modus-go-build/codegen"
 	"github.com/hypermodeinc/modus/sdk/go/tools/modus-go-build/compiler"
 	"github.com/hypermodeinc/modus/sdk/go/tools/modus-go-build/config"

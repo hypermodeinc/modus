@@ -13,7 +13,7 @@ import (
 	"context"
 	"sync"
 
-	"github.com/hypermodeinc/modus/pkg/manifest"
+	"github.com/hypermodeinc/modus/lib/manifest"
 	"github.com/hypermodeinc/modus/runtime/logger"
 	"github.com/hypermodeinc/modus/runtime/storage"
 	"github.com/hypermodeinc/modus/runtime/utils"

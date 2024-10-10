@@ -15,7 +15,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/hypermodeinc/modus/pkg/manifest"
+	"github.com/hypermodeinc/modus/lib/manifest"
 	"github.com/hypermodeinc/modus/runtime/config"
 	"github.com/hypermodeinc/modus/runtime/db"
 	"github.com/hypermodeinc/modus/runtime/hosts"

@@ -16,7 +16,7 @@ import (
 	"slices"
 	"time"
 
-	"github.com/hypermodeinc/modus/pkg/manifest"
+	"github.com/hypermodeinc/modus/lib/manifest"
 	"github.com/hypermodeinc/modus/runtime/collections/in_mem"
 	"github.com/hypermodeinc/modus/runtime/collections/in_mem/sequential"
 	"github.com/hypermodeinc/modus/runtime/collections/index"

@@ -13,7 +13,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/hypermodeinc/modus/pkg/manifest"
+	"github.com/hypermodeinc/modus/lib/manifest"
 	hyp_aws "github.com/hypermodeinc/modus/runtime/aws"
 	"github.com/hypermodeinc/modus/runtime/db"
 	"github.com/hypermodeinc/modus/runtime/utils"
