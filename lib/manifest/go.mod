@@ -1,4 +1,4 @@
-module github.com/hypermodeinc/modus
+module github.com/hypermodeinc/modus/lib/manifest
 
 go 1.23.0
 

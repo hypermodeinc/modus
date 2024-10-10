@@ -14,7 +14,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/hypermodeinc/modus/pkg/manifest"
+	"github.com/hypermodeinc/modus/lib/manifest"
 )
 
 //go:embed valid_hypermode.json
