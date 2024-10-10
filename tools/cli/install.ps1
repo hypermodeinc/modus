@@ -10,7 +10,6 @@
 # Config
 $PACKAGE_ORG=""
 $PACKAGE_NAME="test-modus-cli"
-$GIT_REPO = "JairusSW/modus-cli"
 $INSTALL_DIR = "${env:MODUS_CLI}"
 if (-not $INSTALL_DIR) {
     $INSTALL_DIR = "$HOME\.modus\cli"
