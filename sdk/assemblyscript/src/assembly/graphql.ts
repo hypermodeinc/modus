@@ -13,7 +13,7 @@ import { NamedParams as Variables } from "./database";
 export { Variables };
 
 // @ts-expect-error: decorator
-@external("hypermode", "executeGQL")
+@external("modus_graphql_client", "executeGQL")
 declare function executeGQL(
   hostName: string,
   statement: string,

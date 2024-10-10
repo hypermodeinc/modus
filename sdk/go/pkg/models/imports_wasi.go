@@ -14,7 +14,7 @@ package models
 import "unsafe"
 
 //go:noescape
-//go:wasmimport hypermode lookupModel
+//go:wasmimport modus_models lookupModel
 func _lookupModel(modelName *string) unsafe.Pointer
 
 //hypermode:import hypermode lookupModel
@@ -27,5 +27,5 @@ func lookupModel(modelName *string) *ModelInfo {
 }
 
 //go:noescape
-//go:wasmimport hypermode invokeModel
+//go:wasmimport modus_models invokeModel
 func invokeModel(modelName *string, input *string) *string

@@ -12,7 +12,7 @@ import { JSON } from "json-as";
 const emptyArrayBuffer = new ArrayBuffer(0);
 
 // @ts-expect-error: decorator
-@external("hypermode", "httpFetch")
+@external("modus_http_client", "httpFetch")
 declare function fetchFromHost(request: Request): Response;
 
 /**

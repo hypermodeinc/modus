@@ -14,7 +14,7 @@ package http
 import "unsafe"
 
 //go:noescape
-//go:wasmimport hypermode httpFetch
+//go:wasmimport modus_http_client httpFetch
 func _fetch(request unsafe.Pointer) unsafe.Pointer
 
 //hypermode:import hypermode httpFetch

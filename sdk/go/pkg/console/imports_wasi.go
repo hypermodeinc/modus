@@ -12,7 +12,7 @@
 package console
 
 //go:noescape
-//go:wasmimport hypermode log
+//go:wasmimport modus_system log
 func _log(level, message *string)
 
 func log(level, message string) {

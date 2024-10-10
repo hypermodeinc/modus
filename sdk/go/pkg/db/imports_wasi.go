@@ -14,7 +14,7 @@ package db
 import "unsafe"
 
 //go:noescape
-//go:wasmimport hypermode databaseQuery
+//go:wasmimport modus_sql_client databaseQuery
 func _databaseQuery(hostName, dbType, statement, paramsJson *string) unsafe.Pointer
 
 //hypermode:import hypermode databaseQuery

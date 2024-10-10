@@ -14,7 +14,7 @@ package dgraph
 import "unsafe"
 
 //go:noescape
-//go:wasmimport hypermode executeDQL
+//go:wasmimport modus_dgraph_client executeDQL
 func _hostExecuteDQL(hostName *string, request unsafe.Pointer) unsafe.Pointer
 
 //hypermode:import hypermode executeDQL
@@ -27,13 +27,13 @@ func hostExecuteDQL(hostName *string, request *Request) *Response {
 }
 
 //go:noescape
-//go:wasmimport hypermode dgraphAlterSchema
+//go:wasmimport modus_dgraph_client dgraphAlterSchema
 func hostDgraphAlterSchema(hostName, schema *string) *string
 
 //go:noescape
-//go:wasmimport hypermode dgraphDropAttr
+//go:wasmimport modus_dgraph_client dgraphDropAttr
 func hostDgraphDropAttr(hostName, attr *string) *string
 
 //go:noescape
-//go:wasmimport hypermode dgraphDropAll
+//go:wasmimport modus_dgraph_client dgraphDropAll
 func hostDgraphDropAll(hostName *string) *string
