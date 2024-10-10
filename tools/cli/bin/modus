@@ -7,8 +7,8 @@
 # SPDX-FileCopyrightText: 2024 Hypermode, Inc. <hello@hypermode.com>
 # SPDX-License-Identifier: Apache-2.0
 
-# This ensures that node > $NODE_REQUIRED is installed
-# It first checks which node and if it is <= $NODE_REQUIRED, it installs node
+# This ensures that node > $NODE_MIN is installed
+# It first checks which node and if it is <= $NODE_MIN, it installs node
 # It can use Node on PATH or a local build of node
 
 get_script_dir() {
@@ -18,8 +18,8 @@ get_script_dir() {
 }
 
 # Config
-NODE_WANTED=20.18.0
-NODE_REQUIRED=18
+NODE_WANTED=22.9.0
+NODE_MIN=22
 NODE_PATH="$(which node)"
 NODE_INSTALL_PATH="node-bin"
 
@@ -74,12 +74,22 @@ check_node() {
         fi
         NODE_VERSION=${NODE_VERSION#v}
         MAJOR_VERSION=${NODE_VERSION%%.*}
-        if [ "$MAJOR_VERSION" -le $NODE_REQUIRED ]; then
+        if [ "$MAJOR_VERSION" -le $NODE_MIN ]; then
             install_node
             return 1
         fi
     fi
     return 0
+}
+
+install_deps() {
+    if [ ! -d "$DIR/../node_modules" ]; then
+        if command -v npm >/dev/null 2>&1; then
+            npm install >/dev/null 2>&1
+        fi
+    else
+        "$DIR/$NODE_INSTALL_PATH/bin/npm" install >/dev/null 2>&1
+    fi
 }
 
 if ! check_node; then
@@ -90,6 +100,9 @@ import { execute } from \"@oclif/core\";
 await execute({ dir: import.meta.url });" >$LOCAL_FILE
         chmod +x $LOCAL_FILE
     fi
+    if command -v npm >/dev/null 2>&1; then
+        install_deps
+    fi
     env "$LOCAL_FILE" "$@"
 else
     if ! fexists $PATH_FILE; then
@@ -98,6 +111,9 @@ else
 import { execute } from \"@oclif/core\";
 await execute({ dir: import.meta.url });" >$PATH_FILE
         chmod +x $PATH_FILE
+    fi
+    if command -v npm >/dev/null 2>&1; then
+        install_deps
     fi
     env "$PATH_FILE" "$@"
 fi

@@ -3,6 +3,5 @@ oclif.manifest.json
 tsconfig.tsbuildinfo
 
 # Ignore build folders
+dist/
 tmp/
-scripts/
-node-bin/

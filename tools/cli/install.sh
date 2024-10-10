@@ -21,7 +21,7 @@ OS="$(uname -s)"
 
 get_latest_version() {
   local url="https://registry.npmjs.org/${PACKAGE_ORG:+$PACKAGE_ORG/}$PACKAGE_NAME"
-  
+
   curl --silent "$url" | grep -oP '"latest": *"\K[^"]*'
 }
 
@@ -237,7 +237,5 @@ check_platform || exit 1
 install_version
 
 chmod +x "$INSTALL_DIR/bin/modus"
-
-mv "$INSTALL_DIR/nodemodules/" "$INSTALL_DIR/node_modules/"
 
 restart_shell

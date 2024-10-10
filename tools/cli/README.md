@@ -4,3 +4,7 @@
 
 `npm i`
 `bash ./bin/modus`
+
+or
+
+`node ./run`

@@ -1,10 +1,8 @@
 # Ignore macOS system files
 .DS_Store
 *.generated.go
-node_modules/
 *.wasm
 *.gz
-dist/
 =======
 
 # Ignore environment variable files
