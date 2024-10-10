@@ -132,6 +132,11 @@ export default class Run extends Command {
     try {
       if (flags.build || !existsSync(build_wasm)) await BuildCommand.run(args.path ? [args.path] : []);
     } catch { }
+    
+    const deploy_wasm = expandHomeDir("~/.modus/" + project_name + ".wasm");
+    if (isDev) {
+      copyFileSync(build_wasm, deploy_wasm);
+    }
 
     if (isDev) {
       if (!isRunnable("go")) {
@@ -160,7 +165,7 @@ func GetVersionNumber() string {
         });
       }
 
-      execSync("go run . -storagePath " + quote([cwd]), {
+      execSync("go run .", {
         cwd: runtimePath,
         stdio: "inherit",
         env: {
@@ -195,6 +200,7 @@ func GetVersionNumber() string {
         try {
           await BuildCommand.run(args.path ? [args.path] : []);
         } catch { }
+        if (isDev) copyFileSync(build_wasm, deploy_wasm);
       }, delay);
 
       watch(path.join(cwd, "/assembly"), () => {
