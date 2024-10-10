@@ -78,7 +78,7 @@ func HandleJWT(next http.Handler) http.Handler {
 				tokenStr = s
 			} else {
 				logger.Error(ctx).Msg("Invalid JWT token format, Bearer required")
-				http.Error(w, "Invalid JWT token format, Bearer required", http.StatusUnauthorized)
+				http.Error(w, "Invalid JWT token format, Bearer required", http.StatusBadRequest)
 				return
 			}
 		}
@@ -109,24 +109,23 @@ func HandleJWT(next http.Handler) http.Handler {
 
 		var token *jwt.Token
 		var err error
+		var found bool
 
 		for _, publicKey := range authPublicKeys {
 			token, err = jwtParser.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
 				return publicKey, nil
 			})
 			if err == nil {
-				logger.Info(ctx).Msg("JWT token parsed successfully")
+				if utils.DebugModeEnabled() {
+					logger.Debug(ctx).Msg("JWT token parsed successfully")
+				}
+				found = true
 				break
 			}
 		}
-		if err != nil {
-			if config.IsDevEnvironment() {
-				logger.Debug(r.Context()).Err(err).Msg("JWT parse error")
-				next.ServeHTTP(w, r)
-				return
-			}
-			logger.Error(r.Context()).Err(err).Msg("JWT parse error")
-			http.Error(w, "Invalid JWT token", http.StatusUnauthorized)
+		if !found {
+			logger.Error(ctx).Err(err).Msg("JWT parse error")
+			http.Error(w, "Access Denied", http.StatusUnauthorized)
 		}
 
 		if claims, ok := token.Claims.(jwt.MapClaims); ok {
