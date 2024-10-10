@@ -49,6 +49,6 @@ updates:
           - "minor"
           - "patch"
     ignore:
-      # We target Node.js 20
+      # We target Node.js 22
       - dependency-name: "@types/node"
-        versions: [">= 21.0.0"]
+        versions: [">= 23.0.0"]

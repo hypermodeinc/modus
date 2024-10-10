@@ -124,8 +124,8 @@ func (p *HypDSPlanner) stitchFields(f *fieldInfo) {
 	f.Fields = make([]fieldInfo, len(f.fieldRefs))
 	for i, ref := range f.fieldRefs {
 		field := p.fields[ref]
-		f.Fields[i] = field
 		p.stitchFields(&field)
+		f.Fields[i] = field
 	}
 }
 

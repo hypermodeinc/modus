@@ -2,7 +2,7 @@
   "name": "testdata",
   "private": true,
   "scripts": {
-    "build": "node ./node_modules/@hypermode/modus-sdk-as/bin/build-plugin.js"
+    "build": "modus-as-build"
   },
   "dependencies": {
     "@hypermode/modus-sdk-as": "../../../../sdk/assemblyscript/src",
@@ -11,7 +11,7 @@
   "devDependencies": {
     "assemblyscript": "^0.27.30",
     "semver": "^7.6.3",
-    "typescript": "^5.6.2",
+    "typescript": "^5.6.3",
     "visitor-as": "^0.11.4"
   },
   "overrides": {

@@ -16,7 +16,7 @@ To get started using Modus, please refer to [the Modus docs](https://docs.hyperm
 ## Open Source
 
 Modus is developed by [Hypermode](https://hypermode.com/) as an open-source project, integral but independent from Hypermode.
-We welcome external contributions!  See the [CONTRIBUTING.md](./CONTRIBUTING.md) file if you would like to get involved!
+We welcome external contributions. See the [CONTRIBUTING.md](./CONTRIBUTING.md) file if you would like to get involved.
 
 ## Programming Languages
 
@@ -38,8 +38,8 @@ Additional programming languages may be supported in the future.
 We have designed Hypermode to be the best place to run your Modus app.
 Hypermode hosting plans include features you might expect, such as professional support, telemetry, and high availability.
 They also include specialty features such as model hosting that are purposefully designed to work in tandem with Modus apps.
-Thus, for the best experience, please consider hosting your Modus apps on Hypermode.
-See [hypermode.com](https://hypermode.com/) for details and pricing.
+
+Thus, for the best experience, please consider hosting your Modus apps on Hypermode. See [hypermode.com](https://hypermode.com/) for details and pricing.
 
 As Modus is a free, open-source framework, you’re welcome to run your Modus apps on your own hardware or on any
 hosting platform that meets your needs.  However, please understand that we cannot directly support issues related
@@ -50,7 +50,7 @@ to third-party hosting.
 Hypermode paid hosting plans include standard or premium support that covers both Hypermode and Modus, with response-time guarantees.
 Click the _support_ link after signing in to Hypermode, or email help@hypermode.com for paid support if you are a Hypermode customer.
 
-For free community-based support (without a response-time guarantee), or if you'd just like to share your experiences with
+For free community-based support or if you'd just like to share your experiences with
 Modus or Hypermode, please chat with us on [Discord](https://discord.gg/NJQ4bJpffF).
 We'd be happy to hear from you!
 
