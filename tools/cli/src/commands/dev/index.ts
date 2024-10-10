@@ -132,7 +132,7 @@ export default class Run extends Command {
     try {
       if (flags.build || !existsSync(build_wasm)) await BuildCommand.run(args.path ? [args.path] : []);
     } catch { }
-    
+
     const deploy_wasm = expandHomeDir("~/.modus/" + project_name + ".wasm");
     if (isDev) {
       copyFileSync(build_wasm, deploy_wasm);
@@ -142,35 +142,15 @@ export default class Run extends Command {
       if (!isRunnable("go")) {
         this.logError("Cannot find any valid versions of Go! Please install go")
       }
-      if (flags.legacy) {
-        writeFileSync(path.join(runtimePath, "config/version.go"), `package config
-
-func GetProductVersion() string {
-	return "Hypermode Runtime " + GetVersionNumber()
-}
-
-func GetVersionNumber() string {
-	return "modus-cli/${flags.runtime}"
-}`);
-      } else {
-        // use `make run` and set build version
-        execSync("go run ./tools/generate_version", {
-          cwd: runtimePath,
-          stdio: "ignore",
-          env: {
-            ...process.env,
-            MODUS_ENV: "dev",
-            MODUS_BUILD_VERSION: "modus-cli/" + flags.runtime
-          }
-        });
-      }
-
-      execSync("go run .", {
+      execSync("make run", {
         cwd: runtimePath,
-        stdio: "inherit",
+        stdio: "ignore",
         env: {
           ...process.env,
           MODUS_ENV: "dev",
+          // Since we download via http, we don't have git initialized as a git clone would.
+          // So, we set MODUS_BUILD_VERSION manually. Note that this *is* in dev mode, so this won't be used in prod anyways
+          MODUS_BUILD_VERSION: execSync(path.join(runtimePath, ".git")) ? undefined : "modus-cli/" + flags.runtime
         }
       });
     } else {

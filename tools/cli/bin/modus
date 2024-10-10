@@ -86,9 +86,9 @@ install_deps() {
     if [ ! -d "$DIR/../node_modules" ]; then
         if command -v npm >/dev/null 2>&1; then
             npm install >/dev/null 2>&1
+        else
+            $DIR/$NODE_INSTALL_PATH/bin/npm install >/dev/null 2>&1
         fi
-    else
-        $DIR/$NODE_INSTALL_PATH/bin/npm install >/dev/null 2>&1
     fi
 }
 
@@ -100,9 +100,7 @@ import { execute } from \"@oclif/core\";
 await execute({ dir: import.meta.url });" >$LOCAL_FILE
         chmod +x $LOCAL_FILE
     fi
-    if ! command -v npm >/dev/null 2>&1; then
-        install_deps
-    fi
+    install_deps
     env "$LOCAL_FILE" "$@"
 else
     if ! fexists $PATH_FILE; then
@@ -112,8 +110,6 @@ import { execute } from \"@oclif/core\";
 await execute({ dir: import.meta.url });" >$PATH_FILE
         chmod +x $PATH_FILE
     fi
-    if ! command -v npm >/dev/null 2>&1; then
-        install_deps
-    fi
+    install_deps
     env "$PATH_FILE" "$@"
 fi
