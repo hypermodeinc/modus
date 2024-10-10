@@ -12,7 +12,7 @@ import chalk from "chalk";
 import { createInterface } from "node:readline";
 import ora from "ora";
 import { CLI_VERSION, SDK } from "../../custom/globals.js";
-import { ask, clearLine, cloneRepo, getAvailablePackageManagers, isRunnable } from "../../util/index.js";
+import { ask, clearLine, cloneRepo, isRunnable } from "../../util/index.js";
 import path from "node:path";
 import { Metadata } from "../../util/metadata.js";
 import { existsSync } from "node:fs";
@@ -20,9 +20,6 @@ import { execSync } from "node:child_process";
 import SDKInstallCommand from "../sdk/install/index.js";
 import { fileURLToPath } from "node:url";
 import { quote } from "shell-quote";
-
-const PKGMGRS = getAvailablePackageManagers();
-
 
 const NPM_CMD = isRunnable("npm") ? "npm" : path.join(path.dirname(fileURLToPath(import.meta.url)), "../../../bin/node-bin/bin/npm");
 export default class NewCommand extends Command {
@@ -53,19 +50,14 @@ export default class NewCommand extends Command {
 
     this.log(chalk.bold(`Modus new v${CLI_VERSION}\n${flags.force ? chalk.dim("WARN: Running in forced mode! Proceed with caution.") : ""}`));
 
-    if (PKGMGRS.length === 0) {
-      this.logError("Could not find any suitable package manager. Please install NPM, Yarn, PNPM, or Bun!");
-      return;
-    }
-
     const name = flags.name || (await this.promptProjectName(rl));
     const dir = flags.dir ? path.join(process.cwd(), flags.dir) : await this.promptInstallPath(rl);
     const sdk = flags.sdk
       ? Object.values(SDK)[
-      Object.keys(SDK)
-        .map((v) => v.toLowerCase())
-        .indexOf(flags.sdk?.trim().toLowerCase())
-      ]
+          Object.keys(SDK)
+            .map((v) => v.toLowerCase())
+            .indexOf(flags.sdk?.trim().toLowerCase())
+        ]
       : await this.promptSdkSelection(rl); // Use the enum
 
     if (!flags.force && !(await this.confirmAction(rl, "[3/4] Continue? [y/n]"))) clearLine(), clearLine(), process.exit(0);
@@ -150,7 +142,7 @@ export default class NewCommand extends Command {
     }).start();
 
     if (sdk === "AssemblyScript") {
-      if (isRunnable(NPM_CMD)) execSync(quote([NPM_CMD,"install"]), { cwd: dir, stdio: "ignore" });
+      if (isRunnable(NPM_CMD)) execSync(quote([NPM_CMD, "install"]), { cwd: dir, stdio: "ignore" });
     } else if (sdk === "Go (Beta)") {
       const sh = execSync("go install", { cwd: dir, stdio: "ignore" });
       if (!sh) {

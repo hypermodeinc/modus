@@ -13,7 +13,7 @@ import chalk from "chalk";
 
 export default class DeployCommand extends Command {
   static args = {
-    path: Args.string()
+    path: Args.string(),
   };
   static description = "Deploy a Modus app to Hypermode";
   static examples = [];

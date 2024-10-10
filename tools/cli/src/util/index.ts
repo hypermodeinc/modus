@@ -8,7 +8,7 @@
  */
 
 import { spawnSync } from "node:child_process";
-import { createWriteStream, existsSync, mkdir, mkdirSync } from "node:fs";
+import { createWriteStream, existsSync, mkdirSync } from "node:fs";
 import path from "node:path";
 import { Interface } from "node:readline";
 import { CLI_VERSION } from "../custom/globals.js";
@@ -57,15 +57,6 @@ export function clearLine(): void {
   process.stdout.write("\u001B[0G");
 }
 
-export function getAvailablePackageManagers(): string[] {
-  const pkgMgrs: string[] = [];
-  if (isRunnable("npm")) pkgMgrs.push("NPM");
-  if (isRunnable("yarn")) pkgMgrs.push("Yarn");
-  if (isRunnable("pnpm")) pkgMgrs.push("PNPM");
-  if (isRunnable("bun")) pkgMgrs.push("Bun");
-  return pkgMgrs;
-}
-
 export function getLatestCLI(): string {
   // implement logic later
   return CLI_VERSION;
@@ -74,7 +65,7 @@ export function getLatestCLI(): string {
 export function checkVersion(instance: Command) {
   const outdated = false;
   if (outdated) {
-    console.log(chalk.bgBlueBright(" INFO ") + chalk.dim(": You are running an outdated version of the Modus SDK! Please set your sdk version to stable"))
+    console.log(chalk.bgBlueBright(" INFO ") + chalk.dim(": You are running an outdated version of the Modus SDK! Please set your sdk version to stable"));
   }
 }
 
@@ -85,7 +76,7 @@ export async function downloadFile(url: string, dest: string) {
     process.exit(0);
   }
   if (existsSync(dest)) await rm(dest, { recursive: true });
-  const fileStream = createWriteStream(dest, { flags: 'wx' });
+  const fileStream = createWriteStream(dest, { flags: "wx" });
   // @ts-ignore
   await finished(Readable.fromWeb(res.body).pipe(fileStream));
-};
+}

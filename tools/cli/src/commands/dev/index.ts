@@ -23,7 +23,7 @@ export default class Run extends Command {
       description: "./my-project-|-Path to project directory",
       hidden: false,
       required: false,
-      default: "./"
+      default: "./",
     }),
   };
 
@@ -57,19 +57,19 @@ export default class Run extends Command {
       description: "Frequency to check for changes",
       hidden: false,
       required: false,
-      default: 3000
+      default: 3000,
     }),
     runtime: Flags.string({
       char: "r",
       description: "Runtime to use",
       hidden: false,
       required: false,
-      default: getLatestRuntime()
+      default: getLatestRuntime(),
     }),
     legacy: Flags.boolean({
       description: "Run if you want a pre-modus release",
-      default: false
-    })
+      default: false,
+    }),
   };
 
   static description = "Launch a Modus app to local development";
@@ -78,8 +78,8 @@ export default class Run extends Command {
 
   async run(): Promise<void> {
     const { args, flags } = await this.parse(Run);
-    const isDev = flags.legacy || flags.runtime && (flags.runtime.startsWith("dev-") || flags.runtime.startsWith("link"));
-    const runtimePath = path.join(expandHomeDir("~/.modus/sdk/" + (isDev ? "" : "v") + flags.runtime), flags.legacy ? "" : (isDev ? "/runtime" : "/runtime" + (os.platform() === "win32" ? ".exe" : "")));
+    const isDev = flags.legacy || (flags.runtime && (flags.runtime.startsWith("dev-") || flags.runtime.startsWith("link")));
+    const runtimePath = path.join(expandHomeDir("~/.modus/sdk/" + (isDev ? "" : "v") + flags.runtime), flags.legacy ? "" : isDev ? "/runtime" : "/runtime" + (os.platform() === "win32" ? ".exe" : ""));
 
     const cwd = path.join(process.cwd(), args.path);
     const _watch = flags.watch;
@@ -131,7 +131,7 @@ export default class Run extends Command {
     const build_wasm = path.join(cwd, "/build/" + project_name + ".wasm");
     try {
       if (flags.build || !existsSync(build_wasm)) await BuildCommand.run(args.path ? [args.path] : []);
-    } catch { }
+    } catch {}
 
     const deploy_wasm = expandHomeDir("~/.modus/" + project_name + ".wasm");
     if (isDev) {
@@ -140,7 +140,7 @@ export default class Run extends Command {
 
     if (isDev) {
       if (!isRunnable("go")) {
-        this.logError("Cannot find any valid versions of Go! Please install go")
+        this.logError("Cannot find any valid versions of Go! Please install go");
       }
       execSync("make run", {
         cwd: runtimePath,
@@ -150,16 +150,16 @@ export default class Run extends Command {
           MODUS_ENV: "dev",
           // Since we download via http, we don't have git initialized as a git clone would.
           // So, we set MODUS_BUILD_VERSION manually. Note that this *is* in dev mode, so this won't be used in prod anyways
-          MODUS_BUILD_VERSION: existsSync(path.join(runtimePath, ".git")) ? undefined : "modus-cli/" + flags.runtime
-        }
+          MODUS_BUILD_VERSION: existsSync(path.join(runtimePath, ".git")) ? undefined : "modus-cli/" + flags.runtime,
+        },
       });
     } else {
       spawnSync(runtimePath + " -storagePath " + quote([cwd]), {
         stdio: "inherit",
         env: {
           ...process.env,
-          MODUS_ENV: "dev"
-        }
+          MODUS_ENV: "dev",
+        },
       });
     }
 
@@ -179,7 +179,7 @@ export default class Run extends Command {
         lastBuild = Date.now();
         try {
           await BuildCommand.run(args.path ? [args.path] : []);
-        } catch { }
+        } catch {}
         if (isDev) copyFileSync(build_wasm, deploy_wasm);
       }, delay);
 
@@ -198,8 +198,10 @@ export default class Run extends Command {
 function getLatestRuntime(): string | undefined {
   let versions: string[] = [];
   try {
-    versions = readdirSync(expandHomeDir("~/.modus/sdk/")).reverse().filter(v => !v.startsWith("dev-") && !v.startsWith("link"));
-  } catch { }
+    versions = readdirSync(expandHomeDir("~/.modus/sdk/"))
+      .reverse()
+      .filter((v) => !v.startsWith("dev-") && !v.startsWith("link"));
+  } catch {}
   if (!versions.length) return undefined;
   return versions[0];
 }

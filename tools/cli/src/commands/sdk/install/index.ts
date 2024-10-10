@@ -36,7 +36,7 @@ export default class SDKInstallCommand extends Command {
       char: "s",
       description: "Suppress output logs",
       hidden: false,
-      required: false
+      required: false,
     }),
     // These are meant for developers working on modus itself
     // You can link a directory as your runtime
@@ -47,27 +47,27 @@ export default class SDKInstallCommand extends Command {
       char: "r",
       description: "Change the GitHub owner and repo eg. hypermodeinc/modus",
       required: false,
-      default: "hypermodeinc/modus"
+      default: "hypermodeinc/modus",
     }),
     branch: Flags.string({
       hidden: true,
       char: "b",
       description: "Install runtime from branch on GitHub",
-      required: false
+      required: false,
     }),
     commit: Flags.string({
       hidden: true,
       char: "c",
       description: "Install runtime from specific commit on GitHub",
       default: "latest",
-      required: false
+      required: false,
     }),
     link: Flags.string({
       hidden: true,
       char: "l",
       description: "Link an in-development runtime to CLI",
-      required: false
-    })
+      required: false,
+    }),
   };
 
   async run(): Promise<void> {
@@ -87,7 +87,7 @@ export default class SDKInstallCommand extends Command {
       clearLine();
       this.log("[1/4] Latest version: " + chalk.dim(version));
     } else {
-      this.log("[1/4] Getting release info")
+      this.log("[1/4] Getting release info");
     }
 
     version = version?.replace("v", "");
@@ -110,7 +110,7 @@ export default class SDKInstallCommand extends Command {
     const unpackedDir = tempDir + "/" + archiveName.replace(extension, "");
     this.log("[3/4] Unpacking release" + "tar -xf " + archivePath + " -C " + unpackedDir);
     await rm(unpackedDir, { recursive: true, force: true });
-    mkdirSync(unpackedDir, { recursive: true })
+    mkdirSync(unpackedDir, { recursive: true });
     execSync(quote(["tar", "-xf", archivePath, "-C", unpackedDir]));
 
     clearLine();
@@ -122,7 +122,7 @@ export default class SDKInstallCommand extends Command {
     clearLine();
 
     await rm(tempDir, { recursive: true, force: true });
-    this.log("[4/4] Successfully installed Modus " + version)
+    this.log("[4/4] Successfully installed Modus " + version);
   }
 
   async installCommit(ctx: ParserCtx) {
@@ -169,7 +169,7 @@ export default class SDKInstallCommand extends Command {
     cpSync(unpackedDir + "/modus-" + (flags.commit == "latest" ? branch : sha) + "/", installDir, { recursive: true, force: true });
     clearLine();
     await rm(tempDir, { recursive: true, force: true });
-    this.log("[4/4] Successfully installed Modus " + version)
+    this.log("[4/4] Successfully installed Modus " + version);
   }
 
   async linkDir(ctx: ParserCtx) {
@@ -193,7 +193,7 @@ export default class SDKInstallCommand extends Command {
       process.exit(0);
     }
 
-    linkDirectories(srcDir, installDir)
+    linkDirectories(srcDir, installDir);
     clearLine();
     clearLine();
 
@@ -213,10 +213,13 @@ export default class SDKInstallCommand extends Command {
   }
 }
 
-async function fetchRelease(repo: string, version: string): Promise<{
-  tag_name: string
+async function fetchRelease(
+  repo: string,
+  version: string,
+): Promise<{
+  tag_name: string;
 }> {
-  const res = (await (await fetch("https://api.github.com/repos/" + repo + "/releases/" + version)).json());
+  const res = await (await fetch("https://api.github.com/repos/" + repo + "/releases/" + version)).json();
   if (!res) {
     console.log(chalk.red(" ERROR ") + chalk.dim(": Could not find latest release! Please check your internet connection and try again."));
     process.exit(0);
@@ -224,12 +227,15 @@ async function fetchRelease(repo: string, version: string): Promise<{
   return res;
 }
 
-async function fetchBranch(repo: string, branch: string): Promise<{
-  sha: string,
-  id: string,
-  branch: string
+async function fetchBranch(
+  repo: string,
+  branch: string,
+): Promise<{
+  sha: string;
+  id: string;
+  branch: string;
 }> {
-  const res = (await (await fetch(`https://api.github.com/repos/${repo}/branches/${branch}`)).json());
+  const res = await (await fetch(`https://api.github.com/repos/${repo}/branches/${branch}`)).json();
   if (!res) {
     console.log(chalk.red(" ERROR ") + chalk.dim(": Could not find branch! Please check your internet connection and try again."));
     process.exit(0);
@@ -237,12 +243,15 @@ async function fetchBranch(repo: string, branch: string): Promise<{
   return {
     sha: res["commit"]["sha"],
     id: res["commit"]["sha"].slice(0, 7),
-    branch: res["name"]
-  }
+    branch: res["name"],
+  };
 }
 
-async function fetchCommit(repo: string, commitSha: string): Promise<{
-  sha: string
+async function fetchCommit(
+  repo: string,
+  commitSha: string,
+): Promise<{
+  sha: string;
 }> {
   const response = await fetch(`https://api.github.com/repos/${repo}/commits/${commitSha}`);
   if (!response.ok) {
@@ -253,7 +262,6 @@ async function fetchCommit(repo: string, commitSha: string): Promise<{
 }
 
 function linkDirectories(srcDir: string, destDir: string) {
-
   rmSync(destDir, { recursive: true, force: true });
   mkdirSync(destDir, { recursive: true });
 
@@ -272,12 +280,16 @@ function linkDirectories(srcDir: string, destDir: string) {
   }
 }
 
-type ParserCtx = ParserOutput<{
-  silent: boolean;
-  branch: string | undefined;
-  link: string | undefined;
-}, {
-  [flag: string]: any;
-}, {
-  version: string | undefined;
-}>
+type ParserCtx = ParserOutput<
+  {
+    silent: boolean;
+    branch: string | undefined;
+    link: string | undefined;
+  },
+  {
+    [flag: string]: any;
+  },
+  {
+    version: string | undefined;
+  }
+>;

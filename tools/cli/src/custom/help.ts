@@ -43,15 +43,15 @@ export default class CustomHelp extends Help {
       const args =
         Object.keys(command.args).length > 0
           ? Object.entries(command.args)
-            .map((v) => {
-              if (!v[1].hidden && v[1].required) {
-                if (v[1].description && v[1].description.indexOf("-|-") > 0) {
-                  return v[1].description.split("-|-")[0];
+              .map((v) => {
+                if (!v[1].hidden && v[1].required) {
+                  if (v[1].description && v[1].description.indexOf("-|-") > 0) {
+                    return v[1].description.split("-|-")[0];
+                  }
                 }
-              }
-              return "";
-            })
-            .join(" ")
+                return "";
+              })
+              .join(" ")
           : "";
       const postPadding = " ".repeat(Math.max(1, this.post_pad - args.length));
       const description = command.description!;
@@ -112,19 +112,19 @@ export default class CustomHelp extends Help {
       const args =
         Object.keys(command.args).length > 0
           ? Object.entries(command.args)
-            .map((v) => {
-              if (!v[1].hidden && v[1].required) {
-                if (v[1].description && v[1].description.indexOf("-|-") > 0) {
-                  return v[1].description.split("-|-")[0];
+              .map((v) => {
+                if (!v[1].hidden && v[1].required) {
+                  if (v[1].description && v[1].description.indexOf("-|-") > 0) {
+                    return v[1].description.split("-|-")[0];
+                  }
                 }
-              }
-              return "";
-            })
-            .join(" ")
+                return "";
+              })
+              .join(" ")
           : "";
       if (args.length > this.post_pad) this.post_pad = args.length;
     }
-    this.post_pad = (6 + this.pre_pad + this.post_pad > this.target_pad) ? 6 + this.pre_pad + this.post_pad - this.target_pad : this.target_pad - this.pre_pad;
+    this.post_pad = 6 + this.pre_pad + this.post_pad > this.target_pad ? 6 + this.pre_pad + this.post_pad - this.target_pad : this.target_pad - this.pre_pad;
     this.pre_pad += 2;
 
     if (rootTopics.length > 0) {
@@ -147,19 +147,19 @@ export default class CustomHelp extends Help {
       const args =
         Object.keys(command.args).length > 0
           ? Object.entries(command.args)
-            .map((v) => {
-              if (!v[1].hidden && v[1].required) {
-                if (v[1].description && v[1].description.indexOf("-|-") > 0) {
-                  return v[1].description.split("-|-")[0];
+              .map((v) => {
+                if (!v[1].hidden && v[1].required) {
+                  if (v[1].description && v[1].description.indexOf("-|-") > 0) {
+                    return v[1].description.split("-|-")[0];
+                  }
                 }
-              }
-              return "";
-            })
-            .join(" ")
+                return "";
+              })
+              .join(" ")
           : "";
       if (args.length > this.post_pad) this.post_pad = args.length;
     }
-    this.post_pad = (6 + this.pre_pad + this.post_pad > this.target_pad) ? 6 + this.pre_pad + this.post_pad - this.target_pad : this.target_pad - this.pre_pad;
+    this.post_pad = 6 + this.pre_pad + this.post_pad > this.target_pad ? 6 + this.pre_pad + this.post_pad - this.target_pad : this.target_pad - this.pre_pad;
     this.pre_pad += 2;
     const state = this.config.pjson?.oclif?.state;
     if (state) this.log(`This topic is in ${state}.\n`);

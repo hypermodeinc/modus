@@ -22,6 +22,5 @@ export default class Upgrade extends Command {
 
   async run(): Promise<void> {
     const { args, flags } = await this.parse(Upgrade);
-
   }
 }
