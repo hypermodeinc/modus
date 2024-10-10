@@ -1,5 +1,9 @@
 # Ignore macOS system files
 .DS_Store
+*.generated.go
+*.wasm
+*.gz
+=======
 
 # Ignore environment variable files
 .env
