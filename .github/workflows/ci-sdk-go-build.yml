@@ -40,8 +40,8 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          cache-dependency-path: "${{ matrix.dir }}/go.sum"
-          go-version-file: "${{ matrix.dir }}/go.mod"
+          cache-dependency-path: "./sdk/go/go.sum"
+          go-version-file: "./sdk/go/go.mod"
       - name: Generate Code
         run: go generate ./...
       - name: Build Program
