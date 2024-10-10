@@ -107,7 +107,7 @@ export default class SDKInstallCommand extends Command {
     this.log("[2/4] Downloaded release");
 
     const unpackedDir = tempDir + "/" + archiveName.replace(extension, "");
-    this.log("[3/4] Unpacking release" + "tar -xf " + archivePath + " -C " + unpackedDir);
+    this.log("[3/4] Unpacking release");
     await rm(unpackedDir, { recursive: true, force: true });
     mkdirSync(unpackedDir, { recursive: true });
     execSync(quote(["tar", "-xf", archivePath, "-C", unpackedDir]));
@@ -116,7 +116,7 @@ export default class SDKInstallCommand extends Command {
     this.log("[3/4] Unpacked release");
 
     this.log("[4/4] Building");
-    const installDir = expandHomeDir("~/.modus/sdk/" + version) + "/";
+    const installDir = path.normalize(expandHomeDir("~/.modus/sdk/" + version) + "/");
     cpSync(unpackedDir + "/modus-" + version?.replace("v", "") + "/", installDir, { recursive: true, force: true });
     clearLine();
 
@@ -148,7 +148,7 @@ export default class SDKInstallCommand extends Command {
     const downloadLink = "https://github.com/" + flags.repo + "/archive/" + sha + ".tar.gz";
     const archiveName = ("modus-" + version + ".tar.gz").replaceAll("/", "-");
     const tempDir = expandHomeDir("~/.modus/.modus-temp");
-    const archivePath = path.join(tempDir, archiveName);
+    const archivePath = path.normalize(path.join(tempDir, archiveName));
     mkdirSync(tempDir, { recursive: true });
 
     await downloadFile(downloadLink, archivePath);
@@ -156,7 +156,7 @@ export default class SDKInstallCommand extends Command {
     this.log("[2/4] Fetched Modus");
 
     this.log("[3/4] Unpacking archive");
-    const unpackedDir = tempDir + "/" + archiveName.replace(".tar.gz", "");
+    const unpackedDir = path.normalize(tempDir + "/" + archiveName.replace(".tar.gz", ""));
     await rm(unpackedDir, { recursive: true, force: true });
     mkdirSync(unpackedDir, { recursive: true });
     execSync(quote(["tar", "-xf", archivePath, "-C", unpackedDir]));

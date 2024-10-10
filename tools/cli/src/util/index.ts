@@ -25,10 +25,10 @@ export async function ensureDir(dir: string): Promise<void> {
 // Expand ~ to the user's home directory
 export function expandHomeDir(filePath: string): string {
   if (filePath.startsWith("~")) {
-    return path.join(process.env.HOME || "", filePath.slice(1));
+    return path.normalize(path.join(process.env.HOME || "", filePath.slice(1)));
   }
 
-  return filePath;
+  return path.normalize(filePath);
 }
 
 export function isRunnable(cmd: string): boolean {

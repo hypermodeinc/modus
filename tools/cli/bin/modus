@@ -12,7 +12,7 @@
 # It can use Node on PATH or a local build of node
 
 clear_line() {
-  echo -ne "\033[F\033[K"
+    echo -ne "\033[F\033[K"
 }
 
 get_script_dir() {
@@ -92,12 +92,11 @@ check_node() {
 
 install_deps() {
     if [ ! -d "$NODE_MODULES_PATH" ]; then
+        echo "Installing dependencies with npm"
         if command -v npm >/dev/null 2>&1; then
-            echo "Installing dependencies with npm"
             npm --prefix "$BASE_DIR" install >/dev/null 2>&1
             clear_line
         else
-            echo "Installing dependencies with npm"
             $NODE_INSTALL_PATH/bin/npm --prefix "$BASE_DIR" install >/dev/null 2>&1
             clear_line
         fi

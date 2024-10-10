@@ -21,7 +21,7 @@ import SDKInstallCommand from "../sdk/install/index.js";
 import { fileURLToPath } from "node:url";
 import { quote } from "shell-quote";
 
-const NPM_CMD = isRunnable("npm") ? "npm" : path.join(path.dirname(fileURLToPath(import.meta.url)), "../../../bin/node-bin/bin/npm");
+const NPM_CMD = isRunnable("npm") ? "npm" : path.normalize(path.join(path.dirname(fileURLToPath(import.meta.url)), "../../../bin/node-bin/bin/npm"));
 export default class NewCommand extends Command {
   static description = "Create a new Modus project";
 

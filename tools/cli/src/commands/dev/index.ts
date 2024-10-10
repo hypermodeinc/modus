@@ -159,7 +159,7 @@ export default class Run extends Command {
         },
       });
     } else {
-      spawnSync(runtimePath + " -storagePath " + quote([cwd]), {
+      spawnSync(quote([runtimePath,"-storagePath",path.normalize(cwd)]), {
         stdio: "inherit",
         env: {
           ...process.env,
