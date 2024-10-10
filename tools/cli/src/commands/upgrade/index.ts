@@ -9,7 +9,7 @@
 
 import { Command, Flags } from "@oclif/core";
 
-export default class Upgrade extends Command {
+export default class UpgradeCommand extends Command {
   static args = {
     // person: Args.string({ description: "Person to say hello to", required: true }),
   };
@@ -21,6 +21,6 @@ export default class Upgrade extends Command {
   static flags = {};
 
   async run(): Promise<void> {
-    const { args, flags } = await this.parse(Upgrade);
+    const { args, flags } = await this.parse(UpgradeCommand);
   }
 }

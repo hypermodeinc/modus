@@ -9,7 +9,6 @@
 
 import { Args, Command } from "@oclif/core";
 import chalk from "chalk";
-import os from "node:os";
 import { expandHomeDir } from "../../../util/index.js";
 import { existsSync, readdirSync, rmSync } from "node:fs";
 

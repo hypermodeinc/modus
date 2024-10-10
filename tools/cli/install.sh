@@ -10,8 +10,8 @@
 # I'm hosting builds on my own fork until it goes live
 
 # Config
-PACKAGE_ORG=""
-PACKAGE_NAME="test-modus-cli"
+PACKAGE_ORG="@hypermode"
+PACKAGE_NAME="modus-cli"
 INSTALL_DIR="${MODUS_CLI:-"$HOME/.modus/cli"}"
 VERSION="latest"
 
@@ -31,7 +31,7 @@ download_from_npm() {
   local download_file="$tmpdir/$filename"
 
   local archive_url="https://registry.npmjs.org/${PACKAGE_ORG:+$PACKAGE_ORG/}${PACKAGE_NAME}/-/${PACKAGE_NAME}-${VERSION}.tgz"
-
+echo $archive_url
   mkdir -p "$tmpdir"
 
   curl --progress-bar --show-error --location --fail "$archive_url" \

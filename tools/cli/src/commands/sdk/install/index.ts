@@ -10,10 +10,9 @@
 import { Args, Command, Flags } from "@oclif/core";
 import { quote } from "shell-quote";
 import chalk from "chalk";
-import { cpSync, existsSync, mkdirSync, readdirSync, rmdirSync, rmSync, statSync, symlinkSync } from "node:fs";
-import os from "node:os";
+import { cpSync, existsSync, mkdirSync, readdirSync,  rmSync, statSync, symlinkSync } from "node:fs";
 import path from "node:path";
-import { ask, clearLine, downloadFile, expandHomeDir, isRunnable } from "../../../util/index.js";
+import { ask, clearLine, downloadFile, expandHomeDir } from "../../../util/index.js";
 import { execSync } from "node:child_process";
 import { rm } from "node:fs/promises";
 import { createInterface } from "node:readline";
