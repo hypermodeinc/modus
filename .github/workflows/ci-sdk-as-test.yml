@@ -9,7 +9,7 @@ on:
 jobs:
   sdk-as-test:
     if: github.event_name == 'pull_request'
-    name: AssemblyScript SDK Unit Tests
+    name: test (sdk/assemblyscript/src)
     runs-on: ubuntu-latest
     defaults:
       run:

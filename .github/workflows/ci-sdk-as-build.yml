@@ -9,7 +9,7 @@ on:
 jobs:
   get-dirs:
     if: github.event_name == 'pull_request'
-    name: find examples
+    name: search
     runs-on: ubuntu-latest
     outputs:
       dirs: ${{ steps.get-dirs.outputs.dirs }}
@@ -18,7 +18,6 @@ jobs:
         uses: actions/checkout@v4
       - name: Find Examples
         id: get-dirs
-        # we need to build all the examples
         run: echo "dirs=$(ls -d sdk/assemblyscript/examples/* | jq -Rsc 'split("\n")[:-1]' )" >> ${GITHUB_OUTPUT}
 
   sdk-as-build-examples:
