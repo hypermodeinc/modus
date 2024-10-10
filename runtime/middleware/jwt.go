@@ -83,8 +83,8 @@ func HandleJWT(next http.Handler) http.Handler {
 			}
 		}
 
-		if config.IsDevEnvironment() {
-			if len(authPublicKeys) == 0 {
+		if len(authPublicKeys) == 0 {
+			if config.IsDevEnvironment() {
 				if tokenStr == "" {
 					next.ServeHTTP(w, r)
 					return
@@ -100,9 +100,8 @@ func HandleJWT(next http.Handler) http.Handler {
 				}
 				next.ServeHTTP(w, r.WithContext(ctx))
 				return
-			}
-		} else {
-			if len(authPublicKeys) == 0 {
+
+			} else {
 				next.ServeHTTP(w, r)
 				return
 			}
