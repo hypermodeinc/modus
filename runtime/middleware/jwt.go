@@ -52,6 +52,8 @@ func Init() {
 	}
 }
 
+var jwtParser = new(jwt.Parser)
+
 func HandleJWT(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var ctx context.Context = r.Context()
@@ -65,8 +67,6 @@ func HandleJWT(next http.Handler) http.Handler {
 				return
 			}
 		}
-
-		jwtParser := new(jwt.Parser)
 
 		if len(rsaPublicKeys) == 0 {
 			if !config.IsDevEnvironment() || tokenStr == "" {
