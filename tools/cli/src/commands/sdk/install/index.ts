@@ -111,7 +111,7 @@ export default class SDKInstallCommand extends Command {
     this.log("[3/4] Unpacking release" + "tar -xf " + archivePath + " -C " + unpackedDir);
     await rm(unpackedDir, { recursive: true, force: true });
     mkdirSync(unpackedDir, { recursive: true })
-    execSync("tar -xf " + quote([archivePath]) + " -C " + unpackedDir);
+    execSync(quote(["tar", "-xf", archivePath, "-C", unpackedDir]));
 
     clearLine();
     this.log("[3/4] Unpacked release");
@@ -157,9 +157,9 @@ export default class SDKInstallCommand extends Command {
     await rm(unpackedDir, { recursive: true, force: true });
     mkdirSync(unpackedDir, { recursive: true });
     if (os.platform() === "win32") {
-      execSync("tar -xf " + quote([archivePath]) + " -C " + unpackedDir);
+      execSync(quote(["tar", "-xf", archivePath, "-C", unpackedDir]));
     } else {
-      execSync("unzip " + quote([archivePath]) + " -d " + unpackedDir);
+      execSync(quote(["unzip ", quote([archivePath]), "-d", unpackedDir]));
     }
     clearLine();
     this.log("[3/4] Unpacked archive");

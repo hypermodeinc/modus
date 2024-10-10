@@ -150,7 +150,7 @@ export default class Run extends Command {
           MODUS_ENV: "dev",
           // Since we download via http, we don't have git initialized as a git clone would.
           // So, we set MODUS_BUILD_VERSION manually. Note that this *is* in dev mode, so this won't be used in prod anyways
-          MODUS_BUILD_VERSION: execSync(path.join(runtimePath, ".git")) ? undefined : "modus-cli/" + flags.runtime
+          MODUS_BUILD_VERSION: existsSync(path.join(runtimePath, ".git")) ? undefined : "modus-cli/" + flags.runtime
         }
       });
     } else {
