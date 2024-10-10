@@ -5,6 +5,9 @@
   "author": "Hypermode Inc.",
   "license": "Apache-2.0",
   "type": "module",
+  "bin": {
+    "modus-as-build": "./bin/build-plugin.js"
+  },
   "scripts": {
     "test": "ast run",
     "pretest": "ast build && tsc -p ./tests",

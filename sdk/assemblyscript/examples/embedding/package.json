@@ -6,7 +6,7 @@
   "license": "Apache-2.0",
   "type": "module",
   "scripts": {
-    "build": "node ./node_modules/@hypermode/modus-sdk-as/bin/build-plugin.js",
+    "build": "modus-as-build",
     "lint": "eslint .",
     "pretty": "prettier --write .",
     "pretty:check": "prettier --check ."
