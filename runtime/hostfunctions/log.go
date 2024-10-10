@@ -19,7 +19,9 @@ import (
 )
 
 func init() {
-	registerHostFunction("hypermode", "log", LogFunctionMessage)
+	const module_name = "modus_system"
+
+	registerHostFunction(module_name, "log", LogFunctionMessage)
 }
 
 func LogFunctionMessage(ctx context.Context, level, message string) {

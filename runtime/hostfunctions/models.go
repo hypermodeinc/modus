@@ -16,14 +16,16 @@ import (
 )
 
 func init() {
-	registerHostFunction("hypermode", "lookupModel", models.GetModelInfo,
+	const module_name = "modus_models"
+
+	registerHostFunction(module_name, "lookupModel", models.GetModelInfo,
 		withCancelledMessage("Cancelled getting model info."),
 		withErrorMessage("Error getting model info."),
 		withMessageDetail(func(modelName string) string {
 			return fmt.Sprintf("Model: %s", modelName)
 		}))
 
-	registerHostFunction("hypermode", "invokeModel", models.InvokeModel,
+	registerHostFunction(module_name, "invokeModel", models.InvokeModel,
 		withStartingMessage("Invoking model."),
 		withCompletedMessage("Completed model invocation."),
 		withCancelledMessage("Cancelled model invocation."),

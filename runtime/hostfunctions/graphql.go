@@ -16,7 +16,9 @@ import (
 )
 
 func init() {
-	registerHostFunction("hypermode", "executeGQL", graphqlclient.Execute,
+	const module_name = "modus_graphql_client"
+
+	registerHostFunction(module_name, "executeGQL", graphqlclient.Execute,
 		withStartingMessage("Executing GraphQL operation."),
 		withCompletedMessage("Completed GraphQL operation."),
 		withCancelledMessage("Cancelled GraphQL operation."),

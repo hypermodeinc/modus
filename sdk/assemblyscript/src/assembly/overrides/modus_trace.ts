@@ -8,7 +8,7 @@
  */
 
 // @ts-expect-error: decorator
-@external("hypermode", "log")
+@external("modus_system", "log")
 declare function log(level: string, message: string): void;
 
 const traceLevel = "trace";

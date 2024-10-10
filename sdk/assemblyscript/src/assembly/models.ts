@@ -13,11 +13,11 @@ import * as utils from "./utils";
 type ModelInvoker = (modelName: string, inputJson: string) => string | null;
 
 // @ts-expect-error: decorator
-@external("hypermode", "lookupModel")
+@external("modus_models", "lookupModel")
 declare function hostLookupModel(modelName: string): ModelInfo;
 
 // @ts-expect-error: decorator
-@external("hypermode", "invokeModel")
+@external("modus_models", "invokeModel")
 declare function hostInvokeModel(
   modelName: string,
   input: string,

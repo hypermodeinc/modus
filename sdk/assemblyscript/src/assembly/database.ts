@@ -11,7 +11,7 @@ import { JSON } from "json-as";
 import * as utils from "./utils";
 
 // @ts-expect-error: decorator
-@external("hypermode", "databaseQuery")
+@external("modus_sql_client", "databaseQuery")
 declare function databaseQuery(
   hostName: string,
   dbType: string,
