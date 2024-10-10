@@ -141,10 +141,15 @@ export default class Run extends Command {
     if (isDev) {
       if (!isRunnable("go")) {
         this.logError("Cannot find any valid versions of Go! Please install go");
+        process.exit(0);
+      }
+      if (!isRunnable("make")) {
+        this.logError("Make is not installed! Please install it before continuing");
+        process.exit(0);
       }
       execSync("make run", {
         cwd: runtimePath,
-        stdio: "ignore",
+        stdio: "inherit",
         env: {
           ...process.env,
           MODUS_ENV: "dev",

@@ -129,7 +129,7 @@ export default class NewCommand extends Command {
     if (!clone) {
       gitSpinner.stop();
       this.logError("Failed to clone the git repository. Please check your internet and try again.");
-      return;
+      process.exit(0);
     }
 
     gitSpinner.stop();

@@ -40,7 +40,7 @@ export default class BuildCommand extends Command {
     const sdk = SDK.AssemblyScript;
     if (!isRunnable(NPM_CMD)) {
       this.logError("Could not locate NPM. Please install and try again!");
-      return;
+      process.exit(0);
     }
 
     if (!existsSync(path.join(cwd, "/node_modules"))) {

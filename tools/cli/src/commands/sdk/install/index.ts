@@ -13,7 +13,7 @@ import chalk from "chalk";
 import { cpSync, existsSync, mkdirSync, readdirSync, rmdirSync, rmSync, statSync, symlinkSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { ask, clearLine, downloadFile, expandHomeDir } from "../../../util/index.js";
+import { ask, clearLine, downloadFile, expandHomeDir, isRunnable } from "../../../util/index.js";
 import { execSync } from "node:child_process";
 import { rm } from "node:fs/promises";
 import { createInterface } from "node:readline";
@@ -73,7 +73,7 @@ export default class SDKInstallCommand extends Command {
   async run(): Promise<void> {
     const ctx = await this.parse(SDKInstallCommand);
     if (ctx.args.version) await this.installVersion(ctx);
-    else if (ctx.flags.branch) await this.installCommit(ctx);
+    else if (ctx.flags.branch || ctx.flags.commit) await this.installCommit(ctx);
     else if (ctx.flags.link) await this.linkDir(ctx);
   }
 
@@ -93,7 +93,7 @@ export default class SDKInstallCommand extends Command {
     version = version?.replace("v", "");
 
     this.log("[2/4] Downloading release");
-    const extension = os.platform() == "win32" ? ".zip" : ".tar.gz";
+    const extension = ".tar.gz";
     const filename = "v" + version + extension;
     const downloadLink = "https://github.com/" + flags.repo + "/archive/refs/tags/" + filename;
 
@@ -128,6 +128,10 @@ export default class SDKInstallCommand extends Command {
   async installCommit(ctx: ParserCtx) {
     const { flags } = ctx;
 
+    if (flags.branch && flags.commit == "latest") {
+      const branch_info = await fetchBranch(flags.repo, flags.branch);
+      flags.commit = branch_info.sha;
+    }
     flags.commit = flags.commit.slice(0, 7);
 
     let sha = "";
@@ -142,8 +146,8 @@ export default class SDKInstallCommand extends Command {
     this.log("[1/4] Found latest commit");
 
     this.log("[2/4] Fetching Modus from latest commit" + " " + chalk.dim("(" + version + ")"));
-    const downloadLink = flags.commit == "latest" ? "https://github.com/" + flags.repo + "/archive/refs/heads/" + branch + ".zip" : "https://github.com/" + flags.repo + "/archive/" + sha + ".zip";
-    const archiveName = ("modus-" + version + ".zip").replaceAll("/", "-");
+    const downloadLink = "https://github.com/" + flags.repo + "/archive/" + sha + ".tar.gz";
+    const archiveName = ("modus-" + version + ".tar.gz").replaceAll("/", "-");
     const tempDir = expandHomeDir("~/.modus/.modus-temp");
     const archivePath = path.join(tempDir, archiveName);
     mkdirSync(tempDir, { recursive: true });
@@ -153,14 +157,10 @@ export default class SDKInstallCommand extends Command {
     this.log("[2/4] Fetched Modus");
 
     this.log("[3/4] Unpacking archive");
-    const unpackedDir = tempDir + "/" + archiveName.replace(".zip", "");
+    const unpackedDir = tempDir + "/" + archiveName.replace(".tar.gz", "");
     await rm(unpackedDir, { recursive: true, force: true });
     mkdirSync(unpackedDir, { recursive: true });
-    if (os.platform() === "win32") {
-      execSync(quote(["tar", "-xf", archivePath, "-C", unpackedDir]));
-    } else {
-      execSync(quote(["unzip ", quote([archivePath]), "-d", unpackedDir]));
-    }
+    execSync(quote(["tar", "-xf", archivePath, "-C", unpackedDir]));
     clearLine();
     this.log("[3/4] Unpacked archive");
 
@@ -280,16 +280,14 @@ function linkDirectories(srcDir: string, destDir: string) {
   }
 }
 
-type ParserCtx = ParserOutput<
-  {
-    silent: boolean;
-    branch: string | undefined;
-    link: string | undefined;
-  },
-  {
-    [flag: string]: any;
-  },
-  {
-    version: string | undefined;
-  }
->;
+type ParserCtx = ParserOutput<{
+  silent: boolean;
+  repo: string;
+  branch: string | undefined;
+  commit: string;
+  link: string | undefined;
+}, {
+  [flag: string]: any;
+}, {
+  version: string | undefined;
+}>;
