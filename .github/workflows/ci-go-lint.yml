@@ -10,7 +10,7 @@ on:
 jobs:
   get-dirs:
     if: github.event_name == 'pull_request'
-    name: find go projects
+    name: search
     runs-on: ubuntu-latest
     outputs:
       dirs: ${{ steps.get-dirs.outputs.dirs }}
@@ -19,7 +19,7 @@ jobs:
         uses: actions/checkout@v4
       - name: Search for go.mod files
         id: get-dirs
-        run: echo "dirs=$(find . -name 'go.mod' -exec dirname {} \; | jq -Rsc 'split("\n")[:-1]')" >> ${GITHUB_OUTPUT}
+        run: echo "dirs=$(find . -name 'go.mod' -exec dirname {} \; | sed 's|^\./||' | jq -Rsc 'split("\n")[:-1]')" >> ${GITHUB_OUTPUT}
 
   go-lint:
     needs: get-dirs
