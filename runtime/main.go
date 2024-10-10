@@ -65,7 +65,7 @@ func main() {
 	local := utils.DebugModeEnabled()
 
 	// Retrieve auth private keys
-	middleware.Init()
+	middleware.Init(ctx)
 
 	// Start the HTTP server to listen for requests.
 	// Note, this function blocks, and handles shutdown gracefully.
