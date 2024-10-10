@@ -11,6 +11,7 @@ package middleware
 
 import (
 	"context"
+	"crypto/rsa"
 	"encoding/json"
 	"net/http"
 	"os"
@@ -27,17 +28,27 @@ type jwtClaimsKey string
 
 const jwtClaims jwtClaimsKey = "jwt_claims"
 
-var PrivKeys map[string]string
+var rsaPublicKeys map[string]*rsa.PublicKey
 
 func Init() {
 	privKeysStr := os.Getenv("MODUS_RSA_PEMS")
 	if privKeysStr == "" {
 		return
 	}
-	err := json.Unmarshal([]byte(privKeysStr), &PrivKeys)
+	var publicKeysStr map[string]string
+	err := json.Unmarshal([]byte(privKeysStr), &publicKeysStr)
 	if err != nil {
 		logger.Error(context.Background()).Err(err).Msg("JWT private keys unmarshalling error")
 		return
+	}
+	rsaPublicKeys = make(map[string]*rsa.PublicKey)
+	for key, value := range publicKeysStr {
+		publicKey, err := jwt.ParseRSAPublicKeyFromPEM([]byte(value))
+		if err != nil {
+			logger.Error(context.Background()).Err(err).Msg("JWT public key parsing error")
+			return
+		}
+		rsaPublicKeys[key] = publicKey
 	}
 }
 
@@ -45,14 +56,24 @@ func HandleJWT(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var ctx context.Context = r.Context()
 		tokenStr := r.Header.Get("Authorization")
-		trimmedTokenStr := strings.TrimPrefix(tokenStr, "Bearer ")
+		if tokenStr != "" {
+			if s, found := strings.CutPrefix(tokenStr, "Bearer "); found {
+				tokenStr = s
+			} else {
+				logger.Error(ctx).Msg("Invalid JWT token format, Bearer required")
+				http.Error(w, "Invalid JWT token format, Bearer required", http.StatusUnauthorized)
+				return
+			}
+		}
 
-		if PrivKeys == nil {
-			if !config.IsDevEnvironment() || trimmedTokenStr == "" {
+		jwtParser := new(jwt.Parser)
+
+		if len(rsaPublicKeys) == 0 {
+			if !config.IsDevEnvironment() || tokenStr == "" {
 				next.ServeHTTP(w, r)
 				return
 			}
-			token, _, err := new(jwt.Parser).ParseUnverified(trimmedTokenStr, jwt.MapClaims{})
+			token, _, err := jwtParser.ParseUnverified(tokenStr, jwt.MapClaims{})
 			if err != nil {
 				logger.Warn(ctx).Err(err).Msg("Error parsing JWT token. Continuing since running in development")
 				next.ServeHTTP(w, r)
@@ -66,20 +87,15 @@ func HandleJWT(next http.Handler) http.Handler {
 
 		}
 
-		if trimmedTokenStr == tokenStr {
-			logger.Error(ctx).Msg("Invalid JWT token format, Bearer required")
-			http.Error(w, "Invalid JWT token format, Bearer required", http.StatusUnauthorized)
-			return
-		}
-
 		var token *jwt.Token
 		var err error
 
-		for _, privKey := range PrivKeys {
-			token, err = jwt.Parse(trimmedTokenStr, func(token *jwt.Token) (interface{}, error) {
-				return jwt.ParseRSAPublicKeyFromPEM([]byte(privKey))
+		for _, publicKey := range rsaPublicKeys {
+			token, err = jwtParser.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
+				return publicKey, nil
 			})
 			if err == nil {
+				logger.Info(ctx).Msg("JWT token parsed successfully")
 				break
 			}
 		}
