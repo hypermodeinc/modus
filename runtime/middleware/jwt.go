@@ -107,6 +107,12 @@ func HandleJWT(next http.Handler) http.Handler {
 			}
 		}
 
+		if tokenStr == "" {
+			logger.Error(ctx).Msg("JWT token not found")
+			http.Error(w, "Access Denied", http.StatusUnauthorized)
+			return
+		}
+
 		var token *jwt.Token
 		var err error
 		var found bool
