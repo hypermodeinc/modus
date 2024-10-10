@@ -40,9 +40,9 @@ func Init(ctx context.Context) {
 	err := json.Unmarshal([]byte(publicKeysJson), &publicKeyStrings)
 	if err != nil {
 		if config.IsDevEnvironment() {
-			logger.Fatal(ctx).Err(err).Msg("JWT public keys deserializing error")
+			logger.Fatal(ctx).Err(err).Msg("Auth public keys deserializing error")
 		}
-		logger.Error(ctx).Err(err).Msg("JWT private keys deserializing error")
+		logger.Error(ctx).Err(err).Msg("Auth public keys deserializing error")
 		return
 	}
 	authPublicKeys = make(map[string]any)
