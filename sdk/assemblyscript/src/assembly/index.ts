@@ -27,3 +27,6 @@ export { models };
 
 import * as vectors from "./vectors";
 export { vectors };
+
+import * as auth from "./auth";
+export { auth };

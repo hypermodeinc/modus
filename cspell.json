@@ -1,7 +1,10 @@
 {
   "version": "0.2",
   "language": "en",
-  "flagWords": ["hte", "teh"],
+  "flagWords": [
+    "hte",
+    "teh"
+  ],
   "words": [
     "abstractlogger",
     "Albus",
@@ -119,6 +122,7 @@
     "omitnull",
     "openai",
     "operationreport",
+    "PEMS",
     "pgconn",
     "pgxpool",
     "picsum",
@@ -153,6 +157,7 @@
     "typedarray",
     "uids",
     "uncategorized",
+    "Unmarshalled",
     "unmarshalling",
     "unnest",
     "upsert",

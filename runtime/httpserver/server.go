@@ -24,6 +24,7 @@ import (
 	"github.com/hypermodeinc/modus/runtime/graphql"
 	"github.com/hypermodeinc/modus/runtime/logger"
 	"github.com/hypermodeinc/modus/runtime/metrics"
+	"github.com/hypermodeinc/modus/runtime/middleware"
 	"github.com/hypermodeinc/modus/runtime/utils"
 
 	"github.com/rs/cors"
@@ -111,8 +112,8 @@ func startHttpServer(ctx context.Context, addresses ...string) {
 func GetHandlerMux() http.Handler {
 	mux := http.NewServeMux()
 
-	// Register our main endpoint with instrumentation.
-	mux.Handle("/graphql", metrics.InstrumentHandler(graphql.GraphQLRequestHandler, "graphql"))
+	// Register our main endpoints with instrumentation.
+	mux.Handle("/graphql", metrics.InstrumentHandler(middleware.HandleJWT(graphql.GraphQLRequestHandler), "graphql"))
 
 	// Register metrics endpoint which uses the Prometheus scraping protocol.
 	// We do not instrument it with the InstrumentHandler so that any scraper (eg. OTel)
