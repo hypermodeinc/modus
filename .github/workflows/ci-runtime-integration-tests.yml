@@ -8,7 +8,7 @@ on:
       - ready_for_review
 jobs:
   runtime-integration-tests:
-    name: integration tests (runtime)
+    name: test (runtime)
     runs-on: warp-ubuntu-latest-x64-4x
     if: github.event.pull_request.draft == false
     steps:
