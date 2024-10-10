@@ -43,6 +43,7 @@ if errorlevel 1 (
         ) > "%LOCAL_FILE%.cmd"
     ::)
     call :install_deps
+    cls
     %~dp0scripts\modus-local.cmd %*
     exit
 ) else (
@@ -58,6 +59,7 @@ if errorlevel 1 (
         ) > "%PATH_FILE%.cmd"
     )
     call :install_deps
+    cls
     %~dp0scripts\modus-path.cmd %*
     exit
 )
