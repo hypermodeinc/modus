@@ -83,23 +83,29 @@ func HandleJWT(next http.Handler) http.Handler {
 			}
 		}
 
-		if len(authPublicKeys) == 0 {
-			if !config.IsDevEnvironment() || tokenStr == "" {
+		if config.IsDevEnvironment() {
+			if len(authPublicKeys) == 0 {
+				if tokenStr == "" {
+					next.ServeHTTP(w, r)
+					return
+				}
+				token, _, err := jwtParser.ParseUnverified(tokenStr, jwt.MapClaims{})
+				if err != nil {
+					logger.Warn(ctx).Err(err).Msg("Error parsing JWT token. Continuing since running in development")
+					next.ServeHTTP(w, r)
+					return
+				}
+				if claims, ok := token.Claims.(jwt.MapClaims); ok {
+					ctx = addClaimsToContext(ctx, claims)
+				}
+				next.ServeHTTP(w, r.WithContext(ctx))
+				return
+			}
+		} else {
+			if len(authPublicKeys) == 0 {
 				next.ServeHTTP(w, r)
 				return
 			}
-			token, _, err := jwtParser.ParseUnverified(tokenStr, jwt.MapClaims{})
-			if err != nil {
-				logger.Warn(ctx).Err(err).Msg("Error parsing JWT token. Continuing since running in development")
-				next.ServeHTTP(w, r)
-				return
-			}
-			if claims, ok := token.Claims.(jwt.MapClaims); ok {
-				ctx = addClaimsToContext(ctx, claims)
-			}
-			next.ServeHTTP(w, r.WithContext(ctx))
-			return
-
 		}
 
 		var token *jwt.Token
