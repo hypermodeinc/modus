@@ -11,6 +11,10 @@
 # It first checks which node and if it is <= $NODE_MIN, it installs node
 # It can use Node on PATH or a local build of node
 
+clear_line() {
+  echo -ne "\033[F\033[K"
+}
+
 get_script_dir() {
     SOURCE="${BASH_SOURCE[0]}"
     DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
@@ -49,13 +53,16 @@ install_node() {
 
     download_file="node-v$NODE_WANTED-$OS-$ARCH.tar.gz"
     download_url="https://nodejs.org/dist/v$NODE_WANTED/$download_file"
+    echo "Installing node from $download_url"
     temp_dir="$DIR/.temp"
 
     rm -rf $temp_dir
     mkdir $temp_dir
-    curl --silent --show-error --location --fail "$download_url" \
+    curl --progress-bar --show-error --location --fail "$download_url" \
         --output "$temp_dir/$download_file"
-
+    clear_line
+    clear_line
+    echo "Unpacking archive"
     tar -xf "$temp_dir/$download_file" -C "$temp_dir"
     rm -rf $download_file
     rm -rf "$DIR/$NODE_INSTALL_PATH"
@@ -65,6 +72,7 @@ install_node() {
     chmod +x "$DIR/$NODE_INSTALL_PATH/bin/npm"
     rm -rf $temp_dir
     NODE_PATH="$DIR/$NODE_INSTALL_PATH/bin/node"
+    clear_line
 }
 
 check_node() {
@@ -87,9 +95,13 @@ check_node() {
 install_deps() {
     if [ ! -d "$NODE_MODULES_PATH" ]; then
         if command -v npm >/dev/null 2>&1; then
+            echo "Installing dependencies with npm"
             npm --prefix "$BASE_DIR" install >/dev/null 2>&1
+            clear_line
         else
+            echo "Installing dependencies with npm"
             $DIR/$NODE_INSTALL_PATH/bin/npm --prefix "$BASE_DIR" install >/dev/null 2>&1
+            clear_line
         fi
     fi
 }
