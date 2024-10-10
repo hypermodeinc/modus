@@ -122,6 +122,7 @@
     "omitnull",
     "openai",
     "operationreport",
+    "PEMS",
     "pgconn",
     "pgxpool",
     "picsum",
