@@ -18,7 +18,7 @@ import (
 
 func GetJWTClaims[T any]() (T, error) {
 	var claims T
-	claimsStr := os.Getenv("JWT_CLAIMS")
+	claimsStr := os.Getenv("CLAIMS")
 	if claimsStr == "" {
 		return claims, errors.New("JWT claims not found")
 	}

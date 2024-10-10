@@ -27,7 +27,7 @@ import (
 
 type jwtClaimsKey string
 
-const jwtClaims jwtClaimsKey = "jwt_claims"
+const jwtClaims jwtClaimsKey = "claims"
 
 var authPublicKeys map[string]any
 

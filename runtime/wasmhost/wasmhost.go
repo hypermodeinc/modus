@@ -122,7 +122,7 @@ func (host *wasmHost) GetModuleInstance(ctx context.Context, plugin *plugins.Plu
 		WithSysWalltime().WithSysNanotime().
 		WithRandSource(rand.Reader).
 		WithStdout(wOut).WithStderr(wErr).
-		WithEnv("JWT_CLAIMS", jwtClaims)
+		WithEnv("CLAIMS", jwtClaims)
 
 	// Instantiate the plugin as a module.
 	// NOTE: This will also invoke the plugin's `_start` function,
