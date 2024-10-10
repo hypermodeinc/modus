@@ -1,6 +1,6 @@
 {
   "name": "test-modus-cli",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "description": "The Modus CLI",
   "author": "Hypermode, Inc.",
   "license": "Apache-2.0",

@@ -15,6 +15,7 @@ import { copyFileSync, existsSync, readdirSync, readFileSync, watch, writeFileSy
 import chalk from "chalk";
 import { execSync, spawnSync } from "child_process";
 import os from "node:os";
+import { quote } from "shell-quote";
 
 export default class Run extends Command {
   static args = {
@@ -131,8 +132,6 @@ export default class Run extends Command {
     try {
       if (flags.build || !existsSync(build_wasm)) await BuildCommand.run(args.path ? [args.path] : []);
     } catch { }
-    const deploy_wasm = expandHomeDir("~/.modus/" + project_name + ".wasm");
-    copyFileSync(build_wasm, deploy_wasm);
 
     if (isDev) {
       if (!isRunnable("go")) {
@@ -161,7 +160,7 @@ func GetVersionNumber() string {
         });
       }
 
-      execSync("go run .", {
+      execSync("go run . -storagePath " + quote([cwd]), {
         cwd: runtimePath,
         stdio: "inherit",
         env: {
@@ -170,7 +169,7 @@ func GetVersionNumber() string {
         }
       });
     } else {
-      spawnSync(runtimePath, {
+      spawnSync(runtimePath + " -storagePath " + quote([cwd]), {
         stdio: "inherit",
         env: {
           ...process.env,
@@ -196,7 +195,6 @@ func GetVersionNumber() string {
         try {
           await BuildCommand.run(args.path ? [args.path] : []);
         } catch { }
-        copyFileSync(build_wasm, deploy_wasm);
       }, delay);
 
       watch(path.join(cwd, "/assembly"), () => {
