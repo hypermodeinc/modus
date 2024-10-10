@@ -18,9 +18,13 @@ import { Metadata } from "../../util/metadata.js";
 import { existsSync } from "node:fs";
 import { execSync } from "node:child_process";
 import SDKInstallCommand from "../sdk/install/index.js";
+import { fileURLToPath } from "node:url";
+import { quote } from "shell-quote";
 
 const PKGMGRS = getAvailablePackageManagers();
 
+
+const NPM_CMD = isRunnable("npm") ? "npm" : path.join(path.dirname(fileURLToPath(import.meta.url)), "../../../bin/node-bin/bin/npm");
 export default class NewCommand extends Command {
   static description = "Create a new Modus project";
 
@@ -117,7 +121,7 @@ export default class NewCommand extends Command {
       process.exit(0);
     }
 
-    if (sdk === SDK.AssemblyScript && !isRunnable("npm")) {
+    if (sdk === SDK.AssemblyScript && !isRunnable(NPM_CMD)) {
       this.logError("Could not locate NPM! Please install npm and try again!");
       process.exit(0);
     }
@@ -146,7 +150,7 @@ export default class NewCommand extends Command {
     }).start();
 
     if (sdk === "AssemblyScript") {
-      if (isRunnable("npm")) execSync("npm install", { cwd: dir, stdio: "ignore" });
+      if (isRunnable(NPM_CMD)) execSync(quote([NPM_CMD,"install"]), { cwd: dir, stdio: "ignore" });
     } else if (sdk === "Go (Beta)") {
       const sh = execSync("go install", { cwd: dir, stdio: "ignore" });
       if (!sh) {

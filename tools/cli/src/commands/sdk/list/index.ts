@@ -41,8 +41,4 @@ export default class SDKListCommand extends Command {
       this.log(version);
     }
   }
-
-  private logError(message: string) {
-    this.log("\n" + chalk.red(" ERROR ") + chalk.dim(": " + message));
-  }
 }

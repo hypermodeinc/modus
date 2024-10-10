@@ -91,8 +91,6 @@ install_deps() {
         else
             $DIR/$NODE_INSTALL_PATH/bin/npm --prefix "$BASE_DIR" install >/dev/null 2>&1
         fi
-    else
-        echo "nop"
     fi
 }
 

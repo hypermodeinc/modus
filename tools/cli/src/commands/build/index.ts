@@ -9,11 +9,15 @@
 
 import { Args, Command } from "@oclif/core";
 import chalk from "chalk";
+import { quote } from "shell-quote";
 import { execSync } from "node:child_process";
 import path from "node:path";
 import { SDK } from "../../custom/globals.js";
 import { isRunnable } from "../../util/index.js";
+import { fileURLToPath } from "node:url";
+import { existsSync } from "node:fs";
 
+const NPM_CMD = isRunnable("npm") ? "npm" : path.join(path.dirname(fileURLToPath(import.meta.url)), "../../../bin/node-bin/bin/npm");
 export default class BuildCommand extends Command {
   static args = {
     path: Args.string({
@@ -34,18 +38,19 @@ export default class BuildCommand extends Command {
 
     const cwd = args.path ? path.join(process.cwd(), args.path) : process.cwd();
     const sdk = SDK.AssemblyScript;
-    if (!isRunnable("npm")) {
+    if (!isRunnable(NPM_CMD)) {
       this.logError("Could not locate NPM. Please install and try again!");
       return;
     }
 
-    // if (!existsSync(path.join(cwd, "/node_modules"))) {
-    //   this.logError("Dependencies are not installed! Please install dependencies with npm i");
-    //   process.exit(0);
-    // }
+    if (!existsSync(path.join(cwd, "/node_modules"))) {
+      this.logError("Dependencies are not installed! Please install dependencies with npm i");
+      process.exit(0);
+    }
 
+    // should pass argv
     if (sdk === SDK.AssemblyScript) {
-      execSync("npm run build", { cwd, stdio: "inherit" });
+      execSync(quote([NPM_CMD, "run", "build"]), { cwd, stdio: "inherit" });
     }
   }
 
