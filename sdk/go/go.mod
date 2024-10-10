@@ -3,14 +3,16 @@ module github.com/hypermodeinc/modus/sdk/go
 go 1.23.0
 
 require (
-	github.com/hypermodeinc/modus/lib/manifest v0.0.0
-	github.com/hypermodeinc/modus/lib/wasmextractor v0.0.0
+	github.com/hypermodeinc/modus/lib/manifest v0.0.0-20241010205742-db9f1540f70b
+	github.com/hypermodeinc/modus/lib/wasmextractor v0.0.0-20241010205742-db9f1540f70b
 )
 
-replace (
-	github.com/hypermodeinc/modus/lib/manifest => ../../lib/manifest
-	github.com/hypermodeinc/modus/lib/wasmextractor => ../../lib/wasmextractor
-)
+// NOTE: during developement, you can use replace directives if needed
+// to pick up changes to the above dependencies.  However, they MUST not be committed
+// to this file, because that will break `go install` of the build tools.
+
+// replace github.com/hypermodeinc/modus/lib/manifest => ../../lib/manifest
+// replace github.com/hypermodeinc/modus/lib/wasmextractor => ../../lib/wasmextractor
 
 require (
 	github.com/fatih/color v1.17.0
