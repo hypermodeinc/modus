@@ -1,4 +1,5 @@
 EXECUTABLE := modus_runtime
+VERSION := $(shell git describe --tags --always --match 'runtime/*' | sed 's/^runtime\///')
 
 ifneq ($(OS), Windows_NT)
 	OS := $(shell uname -s)
@@ -18,7 +19,7 @@ tidy:
 
 .PHONY: build
 build:
-	go build -o $(EXECUTABLE) -ldflags "-s -w -X github.com/hypermodeinc/modus/runtime/config.version=$(shell git describe --tags --always --match 'runtime/*' | sed 's/^runtime\///')" .
+	go build -o $(EXECUTABLE) -ldflags "-s -w -X github.com/hypermodeinc/modus/runtime/config.version=$(VERSION)" .
 
 .PHONY: run
 run:
@@ -69,4 +70,4 @@ clean:
 
 .PHONY: docker-build
 docker-build:
-	docker build --build-arg MODUS_BUILD_VERSION="$(shell git describe --tags --always)" -t modus_runtime .
+	cd .. && docker build --build-arg MODUS_BUILD_VERSION="$(VERSION)" -t modus_runtime .

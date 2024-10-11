@@ -2,15 +2,18 @@
 FROM --platform=$BUILDPLATFORM golang:alpine AS builder
 WORKDIR /src
 
+# copy dependencies then switch to the runtime directory
+COPY ./lib ./lib
+WORKDIR /src/runtime
+
 # copy go.mod and go.sum files separately so that the download step
 # is only run when the dependencies change
-COPY go.mod go.sum ./
+COPY runtime/go.mod runtime/go.sum ./
 RUN go mod download
 
-COPY ./ ./
+COPY runtime/ ./
 ARG TARGETOS TARGETARCH MODUS_BUILD_VERSION
-RUN MODUS_BUILD_VERSION=$MODUS_BUILD_VERSION go generate ./...
-RUN GOOS=$TARGETOS GOARCH=$TARGETARCH go build -o modus_runtime
+RUN GOOS=$TARGETOS GOARCH=$TARGETARCH go build -o modus_runtime -ldflags "-s -w -X github.com/hypermodeinc/modus/runtime/config.version=$MODUS_BUILD_VERSION" .
 
 # build the container image
 FROM ubuntu:22.04
@@ -24,7 +27,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     less 
 
 # copy runtime binary from the build phase
-COPY --from=builder /src/modus_runtime /usr/bin/modus_runtime
+COPY --from=builder /src/runtime/modus_runtime /usr/bin/modus_runtime
 
 # update certificates every build
 RUN apt-get update && apt-get install -y --no-install-recommends \
