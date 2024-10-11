@@ -29,7 +29,7 @@ func GetAwsConfig() aws.Config {
 }
 
 func Initialize(ctx context.Context) {
-	if !(hmConfig.UseAwsStorage || hmConfig.UseAwsSecrets) {
+	if !(hmConfig.UseAwsStorage) {
 		return
 	}
 

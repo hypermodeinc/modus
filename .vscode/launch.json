@@ -2,7 +2,7 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Modus Runtime (local)",
+      "name": "Modus Runtime",
       "type": "go",
       "request": "launch",
       "mode": "auto",
@@ -16,7 +16,7 @@
       "args": ["--refresh=1s"]
     },
     {
-      "name": "Modus Runtime (AWS)",
+      "name": "Modus Runtime (AWS Storage)",
       "type": "go",
       "request": "launch",
       "mode": "auto",
@@ -25,13 +25,12 @@
       "env": {
         "MODUS_ENV": "dev",
         "MODUS_DEBUG": "true",
-        "AWS_REGION": "us-west-2",
-        "AWS_PROFILE": "sandbox",
+        "AWS_REGION": "${input:awsRegion}",
+        "AWS_PROFILE": "${input:awsProfile}",
         "AWS_SDK_LOAD_CONFIG": "true",
         "MODUS_DB": "postgresql://postgres:postgres@localhost:5433/my-runtime-db?sslmode=disable"
       },
       "args": [
-        "--useAwsSecrets",
         "--useAwsStorage",
         "--s3bucket=${input:s3bucket}",
         "--s3path=${input:s3folder}",
@@ -50,7 +49,7 @@
       }
     },
     {
-      "name": "hypbumodus-go-buildild http example",
+      "name": "modus-go-build http example",
       "type": "go",
       "request": "launch",
       "mode": "auto",
@@ -62,6 +61,18 @@
     }
   ],
   "inputs": [
+    {
+      "id": "awsProfile",
+      "type": "promptString",
+      "description": "Enter the AWS profile name",
+      "default": "sandbox"
+    },
+    {
+      "id": "awsRegion",
+      "type": "promptString",
+      "description": "Enter the AWS region",
+      "default": "us-west-2"
+    },
     {
       "id": "s3bucket",
       "type": "promptString",
