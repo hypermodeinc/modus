@@ -17,7 +17,7 @@ import "unsafe"
 //go:wasmimport modus_models getModelInfo
 func _lookupModel(modelName *string) unsafe.Pointer
 
-//modus:import hypermode getModelInfo
+//modus:import modus_models getModelInfo
 func lookupModel(modelName *string) *ModelInfo {
 	info := _lookupModel(modelName)
 	if info == nil {
