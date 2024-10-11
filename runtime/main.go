@@ -7,8 +7,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-//go:generate go run ./tools/generate_version
-
 package main
 
 import (

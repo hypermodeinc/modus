@@ -38,8 +38,6 @@ jobs:
         with:
           cache-dependency-path: "${{ matrix.dir }}/go.sum"
           go-version-file: "${{ matrix.dir }}/go.mod"
-      - name: Generate Code
-        run: go generate ./...
       - name: Run Unit Tests
         run: |
           go install github.com/jstemmer/go-junit-report/v2@latest

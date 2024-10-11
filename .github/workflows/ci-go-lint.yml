@@ -39,8 +39,6 @@ jobs:
         with:
           cache-dependency-path: "${{ matrix.dir }}/go.sum"
           go-version-file: "${{ matrix.dir }}/go.mod"
-      - name: Generate Code
-        run: go generate ./...
       - name: Run Linter
         uses: golangci/golangci-lint-action@v6
         with:

@@ -42,8 +42,6 @@ jobs:
         with:
           cache-dependency-path: "./sdk/go/go.sum"
           go-version-file: "./sdk/go/go.mod"
-      - name: Generate Code
-        run: go generate ./...
       - name: Build Program
         run: go build .
 
@@ -69,7 +67,5 @@ jobs:
         uses: acifani/setup-tinygo@v2
         with:
           tinygo-version: "0.33.0"
-      - name: Generate Code
-        run: go generate ./...
       - name: Build Program
         run: ./build.sh
