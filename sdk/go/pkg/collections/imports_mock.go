@@ -26,7 +26,7 @@ var GetVectorCallStack = testutils.NewCallStack()
 var GetLabelsCallStack = testutils.NewCallStack()
 var SearchByVectorCallStack = testutils.NewCallStack()
 
-func hostUpsertToCollection(collection, namespace *string, keys, texts *[]string, labels *[][]string) *CollectionMutationResult {
+func hostUpsert(collection, namespace *string, keys, texts *[]string, labels *[][]string) *CollectionMutationResult {
 	UpsertCallStack.Push(collection, namespace, keys, texts, labels)
 
 	return &CollectionMutationResult{
@@ -35,7 +35,7 @@ func hostUpsertToCollection(collection, namespace *string, keys, texts *[]string
 	}
 }
 
-func hostDeleteFromCollection(collection, namespace, key *string) *CollectionMutationResult {
+func hostDelete(collection, namespace, key *string) *CollectionMutationResult {
 	DeleteCallStack.Push(collection, namespace, key)
 
 	return &CollectionMutationResult{
@@ -44,7 +44,7 @@ func hostDeleteFromCollection(collection, namespace, key *string) *CollectionMut
 	}
 }
 
-func hostSearchCollection(collection *string, namespaces *[]string, searchMethod, text *string, limit int32, returnText bool) *CollectionSearchResult {
+func hostSearch(collection *string, namespaces *[]string, searchMethod, text *string, limit int32, returnText bool) *CollectionSearchResult {
 	SearchCallStack.Push(collection, namespaces, searchMethod, text, limit, returnText)
 
 	return &CollectionSearchResult{
@@ -53,7 +53,7 @@ func hostSearchCollection(collection *string, namespaces *[]string, searchMethod
 	}
 }
 
-func hostNnClassifyCollection(collection, namespace, searchMethod, text *string) *CollectionClassificationResult {
+func hostClassifyText(collection, namespace, searchMethod, text *string) *CollectionClassificationResult {
 	NnClassifyCallStack.Push(collection, namespace, searchMethod, text)
 
 	return &CollectionClassificationResult{
@@ -62,7 +62,7 @@ func hostNnClassifyCollection(collection, namespace, searchMethod, text *string)
 	}
 }
 
-func hostRecomputeSearchMethod(collection, namespace, searchMethod *string) *SearchMethodMutationResult {
+func hostRecomputeIndex(collection, namespace, searchMethod *string) *SearchMethodMutationResult {
 	RecomputeSearchMethodCallStack.Push(collection, namespace, searchMethod)
 
 	return &SearchMethodMutationResult{
@@ -80,14 +80,14 @@ func hostComputeDistance(collection, namespace, searchMethod, key1, key2 *string
 	}
 }
 
-func hostGetTextFromCollection(collection, namespace, key *string) *string {
+func hostGetText(collection, namespace, key *string) *string {
 	GetTextCallStack.Push(collection, namespace, key)
 
 	helloWorld := "Hello, World!"
 	return &helloWorld
 }
 
-func hostGetTextsFromCollection(collection, namespace *string) *map[string]string {
+func hostDumpTexts(collection, namespace *string) *map[string]string {
 	GetTextsCallStack.Push(collection, namespace)
 
 	ret := map[string]string{
@@ -98,7 +98,7 @@ func hostGetTextsFromCollection(collection, namespace *string) *map[string]strin
 	return &ret
 }
 
-func hostGetNamespacesFromCollection(collection *string) *[]string {
+func hostGetNamespaces(collection *string) *[]string {
 	GetNamespacesCallStack.Push(collection)
 
 	ret := []string{"namespace1", "namespace2"}
@@ -122,7 +122,7 @@ func hostGetLabels(collection, namespace, key *string) *[]string {
 	return &ret
 }
 
-func hostSearchCollectionByVector(collection *string, namespaces *[]string, searchMethod *string, vector *[]float32, limit int32, returnText bool) *CollectionSearchResult {
+func hostSearchByVector(collection *string, namespaces *[]string, searchMethod *string, vector *[]float32, limit int32, returnText bool) *CollectionSearchResult {
 	SearchByVectorCallStack.Push(collection, namespaces, searchMethod, vector, limit, returnText)
 
 	return &CollectionSearchResult{
