@@ -23,7 +23,7 @@ import (
 func getTestHostFunctionRegistrations() []func(wasmhost.WasmHost) error {
 	return []func(wasmhost.WasmHost) error{
 		func(host wasmhost.WasmHost) error {
-			return host.RegisterHostFunction("hypermode", "log", hostLog)
+			return host.RegisterHostFunction("modus_system", "logMessage", hostLog)
 		},
 		func(host wasmhost.WasmHost) error {
 			return host.RegisterHostFunction("test", "add", hostAdd)
@@ -51,7 +51,7 @@ func getTestHostFunctionRegistrations() []func(wasmhost.WasmHost) error {
 
 func hostLog(ctx context.Context, level, message string) {
 	if utils.DebugModeEnabled() {
-		hostfunctions.LogFunctionMessage(ctx, level, message)
+		hostfunctions.LogMessage(ctx, level, message)
 	}
 	t := testutils.GetTestT(ctx)
 	t.Logf("[%s] %s", level, message)

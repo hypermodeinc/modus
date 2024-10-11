@@ -27,6 +27,7 @@ In previous releases, the name "Hypermode" was used for all three._
 - Fix object/map field stitching [#447](https://github.com/hypermodeinc/modus/pull/447)
 - Use cli component instead of direct node execution modus-sdk-as [#448](https://github.com/hypermodeinc/modus/pull/448)
 - Cleanup Go Modules [#450](https://github.com/hypermodeinc/modus/pull/450)
+- Modularize / Rename host functions [#452](https://github.com/hypermodeinc/modus/pull/452)
 
 ## 2024-10-02 - Version 0.12.7
 

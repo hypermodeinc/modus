@@ -8,13 +8,13 @@
  */
 
 // @ts-expect-error: decorator
-@external("hypermode", "log")
-declare function log(level: string, message: string): void;
+@external("modus_system", "logMessage")
+declare function hostLogMessage(level: string, message: string): void;
 
 // @ts-expect-error: decorator
 @unsafe
 @external("wasi_snapshot_preview1", "proc_exit")
-declare function exit(rval: u32): void;
+declare function procExit(rval: u32): void;
 
 export default function modus_abort(
   message: string | null = null,
@@ -27,6 +27,6 @@ export default function modus_abort(
     msg += ` at ${fileName}:${lineNumber}:${columnNumber}`;
   }
 
-  log("fatal", msg);
-  exit(255);
+  hostLogMessage("fatal", msg);
+  procExit(255);
 }

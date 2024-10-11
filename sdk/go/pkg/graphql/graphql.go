@@ -26,7 +26,7 @@ func Execute[T any](hostName, statement string, variables map[string]any) (*Resp
 
 	varsStr := string(bytes)
 
-	response := hostExecuteGQL(&hostName, &statement, &varsStr)
+	response := hostExecuteQuery(&hostName, &statement, &varsStr)
 
 	if response == nil {
 		return nil, errors.New("Failed to execute the GQL query.")

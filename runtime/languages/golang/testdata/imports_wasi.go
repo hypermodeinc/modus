@@ -37,7 +37,7 @@ func hostEcho4(message *string) *string
 //go:wasmimport test encodeStrings1
 func _hostEncodeStrings1(items unsafe.Pointer) *string
 
-//hypermode:import test encodeStrings1
+//modus:import test encodeStrings1
 func hostEncodeStrings1(items *[]string) *string {
 	return _hostEncodeStrings1(unsafe.Pointer(items))
 }
@@ -46,7 +46,7 @@ func hostEncodeStrings1(items *[]string) *string {
 //go:wasmimport test encodeStrings2
 func _hostEncodeStrings2(items unsafe.Pointer) *string
 
-//hypermode:import test encodeStrings2
+//modus:import test encodeStrings2
 func hostEncodeStrings2(items *[]*string) *string {
 	return _hostEncodeStrings2(unsafe.Pointer(items))
 }

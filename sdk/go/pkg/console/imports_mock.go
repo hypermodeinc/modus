@@ -19,7 +19,7 @@ import (
 
 var LogCallStack = testutils.NewCallStack()
 
-func log(level, message string) {
+func hostLogMessage(level, message string) {
 	LogCallStack.Push(level, message)
 
 	if level == "" {

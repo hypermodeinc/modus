@@ -22,7 +22,7 @@ func Initialize() {
 	})
 }
 
-func Execute(ctx context.Context, hostName string, req *Request) (*Response, error) {
+func ExecuteQuery(ctx context.Context, hostName string, req *Request) (*Response, error) {
 	dc, err := dgr.getDgraphConnector(ctx, hostName)
 	if err != nil {
 		return nil, err
@@ -40,7 +40,7 @@ func AlterSchema(ctx context.Context, hostName, schema string) (string, error) {
 	return dc.alterSchema(ctx, schema)
 }
 
-func DropAttr(ctx context.Context, hostName, attr string) (string, error) {
+func DropAttribute(ctx context.Context, hostName, attr string) (string, error) {
 	dc, err := dgr.getDgraphConnector(ctx, hostName)
 	if err != nil {
 		return "", err
@@ -49,7 +49,7 @@ func DropAttr(ctx context.Context, hostName, attr string) (string, error) {
 	return dc.dropAttr(ctx, attr)
 }
 
-func DropAll(ctx context.Context, hostName string) (string, error) {
+func DropAllData(ctx context.Context, hostName string) (string, error) {
 	dc, err := dgr.getDgraphConnector(ctx, hostName)
 	if err != nil {
 		return "", err

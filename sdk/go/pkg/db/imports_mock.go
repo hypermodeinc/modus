@@ -28,7 +28,7 @@ var (
 	MockQueryScalarParameters = []any{0, 18, false}
 )
 
-func databaseQuery(hostName, dbType, statement, paramsJson *string) *HostQueryResponse {
+func hostExecuteQuery(hostName, dbType, statement, paramsJson *string) *HostQueryResponse {
 	DatabaseQueryCallStack.Push(hostName, dbType, statement, paramsJson)
 
 	switch *statement {

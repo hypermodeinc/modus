@@ -18,7 +18,7 @@ var InvokeModelCallStack = testutils.NewCallStack()
 
 const MockResponseText = "Hello, World!"
 
-func lookupModel(modelName *string) *ModelInfo {
+func hostGetModelInfo(modelName *string) *ModelInfo {
 	LookupModelCallStack.Push(modelName)
 
 	return &ModelInfo{
@@ -27,7 +27,7 @@ func lookupModel(modelName *string) *ModelInfo {
 	}
 }
 
-func invokeModel(modelName *string, input *string) *string {
+func hostInvokeModel(modelName *string, input *string) *string {
 	InvokeModelCallStack.Push(modelName, input)
 
 	output := `{"response":"` + MockResponseText + `"}`

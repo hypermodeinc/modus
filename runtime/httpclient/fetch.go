@@ -21,7 +21,7 @@ import (
 	"github.com/hypermodeinc/modus/runtime/utils"
 )
 
-func HttpFetch(ctx context.Context, request *HttpRequest) (*HttpResponse, error) {
+func Fetch(ctx context.Context, request *HttpRequest) (*HttpResponse, error) {
 	host, err := hosts.GetHttpHostForUrl(request.Url)
 	if err != nil {
 		return nil, err

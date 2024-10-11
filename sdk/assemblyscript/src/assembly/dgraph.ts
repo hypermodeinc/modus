@@ -11,23 +11,20 @@ import { JSON } from "json-as";
 import * as utils from "./utils";
 
 // @ts-expect-error: decorator
-@external("hypermode", "executeDQL")
-declare function hostExecuteDQL(hostName: string, request: Request): Response;
+@external("modus_dgraph_client", "executeQuery")
+declare function hostExecuteQuery(hostName: string, request: Request): Response;
 
 // @ts-expect-error: decorator
-@external("hypermode", "dgraphAlterSchema")
-declare function hostDgraphAlterSchema(
-  hostName: string,
-  schema: string,
-): string;
+@external("modus_dgraph_client", "alterSchema")
+declare function hostAlterSchema(hostName: string, schema: string): string;
 
 // @ts-expect-error: decorator
-@external("hypermode", "dgraphDropAttr")
-declare function hostDgraphDropAttr(hostName: string, attr: string): string;
+@external("modus_dgraph_client", "dropAttribute")
+declare function hostDropAttribute(hostName: string, attr: string): string;
 
 // @ts-expect-error: decorator
-@external("hypermode", "dgraphDropAll")
-declare function hostDgraphDropAll(hostName: string): string;
+@external("modus_dgraph_client", "dropAllData")
+declare function hostDropAllData(hostName: string): string;
 
 /**
  *
@@ -39,7 +36,7 @@ declare function hostDgraphDropAll(hostName: string): string;
  * @returns The response from the Dgraph server
  */
 export function execute(hostName: string, request: Request): Response {
-  const response = hostExecuteDQL(hostName, request);
+  const response = hostExecuteQuery(hostName, request);
   if (!response) {
     throw new Error("Error executing DQL.");
   }
@@ -56,7 +53,7 @@ export function execute(hostName: string, request: Request): Response {
  * @returns The response from the Dgraph server
  */
 export function alterSchema(hostName: string, schema: string): string {
-  const response = hostDgraphAlterSchema(hostName, schema);
+  const response = hostAlterSchema(hostName, schema);
   if (utils.resultIsInvalid(response)) {
     throw new Error("Error invoking DQL.");
   }
@@ -73,7 +70,7 @@ export function alterSchema(hostName: string, schema: string): string {
  * @returns The response from the Dgraph server
  */
 export function dropAttr(hostName: string, attr: string): string {
-  const response = hostDgraphDropAttr(hostName, attr);
+  const response = hostDropAttribute(hostName, attr);
   if (utils.resultIsInvalid(response)) {
     throw new Error("Error invoking DQL.");
   }
@@ -89,7 +86,7 @@ export function dropAttr(hostName: string, attr: string): string {
  * @returns The response from the Dgraph server
  */
 export function dropAll(hostName: string): string {
-  const response = hostDgraphDropAll(hostName);
+  const response = hostDropAllData(hostName);
   if (utils.resultIsInvalid(response)) {
     throw new Error("Error invoking DQL.");
   }

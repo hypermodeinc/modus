@@ -15,7 +15,7 @@ import "github.com/hypermodeinc/modus/sdk/go/pkg/testutils"
 
 var FetchCallStack = testutils.NewCallStack()
 
-func fetch(request *Request) *Response {
+func hostFetch(request *Request) *Response {
 	FetchCallStack.Push(request)
 
 	return &Response{

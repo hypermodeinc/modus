@@ -83,7 +83,7 @@ func doQuery(hostName, dbType, statement string, params ...any) (*string, uint, 
 	}
 
 	statement = strings.TrimSpace(statement)
-	response := databaseQuery(&hostName, &dbType, &statement, &paramsJson)
+	response := hostExecuteQuery(&hostName, &dbType, &statement, &paramsJson)
 	if response == nil {
 		return nil, 0, errors.New("no response received from database query")
 	}

@@ -16,7 +16,9 @@ import (
 )
 
 func init() {
-	registerHostFunction("hypermode", "httpFetch", httpclient.HttpFetch,
+	const module_name = "modus_http_client"
+
+	registerHostFunction(module_name, "fetch", httpclient.Fetch,
 		withStartingMessage("Starting HTTP request."),
 		withCompletedMessage("Completed HTTP request."),
 		withCancelledMessage("Cancelled HTTP request."),
