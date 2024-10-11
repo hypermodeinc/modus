@@ -13,5 +13,5 @@ const binary = readFileSync("./build/vectors.spec.wasm");
 const module = new WebAssembly.Module(binary);
 instantiate(module, {
   env: {},
-  hypermode: {},
+  modus_models: {},
 });
