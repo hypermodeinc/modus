@@ -34,6 +34,8 @@ archives:
         format: zip
 checksum:
   name_template: "checksums.txt"
+release:
+  prerelease: auto
 changelog:
   # TODO: decide how to generate changelog
   disable: true
