@@ -17,7 +17,7 @@ import "unsafe"
 //go:wasmimport modus_dgraph_client executeQuery
 func _hostExecuteDQL(hostName *string, request unsafe.Pointer) unsafe.Pointer
 
-//hypermode:import hypermode executeQuery
+//modus:import hypermode executeQuery
 func hostExecuteDQL(hostName *string, request *Request) *Response {
 	response := _hostExecuteDQL(hostName, unsafe.Pointer(request))
 	if response == nil {

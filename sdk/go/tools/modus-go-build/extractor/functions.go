@@ -127,7 +127,7 @@ func getProxyImportFuncName(fn *ast.FuncDecl) string {
 	/*
 		A proxy import is a function wrapper that is decorated as follows:
 
-		//hypermode:import <module> <function>
+		//modus:import <module> <function>
 
 		Its definition will be used in lieu of the original function that matches the same wasm module and function name.
 	*/
@@ -135,7 +135,7 @@ func getProxyImportFuncName(fn *ast.FuncDecl) string {
 	if fn.Body != nil && fn.Doc != nil {
 		for _, c := range fn.Doc.List {
 			parts := strings.Split(c.Text, " ")
-			if len(parts) == 3 && parts[0] == "//hypermode:import" {
+			if len(parts) == 3 && parts[0] == "//modus:import" {
 				return parts[1] + "." + parts[2]
 			}
 		}

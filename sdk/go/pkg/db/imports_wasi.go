@@ -17,7 +17,7 @@ import "unsafe"
 //go:wasmimport modus_sql_client executeQuery
 func _databaseQuery(hostName, dbType, statement, paramsJson *string) unsafe.Pointer
 
-//hypermode:import hypermode executeQuery
+//modus:import hypermode executeQuery
 func databaseQuery(hostName, dbType, statement, paramsJson *string) *HostQueryResponse {
 	response := _databaseQuery(hostName, dbType, statement, paramsJson)
 	if response == nil {

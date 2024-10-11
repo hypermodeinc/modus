@@ -17,7 +17,7 @@ import "unsafe"
 //go:wasmimport modus_http_client fetch
 func _fetch(request unsafe.Pointer) unsafe.Pointer
 
-//hypermode:import hypermode fetch
+//modus:import hypermode fetch
 func fetch(request *Request) *Response {
 	response := _fetch(unsafe.Pointer(request))
 	if response == nil {
