@@ -12,8 +12,8 @@ COPY runtime/go.mod runtime/go.sum ./
 RUN go mod download
 
 COPY runtime/ ./
-ARG TARGETOS TARGETARCH MODUS_BUILD_VERSION
-RUN GOOS=$TARGETOS GOARCH=$TARGETARCH go build -o modus_runtime -ldflags "-s -w -X github.com/hypermodeinc/modus/runtime/config.version=$MODUS_BUILD_VERSION" .
+ARG TARGETOS TARGETARCH RUNTIME_RELEASE_VERSION
+RUN GOOS=$TARGETOS GOARCH=$TARGETARCH go build -o modus_runtime -ldflags "-s -w -X github.com/hypermodeinc/modus/runtime/config.version=$RUNTIME_RELEASE_VERSION" .
 
 # build the container image
 FROM ubuntu:22.04

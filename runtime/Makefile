@@ -70,4 +70,4 @@ clean:
 
 .PHONY: docker-build
 docker-build:
-	cd .. && docker build --build-arg MODUS_BUILD_VERSION="$(VERSION)" -t modus_runtime .
+	cd .. && docker build --build-arg RUNTIME_RELEASE_VERSION="$(VERSION)" -t modus_runtime .
