@@ -23,7 +23,7 @@ build:
 
 .PHONY: run
 run:
-	go run .
+	MODUS_ENV=dev go run .
 
 .PHONY: build-testdata
 build-testdata: build-testdata-assemblyscript build-testdata-golang
