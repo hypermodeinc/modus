@@ -21,7 +21,6 @@ import (
 var Port int
 var ModelHost string
 var StoragePath string
-var UseAwsSecrets bool
 var UseAwsStorage bool
 var S3Bucket string
 var S3Path string
@@ -32,7 +31,6 @@ func parseCommandLineFlags() {
 	flag.IntVar(&Port, "port", 8686, "The HTTP port to listen on.")
 	flag.StringVar(&ModelHost, "modelHost", "", "The base DNS of the host endpoint to the model server.")
 	flag.StringVar(&StoragePath, "storagePath", getDefaultStoragePath(), "The path to a directory used for local storage.")
-	flag.BoolVar(&UseAwsSecrets, "useAwsSecrets", false, "Use AWS Secrets Manager for API keys and other secrets.")
 	flag.BoolVar(&UseAwsStorage, "useAwsStorage", false, "Use AWS S3 for storage instead of the local filesystem.")
 	flag.StringVar(&S3Bucket, "s3bucket", "", "The S3 bucket to use, if using AWS storage.")
 	flag.StringVar(&S3Path, "s3path", "", "The path within the S3 bucket to use, if using AWS storage.")

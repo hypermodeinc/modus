@@ -18,7 +18,6 @@ import (
 	"regexp"
 
 	"github.com/hypermodeinc/modus/lib/manifest"
-	"github.com/hypermodeinc/modus/runtime/config"
 	"github.com/hypermodeinc/modus/runtime/logger"
 	"github.com/hypermodeinc/modus/runtime/utils"
 )
@@ -33,12 +32,7 @@ type secretsProvider interface {
 }
 
 func Initialize(ctx context.Context) {
-	if config.UseAwsSecrets {
-		provider = &awsSecretsProvider{}
-	} else {
-		provider = &localSecretsProvider{}
-	}
-
+	provider = &localSecretsProvider{}
 	provider.initialize(ctx)
 }
 

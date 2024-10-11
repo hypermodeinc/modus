@@ -30,6 +30,7 @@ In previous releases, the name "Hypermode" was used for all three._
 - Modularize / Rename host functions [#452](https://github.com/hypermodeinc/modus/pull/452)
 - Add release pipeline for the runtime [#453](https://github.com/hypermodeinc/modus/pull/453) [#454](https://github.com/hypermodeinc/modus/pull/454)
 - Remove `go generate` and fix docker build [#455](https://github.com/hypermodeinc/modus/pull/455)
+- Remove AWS Secrets Manager client [#456](https://github.com/hypermodeinc/modus/pull/456)
 
 ## 2024-10-02 - Version 0.12.7
 
