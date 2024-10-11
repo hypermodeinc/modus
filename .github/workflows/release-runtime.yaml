@@ -1,11 +1,8 @@
 name: "Release Runtime"
 on:
-  workflow_dispatch:
-    inputs:
-      tag:
-        description: "The tag to release"
-        required: true
-        type: string
+  push:
+    tags:
+      - 'runtime/v*'
 permissions:
   contents: "write"
 jobs:
@@ -13,11 +10,11 @@ jobs:
     runs-on: warp-ubuntu-latest-x64-4x
     steps:
     - name: "Validate version"
-      if: ${{ !startsWith(github.event.inputs.tag, 'runtime/v') }}
+      if: ${{ !startsWith(github.ref_name, 'runtime/v') }}
       run: 'echo "Modus Runtime version must start with `runtime/v` && exit 1'
     - uses: actions/checkout@v4
       with:
-        ref: "${{ github.event.inputs.tag }}"
+        ref: "${{ github.ref_name }}"
     - uses: actions/setup-go@v5
       with:
         go-version: 1.23
