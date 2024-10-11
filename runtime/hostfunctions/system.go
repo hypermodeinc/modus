@@ -21,7 +21,7 @@ import (
 func init() {
 	const module_name = "modus_system"
 
-	registerHostFunction(module_name, "log", LogFunctionMessage)
+	registerHostFunction(module_name, "logMessage", LogFunctionMessage)
 }
 
 func LogFunctionMessage(ctx context.Context, level, message string) {

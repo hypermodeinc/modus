@@ -23,7 +23,7 @@ import (
 func getTestHostFunctionRegistrations() []func(wasmhost.WasmHost) error {
 	return []func(wasmhost.WasmHost) error{
 		func(host wasmhost.WasmHost) error {
-			return host.RegisterHostFunction("modus_system", "log", hostLog)
+			return host.RegisterHostFunction("modus_system", "logMessage", hostLog)
 		},
 		func(host wasmhost.WasmHost) error {
 			return host.RegisterHostFunction("test", "add", hostAdd)

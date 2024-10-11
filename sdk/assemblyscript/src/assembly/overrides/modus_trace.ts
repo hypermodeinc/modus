@@ -8,7 +8,7 @@
  */
 
 // @ts-expect-error: decorator
-@external("modus_system", "log")
+@external("modus_system", "logMessage")
 declare function log(level: string, message: string): void;
 
 const traceLevel = "trace";
