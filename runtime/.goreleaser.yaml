@@ -9,7 +9,7 @@ git:
   prerelease_suffix: "-"
 before:
   hooks:
-    - sh -c "cd runtime && go generate ./... && go mod tidy"
+    - sh -c "cd runtime && go mod tidy"
 builds:
   - main: .
     binary: modus_runtime
@@ -23,6 +23,7 @@ builds:
       - amd64
       - arm64
     mod_timestamp: "{{ .CommitTimestamp }}"
+    ldflags: -s -w -X github.com/hypermodeinc/modus/runtime/config.version={{.Version}}
 archives:
   - files:
       - "../README.md"
