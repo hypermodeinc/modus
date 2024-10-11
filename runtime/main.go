@@ -7,8 +7,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-//go:generate go run ./tools/generate_version
-
 package main
 
 import (
@@ -20,6 +18,7 @@ import (
 	"github.com/hypermodeinc/modus/runtime/config"
 	"github.com/hypermodeinc/modus/runtime/httpserver"
 	"github.com/hypermodeinc/modus/runtime/logger"
+	"github.com/hypermodeinc/modus/runtime/middleware"
 	"github.com/hypermodeinc/modus/runtime/services"
 	"github.com/hypermodeinc/modus/runtime/utils"
 
@@ -62,6 +61,9 @@ func main() {
 
 	// Set local mode if debugging is enabled
 	local := utils.DebugModeEnabled()
+
+	// Retrieve auth private keys
+	middleware.Init(ctx)
 
 	// Start the HTTP server to listen for requests.
 	// Note, this function blocks, and handles shutdown gracefully.

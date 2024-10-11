@@ -13,5 +13,5 @@ const binary = readFileSync("./build/graphql.spec.wasm");
 const module = new WebAssembly.Module(binary);
 instantiate(module, {
   env: {},
-  hypermode: {},
+  modus_models: {},
 });

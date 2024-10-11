@@ -17,6 +17,7 @@ import (
 
 	"github.com/hypermodeinc/modus/runtime/functions"
 	"github.com/hypermodeinc/modus/runtime/logger"
+	"github.com/hypermodeinc/modus/runtime/middleware"
 	"github.com/hypermodeinc/modus/runtime/plugins"
 	"github.com/hypermodeinc/modus/runtime/utils"
 
@@ -115,11 +116,13 @@ func (host *wasmHost) GetModuleInstance(ctx context.Context, plugin *plugins.Plu
 	// for concurrency and performance reasons.
 	// See https://github.com/tetratelabs/wazero/pull/2275
 	// And https://gophers.slack.com/archives/C040AKTNTE0/p1719587772724619?thread_ts=1719522663.531579&cid=C040AKTNTE0
+	jwtClaims := middleware.GetJWTClaims(ctx)
 	cfg := wazero.NewModuleConfig().
 		WithName("").
 		WithSysWalltime().WithSysNanotime().
 		WithRandSource(rand.Reader).
-		WithStdout(wOut).WithStderr(wErr)
+		WithStdout(wOut).WithStderr(wErr).
+		WithEnv("CLAIMS", jwtClaims)
 
 	// Instantiate the plugin as a module.
 	// NOTE: This will also invoke the plugin's `_start` function,

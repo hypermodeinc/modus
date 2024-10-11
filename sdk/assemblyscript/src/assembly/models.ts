@@ -13,11 +13,11 @@ import * as utils from "./utils";
 type ModelInvoker = (modelName: string, inputJson: string) => string | null;
 
 // @ts-expect-error: decorator
-@external("hypermode", "lookupModel")
-declare function hostLookupModel(modelName: string): ModelInfo;
+@external("modus_models", "getModelInfo")
+declare function hostGetModelInfo(modelName: string): ModelInfo;
 
 // @ts-expect-error: decorator
-@external("hypermode", "invokeModel")
+@external("modus_models", "invokeModel")
 declare function hostInvokeModel(
   modelName: string,
   input: string,
@@ -38,7 +38,7 @@ class ModusModelFactory implements ModelFactory {
    * @returns An instance of the model object, which can be used to interact with the model.
    */
   getModel<T extends Model>(modelName: string): T {
-    const info = hostLookupModel(modelName);
+    const info = hostGetModelInfo(modelName);
     if (utils.resultIsInvalid(info)) {
       throw new Error(`Model ${modelName} not found.`);
     }

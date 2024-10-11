@@ -2,9 +2,9 @@ module github.com/hypermodeinc/modus/runtime
 
 go 1.23.0
 
-require github.com/hypermodeinc/modus v0.0.0
+require github.com/hypermodeinc/modus/lib/manifest v0.0.0
 
-replace github.com/hypermodeinc/modus => ../
+replace github.com/hypermodeinc/modus/lib/manifest => ../lib/manifest
 
 require (
 	github.com/OneOfOne/xxhash v1.2.8
@@ -23,6 +23,7 @@ require (
 	github.com/getsentry/sentry-go v0.29.0
 	github.com/go-viper/mapstructure/v2 v2.2.1
 	github.com/goccy/go-json v0.10.3
+	github.com/golang-jwt/jwt/v5 v5.2.0
 	github.com/google/renameio v1.0.1
 	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v5 v5.7.1

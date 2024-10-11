@@ -1,7 +1,10 @@
 {
   "version": "0.2",
   "language": "en",
-  "flagWords": ["hte", "teh"],
+  "flagWords": [
+    "hte",
+    "teh"
+  ],
   "words": [
     "abstractlogger",
     "Albus",
@@ -27,6 +30,7 @@
     "classid",
     "codegen",
     "CODEOWNERS",
+    "creatordate",
     "datasource",
     "dbname",
     "dbpool",
@@ -57,6 +61,7 @@
     "godotenv",
     "gojs",
     "gomod",
+    "goreleaser",
     "graphqlclient",
     "graphqlerrors",
     "greq",
@@ -85,6 +90,7 @@
     "jsonparser",
     "jsonschema",
     "langsupport",
+    "ldflags",
     "legacymodels",
     "Lessable",
     "linkname",
@@ -119,6 +125,7 @@
     "omitnull",
     "openai",
     "operationreport",
+    "PEMS",
     "pgconn",
     "pgxpool",
     "picsum",
@@ -153,6 +160,7 @@
     "typedarray",
     "uids",
     "uncategorized",
+    "Unmarshalled",
     "unmarshalling",
     "unnest",
     "upsert",

@@ -6,6 +6,7 @@ _NOTE: This is the first fully open-source release, using the name "Modus" for t
 "Hypermode" still refers to the company and the commercial hosting platform - but not the framework.
 In previous releases, the name "Hypermode" was used for all three._
 
+- Support user defined jwt auth and sdk functions [#405](https://github.com/hypermodeinc/modus/pull/405)
 - Migrate from Hypermode to Modus [#412](https://github.com/hypermodeinc/modus/pull/412)
 - Import WasmExtractor code [#415](https://github.com/hypermodeinc/modus/pull/415)
 - Import Manifest code [#416](https://github.com/hypermodeinc/modus/pull/416)
@@ -23,7 +24,12 @@ In previous releases, the name "Hypermode" was used for all three._
 - Change default for environment setting [#439](https://github.com/hypermodeinc/modus/pull/439)
 - Remove compatibility code for previous versions [#441](https://github.com/hypermodeinc/modus/pull/441)
 - Target Node 22 [#446](https://github.com/hypermodeinc/modus/pull/446)
+- Fix object/map field stitching [#447](https://github.com/hypermodeinc/modus/pull/447)
 - Use cli component instead of direct node execution modus-sdk-as [#448](https://github.com/hypermodeinc/modus/pull/448)
+- Cleanup Go Modules [#450](https://github.com/hypermodeinc/modus/pull/450)
+- Modularize / Rename host functions [#452](https://github.com/hypermodeinc/modus/pull/452)
+- Add release pipeline for the runtime [#453](https://github.com/hypermodeinc/modus/pull/453) [#454](https://github.com/hypermodeinc/modus/pull/454)
+- Remove `go generate` and fix docker build [#455](https://github.com/hypermodeinc/modus/pull/455)
 
 ## 2024-10-02 - Version 0.12.7
 

@@ -146,8 +146,8 @@ export class CollectionClassificationResultObject {
 }
 
 // @ts-expect-error: decorator
-@external("hypermode", "upsertToCollection")
-declare function hostUpsertToCollection(
+@external("modus_collections", "upsert")
+declare function hostUpsert(
   collection: string,
   namespace: string,
   keys: string[],
@@ -156,16 +156,16 @@ declare function hostUpsertToCollection(
 ): CollectionMutationResult;
 
 // @ts-expect-error: decorator
-@external("hypermode", "deleteFromCollection")
-declare function hostDeleteFromCollection(
+@external("modus_collections", "delete")
+declare function hostDelete(
   collection: string,
   namespace: string,
   key: string,
 ): CollectionMutationResult;
 
 // @ts-expect-error: decorator
-@external("hypermode", "searchCollection")
-declare function hostSearchCollection(
+@external("modus_collections", "search")
+declare function hostSearch(
   collection: string,
   namespaces: string[],
   searchMethod: string,
@@ -175,8 +175,8 @@ declare function hostSearchCollection(
 ): CollectionSearchResult;
 
 // @ts-expect-error: decorator
-@external("hypermode", "nnClassifyCollection")
-declare function hostNnClassifyCollection(
+@external("modus_collections", "classifyText")
+declare function hostClassifyText(
   collection: string,
   namespace: string,
   searchMethod: string,
@@ -184,15 +184,15 @@ declare function hostNnClassifyCollection(
 ): CollectionClassificationResult;
 
 // @ts-expect-error: decorator
-@external("hypermode", "recomputeSearchMethod")
-declare function hostRecomputeSearchMethod(
+@external("modus_collections", "recomputeIndex")
+declare function hostRecomputeIndex(
   collection: string,
   namespace: string,
   searchMethod: string,
 ): SearchMethodMutationResult;
 
 // @ts-expect-error: decorator
-@external("hypermode", "computeDistance")
+@external("modus_collections", "computeDistance")
 declare function hostComputeDistance(
   collection: string,
   namespace: string,
@@ -202,26 +202,26 @@ declare function hostComputeDistance(
 ): CollectionSearchResultObject;
 
 // @ts-expect-error: decorator
-@external("hypermode", "getTextFromCollection")
-declare function hostGetTextFromCollection(
+@external("modus_collections", "getText")
+declare function hostGetText(
   collection: string,
   namespace: string,
   key: string,
 ): string;
 
 // @ts-expect-error: decorator
-@external("hypermode", "getTextsFromCollection")
-declare function hostGetTextsFromCollection(
+@external("modus_collections", "dumpTexts")
+declare function hostDumpTexts(
   collection: string,
   namespace: string,
 ): Map<string, string>;
 
 // @ts-expect-error: decorator
-@external("hypermode", "getNamespacesFromCollection")
-declare function hostGetNamespacesFromCollection(collection: string): string[];
+@external("modus_collections", "getNamespaces")
+declare function hostGetNamespaces(collection: string): string[];
 
 // @ts-expect-error: decorator
-@external("hypermode", "getVector")
+@external("modus_collections", "getVector")
 declare function hostGetVector(
   collection: string,
   namespace: string,
@@ -230,7 +230,7 @@ declare function hostGetVector(
 ): f32[];
 
 // @ts-expect-error: decorator
-@external("hypermode", "getLabels")
+@external("modus_collections", "getLabels")
 declare function hostGetLabels(
   collection: string,
   namespace: string,
@@ -238,8 +238,8 @@ declare function hostGetLabels(
 ): string[];
 
 // @ts-expect-error: decorator
-@external("hypermode", "searchCollectionByVector")
-declare function hostSearchCollectionByVector(
+@external("modus_collections", "searchByVector")
+declare function hostSearchByVector(
   collection: string,
   namespaces: string[],
   searchMethod: string,
@@ -279,13 +279,7 @@ export function upsertBatch(
     keysArr = keys;
   }
 
-  const result = hostUpsertToCollection(
-    collection,
-    namespace,
-    keysArr,
-    texts,
-    labelsArr,
-  );
+  const result = hostUpsert(collection, namespace, keysArr, texts, labelsArr);
   if (utils.resultIsInvalid(result)) {
     console.error("Error upserting to Text index.");
     return new CollectionMutationResult(
@@ -334,13 +328,7 @@ export function upsert(
 
   const labelsArr: string[][] = [labels];
 
-  const result = hostUpsertToCollection(
-    collection,
-    namespace,
-    keys,
-    texts,
-    labelsArr,
-  );
+  const result = hostUpsert(collection, namespace, keys, texts, labelsArr);
   if (utils.resultIsInvalid(result)) {
     console.error("Error upserting to Text index.");
     return new CollectionMutationResult(
@@ -377,7 +365,7 @@ export function remove(
       "delete",
     );
   }
-  const result = hostDeleteFromCollection(collection, namespace, key);
+  const result = hostDelete(collection, namespace, key);
   if (utils.resultIsInvalid(result)) {
     console.error("Error deleting from Text index.");
     return new CollectionMutationResult(
@@ -410,7 +398,7 @@ export function search(
       [],
     );
   }
-  const result = hostSearchCollection(
+  const result = hostSearch(
     collection,
     namespaces,
     searchMethod,
@@ -448,7 +436,7 @@ export function searchByVector(
       [],
     );
   }
-  const result = hostSearchCollectionByVector(
+  const result = hostSearchByVector(
     collection,
     namespaces,
     searchMethod,
@@ -487,12 +475,7 @@ export function nnClassify(
       [],
     );
   }
-  const result = hostNnClassifyCollection(
-    collection,
-    namespace,
-    searchMethod,
-    text,
-  );
+  const result = hostClassifyText(collection, namespace, searchMethod, text);
   if (utils.resultIsInvalid(result)) {
     console.error("Error classifying Text index.");
     return new CollectionClassificationResult(
@@ -532,7 +515,7 @@ export function recomputeSearchMethod(
       searchMethod,
     );
   }
-  const result = hostRecomputeSearchMethod(collection, namespace, searchMethod);
+  const result = hostRecomputeIndex(collection, namespace, searchMethod);
   if (utils.resultIsInvalid(result)) {
     console.error("Error recomputing Text index.");
     return new SearchMethodMutationResult(
@@ -598,7 +581,7 @@ export function getText(
     console.error("Key is empty.");
     return "";
   }
-  return hostGetTextFromCollection(collection, namespace, key);
+  return hostGetText(collection, namespace, key);
 }
 
 export function getTexts(
@@ -609,7 +592,7 @@ export function getTexts(
     console.error("Collection is empty.");
     return new Map<string, string>();
   }
-  return hostGetTextsFromCollection(collection, namespace);
+  return hostDumpTexts(collection, namespace);
 }
 
 export function getNamespaces(collection: string): string[] {
@@ -617,7 +600,7 @@ export function getNamespaces(collection: string): string[] {
     console.error("Collection is empty.");
     return [];
   }
-  return hostGetNamespacesFromCollection(collection);
+  return hostGetNamespaces(collection);
 }
 
 export function getVector(

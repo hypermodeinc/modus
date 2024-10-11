@@ -111,7 +111,7 @@ func UpsertBatch(collection string, keys []string, texts []string, labelsArr [][
 		labelsArr = [][]string{}
 	}
 
-	result := hostUpsertToCollection(&collection, &nsOpts.namespace, &keys, &texts, &labelsArr)
+	result := hostUpsert(&collection, &nsOpts.namespace, &keys, &texts, &labelsArr)
 
 	if result == nil {
 		return nil, fmt.Errorf("Failed to upsert")
@@ -149,7 +149,7 @@ func Upsert(collection string, key *string, text string, labels []string, opts .
 		opt(nsOpts)
 	}
 
-	result := hostUpsertToCollection(&collection, &nsOpts.namespace, &keyArr, &[]string{text}, &labelsArr)
+	result := hostUpsert(&collection, &nsOpts.namespace, &keyArr, &[]string{text}, &labelsArr)
 
 	if result == nil {
 		return nil, fmt.Errorf("Failed to upsert")
@@ -175,7 +175,7 @@ func Remove(collection, key string, opts ...NamespaceOption) (*CollectionMutatio
 		opt(nsOpts)
 	}
 
-	result := hostDeleteFromCollection(&collection, &nsOpts.namespace, &key)
+	result := hostDelete(&collection, &nsOpts.namespace, &key)
 
 	if result == nil {
 		return nil, fmt.Errorf("Failed to delete")
@@ -233,7 +233,7 @@ func Search(collection, searchMethod, text string, opts ...SearchOption) (*Colle
 		opt(sOpts)
 	}
 
-	result := hostSearchCollection(&collection, &sOpts.namespaces, &searchMethod, &text, int32(sOpts.limit), sOpts.returnText)
+	result := hostSearch(&collection, &sOpts.namespaces, &searchMethod, &text, int32(sOpts.limit), sOpts.returnText)
 
 	if result == nil {
 		return nil, fmt.Errorf("Failed to search")
@@ -271,7 +271,7 @@ func SearchByVector(collection, searchMethod string, vector []float32, opts ...S
 		opt(sOpts)
 	}
 
-	result := hostSearchCollectionByVector(&collection, &sOpts.namespaces, &searchMethod, &vector, int32(sOpts.limit), sOpts.returnText)
+	result := hostSearchByVector(&collection, &sOpts.namespaces, &searchMethod, &vector, int32(sOpts.limit), sOpts.returnText)
 
 	if result == nil {
 		return nil, fmt.Errorf("Failed to search")
@@ -301,7 +301,7 @@ func NnClassify(collection, searchMethod, text string, opts ...NamespaceOption) 
 		opt(nsOpts)
 	}
 
-	result := hostNnClassifyCollection(&collection, &nsOpts.namespace, &searchMethod, &text)
+	result := hostClassifyText(&collection, &nsOpts.namespace, &searchMethod, &text)
 
 	if result == nil {
 		return nil, fmt.Errorf("Failed to classify")
@@ -327,7 +327,7 @@ func RecomputeSearchMethod(collection, searchMethod string, opts ...NamespaceOpt
 		opt(nsOpts)
 	}
 
-	result := hostRecomputeSearchMethod(&collection, &nsOpts.namespace, &searchMethod)
+	result := hostRecomputeIndex(&collection, &nsOpts.namespace, &searchMethod)
 
 	if result == nil {
 		return nil, fmt.Errorf("Failed to recompute")
@@ -387,7 +387,7 @@ func GetText(collection, key string, opts ...NamespaceOption) (string, error) {
 		opt(nsOpts)
 	}
 
-	result := hostGetTextFromCollection(&collection, &nsOpts.namespace, &key)
+	result := hostGetText(&collection, &nsOpts.namespace, &key)
 
 	if result == nil {
 		return "", fmt.Errorf("Failed to get text for key")
@@ -409,7 +409,7 @@ func GetTexts(collection string, opts ...NamespaceOption) (map[string]string, er
 		opt(nsOpts)
 	}
 
-	result := hostGetTextsFromCollection(&collection, &nsOpts.namespace)
+	result := hostDumpTexts(&collection, &nsOpts.namespace)
 
 	if result == nil {
 		return nil, fmt.Errorf("Failed to get texts")
@@ -423,7 +423,7 @@ func GetNamespaces(collection string) ([]string, error) {
 		return nil, fmt.Errorf("Collection name is required")
 	}
 
-	result := hostGetNamespacesFromCollection(&collection)
+	result := hostGetNamespaces(&collection)
 
 	if result == nil {
 		return nil, fmt.Errorf("Failed to get namespaces")

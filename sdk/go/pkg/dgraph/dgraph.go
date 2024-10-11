@@ -46,7 +46,7 @@ type Response struct {
  * @returns The response from the Dgraph server
  */
 func Execute(hostName string, request *Request) (*Response, error) {
-	response := hostExecuteDQL(&hostName, request)
+	response := hostExecuteQuery(&hostName, request)
 	if response == nil {
 		return nil, errors.New("Failed to execute the DQL query.")
 	}
@@ -63,7 +63,7 @@ func Execute(hostName string, request *Request) (*Response, error) {
  * @returns The response from the Dgraph server
  */
 func AlterSchema(hostName, schema string) error {
-	resp := hostDgraphAlterSchema(&hostName, &schema)
+	resp := hostAlterSchema(&hostName, &schema)
 	if resp == nil {
 		return errors.New("Failed to alter the schema.")
 	}
@@ -80,7 +80,7 @@ func AlterSchema(hostName, schema string) error {
  * @returns The response from the Dgraph server
  */
 func DropAttr(hostName, attr string) error {
-	response := hostDgraphDropAttr(&hostName, &attr)
+	response := hostDropAttribute(&hostName, &attr)
 	if response == nil {
 		return errors.New("Failed to drop the attribute.")
 	}
@@ -96,7 +96,7 @@ func DropAttr(hostName, attr string) error {
  * @returns The response from the Dgraph server
  */
 func DropAll(hostName string) error {
-	response := hostDgraphDropAll(&hostName)
+	response := hostDropAllData(&hostName)
 	if response == nil {
 		return errors.New("Failed to drop all data.")
 	}

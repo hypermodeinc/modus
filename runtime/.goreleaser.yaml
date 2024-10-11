@@ -1,0 +1,42 @@
+# yaml-language-server: $schema=https://goreleaser.com/static/schema-pro.json
+version: 2
+project_name: runtime
+monorepo:
+  tag_prefix: runtime/
+  dir: runtime
+git:
+  tag_sort: "-version:creatordate"
+  prerelease_suffix: "-"
+before:
+  hooks:
+    - sh -c "cd runtime && go mod tidy"
+builds:
+  - main: .
+    binary: modus_runtime
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    mod_timestamp: "{{ .CommitTimestamp }}"
+    ldflags: -s -w -X github.com/hypermodeinc/modus/runtime/config.version={{.Version}}
+archives:
+  - files:
+      - "../README.md"
+      - "../LICENSE"
+    format: tar.gz
+    # use zip for windows archives
+    format_overrides:
+      - goos: windows
+        format: zip
+checksum:
+  name_template: "checksums.txt"
+release:
+  prerelease: auto
+changelog:
+  # TODO: decide how to generate changelog
+  disable: true

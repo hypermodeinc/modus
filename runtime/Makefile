@@ -1,4 +1,5 @@
 EXECUTABLE := modus_runtime
+VERSION := $(shell git describe --tags --always --match 'runtime/*' | sed 's/^runtime\///')
 
 ifneq ($(OS), Windows_NT)
 	OS := $(shell uname -s)
@@ -16,20 +17,16 @@ tidy:
 	go mod tidy -v
 	go fmt ./...
 
-.PHONY: generate
-generate:
-	go generate ./...
-
 .PHONY: build
-build: generate
-	go build -o $(EXECUTABLE)
+build:
+	go build -o $(EXECUTABLE) -ldflags "-s -w -X github.com/hypermodeinc/modus/runtime/config.version=$(VERSION)" .
 
 .PHONY: run
-run: generate
+run:
 	go run .
 
 .PHONY: build-testdata
-build-testdata: generate build-testdata-assemblyscript build-testdata-golang
+build-testdata: build-testdata-assemblyscript build-testdata-golang
 
 .PHONY: build-testdata-assemblyscript
 build-testdata-assemblyscript:
@@ -40,15 +37,15 @@ build-testdata-golang:
 	cd languages/golang/testdata && ./build.sh
 
 .PHONY: test
-test: generate
+test:
 	go test ./...
 
 .PHONY: test-no-cache
-test-no-cache: generate
+test-no-cache:
 	go test -count=1 ./...
 
 .PHONY: test-race
-test-race: generate
+test-race:
 	go test -race ./...
 
 .PHONY: test-integration
@@ -56,12 +53,12 @@ test-integration:
 	go test -race -tags=integration -count=1 ./integration_tests/...
 
 .PHONY: test-ci
-test-ci: generate
+test-ci:
 	go install github.com/jstemmer/go-junit-report/v2@latest
 	go test -v -race 2>&1 ./... | go-junit-report -set-exit-code -iocopy -out report.xml
 
 .PHONY: test-integration-ci
-test-integration-ci: generate
+test-integration-ci:
 	go install github.com/jstemmer/go-junit-report/v2@latest
 	go test -tags integration -v -race 2>&1 ./integration_tests/... | go-junit-report -set-exit-code -iocopy -out report.xml
 
@@ -73,4 +70,4 @@ clean:
 
 .PHONY: docker-build
 docker-build:
-	docker build --build-arg MODUS_BUILD_VERSION="$(shell git describe --tags --always)" -t modus_runtime .
+	cd .. && docker build --build-arg RUNTIME_RELEASE_VERSION="$(VERSION)" -t modus_runtime .

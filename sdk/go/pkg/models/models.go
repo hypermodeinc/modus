@@ -61,7 +61,7 @@ func (m *ModelBase[TIn, TOut]) setInfo(info *ModelInfo) {
 //
 // Note that of the generic type parameters, only [TModel] needs to be specified.  The others are inferred automatically.
 func GetModel[TModel Model[TIn, TOut], TIn, TOut any, P modelPtr[TModel]](name string) (*TModel, error) {
-	info := lookupModel(&name)
+	info := hostGetModelInfo(&name)
 	if info == nil {
 		return nil, fmt.Errorf("model not found: %s", name)
 	}
@@ -89,7 +89,7 @@ func (m ModelBase[TIn, TOut]) Invoke(input *TIn) (*TOut, error) {
 	}
 
 	sInputJson := string(inputJson)
-	sOutputJson := invokeModel(&modelName, &sInputJson)
+	sOutputJson := hostInvokeModel(&modelName, &sInputJson)
 	if sOutputJson == nil {
 		return nil, fmt.Errorf("failed to invoke model %s", modelName)
 	}

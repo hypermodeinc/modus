@@ -12,20 +12,23 @@ import { Request, Response } from "../http";
 import { http } from "..";
 import { JSON } from "json-as";
 
-mockImport("hypermode.log", (level: string, message: string): void => {
-  if (level === "debug") {
-    console.debug(message);
-  } else if (level === "info") {
-    console.info(message);
-  } else if (level === "warning") {
-    console.warn(message);
-  } else if (level === "error") {
-    console.error(message);
-  }
-});
+mockImport(
+  "modus_system.logMessage",
+  (level: string, message: string): void => {
+    if (level === "debug") {
+      console.debug(message);
+    } else if (level === "info") {
+      console.info(message);
+    } else if (level === "warning") {
+      console.warn(message);
+    } else if (level === "error") {
+      console.error(message);
+    }
+  },
+);
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-mockImport("hypermode.httpFetch", (req: Request): Response => {
+mockImport("modus_http_client.fetch", (req: Request): Response => {
   const res = instantiate<Response>();
   const txt = '{"x":1,"y":2,"z":3}';
   const len = String.UTF8.byteLength(txt);

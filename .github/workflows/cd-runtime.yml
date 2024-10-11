@@ -14,8 +14,6 @@ on:
         description: "releasetag"
         required: true
         type: string
-env:
-  GOPRIVATE: "github.com/hypermodeinc/*"
 permissions:
   id-token: write # This is required for requesting the JWT
   contents: read # This is required for actions/checkout
@@ -25,10 +23,6 @@ jobs:
     environment: "${{ github.event.inputs.environment }}"
     runs-on: warp-ubuntu-latest-x64-16x
     steps:
-      - name: Configure git for private modules
-        env:
-          TOKEN: ${{ secrets.GO_PRIVATE_MODULES }}
-        run: git config --global url."https://admin-hypermode:${TOKEN}@github.com".insteadOf "https://github.com"
       - uses: actions/checkout@v4
         with:
           ref: "${{ github.event.inputs.releasetag }}"
@@ -49,7 +43,7 @@ jobs:
             echo "this is NOT a release tag"
             exit 1
           fi
-          RUNTIME_RELEASE_VERSION=$(echo $GIT_TAG_NAME | sed 's/runtime-//')
+          RUNTIME_RELEASE_VERSION=$(echo $GIT_TAG_NAME | sed 's/^runtime\///')
           echo "making a new release for runtime "$RUNTIME_RELEASE_VERSION
           echo "RUNTIME_RELEASE_VERSION=$RUNTIME_RELEASE_VERSION" >> $GITHUB_ENV
       - name: Runtime Git SHA
@@ -70,7 +64,7 @@ jobs:
       - name: Build and push runtime docker image
         uses: docker/build-push-action@v6
         with:
-          context: "{{defaultContext}}:runtime"
+          context: .
           cache-from: type=gha
           cache-to: type=gha,mode=max
           platforms: linux/amd64,linux/arm64
@@ -78,3 +72,5 @@ jobs:
           # see https://github.com/docker/build-push-action/issues/755 for why provenance=false
           provenance: false
           tags: ${{ vars.AWS_ACCOUNT_ID }}.dkr.ecr.${{ vars.AWS_REGION }}.amazonaws.com/hypermode/runtime:${{ env.RUNTIME_RELEASE_VERSION }}-${{ env.RUNTIME_GIT_SHA }}
+          build-args: |
+            RUNTIME_RELEASE_VERSION=${{ env.RUNTIME_RELEASE_VERSION }}

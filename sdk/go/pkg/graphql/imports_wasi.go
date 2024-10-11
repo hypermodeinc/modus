@@ -12,5 +12,5 @@
 package graphql
 
 //go:noescape
-//go:wasmimport hypermode executeGQL
-func hostExecuteGQL(hostName, statement, variables *string) *string
+//go:wasmimport modus_graphql_client executeQuery
+func hostExecuteQuery(hostName, statement, variables *string) *string

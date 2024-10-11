@@ -17,7 +17,7 @@ import (
 	"os"
 	"regexp"
 
-	"github.com/hypermodeinc/modus/pkg/manifest"
+	"github.com/hypermodeinc/modus/lib/manifest"
 	"github.com/hypermodeinc/modus/runtime/config"
 	"github.com/hypermodeinc/modus/runtime/logger"
 	"github.com/hypermodeinc/modus/runtime/utils"

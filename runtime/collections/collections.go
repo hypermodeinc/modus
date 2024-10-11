@@ -44,7 +44,7 @@ func Shutdown(ctx context.Context) {
 	<-globalNamespaceManager.done
 }
 
-func UpsertToCollection(ctx context.Context, collectionName, namespace string, keys, texts []string, labels [][]string) (*CollectionMutationResult, error) {
+func Upsert(ctx context.Context, collectionName, namespace string, keys, texts []string, labels [][]string) (*CollectionMutationResult, error) {
 
 	// Get the collectionName data from the manifest
 	collectionData := manifestdata.GetManifest().Collections[collectionName]
@@ -140,7 +140,7 @@ func UpsertToCollection(ctx context.Context, collectionName, namespace string, k
 	return NewCollectionMutationResult(collectionName, "upsert", "success", keys, ""), nil
 }
 
-func DeleteFromCollection(ctx context.Context, collectionName, namespace, key string) (*CollectionMutationResult, error) {
+func Delete(ctx context.Context, collectionName, namespace, key string) (*CollectionMutationResult, error) {
 	col, err := globalNamespaceManager.findCollection(collectionName)
 	if err != nil {
 		return nil, err
@@ -175,7 +175,7 @@ func DeleteFromCollection(ctx context.Context, collectionName, namespace, key st
 	return NewCollectionMutationResult(collectionName, "delete", "success", keys, ""), nil
 }
 
-func SearchCollection(ctx context.Context, collectionName string, namespaces []string, searchMethod, text string, limit int32, returnText bool) (*CollectionSearchResult, error) {
+func Search(ctx context.Context, collectionName string, namespaces []string, searchMethod, text string, limit int32, returnText bool) (*CollectionSearchResult, error) {
 
 	col, err := globalNamespaceManager.findCollection(collectionName)
 	if err != nil {
@@ -254,7 +254,7 @@ func SearchCollection(ctx context.Context, collectionName string, namespaces []s
 	return NewCollectionSearchResult(collectionName, searchMethod, "success", mergedObjects, ""), nil
 }
 
-func SearchCollectionByVector(ctx context.Context, collectionName string, namespaces []string, searchMethod string, vector []float32, limit int32, returnText bool) (*CollectionSearchResult, error) {
+func SearchByVector(ctx context.Context, collectionName string, namespaces []string, searchMethod string, vector []float32, limit int32, returnText bool) (*CollectionSearchResult, error) {
 
 	col, err := globalNamespaceManager.findCollection(collectionName)
 	if err != nil {
@@ -308,7 +308,7 @@ func SearchCollectionByVector(ctx context.Context, collectionName string, namesp
 	return NewCollectionSearchResult(collectionName, searchMethod, "success", mergedObjects, ""), nil
 }
 
-func NnClassify(ctx context.Context, collectionName, namespace, searchMethod, text string) (*CollectionClassificationResult, error) {
+func ClassifyText(ctx context.Context, collectionName, namespace, searchMethod, text string) (*CollectionClassificationResult, error) {
 
 	col, err := globalNamespaceManager.findCollection(collectionName)
 	if err != nil {
@@ -418,7 +418,7 @@ func NnClassify(ctx context.Context, collectionName, namespace, searchMethod, te
 	return res, nil
 }
 
-func GetVector(ctx context.Context, collectionName, namespace, searchMethod, id string) ([]float32, error) {
+func GetVector(ctx context.Context, collectionName, namespace, searchMethod, key string) ([]float32, error) {
 
 	col, err := globalNamespaceManager.findCollection(collectionName)
 	if err != nil {
@@ -439,7 +439,7 @@ func GetVector(ctx context.Context, collectionName, namespace, searchMethod, id 
 		return nil, err
 	}
 
-	vec, err := vectorIndex.GetVector(ctx, id)
+	vec, err := vectorIndex.GetVector(ctx, key)
 	if err != nil {
 		return nil, err
 	}
@@ -466,7 +466,7 @@ func GetLabels(ctx context.Context, collectionName, namespace, key string) ([]st
 	return labels, nil
 }
 
-func ComputeDistance(ctx context.Context, collectionName, namespace, searchMethod, id1, id2 string) (*CollectionSearchResultObject, error) {
+func ComputeDistance(ctx context.Context, collectionName, namespace, searchMethod, key1, key2 string) (*CollectionSearchResultObject, error) {
 
 	col, err := globalNamespaceManager.findCollection(collectionName)
 	if err != nil {
@@ -487,22 +487,22 @@ func ComputeDistance(ctx context.Context, collectionName, namespace, searchMetho
 		return nil, err
 	}
 
-	vec1, err := vectorIndex.GetVector(ctx, id1)
+	vec1, err := vectorIndex.GetVector(ctx, key1)
 	if err != nil {
 		return nil, err
 	}
 
 	if vec1 == nil {
-		return nil, fmt.Errorf("vector for id %s not found", id1)
+		return nil, fmt.Errorf("vector for key %s not found", key1)
 	}
 
-	vec2, err := vectorIndex.GetVector(ctx, id2)
+	vec2, err := vectorIndex.GetVector(ctx, key2)
 	if err != nil {
 		return nil, err
 	}
 
 	if vec2 == nil {
-		return nil, fmt.Errorf("vector for id %s not found", id2)
+		return nil, fmt.Errorf("vector for key %s not found", key2)
 	}
 
 	distance, err := collection_utils.CosineDistance(vec1, vec2)
@@ -513,7 +513,7 @@ func ComputeDistance(ctx context.Context, collectionName, namespace, searchMetho
 	return NewCollectionSearchResultObject(namespace, "", "", []string{}, distance, 1-distance), nil
 }
 
-func RecomputeSearchMethod(ctx context.Context, collectionName, namespace, searchMethod string) (*SearchMethodMutationResult, error) {
+func RecomputeIndex(ctx context.Context, collectionName, namespace, searchMethod string) (*SearchMethodMutationResult, error) {
 
 	col, err := globalNamespaceManager.findCollection(collectionName)
 	if err != nil {
@@ -542,7 +542,7 @@ func RecomputeSearchMethod(ctx context.Context, collectionName, namespace, searc
 	return NewSearchMethodMutationResult(collectionName, searchMethod, "recompute", "success", ""), nil
 }
 
-func GetTextFromCollection(ctx context.Context, collectionName, namespace, key string) (string, error) {
+func GetText(ctx context.Context, collectionName, namespace, key string) (string, error) {
 	col, err := globalNamespaceManager.findCollection(collectionName)
 	if err != nil {
 		return "", err
@@ -561,7 +561,7 @@ func GetTextFromCollection(ctx context.Context, collectionName, namespace, key s
 	return text, nil
 }
 
-func GetTextsFromCollection(ctx context.Context, collectionName, namespace string) (map[string]string, error) {
+func DumpTexts(ctx context.Context, collectionName, namespace string) (map[string]string, error) {
 
 	col, err := globalNamespaceManager.findCollection(collectionName)
 	if err != nil {
@@ -588,7 +588,7 @@ func GetTextsFromCollection(ctx context.Context, collectionName, namespace strin
 	return textMap, nil
 }
 
-func GetNamespacesFromCollection(ctx context.Context, collectionName string) ([]string, error) {
+func GetNamespaces(ctx context.Context, collectionName string) ([]string, error) {
 	col, err := globalNamespaceManager.findCollection(collectionName)
 	if err != nil {
 		return nil, err
