@@ -21,10 +21,10 @@ import (
 func init() {
 	const module_name = "modus_system"
 
-	registerHostFunction(module_name, "logMessage", LogFunctionMessage)
+	registerHostFunction(module_name, "logMessage", LogMessage)
 }
 
-func LogFunctionMessage(ctx context.Context, level, message string) {
+func LogMessage(ctx context.Context, level, message string) {
 
 	// store messages in the context, so we can return them to the caller
 	messages := ctx.Value(utils.FunctionMessagesContextKey).(*[]utils.LogMessage)

@@ -18,7 +18,7 @@ func Assert(condition bool, message string) {
 }
 
 func Log(message string) {
-	log("", message)
+	hostLogMessage("", message)
 }
 
 func Logf(format string, args ...any) {
@@ -26,7 +26,7 @@ func Logf(format string, args ...any) {
 }
 
 func Debug(message string) {
-	log("debug", message)
+	hostLogMessage("debug", message)
 }
 
 func Debugf(format string, args ...any) {
@@ -34,7 +34,7 @@ func Debugf(format string, args ...any) {
 }
 
 func Info(message string) {
-	log("info", message)
+	hostLogMessage("info", message)
 }
 
 func Infof(format string, args ...any) {
@@ -42,7 +42,7 @@ func Infof(format string, args ...any) {
 }
 
 func Warn(message string) {
-	log("warning", message)
+	hostLogMessage("warning", message)
 }
 
 func Warnf(format string, args ...any) {
@@ -50,7 +50,7 @@ func Warnf(format string, args ...any) {
 }
 
 func Error(message string) {
-	log("error", message)
+	hostLogMessage("error", message)
 }
 
 func Errorf(format string, args ...any) {

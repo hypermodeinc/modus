@@ -18,7 +18,7 @@ import (
 func init() {
 	const module_name = "modus_dgraph_client"
 
-	registerHostFunction(module_name, "executeQuery", dgraphclient.Execute,
+	registerHostFunction(module_name, "executeQuery", dgraphclient.ExecuteQuery,
 		withStartingMessage("Executing DQL operation."),
 		withCompletedMessage("Completed DQL operation."),
 		withCancelledMessage("Cancelled DQL operation."),
@@ -36,7 +36,7 @@ func init() {
 			return fmt.Sprintf("Host: %s Schema: %s", hostName, schema)
 		}))
 
-	registerHostFunction(module_name, "dropAttribute", dgraphclient.DropAttr,
+	registerHostFunction(module_name, "dropAttribute", dgraphclient.DropAttribute,
 		withStartingMessage("Dropping DQL attribute."),
 		withCompletedMessage("Completed DQL attribute drop."),
 		withCancelledMessage("Cancelled DQL attribute drop."),
@@ -45,7 +45,7 @@ func init() {
 			return fmt.Sprintf("Host: %s Attribute: %s", hostName, attr)
 		}))
 
-	registerHostFunction(module_name, "dropAllData", dgraphclient.DropAll,
+	registerHostFunction(module_name, "dropAllData", dgraphclient.DropAllData,
 		withStartingMessage("Dropping all DQL data."),
 		withCompletedMessage("Completed DQL data drop."),
 		withCancelledMessage("Cancelled DQL data drop."),

@@ -9,7 +9,7 @@
 
 // @ts-expect-error: decorator
 @external("modus_system", "logMessage")
-declare function log(level: string, message: string): void;
+declare function hostLogMessage(level: string, message: string): void;
 
 // @ts-expect-error: decorator
 @lazy const timers = new Map<string, u64>();
@@ -17,28 +17,28 @@ declare function log(level: string, message: string): void;
 export default abstract class modus_console {
   static assert<T>(condition: T, message: string = ""): void {
     if (!condition) {
-      log("error", "Assertion failed: " + message);
+      hostLogMessage("error", "Assertion failed: " + message);
     }
   }
 
   static log(message: string = ""): void {
-    log("", message);
+    hostLogMessage("", message);
   }
 
   static debug(message: string = ""): void {
-    log("debug", message);
+    hostLogMessage("debug", message);
   }
 
   static info(message: string = ""): void {
-    log("info", message);
+    hostLogMessage("info", message);
   }
 
   static warn(message: string = ""): void {
-    log("warning", message);
+    hostLogMessage("warning", message);
   }
 
   static error(message: string = ""): void {
-    log("error", message);
+    hostLogMessage("error", message);
   }
 
   static time(label: string = "default"): void {

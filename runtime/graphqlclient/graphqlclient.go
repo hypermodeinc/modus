@@ -25,7 +25,7 @@ type graphqlRequestPayload struct {
 	Variables map[string]any `json:"variables"`
 }
 
-func Execute(ctx context.Context, hostName string, stmt string, varsJson string) (string, error) {
+func ExecuteQuery(ctx context.Context, hostName string, stmt string, varsJson string) (string, error) {
 
 	host, err := hosts.GetHttpHost(hostName)
 	if err != nil {

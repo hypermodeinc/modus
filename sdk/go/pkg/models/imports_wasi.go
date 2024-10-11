@@ -15,11 +15,11 @@ import "unsafe"
 
 //go:noescape
 //go:wasmimport modus_models getModelInfo
-func _lookupModel(modelName *string) unsafe.Pointer
+func _hostGetModelInfo(modelName *string) unsafe.Pointer
 
 //modus:import modus_models getModelInfo
-func lookupModel(modelName *string) *ModelInfo {
-	info := _lookupModel(modelName)
+func hostGetModelInfo(modelName *string) *ModelInfo {
+	info := _hostGetModelInfo(modelName)
 	if info == nil {
 		return nil
 	}
@@ -28,4 +28,4 @@ func lookupModel(modelName *string) *ModelInfo {
 
 //go:noescape
 //go:wasmimport modus_models invokeModel
-func invokeModel(modelName *string, input *string) *string
+func hostInvokeModel(modelName *string, input *string) *string

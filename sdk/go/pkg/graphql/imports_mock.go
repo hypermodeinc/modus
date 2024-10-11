@@ -15,7 +15,7 @@ import "github.com/hypermodeinc/modus/sdk/go/pkg/testutils"
 
 var GraphqlQueryCallStack = testutils.NewCallStack()
 
-func hostExecuteGQL(hostName, statement, variables *string) *string {
+func hostExecuteQuery(hostName, statement, variables *string) *string {
 	GraphqlQueryCallStack.Push(hostName, statement, variables)
 
 	var json string

@@ -15,11 +15,11 @@ import "unsafe"
 
 //go:noescape
 //go:wasmimport modus_sql_client executeQuery
-func _databaseQuery(hostName, dbType, statement, paramsJson *string) unsafe.Pointer
+func _hostExecuteQuery(hostName, dbType, statement, paramsJson *string) unsafe.Pointer
 
 //modus:import modus_sql_client executeQuery
-func databaseQuery(hostName, dbType, statement, paramsJson *string) *HostQueryResponse {
-	response := _databaseQuery(hostName, dbType, statement, paramsJson)
+func hostExecuteQuery(hostName, dbType, statement, paramsJson *string) *HostQueryResponse {
+	response := _hostExecuteQuery(hostName, dbType, statement, paramsJson)
 	if response == nil {
 		return nil
 	}

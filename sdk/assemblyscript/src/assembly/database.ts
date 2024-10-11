@@ -12,7 +12,7 @@ import * as utils from "./utils";
 
 // @ts-expect-error: decorator
 @external("modus_sql_client", "executeQuery")
-declare function databaseQuery(
+declare function hostExecuteQuery(
   hostName: string,
   dbType: string,
   statement: string,
@@ -83,7 +83,7 @@ export function execute(
   params: Params,
 ): Response {
   const paramsJson = params.toJSON();
-  const response = databaseQuery(
+  const response = hostExecuteQuery(
     hostName,
     dbType,
     statement.trim(),
@@ -113,7 +113,7 @@ export function query<T>(
   params: Params,
 ): QueryResponse<T> {
   const paramsJson = params.toJSON();
-  const response = databaseQuery(
+  const response = hostExecuteQuery(
     hostName,
     dbType,
     statement.trim(),

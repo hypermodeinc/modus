@@ -39,7 +39,7 @@ func getTestHostFunctionRegistrations() []func(wasmhost.WasmHost) error {
 
 func hostLog(ctx context.Context, level, message string) {
 	if utils.DebugModeEnabled() {
-		hostfunctions.LogFunctionMessage(ctx, level, message)
+		hostfunctions.LogMessage(ctx, level, message)
 	}
 	t := testutils.GetTestT(ctx)
 	t.Logf("[%s] %s", level, message)

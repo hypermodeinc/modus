@@ -15,11 +15,11 @@ import "unsafe"
 
 //go:noescape
 //go:wasmimport modus_http_client fetch
-func _fetch(request unsafe.Pointer) unsafe.Pointer
+func _hostFetch(request unsafe.Pointer) unsafe.Pointer
 
 //modus:import modus_http_client fetch
-func fetch(request *Request) *Response {
-	response := _fetch(unsafe.Pointer(request))
+func hostFetch(request *Request) *Response {
+	response := _hostFetch(unsafe.Pointer(request))
 	if response == nil {
 		return nil
 	}

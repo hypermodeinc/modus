@@ -15,11 +15,11 @@ import "unsafe"
 
 //go:noescape
 //go:wasmimport modus_dgraph_client executeQuery
-func _hostExecuteDQL(hostName *string, request unsafe.Pointer) unsafe.Pointer
+func _hostExecuteQuery(hostName *string, request unsafe.Pointer) unsafe.Pointer
 
 //modus:import modus_dgraph_client executeQuery
-func hostExecuteDQL(hostName *string, request *Request) *Response {
-	response := _hostExecuteDQL(hostName, unsafe.Pointer(request))
+func hostExecuteQuery(hostName *string, request *Request) *Response {
+	response := _hostExecuteQuery(hostName, unsafe.Pointer(request))
 	if response == nil {
 		return nil
 	}
@@ -28,12 +28,12 @@ func hostExecuteDQL(hostName *string, request *Request) *Response {
 
 //go:noescape
 //go:wasmimport modus_dgraph_client alterSchema
-func hostDgraphAlterSchema(hostName, schema *string) *string
+func hostAlterSchema(hostName, schema *string) *string
 
 //go:noescape
 //go:wasmimport modus_dgraph_client dropAttribute
-func hostDgraphDropAttr(hostName, attr *string) *string
+func hostDropAttribute(hostName, attr *string) *string
 
 //go:noescape
 //go:wasmimport modus_dgraph_client dropAllData
-func hostDgraphDropAll(hostName *string) *string
+func hostDropAllData(hostName *string) *string

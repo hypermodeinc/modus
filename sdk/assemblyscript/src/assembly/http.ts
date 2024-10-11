@@ -13,7 +13,7 @@ const emptyArrayBuffer = new ArrayBuffer(0);
 
 // @ts-expect-error: decorator
 @external("modus_http_client", "fetch")
-declare function fetchFromHost(request: Request): Response;
+declare function hostFetch(request: Request): Response;
 
 /**
  * Performs an HTTP request and returns the response.
@@ -35,7 +35,7 @@ export function fetch<T>(
     throw new Error("Unsupported request type.");
   }
 
-  const response = fetchFromHost(request);
+  const response = hostFetch(request);
   if (!response) {
     throw new Error("HTTP fetch failed. Check the logs for more information.");
   }

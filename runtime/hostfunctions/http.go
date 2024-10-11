@@ -18,7 +18,7 @@ import (
 func init() {
 	const module_name = "modus_http_client"
 
-	registerHostFunction(module_name, "fetch", httpclient.HttpFetch,
+	registerHostFunction(module_name, "fetch", httpclient.Fetch,
 		withStartingMessage("Starting HTTP request."),
 		withCompletedMessage("Completed HTTP request."),
 		withCancelledMessage("Cancelled HTTP request."),
