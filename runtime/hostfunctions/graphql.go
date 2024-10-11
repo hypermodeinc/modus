@@ -18,7 +18,7 @@ import (
 func init() {
 	const module_name = "modus_graphql_client"
 
-	registerHostFunction(module_name, "executeGQL", graphqlclient.Execute,
+	registerHostFunction(module_name, "executeQuery", graphqlclient.Execute,
 		withStartingMessage("Executing GraphQL operation."),
 		withCompletedMessage("Completed GraphQL operation."),
 		withCancelledMessage("Cancelled GraphQL operation."),

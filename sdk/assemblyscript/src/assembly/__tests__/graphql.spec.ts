@@ -13,7 +13,7 @@ import { JSON } from "json-as";
 
 let returnData: string = "";
 mockImport(
-  "hypermode.executeGQL",
+  "modus_graphql_client.executeQuery",
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   (hostName: string, statement: string, variables: string): string => {
     return returnData;

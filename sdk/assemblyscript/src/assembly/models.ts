@@ -13,7 +13,7 @@ import * as utils from "./utils";
 type ModelInvoker = (modelName: string, inputJson: string) => string | null;
 
 // @ts-expect-error: decorator
-@external("modus_models", "lookupModel")
+@external("modus_models", "getModelInfo")
 declare function hostLookupModel(modelName: string): ModelInfo;
 
 // @ts-expect-error: decorator

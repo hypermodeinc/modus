@@ -18,7 +18,7 @@ import (
 func init() {
 	const module_name = "modus_models"
 
-	registerHostFunction(module_name, "lookupModel", models.GetModelInfo,
+	registerHostFunction(module_name, "getModelInfo", models.GetModelInfo,
 		withCancelledMessage("Cancelled getting model info."),
 		withErrorMessage("Error getting model info."),
 		withMessageDetail(func(modelName string) string {

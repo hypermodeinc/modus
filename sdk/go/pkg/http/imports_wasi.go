@@ -14,10 +14,10 @@ package http
 import "unsafe"
 
 //go:noescape
-//go:wasmimport modus_http_client httpFetch
+//go:wasmimport modus_http_client fetch
 func _fetch(request unsafe.Pointer) unsafe.Pointer
 
-//hypermode:import hypermode httpFetch
+//hypermode:import hypermode fetch
 func fetch(request *Request) *Response {
 	response := _fetch(unsafe.Pointer(request))
 	if response == nil {

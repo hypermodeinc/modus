@@ -146,7 +146,7 @@ export class CollectionClassificationResultObject {
 }
 
 // @ts-expect-error: decorator
-@external("modus_collections", "upsertToCollection")
+@external("modus_collections", "upsert")
 declare function hostUpsertToCollection(
   collection: string,
   namespace: string,
@@ -156,7 +156,7 @@ declare function hostUpsertToCollection(
 ): CollectionMutationResult;
 
 // @ts-expect-error: decorator
-@external("modus_collections", "deleteFromCollection")
+@external("modus_collections", "delete")
 declare function hostDeleteFromCollection(
   collection: string,
   namespace: string,
@@ -164,7 +164,7 @@ declare function hostDeleteFromCollection(
 ): CollectionMutationResult;
 
 // @ts-expect-error: decorator
-@external("modus_collections", "searchCollection")
+@external("modus_collections", "search")
 declare function hostSearchCollection(
   collection: string,
   namespaces: string[],
@@ -175,7 +175,7 @@ declare function hostSearchCollection(
 ): CollectionSearchResult;
 
 // @ts-expect-error: decorator
-@external("modus_collections", "nnClassifyCollection")
+@external("modus_collections", "classifyText")
 declare function hostNnClassifyCollection(
   collection: string,
   namespace: string,
@@ -184,7 +184,7 @@ declare function hostNnClassifyCollection(
 ): CollectionClassificationResult;
 
 // @ts-expect-error: decorator
-@external("modus_collections", "recomputeSearchMethod")
+@external("modus_collections", "recomputeIndex")
 declare function hostRecomputeSearchMethod(
   collection: string,
   namespace: string,
@@ -202,7 +202,7 @@ declare function hostComputeDistance(
 ): CollectionSearchResultObject;
 
 // @ts-expect-error: decorator
-@external("modus_collections", "getTextFromCollection")
+@external("modus_collections", "getText")
 declare function hostGetTextFromCollection(
   collection: string,
   namespace: string,
@@ -210,14 +210,14 @@ declare function hostGetTextFromCollection(
 ): string;
 
 // @ts-expect-error: decorator
-@external("modus_collections", "getTextsFromCollection")
+@external("modus_collections", "dumpTexts")
 declare function hostGetTextsFromCollection(
   collection: string,
   namespace: string,
 ): Map<string, string>;
 
 // @ts-expect-error: decorator
-@external("modus_collections", "getNamespacesFromCollection")
+@external("modus_collections", "getNamespaces")
 declare function hostGetNamespacesFromCollection(collection: string): string[];
 
 // @ts-expect-error: decorator
@@ -238,7 +238,7 @@ declare function hostGetLabels(
 ): string[];
 
 // @ts-expect-error: decorator
-@external("modus_collections", "searchCollectionByVector")
+@external("modus_collections", "searchByVector")
 declare function hostSearchCollectionByVector(
   collection: string,
   namespaces: string[],

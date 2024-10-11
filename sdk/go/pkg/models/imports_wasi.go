@@ -14,10 +14,10 @@ package models
 import "unsafe"
 
 //go:noescape
-//go:wasmimport modus_models lookupModel
+//go:wasmimport modus_models getModelInfo
 func _lookupModel(modelName *string) unsafe.Pointer
 
-//hypermode:import hypermode lookupModel
+//hypermode:import hypermode getModelInfo
 func lookupModel(modelName *string) *ModelInfo {
 	info := _lookupModel(modelName)
 	if info == nil {

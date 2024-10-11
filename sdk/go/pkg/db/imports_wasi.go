@@ -14,10 +14,10 @@ package db
 import "unsafe"
 
 //go:noescape
-//go:wasmimport modus_sql_client databaseQuery
+//go:wasmimport modus_sql_client executeQuery
 func _databaseQuery(hostName, dbType, statement, paramsJson *string) unsafe.Pointer
 
-//hypermode:import hypermode databaseQuery
+//hypermode:import hypermode executeQuery
 func databaseQuery(hostName, dbType, statement, paramsJson *string) *HostQueryResponse {
 	response := _databaseQuery(hostName, dbType, statement, paramsJson)
 	if response == nil {

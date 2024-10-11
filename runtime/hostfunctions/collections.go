@@ -25,28 +25,28 @@ func init() {
 			return fmt.Sprintf("Collection: %s, Namespace: %s, Method: %s", collectionName, namespace, searchMethod)
 		}))
 
-	registerHostFunction(module_name, "deleteFromCollection", collections.DeleteFromCollection,
+	registerHostFunction(module_name, "delete", collections.DeleteFromCollection,
 		withCancelledMessage("Cancelled deleting from collection."),
 		withErrorMessage("Error deleting from collection."),
 		withMessageDetail(func(collectionName, namespace, key string) string {
 			return fmt.Sprintf("Collection: %s, Namespace: %s, Key: %s", collectionName, namespace, key)
 		}))
 
-	registerHostFunction(module_name, "getNamespacesFromCollection", collections.GetNamespacesFromCollection,
+	registerHostFunction(module_name, "getNamespaces", collections.GetNamespacesFromCollection,
 		withCancelledMessage("Cancelled getting namespaces from collection."),
 		withErrorMessage("Error getting namespaces from collection."),
 		withMessageDetail(func(collectionName string) string {
 			return fmt.Sprintf("Collection: %s", collectionName)
 		}))
 
-	registerHostFunction(module_name, "getTextFromCollection", collections.GetTextFromCollection,
+	registerHostFunction(module_name, "getText", collections.GetTextFromCollection,
 		withCancelledMessage("Cancelled getting text from collection."),
 		withErrorMessage("Error getting text from collection."),
 		withMessageDetail(func(collectionName, namespace, key string) string {
 			return fmt.Sprintf("Collection: %s, Namespace: %s, Key: %s", collectionName, namespace, key)
 		}))
 
-	registerHostFunction(module_name, "getTextsFromCollection", collections.GetTextsFromCollection,
+	registerHostFunction(module_name, "dumpTexts", collections.GetTextsFromCollection,
 		withCancelledMessage("Cancelled getting texts from collection."),
 		withErrorMessage("Error getting texts from collection."),
 		withMessageDetail(func(collectionName, namespace string) string {
@@ -67,14 +67,14 @@ func init() {
 			return fmt.Sprintf("Collection: %s, Namespace: %s, ID: %s", collectionName, namespace, id)
 		}))
 
-	registerHostFunction(module_name, "nnClassifyCollection", collections.NnClassify,
+	registerHostFunction(module_name, "classifyText", collections.NnClassify,
 		withCancelledMessage("Cancelled classification."),
 		withErrorMessage("Error during classification."),
 		withMessageDetail(func(collectionName, namespace, searchMethod string) string {
 			return fmt.Sprintf("Collection: %s, Namespace: %s, Method: %s", collectionName, namespace, searchMethod)
 		}))
 
-	registerHostFunction(module_name, "recomputeSearchMethod", collections.RecomputeSearchMethod,
+	registerHostFunction(module_name, "recomputeIndex", collections.RecomputeSearchMethod,
 		withStartingMessage("Starting recomputing search method for collection."),
 		withCompletedMessage("Completed recomputing search method for collection."),
 		withCancelledMessage("Cancelled recomputing search method for collection."),
@@ -83,21 +83,21 @@ func init() {
 			return fmt.Sprintf("Collection: %s, Namespace: %s, Method: %s", collectionName, namespace, searchMethod)
 		}))
 
-	registerHostFunction(module_name, "searchCollection", collections.SearchCollection,
+	registerHostFunction(module_name, "search", collections.SearchCollection,
 		withCancelledMessage("Cancelled searching collection."),
 		withErrorMessage("Error searching collection."),
 		withMessageDetail(func(collectionName string, namespaces []string, searchMethod string) string {
 			return fmt.Sprintf("Collection: %s, Namespaces: %v, Method: %s", collectionName, namespaces, searchMethod)
 		}))
 
-	registerHostFunction(module_name, "searchCollectionByVector", collections.SearchCollectionByVector,
+	registerHostFunction(module_name, "searchByVector", collections.SearchCollectionByVector,
 		withCancelledMessage("Cancelled searching collection by vector."),
 		withErrorMessage("Error searching collection by vector."),
 		withMessageDetail(func(collectionName string, namespaces []string, searchMethod string) string {
 			return fmt.Sprintf("Collection: %s, Namespaces: %v, Method: %s", collectionName, namespaces, searchMethod)
 		}))
 
-	registerHostFunction(module_name, "upsertToCollection", collections.UpsertToCollection,
+	registerHostFunction(module_name, "upsert", collections.UpsertToCollection,
 		withCancelledMessage("Cancelled collection upsert."),
 		withErrorMessage("Error upserting to collection."),
 		withMessageDetail(func(collectionName, namespace string, keys []string) string {

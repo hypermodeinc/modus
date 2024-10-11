@@ -18,7 +18,7 @@ import (
 func init() {
 	const module_name = "modus_sql_client"
 
-	registerHostFunction(module_name, "databaseQuery", sqlclient.ExecuteQuery,
+	registerHostFunction(module_name, "executeQuery", sqlclient.ExecuteQuery,
 		withStartingMessage("Starting database query."),
 		withCompletedMessage("Completed database query."),
 		withCancelledMessage("Cancelled database query."),

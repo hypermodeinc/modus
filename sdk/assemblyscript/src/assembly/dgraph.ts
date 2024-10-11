@@ -11,22 +11,22 @@ import { JSON } from "json-as";
 import * as utils from "./utils";
 
 // @ts-expect-error: decorator
-@external("modus_dgraph_client", "executeDQL")
+@external("modus_dgraph_client", "executeQuery")
 declare function hostExecuteDQL(hostName: string, request: Request): Response;
 
 // @ts-expect-error: decorator
-@external("modus_dgraph_client", "dgraphAlterSchema")
+@external("modus_dgraph_client", "alterSchema")
 declare function hostDgraphAlterSchema(
   hostName: string,
   schema: string,
 ): string;
 
 // @ts-expect-error: decorator
-@external("modus_dgraph_client", "dgraphDropAttr")
+@external("modus_dgraph_client", "dropAttribute")
 declare function hostDgraphDropAttr(hostName: string, attr: string): string;
 
 // @ts-expect-error: decorator
-@external("modus_dgraph_client", "dgraphDropAll")
+@external("modus_dgraph_client", "dropAllData")
 declare function hostDgraphDropAll(hostName: string): string;
 
 /**
