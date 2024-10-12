@@ -12,6 +12,7 @@ package utils
 import (
 	"context"
 	"log"
+	"os"
 	"runtime"
 	"strings"
 	"time"
@@ -20,9 +21,6 @@ import (
 
 	"github.com/getsentry/sentry-go"
 )
-
-// The Sentry DSN for the Modus Runtime project (not a secret)
-const sentryDsn = "https://d0de28f77651b88c22af84598882d60a@o4507057700470784.ingest.us.sentry.io/4507153498636288"
 
 var rootSourcePath string
 var sentryInitialized bool
@@ -34,11 +32,31 @@ func InitSentry(rootPath string) {
 		return
 	}
 
+	// ONLY report errors to Sentry when the SENTRY_DSN environment variable is set.
+	dsn := os.Getenv("SENTRY_DSN")
+	if dsn == "" {
+		return
+	}
+
+	// Allow the Sentry environment to be overridden by the SENTRY_ENVIRONMENT environment variable,
+	// but default to the environment name from MODUS_ENV.
+	environment := os.Getenv("SENTRY_ENVIRONMENT")
+	if environment == "" {
+		environment = config.GetEnvironmentName()
+	}
+
+	// Allow the Sentry release to be overridden by the SENTRY_RELEASE environment variable,
+	// but default to the Modus version number.
+	release := os.Getenv("SENTRY_RELEASE")
+	if release == "" {
+		release = config.GetVersionNumber()
+	}
+
 	rootSourcePath = rootPath
 	err := sentry.Init(sentry.ClientOptions{
-		Dsn:                   sentryDsn,
-		Environment:           config.GetEnvironmentName(),
-		Release:               config.GetVersionNumber(),
+		Dsn:                   dsn,
+		Environment:           environment,
+		Release:               release,
 		BeforeSend:            sentryBeforeSend,
 		BeforeSendTransaction: sentryBeforeSendTransaction,
 
