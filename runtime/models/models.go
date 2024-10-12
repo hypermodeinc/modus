@@ -67,7 +67,13 @@ func PostToModelEndpoint[TResult any](ctx context.Context, model *manifest.Model
 	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
 
-	endpoint, host, err := getModelEndpointAndHost(model)
+	host, err := hosts.GetHttpHost(model.Host)
+	if err != nil {
+		var empty TResult
+		return empty, err
+	}
+
+	endpoint, err := getModelEndpoint(model, host)
 	if err != nil {
 		var empty TResult
 		return empty, err
@@ -95,44 +101,39 @@ func PostToModelEndpoint[TResult any](ctx context.Context, model *manifest.Model
 	return res.Data, nil
 }
 
-func getModelEndpointAndHost(model *manifest.ModelInfo) (string, *manifest.HTTPHostInfo, error) {
-
-	host, err := hosts.GetHttpHost(model.Host)
-	if err != nil {
-		return "", nil, err
-	}
+func getModelEndpoint(model *manifest.ModelInfo, host *manifest.HTTPHostInfo) (string, error) {
 
 	if host.Name == hosts.HypermodeHost {
 		if config.IsDevEnvironment() {
 			if !isValidLocalHypermodeModel(model.SourceModel) {
-				return "", host, fmt.Errorf("model %s is not available in the local Hypermode environment", model.SourceModel)
+				return "", fmt.Errorf("model %s is not available in the local Hypermode environment", model.SourceModel)
 			}
 			endpoint := fmt.Sprintf("https://models.hypermode.host/%s", strings.ToLower(model.SourceModel))
-			return endpoint, host, nil
+			return endpoint, nil
 		}
 		// Compose the Hypermode hosted model endpoint URL.
 		// Example: http://modelname.bckid.svc.cluster.local/v1/models/modelname:predict
 		endpoint := fmt.Sprintf("http://%s.%s/%[1]s:predict", strings.ToLower(model.Name), config.ModelHost)
-		return endpoint, host, nil
+		return endpoint, nil
 	}
 
 	if host.BaseURL != "" && host.Endpoint != "" {
-		return "", host, fmt.Errorf("specify either base URL or endpoint for a host, not both")
+		return "", fmt.Errorf("specify either base URL or endpoint for a host, not both")
 	}
 
 	if host.BaseURL != "" {
 		if model.Path == "" {
-			return "", host, fmt.Errorf("model path is not defined")
+			return "", fmt.Errorf("model path is not defined")
 		}
 		endpoint := fmt.Sprintf("%s/%s", strings.TrimRight(host.BaseURL, "/"), strings.TrimLeft(model.Path, "/"))
-		return endpoint, host, nil
+		return endpoint, nil
 	}
 
 	if model.Path != "" {
-		return "", host, fmt.Errorf("model path is defined but host has no base URL")
+		return "", fmt.Errorf("model path is defined but host has no base URL")
 	}
 
-	return host.Endpoint, host, nil
+	return host.Endpoint, nil
 }
 
 func isValidLocalHypermodeModel(modelName string) bool {
