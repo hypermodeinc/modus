@@ -32,6 +32,7 @@ In previous releases, the name "Hypermode" was used for all three._
 - Remove `go generate` and fix docker build [#455](https://github.com/hypermodeinc/modus/pull/455)
 - Remove AWS Secrets Manager client [#456](https://github.com/hypermodeinc/modus/pull/456)
 - Make app path required [#457](https://github.com/hypermodeinc/modus/pull/457)
+- Improve `.env` file handling [#458](https://github.com/hypermodeinc/modus/pull/458)
 
 ## 2024-10-02 - Version 0.12.7
 
