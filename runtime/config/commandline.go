@@ -26,9 +26,9 @@ var RefreshInterval time.Duration
 var UseJsonLogging bool
 
 func parseCommandLineFlags() {
+	flag.StringVar(&AppPath, "appPath", "", "REQUIRED - The path to the Modus app to load and run.")
 	flag.IntVar(&Port, "port", 8686, "The HTTP port to listen on.")
 	flag.StringVar(&ModelHost, "modelHost", "", "The base DNS of the host endpoint to the model server.")
-	flag.StringVar(&AppPath, "appPath", ".", "The path to the Modus app to load and run.")
 	flag.BoolVar(&UseAwsStorage, "useAwsStorage", false, "Use AWS S3 for storage instead of the local filesystem.")
 	flag.StringVar(&S3Bucket, "s3bucket", "", "The S3 bucket to use, if using AWS storage.")
 	flag.StringVar(&S3Path, "s3path", "", "The path within the S3 bucket to use, if using AWS storage.")
