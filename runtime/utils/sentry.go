@@ -136,5 +136,9 @@ func sentryAddExtras(event *sentry.Event) {
 	if event.Extra == nil {
 		event.Extra = make(map[string]interface{})
 	}
-	event.Extra["backend"] = config.GetNamespace()
+
+	ns := config.GetNamespace()
+	if ns != "" {
+		event.Extra["namespace"] = ns
+	}
 }

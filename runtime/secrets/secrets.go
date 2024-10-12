@@ -88,7 +88,7 @@ func ApplyHostSecretsToHttpRequest(ctx context.Context, host *manifest.HTTPHostI
 	return nil
 }
 
-func ApplyAuthToLocalModelRequest(ctx context.Context, host manifest.HostInfo, req *http.Request) error {
+func ApplyAuthToLocalHypermodeModelRequest(ctx context.Context, host manifest.HostInfo, req *http.Request) error {
 
 	jwt := os.Getenv("HYP_JWT")
 	orgId := os.Getenv("HYP_ORG_ID")

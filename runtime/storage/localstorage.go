@@ -25,22 +25,22 @@ type localStorageProvider struct {
 
 func (stg *localStorageProvider) initialize(ctx context.Context) {
 	if config.AppPath == "" {
-		logger.Fatal(ctx).Msg("The -appPath command line argument is required when using local storage.  Exiting.")
+		logger.Fatal(ctx).Msg("The -appPath command line argument is required.  Exiting.")
 	}
 
 	if _, err := os.Stat(config.AppPath); os.IsNotExist(err) {
 		logger.Info(ctx).
 			Str("path", config.AppPath).
-			Msg("Creating local storage directory.")
+			Msg("Creating app directory.")
 		err := os.MkdirAll(config.AppPath, 0755)
 		if err != nil {
 			logger.Fatal(ctx).Err(err).
-				Msg("Failed to create local storage directory.  Exiting.")
+				Msg("Failed to create local app directory.  Exiting.")
 		}
 	} else {
 		logger.Info(ctx).
 			Str("path", config.AppPath).
-			Msg("Found local storage directory.")
+			Msg("Using local app directory.")
 	}
 }
 

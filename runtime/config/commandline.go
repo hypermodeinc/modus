@@ -17,7 +17,6 @@ import (
 )
 
 var Port int
-var ModelHost string
 var AppPath string
 var UseAwsStorage bool
 var S3Bucket string
@@ -28,10 +27,11 @@ var UseJsonLogging bool
 func parseCommandLineFlags() {
 	flag.StringVar(&AppPath, "appPath", "", "REQUIRED - The path to the Modus app to load and run.")
 	flag.IntVar(&Port, "port", 8686, "The HTTP port to listen on.")
-	flag.StringVar(&ModelHost, "modelHost", "", "The base DNS of the host endpoint to the model server.")
+
 	flag.BoolVar(&UseAwsStorage, "useAwsStorage", false, "Use AWS S3 for storage instead of the local filesystem.")
 	flag.StringVar(&S3Bucket, "s3bucket", "", "The S3 bucket to use, if using AWS storage.")
 	flag.StringVar(&S3Path, "s3path", "", "The path within the S3 bucket to use, if using AWS storage.")
+
 	flag.DurationVar(&RefreshInterval, "refresh", time.Second*5, "The refresh interval to reload any changes.")
 	flag.BoolVar(&UseJsonLogging, "jsonlogs", false, "Use JSON format for logging.")
 
