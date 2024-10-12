@@ -24,28 +24,28 @@ type localStorageProvider struct {
 }
 
 func (stg *localStorageProvider) initialize(ctx context.Context) {
-	if config.StoragePath == "" {
-		logger.Fatal(ctx).Msg("A storage path is required when using local storage.  Exiting.")
+	if config.AppPath == "" {
+		logger.Fatal(ctx).Msg("The -appPath command line argument is required when using local storage.  Exiting.")
 	}
 
-	if _, err := os.Stat(config.StoragePath); os.IsNotExist(err) {
+	if _, err := os.Stat(config.AppPath); os.IsNotExist(err) {
 		logger.Info(ctx).
-			Str("path", config.StoragePath).
+			Str("path", config.AppPath).
 			Msg("Creating local storage directory.")
-		err := os.MkdirAll(config.StoragePath, 0755)
+		err := os.MkdirAll(config.AppPath, 0755)
 		if err != nil {
 			logger.Fatal(ctx).Err(err).
 				Msg("Failed to create local storage directory.  Exiting.")
 		}
 	} else {
 		logger.Info(ctx).
-			Str("path", config.StoragePath).
+			Str("path", config.AppPath).
 			Msg("Found local storage directory.")
 	}
 }
 
 func (stg *localStorageProvider) listFiles(ctx context.Context, extension string) ([]FileInfo, error) {
-	entries, err := os.ReadDir(config.StoragePath)
+	entries, err := os.ReadDir(config.AppPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list files in storage directory: %w", err)
 	}
@@ -70,7 +70,7 @@ func (stg *localStorageProvider) listFiles(ctx context.Context, extension string
 }
 
 func (stg *localStorageProvider) getFileContents(ctx context.Context, name string) ([]byte, error) {
-	path := filepath.Join(config.StoragePath, name)
+	path := filepath.Join(config.AppPath, name)
 	content, err := os.ReadFile(path)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read contents of file %s from local storage: %w", name, err)
