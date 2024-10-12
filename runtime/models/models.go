@@ -73,7 +73,7 @@ func PostToModelEndpoint[TResult any](ctx context.Context, model *manifest.Model
 		return empty, err
 	}
 
-	endpoint, err := getModelEndpoint(model, host)
+	url, err := getModelEndpointUrl(model, host)
 	if err != nil {
 		var empty TResult
 		return empty, err
@@ -90,7 +90,7 @@ func PostToModelEndpoint[TResult any](ctx context.Context, model *manifest.Model
 		return nil
 	}
 
-	res, err := utils.PostHttp[TResult](ctx, endpoint, payload, bs)
+	res, err := utils.PostHttp[TResult](ctx, url, payload, bs)
 	if err != nil {
 		var empty TResult
 		return empty, err
@@ -101,7 +101,7 @@ func PostToModelEndpoint[TResult any](ctx context.Context, model *manifest.Model
 	return res.Data, nil
 }
 
-func getModelEndpoint(model *manifest.ModelInfo, host *manifest.HTTPHostInfo) (string, error) {
+func getModelEndpointUrl(model *manifest.ModelInfo, host *manifest.HTTPHostInfo) (string, error) {
 
 	if host.Name == hosts.HypermodeHost {
 		if config.IsDevEnvironment() {
