@@ -39,12 +39,12 @@ func main() {
 
 	// Load environment variables from plugins path
 	// note: .env file is optional, so don't log if it's not found
-	err := godotenv.Load(filepath.Join(config.StoragePath, ".env"))
+	err := godotenv.Load(filepath.Join(config.AppPath, ".env"))
 	if err != nil && !os.IsNotExist(err) {
 		log.Warn().Err(err).Msg("Error reading .env file.  Ignoring.")
 	}
 	if config.IsDevEnvironment() {
-		err = godotenv.Load(filepath.Join(config.StoragePath, ".env.local"))
+		err = godotenv.Load(filepath.Join(config.AppPath, ".env.local"))
 		if err != nil && !os.IsNotExist(err) {
 			log.Warn().Err(err).Msg("Error reading .env.local file.  Ignoring.")
 		}

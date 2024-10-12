@@ -108,7 +108,7 @@ func updateManifest(t *testing.T, jsonManifest []byte) func() {
 
 func TestMain(m *testing.M) {
 	// setup config
-	config.StoragePath = testPluginsPath
+	config.AppPath = testPluginsPath
 	config.RefreshInterval = refreshPluginInterval
 	config.Port = httpListenPort
 
