@@ -132,6 +132,7 @@ func (h *mapHandler) Read(ctx context.Context, wa langsupport.WasmAdapter, offse
 	entrySize := byteLength / entriesCapacity
 	keySize := h.keyHandler.TypeInfo().Size()
 	valueOffset := max(keySize, 4)
+	valueAlign := h.valueHandler.TypeInfo().Alignment()
 
 	if !h.usePseudoMap {
 		// return a map
@@ -144,7 +145,8 @@ func (h *mapHandler) Read(ctx context.Context, wa langsupport.WasmAdapter, offse
 				return nil, err
 			}
 
-			v, err := h.valueHandler.Read(ctx, wa, p+valueOffset)
+			p += langsupport.AlignOffset(valueOffset, valueAlign)
+			v, err := h.valueHandler.Read(ctx, wa, p)
 			if err != nil {
 				return nil, err
 			}
@@ -164,7 +166,8 @@ func (h *mapHandler) Read(ctx context.Context, wa langsupport.WasmAdapter, offse
 				return nil, err
 			}
 
-			v, err := h.valueHandler.Read(ctx, wa, p+keySize)
+			p += langsupport.AlignOffset(valueOffset, valueAlign)
+			v, err := h.valueHandler.Read(ctx, wa, p)
 			if err != nil {
 				return nil, err
 			}
@@ -211,13 +214,14 @@ func (h *mapHandler) Write(ctx context.Context, wa langsupport.WasmAdapter, offs
 	// note: unlike arrays, an empty map DOES have array buffers
 	keySize := h.keyHandler.TypeInfo().Size()
 	valueSize := h.valueHandler.TypeInfo().Size()
-	valueOffset := max(keySize, 4)
+	valueAlign := h.valueHandler.TypeInfo().Alignment()
+	valueOffset := langsupport.AlignOffset(max(keySize, 4), valueAlign)
 
 	const taggedNextSize = 4
-	taggedNextOffset := valueSize + valueOffset
+	taggedNextOffset := valueOffset + langsupport.AlignOffset(valueSize, valueAlign)
 
-	entryAlign := max(keySize, valueSize, 4) - 1
-	entrySize := (keySize + valueSize + taggedNextSize + entryAlign) & ^entryAlign
+	entryAlign := max(keySize, valueSize, taggedNextSize)
+	entrySize := langsupport.AlignOffset(taggedNextOffset+taggedNextSize, entryAlign)
 	entriesBufferSize := entrySize * entriesCapacity
 	entriesBufferOffset, c, err := wa.AllocateMemory(ctx, entriesBufferSize)
 	cln.AddCleaner(c)
@@ -259,7 +263,7 @@ func (h *mapHandler) Write(ctx context.Context, wa langsupport.WasmAdapter, offs
 
 		// write entry value
 		value := vals[i]
-		entryValueOffset := entryOffset + valueOffset
+		entryValueOffset := entryOffset + langsupport.AlignOffset(valueOffset, valueAlign)
 		c, err := h.valueHandler.Write(ctx, wa, entryValueOffset, value)
 		cln.AddCleaner(c)
 		if err != nil {

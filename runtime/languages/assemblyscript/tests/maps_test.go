@@ -12,6 +12,7 @@ package assemblyscript_test
 import (
 	"fmt"
 	"maps"
+	"math"
 	"reflect"
 	"testing"
 
@@ -231,4 +232,48 @@ func makeTestMap(size int) map[string]string {
 		m[key] = val
 	}
 	return m
+}
+
+var epsilon = math.Nextafter(1, 2) - 1
+
+func TestMapInput_string_f64(t *testing.T) {
+	fnName := "testMapInput_string_f64"
+	m := map[string]float64{
+		"a": 0.5,
+		"b": epsilon,
+		"c": math.SmallestNonzeroFloat64,
+		"d": math.MaxFloat64,
+	}
+
+	if _, err := fixture.CallFunction(t, fnName, m); err != nil {
+		t.Error(err)
+	}
+	if m, err := utils.ConvertToMap(m); err != nil {
+		t.Error(fmt.Errorf("failed conversion to interface map: %w", err))
+	} else if _, err := fixture.CallFunction(t, fnName, m); err != nil {
+		t.Error(err)
+	}
+}
+
+func TestMapOutput_string_f64(t *testing.T) {
+	fnName := "testMapOutput_string_f64"
+	result, err := fixture.CallFunction(t, fnName)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expected := map[string]float64{
+		"a": 0.5,
+		"b": epsilon,
+		"c": math.SmallestNonzeroFloat64,
+		"d": math.MaxFloat64,
+	}
+
+	if result == nil {
+		t.Error("expected a result")
+	} else if r, ok := result.(map[string]float64); !ok {
+		t.Errorf("expected %T, got %T", expected, result)
+	} else if !maps.Equal(expected, r) {
+		t.Errorf("expected %v, got %v", expected, r)
+	}
 }
