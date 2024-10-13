@@ -138,3 +138,32 @@ export function testClassContainingMapOutput_string_string(): TestClassWithMap {
   c.m.set("c", "3");
   return c;
 }
+
+export function testMapInput_string_f64(m: Map<string, f64>): void {
+  assert(m.size == 4, "expected size 4");
+
+  let n: f64 = 0.5;
+  assert(m.has("a"), "expected key 'a' to be present");
+  assert(m.get("a") == n, `expected value for key 'a' to be ${n}`);
+
+  n = f64.EPSILON;
+  assert(m.has("b"), "expected key 'b' to be present");
+  assert(m.get("b") == n, `expected value for key 'b' to be ${n}`);
+
+  n = f64.MIN_VALUE;
+  assert(m.has("c"), "expected key 'c' to be present");
+  assert(m.get("c") == n, `expected value for key 'c' to be ${n}`);
+
+  n = f64.MAX_VALUE;
+  assert(m.has("d"), "expected key 'd' to be present");
+  assert(m.get("d") == n, `expected value for key 'd' to be ${n}`);
+}
+
+export function testMapOutput_string_f64(): Map<string, f64> {
+  const m = new Map<string, f64>();
+  m.set("a", 0.5);
+  m.set("b", f64.EPSILON);
+  m.set("c", f64.MIN_VALUE);
+  m.set("d", f64.MAX_VALUE);
+  return m;
+}
