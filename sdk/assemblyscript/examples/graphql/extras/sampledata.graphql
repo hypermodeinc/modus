@@ -1,5 +1,5 @@
 # This mutation will create some sample data in Dgraph.
-# It can be used for the queries in this Hypermode example.
+# It can be used for the queries in this example.
 
 mutation {
   # Clear any existing people first

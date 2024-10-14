@@ -1,12 +1,13 @@
 {
-  "$schema": "https://manifest.hypermode.com/hypermode.json",
+  "$schema": "https://schema.hypermode.com/modus.json",
   "models": {
     // No models are used by this example, but if you add any, they would go here.
   },
-  "hosts": {
+  "connections": {
     // This defines the dgraph host that is used by the example functions.
     // The {{AUTH_TOKEN}} will be replaced by the secret provided in the Hypermode Console.
     "dgraph": {
+      "type": "http",
       "endpoint": "https://blue-sky.cloud.dgraph.io/graphql",
       "headers": {
         "X-Auth-Token": "{{AUTH_TOKEN}}"

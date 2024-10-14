@@ -16,13 +16,12 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/hypermodeinc/modus/runtime/hosts"
 	"github.com/hypermodeinc/modus/runtime/secrets"
 	"github.com/hypermodeinc/modus/runtime/utils"
 )
 
 func Fetch(ctx context.Context, request *HttpRequest) (*HttpResponse, error) {
-	host, err := hosts.GetHttpHostForUrl(request.Url)
+	host, err := GetHttpConnectionForUrl(request.Url)
 	if err != nil {
 		return nil, err
 	}
@@ -39,7 +38,7 @@ func Fetch(ctx context.Context, request *HttpRequest) (*HttpResponse, error) {
 		}
 	}
 
-	if err := secrets.ApplyHostSecretsToHttpRequest(ctx, host, req); err != nil {
+	if err := secrets.ApplySecretsToHttpRequest(ctx, host, req); err != nil {
 		return nil, err
 	}
 

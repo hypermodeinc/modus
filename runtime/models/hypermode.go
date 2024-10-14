@@ -46,10 +46,10 @@ func getHypermodeModelEndpointUrl(model *manifest.ModelInfo) (string, error) {
 	return endpoint, nil
 }
 
-func authenticateHypermodeModelRequest(ctx context.Context, req *http.Request, host *manifest.HTTPHostInfo) error {
+func authenticateHypermodeModelRequest(ctx context.Context, req *http.Request, connection *manifest.HTTPConnectionInfo) error {
 	// In development, Hypermode models require authentication.
 	if config.IsDevEnvironment() {
-		return secrets.ApplyAuthToLocalHypermodeModelRequest(ctx, host, req)
+		return secrets.ApplyAuthToLocalHypermodeModelRequest(ctx, connection, req)
 	}
 
 	// In production, the Hypermode infrastructure protects the model server.

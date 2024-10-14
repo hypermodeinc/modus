@@ -10,6 +10,7 @@
 package manifest
 
 type CollectionInfo struct {
+	Name          string                      `json:"-"`
 	SearchMethods map[string]SearchMethodInfo `json:"searchMethods"`
 }
 

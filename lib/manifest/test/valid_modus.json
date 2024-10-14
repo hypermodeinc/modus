@@ -1,62 +1,63 @@
 {
   // Test valid manifest file
-  "$schema": "https://manifest.hypermode.com/hypermode.json",
+  "$schema": "https://schema.hypermode.com/modus.json",
   "models": {
     "model-1": {
       "sourceModel": "example/source-model-1",
       "provider": "hugging-face",
-      "host": "hypermode"
+      "connection": "hypermode"
     },
     "model-2": {
       "sourceModel": "source-model-2",
-      "host": "my-model-host",
+      "connection": "my-model-connection",
       "path": "path/to/model-2"
     },
     "model-3": {
       "sourceModel": "source-model-3",
-      "host": "my-model-host"
+      "connection": "my-model-connection"
     },
     "model-4": {
       "sourceModel": "example/source-model-4",
       "provider": "hugging-face",
-      "host": "hypermode",
+      "connection": "hypermode",
       "dedicated": true
     }
   },
-  "hosts": {
-    "my-model-host": {
+  "connections": {
+    "my-model-connection": {
+      "type": "http",
       "baseUrl": "https://models.example.com/",
       "headers": {
         "X-API-Key": "{{API_KEY}}"
       }
     },
-    "another-model-host": {
+    "another-model-connection": {
+      "type": "http",
       "endpoint": "https://models.example.com/full/path/to/model-3",
       "headers": {
         "X-API-Key": "{{API_KEY}}"
       }
     },
     "my-graphql-api": {
+      "type": "http",
       "endpoint": "https://api.example.com/graphql",
       "headers": {
         "Authorization": "Bearer {{AUTH_TOKEN}}"
       }
     },
     "my-rest-api": {
+      "type": "http",
       "baseUrl": "https://api.example.com/v1/",
       "queryParameters": {
         "api_token": "{{API_TOKEN}}"
       }
     },
     "another-rest-api": {
+      "type": "http",
       "baseUrl": "https://api.example.com/v2/",
       "headers": {
         "Authorization": "Basic {{base64(USERNAME:PASSWORD)}}"
       }
-    },
-    "api-with-type": {
-      "type": "http",
-      "baseUrl": "https://api.example.com/v2/"
     },
     "neon": {
       "type": "postgresql",

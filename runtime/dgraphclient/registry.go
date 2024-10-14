@@ -79,24 +79,24 @@ func (dr *dgraphRegistry) getDgraphConnector(ctx context.Context, dgName string)
 		return ds, nil
 	}
 
-	for name, info := range manifestdata.GetManifest().Hosts {
+	for name, info := range manifestdata.GetManifest().Connections {
 		if name != dgName {
 			continue
 		}
 
-		if info.HostType() != manifest.HostTypeDgraph {
-			return nil, fmt.Errorf("host %s is not a dgraph host", dgName)
+		if info.ConnectionType() != manifest.ConnectionTypeDgraph {
+			return nil, fmt.Errorf("[%s] is not a dgraph connection", dgName)
 		}
 
-		host := info.(manifest.DgraphHostInfo)
-		if host.GrpcTarget == "" {
-			return nil, fmt.Errorf("dgraph host %s has empty GrpcTarget", dgName)
+		connection := info.(manifest.DgraphConnectionInfo)
+		if connection.GrpcTarget == "" {
+			return nil, fmt.Errorf("dgraph connection [%s] has empty GrpcTarget", dgName)
 		}
 
 		var opts []grpc.DialOption
 
-		if host.Key != "" {
-			hostKey, err := secrets.ApplyHostSecretsToString(ctx, info, host.Key)
+		if connection.Key != "" {
+			conKey, err := secrets.ApplySecretsToString(ctx, info, connection.Key)
 			if err != nil {
 				return nil, err
 			}
@@ -108,9 +108,9 @@ func (dr *dgraphRegistry) getDgraphConnector(ctx context.Context, dgName string)
 			creds := credentials.NewClientTLSFromCert(pool, "")
 			opts = []grpc.DialOption{
 				grpc.WithTransportCredentials(creds),
-				grpc.WithPerRPCCredentials(&authCreds{hostKey}),
+				grpc.WithPerRPCCredentials(&authCreds{conKey}),
 			}
-		} else if strings.Split(host.GrpcTarget, ":")[0] != "localhost" {
+		} else if strings.Split(connection.GrpcTarget, ":")[0] != "localhost" {
 			pool, err := x509.SystemCertPool()
 			if err != nil {
 				return nil, err
@@ -125,7 +125,7 @@ func (dr *dgraphRegistry) getDgraphConnector(ctx context.Context, dgName string)
 			}
 		}
 
-		conn, err := grpc.NewClient(host.GrpcTarget, opts...)
+		conn, err := grpc.NewClient(connection.GrpcTarget, opts...)
 		if err != nil {
 			return nil, err
 		}
@@ -138,5 +138,5 @@ func (dr *dgraphRegistry) getDgraphConnector(ctx context.Context, dgName string)
 		return ds, nil
 	}
 
-	return nil, fmt.Errorf("dgraph host %s not found", dgName)
+	return nil, fmt.Errorf("dgraph connection [%s] not found", dgName)
 }

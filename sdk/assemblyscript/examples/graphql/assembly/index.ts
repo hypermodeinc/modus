@@ -12,7 +12,7 @@ import {
   Person,
 } from "./classes";
 
-// This host name should match one defined in the hypermode.json manifest file.
+// This host name should match one defined in the modus.json manifest file.
 const hostName: string = "dgraph";
 
 // This function returns the results of querying for all people in the database.

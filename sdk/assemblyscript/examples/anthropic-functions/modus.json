@@ -1,16 +1,17 @@
 {
-  "$schema": "https://manifest.hypermode.com/hypermode.json",
+  "$schema": "https://schema.hypermode.com/modus.json",
   "models": {
     "text-generator": {
       "sourceModel": "claude-3-opus-20240229",
-      "host": "anthropic",
+      "connection": "anthropic",
       "path": "v1/messages"
     }
   },
-  "hosts": {
+  "connections": {
     // This defines the Anthropic host, which is used by the model above.
     // The {{API_KEY}} will be replaced by the secret provided in the Hypermode Console.
     "anthropic": {
+      "type": "http",
       "baseUrl": "https://api.anthropic.com/",
       "headers": {
         "x-api-key": "{{API_KEY}}",
@@ -18,6 +19,7 @@
       }
     },
     "stocks": {
+      "type": "http",
       "baseUrl": "https://www.alphavantage.co/",
       "queryParameters": {
         // Get a free API key from https://www.alphavantage.co/support/#api-key

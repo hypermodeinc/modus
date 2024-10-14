@@ -19,7 +19,7 @@ import (
 	"github.com/hypermodeinc/modus/runtime/utils"
 )
 
-const manifestFileName = "hypermode.json"
+const manifestFileName = "modus.json"
 
 var mu sync.RWMutex
 var man = &manifest.Manifest{}

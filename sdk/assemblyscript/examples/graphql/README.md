@@ -1,8 +1,8 @@
-# Hypermode GraphQL Example Plugin
+# Modus GraphQL Example
 
 This example shows how to call a GraphQL endpoint to execute queries and mutations.
 
-It uses a Dgraph, at the host configured in the `hypermode.json` manifest.
+It uses Dgraph at the connection configured in the `modus.json` manifest.
 
 See [./assembly/index.ts](./assembly/index.ts) for the implementation.
 

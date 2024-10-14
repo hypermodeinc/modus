@@ -1,10 +1,10 @@
 {
-  "$schema": "https://manifest.hypermode.com/hypermode.json",
+  "$schema": "https://schema.hypermode.com/modus.json",
   "models": {
     // This defines a model from Hugging Face that is hosted on Hypermode.
     "my-classifier": {
       "sourceModel": "distilbert/distilbert-base-uncased",
-      "host": "hypermode",
+      "connection": "hypermode",
       "provider": "hugging-face"
     }
   }

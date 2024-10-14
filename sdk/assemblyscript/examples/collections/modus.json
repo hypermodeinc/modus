@@ -1,16 +1,17 @@
 {
-  "$schema": "https://manifest.hypermode.com/hypermode.json",
+  "$schema": "https://schema.hypermode.com/modus.json",
   "models": {
     // This defines the model that will be used for vector embeddings.
     "embeddings": {
       "sourceModel": "text-embedding-3-large",
-      "host": "openai"
+      "connection": "openai"
     }
   },
-  "hosts": {
+  "connections": {
     // This defines the OpenAI host, which is used by the model above.
-    // The {{API_KEY}} will be replaced by the secret's value at run time.
+    // The {{API_KEY}} will be replaced by the secret provided in the Hypermode Console.
     "openai": {
+      "type": "http",
       "endpoint": "https://api.openai.com/v1/embeddings",
       "headers": {
         "Authorization": "Bearer {{API_KEY}}"

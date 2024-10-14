@@ -20,7 +20,7 @@ import (
 // Provides information about a model.
 type ModelInfo struct {
 
-	// The name of the model, as specified in the hypermode.json manifest file.
+	// The name of the model, as specified in the modus.json manifest file.
 	Name string
 
 	// The full name of the model that the provider uses to identify the model.
@@ -57,7 +57,7 @@ func (m *ModelBase[TIn, TOut]) setInfo(info *ModelInfo) {
 
 // Gets a model object instance, which can be used to interact with the model.
 //   - The generic type parameter [TModel] is used to specify the API that the model adheres to.
-//   - The name parameter is used to identify the model in the hypermode.json manifest file.
+//   - The name parameter is used to identify the model in the modus.json manifest file.
 //
 // Note that of the generic type parameters, only [TModel] needs to be specified.  The others are inferred automatically.
 func GetModel[TModel Model[TIn, TOut], TIn, TOut any, P modelPtr[TModel]](name string) (*TModel, error) {

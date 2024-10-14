@@ -13,7 +13,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/hypermodeinc/modus/runtime/hosts"
+	"github.com/hypermodeinc/modus/runtime/httpclient"
 	"github.com/hypermodeinc/modus/runtime/logger"
 	"github.com/hypermodeinc/modus/runtime/utils"
 
@@ -27,7 +27,7 @@ type graphqlRequestPayload struct {
 
 func ExecuteQuery(ctx context.Context, hostName string, stmt string, varsJson string) (string, error) {
 
-	host, err := hosts.GetHttpHost(hostName)
+	host, err := httpclient.GetHttpConnectionInfo(hostName)
 	if err != nil {
 		return "", err
 	}
@@ -43,7 +43,7 @@ func ExecuteQuery(ctx context.Context, hostName string, stmt string, varsJson st
 		Variables: vars,
 	}
 
-	result, err := hosts.PostToHostEndpoint[[]byte](ctx, host, payload)
+	result, err := httpclient.PostToConnectionEndpoint[[]byte](ctx, host, payload)
 	if err != nil {
 		return "", fmt.Errorf("error posting GraphQL statement: %w", err)
 	}

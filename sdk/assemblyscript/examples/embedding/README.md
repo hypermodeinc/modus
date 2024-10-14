@@ -1,4 +1,4 @@
-# Hypermode Embedding Example Plugin
+# Modus Embedding Example
 
 This example shows how to invoke a model that can calculate vector embeddings.
 

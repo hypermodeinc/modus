@@ -1,4 +1,4 @@
-# Hypermode Anthropic Function Calling Example Plugin
+# Modus Anthropic Function Calling Example
 
 This example shows how to invoke a model that can perform text generation and functions calling using Anthropic models.
 
