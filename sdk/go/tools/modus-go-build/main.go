@@ -93,7 +93,7 @@ func exitWithError(msg string, err error) {
 }
 
 func validateAndCopyManifestToOutput(config *config.Config) error {
-	manifestFile := filepath.Join(config.SourceDir, "hypermode.json")
+	manifestFile := filepath.Join(config.SourceDir, "modus.json")
 	if _, err := os.Stat(manifestFile); os.IsNotExist(err) {
 		return nil
 	} else if err != nil {
@@ -109,7 +109,7 @@ func validateAndCopyManifestToOutput(config *config.Config) error {
 		return err
 	}
 
-	outFile := filepath.Join(config.OutputDir, "hypermode.json")
+	outFile := filepath.Join(config.OutputDir, "modus.json")
 	if err := os.WriteFile(outFile, data, 0644); err != nil {
 		return err
 	}

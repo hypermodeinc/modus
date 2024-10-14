@@ -1,6 +1,6 @@
 {
-  "$schema": "https://manifest.hypermode.com/hypermode.json",
-  "hosts": {
+  "$schema": "https://schema.hypermode.com/modus.json",
+  "connections": {
     "my-database": {
       "type": "postgresql",
       "connString": "postgresql://postgres:password@localhost:5499/data?sslmode=disable"

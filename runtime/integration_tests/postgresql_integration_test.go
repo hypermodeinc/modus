@@ -96,7 +96,7 @@ func runGraphqlQuery(greq graphQLRequest) ([]byte, error) {
 // updateManifest updates the manifest to provided content and returns
 // a function, calling the returned function restores the original manifest.
 func updateManifest(t *testing.T, jsonManifest []byte) func() {
-	manifestFilePath := path.Join(testPluginsPath, "hypermode.json")
+	manifestFilePath := path.Join(testPluginsPath, "modus.json")
 	originalManifest, err := os.ReadFile(manifestFilePath)
 	assert.Nil(t, err)
 
