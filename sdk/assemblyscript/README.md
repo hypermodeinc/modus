@@ -111,7 +111,7 @@ necessary configuration, scripts, and workflows needed to develop your Hypermode
    You can replace the starter function with your own code. You can also add more files to the `assembly`
    folder and use `import` and `export` statements to connect them (as seen in the `simple` example).
    _Note that only the final function exports from `index.ts` will be registered as Hypermode Functions._
-5. In the root folder of your project, edit the `hypermode.json` manifest file as needed to connect the
+5. In the root folder of your project, edit the `modus.json` manifest file as needed to connect the
    models and hosts used by your functions.
 
 ### Publishing to Hypermode

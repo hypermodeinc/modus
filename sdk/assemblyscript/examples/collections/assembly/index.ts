@@ -8,7 +8,7 @@ import { collections } from "@hypermode/modus-sdk-as";
 import { models } from "@hypermode/modus-sdk-as";
 import { OpenAIEmbeddingsModel } from "@hypermode/modus-sdk-as/models/openai/embeddings";
 
-// These names should match the ones defined in the hypermode.json manifest file.
+// These names should match the ones defined in the modus.json manifest file.
 const modelName: string = "embeddings";
 const myProducts: string = "myProducts";
 const searchMethods: string[] = ["searchMethod1", "searchMethod2"];

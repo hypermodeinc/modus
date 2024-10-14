@@ -8,7 +8,7 @@ import { dgraph } from "@hypermode/modus-sdk-as";
 import { PeopleData, Person } from "./classes";
 import { JSON } from "json-as";
 
-// This host name should match one defined in the hypermode.json manifest file.
+// This host name should match one defined in the modus.json manifest file.
 const hostName: string = "dgraph";
 
 export function dropAll(): string {

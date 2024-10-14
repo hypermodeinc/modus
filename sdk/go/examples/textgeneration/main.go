@@ -19,7 +19,7 @@ import (
 // See https://platform.openai.com/docs/api-reference/chat/create for more details
 // about the options available on the model, which you can set on the input object.
 
-// This model name should match the one defined in the hypermode.json manifest file.
+// This model name should match the one defined in the modus.json manifest file.
 const modelName = "text-generator"
 
 // This function generates some text based on the instruction and prompt provided.

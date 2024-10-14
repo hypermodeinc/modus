@@ -74,7 +74,7 @@ store for your environment.  (See the modus documentation for details.)
 NOTE: Do not pass the Authorization header in code when creating the request.
 That would be a security risk, as the token could be exposed in the source code repository.
 
-Instead, configure the headers in the hypermode.json manifest as follows:
+Instead, configure the headers in the modus.json manifest as follows:
 
 	"hosts": {
 	  "github": {

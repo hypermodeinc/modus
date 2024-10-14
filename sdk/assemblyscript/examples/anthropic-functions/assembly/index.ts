@@ -20,7 +20,7 @@ class StockPriceInput {
   symbol!: string;
 }
 
-// This model name should match the one defined in the hypermode.json manifest file.
+// This model name should match the one defined in the modus.json manifest file.
 const modelName: string = "text-generator";
 
 export function getStockPrice(company: string, useTools: bool): string {
