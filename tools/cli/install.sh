@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 
-# Copyright 2024 Hypermode, Inc.
+# Copyright 2024 Hypermode Inc.
 # Licensed under the terms of the Apache License, Version 2.0
 # See the LICENSE file that accompanied this code for further details.
 #
-# SPDX-FileCopyrightText: 2024 Hypermode, Inc. <hello@hypermode.com>
+# SPDX-FileCopyrightText: 2024 Hypermode Inc. <hello@hypermode.com>
 # SPDX-License-Identifier: Apache-2.0
 
-# I'm hosting builds on my own fork until it goes live
+# Run with: curl install.hypermode.com/modus.sh -sSfL | bash
 
 # Config
 PACKAGE_ORG="@hypermode"
@@ -193,14 +193,13 @@ install_from_file() {
 
 check_platform() {
   case $ARCH in
-  aarch64) ARCH="arm64" ;;
+  arm64) ARCH="arm64" ;;
   x86_64) ARCH="x64" ;;
-  armv6l) ARCH="arm" ;;
   *) ;;
   esac
 
   case "$ARCH/$OS" in
-  x64/Linux | arm64/Linux | arm/Linux | x64/Darwin | arm64/Darwin) return 0 ;;
+  x64/Linux | arm64/Linux | x64/Darwin | arm64/Darwin) return 0 ;;
   *)
     echo -e "Unsupported os $OS $ARCH"
     exit 0

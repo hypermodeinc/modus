@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 
-# Copyright 2024 Hypermode, Inc.
+# Copyright 2024 Hypermode Inc.
 # Licensed under the terms of the Apache License, Version 2.0
 # See the LICENSE file that accompanied this code for further details.
 #
-# SPDX-FileCopyrightText: 2024 Hypermode, Inc. <hello@hypermode.com>
+# SPDX-FileCopyrightText: 2024 Hypermode Inc. <hello@hypermode.com>
 # SPDX-License-Identifier: Apache-2.0
 
 # This ensures that node > $NODE_MIN is installed
@@ -38,9 +38,8 @@ PATH_FILE="$DIR/scripts/modus-path"
 LOCAL_FILE="$DIR/scripts/modus-local"
 
 case $ARCH in
-aarch64) ARCH="arm64" ;;
+arm64) ARCH="arm64" ;;
 x86_64) ARCH="x64" ;;
-armv6l) ARCH="arm" ;;
 *) ;;
 esac
 

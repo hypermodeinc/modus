@@ -1,202 +1,326 @@
 /*
- * Copyright 2024 Hypermode, Inc.
+ * Copyright 2024 Hypermode Inc.
  * Licensed under the terms of the Apache License, Version 2.0
  * See the LICENSE file that accompanied this code for further details.
  *
- * SPDX-FileCopyrightText: 2024 Hypermode, Inc. <hello@hypermode.com>
+ * SPDX-FileCopyrightText: 2024 Hypermode Inc. <hello@hypermode.com>
  * SPDX-License-Identifier: Apache-2.0
  */
 
 import { Command, Flags } from "@oclif/core";
 import chalk from "chalk";
-import { createInterface } from "node:readline";
-import ora from "ora";
-import { CLI_VERSION, SDK } from "../../custom/globals.js";
-import { ask, clearLine, cloneRepo, isRunnable } from "../../util/index.js";
+import semver from "semver";
+
+import os from "node:os";
 import path from "node:path";
-import { Metadata } from "../../util/metadata.js";
-import { existsSync } from "node:fs";
-import { execSync } from "node:child_process";
+
+import * as fs from "../../util/fs.js";
+import * as vi from "../../util/versioninfo.js";
+import { execFile } from "../../util/cp.js";
+import { isOnline } from "../../util/index.js";
+import { GitHubOwner, GitHubRepo, MinGoVersion, MinNodeVersion, MinTinyGoVersion, ModusHomeDir, SDK, parseSDK } from "../../custom/globals.js";
+import { ask, clearLine, withSpinner } from "../../util/index.js";
 import SDKInstallCommand from "../sdk/install/index.js";
-import { fileURLToPath } from "node:url";
-import { quote } from "shell-quote";
 
-const NPM_CMD = isRunnable("npm") ? "npm" : path.normalize(path.join(path.dirname(fileURLToPath(import.meta.url)), "../../../bin/node-bin/bin/npm"));
 export default class NewCommand extends Command {
-  static description = "Create a new Modus project";
+  static description = "Create a new Modus app";
 
-  static examples = ["modus new", "modus new --name Project01", "modus new --name Project01 --sdk go --dir ./my-project --force"];
+  static examples = ["modus new", "modus new --name my-app", "modus new --name my-app --sdk go --dir ./my-app --force"];
 
   static flags = {
-    name: Flags.string({ description: "Project name" }),
-    dir: Flags.string({
-      description: "Directory to install to",
-      aliases: ["d"],
+    name: Flags.string({
+      char: "n",
+      description: "App name",
     }),
-    sdk: Flags.string({ description: "SDK to use" }),
+    dir: Flags.string({
+      char: "d",
+      aliases: ["directory"],
+      description: "App directory",
+    }),
+    sdk: Flags.string({
+      char: "s",
+      description: "SDK to use",
+    }),
+    template: Flags.string({
+      char: "t",
+      description: "Template to use",
+    }),
     force: Flags.boolean({
-      description: "Initialize without prompt",
-      aliases: ["f"],
+      char: "f",
+      default: false,
+      description: "Initialize without prompting",
+    }),
+    prerelease: Flags.boolean({
+      char: "p",
+      aliases: ["pre"],
+      default: false,
+      description: "Use a prerelease version of the Modus SDK",
     }),
   };
 
   async run(): Promise<void> {
     const { flags } = await this.parse(NewCommand);
 
-    const rl = createInterface({
-      input: process.stdin,
-      output: process.stdout,
-    });
+    this.log(chalk.bold(`Modus CLI v${this.config.version}`));
 
-    this.log(chalk.bold(`Modus new v${CLI_VERSION}\n${flags.force ? chalk.dim("WARN: Running in forced mode! Proceed with caution.") : ""}`));
+    const name = flags.name || (await this.promptAppName());
+    if (!name) {
+      this.logError("An app name is required.");
+      this.exit(1);
+    }
 
-    const name = flags.name || (await this.promptProjectName(rl));
-    const dir = flags.dir ? path.join(process.cwd(), flags.dir) : await this.promptInstallPath(rl);
-    const sdk = flags.sdk
-      ? Object.values(SDK)[
-          Object.keys(SDK)
-            .map((v) => v.toLowerCase())
-            .indexOf(flags.sdk?.trim().toLowerCase())
-        ]
-      : await this.promptSdkSelection(rl); // Use the enum
+    const dir = flags.dir ? path.join(process.cwd(), flags.dir) : await this.promptInstallPath("." + path.sep + name);
+    if (!dir) {
+      this.logError("An install directory is required.");
+      this.exit(1);
+    }
 
-    if (!flags.force && !(await this.confirmAction(rl, "[3/4] Continue? [y/n]"))) clearLine(), clearLine(), process.exit(0);
+    const sdk = parseSDK(
+      flags.sdk
+        ? Object.values(SDK)[
+            Object.keys(SDK)
+              .map((v) => v.toLowerCase())
+              .indexOf(flags.sdk?.trim().toLowerCase())
+          ]
+        : await this.promptSdkSelection(),
+    );
 
-    this.installProject(name, dir, sdk, flags.force, rl);
+    const template = flags.template || (await this.promptTemplate("default"));
+    if (!template) {
+      this.logError("A template is required.");
+      this.exit(1);
+    }
+
+    if (!flags.force && !(await this.confirmAction("[5/5] Continue? [y/n]"))) {
+      this.log(chalk.dim("Aborted."));
+      this.exit(1);
+    }
+
+    await this.createApp(name, dir, sdk, template, flags.force, flags.prerelease);
   }
 
-  private async promptProjectName(rl: ReturnType<typeof createInterface>): Promise<string> {
-    this.log("[1/4] Project Name:");
-    const name = ((await ask(chalk.dim(" -> "), rl)) || "").trim();
+  private async promptAppName(): Promise<string> {
+    this.log("[1/5] App Name:");
+    const name = ((await ask(chalk.dim(" -> "))) || "").trim();
     clearLine();
     clearLine();
-    this.log("[1/4] Name: " + chalk.dim(name.length ? name : "Not Provided"));
+    this.log("[1/5] App Name: " + chalk.dim(name.length ? name : "Not Provided"));
     return name;
   }
 
-  private async promptInstallPath(rl: ReturnType<typeof createInterface>): Promise<string> {
-    this.log("[2/4] Install Dir: " + chalk.dim("(./)"));
-    const dir = ((await ask(chalk.dim(" -> "), rl)) || "./").trim();
+  private async promptInstallPath(defaultValue: string): Promise<string> {
+    this.log("[2/5] Install Dir: " + chalk.dim(`(${defaultValue})`));
+    const dir = ((await ask(chalk.dim(" -> "))) || defaultValue).trim();
     clearLine();
     clearLine();
-    this.log("[2/4] Directory: " + chalk.dim(dir));
-    return path.join(process.cwd(), dir);
+    this.log("[2/5] Directory: " + chalk.dim(dir));
+    return path.resolve(dir);
   }
 
-  private async promptSdkSelection(rl: ReturnType<typeof createInterface>): Promise<string> {
-    this.log("[2/4] Select an SDK");
+  private async promptSdkSelection(): Promise<string> {
+    this.log("[3/5] Select an SDK");
     for (const [index, sdk] of Object.values(SDK).entries()) {
       this.log(chalk.dim(` ${index + 1}. ${sdk}`));
     }
 
-    const selectedIndex = Number.parseInt(((await ask(chalk.dim(" -> "), rl)) || "1").trim(), 10) - 1;
+    const selectedIndex = Number.parseInt(((await ask(chalk.dim(" -> "))) || "1").trim(), 10) - 1;
     const sdk = Object.values(SDK)[selectedIndex];
     clearLine();
     clearLine();
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     for (const _ of Object.values(SDK)) clearLine();
-    if (!sdk) process.exit(1);
-    this.log("[2/4] SDK: " + chalk.dim(sdk));
+    if (!sdk) this.exit(1);
+    this.log("[3/5] SDK: " + chalk.dim(sdk));
     return sdk;
   }
 
-  private async installProject(name: string, dir: string, sdk: string, force: boolean, rl: ReturnType<typeof createInterface>) {
-    if (!force && existsSync(dir)) {
-      if (!(await this.confirmAction(rl, "Attempting to overwrite a folder that already exists.\nAre you sure you want to continue? [y/n]"))) clearLine(), process.exit(0);
-      else clearLine(), clearLine(), clearLine();
-    }
+  private async promptTemplate(defaultValue: string): Promise<string> {
+    this.log("[4/5] Template: " + chalk.dim(`(${defaultValue})`));
+    const template = ((await ask(chalk.dim(" -> "))) || defaultValue).trim();
+    clearLine();
+    clearLine();
+    this.log("[4/5] Template: " + chalk.dim(template));
+    return template;
+  }
 
-    this.log("[3/4] Installing");
-
-    if (!isRunnable("git")) {
-      this.logError("Could not find valid Git installation! Please download Git or ensure it is in your PATH!");
-      process.exit(0);
-    }
-
-    if (sdk === SDK.AssemblyScript && !isRunnable(NPM_CMD)) {
-      this.logError("Could not locate NPM! Please install npm and try again!");
-      process.exit(0);
-    }
-
-    const gitSpinner = ora({
-      color: "white",
-      indent: 2,
-      text: "Downloading Template",
-    }).start();
-
-    const clone = await cloneRepo("https://github.com/HypermodeAI/template-project", dir);
-
-    if (!clone) {
-      gitSpinner.stop();
-      this.logError("Failed to clone the git repository. Please check your internet and try again.");
-      process.exit(0);
-    }
-
-    gitSpinner.stop();
-    this.log("- Downloaded Template");
-
-    const depsSpinner = ora({
-      color: "white",
-      indent: 2,
-      text: "Installing dependencies",
-    }).start();
-
-    if (sdk === "AssemblyScript") {
-      if (isRunnable(NPM_CMD)) execSync(quote([NPM_CMD, "install"]), { cwd: dir, stdio: "ignore" });
-    } else if (sdk === "Go (Beta)") {
-      const sh = execSync("go install", { cwd: dir, stdio: "ignore" });
-      if (!sh) {
-        this.logError("Failed to install dependencies via go install! Please try again");
-        process.exit(0);
+  private async createApp(name: string, dir: string, sdk: SDK, template: string, force: boolean, prerelease: boolean) {
+    if (!force && (await fs.exists(dir))) {
+      if (!(await this.confirmAction("Attempting to overwrite a folder that already exists.\nAre you sure you want to continue? [y/n]"))) {
+        clearLine();
+        return;
+      } else {
+        clearLine();
+        clearLine();
       }
     }
 
-    depsSpinner.stop();
-    this.log("- Installed Dependencies");
+    // Validate SDK-specific prerequisites
+    switch (sdk) {
+      case SDK.AssemblyScript:
+        if (semver.lt(process.versions.node, MinNodeVersion)) {
+          this.logError(`The Modus AssemblyScript SDK requires Node.js version ${MinNodeVersion} or newer.`);
+          this.logError(`You have Node.js version ${process.versions.node}.`);
+          this.logError(`Please upgrade Node.js and try again.`);
+          this.exit(1);
+        }
+        break;
+      case SDK.Go:
+        const goVersion = await getGoVersion();
+        if (!goVersion) {
+          this.logError(`Go is not installed. Please install Go ${MinGoVersion} or newer and try again.`);
+          this.exit(1);
+        }
+        if (semver.lt(goVersion, MinGoVersion)) {
+          this.logError(`The Modus Go SDK requires Go version ${MinGoVersion} or newer.`);
+          this.logError(`You have Go version ${goVersion}.`);
+          this.logError(`Please upgrade Go and try again.`);
+          this.exit(1);
+        }
 
-    await this.installRuntime();
+        const tinyGoVersion = await getTinyGoVersion();
+        if (!tinyGoVersion) {
+          this.logError(`TinyGo is not installed. Please install Go ${MinTinyGoVersion} or newer and try again.`);
+          this.exit(1);
+        }
+        if (semver.lt(tinyGoVersion, MinTinyGoVersion)) {
+          this.logError(`The Modus Go SDK requires TinyGo version ${MinTinyGoVersion} or newer.`);
+          this.logError(`You have TinyGo version ${tinyGoVersion}.`);
+          this.logError(`Please upgrade TinyGo and try again.`);
+          this.exit(1);
+        }
 
-    this.log("\nSuccessfully installed Modus SDK!");
+        break;
+    }
+
+    // Verify and/or install the Modus SDK
+    let installedVersion = await vi.getLatestInstalledVersion();
+    const online = await isOnline();
+    if (online) {
+      let latestVersion: string | undefined;
+      await withSpinner(chalk.dim("Checking to see if you have the latest Modus SDK version ..."), async () => {
+        latestVersion = await vi.getLatestRuntimeVersion(prerelease);
+        if (!latestVersion) {
+          this.logError("Failed to fetch the latest Modus SDK version.");
+          this.exit(1);
+        }
+      });
+
+      let updateSDK = false;
+      if (!installedVersion) {
+        if (!(await this.confirmAction("You do not have the Modus SDK installed. Would you like to install it now? [y/n]"))) {
+          clearLine();
+          this.log(chalk.dim("Aborted."));
+          this.exit(1);
+        }
+        updateSDK = true;
+      } else if (latestVersion !== installedVersion) {
+        if (await this.confirmAction("You have an outdated version of the Modus SDK. Would you like to update? [y/n]")) {
+          updateSDK = true;
+        } else {
+          clearLine();
+        }
+      }
+      if (updateSDK) {
+        await SDKInstallCommand.run([latestVersion!]);
+        installedVersion = latestVersion;
+      }
+    }
+
+    if (!installedVersion) {
+      this.logError("Could not find an installed Modus SDK.");
+      this.exit(1);
+    }
+
+    const version = installedVersion;
+    const templatesArchive = await vi.getLatestTemplatesArchive(version, sdk.toLowerCase());
+    if (!templatesArchive) {
+      this.logError(`Could not find any ${sdk} templates for SDK version ${version}`);
+      this.exit(1);
+    }
+
+    // Install build tools if needed
+    if (sdk == SDK.Go) {
+      const ext = os.platform() === "win32" ? ".exe" : "";
+      const buildTool = path.join(ModusHomeDir, "sdk", version, "modus-go-build" + ext);
+      if (!(await fs.exists(buildTool))) {
+        if (online) {
+          const module = `github.com/${GitHubOwner}/${GitHubRepo}/sdk/go/tools/modus-go-build@${version}`;
+          await withSpinner("Downloading the Modus Go build tool ...", async () => {
+            await execFile("go", ["install", module], {
+              cwd: ModusHomeDir,
+              env: {
+                ...process.env,
+                GOBIN: path.join(ModusHomeDir, "sdk", version),
+              },
+            });
+          });
+        } else {
+          this.logError("Could not find the Go build tool. Please try again when you are online.");
+          this.exit(1);
+        }
+      }
+    }
+
+    // Create the app
+    this.log(chalk.dim(`Using Modus ${sdk} SDK ${templatesArchive.version}`));
+    await withSpinner("Creating a new Modus app ...", async () => {
+      if (!(await fs.exists(dir))) {
+        await fs.mkdir(dir, { recursive: true });
+      }
+      await execFile("tar", ["-xf", templatesArchive.path, "-C", dir, "--strip-components=2", `templates/${template}`]);
+
+      // Apply SDK-specific modifications
+      const execOpts = { env: process.env, cwd: dir };
+      switch (sdk) {
+        case SDK.AssemblyScript:
+          await execFile("npm", ["pkg", "set", `name=${name}`], execOpts);
+          await execFile("npm", ["install"], execOpts);
+          break;
+        case SDK.Go:
+          await execFile("go", ["mod", "download"], execOpts);
+          break;
+      }
+    });
+
+    this.log(chalk.bold(chalk.cyanBright("Successfully created a Modus app!")));
     this.log("To start, run the following command:");
-    this.log(chalk.dim(`$ ${dir == process.cwd() ? "" : "cd " + path.basename(dir)} && modus dev --build`));
-  }
-
-  private async installRuntime() {
-    const latest_runtime = await Metadata.getLatestRuntime();
-
-    if (!latest_runtime) {
-      this.logError("Could not find latest runtime via GitHub API. Please try again with internet access!");
-      process.exit(0);
-    }
-
-    if (!Metadata.runtimes.includes(latest_runtime)) {
-      const runtimeDlSpinner = ora({
-        color: "white",
-        indent: 2,
-        text: `Downloading Runtime ${chalk.dim(`(${latest_runtime})`)}`,
-      }).start();
-      runtimeDlSpinner.stop();
-
-      const runtimeInstSpinner = ora({
-        color: "white",
-        indent: 2,
-        text: `Installing Runtime ${chalk.dim(`(${latest_runtime})`)}`,
-      }).start();
-      runtimeInstSpinner.stop();
-
-      SDKInstallCommand.run([latest_runtime, "--silent"]);
-    }
-    this.log(`- Installed Runtime ${chalk.dim(`(${latest_runtime})`)}`);
+    this.log("$ " + chalk.blueBright(`${dir == process.cwd() ? "" : "cd " + path.basename(dir)} && modus dev --build`));
+    this.log("");
   }
 
   private logError(message: string) {
     this.log("\n" + chalk.red(" ERROR ") + chalk.dim(": " + message));
   }
 
-  private async confirmAction(rl: ReturnType<typeof createInterface>, message: string): Promise<boolean> {
+  private async confirmAction(message: string): Promise<boolean> {
     this.log(message);
-    const cont = ((await ask(chalk.dim(" -> "), rl)) || "n").toLowerCase().trim();
+    const cont = ((await ask(chalk.dim(" -> "))) || "n").toLowerCase().trim();
     clearLine();
     return cont === "yes" || cont === "y";
   }
+}
+
+async function getGoVersion(): Promise<string | undefined> {
+  try {
+    const result = await execFile("go", ["version"], {
+      cwd: ModusHomeDir,
+      env: process.env,
+    });
+    const parts = result.stdout.split(" ");
+    const str = parts.length > 2 ? parts[2] : undefined;
+    if (str?.startsWith("go")) {
+      return str.slice(2);
+    }
+  } catch {}
+}
+
+async function getTinyGoVersion(): Promise<string | undefined> {
+  try {
+    const result = await execFile("tinygo", ["version"], {
+      cwd: ModusHomeDir,
+      env: process.env,
+    });
+    const parts = result.stdout.split(" ");
+    return parts.length > 2 ? parts[2] : undefined;
+  } catch {}
 }

@@ -7,4 +7,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-export { run } from "@oclif/core";
+import util from "node:util";
+import cp from "node:child_process";
+
+const execFile = util.promisify(cp.execFile);
+export { execFile };

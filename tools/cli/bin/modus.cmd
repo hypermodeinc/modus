@@ -20,8 +20,6 @@ set "ECHO_CALLED=0"
 :: Determine architecture
 if /I "%ARCH%"=="AMD64" (
     set ARCH=x64
-) else if /I "%ARCH%"=="ARM" (
-    set ARCH=arm
 ) else if /I "%ARCH%"=="ARM64" (
     set ARCH=arm64
 ) else (

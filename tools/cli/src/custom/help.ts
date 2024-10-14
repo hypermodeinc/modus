@@ -1,15 +1,14 @@
 /*
- * Copyright 2024 Hypermode, Inc.
+ * Copyright 2024 Hypermode Inc.
  * Licensed under the terms of the Apache License, Version 2.0
  * See the LICENSE file that accompanied this code for further details.
  *
- * SPDX-FileCopyrightText: 2024 Hypermode, Inc. <hello@hypermode.com>
+ * SPDX-FileCopyrightText: 2024 Hypermode Inc. <hello@hypermode.com>
  * SPDX-License-Identifier: Apache-2.0
  */
 
 import { Command, Help, Interfaces } from "@oclif/core";
 import chalk from "chalk";
-import { CLI_VERSION } from "./globals.js";
 
 export default class CustomHelp extends Help {
   private target_pad = 15;
@@ -17,7 +16,7 @@ export default class CustomHelp extends Help {
   private post_pad = 0;
   formatRoot(): string {
     let out = "";
-    out += chalk.bold.blueBright("Modus") + " Framework CLI " + chalk.dim("(v" + CLI_VERSION + ")") + "\n\n";
+    out += `${chalk.bold.blueBright("Modus")} CLI ${chalk.dim(`(v${this.config.version})`)}\n\n`;
 
     // Usage: modus <command> [...flags] [...args]
     out += chalk.bold("Usage: modus") + " " + chalk.dim("<command>") + " " + chalk.bold.blueBright("[...flags]") + " " + chalk.bold("[...args]");
@@ -64,10 +63,10 @@ export default class CustomHelp extends Help {
 
   formatTopic(topic: Interfaces.Topic): string {
     let out = "";
-    out += chalk.bold.blueBright("Modus") + " Help " + chalk.dim("(v" + CLI_VERSION + ")") + "\n\n";
+    out += `${chalk.bold.blueBright("Modus")} CLI ${chalk.dim(`(v${this.config.version})`)}\n\n`;
     if (topic.description) out += chalk.dim(topic.description) + "\n";
 
-    out += chalk.bold("Usage: modus " + topic.name) + " " + chalk.bold.blue("[command]") + "\n";
+    out += `${chalk.bold("Usage: modus " + topic.name)} ${chalk.bold.blue("[command]")}\n`;
     return out;
   }
 

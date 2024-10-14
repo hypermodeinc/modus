@@ -1,42 +1,29 @@
 /*
- * Copyright 2024 Hypermode, Inc.
+ * Copyright 2024 Hypermode Inc.
  * Licensed under the terms of the Apache License, Version 2.0
  * See the LICENSE file that accompanied this code for further details.
  *
- * SPDX-FileCopyrightText: 2024 Hypermode, Inc. <hello@hypermode.com>
+ * SPDX-FileCopyrightText: 2024 Hypermode Inc. <hello@hypermode.com>
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Args, Command } from "@oclif/core";
+import { Command } from "@oclif/core";
 import chalk from "chalk";
-import { existsSync, readdirSync } from "node:fs";
-import { expandHomeDir } from "../../../util/index.js";
+import * as vi from "../../../util/versioninfo.js";
 
 export default class SDKListCommand extends Command {
   static args = {};
-  static description = "List installed SDK versions";
+  static description = "List installed Modus SDK versions";
   static examples = ["modus sdk list"];
   static flags = {};
 
   async run(): Promise<void> {
-    let versions: string[] = [];
-
-    if (!existsSync(expandHomeDir("~/.modus/sdk/"))) {
-      this.log("No versions installed!");
-      process.exit(0);
+    const versions = await vi.getInstalledVersions();
+    if (versions.length === 0) {
+      this.log(chalk.yellow("No Modus SDK versions installed!"));
     }
 
-    try {
-      versions = readdirSync(expandHomeDir("~/.modus/sdk")).reverse();
-    } catch {
-      versions = [];
-    }
-
-    if (!versions.length) {
-      this.log("No versions installed!");
-      return;
-    }
-
+    this.log(chalk.cyan(chalk.bold("Installed Modus SDK Versions:")));
     for (const version of versions) {
       this.log(version);
     }
