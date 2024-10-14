@@ -1,16 +1,16 @@
 /*
- * Copyright 2024 Hypermode, Inc.
+ * Copyright 2024 Hypermode Inc.
  * Licensed under the terms of the Apache License, Version 2.0
  * See the LICENSE file that accompanied this code for further details.
  *
- * SPDX-FileCopyrightText: 2024 Hypermode, Inc. <hello@hypermode.com>
+ * SPDX-FileCopyrightText: 2024 Hypermode Inc. <hello@hypermode.com>
  * SPDX-License-Identifier: Apache-2.0
  */
 
 import { Args, Command, Flags } from "@oclif/core";
 import { quote } from "shell-quote";
 import chalk from "chalk";
-import { cpSync, existsSync, mkdirSync, readdirSync,  rmSync, statSync, symlinkSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, readdirSync, rmSync, statSync, symlinkSync } from "node:fs";
 import path from "node:path";
 import { ask, clearLine, downloadFile, expandHomeDir } from "../../../util/index.js";
 import { execSync } from "node:child_process";
@@ -279,14 +279,18 @@ function linkDirectories(srcDir: string, destDir: string) {
   }
 }
 
-type ParserCtx = ParserOutput<{
-  silent: boolean;
-  repo: string;
-  branch: string | undefined;
-  commit: string;
-  link: string | undefined;
-}, {
-  [flag: string]: any;
-}, {
-  version: string | undefined;
-}>;
+type ParserCtx = ParserOutput<
+  {
+    silent: boolean;
+    repo: string;
+    branch: string | undefined;
+    commit: string;
+    link: string | undefined;
+  },
+  {
+    [flag: string]: any;
+  },
+  {
+    version: string | undefined;
+  }
+>;

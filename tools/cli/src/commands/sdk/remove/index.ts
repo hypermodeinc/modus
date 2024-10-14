@@ -1,9 +1,9 @@
 /*
- * Copyright 2024 Hypermode, Inc.
+ * Copyright 2024 Hypermode Inc.
  * Licensed under the terms of the Apache License, Version 2.0
  * See the LICENSE file that accompanied this code for further details.
  *
- * SPDX-FileCopyrightText: 2024 Hypermode, Inc. <hello@hypermode.com>
+ * SPDX-FileCopyrightText: 2024 Hypermode Inc. <hello@hypermode.com>
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -40,12 +40,18 @@ export default class SDKRemoveCommand extends Command {
     }
     if (version === "all") {
       for (const version of versions) {
-        rmSync(expandHomeDir("~/.modus/sdk/" + version), { recursive: true, force: true });
+        rmSync(expandHomeDir("~/.modus/sdk/" + version), {
+          recursive: true,
+          force: true,
+        });
       }
       this.log("Removed all SDK versions");
       process.exit(0);
     } else {
-      rmSync(expandHomeDir("~/.modus/sdk/" + version), { recursive: true, force: true });
+      rmSync(expandHomeDir("~/.modus/sdk/" + version), {
+        recursive: true,
+        force: true,
+      });
       this.log("Removed Modus " + (isDev ? "" : "v") + version);
       process.exit(0);
     }

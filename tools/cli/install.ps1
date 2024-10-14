@@ -1,15 +1,15 @@
-# Copyright 2024 Hypermode, Inc.
+# Copyright 2024 Hypermode Inc.
 # Licensed under the terms of the Apache License, Version 2.0
 # See the LICENSE file that accompanied this code for further details.
 
-# SPDX-FileCopyrightText: 2024 Hypermode, Inc. <hello@hypermode.com>
+# SPDX-FileCopyrightText: 2024 Hypermode Inc. <hello@hypermode.com>
 # SPDX-License-Identifier: Apache-2.0
 
-# Run with: iwr install.hypermode.com/modus.ps1 -UseBasicP | iex
+# Run with: iwr install.hypermode.com/modus.ps1 -UseBasicParsing | iex
 
 # Config
-$PACKAGE_ORG=""
-$PACKAGE_NAME="test-modus-cli"
+$PACKAGE_ORG="@hypermode"
+$PACKAGE_NAME="modus-cli"
 $INSTALL_DIR = "${env:MODUS_CLI}"
 if (-not $INSTALL_DIR) {
     $INSTALL_DIR = "$HOME\.modus\cli"
@@ -21,8 +21,8 @@ $ARCH = $env:PROCESSOR_ARCHITECTURE
 if ($ARCH -eq "AMD64") {
     $ARCH = "x64"
 }
-elseif ($ARCH -eq "ARM") {
-    $ARCH = "arm"
+elseif ($ARCH -eq "ARM64") {
+    $ARCH = "arm64"
 }
 
 # Functions

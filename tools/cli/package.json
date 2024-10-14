@@ -1,12 +1,25 @@
 {
-  "name": "test-modus-cli",
-  "version": "0.0.16",
+  "name": "@hypermode/modus-cli",
+  "version": "0.0.17",
   "description": "The Modus CLI",
-  "author": "Hypermode, Inc.",
+  "author": "Hypermode Inc.",
   "license": "Apache-2.0",
+  "homepage": "https://github.com/hypermodeinc/modus",
+  "repository": "github:hypermodeinc/modus",
+  "bugs": {
+    "url": "https://github.com/hypermodeinc/modus/issues"
+  },
+  "keywords": [
+    "Hypermode",
+    "Modus",
+    "CLI"
+  ],
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
   "bin": {
     "modus": "./run/modus.js"
   },
@@ -24,7 +37,7 @@
   },
   "devDependencies": {
     "@oclif/test": "^4",
-    "@types/node": "^20",
+    "@types/node": "^22",
     "@types/shell-quote": "^1.7.5",
     "oclif": "^4",
     "ts-node": "^10",
@@ -38,15 +51,6 @@
     "/dist",
     "/oclif.manifest.json"
   ],
-  "keywords": [
-    "Hypermode",
-    "WebAssembly",
-    "AI",
-    "Modus",
-    "API",
-    "Runtime",
-    "SDK"
-  ],
   "oclif": {
     "bin": "modus",
     "helpClass": "./dist/custom/help",
@@ -55,20 +59,8 @@
     "topicSeparator": " ",
     "topics": {
       "sdk": {
-        "description": "Modus SDK version manager"
+        "description": "Modus SDK Management"
       }
-    },
-    "plugins": []
-  },
-  "engines": {
-    "node": ">=22"
-  },
-  "homepage": "https://github.com/hypermodeinc/modus",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/hypermodeinc/modus.git"
-  },
-  "bugs": {
-    "url": "https://github.com/hypermodeinc/modus/issues"
+    }
   }
 }
