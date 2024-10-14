@@ -32,10 +32,10 @@ func ShutdownPGPools() {
 	clear(dsr.pgCache)
 }
 
-func (r *dsRegistry) getPGPool(ctx context.Context, dsname string) (*postgresqlDS, error) {
+func (r *dsRegistry) getPGPool(ctx context.Context, dsName string) (*postgresqlDS, error) {
 	// fast path
 	r.RLock()
-	ds, ok := r.pgCache[dsname]
+	ds, ok := r.pgCache[dsName]
 	r.RUnlock()
 	if ok {
 		return ds, nil
@@ -46,37 +46,37 @@ func (r *dsRegistry) getPGPool(ctx context.Context, dsname string) (*postgresqlD
 	defer r.Unlock()
 
 	// we do another lookup to make sure any other goroutine didn't create it
-	if ds, ok := r.pgCache[dsname]; ok {
+	if ds, ok := r.pgCache[dsName]; ok {
 		return ds, nil
 	}
 
-	for name, info := range manifestdata.GetManifest().Hosts {
-		if name != dsname {
+	for name, info := range manifestdata.GetManifest().Connections {
+		if name != dsName {
 			continue
 		}
 
-		if info.HostType() != manifest.HostTypePostgresql {
-			return nil, fmt.Errorf("host %s is not a postgresql host", dsname)
+		if info.ConnectionType() != manifest.ConnectionTypePostgresql {
+			return nil, fmt.Errorf("[%s] is not a postgresql connection", dsName)
 		}
 
-		conf := info.(manifest.PostgresqlHostInfo)
+		conf := info.(manifest.PostgresqlConnectionInfo)
 		if conf.ConnStr == "" {
-			return nil, fmt.Errorf("postgresql host %s has empty connString", dsname)
+			return nil, fmt.Errorf("postgresql connection [%s] has empty connString", dsName)
 		}
 
-		fullConnStr, err := secrets.ApplyHostSecretsToString(ctx, info, conf.ConnStr)
+		fullConnStr, err := secrets.ApplySecretsToString(ctx, info, conf.ConnStr)
 		if err != nil {
-			return nil, fmt.Errorf("failed to apply secrets to connection string for host %s: %w", dsname, err)
+			return nil, fmt.Errorf("failed to apply secrets to connection string for connection [%s]: %w", dsName, err)
 		}
 
 		dbpool, err := pgxpool.New(ctx, fullConnStr)
 		if err != nil {
-			return nil, fmt.Errorf("failed to connect to postgres host %s: %w", dsname, err)
+			return nil, fmt.Errorf("failed to connect to postgres connection [%s]: %w", dsName, err)
 		}
 
-		r.pgCache[dsname] = &postgresqlDS{pool: dbpool}
-		return r.pgCache[dsname], nil
+		r.pgCache[dsName] = &postgresqlDS{pool: dbpool}
+		return r.pgCache[dsName], nil
 	}
 
-	return nil, fmt.Errorf("postgresql host %s not found", dsname)
+	return nil, fmt.Errorf("postgresql connection [%s] not found", dsName)
 }

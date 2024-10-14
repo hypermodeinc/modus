@@ -26,8 +26,8 @@ import (
 func Test_GetGraphQLSchema_Go(t *testing.T) {
 
 	manifest := &manifest.Manifest{
-		Models: map[string]manifest.ModelInfo{},
-		Hosts:  map[string]manifest.HostInfo{},
+		Models:      map[string]manifest.ModelInfo{},
+		Connections: map[string]manifest.ConnectionInfo{},
 		Collections: map[string]manifest.CollectionInfo{
 			"collection1": {
 				SearchMethods: map[string]manifest.SearchMethodInfo{

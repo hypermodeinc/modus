@@ -25,13 +25,13 @@ func Initialize() {
 	})
 }
 
-func ExecuteQuery(ctx context.Context, hostName, dbType, statement, paramsJson string) (*HostQueryResponse, error) {
+func ExecuteQuery(ctx context.Context, connectionName, dbType, statement, paramsJson string) (*HostQueryResponse, error) {
 	var params []any
 	if err := utils.JsonDeserialize([]byte(paramsJson), &params); err != nil {
 		return nil, fmt.Errorf("error deserializing database query parameters: %w", err)
 	}
 
-	dbResponse, err := doExecuteQuery(ctx, hostName, dbType, statement, params)
+	dbResponse, err := doExecuteQuery(ctx, connectionName, dbType, statement, params)
 	if err != nil {
 		return nil, err
 	}
@@ -58,10 +58,10 @@ func ExecuteQuery(ctx context.Context, hostName, dbType, statement, paramsJson s
 	return response, nil
 }
 
-func doExecuteQuery(ctx context.Context, dsname, dsType, stmt string, params []any) (*dbResponse, error) {
+func doExecuteQuery(ctx context.Context, dsName, dsType, stmt string, params []any) (*dbResponse, error) {
 	switch dsType {
-	case manifest.HostTypePostgresql:
-		ds, err := dsr.getPGPool(ctx, dsname)
+	case manifest.ConnectionTypePostgresql:
+		ds, err := dsr.getPGPool(ctx, dsName)
 		if err != nil {
 			return nil, err
 		}
@@ -69,6 +69,6 @@ func doExecuteQuery(ctx context.Context, dsname, dsType, stmt string, params []a
 		return ds.query(ctx, stmt, params)
 
 	default:
-		return nil, fmt.Errorf("host %s has an unsupported type: %s", dsname, dsType)
+		return nil, fmt.Errorf("connection [%s] has an unsupported type: %s", dsName, dsType)
 	}
 }

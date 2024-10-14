@@ -17,7 +17,7 @@ import (
 
 	"github.com/hypermodeinc/modus/lib/manifest"
 	"github.com/hypermodeinc/modus/runtime/db"
-	"github.com/hypermodeinc/modus/runtime/hosts"
+	"github.com/hypermodeinc/modus/runtime/httpclient"
 	"github.com/hypermodeinc/modus/runtime/manifestdata"
 	"github.com/hypermodeinc/modus/runtime/secrets"
 	"github.com/hypermodeinc/modus/runtime/utils"
@@ -53,7 +53,7 @@ func InvokeModel(ctx context.Context, modelName string, input string) (string, e
 	}
 
 	// TODO: use the provider pattern instead of branching
-	if model.Host == "aws-bedrock" {
+	if model.Connection == "aws-bedrock" {
 		return invokeAwsBedrockModel(ctx, model, input)
 	}
 
@@ -64,13 +64,13 @@ func PostToModelEndpoint[TResult any](ctx context.Context, model *manifest.Model
 	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
 
-	host, err := hosts.GetHttpHost(model.Host)
+	connInfo, err := httpclient.GetHttpConnectionInfo(model.Connection)
 	if err != nil {
 		var empty TResult
 		return empty, err
 	}
 
-	url, err := getModelEndpointUrl(model, host)
+	url, err := getModelEndpointUrl(model, connInfo)
 	if err != nil {
 		var empty TResult
 		return empty, err
@@ -78,10 +78,10 @@ func PostToModelEndpoint[TResult any](ctx context.Context, model *manifest.Model
 
 	bs := func(ctx context.Context, req *http.Request) error {
 		req.Header.Set("Content-Type", "application/json")
-		if host.Name == hosts.HypermodeHost {
-			return authenticateHypermodeModelRequest(ctx, req, host)
+		if connInfo.Name == httpclient.HypermodeConnectionName {
+			return authenticateHypermodeModelRequest(ctx, req, connInfo)
 		} else {
-			return secrets.ApplyHostSecretsToHttpRequest(ctx, host, req)
+			return secrets.ApplySecretsToHttpRequest(ctx, connInfo, req)
 		}
 	}
 
@@ -96,27 +96,27 @@ func PostToModelEndpoint[TResult any](ctx context.Context, model *manifest.Model
 	return res.Data, nil
 }
 
-func getModelEndpointUrl(model *manifest.ModelInfo, host *manifest.HTTPHostInfo) (string, error) {
+func getModelEndpointUrl(model *manifest.ModelInfo, connection *manifest.HTTPConnectionInfo) (string, error) {
 
-	if host.Name == hosts.HypermodeHost {
+	if connection.Name == httpclient.HypermodeConnectionName {
 		return getHypermodeModelEndpointUrl(model)
 	}
 
-	if host.BaseURL != "" && host.Endpoint != "" {
-		return "", fmt.Errorf("specify either base URL or endpoint for a host, not both")
+	if connection.BaseURL != "" && connection.Endpoint != "" {
+		return "", fmt.Errorf("specify either base URL or endpoint for an HTTP connection, not both")
 	}
 
-	if host.BaseURL != "" {
+	if connection.BaseURL != "" {
 		if model.Path == "" {
 			return "", fmt.Errorf("model path is not defined")
 		}
-		endpoint := fmt.Sprintf("%s/%s", strings.TrimRight(host.BaseURL, "/"), strings.TrimLeft(model.Path, "/"))
+		endpoint := fmt.Sprintf("%s/%s", strings.TrimRight(connection.BaseURL, "/"), strings.TrimLeft(model.Path, "/"))
 		return endpoint, nil
 	}
 
 	if model.Path != "" {
-		return "", fmt.Errorf("model path is defined but host has no base URL")
+		return "", fmt.Errorf("model path is defined but the connection has no base URL")
 	}
 
-	return host.Endpoint, nil
+	return connection.Endpoint, nil
 }

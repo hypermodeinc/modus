@@ -25,8 +25,8 @@ import (
 )
 
 const (
-	testModelName = "test"
-	testHostName  = "mock"
+	testModelName      = "test"
+	testConnectionName = "mock"
 )
 
 // TestMain runs in the main goroutine and can do whatever setup and teardown is necessary around a call to m.Run
@@ -38,12 +38,12 @@ func TestMain(m *testing.M) {
 				Name:        testModelName,
 				SourceModel: "",
 				Provider:    "",
-				Host:        testHostName,
+				Connection:  testConnectionName,
 			},
 		},
-		Hosts: map[string]manifest.HostInfo{
-			testHostName: manifest.HTTPHostInfo{
-				Name:     testHostName,
+		Connections: map[string]manifest.ConnectionInfo{
+			testConnectionName: manifest.HTTPConnectionInfo{
+				Name:     testConnectionName,
 				Endpoint: "",
 			},
 		},
@@ -101,9 +101,9 @@ func TestPostExternalModelEndpoint(t *testing.T) {
 	tsrv := httptest.NewServer(handler)
 	defer tsrv.Close()
 
-	h := manifestdata.GetManifest().Hosts[testHostName].(manifest.HTTPHostInfo)
+	h := manifestdata.GetManifest().Connections[testConnectionName].(manifest.HTTPConnectionInfo)
 	h.Endpoint = tsrv.URL
-	manifestdata.GetManifest().Hosts[testHostName] = h
+	manifestdata.GetManifest().Connections[testConnectionName] = h
 
 	sentenceMap := map[string]string{
 		"key1": "value1",
