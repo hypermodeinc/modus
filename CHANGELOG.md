@@ -36,6 +36,7 @@ In previous releases, the name "Hypermode" was used for all three._
 - Update command-line args and env variables [#459](https://github.com/hypermodeinc/modus/pull/459)
 - Update Sentry telemetry collection rules [#460](https://github.com/hypermodeinc/modus/pull/460)
 - Fix entry alignment issue with AssemblyScript maps [#461](https://github.com/hypermodeinc/modus/pull/461)
+- Update to use new Modus manifest [#462](https://github.com/hypermodeinc/modus/pull/462)
 
 ## 2024-10-02 - Version 0.12.7
 
