@@ -1,12 +1,10 @@
 {
   "$schema": "https://schema.hypermode.com/modus.json",
-  "models": {
-    // No models are used by this example, but if you add any, they would go here.
-  },
-  "connections": {
-    // No hosts are used by this example, but if you add any, they would go here.
-  },
-  "collections": {
-    // No collections are used by this example, but if you add any, they would go here.
+  "endpoints": {
+    "default": {
+      "type": "graphql",
+      "path": "/graphql",
+      "auth": "bearer"
+    }
   }
 }

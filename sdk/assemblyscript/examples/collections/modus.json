@@ -1,5 +1,12 @@
 {
   "$schema": "https://schema.hypermode.com/modus.json",
+  "endpoints": {
+    "default": {
+      "type": "graphql",
+      "path": "/graphql",
+      "auth": "bearer"
+    }
+  },
   "models": {
     // This defines the model that will be used for vector embeddings.
     "embeddings": {

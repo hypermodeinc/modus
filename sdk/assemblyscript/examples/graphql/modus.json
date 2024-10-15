@@ -1,7 +1,11 @@
 {
   "$schema": "https://schema.hypermode.com/modus.json",
-  "models": {
-    // No models are used by this example, but if you add any, they would go here.
+  "endpoints": {
+    "default": {
+      "type": "graphql",
+      "path": "/graphql",
+      "auth": "bearer"
+    }
   },
   "connections": {
     // This defines the dgraph host that is used by the example functions.

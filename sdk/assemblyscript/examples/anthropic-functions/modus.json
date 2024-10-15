@@ -1,5 +1,12 @@
 {
   "$schema": "https://schema.hypermode.com/modus.json",
+  "endpoints": {
+    "default": {
+      "type": "graphql",
+      "path": "/graphql",
+      "auth": "bearer"
+    }
+  },
   "models": {
     "text-generator": {
       "sourceModel": "claude-3-opus-20240229",
