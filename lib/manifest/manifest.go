@@ -15,8 +15,8 @@ import (
 	"fmt"
 
 	"github.com/santhosh-tekuri/jsonschema/v5"
-	"github.com/tailscale/hujson"
 	"github.com/tidwall/gjson"
+	"github.com/tidwall/jsonc"
 )
 
 // This version should only be incremented if there are major breaking changes
@@ -64,29 +64,25 @@ func ValidateManifest(content []byte) error {
 		return err
 	}
 
-	if content, err := standardizeJSON(content); err != nil {
-		return fmt.Errorf("failed to standardize manifest: %w", err)
-	} else {
-		var v interface{}
-		if err := json.Unmarshal(content, &v); err != nil {
-			return fmt.Errorf("failed to deserialize manifest: %w", err)
-		}
-		if err := sch.Validate(v); err != nil {
-			return fmt.Errorf("failed to validate manifest: %w", err)
-		}
+	content = jsonc.ToJSONInPlace(content)
+
+	var v interface{}
+	if err := json.Unmarshal(content, &v); err != nil {
+		return fmt.Errorf("failed to deserialize manifest: %w", err)
+	}
+	if err := sch.Validate(v); err != nil {
+		return fmt.Errorf("failed to validate manifest: %w", err)
 	}
 
 	return nil
 }
 
 func ReadManifest(content []byte) (*Manifest, error) {
-	data, err := standardizeJSON(content)
-	if err != nil {
-		return nil, err
-	}
+
+	content = jsonc.ToJSONInPlace(content)
 
 	var manifest Manifest
-	if err := parseManifestJson(data, &manifest); err != nil {
+	if err := parseManifestJson(content, &manifest); err != nil {
 		return nil, fmt.Errorf("failed to parse manifest: %w", err)
 	}
 	return &manifest, nil
@@ -176,14 +172,4 @@ func parseManifestJson(data []byte, manifest *Manifest) error {
 	}
 
 	return nil
-}
-
-// standardizeJSON removes comments and trailing commas to make the JSON valid
-func standardizeJSON(b []byte) ([]byte, error) {
-	ast, err := hujson.Parse(b)
-	if err != nil {
-		return b, err
-	}
-	ast.Standardize()
-	return ast.Pack(), nil
 }

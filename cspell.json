@@ -1,10 +1,7 @@
 {
   "version": "0.2",
   "language": "en",
-  "flagWords": [
-    "hte",
-    "teh"
-  ],
+  "flagWords": ["hte", "teh"],
   "words": [
     "abstractlogger",
     "Albus",
@@ -71,7 +68,6 @@
     "hostfns",
     "hostfunctions",
     "httpclient",
-    "hujson",
     "hypbuild",
     "hypermode",
     "Hypermode",
