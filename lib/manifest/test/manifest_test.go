@@ -24,6 +24,13 @@ func TestReadManifest(t *testing.T) {
 	// This should match the content of valid_modus.json
 	expectedManifest := &manifest.Manifest{
 		Version: 1,
+		Endpoints: map[string]manifest.EndpointInfo{
+			"default": manifest.GraphqlEndpointInfo{
+				Name: "default",
+				Path: "/graphql",
+				Auth: manifest.EndpointAuthBearer,
+			},
+		},
 		Models: map[string]manifest.ModelInfo{
 			"model-1": {
 				Name:        "model-1",

@@ -30,6 +30,7 @@ var schemaContent string
 
 type Manifest struct {
 	Version     int                       `json:"-"`
+	Endpoints   map[string]EndpointInfo   `json:"endpoints"`
 	Models      map[string]ModelInfo      `json:"models"`
 	Connections map[string]ConnectionInfo `json:"connections"`
 	Collections map[string]CollectionInfo `json:"collections"`
@@ -93,6 +94,7 @@ func ReadManifest(content []byte) (*Manifest, error) {
 
 func parseManifestJson(data []byte, manifest *Manifest) error {
 	var m struct {
+		Endpoints   map[string]json.RawMessage `json:"endpoints"`
 		Models      map[string]ModelInfo       `json:"models"`
 		Connections map[string]json.RawMessage `json:"connections"`
 		Collections map[string]CollectionInfo  `json:"collections"`
@@ -113,6 +115,28 @@ func parseManifestJson(data []byte, manifest *Manifest) error {
 	for key, collection := range manifest.Collections {
 		collection.Name = key
 		manifest.Collections[key] = collection
+	}
+
+	// Parse the endpoints by type
+	manifest.Endpoints = make(map[string]EndpointInfo, len(m.Endpoints))
+	for name, rawEp := range m.Endpoints {
+		t := gjson.GetBytes(rawEp, "type")
+		if !t.Exists() {
+			return fmt.Errorf("missing type for endpoint [%s]", name)
+		}
+		epType := EndpointType(t.String())
+
+		switch epType {
+		case EndpointTypeGraphQL:
+			var info GraphqlEndpointInfo
+			if err := json.Unmarshal(rawEp, &info); err != nil {
+				return fmt.Errorf("failed to parse graphql endpoint [%s]: %w", name, err)
+			}
+			info.Name = name
+			manifest.Endpoints[name] = info
+		default:
+			return fmt.Errorf("unknown type [%s] for endpoint [%s]", epType, name)
+		}
 	}
 
 	// Parse the connections by type
