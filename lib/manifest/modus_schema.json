@@ -12,6 +12,45 @@
           "description": "The schema that the document should conform to.",
           "markdownDescription": "The schema that the document should conform to.\n\nReference: https://json-schema.org/"
         },
+        "endpoints": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 63,
+            "default": "default",
+            "pattern": "^[a-zA-Z0-9]+(?:-[a-zA-Z0-9]+)*$"
+          },
+          "additionalProperties": {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "graphql",
+                    "description": "Type of the endpoint."
+                  },
+                  "path": {
+                    "type": "string",
+                    "minLength": 1,
+                    "pattern": "^\\/\\S*$",
+                    "default": "/graphql",
+                    "description": "Path of the endpoint. Must start with a forward slash."
+                  },
+                  "auth": {
+                    "type": "string",
+                    "enum": ["none", "bearer"],
+                    "default": "bearer",
+                    "description": "Type of authentication for the endpoint."
+                  }
+                },
+                "required": ["type", "path", "auth"],
+                "additionalProperties": false
+              }
+            ]
+          }
+        },
         "models": {
           "type": "object",
           "propertyNames": {
