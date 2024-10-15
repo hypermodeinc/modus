@@ -168,7 +168,7 @@ func TestPostgresqlNoHost(t *testing.T) {
     "default": {
       "type": "graphql",
       "path": "/graphql",
-      "auth": "bearer"
+      "auth": "bearer-token"
     }
   },
   "connections": {
@@ -199,7 +199,7 @@ func TestPostgresqlNoPostgresqlHost(t *testing.T) {
     "default": {
       "type": "graphql",
       "path": "/graphql",
-      "auth": "bearer"
+      "auth": "bearer-token"
     }
   },
   "connections": {
@@ -230,7 +230,7 @@ func TestPostgresqlWrongConnString(t *testing.T) {
     "default": {
       "type": "graphql",
       "path": "/graphql",
-      "auth": "bearer"
+      "auth": "bearer-token"
     }
   },
   "connections": {
@@ -261,7 +261,7 @@ func TestPostgresqlNoConnString(t *testing.T) {
     "default": {
       "type": "graphql",
       "path": "/graphql",
-      "auth": "bearer"
+      "auth": "bearer-token"
     }
   },
   "connections": {

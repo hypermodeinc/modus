@@ -43,8 +43,8 @@
                   },
                   "auth": {
                     "type": "string",
-                    "enum": ["none", "bearer"],
-                    "default": "bearer",
+                    "enum": ["none", "bearer-token"],
+                    "default": "bearer-token",
                     "description": "Type of authentication for the endpoint."
                   }
                 },
