@@ -29,7 +29,7 @@ func TestReadManifest(t *testing.T) {
 				Name: "default",
 				Type: manifest.EndpointTypeGraphQL,
 				Path: "/graphql",
-				Auth: manifest.EndpointAuthBearer,
+				Auth: manifest.EndpointAuthBearerToken,
 			},
 		},
 		Models: map[string]manifest.ModelInfo{

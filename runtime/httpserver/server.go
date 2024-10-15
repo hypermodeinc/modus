@@ -139,7 +139,7 @@ func GetMainHandler(options ...func(map[string]http.Handler)) http.Handler {
 				switch info.Auth {
 				case manifest.EndpointAuthNone:
 					// No auth required.
-				case manifest.EndpointAuthBearer:
+				case manifest.EndpointAuthBearerToken:
 					handler = middleware.HandleJWT(handler)
 				default:
 					logger.Warn(ctx).Str("endpoint", name).Msg("Unsupported auth type.")

@@ -24,8 +24,8 @@ const (
 type EndpointAuthType string
 
 const (
-	EndpointAuthNone   EndpointAuthType = "none"
-	EndpointAuthBearer EndpointAuthType = "bearer"
+	EndpointAuthNone        EndpointAuthType = "none"
+	EndpointAuthBearerToken EndpointAuthType = "bearer-token"
 )
 
 type GraphqlEndpointInfo struct {
