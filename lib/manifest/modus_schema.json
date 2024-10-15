@@ -35,8 +35,11 @@
                     "type": "string",
                     "minLength": 1,
                     "pattern": "^\\/\\S*$",
+                    "not": {
+                      "enum": ["/health", "/metrics"]
+                    },
                     "default": "/graphql",
-                    "description": "Path of the endpoint. Must start with a forward slash."
+                    "description": "Path of the endpoint. Must start with a forward slash. Cannot be '/health' or '/metrics'."
                   },
                   "auth": {
                     "type": "string",
