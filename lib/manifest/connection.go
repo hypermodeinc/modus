@@ -9,9 +9,11 @@
 
 package manifest
 
+type ConnectionType string
+
 type ConnectionInfo interface {
 	ConnectionName() string
-	ConnectionType() string
+	ConnectionType() ConnectionType
 	Hash() string
 	Variables() []string
 }

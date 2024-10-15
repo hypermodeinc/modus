@@ -30,6 +30,7 @@ const (
 
 type GraphqlEndpointInfo struct {
 	Name string           `json:"-"`
+	Type EndpointType     `json:"type"`
 	Path string           `json:"path"`
 	Auth EndpointAuthType `json:"auth"`
 }
@@ -39,7 +40,7 @@ func (e GraphqlEndpointInfo) EndpointName() string {
 }
 
 func (e GraphqlEndpointInfo) EndpointType() EndpointType {
-	return EndpointTypeGraphQL
+	return e.Type
 }
 
 func (e GraphqlEndpointInfo) EndpointAuth() EndpointAuthType {

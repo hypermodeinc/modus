@@ -13,13 +13,13 @@ import (
 	"regexp"
 )
 
-const ConnectionTypeHTTP string = "http"
+const ConnectionTypeHTTP ConnectionType = "http"
 
 var templateRegex = regexp.MustCompile(`{{\s*(?:base64\((.+?):(.+?)\)|(.+?))\s*}}`)
 
 type HTTPConnectionInfo struct {
 	Name            string            `json:"-"`
-	Type            string            `json:"type"`
+	Type            ConnectionType    `json:"type"`
 	Endpoint        string            `json:"endpoint"`
 	BaseURL         string            `json:"baseURL"`
 	Headers         map[string]string `json:"headers"`
@@ -30,7 +30,7 @@ func (info HTTPConnectionInfo) ConnectionName() string {
 	return info.Name
 }
 
-func (info HTTPConnectionInfo) ConnectionType() string {
+func (info HTTPConnectionInfo) ConnectionType() ConnectionType {
 	return info.Type
 }
 

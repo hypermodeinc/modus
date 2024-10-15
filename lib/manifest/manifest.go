@@ -146,7 +146,7 @@ func parseManifestJson(data []byte, manifest *Manifest) error {
 		if !t.Exists() {
 			return fmt.Errorf("missing type for connection [%s]", name)
 		}
-		conType := t.String()
+		conType := ConnectionType(t.String())
 
 		switch conType {
 		case ConnectionTypeHTTP:

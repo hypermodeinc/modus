@@ -27,6 +27,7 @@ func TestReadManifest(t *testing.T) {
 		Endpoints: map[string]manifest.EndpointInfo{
 			"default": manifest.GraphqlEndpointInfo{
 				Name: "default",
+				Type: manifest.EndpointTypeGraphQL,
 				Path: "/graphql",
 				Auth: manifest.EndpointAuthBearer,
 			},
@@ -99,18 +100,18 @@ func TestReadManifest(t *testing.T) {
 			},
 			"neon": manifest.PostgresqlConnectionInfo{
 				Name:    "neon",
-				Type:    "postgresql",
+				Type:    manifest.ConnectionTypePostgresql,
 				ConnStr: "postgresql://{{POSTGRESQL_USERNAME}}:{{POSTGRESQL_PASSWORD}}@1.2.3.4:5432/data?sslmode=disable",
 			},
 			"my-dgraph-cloud": manifest.DgraphConnectionInfo{
 				Name:       "my-dgraph-cloud",
-				Type:       "dgraph",
+				Type:       manifest.ConnectionTypeDgraph,
 				GrpcTarget: "frozen-mango.grpc.eu-central-1.aws.cloud.dgraph.io:443",
 				Key:        "{{DGRAPH_KEY}}",
 			},
 			"local-dgraph": manifest.DgraphConnectionInfo{
 				Name:       "local-dgraph",
-				Type:       "dgraph",
+				Type:       manifest.ConnectionTypeDgraph,
 				GrpcTarget: "localhost:9080",
 				Key:        "",
 			},
