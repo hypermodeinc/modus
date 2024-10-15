@@ -58,8 +58,8 @@ func ensureValidMetrics(t *testing.T, s *httptest.Server, totalRequests int) {
 
 func TestRuntimeMetrics(t *testing.T) {
 
-	mux := httpserver.GetHandlerMux()
-	s := httptest.NewServer(mux)
+	handler := httpserver.GetMainHandler(httpserver.WithDefaultGraphQLHandler())
+	s := httptest.NewServer(handler)
 	defer s.Close()
 
 	_ = httpGet(t, s, graphqlEndpoint)
