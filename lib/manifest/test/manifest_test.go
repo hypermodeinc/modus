@@ -24,6 +24,14 @@ func TestReadManifest(t *testing.T) {
 	// This should match the content of valid_modus.json
 	expectedManifest := &manifest.Manifest{
 		Version: 1,
+		Endpoints: map[string]manifest.EndpointInfo{
+			"default": manifest.GraphqlEndpointInfo{
+				Name: "default",
+				Type: manifest.EndpointTypeGraphQL,
+				Path: "/graphql",
+				Auth: manifest.EndpointAuthBearerToken,
+			},
+		},
 		Models: map[string]manifest.ModelInfo{
 			"model-1": {
 				Name:        "model-1",
@@ -92,18 +100,18 @@ func TestReadManifest(t *testing.T) {
 			},
 			"neon": manifest.PostgresqlConnectionInfo{
 				Name:    "neon",
-				Type:    "postgresql",
+				Type:    manifest.ConnectionTypePostgresql,
 				ConnStr: "postgresql://{{POSTGRESQL_USERNAME}}:{{POSTGRESQL_PASSWORD}}@1.2.3.4:5432/data?sslmode=disable",
 			},
 			"my-dgraph-cloud": manifest.DgraphConnectionInfo{
 				Name:       "my-dgraph-cloud",
-				Type:       "dgraph",
+				Type:       manifest.ConnectionTypeDgraph,
 				GrpcTarget: "frozen-mango.grpc.eu-central-1.aws.cloud.dgraph.io:443",
 				Key:        "{{DGRAPH_KEY}}",
 			},
 			"local-dgraph": manifest.DgraphConnectionInfo{
 				Name:       "local-dgraph",
-				Type:       "dgraph",
+				Type:       manifest.ConnectionTypeDgraph,
 				GrpcTarget: "localhost:9080",
 				Key:        "",
 			},
@@ -184,7 +192,7 @@ func TestHttpConnectionInfo_Hash(t *testing.T) {
 	}
 }
 
-func TestHPostgresConnectionInfo_Hash(t *testing.T) {
+func TestPostgresConnectionInfo_Hash(t *testing.T) {
 	connection := manifest.PostgresqlConnectionInfo{
 		Name:    "my-database",
 		ConnStr: "postgresql://{{USERNAME}}:{{PASSWORD}}@database.example.com:5432/dbname?sslmode=require",

@@ -164,7 +164,14 @@ func TestPostgresqlNoConnection(t *testing.T) {
 func TestPostgresqlNoHost(t *testing.T) {
 	jsonManifest := []byte(`
 {
-  "hosts": {
+  "endpoints": {
+    "default": {
+      "type": "graphql",
+      "path": "/graphql",
+      "auth": "bearer-token"
+    }
+  },
+  "connections": {
     "postgres": {
       "type": "postgresql",
       "connString": "postgresql://postgres:password@localhost:5499/data?sslmode=disable"
@@ -188,7 +195,14 @@ func TestPostgresqlNoHost(t *testing.T) {
 func TestPostgresqlNoPostgresqlHost(t *testing.T) {
 	jsonManifest := []byte(`
 {
-  "hosts": {
+  "endpoints": {
+    "default": {
+      "type": "graphql",
+      "path": "/graphql",
+      "auth": "bearer-token"
+    }
+  },
+  "connections": {
     "my-database": {
       "type": "http",
       "connString": "http://localhost:5499/data"
@@ -212,7 +226,14 @@ func TestPostgresqlNoPostgresqlHost(t *testing.T) {
 func TestPostgresqlWrongConnString(t *testing.T) {
 	jsonManifest := []byte(`
 {
-  "hosts": {
+  "endpoints": {
+    "default": {
+      "type": "graphql",
+      "path": "/graphql",
+      "auth": "bearer-token"
+    }
+  },
+  "connections": {
     "my-database": {
       "type": "postgresql",
       "connString": "http://localhost:5499/data"
@@ -235,13 +256,20 @@ func TestPostgresqlWrongConnString(t *testing.T) {
 
 func TestPostgresqlNoConnString(t *testing.T) {
 	jsonManifest := []byte(`
-	{
-	  "hosts": {
-		"my-database": {
-		  "type": "postgresql"
-		}
-	  }
-	}`)
+{
+  "endpoints": {
+    "default": {
+      "type": "graphql",
+      "path": "/graphql",
+      "auth": "bearer-token"
+    }
+  },
+  "connections": {
+    "my-database": {
+      "type": "postgresql"
+    }
+  }
+}`)
 	restoreFn := updateManifest(t, jsonManifest)
 	defer restoreFn()
 

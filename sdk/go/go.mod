@@ -3,8 +3,8 @@ module github.com/hypermodeinc/modus/sdk/go
 go 1.23.0
 
 require (
-	github.com/hypermodeinc/modus/lib/manifest v0.0.0-20241014211105-4cec736f145e
-	github.com/hypermodeinc/modus/lib/wasmextractor v0.0.0-20241014211105-4cec736f145e
+	github.com/hypermodeinc/modus/lib/manifest v0.0.0-20241015232538-3d367579cd46
+	github.com/hypermodeinc/modus/lib/wasmextractor v0.0.0-20241015232538-3d367579cd46
 )
 
 // NOTE: during developement, you can use replace directives if needed
@@ -28,8 +28,8 @@ require (
 require (
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/santhosh-tekuri/jsonschema/v5 v5.3.1 // indirect
-	github.com/tailscale/hujson v0.0.0-20241010212012-29efb4a0184b // indirect
 	github.com/tidwall/gjson v1.18.0 // indirect
+	github.com/tidwall/jsonc v0.3.2 // indirect
 	github.com/tidwall/match v1.1.1 // indirect
 	github.com/tidwall/pretty v1.2.1 // indirect
 	golang.org/x/sync v0.8.0 // indirect

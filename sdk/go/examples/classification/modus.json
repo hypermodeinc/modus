@@ -1,5 +1,12 @@
 {
   "$schema": "https://schema.hypermode.com/modus.json",
+  "endpoints": {
+    "default": {
+      "type": "graphql",
+      "path": "/graphql",
+      "auth": "bearer-token"
+    }
+  },
   "models": {
     // This defines a model from Hugging Face that is hosted on Hypermode.
     "my-classifier": {

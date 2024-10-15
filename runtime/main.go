@@ -49,11 +49,11 @@ func main() {
 	ctx := services.Start()
 	defer services.Stop(ctx)
 
-	// Set local mode if debugging is enabled
-	local := utils.DebugModeEnabled()
-
 	// Retrieve auth private keys
 	middleware.Init(ctx)
+
+	// Set local mode in development
+	local := config.IsDevEnvironment()
 
 	// Start the HTTP server to listen for requests.
 	// Note, this function blocks, and handles shutdown gracefully.

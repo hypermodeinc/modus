@@ -9,19 +9,19 @@
 
 package manifest
 
-const ConnectionTypePostgresql string = "postgresql"
+const ConnectionTypePostgresql ConnectionType = "postgresql"
 
 type PostgresqlConnectionInfo struct {
-	Name    string `json:"-"`
-	Type    string `json:"type"`
-	ConnStr string `json:"connString"`
+	Name    string         `json:"-"`
+	Type    ConnectionType `json:"type"`
+	ConnStr string         `json:"connString"`
 }
 
 func (info PostgresqlConnectionInfo) ConnectionName() string {
 	return info.Name
 }
 
-func (info PostgresqlConnectionInfo) ConnectionType() string {
+func (info PostgresqlConnectionInfo) ConnectionType() ConnectionType {
 	return info.Type
 }
 

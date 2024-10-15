@@ -37,6 +37,7 @@ In previous releases, the name "Hypermode" was used for all three._
 - Update Sentry telemetry collection rules [#460](https://github.com/hypermodeinc/modus/pull/460)
 - Fix entry alignment issue with AssemblyScript maps [#461](https://github.com/hypermodeinc/modus/pull/461)
 - Update to use new Modus manifest [#462](https://github.com/hypermodeinc/modus/pull/462)
+- Enable GraphQL endpoints to be defined in the manifest [#464](https://github.com/hypermodeinc/modus/pull/464)
 
 ## 2024-10-02 - Version 0.12.7
 

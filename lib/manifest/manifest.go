@@ -15,8 +15,8 @@ import (
 	"fmt"
 
 	"github.com/santhosh-tekuri/jsonschema/v5"
-	"github.com/tailscale/hujson"
 	"github.com/tidwall/gjson"
+	"github.com/tidwall/jsonc"
 )
 
 // This version should only be incremented if there are major breaking changes
@@ -30,6 +30,7 @@ var schemaContent string
 
 type Manifest struct {
 	Version     int                       `json:"-"`
+	Endpoints   map[string]EndpointInfo   `json:"endpoints"`
 	Models      map[string]ModelInfo      `json:"models"`
 	Connections map[string]ConnectionInfo `json:"connections"`
 	Collections map[string]CollectionInfo `json:"collections"`
@@ -63,29 +64,25 @@ func ValidateManifest(content []byte) error {
 		return err
 	}
 
-	if content, err := standardizeJSON(content); err != nil {
-		return fmt.Errorf("failed to standardize manifest: %w", err)
-	} else {
-		var v interface{}
-		if err := json.Unmarshal(content, &v); err != nil {
-			return fmt.Errorf("failed to deserialize manifest: %w", err)
-		}
-		if err := sch.Validate(v); err != nil {
-			return fmt.Errorf("failed to validate manifest: %w", err)
-		}
+	content = jsonc.ToJSONInPlace(content)
+
+	var v interface{}
+	if err := json.Unmarshal(content, &v); err != nil {
+		return fmt.Errorf("failed to deserialize manifest: %w", err)
+	}
+	if err := sch.Validate(v); err != nil {
+		return fmt.Errorf("failed to validate manifest: %w", err)
 	}
 
 	return nil
 }
 
 func ReadManifest(content []byte) (*Manifest, error) {
-	data, err := standardizeJSON(content)
-	if err != nil {
-		return nil, err
-	}
+
+	content = jsonc.ToJSONInPlace(content)
 
 	var manifest Manifest
-	if err := parseManifestJson(data, &manifest); err != nil {
+	if err := parseManifestJson(content, &manifest); err != nil {
 		return nil, fmt.Errorf("failed to parse manifest: %w", err)
 	}
 	return &manifest, nil
@@ -93,6 +90,7 @@ func ReadManifest(content []byte) (*Manifest, error) {
 
 func parseManifestJson(data []byte, manifest *Manifest) error {
 	var m struct {
+		Endpoints   map[string]json.RawMessage `json:"endpoints"`
 		Models      map[string]ModelInfo       `json:"models"`
 		Connections map[string]json.RawMessage `json:"connections"`
 		Collections map[string]CollectionInfo  `json:"collections"`
@@ -115,6 +113,28 @@ func parseManifestJson(data []byte, manifest *Manifest) error {
 		manifest.Collections[key] = collection
 	}
 
+	// Parse the endpoints by type
+	manifest.Endpoints = make(map[string]EndpointInfo, len(m.Endpoints))
+	for name, rawEp := range m.Endpoints {
+		t := gjson.GetBytes(rawEp, "type")
+		if !t.Exists() {
+			return fmt.Errorf("missing type for endpoint [%s]", name)
+		}
+		epType := EndpointType(t.String())
+
+		switch epType {
+		case EndpointTypeGraphQL:
+			var info GraphqlEndpointInfo
+			if err := json.Unmarshal(rawEp, &info); err != nil {
+				return fmt.Errorf("failed to parse graphql endpoint [%s]: %w", name, err)
+			}
+			info.Name = name
+			manifest.Endpoints[name] = info
+		default:
+			return fmt.Errorf("unknown type [%s] for endpoint [%s]", epType, name)
+		}
+	}
+
 	// Parse the connections by type
 	manifest.Connections = make(map[string]ConnectionInfo, len(m.Connections))
 	for name, rawCon := range m.Connections {
@@ -122,7 +142,7 @@ func parseManifestJson(data []byte, manifest *Manifest) error {
 		if !t.Exists() {
 			return fmt.Errorf("missing type for connection [%s]", name)
 		}
-		conType := t.String()
+		conType := ConnectionType(t.String())
 
 		switch conType {
 		case ConnectionTypeHTTP:
@@ -152,14 +172,4 @@ func parseManifestJson(data []byte, manifest *Manifest) error {
 	}
 
 	return nil
-}
-
-// standardizeJSON removes comments and trailing commas to make the JSON valid
-func standardizeJSON(b []byte) ([]byte, error) {
-	ast, err := hujson.Parse(b)
-	if err != nil {
-		return b, err
-	}
-	ast.Standardize()
-	return ast.Pack(), nil
 }

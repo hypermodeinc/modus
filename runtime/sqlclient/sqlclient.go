@@ -13,7 +13,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/hypermodeinc/modus/lib/manifest"
 	"github.com/hypermodeinc/modus/runtime/manifestdata"
 	"github.com/hypermodeinc/modus/runtime/utils"
 )
@@ -60,7 +59,7 @@ func ExecuteQuery(ctx context.Context, connectionName, dbType, statement, params
 
 func doExecuteQuery(ctx context.Context, dsName, dsType, stmt string, params []any) (*dbResponse, error) {
 	switch dsType {
-	case manifest.ConnectionTypePostgresql:
+	case "postgresql":
 		ds, err := dsr.getPGPool(ctx, dsName)
 		if err != nil {
 			return nil, err

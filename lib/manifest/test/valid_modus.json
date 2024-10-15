@@ -1,6 +1,13 @@
 {
   // Test valid manifest file
   "$schema": "https://schema.hypermode.com/modus.json",
+  "endpoints": {
+    "default": {
+      "type": "graphql",
+      "path": "/graphql",
+      "auth": "bearer-token"
+    }
+  },
   "models": {
     "model-1": {
       "sourceModel": "example/source-model-1",

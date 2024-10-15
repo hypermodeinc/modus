@@ -9,20 +9,20 @@
 
 package manifest
 
-const ConnectionTypeDgraph string = "dgraph"
+const ConnectionTypeDgraph ConnectionType = "dgraph"
 
 type DgraphConnectionInfo struct {
-	Name       string `json:"-"`
-	Type       string `json:"type"`
-	GrpcTarget string `json:"grpcTarget"`
-	Key        string `json:"key"`
+	Name       string         `json:"-"`
+	Type       ConnectionType `json:"type"`
+	GrpcTarget string         `json:"grpcTarget"`
+	Key        string         `json:"key"`
 }
 
 func (info DgraphConnectionInfo) ConnectionName() string {
 	return info.Name
 }
 
-func (info DgraphConnectionInfo) ConnectionType() string {
+func (info DgraphConnectionInfo) ConnectionType() ConnectionType {
 	return info.Type
 }
 

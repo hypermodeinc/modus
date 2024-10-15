@@ -12,6 +12,48 @@
           "description": "The schema that the document should conform to.",
           "markdownDescription": "The schema that the document should conform to.\n\nReference: https://json-schema.org/"
         },
+        "endpoints": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 63,
+            "default": "default",
+            "pattern": "^[a-zA-Z0-9]+(?:-[a-zA-Z0-9]+)*$"
+          },
+          "additionalProperties": {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "graphql",
+                    "description": "Type of the endpoint."
+                  },
+                  "path": {
+                    "type": "string",
+                    "minLength": 1,
+                    "pattern": "^\\/\\S*$",
+                    "not": {
+                      "enum": ["/health", "/metrics"]
+                    },
+                    "default": "/graphql",
+                    "description": "Path of the endpoint. Must start with a forward slash. Cannot be '/health' or '/metrics'."
+                  },
+                  "auth": {
+                    "type": "string",
+                    "enum": ["none", "bearer-token"],
+                    "default": "bearer-token",
+                    "description": "Type of authentication for the endpoint."
+                  }
+                },
+                "required": ["type", "path", "auth"],
+                "additionalProperties": false
+              }
+            ]
+          }
+        },
         "models": {
           "type": "object",
           "propertyNames": {
@@ -105,138 +147,120 @@
             "pattern": "^[a-zA-Z0-9]+(?:-[a-zA-Z0-9]+)*$"
           },
           "additionalProperties": {
-            "type": "object",
-            "properties": {
-              "type": {
-                "type": "string",
-                "default": "http",
-                "enum": ["http", "postgresql", "dgraph"],
-                "description": "Type for the connection, such as 'http', 'postgresql', 'dgraph'",
-                "markdownDescription": "Type for the connection, such as 'http', 'postgresql', 'dgraph'.\n\nReference: https://docs.hypermode.com/define-connections"
-              }
-            },
-            "required": ["type"],
-            "allOf": [
+            "oneOf": [
               {
-                "if": {
-                  "properties": { "type": { "const": "http" } }
-                },
-                "then": {
-                  "properties": {
-                    "type": {
-                      "const": "http"
-                    },
-                    "baseUrl": {
-                      "type": "string",
-                      "format": "uri",
-                      "minLength": 1,
-                      "pattern": "^https?://\\S+/$",
-                      "description": "Base URL for connections to the connection.  Must end with a trailing slash.  If providing the entire URL, use the endpoint field instead.",
-                      "markdownDescription": "Base URL for connections to the connection.  Must end with a trailing slash.  If providing the entire URL, use the `endpoint` field instead.\n\nReference: https://docs.hypermode.com/define-connections"
-                    },
-                    "endpoint": {
-                      "type": "string",
-                      "format": "uri",
-                      "minLength": 1,
-                      "pattern": "^https?://\\S+$",
-                      "description": "Full URL endpoint for connections to the connection.  If providing the base URL, use the baseUrl field instead.",
-                      "markdownDescription": "Full URL endpoint for connections to the connection.  If providing the base URL, use the `baseUrl` field instead.\n\nReference: https://docs.hypermode.com/define-connections"
-                    },
-                    "headers": {
-                      "type": "object",
-                      "propertyNames": {
-                        "type": "string",
-                        "minLength": 1,
-                        "pattern": "^[\\w!#$%&'*+-.^`|~]+$"
-                      },
-                      "additionalProperties": {
-                        "type": "string",
-                        "minLength": 1
-                      },
-                      "description": "Headers to include in requests to the connection.",
-                      "markdownDescription": "Headers to include in requests to the connection.\n\nReference: https://docs.hypermode.com/define-connections"
-                    },
-                    "queryParameters": {
-                      "type": "object",
-                      "$comment": "Query parameter keys and values will be encoded when used, so there is no need to validate a pattern in the schema.",
-                      "propertyNames": {
-                        "type": "string",
-                        "minLength": 1
-                      },
-                      "additionalProperties": {
-                        "type": "string",
-                        "minLength": 1
-                      },
-                      "description": "Query parameters to include in requests to the connection.",
-                      "markdownDescription": "Query parameters to include in requests to the connection.\n\nReference: https://docs.hypermode.com/define-connections"
-                    },
-                    "additionalProperties": false
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "http",
+                    "description": "Type of the connection."
                   },
-                  "$comment": "Either baseUrl or endpoint must be provided, but not both.",
-                  "allOf": [
-                    {
-                      "oneOf": [
-                        {
-                          "required": ["baseUrl"]
-                        },
-                        {
-                          "required": ["endpoint"]
-                        }
-                      ],
-                      "not": {
-                        "required": ["baseUrl", "endpoint"]
+                  "baseUrl": {
+                    "type": "string",
+                    "format": "uri",
+                    "minLength": 1,
+                    "pattern": "^https?://\\S+/$",
+                    "description": "Base URL for connections to the connection.  Must end with a trailing slash.  If providing the entire URL, use the endpoint field instead.",
+                    "markdownDescription": "Base URL for connections to the connection.  Must end with a trailing slash.  If providing the entire URL, use the `endpoint` field instead.\n\nReference: https://docs.hypermode.com/define-connections"
+                  },
+                  "endpoint": {
+                    "type": "string",
+                    "format": "uri",
+                    "minLength": 1,
+                    "pattern": "^https?://\\S+$",
+                    "description": "Full URL endpoint for connections to the connection.  If providing the base URL, use the baseUrl field instead.",
+                    "markdownDescription": "Full URL endpoint for connections to the connection.  If providing the base URL, use the `baseUrl` field instead.\n\nReference: https://docs.hypermode.com/define-connections"
+                  },
+                  "headers": {
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string",
+                      "minLength": 1,
+                      "pattern": "^[\\w!#$%&'*+-.^`|~]+$"
+                    },
+                    "additionalProperties": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "description": "Headers to include in requests to the connection.",
+                    "markdownDescription": "Headers to include in requests to the connection.\n\nReference: https://docs.hypermode.com/define-connections"
+                  },
+                  "queryParameters": {
+                    "type": "object",
+                    "$comment": "Query parameter keys and values will be encoded when used, so there is no need to validate a pattern in the schema.",
+                    "propertyNames": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "additionalProperties": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "description": "Query parameters to include in requests to the connection.",
+                    "markdownDescription": "Query parameters to include in requests to the connection.\n\nReference: https://docs.hypermode.com/define-connections"
+                  }
+                },
+                "required": ["type"],
+                "additionalProperties": false,
+                "$comment": "Either baseUrl or endpoint must be provided, but not both.",
+                "allOf": [
+                  {
+                    "oneOf": [
+                      {
+                        "required": ["baseUrl"]
+                      },
+                      {
+                        "required": ["endpoint"]
                       }
+                    ],
+                    "not": {
+                      "required": ["baseUrl", "endpoint"]
                     }
-                  ]
-                }
+                  }
+                ]
               },
               {
-                "if": {
-                  "properties": { "type": { "const": "postgresql" } }
-                },
-                "then": {
-                  "properties": {
-                    "type": {
-                      "const": "postgresql"
-                    },
-                    "connString": {
-                      "type": "string",
-                      "minLength": 1,
-                      "pattern": "^postgres(?:ql)?:\\/\\/(.*?@)?([0-9a-zA-Z.-]*?)(:\\d+)?(\\/[0-9a-zA-Z.-]+)?(\\?.+)?$",
-                      "description": "The PostgreSQL connection string in URI format.",
-                      "markdownDescription": "The PostgreSQL connection string in URI format.\n\nReference: https://docs.hypermode.com/define-connections"
-                    }
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "postgresql",
+                    "description": "Type of the connection."
                   },
-                  "required": ["connString"],
-                  "additionalProperties": false
-                }
+                  "connString": {
+                    "type": "string",
+                    "minLength": 1,
+                    "pattern": "^postgres(?:ql)?:\\/\\/(.*?@)?([0-9a-zA-Z.-]*?)(:\\d+)?(\\/[0-9a-zA-Z.-]+)?(\\?.+)?$",
+                    "description": "The PostgreSQL connection string in URI format.",
+                    "markdownDescription": "The PostgreSQL connection string in URI format.\n\nReference: https://docs.hypermode.com/define-connections"
+                  }
+                },
+                "required": ["type", "connString"],
+                "additionalProperties": false
               },
               {
-                "if": {
-                  "properties": { "type": { "const": "dgraph" } }
-                },
-                "then": {
-                  "properties": {
-                    "type": {
-                      "const": "dgraph"
-                    },
-                    "grpcTarget": {
-                      "type": "string",
-                      "minLength": 1,
-                      "pattern": "^[a-zA-Z0-9]+(?:-[a-zA-Z0-9.]+)*:\\d+$",
-                      "description": "The gRPC target for connections to Dgraph, such as \"localhost:9080\" or \"your-server-1234567.grpc.us-east-1.aws.cloud.dgraph.io:443\".",
-                      "markdownDescription": "The gRPC target for connections to Dgraph, such as \"localhost:9080\" or \"your-server-1234567.grpc.us-east-1.aws.cloud.dgraph.io:443\".\n\nReference: https://docs.hypermode.com/define-connections"
-                    },
-                    "key": {
-                      "type": "string",
-                      "minLength": 1,
-                      "description": "API key for Dgraph.",
-                      "markdownDescription": "API key for Dgraph.\n\nReference: https://docs.hypermode.com/define-connections"
-                    }
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "dgraph",
+                    "description": "Type of the connection."
                   },
-                  "required": ["grpcTarget"],
-                  "additionalProperties": false
-                }
+                  "grpcTarget": {
+                    "type": "string",
+                    "minLength": 1,
+                    "pattern": "^[a-zA-Z0-9]+(?:-[a-zA-Z0-9.]+)*:\\d+$",
+                    "description": "The gRPC target for connections to Dgraph, such as \"localhost:9080\" or \"your-server-1234567.grpc.us-east-1.aws.cloud.dgraph.io:443\".",
+                    "markdownDescription": "The gRPC target for connections to Dgraph, such as \"localhost:9080\" or \"your-server-1234567.grpc.us-east-1.aws.cloud.dgraph.io:443\".\n\nReference: https://docs.hypermode.com/define-connections"
+                  },
+                  "key": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "API key for Dgraph.",
+                    "markdownDescription": "API key for Dgraph.\n\nReference: https://docs.hypermode.com/define-connections"
+                  }
+                },
+                "required": ["type", "grpcTarget"],
+                "additionalProperties": false
               }
             ]
           }
