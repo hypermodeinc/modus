@@ -192,7 +192,7 @@ func TestHttpConnectionInfo_Hash(t *testing.T) {
 	}
 }
 
-func TestHPostgresConnectionInfo_Hash(t *testing.T) {
+func TestPostgresConnectionInfo_Hash(t *testing.T) {
 	connection := manifest.PostgresqlConnectionInfo{
 		Name:    "my-database",
 		ConnStr: "postgresql://{{USERNAME}}:{{PASSWORD}}@database.example.com:5432/dbname?sslmode=require",
