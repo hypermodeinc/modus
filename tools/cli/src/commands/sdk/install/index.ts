@@ -13,10 +13,13 @@ import chalk from "chalk";
 import { cpSync, existsSync, mkdirSync, readdirSync, rmSync, statSync, symlinkSync } from "node:fs";
 import path from "node:path";
 import { ask, clearLine, downloadFile, expandHomeDir } from "../../../util/index.js";
+import * as globals from "../../../custom/globals.js";
 import { execSync } from "node:child_process";
 import { rm } from "node:fs/promises";
 import { createInterface } from "node:readline";
 import { ParserOutput } from "@oclif/core/interfaces";
+
+const defaultGitHubLocation = globals.GitHubOwner + "/" + globals.GitHubRepo;
 
 export default class SDKInstallCommand extends Command {
   static args = {
@@ -44,9 +47,9 @@ export default class SDKInstallCommand extends Command {
     repo: Flags.string({
       hidden: true,
       char: "r",
-      description: "Change the GitHub owner and repo eg. hypermodeinc/modus",
+      description: "Change the GitHub owner and repo eg. " + defaultGitHubLocation,
       required: false,
-      default: "hypermodeinc/modus",
+      default: defaultGitHubLocation,
     }),
     branch: Flags.string({
       hidden: true,

@@ -162,7 +162,7 @@ export default class NewCommand extends Command {
   }
 
   private async installRuntime() {
-    const latest_runtime = await Metadata.getLatestRuntime();
+    const latest_runtime = await Metadata.getLatestRuntimeVersion();
 
     if (!latest_runtime) {
       this.logError("Could not find latest runtime via GitHub API. Please try again with internet access!");

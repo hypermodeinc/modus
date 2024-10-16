@@ -9,7 +9,14 @@
 
 export const CLI_VERSION = "0.0.0";
 
+export const GitHubOwner = "hypermodeinc";
+export const GitHubRepo = "modus";
+export const GitHubRuntimeTagPrefix = "runtime/";
+
+// TODO: take this as a flag on CLI commands as needed
+export const usePrereleaseVersions = true;
+
 export enum SDK {
   AssemblyScript = "AssemblyScript",
-  Go = "Go (Beta)",
+  Go = "Go",
 }
