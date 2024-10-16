@@ -9,6 +9,7 @@ on:
       - ready_for_review
     paths:
       - /runtime
+      - /lib
       - /sdk/go
 jobs:
   get-dirs:
