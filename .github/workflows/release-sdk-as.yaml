@@ -1,0 +1,25 @@
+name: "Release AssemblyScript SDK"
+on:
+  push:
+    tags:
+      - "sdk/assemblyscript/v*"
+permissions:
+  contents: "write"
+jobs:
+  release:
+    runs-on: warp-ubuntu-latest-x64-4x
+    steps:
+      - name: "Validate version"
+        if: ${{ !startsWith(github.ref_name, 'sdk/assemblyscript/v') }}
+        run: 'echo "Modus AssemblyScript SDK version must start with `sdk/assemblyscript/v` && exit 1'
+      - uses: actions/checkout@v4
+        with:
+          ref: "${{ github.ref_name }}"
+      - name: Make version variable
+        run: echo "SDK_VERSION=$(echo ${{ github.ref_name }} | cut -d'/' -f 3)" >> $GITHUB_ENV
+      - name: Create Archive
+        run: tar -czvf templates_assemblyscript_$SDK_VERSION.tar.gz sdk/assemblyscript/templates
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: templates_assemblyscript_$SDK_VERSION.tar.gz
