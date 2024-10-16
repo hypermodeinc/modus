@@ -7,12 +7,10 @@ on:
       - synchronize
       - reopened
       - ready_for_review
-    paths-ignore:
-      - /sdk/assemblyscript
-      - /tools/cli
-      - '**/*.md'
-      - '**/*.json'
-      - '.gitignore'
+    paths:
+      - '**/*.go'
+      - '**/go.mod'
+      - '**/testdata/**'
 jobs:
   get-dirs:
     if: github.event_name == 'pull_request'
