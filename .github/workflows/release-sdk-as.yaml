@@ -8,7 +8,8 @@ permissions:
   id-token: write
 jobs:
   release:
-    runs-on: warp-ubuntu-latest-x64-4x
+    # note: must use GitHub-hosted runner for publishing to NPM with --provenance flag
+    runs-on: ubuntu-latest
     steps:
       - name: "Validate version"
         if: ${{ !startsWith(github.ref_name, 'sdk/assemblyscript/v') }}
