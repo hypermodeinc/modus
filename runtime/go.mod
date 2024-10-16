@@ -40,7 +40,7 @@ require (
 	github.com/tidwall/sjson v1.2.5
 	github.com/viterin/vek v0.4.2
 	github.com/wundergraph/graphql-go-tools/execution v1.0.6
-	github.com/wundergraph/graphql-go-tools/v2 v2.0.0-rc.102
+	github.com/wundergraph/graphql-go-tools/v2 v2.0.0-rc.105
 	golang.org/x/exp v0.0.0-20240909161429-701f63a606c0
 	google.golang.org/grpc v1.67.1
 )
