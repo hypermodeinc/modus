@@ -38,6 +38,7 @@ In previous releases, the name "Hypermode" was used for all three._
 - Fix entry alignment issue with AssemblyScript maps [#461](https://github.com/hypermodeinc/modus/pull/461)
 - Update to use new Modus manifest [#462](https://github.com/hypermodeinc/modus/pull/462)
 - Enable GraphQL endpoints to be defined in the manifest [#464](https://github.com/hypermodeinc/modus/pull/464)
+- Publish templates for SDKs using release workflows [#465](https://github.com/hypermodeinc/modus/pull/465)
 
 ## 2024-10-02 - Version 0.12.7
 
