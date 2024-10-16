@@ -23,7 +23,7 @@ import (
 // to the manifest schema.  In general, we don't consider the schema to be versioned,
 // from the user's perspective, so this should be rare.
 // NOTE: We intentionally do not expose the *current* version number outside this package.
-const currentVersion = 1
+const currentVersion = 3
 
 //go:embed modus_schema.json
 var schemaContent string
