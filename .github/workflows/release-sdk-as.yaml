@@ -5,6 +5,7 @@ on:
       - "sdk/assemblyscript/v*"
 permissions:
   contents: "write"
+  id-token: write
 jobs:
   release:
     runs-on: warp-ubuntu-latest-x64-4x
@@ -15,15 +16,33 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: "${{ github.ref_name }}"
-      - name: Get SDK Version
-        id: get_sdk_version
-        run: echo "sdk_version=$(echo '${{ github.ref_name }}' | cut -d'/' -f 3)" >> $GITHUB_OUTPUT
+      - name: Parse SDK Version
+        id: parse_sdk_version
+        run: |
+          echo "sdk_version=$(echo '${{ github.ref_name }}' | cut -d'/' -f 3)" >> $GITHUB_OUTPUT
+          echo "npm_tag=$(echo '${{ github.ref_name }}' | cut -d'/' -f 3 | sed -E 's/^[^-]+-([a-zA-Z]+).*/\1/ ; s/v.*/latest/')" >> $GITHUB_OUTPUT
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ">=22"
+          registry-url: "https://registry.npmjs.org"
+      - name: Set Package Version
+        working-directory: sdk/assemblyscript/src
+        run: npm version ${{ steps.parse_sdk_version.outputs.sdk_version }} --no-git-tag-version
+      - name: Install Dependencies
+        working-directory: sdk/assemblyscript/src
+        run: npm ci
+      - name: Publish NPM Package
+        working-directory: sdk/assemblyscript/src
+        run: npm publish --provenance --access public --tag ${{ steps.parse_sdk_version.outputs.npm_tag }}
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       - name: Prepare Templates
         working-directory: sdk/assemblyscript
-        run: ./scripts/prepare-templates.sh ${{ steps.get_sdk_version.outputs.sdk_version }}
+        run: ./scripts/prepare-templates.sh ${{ steps.parse_sdk_version.outputs.sdk_version }}
       - name: Release
         uses: softprops/action-gh-release@v2
         with:
-          files: templates_assemblyscript_${{ steps.get_sdk_version.outputs.sdk_version }}.tar.gz
-          prerelease: ${{ contains(steps.get_sdk_version.outputs.sdk_version, '-') }}
+          files: templates_assemblyscript_${{ steps.parse_sdk_version.outputs.sdk_version }}.tar.gz
+          prerelease: ${{ contains(steps.parse_sdk_version.outputs.sdk_version, '-') }}
           make_latest: false
