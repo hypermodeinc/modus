@@ -15,11 +15,12 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: "${{ github.ref_name }}"
-      - name: Make version variable
-        run: echo "SDK_VERSION=$(echo ${{ github.ref_name }} | cut -d'/' -f 3)" >> $GITHUB_ENV
+      - name: Get SDK Version
+        id: get_sdk_version
+        run: echo "sdk_version=$(echo ${{ github.ref_name }} | cut -d'/' -f 3)" >> $GITHUB_OUTUT
       - name: Create Archive
-        run: tar -czvf templates_assemblyscript_$SDK_VERSION.tar.gz sdk/assemblyscript/templates
+        run: tar -czvf templates_assemblyscript_${{ steps.get_sdk_version.outputs.sdk_version }}.tar.gz -C sdk/assemblyscript templates
       - name: Release
         uses: softprops/action-gh-release@v2
         with:
-          files: templates_assemblyscript_$SDK_VERSION.tar.gz
+          files: templates_assemblyscript_${{ steps.get_sdk_version.outputs.sdk_version }}.tar.gz
