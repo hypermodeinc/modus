@@ -1,0 +1,26 @@
+name: "Release Go SDK"
+on:
+  push:
+    tags:
+      - "sdk/go/v*"
+permissions:
+  contents: "write"
+jobs:
+  release:
+    runs-on: warp-ubuntu-latest-x64-4x
+    steps:
+      - name: "Validate version"
+        if: ${{ !startsWith(github.ref_name, 'sdk/go/v') }}
+        run: 'echo "Modus Go SDK version must start with `sdk/go/v` && exit 1'
+      - uses: actions/checkout@v4
+        with:
+          ref: "${{ github.ref_name }}"
+      - name: Get SDK Version
+        id: get_sdk_version
+        run: echo "sdk_version=$(echo '${{ github.ref_name }}' | cut -d'/' -f 3)" >> $GITHUB_OUTPUT
+      - name: Create Archive
+        run: tar -czvf templates_go_${{ steps.get_sdk_version.outputs.sdk_version }}.tar.gz -C sdk/go templates
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: templates_go_${{ steps.get_sdk_version.outputs.sdk_version }}.tar.gz
