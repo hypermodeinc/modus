@@ -4,8 +4,12 @@ github.com/hashicorp/go-version v1.7.0 h1:5tqGy27NaOTB8yJKUZELlFAS/LTKJkrmONwQKe
 github.com/hashicorp/go-version v1.7.0/go.mod h1:fltr4n8CU8Ke44wwGCBoEymUuxUHl09ZGVZPK5anwXA=
 github.com/hypermodeinc/modus/lib/manifest v0.0.0-20241015232538-3d367579cd46 h1:5bpaZyxadWKAefD+3hnjtY/R9kteLeZaPyraUX44ES0=
 github.com/hypermodeinc/modus/lib/manifest v0.0.0-20241015232538-3d367579cd46/go.mod h1:ymRlTZWerFnIUVpvEonTMTo38EDYzHcGSNYTOv2MITk=
+github.com/hypermodeinc/modus/lib/manifest v0.13.0-alpha1 h1:zd0f6361EIDovowOWuKycyJAhcJrecpZJxMWjRx3TmQ=
+github.com/hypermodeinc/modus/lib/manifest v0.13.0-alpha1/go.mod h1:ymRlTZWerFnIUVpvEonTMTo38EDYzHcGSNYTOv2MITk=
 github.com/hypermodeinc/modus/lib/wasmextractor v0.0.0-20241015232538-3d367579cd46 h1:4hU/yrt1EfMlR6RWgbHaumEHLotQY7DVrKzzlf7yIDA=
 github.com/hypermodeinc/modus/lib/wasmextractor v0.0.0-20241015232538-3d367579cd46/go.mod h1:YCesMU95vF5qkscLMKSYr92OloLe1KGwyiqW2i4OmnE=
+github.com/hypermodeinc/modus/lib/wasmextractor v0.13.0-alpha1 h1:NClXj9rPg9nAnwrXgH9Gf/xLuPtxveC+plkKb68ux48=
+github.com/hypermodeinc/modus/lib/wasmextractor v0.13.0-alpha1/go.mod h1:YCesMU95vF5qkscLMKSYr92OloLe1KGwyiqW2i4OmnE=
 github.com/mattn/go-colorable v0.1.13 h1:fFA4WZxdEF4tXPZVKMLwD8oUnCTTo08duU7wxecdEvA=
 github.com/mattn/go-colorable v0.1.13/go.mod h1:7S9/ev0klgBDR4GtXTXX8a3vIGJpMovkB8vQcUbaXHg=
 github.com/mattn/go-isatty v0.0.16/go.mod h1:kYGgaQfpe5nmfYZH+SKPsOc2e4SrIfOl2e/yFXSvRLM=
