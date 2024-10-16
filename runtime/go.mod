@@ -12,23 +12,23 @@ require (
 	github.com/aws/aws-sdk-go-v2 v1.32.2
 	github.com/aws/aws-sdk-go-v2/config v1.27.43
 	github.com/aws/aws-sdk-go-v2/service/bedrockruntime v1.19.2
-	github.com/aws/aws-sdk-go-v2/service/s3 v1.65.2
+	github.com/aws/aws-sdk-go-v2/service/s3 v1.65.3
 	github.com/aws/aws-sdk-go-v2/service/sts v1.32.2
 	github.com/buger/jsonparser v1.1.1
 	github.com/chewxy/math32 v1.11.1
 	github.com/dgraph-io/dgo/v230 v230.0.1
 	github.com/docker/docker v27.3.1+incompatible
 	github.com/docker/go-connections v0.5.0
-	github.com/getsentry/sentry-go v0.29.0
+	github.com/getsentry/sentry-go v0.29.1
 	github.com/go-viper/mapstructure/v2 v2.2.1
 	github.com/goccy/go-json v0.10.3
-	github.com/golang-jwt/jwt/v5 v5.2.0
+	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/google/renameio v1.0.1
 	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v5 v5.7.1
 	github.com/jensneuse/abstractlogger v0.0.4
 	github.com/joho/godotenv v1.5.1
-	github.com/prometheus/client_golang v1.20.4
+	github.com/prometheus/client_golang v1.20.5
 	github.com/prometheus/common v0.60.0
 	github.com/rs/cors v1.11.1
 	github.com/rs/xid v1.6.0
