@@ -22,14 +22,14 @@ jobs:
         run: |
           echo "sdk_version=$(echo '${{ github.ref_name }}' | cut -d'/' -f 3)" >> $GITHUB_OUTPUT
           echo "npm_tag=$(echo '${{ github.ref_name }}' | cut -d'/' -f 3 | sed -E 's/^[^-]+-([a-zA-Z]+).*/\1/ ; s/v.*/latest/')" >> $GITHUB_OUTPUT
-      - name: Prepare Templates
-        working-directory: sdk/assemblyscript
-        run: ./scripts/prepare-templates.sh ${{ steps.parse_sdk_version.outputs.sdk_version }}
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: ">=22"
           registry-url: "https://registry.npmjs.org"
+      - name: Prepare Templates
+        working-directory: sdk/assemblyscript
+        run: ./scripts/prepare-templates.sh ${{ steps.parse_sdk_version.outputs.sdk_version }}
       - name: Set Package Version
         working-directory: sdk/assemblyscript/src
         run: npm version ${{ steps.parse_sdk_version.outputs.sdk_version }} --no-git-tag-version
@@ -41,7 +41,7 @@ jobs:
         run: npm publish --provenance --access public --tag ${{ steps.parse_sdk_version.outputs.npm_tag }}
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-      - name: Release
+      - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
           files: templates_assemblyscript_${{ steps.parse_sdk_version.outputs.sdk_version }}.tar.gz
