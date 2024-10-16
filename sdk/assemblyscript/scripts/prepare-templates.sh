@@ -28,7 +28,11 @@ for template in *; do
     rm -f package-lock.json
 
     # Update the version of the modus-sdk-as dependency to match the release version.
-    sed -i '' 's/"@hypermode\/modus-sdk-as": "..\/..\/src"/"@hypermode\/modus-sdk-as": "^'"${version}"'"/' package.json
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+      sed -i '' 's/"@hypermode\/modus-sdk-as": "..\/..\/src"/"@hypermode\/modus-sdk-as": "^'"${version}"'"/' package.json
+    else
+      sed -i 's/"@hypermode\/modus-sdk-as": "..\/..\/src"/"@hypermode\/modus-sdk-as": "^'"${version}"'"/' package.json
+    fi
 
     cd ..
   fi
