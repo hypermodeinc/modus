@@ -6,6 +6,8 @@ on:
       - synchronize
       - reopened
       - ready_for_review
+    paths:
+      - /runtime
 jobs:
   runtime-integration-tests:
     name: test (runtime)
