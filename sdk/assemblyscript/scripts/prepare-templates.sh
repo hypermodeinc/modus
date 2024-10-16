@@ -39,4 +39,4 @@ for template in *; do
 done
 
 cd ..
-tar -czvf ../../templates_assemblyscript_${version}.tar.gz templates
+tar -czvf ../../templates_assemblyscript_v${version}.tar.gz templates
