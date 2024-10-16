@@ -1,6 +1,7 @@
 {
   "name": "@hypermode/modus-sdk-as",
   "version": "",
+  "repository": "github:hypermodeinc/modus",
   "description": "Modus SDK for AssemblyScript",
   "author": "Hypermode Inc.",
   "license": "Apache-2.0",
