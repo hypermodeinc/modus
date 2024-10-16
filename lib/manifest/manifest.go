@@ -23,6 +23,7 @@ import (
 // to the manifest schema.  In general, we don't consider the schema to be versioned,
 // from the user's perspective, so this should be rare.
 // NOTE: We intentionally do not expose the *current* version number outside this package.
+// NOTE: versions 1 & 2 are reserved for the prior hypermode.json, modus.json starts at version 3.
 const currentVersion = 3
 
 //go:embed modus_schema.json

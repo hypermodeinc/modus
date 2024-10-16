@@ -23,7 +23,7 @@ var validManifest []byte
 func TestReadManifest(t *testing.T) {
 	// This should match the content of valid_modus.json
 	expectedManifest := &manifest.Manifest{
-		Version: 1,
+		Version: 3,
 		Endpoints: map[string]manifest.EndpointInfo{
 			"default": manifest.GraphqlEndpointInfo{
 				Name: "default",
