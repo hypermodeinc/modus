@@ -7,7 +7,7 @@ on:
       - reopened
       - ready_for_review
     paths:
-      - /sdk/assemblyscript
+      - 'sdk/assemblyscript/**'
 jobs:
   get-dirs:
     if: github.event_name == 'pull_request'
