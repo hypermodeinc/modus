@@ -24,3 +24,5 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: templates_go_${{ steps.get_sdk_version.outputs.sdk_version }}.tar.gz
+          prerelease: ${{ contains(steps.get_sdk_version.outputs.sdk_version, '-') }}
+          make_latest: false
