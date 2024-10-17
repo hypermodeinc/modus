@@ -7,15 +7,16 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { spawnSync } from "node:child_process";
-import { createWriteStream, existsSync, mkdirSync } from "node:fs";
-import path from "node:path";
-import { Interface } from "node:readline";
 import { Command } from "@oclif/core";
 import chalk from "chalk";
+
+import { spawnSync } from "node:child_process";
+import { createWriteStream, existsSync, mkdirSync } from "node:fs";
+import { homedir } from "node:os";
+import path from "node:path";
+import { Interface } from "node:readline";
 import { Readable } from "node:stream";
 import { finished } from "node:stream/promises";
-import { rm } from "node:fs/promises";
 
 export async function ensureDir(dir: string): Promise<void> {
   if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
@@ -24,7 +25,7 @@ export async function ensureDir(dir: string): Promise<void> {
 // Expand ~ to the user's home directory
 export function expandHomeDir(filePath: string): string {
   if (filePath.startsWith("~")) {
-    return path.normalize(path.join(process.env.HOME || "", filePath.slice(1)));
+    return path.normalize(path.join(homedir(), filePath.slice(1)));
   }
 
   return path.normalize(filePath);
@@ -66,11 +67,14 @@ export function checkVersion(instance: Command) {
 export async function downloadFile(url: string, dest: string) {
   const res = await fetch(url);
   if (!res.ok) {
-    console.log(chalk.red(" ERROR ") + chalk.dim(": Could not download latest! Please check your internet connection and try again."));
+    console.log(chalk.red(" ERROR ") + chalk.dim(": Could not download file."));
+    console.log(chalk.dim("    url: " + url));
+    console.log(chalk.dim(`  result: ${res.status} ${res.statusText}`));
     process.exit(0);
   }
-  if (existsSync(dest)) await rm(dest, { recursive: true });
-  const fileStream = createWriteStream(dest, { flags: "wx" });
+
+  const fileStream = createWriteStream(dest);
+
   // @ts-ignore
   await finished(Readable.fromWeb(res.body).pipe(fileStream));
 }

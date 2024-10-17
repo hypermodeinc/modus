@@ -8,287 +8,24 @@
  */
 
 import { Args, Command, Flags } from "@oclif/core";
+import { ParserOutput } from "@oclif/core/interfaces";
 import { quote } from "shell-quote";
 import chalk from "chalk";
-import { cpSync, existsSync, mkdirSync, readdirSync, rmSync, statSync, symlinkSync } from "node:fs";
-import path from "node:path";
-import { ask, clearLine, downloadFile, expandHomeDir } from "../../../util/index.js";
-import * as globals from "../../../custom/globals.js";
-import { execSync } from "node:child_process";
+
+import { execFileSync, execSync } from "node:child_process";
+import { cpSync, existsSync, mkdirSync } from "node:fs";
 import { rm } from "node:fs/promises";
+import { arch, platform, tmpdir } from "node:os";
+import path from "node:path";
 import { createInterface } from "node:readline";
-import { ParserOutput } from "@oclif/core/interfaces";
 
-const defaultGitHubLocation = globals.GitHubOwner + "/" + globals.GitHubRepo;
-
-export default class SDKInstallCommand extends Command {
-  static args = {
-    version: Args.string({
-      description: "v0.0.0-|-SDK version to install",
-      hidden: false,
-      required: false,
-    }),
-  };
-
-  static description = "Install a specific SDK version";
-  static examples = ["modus sdk install v0.0.0", "modus sdk install latest"];
-
-  static flags = {
-    silent: Flags.boolean({
-      char: "s",
-      description: "Suppress output logs",
-      hidden: false,
-      required: false,
-    }),
-    // These are meant for developers working on modus itself
-    // You can link a directory as your runtime
-    // You can also run a specific branch
-    // You can also run a specific branch and commit on that branch
-    repo: Flags.string({
-      hidden: true,
-      char: "r",
-      description: "Change the GitHub owner and repo eg. " + defaultGitHubLocation,
-      required: false,
-      default: defaultGitHubLocation,
-    }),
-    branch: Flags.string({
-      hidden: true,
-      char: "b",
-      description: "Install runtime from branch on GitHub",
-      required: false,
-    }),
-    commit: Flags.string({
-      hidden: true,
-      char: "c",
-      description: "Install runtime from specific commit on GitHub",
-      default: "latest",
-      required: false,
-    }),
-    link: Flags.string({
-      hidden: true,
-      char: "l",
-      description: "Link an in-development runtime to CLI",
-      required: false,
-    }),
-  };
-
-  async run(): Promise<void> {
-    const ctx = await this.parse(SDKInstallCommand);
-    if (ctx.args.version) await this.installVersion(ctx);
-    else if (ctx.flags.branch || ctx.flags.commit) await this.installCommit(ctx);
-    else if (ctx.flags.link) await this.linkDir(ctx);
-  }
-
-  async installVersion(ctx: ParserCtx) {
-    const { args, flags } = ctx;
-    let version = args.version?.toLowerCase();
-    const release_info = await fetchRelease(flags.repo, version!);
-    if (version == "latest") {
-      this.log("[1/4] Getting latest version");
-      version = release_info["tag_name"];
-      clearLine();
-      this.log("[1/4] Latest version: " + chalk.dim(version));
-    } else {
-      this.log("[1/4] Getting release info");
-    }
-
-    version = version?.replace("v", "");
-
-    this.log("[2/4] Downloading release");
-    const extension = ".tar.gz";
-    const filename = "v" + version + extension;
-    const downloadLink = "https://github.com/" + flags.repo + "/archive/refs/tags/" + filename;
-
-    const archiveName = ("modus-" + version + extension).replaceAll("/", "-");
-    const tempDir = expandHomeDir("~/.modus/.modus-temp");
-    const archivePath = path.join(tempDir, archiveName);
-
-    mkdirSync(tempDir, { recursive: true });
-    await downloadFile(downloadLink, archivePath);
-
-    clearLine();
-    this.log("[2/4] Downloaded release");
-
-    const unpackedDir = tempDir + "/" + archiveName.replace(extension, "");
-    this.log("[3/4] Unpacking release");
-    await rm(unpackedDir, { recursive: true, force: true });
-    mkdirSync(unpackedDir, { recursive: true });
-    execSync(quote(["tar", "-xf", archivePath, "-C", unpackedDir]));
-
-    clearLine();
-    this.log("[3/4] Unpacked release");
-
-    this.log("[4/4] Building");
-    const installDir = path.normalize(expandHomeDir("~/.modus/sdk/" + version) + "/");
-    cpSync(unpackedDir + "/modus-" + version?.replace("v", "") + "/", installDir, { recursive: true, force: true });
-    clearLine();
-
-    await rm(tempDir, { recursive: true, force: true });
-    this.log("[4/4] Successfully installed Modus " + version);
-  }
-
-  async installCommit(ctx: ParserCtx) {
-    const { flags } = ctx;
-
-    if (flags.branch && flags.commit == "latest") {
-      const branch_info = await fetchBranch(flags.repo, flags.branch);
-      flags.commit = branch_info.sha;
-    }
-    flags.commit = flags.commit.slice(0, 7);
-
-    let sha = "";
-
-    const commit_info = await fetchCommit(flags.repo, flags.commit);
-    sha = commit_info.sha;
-    this.log("[1/4] Getting commit " + flags.commit);
-    let { id, branch } = await fetchBranch(flags.repo, "main");
-    if (sha) id = sha.slice(0, 7);
-    const version = branch + "/" + id;
-    clearLine();
-    this.log("[1/4] Found latest commit");
-
-    this.log("[2/4] Fetching Modus from latest commit" + " " + chalk.dim("(" + version + ")"));
-    const downloadLink = "https://github.com/" + flags.repo + "/archive/" + sha + ".tar.gz";
-    const archiveName = ("modus-" + version + ".tar.gz").replaceAll("/", "-");
-    const tempDir = expandHomeDir("~/.modus/.modus-temp");
-    const archivePath = path.normalize(path.join(tempDir, archiveName));
-    mkdirSync(tempDir, { recursive: true });
-
-    await downloadFile(downloadLink, archivePath);
-    clearLine();
-    this.log("[2/4] Fetched Modus");
-
-    this.log("[3/4] Unpacking archive");
-    const unpackedDir = path.normalize(tempDir + "/" + archiveName.replace(".tar.gz", ""));
-    await rm(unpackedDir, { recursive: true, force: true });
-    mkdirSync(unpackedDir, { recursive: true });
-    execSync(quote(["tar", "-xf", archivePath, "-C", unpackedDir]));
-    clearLine();
-    this.log("[3/4] Unpacked archive");
-
-    this.log("[4/4] Installing");
-    const installDir = expandHomeDir("~/.modus/sdk/dev-" + branch + "-" + id) + "/";
-    cpSync(unpackedDir + "/modus-" + (flags.commit == "latest" ? branch : sha) + "/", installDir, { recursive: true, force: true });
-    clearLine();
-    await rm(tempDir, { recursive: true, force: true });
-    this.log("[4/4] Successfully installed Modus " + version);
-  }
-
-  async linkDir(ctx: ParserCtx) {
-    const { flags } = ctx;
-
-    const srcDir = path.join(process.cwd(), flags.link!);
-    if (!existsSync(srcDir)) {
-      this.logError("Cannot link to invalid directory! Please try again");
-      process.exit(0);
-    }
-
-    const installDir = expandHomeDir("~/.modus/sdk/link") + "/";
-    this.log("[1/4] Linking directories " + srcDir + " <-> " + installDir);
-
-    const rl = createInterface({
-      input: process.stdin,
-      output: process.stdout,
-    });
-
-    if (!(await this.confirmAction(rl, "[2/4] Continue? [y/n]"))) {
-      process.exit(0);
-    }
-
-    linkDirectories(srcDir, installDir);
-    clearLine();
-    clearLine();
-
-    this.log("\nSuccessfully linked directories!");
-    process.exit(0);
-  }
-
-  private logError(message: string) {
-    this.log("\n" + chalk.red(" ERROR ") + chalk.dim(": " + message));
-  }
-
-  private async confirmAction(rl: ReturnType<typeof createInterface>, message: string): Promise<boolean> {
-    this.log(message);
-    const cont = ((await ask(chalk.dim(" -> "), rl)) || "n").toLowerCase().trim();
-    clearLine();
-    return cont === "yes" || cont === "y";
-  }
-}
-
-async function fetchRelease(
-  repo: string,
-  version: string,
-): Promise<{
-  tag_name: string;
-}> {
-  const res = await (await fetch("https://api.github.com/repos/" + repo + "/releases/" + version)).json();
-  if (!res) {
-    console.log(chalk.red(" ERROR ") + chalk.dim(": Could not find latest release! Please check your internet connection and try again."));
-    process.exit(0);
-  }
-  return res;
-}
-
-async function fetchBranch(
-  repo: string,
-  branch: string,
-): Promise<{
-  sha: string;
-  id: string;
-  branch: string;
-}> {
-  const res = await (await fetch(`https://api.github.com/repos/${repo}/branches/${branch}`)).json();
-  if (!res) {
-    console.log(chalk.red(" ERROR ") + chalk.dim(": Could not find branch! Please check your internet connection and try again."));
-    process.exit(0);
-  }
-  return {
-    sha: res["commit"]["sha"],
-    id: res["commit"]["sha"].slice(0, 7),
-    branch: res["name"],
-  };
-}
-
-async function fetchCommit(
-  repo: string,
-  commitSha: string,
-): Promise<{
-  sha: string;
-}> {
-  const response = await fetch(`https://api.github.com/repos/${repo}/commits/${commitSha}`);
-  if (!response.ok) {
-    console.log(chalk.red(" ERROR ") + chalk.dim(": Could not find commit! Please check your internet connection and try again."));
-    process.exit(0);
-  }
-  return response.json();
-}
-
-function linkDirectories(srcDir: string, destDir: string) {
-  rmSync(destDir, { recursive: true, force: true });
-  mkdirSync(destDir, { recursive: true });
-
-  const items = readdirSync(srcDir);
-
-  for (const item of items) {
-    const srcItem = path.join(srcDir, item);
-    const destItem = path.join(destDir, item);
-
-    if (statSync(srcItem).isDirectory()) {
-      symlinkSync(srcItem, destItem, "dir");
-      linkDirectories(srcItem, destItem);
-    } else {
-      symlinkSync(srcItem, destItem);
-    }
-  }
-}
+import { ask, clearLine, downloadFile, expandHomeDir } from "../../../util/index.js";
+import { getLatestRuntimeVersion } from "../../../util/versioninfo.js";
+import { GitHubOwner, GitHubRepo } from "../../../custom/globals.js";
 
 type ParserCtx = ParserOutput<
   {
-    silent: boolean;
-    repo: string;
-    branch: string | undefined;
-    commit: string;
-    link: string | undefined;
+    prerelease: boolean;
   },
   {
     [flag: string]: any;
@@ -297,3 +34,80 @@ type ParserCtx = ParserOutput<
     version: string | undefined;
   }
 >;
+
+export default class SDKInstallCommand extends Command {
+  static args = {
+    version: Args.string({
+      description: "v0.0.0-|-SDK version to install",
+      default: "latest",
+    }),
+  };
+
+  static description = "Install a specific SDK version";
+  static examples = ["modus sdk install v0.0.0", "modus sdk install latest"];
+
+  static flags = {
+    prerelease: Flags.boolean({
+      char: "p",
+      description: "Install a prerelease version",
+    }),
+  };
+
+  async run(): Promise<void> {
+    const ctx = await this.parse(SDKInstallCommand);
+    if (ctx.args.version) await this.installVersion(ctx);
+  }
+
+  async installVersion(ctx: ParserCtx) {
+    const { args, flags } = ctx;
+    let version = args.version?.toLowerCase();
+
+    if (version === "latest") {
+      const versionText = flags.prerelease ? "prerelease version" : "version";
+      this.log(`[1/3] Getting latest ${versionText}`);
+      version = await getLatestRuntimeVersion(flags.prerelease);
+      if (!version) {
+        this.logError(`Failed to fetch latest ${versionText}`);
+        return;
+      }
+    } else {
+      // TODO: check if the version exists
+    }
+
+    this.log("[2/3] Downloading Modus runtime " + version);
+
+    let osPlatform = platform().toString();
+    let osArch = arch();
+    if (osPlatform === "win32") osPlatform = "windows";
+    if (osArch === "x64") osArch = "amd64";
+
+    const release = `runtime/${version}`;
+    const filename = `runtime_${version}_${osPlatform}_${osArch}.${osPlatform === "windows" ? "zip" : "tar.gz"}`;
+    const downloadUrl = `https://github.com/${GitHubOwner}/${GitHubRepo}/releases/download/${encodeURIComponent(release)}/${encodeURIComponent(filename)}`;
+
+    const archiveName = "modus-" + filename;
+    const archivePath = path.join(tmpdir(), archiveName);
+    await downloadFile(downloadUrl, archivePath);
+
+    clearLine();
+    this.log("[2/3] Downloaded Modus runtime " + version);
+
+    this.log("[3/3] Installing...");
+    const installDir = expandHomeDir(`~/.modus/sdk/${version}/`);
+
+    if (existsSync(installDir)) {
+      await rm(installDir, { recursive: true, force: true });
+    }
+
+    mkdirSync(installDir, { recursive: true });
+    execFileSync("tar", ["-xf", archivePath, "-C", installDir]);
+    await rm(archivePath);
+
+    clearLine();
+    this.log("[3/3] Successfully installed Modus " + version);
+  }
+
+  private logError(message: string) {
+    this.log("\n" + chalk.red(" ERROR ") + chalk.dim(": " + message));
+  }
+}

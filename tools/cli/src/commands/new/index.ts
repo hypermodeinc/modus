@@ -15,6 +15,7 @@ import { SDK } from "../../custom/globals.js";
 import { ask, clearLine, cloneRepo, isRunnable } from "../../util/index.js";
 import path from "node:path";
 import { Metadata } from "../../util/metadata.js";
+import { getLatestRuntimeVersion } from "../../util/versioninfo.js";
 import { existsSync } from "node:fs";
 import { execSync } from "node:child_process";
 import SDKInstallCommand from "../sdk/install/index.js";
@@ -162,7 +163,7 @@ export default class NewCommand extends Command {
   }
 
   private async installRuntime() {
-    const latest_runtime = await Metadata.getLatestRuntimeVersion();
+    const latest_runtime = await getLatestRuntimeVersion(true);
 
     if (!latest_runtime) {
       this.logError("Could not find latest runtime via GitHub API. Please try again with internet access!");
