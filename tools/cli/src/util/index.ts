@@ -68,8 +68,8 @@ export async function downloadFile(url: string, dest: string) {
   const res = await fetch(url);
   if (!res.ok) {
     console.log(chalk.red(" ERROR ") + chalk.dim(": Could not download file."));
-    console.log(chalk.dim("    url: " + url));
-    console.log(chalk.dim(`  result: ${res.status} ${res.statusText}`));
+    console.log(chalk.dim("   url : " + url));
+    console.log(chalk.dim(`result : ${res.status} ${res.statusText}`));
     process.exit(0);
   }
 

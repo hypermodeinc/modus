@@ -8,7 +8,6 @@
  */
 
 import { Args, Command, Flags } from "@oclif/core";
-import { ParserOutput } from "@oclif/core/interfaces";
 import chalk from "chalk";
 
 import { execFileSync } from "node:child_process";
@@ -20,18 +19,6 @@ import path from "node:path";
 import { clearLine, downloadFile, expandHomeDir } from "../../../util/index.js";
 import { getLatestRuntimeVersion, runtimeReleaseExists } from "../../../util/versioninfo.js";
 import { GitHubOwner, GitHubRepo } from "../../../custom/globals.js";
-
-type ParserCtx = ParserOutput<
-  {
-    prerelease: boolean;
-  },
-  {
-    [flag: string]: any;
-  },
-  {
-    version: string | undefined;
-  }
->;
 
 export default class SDKInstallCommand extends Command {
   static args = {
@@ -52,22 +39,20 @@ export default class SDKInstallCommand extends Command {
   };
 
   async run(): Promise<void> {
-    const ctx = await this.parse(SDKInstallCommand);
-    if (ctx.args.version) await this.installVersion(ctx);
+    const { args, flags } = await this.parse(SDKInstallCommand);
+    await this.installVersion(args.version, flags.prerelease);
   }
 
-  async installVersion(ctx: ParserCtx) {
-    const { args, flags } = ctx;
-    let version = args.version?.toLowerCase();
-
-    if (version === "latest") {
-      const versionText = flags.prerelease ? "prerelease version" : "version";
+  async installVersion(version: string, prerelease: boolean) {
+    if (version.toLowerCase() === "latest") {
+      const versionText = prerelease ? "prerelease version" : "version";
       this.log(`[1/3] Getting latest ${versionText}`);
-      version = await getLatestRuntimeVersion(flags.prerelease);
+      const ver = await getLatestRuntimeVersion(prerelease);
       if (!version) {
         this.logError(`Failed to fetch latest ${versionText}`);
         return;
       }
+      version = ver!;
     } else {
       this.log(`[1/3] Checking version ${version}`);
       const exists = await runtimeReleaseExists(version!);
