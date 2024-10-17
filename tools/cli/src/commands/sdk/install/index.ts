@@ -11,7 +11,7 @@ import { Args, Command, Flags } from "@oclif/core";
 import chalk from "chalk";
 
 import { execFileSync } from "node:child_process";
-import { existsSync, mkdirSync } from "node:fs";
+import { existsSync, mkdirSync, renameSync } from "node:fs";
 import { rm } from "node:fs/promises";
 import { arch, platform, tmpdir } from "node:os";
 import path from "node:path";
@@ -79,9 +79,8 @@ export default class SDKInstallCommand extends Command {
     const runtimeFilename = `runtime_${version}_${osPlatform}_${osArch}.${osPlatform === "windows" ? "zip" : "tar.gz"}`;
     const runtimeDownloadUrl = `https://github.com/${GitHubOwner}/${GitHubRepo}/releases/download/${encodeURIComponent(runtimeRelease)}/${encodeURIComponent(runtimeFilename)}`;
 
-    const runtimeArchiveName = "modus-" + runtimeFilename;
-    const runtimeArchivePath = path.join(tempDir, runtimeArchiveName);
-    archivePaths.push({ folder: ".", archive: runtimeArchivePath });
+    const runtimeArchivePath = path.join(tempDir, runtimeFilename);
+    archivePaths.push({ archive: runtimeArchivePath, decompress: true });
     await downloadFile(runtimeDownloadUrl, runtimeArchivePath);
 
     // loop through each enum in SDK
@@ -99,9 +98,8 @@ export default class SDKInstallCommand extends Command {
       const sdkFilename = `templates_${sdk.toLowerCase()}_${sdkVersion}.tar.gz`;
       const sdkDownloadUrl = `https://github.com/${GitHubOwner}/${GitHubRepo}/releases/download/${encodeURIComponent(sdkRelease)}/${encodeURIComponent(sdkFilename)}`;
 
-      const sdkArchiveName = "modus-" + sdkFilename;
-      const sdkArchivePath = path.join(tempDir, sdkArchiveName);
-      archivePaths.push({ folder: sdk.toLowerCase(), archive: sdkArchivePath });
+      const sdkArchivePath = path.join(tempDir, sdkFilename);
+      archivePaths.push({ archive: sdkArchivePath, decompress: false });
       await downloadFile(sdkDownloadUrl, sdkArchivePath);
     }
 
@@ -115,13 +113,16 @@ export default class SDKInstallCommand extends Command {
       await rm(installDir, { recursive: true, force: true });
     }
 
-    for (const { folder, archive } of archivePaths) {
-      const dir = path.join(installDir, folder);
-      if (!existsSync(dir)) {
-        mkdirSync(dir, { recursive: true });
+    for (const { archive, decompress } of archivePaths) {
+      if (!existsSync(installDir)) {
+        mkdirSync(installDir, { recursive: true });
       }
-      execFileSync("tar", ["-xf", archive, "-C", dir]);
-      await rm(archive);
+      if (decompress) {
+        execFileSync("tar", ["-xf", archive, "-C", installDir]);
+        await rm(archive);
+      } else {
+        renameSync(archive, path.join(installDir, path.basename(archive)));
+      }
     }
 
     clearLine();
