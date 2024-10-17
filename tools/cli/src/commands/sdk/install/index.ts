@@ -16,7 +16,7 @@ import * as fs from "../../../util/fs.js";
 import { execFile } from "../../../util/cp.js";
 
 import { clearLine, downloadFile } from "../../../util/index.js";
-import { getLatestRuntimeVersion, runtimeReleaseExists, findCompatibleSdkVersion } from "../../../util/versioninfo.js";
+import * as vi from "../../../util/versioninfo.js";
 import { GitHubOwner, GitHubRepo, SDK, ModusHomeDir } from "../../../custom/globals.js";
 
 export default class SDKInstallCommand extends Command {
@@ -51,7 +51,7 @@ export default class SDKInstallCommand extends Command {
     if (version.toLowerCase() === "latest") {
       const versionText = prerelease ? "prerelease version" : "version";
       this.log(`[1/3] Getting latest ${versionText}`);
-      const ver = await getLatestRuntimeVersion(prerelease);
+      const ver = await vi.getLatestRuntimeVersion(prerelease);
       if (!version) {
         this.logError(`Failed to fetch latest ${versionText}`);
         this.exit(1);
@@ -59,7 +59,7 @@ export default class SDKInstallCommand extends Command {
       version = ver!;
     } else {
       this.log(`[1/3] Checking version ${version}`);
-      const exists = await runtimeReleaseExists(version!);
+      const exists = await vi.runtimeReleaseExists(version!);
       if (!exists) {
         this.logError(`Version ${version} does not exist`);
         this.exit(1);
@@ -89,7 +89,7 @@ export default class SDKInstallCommand extends Command {
 
     // loop through each enum in SDK
     for (const sdk of Object.values(SDK)) {
-      const sdkVersion = await findCompatibleSdkVersion(sdk, version);
+      const sdkVersion = await vi.findCompatibleSdkVersion(sdk, version);
       if (!sdkVersion) {
         this.logError(`Failed to find compatible ${sdk} SDK version for runtime ${version}`);
         this.exit(1);

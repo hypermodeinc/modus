@@ -17,7 +17,7 @@ import * as fs from "../../util/fs.js";
 import { execFile } from "../../util/cp.js";
 import { SDK } from "../../custom/globals.js";
 import { ask, clearLine, expandHomeDir } from "../../util/index.js";
-import { getLatestTemplatesArchivePath, latestInstalledVersion } from "../../util/versioninfo.js";
+import * as vi from "../../util/versioninfo.js";
 
 export default class NewCommand extends Command {
   static description = "Create a new Modus app";
@@ -154,14 +154,14 @@ export default class NewCommand extends Command {
       await fs.mkdir(dir, { recursive: true });
     }
 
-    const version = latestInstalledVersion();
+    const version = vi.latestInstalledVersion();
     if (!version) {
       // TODO: install the latest version
       this.logError("Could not find the latest installed SDK version.");
       process.exit(1);
     }
 
-    const templatesArchive = getLatestTemplatesArchivePath(version, sdk);
+    const templatesArchive = vi.getLatestTemplatesArchivePath(version, sdk);
     if (!templatesArchive) {
       this.logError(`Could not find any templates for SDK version ${version}`);
       process.exit(1);
