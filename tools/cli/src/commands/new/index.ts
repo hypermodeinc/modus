@@ -16,6 +16,7 @@ import readline from "node:readline";
 import * as fs from "../../util/fs.js";
 import * as vi from "../../util/versioninfo.js";
 import { execFile } from "../../util/cp.js";
+import { isOnline } from "../../util/index.js";
 import { SDK } from "../../custom/globals.js";
 import { ask, clearLine, withReadline } from "../../util/index.js";
 import SDKInstallCommand from "../sdk/install/index.js";
@@ -46,6 +47,11 @@ export default class NewCommand extends Command {
     force: Flags.boolean({
       char: "f",
       description: "Initialize without prompting",
+    }),
+    prerelease: Flags.boolean({
+      char: "p",
+      aliases: ["pre"],
+      description: "Use a prerelease version of the Modus SDK",
     }),
   };
 
@@ -87,7 +93,7 @@ export default class NewCommand extends Command {
         this.exit(1);
       }
 
-      await this.createApp(name, dir, sdk, template, flags.force, rl);
+      await this.createApp(name, dir, sdk, template, flags.force, flags.prerelease, rl);
     });
   }
 
@@ -135,7 +141,7 @@ export default class NewCommand extends Command {
     return template;
   }
 
-  private async createApp(name: string, dir: string, sdk: string, template: string, force: boolean, rl: readline.Interface) {
+  private async createApp(name: string, dir: string, sdk: string, template: string, force: boolean, prerelease: boolean, rl: readline.Interface) {
     if (!force && (await fs.exists(dir))) {
       if (!(await this.confirmAction(rl, "Attempting to overwrite a folder that already exists.\nAre you sure you want to continue? [y/n]"))) {
         clearLine();
@@ -146,25 +152,52 @@ export default class NewCommand extends Command {
       }
     }
 
-    // TODO: validate prerequisites for the SDK
+    let installedVersion = await vi.getLatestInstalledVersion();
 
-    this.log(chalk.dim("Checking for the latest SDK version..."));
-
-    let version = await vi.getLatestInstalledVersion();
-    if (!version) {
-      await SDKInstallCommand.run(["latest"]);
-      version = await vi.getLatestInstalledVersion();
-      if (!version) {
-        this.logError("Failed to install the latest SDK version.");
+    if (await isOnline()) {
+      this.log(chalk.dim("Checking to see if you have the latest Modus SDK version ..."));
+      const latestVersion = await vi.getLatestRuntimeVersion(prerelease);
+      if (!latestVersion) {
+        this.logError("Failed to fetch the latest Modus SDK version.");
         this.exit(1);
       }
+
+      let updateSDK = false;
+      if (!installedVersion) {
+        if (!(await this.confirmAction(rl, "You do not have the Modus SDK installed. Would you like to install it now? [y/n]"))) {
+          clearLine();
+          this.log(chalk.dim("Aborted."));
+          this.exit(1);
+        }
+        updateSDK = true;
+      } else if (latestVersion !== installedVersion) {
+        if (await this.confirmAction(rl, "You have an outdated version of the Modus SDK. Would you like to update? [y/n]")) {
+          updateSDK = true;
+        } else {
+          clearLine();
+        }
+      }
+      if (updateSDK) {
+        await SDKInstallCommand.run([latestVersion]);
+        installedVersion = latestVersion;
+      }
     }
+
+    if (!installedVersion) {
+      this.logError("Could not find an installed Modus SDK.");
+      this.exit(1);
+    }
+
+    const version = installedVersion;
+    this.log(chalk.dim(`Using Modus SDK ${version}`));
 
     const templatesArchive = await vi.getLatestTemplatesArchivePath(version, sdk);
     if (!templatesArchive) {
       this.logError(`Could not find any templates for SDK version ${version}`);
       this.exit(1);
     }
+
+    // TODO: validate prerequisites for the SDK
 
     this.log(chalk.dim("Creating a new Modus app..."));
 
@@ -201,9 +234,10 @@ export default class NewCommand extends Command {
 
     // await this.installRuntime();
 
-    this.log("\nSuccessfully created a Modus app!");
+    this.log(chalk.bold(chalk.cyanBright("Successfully created a Modus app!")));
     this.log("To start, run the following command:");
-    this.log("$ " + chalk.dim(`${dir == process.cwd() ? "" : "cd " + path.basename(dir)} && modus dev --build`));
+    this.log("$ " + chalk.blueBright(`${dir == process.cwd() ? "" : "cd " + path.basename(dir)} && modus dev --build`));
+    this.log("");
   }
 
   // private async installRuntime() {
