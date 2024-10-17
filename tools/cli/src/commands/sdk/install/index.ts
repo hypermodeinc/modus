@@ -27,7 +27,7 @@ export default class SDKInstallCommand extends Command {
   };
 
   static description = "Install a specific Modus SDK version";
-  static examples = ["modus sdk install v1.2.3", "modus sdk install", "modus sdk install latest", "modus sdk install latest --prerelease"];
+  static examples = ["modus sdk install v0.0.0", "modus sdk install", "modus sdk install latest", "modus sdk install latest --prerelease"];
 
   static flags = {
     force: Flags.boolean({
@@ -108,7 +108,9 @@ export default class SDKInstallCommand extends Command {
 
     const runtimeArchivePath = path.join(tempDir, runtimeFilename);
     archivePaths.push({ archive: runtimeArchivePath, decompress: true });
-    await downloadFile(runtimeDownloadUrl, runtimeArchivePath);
+    if (!(await downloadFile(runtimeDownloadUrl, runtimeArchivePath))) {
+      this.exit(1);
+    }
 
     for (const sdk of Object.values(globals.SDK)) {
       const sdkVersion = await vi.findCompatibleSdkVersion(sdk, version);
@@ -126,7 +128,9 @@ export default class SDKInstallCommand extends Command {
 
       const sdkArchivePath = path.join(tempDir, sdkFilename);
       archivePaths.push({ archive: sdkArchivePath, decompress: false });
-      await downloadFile(sdkDownloadUrl, sdkArchivePath);
+      if (!(await downloadFile(sdkDownloadUrl, sdkArchivePath))) {
+        this.exit(1);
+      }
     }
 
     clearLine();

@@ -7,10 +7,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Args, Command } from "@oclif/core";
+import { Args, Command, Flags } from "@oclif/core";
+import { createInterface } from "node:readline";
+import path from "node:path";
 import chalk from "chalk";
-import { expandHomeDir } from "../../../util/index.js";
-import { existsSync, readdirSync, rmSync } from "node:fs";
+
+import * as fs from "../../../util/fs.js";
+import * as vi from "../../../util/versioninfo.js";
+import * as globals from "../../../custom/globals.js";
+import { ask, clearLine } from "../../../util/index.js";
 
 export default class SDKRemoveCommand extends Command {
   static args = {
@@ -20,44 +25,66 @@ export default class SDKRemoveCommand extends Command {
       required: false,
     }),
   };
-  static description = "Remove a specific SDK version";
+
+  static flags = {
+    force: Flags.boolean({
+      char: "f",
+      description: "Remove without prompting",
+    }),
+  };
+
+  static description = "Remove a Modus SDK";
   static examples = ["modus sdk remove v0.0.0", "modus sdk remove all"];
-  static flags = {};
 
   async run(): Promise<void> {
-    const { args } = await this.parse(SDKRemoveCommand);
-    if (!args.version) this.logError("No version specified! Run modus sdk remove <version>"), process.exit(0);
-    const isDev = args.version.startsWith("dev-") || args.version.startsWith("link");
-    let version = isDev ? args.version : args.version?.trim().toLowerCase().replace("v", "");
-    if (!existsSync(expandHomeDir("~/.modus/sdk/"))) {
+    const { args, flags } = await this.parse(SDKRemoveCommand);
+    if (!args.version) this.logError("No version specified! Run modus sdk remove <version>"), this.exit(0);
+
+    const installedVersions = await vi.getInstalledVersions();
+    if (installedVersions.length == 0) {
       this.log("No versions installed!");
-      process.exit(0);
+      this.exit(0);
     }
-    const versions = readdirSync(expandHomeDir("~/.modus/sdk/"));
-    if (!versions.length) {
-      this.log("No versions installed!");
-      process.exit(0);
-    }
-    if (version === "all") {
-      for (const version of versions) {
-        rmSync(expandHomeDir("~/.modus/sdk/" + version), {
-          recursive: true,
-          force: true,
-        });
+
+    const rl = createInterface({
+      input: process.stdin,
+      output: process.stdout,
+    });
+
+    if (args.version.toLowerCase() === "all") {
+      if (!flags.force && !(await this.confirmAction(rl, "Really, remove all Modus SDK versions? [y/n]"))) {
+        clearLine();
+        return;
       }
-      this.log("Removed all SDK versions");
-      process.exit(0);
-    } else {
-      rmSync(expandHomeDir("~/.modus/sdk/" + version), {
-        recursive: true,
-        force: true,
-      });
-      this.log("Removed Modus " + (isDev ? "" : "v") + version);
-      process.exit(0);
+
+      await fs.rm(globals.ModusHomeDir, { recursive: true, force: true });
+      this.log("Removed all Modus SDK versions");
+      this.exit(0);
     }
+
+    if (!installedVersions.includes(args.version)) {
+      this.logError("Specified version is not installed!");
+      this.exit(1);
+    }
+
+    if (!flags.force && !(await this.confirmAction(rl, `Really, remove Modus SDK version ${args.version}? [y/n]`))) {
+      clearLine();
+      return;
+    }
+
+    const dir = path.join(globals.ModusHomeDir, "sdk", args.version);
+    await fs.rm(dir, { recursive: true, force: true });
+    this.log(`Removed Modus SDK version ${args.version}`);
   }
 
   private logError(message: string) {
     this.log("\n" + chalk.red(" ERROR ") + chalk.dim(": " + message));
+  }
+
+  private async confirmAction(rl: ReturnType<typeof createInterface>, message: string): Promise<boolean> {
+    this.log(message);
+    const cont = ((await ask(chalk.dim(" -> "), rl)) || "n").toLowerCase().trim();
+    clearLine();
+    return cont === "yes" || cont === "y";
   }
 }

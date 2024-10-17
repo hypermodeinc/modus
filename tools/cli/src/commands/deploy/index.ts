@@ -24,7 +24,7 @@ export default class DeployCommand extends Command {
 
     if (!isHypCLIInstalled()) {
       this.logError("Hypermode CLI is not installed! Please run PLACEHOLDER to install and try again!");
-      process.exit(0);
+      this.exit(0);
     }
   }
 

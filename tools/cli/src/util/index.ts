@@ -64,17 +64,18 @@ export function checkVersion(instance: Command) {
   }
 }
 
-export async function downloadFile(url: string, dest: string) {
+export async function downloadFile(url: string, dest: string): Promise<boolean> {
   const res = await fetch(url);
   if (!res.ok) {
     console.log(chalk.red(" ERROR ") + chalk.dim(": Could not download file."));
     console.log(chalk.dim("   url : " + url));
     console.log(chalk.dim(`result : ${res.status} ${res.statusText}`));
-    process.exit(0);
+    return false;
   }
 
   const fileStream = createWriteStream(dest);
 
   // @ts-ignore
   await finished(Readable.fromWeb(res.body).pipe(fileStream));
+  return true;
 }

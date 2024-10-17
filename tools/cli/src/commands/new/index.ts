@@ -44,7 +44,7 @@ export default class NewCommand extends Command {
     }),
     force: Flags.boolean({
       char: "f",
-      description: "Initialize without prompt",
+      description: "Initialize without prompting",
     }),
   };
 
@@ -85,7 +85,7 @@ export default class NewCommand extends Command {
       this.exit(1);
     }
 
-    if (!flags.force && !(await this.confirmAction(rl, "[5/5] Continue? [y/n]"))) clearLine(), clearLine(), process.exit(0);
+    if (!flags.force && !(await this.confirmAction(rl, "[5/5] Continue? [y/n]"))) clearLine(), clearLine(), this.exit(0);
 
     await this.createApp(name, dir, sdk, template, flags.force, rl);
     // this.exit(0);
@@ -121,7 +121,7 @@ export default class NewCommand extends Command {
     clearLine();
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     for (const _ of Object.values(SDK)) clearLine();
-    if (!sdk) process.exit(1);
+    if (!sdk) this.exit(1);
     this.log("[3/5] SDK: " + chalk.dim(sdk));
     return sdk;
   }
@@ -139,7 +139,7 @@ export default class NewCommand extends Command {
     if (!force && (await fs.exists(dir))) {
       if (!(await this.confirmAction(rl, "Attempting to overwrite a folder that already exists.\nAre you sure you want to continue? [y/n]"))) {
         clearLine();
-        process.exit(0);
+        this.exit(0);
       } else {
         clearLine(), clearLine();
       }
@@ -158,20 +158,20 @@ export default class NewCommand extends Command {
     if (!version) {
       // TODO: install the latest version
       this.logError("Could not find the latest installed SDK version.");
-      process.exit(1);
+      this.exit(1);
     }
 
     const templatesArchive = await vi.getLatestTemplatesArchivePath(version, sdk);
     if (!templatesArchive) {
       this.logError(`Could not find any templates for SDK version ${version}`);
-      process.exit(1);
+      this.exit(1);
     }
 
     await execFile("tar", ["-xf", templatesArchive, "-C", dir, "--strip-components=2", `templates/${template}`]);
 
     // if (!existsSync(templatePath)) {
     //   this.logError("Could not find the template for the latest installed SDK version.");
-    //   process.exit(1);
+    //   this.exit(1);
     // }
     // cpSync(templatePath, dir, { recursive: true });
 
@@ -187,7 +187,7 @@ export default class NewCommand extends Command {
     //   const sh = execSync("go install", { cwd: dir, stdio: "ignore" });
     //   if (!sh) {
     //     this.logError("Failed to install dependencies via go install! Please try again");
-    //     process.exit(0);
+    //     this.exit(0);
     //   }
     // }
 
@@ -206,7 +206,7 @@ export default class NewCommand extends Command {
 
   //   if (!latest_runtime) {
   //     this.logError("Could not find latest runtime via GitHub API. Please try again with internet access!");
-  //     process.exit(0);
+  //     this.exit(0);
   //   }
 
   //   if (!Metadata.runtimes.includes(latest_runtime)) {
