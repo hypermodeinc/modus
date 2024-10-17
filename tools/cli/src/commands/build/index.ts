@@ -9,13 +9,13 @@
 
 import { Args, Command } from "@oclif/core";
 import chalk from "chalk";
-import { quote } from "shell-quote";
-import { execSync } from "node:child_process";
 import path from "node:path";
+import { execFileSync } from "node:child_process";
+
+import * as fs from "../../util/fs.js";
 import { SDK } from "../../custom/globals.js";
 import { isRunnable } from "../../util/index.js";
 import { fileURLToPath } from "node:url";
-import { existsSync } from "node:fs";
 
 const NPM_CMD = isRunnable("npm") ? "npm" : path.join(path.dirname(fileURLToPath(import.meta.url)), "../../../bin/node-bin/bin/npm");
 export default class BuildCommand extends Command {
@@ -43,14 +43,13 @@ export default class BuildCommand extends Command {
       return;
     }
 
-    if (!existsSync(path.join(cwd, "/node_modules"))) {
+    if (!(await fs.exists(path.join(cwd, "/node_modules")))) {
       this.logError("Dependencies are not installed! Please install dependencies with npm i");
       return;
     }
 
-    // should pass argv
     if (sdk === SDK.AssemblyScript) {
-      execSync(quote([NPM_CMD, "run", "build"]), { cwd, stdio: "inherit" });
+      execFileSync(NPM_CMD, ["run", "build"], { cwd, stdio: "inherit" });
     }
   }
 

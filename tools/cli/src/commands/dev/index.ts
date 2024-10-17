@@ -13,9 +13,8 @@ import BuildCommand from "../build/index.js";
 import path from "path";
 import { copyFileSync, existsSync, readdirSync, readFileSync, watch, writeFileSync } from "fs";
 import chalk from "chalk";
-import { execSync, spawnSync } from "child_process";
+import { execFileSync, spawnSync } from "child_process";
 import os from "node:os";
-import { quote } from "shell-quote";
 
 export default class Run extends Command {
   static args = {
@@ -147,7 +146,7 @@ export default class Run extends Command {
         this.logError("Make is not installed! Please install it before continuing");
         return;
       }
-      execSync("make run", {
+      execFileSync("make", ["run"], {
         cwd: runtimePath,
         stdio: "inherit",
         env: {
@@ -159,7 +158,7 @@ export default class Run extends Command {
         },
       });
     } else {
-      spawnSync(quote([runtimePath, "-storagePath", path.normalize(cwd)]), {
+      execFileSync(runtimePath, ["-appPath", path.normalize(cwd)], {
         stdio: "inherit",
         env: {
           ...process.env,

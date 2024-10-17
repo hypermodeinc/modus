@@ -240,34 +240,6 @@ export default class NewCommand extends Command {
     this.log("");
   }
 
-  // private async installRuntime() {
-  //   const latest_runtime = await getLatestRuntimeVersion(true);
-
-  //   if (!latest_runtime) {
-  //     this.logError("Could not find latest runtime via GitHub API. Please try again with internet access!");
-  //     return;
-  //   }
-
-  //   if (!Metadata.runtimes.includes(latest_runtime)) {
-  //     const runtimeDlSpinner = ora({
-  //       color: "white",
-  //       indent: 2,
-  //       text: `Downloading Runtime ${chalk.dim(`(${latest_runtime})`)}`,
-  //     }).start();
-  //     runtimeDlSpinner.stop();
-
-  //     const runtimeInstSpinner = ora({
-  //       color: "white",
-  //       indent: 2,
-  //       text: `Installing Runtime ${chalk.dim(`(${latest_runtime})`)}`,
-  //     }).start();
-  //     runtimeInstSpinner.stop();
-
-  //     SDKInstallCommand.run([latest_runtime, "--silent"]);
-  //   }
-  //   this.log(`- Installed Runtime ${chalk.dim(`(${latest_runtime})`)}`);
-  // }
-
   private logError(message: string) {
     this.log("\n" + chalk.red(" ERROR ") + chalk.dim(": " + message));
   }
