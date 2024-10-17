@@ -29,7 +29,7 @@ export default class SDKInstallCommand extends Command {
   };
 
   static description = "Install a specific SDK version";
-  static examples = ["modus sdk install v0.0.0", "modus sdk install latest"];
+  static examples = ["modus sdk install v0.13.0", "modus sdk install latest"];
 
   static flags = {
     prerelease: Flags.boolean({
