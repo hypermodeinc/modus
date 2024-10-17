@@ -11,6 +11,10 @@ export const GitHubOwner = "hypermodeinc";
 export const GitHubRepo = "modus";
 export const GitHubRuntimeTagPrefix = "runtime/";
 
+export function GetSdkTagPrefix(sdk: SDK): string {
+  return `sdk/${sdk.toLowerCase()}/`;
+}
+
 export enum SDK {
   AssemblyScript = "AssemblyScript",
   Go = "Go",

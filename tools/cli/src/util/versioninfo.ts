@@ -7,6 +7,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { run } from "node:test";
 import * as globals from "../custom/globals.js";
 
 export async function getLatestRuntimeVersion(prerelease: boolean): Promise<string | undefined> {
@@ -22,6 +23,19 @@ export async function getLatestRuntimeVersion(prerelease: boolean): Promise<stri
 
 export async function runtimeReleaseExists(version: string): Promise<boolean> {
   return releaseExists(globals.GitHubOwner, globals.GitHubRepo, `${globals.GitHubRuntimeTagPrefix}${version}`);
+}
+
+export async function findCompatibleSdkVersion(sdk: globals.SDK, runtimeVersion: string): Promise<string | undefined> {
+  const versionParts = runtimeVersion.split(".");
+  const versionPrefix = versionParts.slice(0, 2).join(".") + ".";
+  const prerelease = versionParts.length > 2 && versionParts[2].includes("-");
+
+  const sdkPrefix = globals.GetSdkTagPrefix(sdk);
+  const searchPrefix = `${sdkPrefix}${versionPrefix}`; // ex: "sdk/assemblyscript/v0.13."
+  const tag = await findLatestReleaseTag(globals.GitHubOwner, globals.GitHubRepo, searchPrefix, prerelease);
+  if (tag) {
+    return tag.slice(sdkPrefix.length);
+  }
 }
 
 async function releaseExists(owner: string, repo: string, tag: string): Promise<boolean> {
