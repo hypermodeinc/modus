@@ -52,9 +52,15 @@ export default class SDKInstallCommand extends Command {
       const versionText = prerelease ? "prerelease version" : "version";
       this.log(`[1/3] Getting latest ${versionText}`);
       clearLine();
-      const ver = await vi.getLatestRuntimeVersion(prerelease);
-      if (!version) {
-        this.logError(`Failed to fetch latest ${versionText}`);
+
+      let ver = await vi.getLatestRuntimeVersion(prerelease);
+      if (!ver && !prerelease) {
+        // if no stable version is found, try again with prerelease
+        ver = await vi.getLatestRuntimeVersion(true);
+      }
+
+      if (!ver) {
+        this.logError(`Failed to fetch latest ${versionText}.`);
         this.exit(1);
       }
       version = ver!;
