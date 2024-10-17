@@ -9,29 +9,35 @@
 
 import { Command, Flags } from "@oclif/core";
 import chalk from "chalk";
-import { createInterface } from "node:readline";
 import ora from "ora";
-import { SDK } from "../../custom/globals.js";
-import { ask, clearLine, cloneRepo, isRunnable } from "../../util/index.js";
-import path from "node:path";
-import { Metadata } from "../../util/metadata.js";
-import { getLatestRuntimeVersion } from "../../util/versioninfo.js";
-import { existsSync } from "node:fs";
-import { execSync } from "node:child_process";
-import SDKInstallCommand from "../sdk/install/index.js";
-import { fileURLToPath } from "node:url";
 import { quote } from "shell-quote";
 
-const NPM_CMD = isRunnable("npm") ? "npm" : path.normalize(path.join(path.dirname(fileURLToPath(import.meta.url)), "../../../bin/node-bin/bin/npm"));
-export default class NewCommand extends Command {
-  static description = "Create a new Modus project";
+import { createInterface } from "node:readline";
+import path from "node:path";
+import { existsSync } from "node:fs";
+import { execSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
 
-  static examples = ["modus new", "modus new --name Project01", "modus new --name Project01 --sdk go --dir ./my-project --force"];
+import { SDK } from "../../custom/globals.js";
+import { ask, clearLine, cloneRepo, isRunnable } from "../../util/index.js";
+import { Metadata } from "../../util/metadata.js";
+import { getLatestRuntimeVersion } from "../../util/versioninfo.js";
+import SDKInstallCommand from "../sdk/install/index.js";
+
+const NPM_CMD = isRunnable("npm") ? "npm" : path.normalize(path.join(path.dirname(fileURLToPath(import.meta.url)), "../../../bin/node-bin/bin/npm"));
+
+export default class NewCommand extends Command {
+  static description = "Create a new Modus app";
+
+  static examples = ["modus new", "modus new --name my-app", "modus new --name my-app --sdk go --dir ./my-app --force"];
 
   static flags = {
-    name: Flags.string({ description: "Project name" }),
+    name: Flags.string({
+      description: "App name",
+      aliases: ["n"],
+    }),
     dir: Flags.string({
-      description: "Directory to install to",
+      description: "App directory",
       aliases: ["d"],
     }),
     sdk: Flags.string({ description: "SDK to use" }),
@@ -49,10 +55,16 @@ export default class NewCommand extends Command {
       output: process.stdout,
     });
 
-    this.log(chalk.bold(`Modus new v${this.config.version}\n${flags.force ? chalk.dim("WARN: Running in forced mode! Proceed with caution.") : ""}`));
+    this.log(chalk.bold(`Modus CLI v${this.config.version}\n${flags.force ? chalk.dim("WARN: Running in forced mode! Proceed with caution.") : ""}`));
 
-    const name = flags.name || (await this.promptProjectName(rl));
-    const dir = flags.dir ? path.join(process.cwd(), flags.dir) : await this.promptInstallPath(rl);
+    const name = flags.name || (await this.promptAppName(rl));
+    if (!name) {
+      this.logError("An app name is required.");
+      this.exit(1);
+    }
+
+    const dir = flags.dir ? path.join(process.cwd(), flags.dir) : await this.promptInstallPath(rl, "." + path.sep + name);
+
     const sdk = flags.sdk
       ? Object.values(SDK)[
           Object.keys(SDK)
@@ -63,11 +75,11 @@ export default class NewCommand extends Command {
 
     if (!flags.force && !(await this.confirmAction(rl, "[3/4] Continue? [y/n]"))) clearLine(), clearLine(), process.exit(0);
 
-    this.installProject(name, dir, sdk, flags.force, rl);
+    await this.createApp(name, dir, sdk, flags.force, rl);
   }
 
-  private async promptProjectName(rl: ReturnType<typeof createInterface>): Promise<string> {
-    this.log("[1/4] Project Name:");
+  private async promptAppName(rl: ReturnType<typeof createInterface>): Promise<string> {
+    this.log("[1/4] App Name:");
     const name = ((await ask(chalk.dim(" -> "), rl)) || "").trim();
     clearLine();
     clearLine();
@@ -75,13 +87,13 @@ export default class NewCommand extends Command {
     return name;
   }
 
-  private async promptInstallPath(rl: ReturnType<typeof createInterface>): Promise<string> {
-    this.log("[2/4] Install Dir: " + chalk.dim("(./)"));
-    const dir = ((await ask(chalk.dim(" -> "), rl)) || "./").trim();
+  private async promptInstallPath(rl: ReturnType<typeof createInterface>, defaultValue: string): Promise<string> {
+    this.log("[2/4] Install Dir: " + chalk.dim(`(${defaultValue})`));
+    const dir = ((await ask(chalk.dim(" -> "), rl)) || defaultValue).trim();
     clearLine();
     clearLine();
     this.log("[2/4] Directory: " + chalk.dim(dir));
-    return path.join(process.cwd(), dir);
+    return path.resolve(dir);
   }
 
   private async promptSdkSelection(rl: ReturnType<typeof createInterface>): Promise<string> {
@@ -101,7 +113,7 @@ export default class NewCommand extends Command {
     return sdk;
   }
 
-  private async installProject(name: string, dir: string, sdk: string, force: boolean, rl: ReturnType<typeof createInterface>) {
+  private async createApp(name: string, dir: string, sdk: string, force: boolean, rl: ReturnType<typeof createInterface>) {
     if (!force && existsSync(dir)) {
       if (!(await this.confirmAction(rl, "Attempting to overwrite a folder that already exists.\nAre you sure you want to continue? [y/n]"))) clearLine(), process.exit(0);
       else clearLine(), clearLine(), clearLine();
