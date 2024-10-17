@@ -118,3 +118,13 @@ export async function versionIsInstalled(version: string): Promise<boolean> {
   const dir = path.join(globals.ModusHomeDir, "sdk", version);
   return await fs.exists(dir);
 }
+
+export async function getInstalledVersions(): Promise<string[]> {
+  const dir = path.join(globals.ModusHomeDir, "sdk");
+  if (!(await fs.exists(dir))) {
+    return [];
+  }
+
+  const versions = (await fs.readdir(dir, { withFileTypes: true })).filter((e) => e.isDirectory()).map((e) => e.name);
+  return semver.rsort(versions);
+}

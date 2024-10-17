@@ -133,6 +133,7 @@
     "ptrs",
     "reindex",
     "renameio",
+    "rsort",
     "rtti",
     "runtimes",
     "santhosh",

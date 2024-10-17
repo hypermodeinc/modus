@@ -26,8 +26,8 @@ export default class SDKInstallCommand extends Command {
     }),
   };
 
-  static description = "Install a specific SDK version";
-  static examples = ["modus sdk install v0.13.0", "modus sdk install", "modus sdk install latest", "modus sdk install latest --prerelease"];
+  static description = "Install a specific Modus SDK version";
+  static examples = ["modus sdk install v1.2.3", "modus sdk install", "modus sdk install latest", "modus sdk install latest --prerelease"];
 
   static flags = {
     force: Flags.boolean({
