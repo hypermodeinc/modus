@@ -13,11 +13,10 @@ import chalk from "chalk";
 import os from "node:os";
 import path from "node:path";
 import * as fs from "../../../util/fs.js";
-import { execFile } from "../../../util/cp.js";
-
-import { clearLine, downloadFile } from "../../../util/index.js";
 import * as vi from "../../../util/versioninfo.js";
-import { GitHubOwner, GitHubRepo, SDK, ModusHomeDir } from "../../../custom/globals.js";
+import * as globals from "../../../custom/globals.js";
+import { execFile } from "../../../util/cp.js";
+import { clearLine, downloadFile } from "../../../util/index.js";
 
 export default class SDKInstallCommand extends Command {
   static args = {
@@ -77,6 +76,7 @@ export default class SDKInstallCommand extends Command {
     if (osPlatform === "win32") osPlatform = "windows";
     if (osArch === "x64") osArch = "amd64";
 
+    const { GitHubOwner, GitHubRepo, ModusHomeDir } = globals;
     const archivePaths = [];
 
     const runtimeRelease = `runtime/${version}`;
@@ -87,8 +87,7 @@ export default class SDKInstallCommand extends Command {
     archivePaths.push({ archive: runtimeArchivePath, decompress: true });
     await downloadFile(runtimeDownloadUrl, runtimeArchivePath);
 
-    // loop through each enum in SDK
-    for (const sdk of Object.values(SDK)) {
+    for (const sdk of Object.values(globals.SDK)) {
       const sdkVersion = await vi.findCompatibleSdkVersion(sdk, version);
       if (!sdkVersion) {
         this.logError(`Failed to find compatible ${sdk} SDK version for runtime ${version}`);

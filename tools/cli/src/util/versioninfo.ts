@@ -7,12 +7,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { sort as semverSort } from "semver";
-import { existsSync, readdirSync } from "node:fs";
+import semver from "semver";
 import path from "node:path";
-
+import * as fs from "./fs.js";
 import * as globals from "../custom/globals.js";
-import { expandHomeDir } from "./index.js";
 
 export async function getLatestRuntimeVersion(prerelease: boolean): Promise<string | undefined> {
   try {
@@ -88,35 +86,35 @@ async function findLatestReleaseTag(owner: string, repo: string, prefix: string,
   }
 }
 
-export function latestInstalledVersion(): string | undefined {
-  const baseDir = expandHomeDir("~/.modus/sdk");
-  if (!existsSync(baseDir)) {
+export async function getLatestInstalledVersion(): Promise<string | undefined> {
+  const dir = path.join(globals.ModusHomeDir, "sdk");
+  if (!(await fs.exists(dir))) {
     return;
   }
 
-  const subdirs = readdirSync(baseDir, { withFileTypes: true })
-    .filter((e) => e.isDirectory())
-    .map((e) => e.name);
-
-  return semverSort(subdirs).pop();
+  const subdirs = (await fs.readdir(dir, { withFileTypes: true })).filter((e) => e.isDirectory()).map((e) => e.name);
+  return semver.sort(subdirs).pop();
 }
 
-export function getLatestTemplatesArchivePath(mainVersion: string, sdk: string): string | undefined {
-  const baseDir = expandHomeDir("~/.modus/sdk/" + mainVersion);
-  if (!existsSync(baseDir)) {
+export async function getLatestTemplatesArchivePath(mainVersion: string, sdk: string): Promise<string | undefined> {
+  const dir = path.join(globals.ModusHomeDir, "sdk", mainVersion);
+  if (!(await fs.exists(dir))) {
     return;
   }
 
   const prefix = `templates_${sdk}_v`;
   const suffix = ".tar.gz";
 
-  const versions = readdirSync(baseDir)
-    .filter((f) => f.startsWith(prefix) && f.endsWith(suffix))
-    .map((f) => f.slice(prefix.length, -suffix.length));
+  const versions = (await fs.readdir(dir)).filter((f) => f.startsWith(prefix) && f.endsWith(suffix)).map((f) => f.slice(prefix.length, -suffix.length));
 
-  semverSort(versions);
+  semver.sort(versions);
   const latestVersion = versions.pop();
   if (latestVersion) {
-    return path.join(baseDir, prefix + latestVersion + suffix);
+    return path.join(dir, prefix + latestVersion + suffix);
   }
+}
+
+export async function versionIsInstalled(version: string): Promise<boolean> {
+  const dir = path.join(globals.ModusHomeDir, "sdk", version);
+  return await fs.exists(dir);
 }

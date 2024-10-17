@@ -10,14 +10,14 @@
 import { Command, Flags } from "@oclif/core";
 import chalk from "chalk";
 
-import { createInterface } from "node:readline";
 import path from "node:path";
+import { createInterface } from "node:readline";
 
 import * as fs from "../../util/fs.js";
+import * as vi from "../../util/versioninfo.js";
 import { execFile } from "../../util/cp.js";
 import { SDK } from "../../custom/globals.js";
-import { ask, clearLine, expandHomeDir } from "../../util/index.js";
-import * as vi from "../../util/versioninfo.js";
+import { ask, clearLine } from "../../util/index.js";
 
 export default class NewCommand extends Command {
   static description = "Create a new Modus app";
@@ -154,14 +154,14 @@ export default class NewCommand extends Command {
       await fs.mkdir(dir, { recursive: true });
     }
 
-    const version = vi.latestInstalledVersion();
+    const version = await vi.getLatestInstalledVersion();
     if (!version) {
       // TODO: install the latest version
       this.logError("Could not find the latest installed SDK version.");
       process.exit(1);
     }
 
-    const templatesArchive = vi.getLatestTemplatesArchivePath(version, sdk);
+    const templatesArchive = await vi.getLatestTemplatesArchivePath(version, sdk);
     if (!templatesArchive) {
       this.logError(`Could not find any templates for SDK version ${version}`);
       process.exit(1);
