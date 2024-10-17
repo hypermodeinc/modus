@@ -75,11 +75,12 @@ export default class SDKInstallCommand extends Command {
         this.logError(`Version ${version} does not exist`);
         return;
       }
-      clearLine();
-      this.log(`[1/3] Found version ${version}`);
     }
 
-    this.log("[2/3] Downloading Modus runtime " + version);
+    clearLine();
+    this.log(`[1/3] Found version ${version}`);
+
+    this.log("[2/3] Downloading ...");
 
     let osPlatform = platform().toString();
     let osArch = arch();
@@ -95,9 +96,9 @@ export default class SDKInstallCommand extends Command {
     await downloadFile(downloadUrl, archivePath);
 
     clearLine();
-    this.log("[2/3] Downloaded Modus runtime " + version);
+    this.log("[2/3] Download completed");
 
-    this.log("[3/3] Installing...");
+    this.log("[3/3] Installing ...");
     const installDir = expandHomeDir(`~/.modus/sdk/${version}/`);
 
     if (existsSync(installDir)) {
@@ -109,7 +110,7 @@ export default class SDKInstallCommand extends Command {
     await rm(archivePath);
 
     clearLine();
-    this.log("[3/3] Successfully installed Modus " + version);
+    this.log("[3/3] Installation successful");
   }
 
   private logError(message: string) {
