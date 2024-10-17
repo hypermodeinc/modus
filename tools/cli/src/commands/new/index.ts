@@ -9,22 +9,14 @@
 
 import { Command, Flags } from "@oclif/core";
 import chalk from "chalk";
-import ora from "ora";
-import { quote } from "shell-quote";
 
 import { createInterface } from "node:readline";
 import path from "node:path";
-import { existsSync } from "node:fs";
-import { execSync } from "node:child_process";
-import { fileURLToPath } from "node:url";
+import { cpSync, existsSync, mkdirSync } from "node:fs";
 
 import { SDK } from "../../custom/globals.js";
-import { ask, clearLine, cloneRepo, isRunnable } from "../../util/index.js";
-import { Metadata } from "../../util/metadata.js";
-import { getLatestRuntimeVersion } from "../../util/versioninfo.js";
-import SDKInstallCommand from "../sdk/install/index.js";
-
-const NPM_CMD = isRunnable("npm") ? "npm" : path.normalize(path.join(path.dirname(fileURLToPath(import.meta.url)), "../../../bin/node-bin/bin/npm"));
+import { ask, clearLine, expandHomeDir } from "../../util/index.js";
+import { latestInstalledVersion } from "../../util/versioninfo.js";
 
 export default class NewCommand extends Command {
   static description = "Create a new Modus app";
@@ -76,6 +68,7 @@ export default class NewCommand extends Command {
     if (!flags.force && !(await this.confirmAction(rl, "[3/4] Continue? [y/n]"))) clearLine(), clearLine(), process.exit(0);
 
     await this.createApp(name, dir, sdk, flags.force, rl);
+    this.exit(0);
   }
 
   private async promptAppName(rl: ReturnType<typeof createInterface>): Promise<string> {
@@ -115,92 +108,85 @@ export default class NewCommand extends Command {
 
   private async createApp(name: string, dir: string, sdk: string, force: boolean, rl: ReturnType<typeof createInterface>) {
     if (!force && existsSync(dir)) {
-      if (!(await this.confirmAction(rl, "Attempting to overwrite a folder that already exists.\nAre you sure you want to continue? [y/n]"))) clearLine(), process.exit(0);
-      else clearLine(), clearLine(), clearLine();
-    }
-
-    this.log("[3/4] Installing");
-
-    if (!isRunnable("git")) {
-      this.logError("Could not find valid Git installation! Please download Git or ensure it is in your PATH!");
-      process.exit(0);
-    }
-
-    if (sdk === SDK.AssemblyScript && !isRunnable(NPM_CMD)) {
-      this.logError("Could not locate NPM! Please install npm and try again!");
-      process.exit(0);
-    }
-
-    const gitSpinner = ora({
-      color: "white",
-      indent: 2,
-      text: "Downloading Template",
-    }).start();
-
-    const clone = await cloneRepo("https://github.com/HypermodeAI/template-project", dir);
-
-    if (!clone) {
-      gitSpinner.stop();
-      this.logError("Failed to clone the git repository. Please check your internet and try again.");
-      process.exit(0);
-    }
-
-    gitSpinner.stop();
-    this.log("- Downloaded Template");
-
-    const depsSpinner = ora({
-      color: "white",
-      indent: 2,
-      text: "Installing dependencies",
-    }).start();
-
-    if (sdk === "AssemblyScript") {
-      if (isRunnable(NPM_CMD)) execSync(quote([NPM_CMD, "install"]), { cwd: dir, stdio: "ignore" });
-    } else if (sdk === "Go (Beta)") {
-      const sh = execSync("go install", { cwd: dir, stdio: "ignore" });
-      if (!sh) {
-        this.logError("Failed to install dependencies via go install! Please try again");
+      if (!(await this.confirmAction(rl, "Attempting to overwrite a folder that already exists.\nAre you sure you want to continue? [y/n]"))) {
+        clearLine();
         process.exit(0);
+      } else {
+        clearLine(), clearLine();
       }
     }
 
-    depsSpinner.stop();
-    this.log("- Installed Dependencies");
+    clearLine();
+    this.log("[3/4] Installing");
 
-    await this.installRuntime();
+    // TODO: validate prerequisites for the SDK
 
-    this.log("\nSuccessfully installed the Modus SDK!");
+    if (!existsSync(dir)) {
+      mkdirSync(dir, { recursive: true });
+    }
+
+    // copy the default template
+    const latestVersion = latestInstalledVersion();
+    const templatePath = expandHomeDir(`~/.modus/sdk/${latestVersion}/${sdk.toLowerCase()}/templates/default`);
+    if (!existsSync(templatePath)) {
+      this.logError("Could not find the template for the latest installed SDK version.");
+      process.exit(1);
+    }
+    cpSync(templatePath, dir, { recursive: true });
+
+    // const depsSpinner = ora({
+    //   color: "white",
+    //   indent: 2,
+    //   text: "Installing dependencies",
+    // }).start();
+
+    // if (sdk === "AssemblyScript") {
+    //   if (isRunnable(NPM_CMD)) execSync(quote([NPM_CMD, "install"]), { cwd: dir, stdio: "ignore" });
+    // } else if (sdk === "Go (Beta)") {
+    //   const sh = execSync("go install", { cwd: dir, stdio: "ignore" });
+    //   if (!sh) {
+    //     this.logError("Failed to install dependencies via go install! Please try again");
+    //     process.exit(0);
+    //   }
+    // }
+
+    // depsSpinner.stop();
+    // this.log("- Installed Dependencies");
+
+    // await this.installRuntime();
+
+    this.log("\nSuccessfully created a Modus app!");
     this.log("To start, run the following command:");
-    this.log(chalk.dim(`$ ${dir == process.cwd() ? "" : "cd " + path.basename(dir)} && modus dev --build`));
+    this.log("$ " + chalk.dim(`${dir == process.cwd() ? "" : "cd " + path.basename(dir)} && modus dev --build`));
   }
 
-  private async installRuntime() {
-    const latest_runtime = await getLatestRuntimeVersion(true);
+  // private async installRuntime() {
+  //   const latest_runtime = await getLatestRuntimeVersion(true);
 
-    if (!latest_runtime) {
-      this.logError("Could not find latest runtime via GitHub API. Please try again with internet access!");
-      process.exit(0);
-    }
+  //   if (!latest_runtime) {
+  //     this.logError("Could not find latest runtime via GitHub API. Please try again with internet access!");
+  //     process.exit(0);
+  //   }
 
-    if (!Metadata.runtimes.includes(latest_runtime)) {
-      const runtimeDlSpinner = ora({
-        color: "white",
-        indent: 2,
-        text: `Downloading Runtime ${chalk.dim(`(${latest_runtime})`)}`,
-      }).start();
-      runtimeDlSpinner.stop();
+  //   if (!Metadata.runtimes.includes(latest_runtime)) {
+  //     const runtimeDlSpinner = ora({
+  //       color: "white",
+  //       indent: 2,
+  //       text: `Downloading Runtime ${chalk.dim(`(${latest_runtime})`)}`,
+  //     }).start();
+  //     runtimeDlSpinner.stop();
 
-      const runtimeInstSpinner = ora({
-        color: "white",
-        indent: 2,
-        text: `Installing Runtime ${chalk.dim(`(${latest_runtime})`)}`,
-      }).start();
-      runtimeInstSpinner.stop();
+  //     const runtimeInstSpinner = ora({
+  //       color: "white",
+  //       indent: 2,
+  //       text: `Installing Runtime ${chalk.dim(`(${latest_runtime})`)}`,
+  //     }).start();
+  //     runtimeInstSpinner.stop();
 
-      SDKInstallCommand.run([latest_runtime, "--silent"]);
-    }
-    this.log(`- Installed Runtime ${chalk.dim(`(${latest_runtime})`)}`);
-  }
+  //     SDKInstallCommand.run([latest_runtime, "--silent"]);
+  //   }
+  //   this.log(`- Installed Runtime ${chalk.dim(`(${latest_runtime})`)}`);
+  // }
 
   private logError(message: string) {
     this.log("\n" + chalk.red(" ERROR ") + chalk.dim(": " + message));

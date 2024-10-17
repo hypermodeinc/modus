@@ -7,8 +7,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { sort as semverSort } from "semver";
 import { run } from "node:test";
+import { existsSync, readdirSync } from "node:fs";
+
 import * as globals from "../custom/globals.js";
+import { expandHomeDir } from "./index.js";
 
 export async function getLatestRuntimeVersion(prerelease: boolean): Promise<string | undefined> {
   try {
@@ -82,4 +86,17 @@ async function findLatestReleaseTag(owner: string, repo: string, prefix: string,
 
     page++;
   }
+}
+
+export function latestInstalledVersion(): string | undefined {
+  const baseDir = expandHomeDir("~/.modus/sdk");
+  if (!existsSync(baseDir)) {
+    return;
+  }
+
+  const subdirs = readdirSync(baseDir, { withFileTypes: true })
+    .filter((e) => e.isDirectory())
+    .map((e) => e.name);
+
+  return semverSort(subdirs).pop();
 }
