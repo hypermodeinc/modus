@@ -9,18 +9,16 @@
 
 import { Args, Command, Flags } from "@oclif/core";
 import { ParserOutput } from "@oclif/core/interfaces";
-import { quote } from "shell-quote";
 import chalk from "chalk";
 
-import { execFileSync, execSync } from "node:child_process";
-import { cpSync, existsSync, mkdirSync } from "node:fs";
+import { execFileSync } from "node:child_process";
+import { existsSync, mkdirSync } from "node:fs";
 import { rm } from "node:fs/promises";
 import { arch, platform, tmpdir } from "node:os";
 import path from "node:path";
-import { createInterface } from "node:readline";
 
-import { ask, clearLine, downloadFile, expandHomeDir } from "../../../util/index.js";
-import { getLatestRuntimeVersion } from "../../../util/versioninfo.js";
+import { clearLine, downloadFile, expandHomeDir } from "../../../util/index.js";
+import { getLatestRuntimeVersion, runtimeReleaseExists } from "../../../util/versioninfo.js";
 import { GitHubOwner, GitHubRepo } from "../../../custom/globals.js";
 
 type ParserCtx = ParserOutput<
@@ -71,7 +69,14 @@ export default class SDKInstallCommand extends Command {
         return;
       }
     } else {
-      // TODO: check if the version exists
+      this.log(`[1/3] Checking version ${version}`);
+      const exists = await runtimeReleaseExists(version!);
+      if (!exists) {
+        this.logError(`Version ${version} does not exist`);
+        return;
+      }
+      clearLine();
+      this.log(`[1/3] Found version ${version}`);
     }
 
     this.log("[2/3] Downloading Modus runtime " + version);

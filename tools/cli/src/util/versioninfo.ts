@@ -20,6 +20,21 @@ export async function getLatestRuntimeVersion(prerelease: boolean): Promise<stri
   }
 }
 
+export async function runtimeReleaseExists(version: string): Promise<boolean> {
+  return releaseExists(globals.GitHubOwner, globals.GitHubRepo, `${globals.GitHubRuntimeTagPrefix}${version}`);
+}
+
+async function releaseExists(owner: string, repo: string, tag: string): Promise<boolean> {
+  const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/releases/tags/${encodeURIComponent(tag)}`, {
+    headers: {
+      Accept: "application/vnd.github.v3+json",
+      "X-GitHub-Api-Version": "2022-11-28",
+    },
+  });
+
+  return response.ok;
+}
+
 async function findLatestReleaseTag(owner: string, repo: string, prefix: string, prerelease: boolean): Promise<string | undefined> {
   let page = 1;
   while (true) {
