@@ -26,24 +26,25 @@ export default class NewCommand extends Command {
 
   static flags = {
     name: Flags.string({
+      char: "n",
       description: "App name",
-      aliases: ["n"],
     }),
     dir: Flags.string({
+      char: "d",
+      aliases: ["directory"],
       description: "App directory",
-      aliases: ["d"],
     }),
     sdk: Flags.string({
+      char: "s",
       description: "SDK to use",
-      aliases: ["s"],
     }),
     template: Flags.string({
+      char: "t",
       description: "Template to use",
-      aliases: ["t"],
     }),
     force: Flags.boolean({
+      char: "f",
       description: "Initialize without prompt",
-      aliases: ["f"],
     }),
   };
 

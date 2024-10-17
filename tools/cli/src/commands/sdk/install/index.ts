@@ -15,9 +15,9 @@ import path from "node:path";
 import * as fs from "../../../util/fs.js";
 import { execFile } from "../../../util/cp.js";
 
-import { clearLine, downloadFile, expandHomeDir } from "../../../util/index.js";
+import { clearLine, downloadFile } from "../../../util/index.js";
 import { getLatestRuntimeVersion, runtimeReleaseExists, findCompatibleSdkVersion } from "../../../util/versioninfo.js";
-import { GitHubOwner, GitHubRepo, SDK } from "../../../custom/globals.js";
+import { GitHubOwner, GitHubRepo, SDK, ModusHomeDir } from "../../../custom/globals.js";
 
 export default class SDKInstallCommand extends Command {
   static args = {
@@ -31,8 +31,13 @@ export default class SDKInstallCommand extends Command {
   static examples = ["modus sdk install v0.13.0", "modus sdk install", "modus sdk install latest", "modus sdk install latest --prerelease"];
 
   static flags = {
+    force: Flags.boolean({
+      char: "f",
+      description: "Force re-installation if version already exists",
+    }),
     prerelease: Flags.boolean({
       char: "p",
+      aliases: ["pre"],
       description: "Install a prerelease version (used with 'latest' version)",
     }),
   };
@@ -106,7 +111,7 @@ export default class SDKInstallCommand extends Command {
     this.log("[2/3] Downloads completed");
 
     this.log("[3/3] Installing ...");
-    const installDir = expandHomeDir(`~/.modus/sdk/${version}/`);
+    const installDir = path.join(ModusHomeDir, "sdk", version);
 
     if (await fs.exists(installDir)) {
       await fs.rm(installDir, { recursive: true, force: true });
