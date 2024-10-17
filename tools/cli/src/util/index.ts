@@ -11,7 +11,6 @@ import { spawnSync } from "node:child_process";
 import { createWriteStream, existsSync, mkdirSync } from "node:fs";
 import path from "node:path";
 import { Interface } from "node:readline";
-import { CLI_VERSION } from "../custom/globals.js";
 import { Command } from "@oclif/core";
 import chalk from "chalk";
 import { Readable } from "node:stream";
@@ -55,11 +54,6 @@ export function clearLine(): void {
   process.stdout.write(`\u001B[1A`);
   process.stdout.write("\u001B[2K");
   process.stdout.write("\u001B[0G");
-}
-
-export function getLatestCLI(): string {
-  // implement logic later
-  return CLI_VERSION;
 }
 
 export function checkVersion(instance: Command) {

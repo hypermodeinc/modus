@@ -10,9 +10,6 @@
 import * as globals from "../custom/globals.js";
 
 export class Metadata {
-  // CLI version (may want to have it read package.json instead)
-  static cli_version: string = globals.CLI_VERSION;
-
   // Installed runtimes - sorted by date
   static runtimes: string[] = [];
 

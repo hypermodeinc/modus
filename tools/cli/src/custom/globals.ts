@@ -7,8 +7,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-export const CLI_VERSION = "0.0.0";
-
 export const GitHubOwner = "hypermodeinc";
 export const GitHubRepo = "modus";
 export const GitHubRuntimeTagPrefix = "runtime/";

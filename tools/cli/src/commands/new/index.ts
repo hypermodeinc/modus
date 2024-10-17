@@ -11,7 +11,7 @@ import { Command, Flags } from "@oclif/core";
 import chalk from "chalk";
 import { createInterface } from "node:readline";
 import ora from "ora";
-import { CLI_VERSION, SDK } from "../../custom/globals.js";
+import { SDK } from "../../custom/globals.js";
 import { ask, clearLine, cloneRepo, isRunnable } from "../../util/index.js";
 import path from "node:path";
 import { Metadata } from "../../util/metadata.js";
@@ -48,7 +48,7 @@ export default class NewCommand extends Command {
       output: process.stdout,
     });
 
-    this.log(chalk.bold(`Modus new v${CLI_VERSION}\n${flags.force ? chalk.dim("WARN: Running in forced mode! Proceed with caution.") : ""}`));
+    this.log(chalk.bold(`Modus new v${this.config.version}\n${flags.force ? chalk.dim("WARN: Running in forced mode! Proceed with caution.") : ""}`));
 
     const name = flags.name || (await this.promptProjectName(rl));
     const dir = flags.dir ? path.join(process.cwd(), flags.dir) : await this.promptInstallPath(rl);
@@ -156,7 +156,7 @@ export default class NewCommand extends Command {
 
     await this.installRuntime();
 
-    this.log("\nSuccessfully installed Modus SDK!");
+    this.log("\nSuccessfully installed the Modus SDK!");
     this.log("To start, run the following command:");
     this.log(chalk.dim(`$ ${dir == process.cwd() ? "" : "cd " + path.basename(dir)} && modus dev --build`));
   }
