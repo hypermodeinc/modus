@@ -50,7 +50,7 @@ export default class SDKInstallCommand extends Command {
       const ver = await getLatestRuntimeVersion(prerelease);
       if (!version) {
         this.logError(`Failed to fetch latest ${versionText}`);
-        return;
+        this.exit(1);
       }
       version = ver!;
     } else {
@@ -58,7 +58,7 @@ export default class SDKInstallCommand extends Command {
       const exists = await runtimeReleaseExists(version!);
       if (!exists) {
         this.logError(`Version ${version} does not exist`);
-        return;
+        this.exit(1);
       }
     }
 
