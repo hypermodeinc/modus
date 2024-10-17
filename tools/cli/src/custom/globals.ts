@@ -7,6 +7,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import path from "node:path";
+import os from "node:os";
+
+export const ModusHomeDir = path.join(os.homedir(), ".modus");
+
 export const GitHubOwner = "hypermodeinc";
 export const GitHubRepo = "modus";
 export const GitHubRuntimeTagPrefix = "runtime/";

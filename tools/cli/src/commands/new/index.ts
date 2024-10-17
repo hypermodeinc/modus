@@ -12,12 +12,12 @@ import chalk from "chalk";
 
 import { createInterface } from "node:readline";
 import path from "node:path";
-import { existsSync, mkdirSync } from "node:fs";
 
+import * as fs from "../../util/fs.js";
+import { execFile } from "../../util/cp.js";
 import { SDK } from "../../custom/globals.js";
 import { ask, clearLine, expandHomeDir } from "../../util/index.js";
 import { getLatestTemplatesArchivePath, latestInstalledVersion } from "../../util/versioninfo.js";
-import { execFileSync } from "node:child_process";
 
 export default class NewCommand extends Command {
   static description = "Create a new Modus app";
@@ -87,7 +87,7 @@ export default class NewCommand extends Command {
     if (!flags.force && !(await this.confirmAction(rl, "[5/5] Continue? [y/n]"))) clearLine(), clearLine(), process.exit(0);
 
     await this.createApp(name, dir, sdk, template, flags.force, rl);
-    this.exit(0);
+    // this.exit(0);
   }
 
   private async promptAppName(rl: ReturnType<typeof createInterface>): Promise<string> {
@@ -135,7 +135,7 @@ export default class NewCommand extends Command {
   }
 
   private async createApp(name: string, dir: string, sdk: string, template: string, force: boolean, rl: ReturnType<typeof createInterface>) {
-    if (!force && existsSync(dir)) {
+    if (!force && (await fs.exists(dir))) {
       if (!(await this.confirmAction(rl, "Attempting to overwrite a folder that already exists.\nAre you sure you want to continue? [y/n]"))) {
         clearLine();
         process.exit(0);
@@ -149,8 +149,8 @@ export default class NewCommand extends Command {
 
     // TODO: validate prerequisites for the SDK
 
-    if (!existsSync(dir)) {
-      mkdirSync(dir, { recursive: true });
+    if (!(await fs.exists(dir))) {
+      await fs.mkdir(dir, { recursive: true });
     }
 
     const version = latestInstalledVersion();
@@ -166,7 +166,7 @@ export default class NewCommand extends Command {
       process.exit(1);
     }
 
-    execFileSync("tar", ["-xf", templatesArchive, "-C", dir, "--strip-components=2", `templates/${template}`]);
+    await execFile("tar", ["-xf", templatesArchive, "-C", dir, "--strip-components=2", `templates/${template}`]);
 
     // if (!existsSync(templatePath)) {
     //   this.logError("Could not find the template for the latest installed SDK version.");

@@ -10,11 +10,10 @@
 import { Args, Command, Flags } from "@oclif/core";
 import chalk from "chalk";
 
-import { execFileSync } from "node:child_process";
-import { existsSync, mkdirSync, renameSync } from "node:fs";
-import { rm } from "node:fs/promises";
-import { arch, platform, tmpdir } from "node:os";
+import os from "node:os";
 import path from "node:path";
+import * as fs from "../../../util/fs.js";
+import { execFile } from "../../../util/cp.js";
 
 import { clearLine, downloadFile, expandHomeDir } from "../../../util/index.js";
 import { getLatestRuntimeVersion, runtimeReleaseExists, findCompatibleSdkVersion } from "../../../util/versioninfo.js";
@@ -67,9 +66,9 @@ export default class SDKInstallCommand extends Command {
 
     this.log("[2/3] Downloading runtime ...");
 
-    const tempDir = tmpdir();
-    let osPlatform = platform().toString();
-    let osArch = arch();
+    const tempDir = os.tmpdir();
+    let osPlatform = os.platform().toString();
+    let osArch = os.arch();
     if (osPlatform === "win32") osPlatform = "windows";
     if (osArch === "x64") osArch = "amd64";
 
@@ -109,19 +108,19 @@ export default class SDKInstallCommand extends Command {
     this.log("[3/3] Installing ...");
     const installDir = expandHomeDir(`~/.modus/sdk/${version}/`);
 
-    if (existsSync(installDir)) {
-      await rm(installDir, { recursive: true, force: true });
+    if (await fs.exists(installDir)) {
+      await fs.rm(installDir, { recursive: true, force: true });
     }
 
     for (const { archive, decompress } of archivePaths) {
-      if (!existsSync(installDir)) {
-        mkdirSync(installDir, { recursive: true });
+      if (!(await fs.exists(installDir))) {
+        await fs.mkdir(installDir, { recursive: true });
       }
       if (decompress) {
-        execFileSync("tar", ["-xf", archive, "-C", installDir]);
-        await rm(archive);
+        await execFile("tar", ["-xf", archive, "-C", installDir]);
+        await fs.rm(archive);
       } else {
-        renameSync(archive, path.join(installDir, path.basename(archive)));
+        await fs.rename(archive, path.join(installDir, path.basename(archive)));
       }
     }
 
