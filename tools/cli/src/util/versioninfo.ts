@@ -8,8 +8,8 @@
  */
 
 import { sort as semverSort } from "semver";
-import { run } from "node:test";
 import { existsSync, readdirSync } from "node:fs";
+import path from "node:path";
 
 import * as globals from "../custom/globals.js";
 import { expandHomeDir } from "./index.js";
@@ -99,4 +99,24 @@ export function latestInstalledVersion(): string | undefined {
     .map((e) => e.name);
 
   return semverSort(subdirs).pop();
+}
+
+export function getLatestTemplatesArchivePath(mainVersion: string, sdk: string): string | undefined {
+  const baseDir = expandHomeDir("~/.modus/sdk/" + mainVersion);
+  if (!existsSync(baseDir)) {
+    return;
+  }
+
+  const prefix = `templates_${sdk}_v`;
+  const suffix = ".tar.gz";
+
+  const versions = readdirSync(baseDir)
+    .filter((f) => f.startsWith(prefix) && f.endsWith(suffix))
+    .map((f) => f.slice(prefix.length, -suffix.length));
+
+  semverSort(versions);
+  const latestVersion = versions.pop();
+  if (latestVersion) {
+    return path.join(baseDir, prefix + latestVersion + suffix);
+  }
 }

@@ -12,11 +12,12 @@ import chalk from "chalk";
 
 import { createInterface } from "node:readline";
 import path from "node:path";
-import { cpSync, existsSync, mkdirSync } from "node:fs";
+import { existsSync, mkdirSync } from "node:fs";
 
 import { SDK } from "../../custom/globals.js";
 import { ask, clearLine, expandHomeDir } from "../../util/index.js";
-import { latestInstalledVersion } from "../../util/versioninfo.js";
+import { getLatestTemplatesArchivePath, latestInstalledVersion } from "../../util/versioninfo.js";
+import { execFileSync } from "node:child_process";
 
 export default class NewCommand extends Command {
   static description = "Create a new Modus app";
@@ -32,7 +33,14 @@ export default class NewCommand extends Command {
       description: "App directory",
       aliases: ["d"],
     }),
-    sdk: Flags.string({ description: "SDK to use" }),
+    sdk: Flags.string({
+      description: "SDK to use",
+      aliases: ["s"],
+    }),
+    template: Flags.string({
+      description: "Template to use",
+      aliases: ["t"],
+    }),
     force: Flags.boolean({
       description: "Initialize without prompt",
       aliases: ["f"],
@@ -56,41 +64,52 @@ export default class NewCommand extends Command {
     }
 
     const dir = flags.dir ? path.join(process.cwd(), flags.dir) : await this.promptInstallPath(rl, "." + path.sep + name);
+    if (!dir) {
+      this.logError("An install directory is required.");
+      this.exit(1);
+    }
 
-    const sdk = flags.sdk
+    let sdk = flags.sdk
       ? Object.values(SDK)[
           Object.keys(SDK)
             .map((v) => v.toLowerCase())
             .indexOf(flags.sdk?.trim().toLowerCase())
         ]
       : await this.promptSdkSelection(rl); // Use the enum
+    sdk = sdk.toLowerCase();
 
-    if (!flags.force && !(await this.confirmAction(rl, "[3/4] Continue? [y/n]"))) clearLine(), clearLine(), process.exit(0);
+    const template = flags.template || (await this.promptTemplate(rl, "default"));
+    if (!template) {
+      this.logError("A template is required.");
+      this.exit(1);
+    }
 
-    await this.createApp(name, dir, sdk, flags.force, rl);
+    if (!flags.force && !(await this.confirmAction(rl, "[5/5] Continue? [y/n]"))) clearLine(), clearLine(), process.exit(0);
+
+    await this.createApp(name, dir, sdk, template, flags.force, rl);
     this.exit(0);
   }
 
   private async promptAppName(rl: ReturnType<typeof createInterface>): Promise<string> {
-    this.log("[1/4] App Name:");
+    this.log("[1/5] App Name:");
     const name = ((await ask(chalk.dim(" -> "), rl)) || "").trim();
     clearLine();
     clearLine();
-    this.log("[1/4] Name: " + chalk.dim(name.length ? name : "Not Provided"));
+    this.log("[1/5] Name: " + chalk.dim(name.length ? name : "Not Provided"));
     return name;
   }
 
   private async promptInstallPath(rl: ReturnType<typeof createInterface>, defaultValue: string): Promise<string> {
-    this.log("[2/4] Install Dir: " + chalk.dim(`(${defaultValue})`));
+    this.log("[2/5] Install Dir: " + chalk.dim(`(${defaultValue})`));
     const dir = ((await ask(chalk.dim(" -> "), rl)) || defaultValue).trim();
     clearLine();
     clearLine();
-    this.log("[2/4] Directory: " + chalk.dim(dir));
+    this.log("[2/5] Directory: " + chalk.dim(dir));
     return path.resolve(dir);
   }
 
   private async promptSdkSelection(rl: ReturnType<typeof createInterface>): Promise<string> {
-    this.log("[2/4] Select an SDK");
+    this.log("[3/5] Select an SDK");
     for (const [index, sdk] of Object.values(SDK).entries()) {
       this.log(chalk.dim(` ${index + 1}. ${sdk}`));
     }
@@ -102,11 +121,20 @@ export default class NewCommand extends Command {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     for (const _ of Object.values(SDK)) clearLine();
     if (!sdk) process.exit(1);
-    this.log("[2/4] SDK: " + chalk.dim(sdk));
+    this.log("[3/5] SDK: " + chalk.dim(sdk));
     return sdk;
   }
 
-  private async createApp(name: string, dir: string, sdk: string, force: boolean, rl: ReturnType<typeof createInterface>) {
+  private async promptTemplate(rl: ReturnType<typeof createInterface>, defaultValue: string): Promise<string> {
+    this.log("[4/5] Template: " + chalk.dim(`(${defaultValue})`));
+    const template = ((await ask(chalk.dim(" -> "), rl)) || defaultValue).trim();
+    clearLine();
+    clearLine();
+    this.log("[4/5] Template: " + chalk.dim(template));
+    return template;
+  }
+
+  private async createApp(name: string, dir: string, sdk: string, template: string, force: boolean, rl: ReturnType<typeof createInterface>) {
     if (!force && existsSync(dir)) {
       if (!(await this.confirmAction(rl, "Attempting to overwrite a folder that already exists.\nAre you sure you want to continue? [y/n]"))) {
         clearLine();
@@ -125,14 +153,26 @@ export default class NewCommand extends Command {
       mkdirSync(dir, { recursive: true });
     }
 
-    // copy the default template
-    const latestVersion = latestInstalledVersion();
-    const templatePath = expandHomeDir(`~/.modus/sdk/${latestVersion}/${sdk.toLowerCase()}/templates/default`);
-    if (!existsSync(templatePath)) {
-      this.logError("Could not find the template for the latest installed SDK version.");
+    const version = latestInstalledVersion();
+    if (!version) {
+      // TODO: install the latest version
+      this.logError("Could not find the latest installed SDK version.");
       process.exit(1);
     }
-    cpSync(templatePath, dir, { recursive: true });
+
+    const templatesArchive = getLatestTemplatesArchivePath(version, sdk);
+    if (!templatesArchive) {
+      this.logError(`Could not find any templates for SDK version ${version}`);
+      process.exit(1);
+    }
+
+    execFileSync("tar", ["-xf", templatesArchive, "-C", dir, "--strip-components=2", `templates/${template}`]);
+
+    // if (!existsSync(templatePath)) {
+    //   this.logError("Could not find the template for the latest installed SDK version.");
+    //   process.exit(1);
+    // }
+    // cpSync(templatePath, dir, { recursive: true });
 
     // const depsSpinner = ora({
     //   color: "white",
