@@ -40,12 +40,12 @@ export default class BuildCommand extends Command {
     const sdk = SDK.AssemblyScript;
     if (!isRunnable(NPM_CMD)) {
       this.logError("Could not locate NPM. Please install and try again!");
-      this.exit(0);
+      return;
     }
 
     if (!existsSync(path.join(cwd, "/node_modules"))) {
       this.logError("Dependencies are not installed! Please install dependencies with npm i");
-      this.exit(0);
+      return;
     }
 
     // should pass argv

@@ -14,7 +14,7 @@ import { spawnSync } from "node:child_process";
 import { createWriteStream, existsSync, mkdirSync } from "node:fs";
 import { homedir } from "node:os";
 import path from "node:path";
-import { Interface } from "node:readline";
+import readline from "node:readline";
 import { Readable } from "node:stream";
 import { finished } from "node:stream/promises";
 
@@ -43,7 +43,20 @@ export async function cloneRepo(url: string, pth: string): Promise<boolean> {
   return true;
 }
 
-export function ask(question: string, rl: Interface, placeholder?: string): Promise<string> {
+export async function withReadline<T>(fn: (rl: readline.Interface) => Promise<T>): Promise<T> {
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  });
+
+  try {
+    return await fn(rl);
+  } finally {
+    rl.close();
+  }
+}
+
+export function ask(question: string, rl: readline.Interface, placeholder?: string): Promise<string> {
   return new Promise<string>((res, _) => {
     rl.question(question + (placeholder ? " " + placeholder + " " : ""), (answer) => {
       res(answer);

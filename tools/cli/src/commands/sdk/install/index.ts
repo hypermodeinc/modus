@@ -65,7 +65,7 @@ export default class SDKInstallCommand extends Command {
           this.log(chalk.yellow(version + " (latest) is already installed. Reinstalling ..."));
         } else {
           this.log(chalk.cyan(version + " (latest) is already installed."));
-          this.exit(0);
+          return;
         }
       }
     } else {
@@ -75,7 +75,7 @@ export default class SDKInstallCommand extends Command {
           this.log(chalk.yellow(version + " is already installed. Reinstalling ..."));
         } else {
           this.log(chalk.cyan(version + " is already installed."));
-          this.exit(0);
+          return;
         }
       }
 

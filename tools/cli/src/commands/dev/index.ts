@@ -86,24 +86,24 @@ export default class Run extends Command {
 
     if (!flags.runtime) {
       this.logError("Modus Runtime is not installed!\n Run `modus sdk install latest` and try again!");
-      this.exit(0);
+      return;
     }
 
     if (!existsSync(path.join(cwd))) {
       this.logError("Could not target folder! Please try again");
-      this.exit(0);
+      return;
     }
 
     // TODO: Check the type of SDK we are running
 
     if (!existsSync(path.join(cwd, "/node_modules"))) {
       this.logError("Dependencies not installed! Please install dependencies by running `npm i` and try again");
-      this.exit(0);
+      return;
     }
 
     if (!existsSync(path.join(cwd, "/package.json"))) {
       this.logError("Could not locate package.json! Please try again");
-      this.exit(0);
+      return;
     }
 
     let install_cmd = flags.runtime;
@@ -117,7 +117,7 @@ export default class Run extends Command {
 
     if (!existsSync(runtimePath)) {
       this.logError("Modus Runtime  " + runtimePath + "  " + (isDev ? "" : "v") + flags.runtime + " not installed!\n Run `modus sdk install v" + install_cmd + "` and try again!");
-      this.exit(0);
+      return;
     }
 
     let project_name: string;
@@ -125,7 +125,7 @@ export default class Run extends Command {
       project_name = JSON.parse(readFileSync(path.join(cwd, "/package.json")).toString()).name;
     } catch {
       this.logError("Could not read package.json! Please try again");
-      this.exit(0);
+      return;
     }
 
     const build_wasm = path.join(cwd, "/build/" + project_name + ".wasm");
@@ -141,11 +141,11 @@ export default class Run extends Command {
     if (isDev) {
       if (!isRunnable("go")) {
         this.logError("Cannot find any valid versions of Go! Please install go");
-        this.exit(0);
+        return;
       }
       if (!isRunnable("make")) {
         this.logError("Make is not installed! Please install it before continuing");
-        this.exit(0);
+        return;
       }
       execSync("make run", {
         cwd: runtimePath,
