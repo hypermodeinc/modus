@@ -43,21 +43,45 @@ export default class SDKInstallCommand extends Command {
 
   async run(): Promise<void> {
     const { args, flags } = await this.parse(SDKInstallCommand);
-    await this.installVersion(args.version, flags.prerelease);
+    await this.installVersion(args.version, flags.force, flags.prerelease);
   }
 
-  async installVersion(version: string, prerelease: boolean) {
+  async installVersion(version: string, force: boolean, prerelease: boolean) {
     if (version.toLowerCase() === "latest") {
+      // first get the latest version that has been published
       const versionText = prerelease ? "prerelease version" : "version";
       this.log(`[1/3] Getting latest ${versionText}`);
+      clearLine();
       const ver = await vi.getLatestRuntimeVersion(prerelease);
       if (!version) {
         this.logError(`Failed to fetch latest ${versionText}`);
         this.exit(1);
       }
       version = ver!;
+
+      // then check if it's already installed
+      if (await vi.versionIsInstalled(version)) {
+        if (force) {
+          this.log(chalk.yellow(version + " (latest) is already installed. Reinstalling ..."));
+        } else {
+          this.log(chalk.cyan(version + " (latest) is already installed."));
+          this.exit(0);
+        }
+      }
     } else {
+      // when specifying a version, _first_ check if it's already installed
+      if (await vi.versionIsInstalled(version)) {
+        if (force) {
+          this.log(chalk.yellow(version + " is already installed. Reinstalling ..."));
+        } else {
+          this.log(chalk.cyan(version + " is already installed."));
+          this.exit(0);
+        }
+      }
+
+      // now check if the version exists online
       this.log(`[1/3] Checking version ${version}`);
+      clearLine();
       const exists = await vi.runtimeReleaseExists(version!);
       if (!exists) {
         this.logError(`Version ${version} does not exist`);
@@ -65,7 +89,6 @@ export default class SDKInstallCommand extends Command {
       }
     }
 
-    clearLine();
     this.log(`[1/3] Found version ${version}`);
 
     this.log("[2/3] Downloading runtime ...");
