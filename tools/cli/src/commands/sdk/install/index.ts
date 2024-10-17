@@ -29,12 +29,12 @@ export default class SDKInstallCommand extends Command {
   };
 
   static description = "Install a specific SDK version";
-  static examples = ["modus sdk install v0.13.0", "modus sdk install latest"];
+  static examples = ["modus sdk install v0.13.0", "modus sdk install", "modus sdk install latest", "modus sdk install latest --prerelease"];
 
   static flags = {
     prerelease: Flags.boolean({
       char: "p",
-      description: "Install a prerelease version",
+      description: "Install a prerelease version (used with 'latest' version)",
     }),
   };
 
