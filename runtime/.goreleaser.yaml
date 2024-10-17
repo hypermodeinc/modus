@@ -28,6 +28,7 @@ archives:
   - files:
       - "../README.md"
       - "../LICENSE"
+    name_template: "{{ .ProjectName }}_v{{ .Version }}_{{ .Os }}_{{ .Arch }}"
     format: tar.gz
     # use zip for windows archives
     format_overrides:
