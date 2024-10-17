@@ -92,3 +92,16 @@ export async function downloadFile(url: string, dest: string): Promise<boolean> 
   await finished(Readable.fromWeb(res.body).pipe(fileStream));
   return true;
 }
+
+export async function isOnline(): Promise<boolean> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 1000);
+  try {
+    const response = await fetch("https://api.github.com", { signal: controller.signal });
+    return response.ok;
+  } catch {
+    return false;
+  } finally {
+    clearTimeout(timeout);
+  }
+}

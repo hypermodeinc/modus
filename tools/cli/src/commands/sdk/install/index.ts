@@ -16,7 +16,7 @@ import * as fs from "../../../util/fs.js";
 import * as vi from "../../../util/versioninfo.js";
 import * as globals from "../../../custom/globals.js";
 import { execFile } from "../../../util/cp.js";
-import { clearLine, downloadFile } from "../../../util/index.js";
+import { clearLine, downloadFile, isOnline } from "../../../util/index.js";
 
 export default class SDKInstallCommand extends Command {
   static args = {
@@ -47,10 +47,15 @@ export default class SDKInstallCommand extends Command {
   }
 
   async installVersion(version: string, force: boolean, prerelease: boolean) {
+    if (!(await isOnline())) {
+      this.logError("No internet connection.  You must be online to install a Modus SDK.");
+      this.exit(1);
+    }
+
     if (version.toLowerCase() === "latest") {
       // first get the latest version that has been published
       const versionText = prerelease ? "prerelease version" : "version";
-      this.log(`[1/3] Getting latest ${versionText}`);
+      this.log(chalk.dim(`Getting latest ${versionText}`));
       clearLine();
 
       let ver = await vi.getLatestRuntimeVersion(prerelease);
@@ -86,7 +91,7 @@ export default class SDKInstallCommand extends Command {
       }
 
       // now check if the version exists online
-      this.log(`[1/3] Checking version ${version}`);
+      this.log(chalk.dim(`Checking version ${version}`));
       clearLine();
       const exists = await vi.runtimeReleaseExists(version!);
       if (!exists) {
@@ -95,9 +100,7 @@ export default class SDKInstallCommand extends Command {
       }
     }
 
-    this.log(`[1/3] Found version ${version}`);
-
-    this.log("[2/3] Downloading runtime ...");
+    this.log(chalk.dim("Downloading Modus Runtime " + version));
 
     const tempDir = os.tmpdir();
     let osPlatform = os.platform().toString();
@@ -125,8 +128,7 @@ export default class SDKInstallCommand extends Command {
         this.exit(1);
       }
 
-      clearLine();
-      this.log(`[2/3] Downloading ${sdk} SDK version ${sdkVersion} ...`);
+      this.log(chalk.dim(`Downloading Modus ${sdk} SDK ${sdkVersion}`));
 
       const sdkRelease = `sdk/${sdk.toLowerCase()}/${sdkVersion}`;
       const sdkFilename = `templates_${sdk.toLowerCase()}_${sdkVersion}.tar.gz`;
@@ -139,10 +141,7 @@ export default class SDKInstallCommand extends Command {
       }
     }
 
-    clearLine();
-    this.log("[2/3] Downloads completed");
-
-    this.log("[3/3] Installing ...");
+    this.log(chalk.dim("Installing ..."));
     const installDir = path.join(ModusHomeDir, "sdk", version);
 
     if (await fs.exists(installDir)) {
@@ -162,7 +161,7 @@ export default class SDKInstallCommand extends Command {
     }
 
     clearLine();
-    this.log("[3/3] Installation successful");
+    this.log(chalk.bold(chalk.cyanBright("Installation successful!")));
   }
 
   private logError(message: string) {

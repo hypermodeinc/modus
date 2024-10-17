@@ -18,6 +18,7 @@ import * as vi from "../../util/versioninfo.js";
 import { execFile } from "../../util/cp.js";
 import { SDK } from "../../custom/globals.js";
 import { ask, clearLine, withReadline } from "../../util/index.js";
+import SDKInstallCommand from "../sdk/install/index.js";
 
 export default class NewCommand extends Command {
   static description = "Create a new Modus app";
@@ -82,9 +83,8 @@ export default class NewCommand extends Command {
       }
 
       if (!flags.force && !(await this.confirmAction(rl, "[5/5] Continue? [y/n]"))) {
-        clearLine();
-        clearLine();
-        return;
+        this.log(chalk.dim("Aborted."));
+        this.exit(1);
       }
 
       await this.createApp(name, dir, sdk, template, flags.force, rl);
@@ -96,7 +96,7 @@ export default class NewCommand extends Command {
     const name = ((await ask(chalk.dim(" -> "), rl)) || "").trim();
     clearLine();
     clearLine();
-    this.log("[1/5] Name: " + chalk.dim(name.length ? name : "Not Provided"));
+    this.log("[1/5] App Name: " + chalk.dim(name.length ? name : "Not Provided"));
     return name;
   }
 
@@ -146,26 +146,30 @@ export default class NewCommand extends Command {
       }
     }
 
-    clearLine();
-    this.log("[3/4] Installing");
-
     // TODO: validate prerequisites for the SDK
 
-    if (!(await fs.exists(dir))) {
-      await fs.mkdir(dir, { recursive: true });
-    }
+    this.log(chalk.dim("Checking for the latest SDK version..."));
 
-    const version = await vi.getLatestInstalledVersion();
+    let version = await vi.getLatestInstalledVersion();
     if (!version) {
-      // TODO: install the latest version
-      this.logError("Could not find the latest installed SDK version.");
-      this.exit(1);
+      await SDKInstallCommand.run(["latest"]);
+      version = await vi.getLatestInstalledVersion();
+      if (!version) {
+        this.logError("Failed to install the latest SDK version.");
+        this.exit(1);
+      }
     }
 
     const templatesArchive = await vi.getLatestTemplatesArchivePath(version, sdk);
     if (!templatesArchive) {
       this.logError(`Could not find any templates for SDK version ${version}`);
       this.exit(1);
+    }
+
+    this.log(chalk.dim("Creating a new Modus app..."));
+
+    if (!(await fs.exists(dir))) {
+      await fs.mkdir(dir, { recursive: true });
     }
 
     await execFile("tar", ["-xf", templatesArchive, "-C", dir, "--strip-components=2", `templates/${template}`]);
