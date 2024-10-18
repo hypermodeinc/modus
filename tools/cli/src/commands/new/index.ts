@@ -12,14 +12,13 @@ import chalk from "chalk";
 
 import os from "node:os";
 import path from "node:path";
-import readline from "node:readline";
 
 import * as fs from "../../util/fs.js";
 import * as vi from "../../util/versioninfo.js";
 import { execFile } from "../../util/cp.js";
 import { isOnline } from "../../util/index.js";
 import { GitHubOwner, GitHubRepo, ModusHomeDir, SDK, parseSDK } from "../../custom/globals.js";
-import { ask, clearLine, withReadline, withSpinner } from "../../util/index.js";
+import { ask, clearLine, withSpinner } from "../../util/index.js";
 import SDKInstallCommand from "../sdk/install/index.js";
 
 export default class NewCommand extends Command {
@@ -59,73 +58,71 @@ export default class NewCommand extends Command {
   };
 
   async run(): Promise<void> {
-    await withReadline(async (rl) => {
-      const { flags } = await this.parse(NewCommand);
+    const { flags } = await this.parse(NewCommand);
 
-      this.log(chalk.bold(`Modus CLI v${this.config.version}`));
+    this.log(chalk.bold(`Modus CLI v${this.config.version}`));
 
-      const name = flags.name || (await this.promptAppName(rl));
-      if (!name) {
-        this.logError("An app name is required.");
-        this.exit(1);
-      }
+    const name = flags.name || (await this.promptAppName());
+    if (!name) {
+      this.logError("An app name is required.");
+      this.exit(1);
+    }
 
-      const dir = flags.dir ? path.join(process.cwd(), flags.dir) : await this.promptInstallPath(rl, "." + path.sep + name);
-      if (!dir) {
-        this.logError("An install directory is required.");
-        this.exit(1);
-      }
+    const dir = flags.dir ? path.join(process.cwd(), flags.dir) : await this.promptInstallPath("." + path.sep + name);
+    if (!dir) {
+      this.logError("An install directory is required.");
+      this.exit(1);
+    }
 
-      const sdk = parseSDK(
-        flags.sdk
-          ? Object.values(SDK)[
-              Object.keys(SDK)
-                .map((v) => v.toLowerCase())
-                .indexOf(flags.sdk?.trim().toLowerCase())
-            ]
-          : await this.promptSdkSelection(rl)
-      );
+    const sdk = parseSDK(
+      flags.sdk
+        ? Object.values(SDK)[
+            Object.keys(SDK)
+              .map((v) => v.toLowerCase())
+              .indexOf(flags.sdk?.trim().toLowerCase())
+          ]
+        : await this.promptSdkSelection()
+    );
 
-      const template = flags.template || (await this.promptTemplate(rl, "default"));
-      if (!template) {
-        this.logError("A template is required.");
-        this.exit(1);
-      }
+    const template = flags.template || (await this.promptTemplate("default"));
+    if (!template) {
+      this.logError("A template is required.");
+      this.exit(1);
+    }
 
-      if (!flags.force && !(await this.confirmAction(rl, "[5/5] Continue? [y/n]"))) {
-        this.log(chalk.dim("Aborted."));
-        this.exit(1);
-      }
+    if (!flags.force && !(await this.confirmAction("[5/5] Continue? [y/n]"))) {
+      this.log(chalk.dim("Aborted."));
+      this.exit(1);
+    }
 
-      await this.createApp(name, dir, sdk, template, flags.force, flags.prerelease, rl);
-    });
+    await this.createApp(name, dir, sdk, template, flags.force, flags.prerelease);
   }
 
-  private async promptAppName(rl: readline.Interface): Promise<string> {
+  private async promptAppName(): Promise<string> {
     this.log("[1/5] App Name:");
-    const name = ((await ask(chalk.dim(" -> "), rl)) || "").trim();
+    const name = ((await ask(chalk.dim(" -> "))) || "").trim();
     clearLine();
     clearLine();
     this.log("[1/5] App Name: " + chalk.dim(name.length ? name : "Not Provided"));
     return name;
   }
 
-  private async promptInstallPath(rl: readline.Interface, defaultValue: string): Promise<string> {
+  private async promptInstallPath(defaultValue: string): Promise<string> {
     this.log("[2/5] Install Dir: " + chalk.dim(`(${defaultValue})`));
-    const dir = ((await ask(chalk.dim(" -> "), rl)) || defaultValue).trim();
+    const dir = ((await ask(chalk.dim(" -> "))) || defaultValue).trim();
     clearLine();
     clearLine();
     this.log("[2/5] Directory: " + chalk.dim(dir));
     return path.resolve(dir);
   }
 
-  private async promptSdkSelection(rl: readline.Interface): Promise<string> {
+  private async promptSdkSelection(): Promise<string> {
     this.log("[3/5] Select an SDK");
     for (const [index, sdk] of Object.values(SDK).entries()) {
       this.log(chalk.dim(` ${index + 1}. ${sdk}`));
     }
 
-    const selectedIndex = Number.parseInt(((await ask(chalk.dim(" -> "), rl)) || "1").trim(), 10) - 1;
+    const selectedIndex = Number.parseInt(((await ask(chalk.dim(" -> "))) || "1").trim(), 10) - 1;
     const sdk = Object.values(SDK)[selectedIndex];
     clearLine();
     clearLine();
@@ -136,18 +133,18 @@ export default class NewCommand extends Command {
     return sdk;
   }
 
-  private async promptTemplate(rl: readline.Interface, defaultValue: string): Promise<string> {
+  private async promptTemplate(defaultValue: string): Promise<string> {
     this.log("[4/5] Template: " + chalk.dim(`(${defaultValue})`));
-    const template = ((await ask(chalk.dim(" -> "), rl)) || defaultValue).trim();
+    const template = ((await ask(chalk.dim(" -> "))) || defaultValue).trim();
     clearLine();
     clearLine();
     this.log("[4/5] Template: " + chalk.dim(template));
     return template;
   }
 
-  private async createApp(name: string, dir: string, sdk: SDK, template: string, force: boolean, prerelease: boolean, rl: readline.Interface) {
+  private async createApp(name: string, dir: string, sdk: SDK, template: string, force: boolean, prerelease: boolean) {
     if (!force && (await fs.exists(dir))) {
-      if (!(await this.confirmAction(rl, "Attempting to overwrite a folder that already exists.\nAre you sure you want to continue? [y/n]"))) {
+      if (!(await this.confirmAction("Attempting to overwrite a folder that already exists.\nAre you sure you want to continue? [y/n]"))) {
         clearLine();
         return;
       } else {
@@ -184,14 +181,14 @@ export default class NewCommand extends Command {
 
       let updateSDK = false;
       if (!installedVersion) {
-        if (!(await this.confirmAction(rl, "You do not have the Modus SDK installed. Would you like to install it now? [y/n]"))) {
+        if (!(await this.confirmAction("You do not have the Modus SDK installed. Would you like to install it now? [y/n]"))) {
           clearLine();
           this.log(chalk.dim("Aborted."));
           this.exit(1);
         }
         updateSDK = true;
       } else if (latestVersion !== installedVersion) {
-        if (await this.confirmAction(rl, "You have an outdated version of the Modus SDK. Would you like to update? [y/n]")) {
+        if (await this.confirmAction("You have an outdated version of the Modus SDK. Would you like to update? [y/n]")) {
           updateSDK = true;
         } else {
           clearLine();
@@ -270,9 +267,9 @@ export default class NewCommand extends Command {
     this.log("\n" + chalk.red(" ERROR ") + chalk.dim(": " + message));
   }
 
-  private async confirmAction(rl: readline.Interface, message: string): Promise<boolean> {
+  private async confirmAction(message: string): Promise<boolean> {
     this.log(message);
-    const cont = ((await ask(chalk.dim(" -> "), rl)) || "n").toLowerCase().trim();
+    const cont = ((await ask(chalk.dim(" -> "))) || "n").toLowerCase().trim();
     clearLine();
     return cont === "yes" || cont === "y";
   }

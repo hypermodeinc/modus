@@ -51,25 +51,17 @@ export async function withSpinner<T>(text: string, fn: () => Promise<T>): Promis
   }
 }
 
-export async function withReadline<T>(fn: (rl: readline.Interface) => Promise<T>): Promise<T> {
+export function ask(question: string, placeholder?: string): Promise<string> {
   const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout,
   });
 
-  try {
-    return await fn(rl);
-  } finally {
-    rl.close();
-  }
-}
-
-export function ask(question: string, rl: readline.Interface, placeholder?: string): Promise<string> {
   return new Promise<string>((res, _) => {
     rl.question(question + (placeholder ? " " + placeholder + " " : ""), (answer) => {
       res(answer);
     });
-  });
+  }).finally(() => rl.close());
 }
 
 export function clearLine(): void {
