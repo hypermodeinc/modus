@@ -19,7 +19,7 @@ import os from "node:os";
 export default class Run extends Command {
   static args = {
     path: Args.string({
-      description: "./my-project-|-Path to project directory",
+      description: "./my-app-|-Path to app directory",
       hidden: false,
       required: false,
       default: "./",
@@ -29,7 +29,7 @@ export default class Run extends Command {
   static flags = {
     watch: Flags.boolean({
       char: "w",
-      description: "Watch project and rebuild continually",
+      description: "Watch app code and rebuild continually",
       hidden: false,
       required: false,
     }),
@@ -73,7 +73,7 @@ export default class Run extends Command {
 
   static description = "Launch a Modus app to local development";
 
-  static examples = [`<%= config.bin %> <%= command.id %> run ./project-path --watch`];
+  static examples = [`<%= config.bin %> <%= command.id %> run ./app-path --watch`];
 
   async run(): Promise<void> {
     const { args, flags } = await this.parse(Run);
