@@ -8,8 +8,8 @@
  */
 
 import { Command, Help, Interfaces } from "@oclif/core";
+import { getHeader } from "./header.js";
 import chalk from "chalk";
-import { getLogo } from "./logo.js";
 
 export default class CustomHelp extends Help {
   private target_pad = 15;
@@ -17,15 +17,7 @@ export default class CustomHelp extends Help {
   private post_pad = 0;
 
   formatHeader(): string {
-    const logo = getLogo();
-
-    let out = "";
-    out += logo;
-    out += "\n";
-    out += chalk.dim(`Modus CLI v${this.config.version}`);
-    out += "\n";
-
-    return out;
+    return getHeader(this.config.version);
   }
 
   formatRoot(): string {

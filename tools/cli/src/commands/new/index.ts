@@ -21,6 +21,7 @@ import { isOnline } from "../../util/index.js";
 import { GitHubOwner, GitHubRepo, MinGoVersion, MinNodeVersion, MinTinyGoVersion, ModusHomeDir, SDK, parseSDK } from "../../custom/globals.js";
 import { ask, clearLine, withSpinner } from "../../util/index.js";
 import SDKInstallCommand from "../sdk/install/index.js";
+import { getHeader } from "../../custom/header.js";
 
 export default class NewCommand extends Command {
   static description = "Create a new Modus app";
@@ -60,8 +61,8 @@ export default class NewCommand extends Command {
 
   async run(): Promise<void> {
     const { flags } = await this.parse(NewCommand);
-
-    this.log(chalk.bold(`Modus CLI v${this.config.version}`));
+    this.log(getHeader(this.config.version));
+    this.log(chalk.hex("#A585FF")(NewCommand.description) + "\n");
 
     const name = flags.name || (await this.promptAppName());
     if (!name) {
@@ -95,6 +96,8 @@ export default class NewCommand extends Command {
       this.log(chalk.dim("Aborted."));
       this.exit(1);
     }
+
+    this.log();
 
     await this.createApp(name, dir, sdk, template, flags.force, flags.prerelease);
   }
@@ -283,6 +286,8 @@ export default class NewCommand extends Command {
     });
 
     this.log(chalk.bold.cyanBright("Successfully created a Modus app!"));
+    this.log();
+
     this.log("To start, run the following command:");
     this.log("$ " + chalk.blueBright(`${dir == process.cwd() ? "" : "cd " + path.basename(dir)} && modus dev --build`));
     this.log();
