@@ -16,7 +16,7 @@ import * as fs from "../../../util/fs.js";
 import * as vi from "../../../util/versioninfo.js";
 import * as globals from "../../../custom/globals.js";
 import { execFile } from "../../../util/cp.js";
-import { clearLine, downloadFile, isOnline } from "../../../util/index.js";
+import { clearLine, downloadFile, isOnline, withSpinner } from "../../../util/index.js";
 
 export default class SDKInstallCommand extends Command {
   static args = {
@@ -97,8 +97,6 @@ export default class SDKInstallCommand extends Command {
       }
     }
 
-    this.log(chalk.dim("Downloading Modus Runtime " + version));
-
     const tempDir = os.tmpdir();
     let osPlatform = os.platform().toString();
     let osArch = os.arch();
@@ -106,17 +104,20 @@ export default class SDKInstallCommand extends Command {
     if (osArch === "x64") osArch = "amd64";
 
     const { GitHubOwner, GitHubRepo, ModusHomeDir } = globals;
-    const archivePaths = [];
+    const archivePaths: { archive: string; decompress: boolean }[] = [];
 
-    const runtimeRelease = `runtime/${version}`;
-    const runtimeFilename = `runtime_${version}_${osPlatform}_${osArch}.${osPlatform === "windows" ? "zip" : "tar.gz"}`;
-    const runtimeDownloadUrl = `https://github.com/${GitHubOwner}/${GitHubRepo}/releases/download/${encodeURIComponent(runtimeRelease)}/${encodeURIComponent(runtimeFilename)}`;
+    await withSpinner(chalk.dim("Downloading Modus Runtime " + version), async () => {
+      const runtimeRelease = `runtime/${version}`;
+      const runtimeFilename = `runtime_${version}_${osPlatform}_${osArch}.${osPlatform === "windows" ? "zip" : "tar.gz"}`;
+      const runtimeDownloadUrl = `https://github.com/${GitHubOwner}/${GitHubRepo}/releases/download/${encodeURIComponent(runtimeRelease)}/${encodeURIComponent(runtimeFilename)}`;
 
-    const runtimeArchivePath = path.join(tempDir, runtimeFilename);
-    archivePaths.push({ archive: runtimeArchivePath, decompress: true });
-    if (!(await downloadFile(runtimeDownloadUrl, runtimeArchivePath))) {
-      this.exit(1);
-    }
+      const runtimeArchivePath = path.join(tempDir, runtimeFilename);
+      archivePaths.push({ archive: runtimeArchivePath, decompress: true });
+      if (!(await downloadFile(runtimeDownloadUrl, runtimeArchivePath))) {
+        this.exit(1);
+      }
+    });
+    this.log(chalk.dim("Downloaded Modus Runtime " + version));
 
     for (const sdk of Object.values(globals.SDK)) {
       const sdkVersion = await vi.findCompatibleSdkVersion(sdk, version);
@@ -125,17 +126,18 @@ export default class SDKInstallCommand extends Command {
         this.exit(1);
       }
 
-      this.log(chalk.dim(`Downloading Modus ${sdk} SDK ${sdkVersion}`));
+      await withSpinner(chalk.dim(`Downloading Modus ${sdk} SDK ${sdkVersion}`), async () => {
+        const sdkRelease = `sdk/${sdk.toLowerCase()}/${sdkVersion}`;
+        const sdkFilename = `templates_${sdk.toLowerCase()}_${sdkVersion}.tar.gz`;
+        const sdkDownloadUrl = `https://github.com/${GitHubOwner}/${GitHubRepo}/releases/download/${encodeURIComponent(sdkRelease)}/${encodeURIComponent(sdkFilename)}`;
 
-      const sdkRelease = `sdk/${sdk.toLowerCase()}/${sdkVersion}`;
-      const sdkFilename = `templates_${sdk.toLowerCase()}_${sdkVersion}.tar.gz`;
-      const sdkDownloadUrl = `https://github.com/${GitHubOwner}/${GitHubRepo}/releases/download/${encodeURIComponent(sdkRelease)}/${encodeURIComponent(sdkFilename)}`;
-
-      const sdkArchivePath = path.join(tempDir, sdkFilename);
-      archivePaths.push({ archive: sdkArchivePath, decompress: false });
-      if (!(await downloadFile(sdkDownloadUrl, sdkArchivePath))) {
-        this.exit(1);
-      }
+        const sdkArchivePath = path.join(tempDir, sdkFilename);
+        archivePaths.push({ archive: sdkArchivePath, decompress: false });
+        if (!(await downloadFile(sdkDownloadUrl, sdkArchivePath))) {
+          this.exit(1);
+        }
+      });
+      this.log(chalk.dim(`Downloaded Modus ${sdk} SDK ${sdkVersion}`));
     }
 
     this.log(chalk.dim("Installing ..."));
