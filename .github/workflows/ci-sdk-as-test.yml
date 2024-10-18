@@ -6,6 +6,8 @@ on:
       - synchronize
       - reopened
       - ready_for_review
+    paths:
+      - 'sdk/assemblyscript/**'
 jobs:
   sdk-as-test:
     if: github.event_name == 'pull_request'
@@ -21,6 +23,6 @@ jobs:
         with:
           node-version: ">=22"
       - name: Install dependencies
-        run: npm install
+        run: npm ci
       - name: Run Unit Tests
         run: npm run test

@@ -1,0 +1,34 @@
+{
+  "$schema": "https://schema.hypermode.com/modus.json",
+  "endpoints": {
+    "default": {
+      "type": "graphql",
+      "path": "/graphql",
+      "auth": "bearer-token"
+    }
+  },
+  "connections": {
+    // These are the hosts used by the functions in this example project.
+    // Where secrets are required, {{SECRET_NAME}} templates are replaced with the secret's value at run time.
+    // Note that "baseUrl" is specified instead of "endpoint", to allow for customization of the URL path in code.
+    "example": {
+      "type": "http",
+      "baseUrl": "https://example.com/"
+    },
+    "zenquotes": {
+      "type": "http",
+      "baseUrl": "https://zenquotes.io/"
+    },
+    "picsum": {
+      "type": "http",
+      "baseUrl": "https://picsum.photos/"
+    },
+    "github": {
+      "type": "http",
+      "baseUrl": "https://api.github.com/",
+      "headers": {
+        "Authorization": "Bearer {{AUTH_TOKEN}}"
+      }
+    }
+  }
+}

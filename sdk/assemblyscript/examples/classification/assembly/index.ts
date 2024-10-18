@@ -10,7 +10,7 @@ import {
   ClassifierResult,
 } from "@hypermode/modus-sdk-as/models/experimental/classification";
 
-// This model name should match one defined in the hypermode.json manifest file.
+// This model name should match one defined in the modus.json manifest file.
 const modelName: string = "my-classifier";
 
 // This function takes input text and a probability threshold, and returns the

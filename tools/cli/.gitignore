@@ -1,0 +1,9 @@
+# Ignore output files
+oclif.manifest.json
+tsconfig.tsbuildinfo
+
+# Ignore build folders
+dist/
+tmp/
+bin/node-bin/
+bin/scripts/

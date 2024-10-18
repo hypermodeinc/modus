@@ -1,0 +1,360 @@
+{
+  "$id": "https://schema.hypermode.com/modus.json",
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "oneOf": [
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "$schema": {
+          "type": "string",
+          "format": "uri",
+          "description": "The schema that the document should conform to.",
+          "markdownDescription": "The schema that the document should conform to.\n\nReference: https://json-schema.org/"
+        },
+        "endpoints": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 63,
+            "default": "default",
+            "pattern": "^[a-zA-Z0-9]+(?:-[a-zA-Z0-9]+)*$"
+          },
+          "additionalProperties": {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "graphql",
+                    "description": "Type of the endpoint."
+                  },
+                  "path": {
+                    "type": "string",
+                    "minLength": 1,
+                    "pattern": "^\\/\\S*$",
+                    "not": {
+                      "enum": ["/health", "/metrics"]
+                    },
+                    "default": "/graphql",
+                    "description": "Path of the endpoint. Must start with a forward slash. Cannot be '/health' or '/metrics'."
+                  },
+                  "auth": {
+                    "type": "string",
+                    "enum": ["none", "bearer-token"],
+                    "default": "bearer-token",
+                    "description": "Type of authentication for the endpoint."
+                  }
+                },
+                "required": ["type", "path", "auth"],
+                "additionalProperties": false
+              }
+            ]
+          }
+        },
+        "models": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 63,
+            "pattern": "^[a-zA-Z0-9]+(?:-[a-zA-Z0-9]+)*$"
+          },
+          "additionalProperties": {
+            "oneOf": [
+              {
+                "type": "object",
+                "required": ["sourceModel", "provider", "connection"],
+                "additionalProperties": false,
+                "properties": {
+                  "task": {
+                    "type": "string",
+                    "deprecated": true,
+                    "minLength": 1,
+                    "enum": ["classification", "embedding", "generation"],
+                    "description": "Training intent of the model, such as 'classification' or 'embedding'.\n\nThis field is deprecated and no longer used.  It will be removed in a future version of the schema."
+                  },
+                  "sourceModel": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Name of the source model, using the id or path assigned by the provider."
+                  },
+                  "provider": {
+                    "type": "string",
+                    "minLength": 1,
+                    "$comment": "More providers can be added to the enum as needed.",
+                    "enum": ["hugging-face"],
+                    "description": "Source provider of the model."
+                  },
+                  "connection": {
+                    "type": "string",
+                    "const": "hypermode",
+                    "description": "Connection for the model.  Either 'hypermode', or the name of an external connection as defined in the 'connections' section."
+                  },
+                  "dedicated": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Whether to have the model be dedicated to the project, or shared."
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "required": ["connection"],
+                "additionalProperties": false,
+                "properties": {
+                  "task": {
+                    "type": "string",
+                    "deprecated": true,
+                    "minLength": 1,
+                    "enum": ["classification", "embedding", "generation"],
+                    "description": "Training intent of model, such as 'classification' or 'embedding'.\n\nThis field is deprecated and no longer used.  It will be removed in a future version of the schema."
+                  },
+                  "sourceModel": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Name of the source model, using the id or path assigned by the provider."
+                  },
+                  "connection": {
+                    "type": "string",
+                    "not": {
+                      "const": "hypermode"
+                    },
+                    "minLength": 1,
+                    "maxLength": 63,
+                    "pattern": "^[a-zA-Z0-9]+(?:-[a-zA-Z0-9]+)*$",
+                    "description": "Connection for the model.  Either 'hypermode', or the name of an external connection as defined in the 'connections' section."
+                  },
+                  "path": {
+                    "type": "string",
+                    "minLength": 1,
+                    "$comment": "todo: validate path with a pattern regex",
+                    "description": "Path to the model endpoint, applied to the 'baseUrl' of the connection."
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "connections": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 63,
+            "pattern": "^[a-zA-Z0-9]+(?:-[a-zA-Z0-9]+)*$"
+          },
+          "additionalProperties": {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "http",
+                    "description": "Type of the connection."
+                  },
+                  "baseUrl": {
+                    "type": "string",
+                    "format": "uri",
+                    "minLength": 1,
+                    "pattern": "^https?://\\S+/$",
+                    "description": "Base URL for connections to the connection.  Must end with a trailing slash.  If providing the entire URL, use the endpoint field instead.",
+                    "markdownDescription": "Base URL for connections to the connection.  Must end with a trailing slash.  If providing the entire URL, use the `endpoint` field instead.\n\nReference: https://docs.hypermode.com/define-connections"
+                  },
+                  "endpoint": {
+                    "type": "string",
+                    "format": "uri",
+                    "minLength": 1,
+                    "pattern": "^https?://\\S+$",
+                    "description": "Full URL endpoint for connections to the connection.  If providing the base URL, use the baseUrl field instead.",
+                    "markdownDescription": "Full URL endpoint for connections to the connection.  If providing the base URL, use the `baseUrl` field instead.\n\nReference: https://docs.hypermode.com/define-connections"
+                  },
+                  "headers": {
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string",
+                      "minLength": 1,
+                      "pattern": "^[\\w!#$%&'*+-.^`|~]+$"
+                    },
+                    "additionalProperties": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "description": "Headers to include in requests to the connection.",
+                    "markdownDescription": "Headers to include in requests to the connection.\n\nReference: https://docs.hypermode.com/define-connections"
+                  },
+                  "queryParameters": {
+                    "type": "object",
+                    "$comment": "Query parameter keys and values will be encoded when used, so there is no need to validate a pattern in the schema.",
+                    "propertyNames": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "additionalProperties": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "description": "Query parameters to include in requests to the connection.",
+                    "markdownDescription": "Query parameters to include in requests to the connection.\n\nReference: https://docs.hypermode.com/define-connections"
+                  }
+                },
+                "required": ["type"],
+                "additionalProperties": false,
+                "$comment": "Either baseUrl or endpoint must be provided, but not both.",
+                "allOf": [
+                  {
+                    "oneOf": [
+                      {
+                        "required": ["baseUrl"]
+                      },
+                      {
+                        "required": ["endpoint"]
+                      }
+                    ],
+                    "not": {
+                      "required": ["baseUrl", "endpoint"]
+                    }
+                  }
+                ]
+              },
+              {
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "postgresql",
+                    "description": "Type of the connection."
+                  },
+                  "connString": {
+                    "type": "string",
+                    "minLength": 1,
+                    "pattern": "^postgres(?:ql)?:\\/\\/(.*?@)?([0-9a-zA-Z.-]*?)(:\\d+)?(\\/[0-9a-zA-Z.-]+)?(\\?.+)?$",
+                    "description": "The PostgreSQL connection string in URI format.",
+                    "markdownDescription": "The PostgreSQL connection string in URI format.\n\nReference: https://docs.hypermode.com/define-connections"
+                  }
+                },
+                "required": ["type", "connString"],
+                "additionalProperties": false
+              },
+              {
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "dgraph",
+                    "description": "Type of the connection."
+                  },
+                  "grpcTarget": {
+                    "type": "string",
+                    "minLength": 1,
+                    "pattern": "^[a-zA-Z0-9]+(?:-[a-zA-Z0-9.]+)*:\\d+$",
+                    "description": "The gRPC target for connections to Dgraph, such as \"localhost:9080\" or \"your-server-1234567.grpc.us-east-1.aws.cloud.dgraph.io:443\".",
+                    "markdownDescription": "The gRPC target for connections to Dgraph, such as \"localhost:9080\" or \"your-server-1234567.grpc.us-east-1.aws.cloud.dgraph.io:443\".\n\nReference: https://docs.hypermode.com/define-connections"
+                  },
+                  "key": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "API key for Dgraph.",
+                    "markdownDescription": "API key for Dgraph.\n\nReference: https://docs.hypermode.com/define-connections"
+                  }
+                },
+                "required": ["type", "grpcTarget"],
+                "additionalProperties": false
+              }
+            ]
+          }
+        },
+        "collections": {
+          "type": "object",
+          "description": "Collection definitions, for natural language search.",
+          "propertyNames": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 63,
+            "pattern": "^[a-zA-Z0-9]+(?:-[a-zA-Z0-9]+)*$"
+          },
+          "additionalProperties": {
+            "type": "object",
+            "description": "Collection configuration.",
+            "additionalProperties": false,
+            "properties": {
+              "searchMethods": {
+                "type": "object",
+                "description": "Search methods for the collection.",
+                "propertyNames": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 63,
+                  "pattern": "^[a-zA-Z0-9]+(?:-[a-zA-Z0-9]+)*$"
+                },
+                "additionalProperties": {
+                  "type": "object",
+                  "description": "Search method configuration for the collection.  If an index configuration is not specified, a default sequential index will be created automatically.",
+                  "additionalProperties": false,
+                  "properties": {
+                    "embedder": {
+                      "type": "string",
+                      "minLength": 1,
+                      "description": "Name of the embedding function to call in the collection."
+                    },
+                    "index": {
+                      "description": "Index configuration for the collection.",
+                      "oneOf": [
+                        {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "properties": {
+                            "type": {
+                              "type": "string",
+                              "const": "sequential",
+                              "default": "sequential",
+                              "description": "Type of the index."
+                            }
+                          },
+                          "required": ["type"]
+                        },
+                        {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "properties": {
+                            "type": {
+                              "type": "string",
+                              "const": "hnsw",
+                              "default": "sequential",
+                              "description": "Type of the index."
+                            },
+                            "options": {
+                              "type": "object",
+                              "description": "Options for the HNSW index.",
+                              "minProperties": 1,
+                              "additionalProperties": false,
+                              "properties": {
+                                "efConstruction": {
+                                  "type": "integer",
+                                  "default": 15,
+                                  "description": "The number of candidate vertices to evaluate during construction.\n\nDefault: 15"
+                                },
+                                "maxLevels": {
+                                  "type": "integer",
+                                  "default": 5,
+                                  "description": "The maximum number of levels in the structure.\n\nDefault: 5"
+                                }
+                              }
+                            }
+                          },
+                          "required": ["type"]
+                        }
+                      ]
+                    }
+                  },
+                  "required": ["embedder"]
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

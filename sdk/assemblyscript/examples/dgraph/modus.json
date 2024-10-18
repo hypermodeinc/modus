@@ -1,0 +1,19 @@
+{
+  "$schema": "https://schema.hypermode.com/modus.json",
+  "endpoints": {
+    "default": {
+      "type": "graphql",
+      "path": "/graphql",
+      "auth": "bearer-token"
+    }
+  },
+  "connections": {
+    // This defines the dgraph host that is used by the example functions.
+    // The {{API_KEY}} will be replaced by the secret provided in the Hypermode Console.
+    "dgraph": {
+      "type": "dgraph",
+      "grpcTarget": "frozen-mango.grpc.eu-central-1.aws.cloud.dgraph.io:443",
+      "key": "{{API_KEY}}"
+    }
+  }
+}

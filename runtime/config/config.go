@@ -11,6 +11,5 @@ package config
 
 func Initialize() {
 	parseCommandLineFlags()
-	setEnvironmentName()
-	setNamespace()
+	readEnvironmentVariables()
 }

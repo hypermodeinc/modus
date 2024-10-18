@@ -18,7 +18,6 @@ import (
 	"regexp"
 
 	"github.com/hypermodeinc/modus/lib/manifest"
-	"github.com/hypermodeinc/modus/runtime/config"
 	"github.com/hypermodeinc/modus/runtime/logger"
 	"github.com/hypermodeinc/modus/runtime/utils"
 )
@@ -29,16 +28,11 @@ type secretsProvider interface {
 	initialize(ctx context.Context)
 	hasSecret(name string) bool
 	getSecretValue(name string) (string, error)
-	getHostSecrets(host manifest.HostInfo) (map[string]string, error)
+	getConnectionSecrets(connection manifest.ConnectionInfo) (map[string]string, error)
 }
 
 func Initialize(ctx context.Context) {
-	if config.UseAwsSecrets {
-		provider = &awsSecretsProvider{}
-	} else {
-		provider = &localSecretsProvider{}
-	}
-
+	provider = &localSecretsProvider{}
 	provider.initialize(ctx)
 }
 
@@ -50,12 +44,12 @@ func GetSecretValue(name string) (string, error) {
 	return provider.getSecretValue(name)
 }
 
-func GetHostSecrets(host manifest.HostInfo) (map[string]string, error) {
-	return provider.getHostSecrets(host)
+func GetConnectionSecrets(connection manifest.ConnectionInfo) (map[string]string, error) {
+	return provider.getConnectionSecrets(connection)
 }
 
-func GetHostSecret(host manifest.HostInfo, secretName string) (string, error) {
-	secrets, err := GetHostSecrets(host)
+func GetConnectionSecret(connection manifest.ConnectionInfo, secretName string) (string, error) {
+	secrets, err := GetConnectionSecrets(connection)
 	if err != nil {
 		return "", err
 	}
@@ -64,37 +58,37 @@ func GetHostSecret(host manifest.HostInfo, secretName string) (string, error) {
 		return val, nil
 	}
 
-	return "", fmt.Errorf("could not find secret '%s' for host '%s'", secretName, host.HostName())
+	return "", fmt.Errorf("could not find secret '%s' for connection '%s'", secretName, connection.ConnectionName())
 }
 
-// ApplyHostSecretsToHttpRequest evaluates the given request and replaces any placeholders
-// present in the query parameters and headers with their secret values for the given host.
-func ApplyHostSecretsToHttpRequest(ctx context.Context, host *manifest.HTTPHostInfo, req *http.Request) error {
+// ApplySecretsToHttpRequest evaluates the given request and replaces any placeholders
+// present in the query parameters and headers with their secret values for the given connection.
+func ApplySecretsToHttpRequest(ctx context.Context, connection *manifest.HTTPConnectionInfo, req *http.Request) error {
 	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
 
-	// get secrets for the host
-	secrets, err := GetHostSecrets(host)
+	// get secrets for the connection
+	secrets, err := GetConnectionSecrets(connection)
 	if err != nil {
 		return err
 	}
 
 	// apply query parameters from manifest
 	q := req.URL.Query()
-	for k, v := range host.QueryParameters {
+	for k, v := range connection.QueryParameters {
 		q.Add(k, applySecretsToString(ctx, secrets, v))
 	}
 	req.URL.RawQuery = q.Encode()
 
 	// apply headers from manifest
-	for k, v := range host.Headers {
+	for k, v := range connection.Headers {
 		req.Header.Add(k, applySecretsToString(ctx, secrets, v))
 	}
 
 	return nil
 }
 
-func ApplyAuthToLocalModelRequest(ctx context.Context, host manifest.HostInfo, req *http.Request) error {
+func ApplyAuthToLocalHypermodeModelRequest(ctx context.Context, connection manifest.ConnectionInfo, req *http.Request) error {
 
 	jwt := os.Getenv("HYP_JWT")
 	orgId := os.Getenv("HYP_ORG_ID")
@@ -109,13 +103,13 @@ func ApplyAuthToLocalModelRequest(ctx context.Context, host manifest.HostInfo, r
 	return nil
 }
 
-// ApplyHostSecretsToString evaluates the given string and replaces any placeholders
-// present in the string with their secret values for the given host.
-func ApplyHostSecretsToString(ctx context.Context, host manifest.HostInfo, str string) (string, error) {
+// ApplySecretsToString evaluates the given string and replaces any placeholders
+// present in the string with their secret values for the given connection.
+func ApplySecretsToString(ctx context.Context, connection manifest.ConnectionInfo, str string) (string, error) {
 	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
 
-	secrets, err := GetHostSecrets(host)
+	secrets, err := GetConnectionSecrets(connection)
 	if err != nil {
 		return "", err
 	}

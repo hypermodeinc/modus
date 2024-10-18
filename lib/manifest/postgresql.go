@@ -9,43 +9,26 @@
 
 package manifest
 
-import (
-	"crypto/sha256"
-	"encoding/hex"
-	"fmt"
-)
+const ConnectionTypePostgresql ConnectionType = "postgresql"
 
-const (
-	HostTypePostgresql string = "postgresql"
-)
-
-type PostgresqlHostInfo struct {
-	Name    string `json:"-"`
-	Type    string `json:"type"`
-	ConnStr string `json:"connString"`
+type PostgresqlConnectionInfo struct {
+	Name    string         `json:"-"`
+	Type    ConnectionType `json:"type"`
+	ConnStr string         `json:"connString"`
 }
 
-func (p PostgresqlHostInfo) HostName() string {
-	return p.Name
+func (info PostgresqlConnectionInfo) ConnectionName() string {
+	return info.Name
 }
 
-func (PostgresqlHostInfo) HostType() string {
-	return HostTypePostgresql
+func (info PostgresqlConnectionInfo) ConnectionType() ConnectionType {
+	return info.Type
 }
 
-func (h PostgresqlHostInfo) GetVariables() []string {
-	return extractVariables(h.ConnStr)
+func (info PostgresqlConnectionInfo) Hash() string {
+	return computeHash(info.Name, info.Type, info.ConnStr)
 }
 
-func (h PostgresqlHostInfo) Hash() string {
-	// Concatenate the attributes into a single string
-	data := fmt.Sprintf("%v|%v|%v", h.Name, h.Type, h.ConnStr)
-
-	// Compute the SHA-256 hash
-	hash := sha256.Sum256([]byte(data))
-
-	// Convert the hash to a hexadecimal string
-	hashStr := hex.EncodeToString(hash[:])
-
-	return hashStr
+func (info PostgresqlConnectionInfo) Variables() []string {
+	return extractVariables(info.ConnStr)
 }

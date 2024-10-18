@@ -2,21 +2,37 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Modus Runtime (local)",
+      "name": "Debug Modus Runtime (pick example)",
       "type": "go",
       "request": "launch",
       "mode": "auto",
-      "preLaunchTask": "go: generate code",
       "program": "${workspaceFolder}/runtime",
       "env": {
         "MODUS_ENV": "dev",
         "MODUS_DEBUG": "true",
         "MODUS_DB": "postgresql://postgres:postgres@localhost:5433/my-runtime-db?sslmode=disable"
       },
-      "args": ["--refresh=1s"]
+      "args": [
+        "--refresh=1s",
+        "--appPath",
+        "${workspaceFolder}/sdk/${input:appLanguage}/examples/${input:exampleApp}/build"
+      ]
     },
     {
-      "name": "Modus Runtime (AWS)",
+      "name": "Debug Modus Runtime (input path)",
+      "type": "go",
+      "request": "launch",
+      "mode": "auto",
+      "program": "${workspaceFolder}/runtime",
+      "env": {
+        "MODUS_ENV": "dev",
+        "MODUS_DEBUG": "true",
+        "MODUS_DB": "postgresql://postgres:postgres@localhost:5433/my-runtime-db?sslmode=disable"
+      },
+      "args": ["--refresh=1s", "--appPath", "${input:appPath}"]
+    },
+    {
+      "name": "Debug Modus Runtime (aws storage)",
       "type": "go",
       "request": "launch",
       "mode": "auto",
@@ -25,13 +41,12 @@
       "env": {
         "MODUS_ENV": "dev",
         "MODUS_DEBUG": "true",
-        "AWS_REGION": "us-west-2",
-        "AWS_PROFILE": "sandbox",
+        "AWS_REGION": "${input:awsRegion}",
+        "AWS_PROFILE": "${input:awsProfile}",
         "AWS_SDK_LOAD_CONFIG": "true",
         "MODUS_DB": "postgresql://postgres:postgres@localhost:5433/my-runtime-db?sslmode=disable"
       },
       "args": [
-        "--useAwsSecrets",
         "--useAwsStorage",
         "--s3bucket=${input:s3bucket}",
         "--s3path=${input:s3folder}",
@@ -39,29 +54,112 @@
       ]
     },
     {
-      "name": "modus-go-build simple example",
-      "type": "go",
+      "name": "Debug Build Example AssemblyScript App",
+      "type": "node-terminal",
       "request": "launch",
-      "mode": "auto",
-      "program": "${workspaceFolder}/sdk/go/tools/modus-go-build",
-      "args": ["${workspaceFolder}/sdk/go/examples/simple"],
-      "env": {
-        "MODUS_DEBUG": "true"
-      }
+      "command": "npm install --prefix ${workspaceFolder}/sdk/assemblyscript/src && npm install && npm run build",
+      "cwd": "${workspaceFolder}/sdk/assemblyscript/examples/${input:exampleApp}"
     },
     {
-      "name": "hypbumodus-go-buildild http example",
+      "name": "Debug Build Example Go App",
       "type": "go",
       "request": "launch",
       "mode": "auto",
       "program": "${workspaceFolder}/sdk/go/tools/modus-go-build",
-      "args": ["${workspaceFolder}/sdk/go/examples/http"],
+      "args": ["${workspaceFolder}/sdk/go/examples/${input:exampleApp}"],
       "env": {
         "MODUS_DEBUG": "true"
       }
     }
   ],
   "inputs": [
+    {
+      "id": "appPath",
+      "type": "promptString",
+      "description": "Enter the path to the Modus app's build directory"
+    },
+    {
+      "id": "appLanguage",
+      "type": "pickString",
+      "description": "Choose an app language",
+      "options": [
+        {
+          "label": "AssemblyScript",
+          "value": "assemblyscript"
+        },
+        {
+          "label": "Go",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "id": "exampleApp",
+      "type": "pickString",
+      "description": "Choose a Modus app",
+      "options": [
+        {
+          "label": "Anthropic Model Example",
+          "value": "anthropic-functions"
+        },
+        {
+          "label": "Auth Example",
+          "value": "auth"
+        },
+        {
+          "label": "Classification Model Example",
+          "value": "classification"
+        },
+        {
+          "label": "Collections Example",
+          "value": "collections"
+        },
+        {
+          "label": "Dgraph Client Example",
+          "value": "dgraph"
+        },
+        {
+          "label": "Embedding Model Example",
+          "value": "embedding"
+        },
+        {
+          "label": "GraphQL Client Example",
+          "value": "graphql"
+        },
+        {
+          "label": "HTTP Client Example",
+          "value": "http"
+        },
+        {
+          "label": "PostgreSQL Client Example",
+          "value": "postgresql"
+        },
+        {
+          "label": "Simple Example",
+          "value": "simple"
+        },
+        {
+          "label": "Text Generation Model Example",
+          "value": "textgeneration"
+        },
+        {
+          "label": "Vectors API Example",
+          "value": "vectors"
+        }
+      ]
+    },
+    {
+      "id": "awsProfile",
+      "type": "promptString",
+      "description": "Enter the AWS profile name",
+      "default": "sandbox"
+    },
+    {
+      "id": "awsRegion",
+      "type": "promptString",
+      "description": "Enter the AWS region",
+      "default": "us-west-2"
+    },
     {
       "id": "s3bucket",
       "type": "promptString",

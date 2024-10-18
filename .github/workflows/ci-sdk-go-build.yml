@@ -6,6 +6,8 @@ on:
       - synchronize
       - reopened
       - ready_for_review
+    paths:
+      - 'sdk/go/**'
 jobs:
   get-dirs:
     if: github.event_name == 'pull_request'

@@ -23,7 +23,13 @@ build:
 
 .PHONY: run
 run:
-	go run .
+	@ARGS="$(filter-out $@,$(MAKECMDGOALS))" && \
+	MODUS_ENV=dev go run . $$ARGS
+
+.PHONY: runapp
+runapp:
+	@ARGS="$(filter-out $@,$(MAKECMDGOALS))" && \
+	MODUS_ENV=dev go run . -appPath $$ARGS
 
 .PHONY: build-testdata
 build-testdata: build-testdata-assemblyscript build-testdata-golang
@@ -71,3 +77,7 @@ clean:
 .PHONY: docker-build
 docker-build:
 	cd .. && docker build --build-arg RUNTIME_RELEASE_VERSION="$(VERSION)" -t modus_runtime .
+
+# Catch all rule to prevent make errors for non-target arguments
+%:
+	@true

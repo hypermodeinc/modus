@@ -30,6 +30,17 @@ In previous releases, the name "Hypermode" was used for all three._
 - Modularize / Rename host functions [#452](https://github.com/hypermodeinc/modus/pull/452)
 - Add release pipeline for the runtime [#453](https://github.com/hypermodeinc/modus/pull/453) [#454](https://github.com/hypermodeinc/modus/pull/454)
 - Remove `go generate` and fix docker build [#455](https://github.com/hypermodeinc/modus/pull/455)
+- Remove AWS Secrets Manager client [#456](https://github.com/hypermodeinc/modus/pull/456)
+- Make app path required [#457](https://github.com/hypermodeinc/modus/pull/457)
+- Improve `.env` file handling [#458](https://github.com/hypermodeinc/modus/pull/458)
+- Update command-line args and env variables [#459](https://github.com/hypermodeinc/modus/pull/459)
+- Update Sentry telemetry collection rules [#460](https://github.com/hypermodeinc/modus/pull/460)
+- Fix entry alignment issue with AssemblyScript maps [#461](https://github.com/hypermodeinc/modus/pull/461)
+- Update to use new Modus manifest [#462](https://github.com/hypermodeinc/modus/pull/462)
+- Enable GraphQL endpoints to be defined in the manifest [#464](https://github.com/hypermodeinc/modus/pull/464)
+- Publish SDKs and templates via release workflows [#465](https://github.com/hypermodeinc/modus/pull/465)
+- Fix AssemblyScript build failure when no Git repo is present [#475](https://github.com/hypermodeinc/modus/pull/475)
+- Disable AWS Bedrock support temporarily [#479](https://github.com/hypermodeinc/modus/pull/479)
 
 ## 2024-10-02 - Version 0.12.7
 

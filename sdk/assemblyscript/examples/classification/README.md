@@ -1,4 +1,4 @@
-# Hypermode Classification Example Plugin
+# Modus Classification Example
 
 This example shows how to invoke a model that can perform classification.
 

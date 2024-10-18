@@ -24,8 +24,8 @@ type localSecretsProvider struct {
 func (sp *localSecretsProvider) initialize(ctx context.Context) {
 }
 
-func (sp *localSecretsProvider) getHostSecrets(host manifest.HostInfo) (map[string]string, error) {
-	prefix := "MODUS_" + strings.ToUpper(strings.ReplaceAll(host.HostName(), "-", "_")) + "_"
+func (sp *localSecretsProvider) getConnectionSecrets(connection manifest.ConnectionInfo) (map[string]string, error) {
+	prefix := "MODUS_" + strings.ToUpper(strings.ReplaceAll(connection.ConnectionName(), "-", "_")) + "_"
 	secrets := make(map[string]string)
 	for _, e := range os.Environ() {
 		if strings.HasPrefix(e, prefix) {

@@ -1,4 +1,4 @@
-# This schema is used for the queries in this Hypermode example.
+# This schema is used for the queries in this example.
 
 type Person {
   id: ID!

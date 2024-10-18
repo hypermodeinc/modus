@@ -9,44 +9,27 @@
 
 package manifest
 
-import (
-	"crypto/sha256"
-	"encoding/hex"
-	"fmt"
-)
+const ConnectionTypeDgraph ConnectionType = "dgraph"
 
-const (
-	HostTypeDgraph string = "dgraph"
-)
-
-type DgraphHostInfo struct {
-	Name       string `json:"-"`
-	Type       string `json:"type"`
-	GrpcTarget string `json:"grpcTarget"`
-	Key        string `json:"key"`
+type DgraphConnectionInfo struct {
+	Name       string         `json:"-"`
+	Type       ConnectionType `json:"type"`
+	GrpcTarget string         `json:"grpcTarget"`
+	Key        string         `json:"key"`
 }
 
-func (p DgraphHostInfo) HostName() string {
-	return p.Name
+func (info DgraphConnectionInfo) ConnectionName() string {
+	return info.Name
 }
 
-func (DgraphHostInfo) HostType() string {
-	return HostTypeDgraph
+func (info DgraphConnectionInfo) ConnectionType() ConnectionType {
+	return info.Type
 }
 
-func (h DgraphHostInfo) GetVariables() []string {
-	return extractVariables(h.Key)
+func (info DgraphConnectionInfo) Hash() string {
+	return computeHash(info.Name, info.Type, info.GrpcTarget)
 }
 
-func (h DgraphHostInfo) Hash() string {
-	// Concatenate the attributes into a single string
-	data := fmt.Sprintf("%v|%v|%v", h.Name, h.Type, h.GrpcTarget)
-
-	// Compute the SHA-256 hash
-	hash := sha256.Sum256([]byte(data))
-
-	// Convert the hash to a hexadecimal string
-	hashStr := hex.EncodeToString(hash[:])
-
-	return hashStr
+func (info DgraphConnectionInfo) Variables() []string {
+	return extractVariables(info.Key)
 }

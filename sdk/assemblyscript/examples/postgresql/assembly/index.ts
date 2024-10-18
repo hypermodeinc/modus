@@ -6,7 +6,7 @@
 
 import { postgresql } from "@hypermode/modus-sdk-as";
 
-// The name of the PostgreSQL host, as specified in the hypermode.json manifest
+// The name of the PostgreSQL host, as specified in the modus.json manifest
 const host = "my-database";
 
 

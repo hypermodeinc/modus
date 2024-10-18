@@ -1,0 +1,16 @@
+{
+  "$schema": "https://schema.hypermode.com/modus.json",
+  "endpoints": {
+    "default": {
+      "type": "graphql",
+      "path": "/graphql",
+      "auth": "bearer-token"
+    }
+  },
+  "connections": {
+    "my-database": {
+      "type": "postgresql",
+      "connString": "postgresql://postgres:password@localhost:5499/data?sslmode=disable"
+    }
+  }
+}

@@ -1,0 +1,49 @@
+name: "Release AssemblyScript SDK"
+on:
+  push:
+    tags:
+      - "sdk/assemblyscript/v*"
+permissions:
+  contents: "write"
+  id-token: write
+jobs:
+  release:
+    # note: must use GitHub-hosted runner for publishing to NPM with --provenance flag
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Validate version"
+        if: ${{ !startsWith(github.ref_name, 'sdk/assemblyscript/v') }}
+        run: 'echo "Modus AssemblyScript SDK version must start with `sdk/assemblyscript/v` && exit 1'
+      - uses: actions/checkout@v4
+        with:
+          ref: "${{ github.ref_name }}"
+      - name: Parse SDK Version
+        id: parse_sdk_version
+        run: |
+          echo "sdk_version=$(echo '${{ github.ref_name }}' | cut -d'/' -f 3)" >> $GITHUB_OUTPUT
+          echo "npm_tag=$(echo '${{ github.ref_name }}' | cut -d'/' -f 3 | sed -E 's/^[^-]+-([a-zA-Z]+).*/\1/ ; s/v.*/latest/')" >> $GITHUB_OUTPUT
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ">=22"
+          registry-url: "https://registry.npmjs.org"
+      - name: Prepare Templates
+        working-directory: sdk/assemblyscript
+        run: ./scripts/prepare-templates.sh ${{ steps.parse_sdk_version.outputs.sdk_version }}
+      - name: Set Package Version
+        working-directory: sdk/assemblyscript/src
+        run: npm version ${{ steps.parse_sdk_version.outputs.sdk_version }} --no-git-tag-version
+      - name: Install Dependencies
+        working-directory: sdk/assemblyscript/src
+        run: npm ci
+      - name: Publish NPM Package
+        working-directory: sdk/assemblyscript/src
+        run: npm publish --provenance --access public --tag ${{ steps.parse_sdk_version.outputs.npm_tag }}
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: templates_assemblyscript_${{ steps.parse_sdk_version.outputs.sdk_version }}.tar.gz
+          prerelease: ${{ contains(steps.parse_sdk_version.outputs.sdk_version, '-') }}
+          make_latest: false

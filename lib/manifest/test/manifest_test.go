@@ -17,105 +17,108 @@ import (
 	"github.com/hypermodeinc/modus/lib/manifest"
 )
 
-//go:embed valid_hypermode.json
+//go:embed valid_modus.json
 var validManifest []byte
 
 func TestReadManifest(t *testing.T) {
-	// This should match the content of valid_hypermode.json
+	// This should match the content of valid_modus.json
 	expectedManifest := &manifest.Manifest{
-		Version: 2,
+		Version: 3,
+		Endpoints: map[string]manifest.EndpointInfo{
+			"default": manifest.GraphqlEndpointInfo{
+				Name: "default",
+				Type: manifest.EndpointTypeGraphQL,
+				Path: "/graphql",
+				Auth: manifest.EndpointAuthBearerToken,
+			},
+		},
 		Models: map[string]manifest.ModelInfo{
 			"model-1": {
 				Name:        "model-1",
 				SourceModel: "example/source-model-1",
 				Provider:    "hugging-face",
-				Host:        "hypermode",
+				Connection:  "hypermode",
 			},
 			"model-2": {
 				Name:        "model-2",
 				SourceModel: "source-model-2",
-				Host:        "my-model-host",
+				Connection:  "my-model-connection",
 				Path:        "path/to/model-2",
 			},
 			"model-3": {
 				Name:        "model-3",
 				SourceModel: "source-model-3",
-				Host:        "my-model-host",
+				Connection:  "my-model-connection",
 			},
 			"model-4": {
 				Name:        "model-4",
 				SourceModel: "example/source-model-4",
 				Provider:    "hugging-face",
-				Host:        "hypermode",
-				Dedicated:   true,
+				Connection:  "hypermode",
 			},
 		},
-		Hosts: map[string]manifest.HostInfo{
-			"my-model-host": manifest.HTTPHostInfo{
-				Name:    "my-model-host",
-				Type:    manifest.HostTypeHTTP,
+		Connections: map[string]manifest.ConnectionInfo{
+			"my-model-connection": manifest.HTTPConnectionInfo{
+				Name:    "my-model-connection",
+				Type:    manifest.ConnectionTypeHTTP,
 				BaseURL: "https://models.example.com/",
 				Headers: map[string]string{
 					"X-API-Key": "{{API_KEY}}",
 				},
 			},
-			"another-model-host": manifest.HTTPHostInfo{
-				Name:     "another-model-host",
-				Type:     manifest.HostTypeHTTP,
+			"another-model-connection": manifest.HTTPConnectionInfo{
+				Name:     "another-model-connection",
+				Type:     manifest.ConnectionTypeHTTP,
 				Endpoint: "https://models.example.com/full/path/to/model-3",
 				Headers: map[string]string{
 					"X-API-Key": "{{API_KEY}}",
 				},
 			},
-			"my-graphql-api": manifest.HTTPHostInfo{
+			"my-graphql-api": manifest.HTTPConnectionInfo{
 				Name:     "my-graphql-api",
-				Type:     manifest.HostTypeHTTP,
+				Type:     manifest.ConnectionTypeHTTP,
 				Endpoint: "https://api.example.com/graphql",
 				Headers: map[string]string{
 					"Authorization": "Bearer {{AUTH_TOKEN}}",
 				},
 			},
-			"my-rest-api": manifest.HTTPHostInfo{
+			"my-rest-api": manifest.HTTPConnectionInfo{
 				Name:    "my-rest-api",
-				Type:    manifest.HostTypeHTTP,
+				Type:    manifest.ConnectionTypeHTTP,
 				BaseURL: "https://api.example.com/v1/",
 				QueryParameters: map[string]string{
 					"api_token": "{{API_TOKEN}}",
 				},
 			},
-			"another-rest-api": manifest.HTTPHostInfo{
+			"another-rest-api": manifest.HTTPConnectionInfo{
 				Name:    "another-rest-api",
-				Type:    manifest.HostTypeHTTP,
+				Type:    manifest.ConnectionTypeHTTP,
 				BaseURL: "https://api.example.com/v2/",
 				Headers: map[string]string{
 					"Authorization": "Basic {{base64(USERNAME:PASSWORD)}}",
 				},
 			},
-			"api-with-type": manifest.HTTPHostInfo{
-				Name:    "api-with-type",
-				Type:    manifest.HostTypeHTTP,
-				BaseURL: "https://api.example.com/v2/",
-			},
-			"neon": manifest.PostgresqlHostInfo{
+			"neon": manifest.PostgresqlConnectionInfo{
 				Name:    "neon",
-				Type:    "postgresql",
+				Type:    manifest.ConnectionTypePostgresql,
 				ConnStr: "postgresql://{{POSTGRESQL_USERNAME}}:{{POSTGRESQL_PASSWORD}}@1.2.3.4:5432/data?sslmode=disable",
 			},
-			"my-dgraph-cloud": manifest.DgraphHostInfo{
+			"my-dgraph-cloud": manifest.DgraphConnectionInfo{
 				Name:       "my-dgraph-cloud",
-				Type:       "dgraph",
+				Type:       manifest.ConnectionTypeDgraph,
 				GrpcTarget: "frozen-mango.grpc.eu-central-1.aws.cloud.dgraph.io:443",
 				Key:        "{{DGRAPH_KEY}}",
 			},
-			"local-dgraph": manifest.DgraphHostInfo{
+			"local-dgraph": manifest.DgraphConnectionInfo{
 				Name:       "local-dgraph",
-				Type:       "dgraph",
+				Type:       manifest.ConnectionTypeDgraph,
 				GrpcTarget: "localhost:9080",
 				Key:        "",
 			},
 		},
 		Collections: map[string]manifest.CollectionInfo{
 			"collection1": {
+				Name: "collection1",
 				SearchMethods: map[string]manifest.SearchMethodInfo{
 					"searchMethod1": {
 						Embedder: "embedder1",
@@ -157,55 +160,20 @@ func TestModelInfo_Hash(t *testing.T) {
 		Name:        "my-model",
 		SourceModel: "my-source-model",
 		Provider:    "my-provider",
-		Host:        "my-host",
+		Connection:  "my-connection",
+		Path:        "path/to/my-model",
 	}
 
-	expectedHash := "f0e05986e8fc7c7986337990cfd175adc62a323e287a7802f43e60eea77c93ac"
+	expectedHash := "180de1ebfbaeb038682a121cec743809d22e07c8dcedbfcfe14b9b3329774aea"
 
-	if actualHash := model.Hash(); actualHash != expectedHash {
-		t.Errorf("Expected hash: %s, but got: %s", expectedHash, actualHash)
-	}
-
-	// Dedicated is not relevant for non-hypermode hosts,
-	// so this should not affect the hash.
-	model.Dedicated = true
 	if actualHash := model.Hash(); actualHash != expectedHash {
 		t.Errorf("Expected hash: %s, but got: %s", expectedHash, actualHash)
 	}
 }
 
-func TestHypermodeModelInfo_Hash(t *testing.T) {
-	model := manifest.ModelInfo{
-		Name:        "my-model",
-		SourceModel: "my-source-model",
-		Provider:    "my-provider",
-		Host:        "hypermode",
-	}
-
-	expectedHash := "010e30710a2fe7b140a0aee1981fa5bfbbb8ab8c4ae2b946a585636e8c5c3152"
-
-	if actualHash := model.Hash(); actualHash != expectedHash {
-		t.Errorf("Expected hash: %s, but got: %s", expectedHash, actualHash)
-	}
-
-	// We don't include the "dedicated" attribute if it is false,
-	// so this should not affect the hash
-	model.Dedicated = false
-	if actualHash := model.Hash(); actualHash != expectedHash {
-		t.Errorf("Expected hash: %s, but got: %s", expectedHash, actualHash)
-	}
-
-	// Whereas if it is true, it should affect the hash
-	model.Dedicated = true
-	expectedHash = "73c776a156bfec3e5b74d815b4d9ab177dac1d00b9721d51447adc0c17fd1fd5"
-	if actualHash := model.Hash(); actualHash != expectedHash {
-		t.Errorf("Expected hash: %s, but got: %s", expectedHash, actualHash)
-	}
-}
-
-func TestHttpHostInfo_Hash(t *testing.T) {
-	host := manifest.HTTPHostInfo{
-		Name:     "my-host",
+func TestHttpConnectionInfo_Hash(t *testing.T) {
+	connection := manifest.HTTPConnectionInfo{
+		Name:     "my-connection",
 		Endpoint: "https://example.com/api",
 		BaseURL:  "https://example.com/api",
 		Headers: map[string]string{
@@ -216,66 +184,66 @@ func TestHttpHostInfo_Hash(t *testing.T) {
 		},
 	}
 
-	expectedHash := "897ba7738c819211a9291f402bbdda529aadd4f83107ee08157e72bc12e915ec"
+	expectedHash := "dfb26f6fc9ae7b55d0c60b0b1b78518644c397469624a77b063330ad05a43974"
 
-	actualHash := host.Hash()
+	actualHash := connection.Hash()
 	if actualHash != expectedHash {
 		t.Errorf("Expected hash: %s, but got: %s", expectedHash, actualHash)
 	}
 }
 
-func TestHPostgresHostInfo_Hash(t *testing.T) {
-	host := manifest.PostgresqlHostInfo{
+func TestPostgresConnectionInfo_Hash(t *testing.T) {
+	connection := manifest.PostgresqlConnectionInfo{
 		Name:    "my-database",
 		ConnStr: "postgresql://{{USERNAME}}:{{PASSWORD}}@database.example.com:5432/dbname?sslmode=require",
 	}
 
 	expectedHash := "bca6ac337c06274506199ceab0f5ce6145b2abd88504284ad0125b8ea1e1d051"
 
-	actualHash := host.Hash()
+	actualHash := connection.Hash()
 	if actualHash != expectedHash {
 		t.Errorf("Expected hash: %s, but got: %s", expectedHash, actualHash)
 	}
 }
 
-func TestDgraphCloudHostInfo_Hash(t *testing.T) {
-	host := manifest.DgraphHostInfo{
+func TestDgraphCloudConnectionInfo_Hash(t *testing.T) {
+	connection := manifest.DgraphConnectionInfo{
 		Name:       "my-dgraph-cloud",
 		GrpcTarget: "frozen-mango.grpc.eu-central-1.aws.cloud.dgraph.io:443",
 		Key:        "{{DGRAPH_KEY}}",
 	}
 
 	expectedHash := "542e5cf68cbff1b2839c2494da557d81c0e0c75a8313bedb06e8040dc4973658"
-	actualHash := host.Hash()
+	actualHash := connection.Hash()
 	if actualHash != expectedHash {
 		t.Errorf("Expected hash: %s, but got: %s", expectedHash, actualHash)
 	}
 }
 
-func TestDgraphLocalHostInfo_Hash(t *testing.T) {
-	host := manifest.DgraphHostInfo{
+func TestDgraphLocalConnectionInfo_Hash(t *testing.T) {
+	connection := manifest.DgraphConnectionInfo{
 		Name:       "local-dgraph",
 		GrpcTarget: "localhost:9080",
 		Key:        "",
 	}
 
 	expectedHash := "9e5fd654b1007e1eb2d32480c17e5f977046fdda53f649df166f68bf6545ebdc"
-	actualHash := host.Hash()
+	actualHash := connection.Hash()
 	if actualHash != expectedHash {
 		t.Errorf("Expected hash: %s, but got: %s", expectedHash, actualHash)
 	}
 }
 
-func TestGetHostVariablesFromManifest(t *testing.T) {
-	// This should match the host variables that are present in valid_hypermode.json
+func TestGetVariablesFromManifest(t *testing.T) {
+	// This should match the connection variables that are present in valid_modus.json
 	expectedVars := map[string][]string{
-		"my-model-host":      {"API_KEY"},
-		"another-model-host": {"API_KEY"},
-		"my-graphql-api":     {"AUTH_TOKEN"},
-		"my-rest-api":        {"API_TOKEN"},
-		"another-rest-api":   {"USERNAME", "PASSWORD"},
-		"neon":               {"POSTGRESQL_USERNAME", "POSTGRESQL_PASSWORD"},
-		"my-dgraph-cloud":    {"DGRAPH_KEY"},
+		"my-model-connection":      {"API_KEY"},
+		"another-model-connection": {"API_KEY"},
+		"my-graphql-api":           {"AUTH_TOKEN"},
+		"my-rest-api":              {"API_TOKEN"},
+		"another-rest-api":         {"USERNAME", "PASSWORD"},
+		"neon":                     {"POSTGRESQL_USERNAME", "POSTGRESQL_PASSWORD"},
+		"my-dgraph-cloud":          {"DGRAPH_KEY"},
 	}
 
 	m, err := manifest.ReadManifest(validManifest)
@@ -283,7 +251,7 @@ func TestGetHostVariablesFromManifest(t *testing.T) {
 		t.Errorf("Error reading manifest: %v", err)
 	}
 
-	vars := m.GetHostVariables()
+	vars := m.GetVariables()
 	if !reflect.DeepEqual(vars, expectedVars) {
 		t.Errorf("Expected vars: %+v, but got: %+v", expectedVars, vars)
 	}

@@ -1,0 +1,29 @@
+{
+  "$schema": "https://schema.hypermode.com/modus.json",
+  "endpoints": {
+    "default": {
+      "type": "graphql",
+      "path": "/graphql",
+      "auth": "bearer-token"
+    }
+  },
+  "models": {
+    // This defines the model that will be used for text generation.
+    "text-generator": {
+      "sourceModel": "gpt-3.5-turbo",
+      "connection": "openai",
+      "path": "v1/chat/completions"
+    }
+  },
+  "connections": {
+    // This defines the OpenAI host, which is used by the model above.
+    // The {{API_KEY}} will be replaced by the secret's value at run time.
+    "openai": {
+      "type": "http",
+      "baseUrl": "https://api.openai.com/",
+      "headers": {
+        "Authorization": "Bearer {{API_KEY}}"
+      }
+    }
+  }
+}
