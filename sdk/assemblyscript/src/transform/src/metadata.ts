@@ -112,6 +112,7 @@ export class Metadata {
     };
 
     const writeTable = (rows: string[][]) => {
+      rows = rows.filter((r) => !!r);
       const pad = rows.reduce(
         (max, row) => [
           Math.max(max[0], row[0].length),
