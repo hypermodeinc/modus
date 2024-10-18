@@ -1,22 +1,25 @@
 name: cd-runtime
+
 on:
   workflow_dispatch:
     inputs:
       environment:
-        description: "environment"
+        description: environment
         required: true
-        default: "stage"
+        default: stage
         type: choice
         options:
           - stage
           - prod
       releasetag:
-        description: "releasetag"
+        description: releasetag
         required: true
         type: string
+
 permissions:
-  id-token: write # This is required for requesting the JWT
   contents: read # This is required for actions/checkout
+  id-token: write # This is required for requesting the JWT
+
 jobs:
   runtime-build-workflow-dispatch:
     if: ${{ github.event_name == 'workflow_dispatch' }}
