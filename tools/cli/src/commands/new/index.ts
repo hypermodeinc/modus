@@ -17,8 +17,8 @@ import * as fs from "../../util/fs.js";
 import * as vi from "../../util/versioninfo.js";
 import { execFile } from "../../util/cp.js";
 import { isOnline } from "../../util/index.js";
-import { SDK } from "../../custom/globals.js";
-import { ask, clearLine, withReadline } from "../../util/index.js";
+import { SDK, parseSDK } from "../../custom/globals.js";
+import { ask, clearLine, withReadline, withSpinner } from "../../util/index.js";
 import SDKInstallCommand from "../sdk/install/index.js";
 
 export default class NewCommand extends Command {
@@ -46,11 +46,13 @@ export default class NewCommand extends Command {
     }),
     force: Flags.boolean({
       char: "f",
+      default: false,
       description: "Initialize without prompting",
     }),
     prerelease: Flags.boolean({
       char: "p",
       aliases: ["pre"],
+      default: false,
       description: "Use a prerelease version of the Modus SDK",
     }),
   };
@@ -73,14 +75,15 @@ export default class NewCommand extends Command {
         this.exit(1);
       }
 
-      let sdk = flags.sdk
-        ? Object.values(SDK)[
-            Object.keys(SDK)
-              .map((v) => v.toLowerCase())
-              .indexOf(flags.sdk?.trim().toLowerCase())
-          ]
-        : await this.promptSdkSelection(rl); // Use the enum
-      sdk = sdk.toLowerCase();
+      const sdk = parseSDK(
+        flags.sdk
+          ? Object.values(SDK)[
+              Object.keys(SDK)
+                .map((v) => v.toLowerCase())
+                .indexOf(flags.sdk?.trim().toLowerCase())
+            ]
+          : await this.promptSdkSelection(rl)
+      );
 
       const template = flags.template || (await this.promptTemplate(rl, "default"));
       if (!template) {
@@ -141,7 +144,7 @@ export default class NewCommand extends Command {
     return template;
   }
 
-  private async createApp(name: string, dir: string, sdk: string, template: string, force: boolean, prerelease: boolean, rl: readline.Interface) {
+  private async createApp(name: string, dir: string, sdk: SDK, template: string, force: boolean, prerelease: boolean, rl: readline.Interface) {
     if (!force && (await fs.exists(dir))) {
       if (!(await this.confirmAction(rl, "Attempting to overwrite a folder that already exists.\nAre you sure you want to continue? [y/n]"))) {
         clearLine();
@@ -152,15 +155,17 @@ export default class NewCommand extends Command {
       }
     }
 
+    // Verify and/or install the Modus SDK
     let installedVersion = await vi.getLatestInstalledVersion();
-
     if (await isOnline()) {
-      this.log(chalk.dim("Checking to see if you have the latest Modus SDK version ..."));
-      const latestVersion = await vi.getLatestRuntimeVersion(prerelease);
-      if (!latestVersion) {
-        this.logError("Failed to fetch the latest Modus SDK version.");
-        this.exit(1);
-      }
+      let latestVersion: string | undefined;
+      await withSpinner(chalk.dim("Checking to see if you have the latest Modus SDK version ..."), async () => {
+        latestVersion = await vi.getLatestRuntimeVersion(prerelease);
+        if (!latestVersion) {
+          this.logError("Failed to fetch the latest Modus SDK version.");
+          this.exit(1);
+        }
+      });
 
       let updateSDK = false;
       if (!installedVersion) {
@@ -178,7 +183,7 @@ export default class NewCommand extends Command {
         }
       }
       if (updateSDK) {
-        await SDKInstallCommand.run([latestVersion]);
+        await SDKInstallCommand.run([latestVersion!]);
         installedVersion = latestVersion;
       }
     }
@@ -191,48 +196,41 @@ export default class NewCommand extends Command {
     const version = installedVersion;
     this.log(chalk.dim(`Using Modus SDK ${version}`));
 
-    const templatesArchive = await vi.getLatestTemplatesArchivePath(version, sdk);
+    const templatesArchive = await vi.getLatestTemplatesArchivePath(version, sdk.toLowerCase());
     if (!templatesArchive) {
-      this.logError(`Could not find any templates for SDK version ${version}`);
+      this.logError(`Could not find any ${sdk} templates for SDK version ${version}`);
       this.exit(1);
     }
 
-    // TODO: validate prerequisites for the SDK
-
-    this.log(chalk.dim("Creating a new Modus app..."));
-
-    if (!(await fs.exists(dir))) {
-      await fs.mkdir(dir, { recursive: true });
+    // Validate SDK-specific prerequisites
+    switch (sdk) {
+      case SDK.AssemblyScript:
+        if (parseInt(process.versions.node.split(".")[0]) < 22) {
+          this.logError("The Modus AssemblyScript SDK requires Node.js v22 or later.");
+          this.exit(1);
+        }
+        break;
+      case SDK.Go:
+        break;
     }
 
-    await execFile("tar", ["-xf", templatesArchive, "-C", dir, "--strip-components=2", `templates/${template}`]);
+    // Create the app
+    await withSpinner("Creating a new Modus app ...", async () => {
+      if (!(await fs.exists(dir))) {
+        await fs.mkdir(dir, { recursive: true });
+      }
+      await execFile("tar", ["-xf", templatesArchive, "-C", dir, "--strip-components=2", `templates/${template}`]);
 
-    // if (!existsSync(templatePath)) {
-    //   this.logError("Could not find the template for the latest installed SDK version.");
-    //   this.exit(1);
-    // }
-    // cpSync(templatePath, dir, { recursive: true });
-
-    // const depsSpinner = ora({
-    //   color: "white",
-    //   indent: 2,
-    //   text: "Installing dependencies",
-    // }).start();
-
-    // if (sdk === "AssemblyScript") {
-    //   if (isRunnable(NPM_CMD)) execSync(quote([NPM_CMD, "install"]), { cwd: dir, stdio: "ignore" });
-    // } else if (sdk === "Go (Beta)") {
-    //   const sh = execSync("go install", { cwd: dir, stdio: "ignore" });
-    //   if (!sh) {
-    //     this.logError("Failed to install dependencies via go install! Please try again");
-    //     return;
-    //   }
-    // }
-
-    // depsSpinner.stop();
-    // this.log("- Installed Dependencies");
-
-    // await this.installRuntime();
+      // Apply SDK-specific modifications
+      switch (sdk) {
+        case SDK.AssemblyScript:
+          await execFile("npm", ["pkg", "set", `name=${name}`], { cwd: dir });
+          await execFile("npm", ["install"], { cwd: dir });
+          break;
+        case SDK.Go:
+          break;
+      }
+    });
 
     this.log(chalk.bold(chalk.cyanBright("Successfully created a Modus app!")));
     this.log("To start, run the following command:");

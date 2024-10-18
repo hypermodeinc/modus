@@ -14,7 +14,11 @@ import * as globals from "../custom/globals.js";
 
 export async function getLatestRuntimeVersion(prerelease: boolean): Promise<string | undefined> {
   try {
-    const tag = await findLatestReleaseTag(globals.GitHubOwner, globals.GitHubRepo, globals.GitHubRuntimeTagPrefix, prerelease);
+    let tag = await findLatestReleaseTag(globals.GitHubOwner, globals.GitHubRepo, globals.GitHubRuntimeTagPrefix, prerelease);
+    if (!tag && !prerelease) {
+      // If no stable release was found, look for a prerelease
+      tag = await findLatestReleaseTag(globals.GitHubOwner, globals.GitHubRepo, globals.GitHubRuntimeTagPrefix, true);
+    }
     if (tag) {
       return tag.slice(globals.GitHubRuntimeTagPrefix.length);
     }

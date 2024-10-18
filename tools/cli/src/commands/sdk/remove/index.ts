@@ -29,6 +29,7 @@ export default class SDKRemoveCommand extends Command {
   static flags = {
     force: Flags.boolean({
       char: "f",
+      default: false,
       description: "Remove without prompting",
     }),
   };

@@ -9,6 +9,7 @@
 
 import { Command } from "@oclif/core";
 import chalk from "chalk";
+import ora from "ora";
 
 import { spawnSync } from "node:child_process";
 import { createWriteStream, existsSync, mkdirSync } from "node:fs";
@@ -37,10 +38,17 @@ export function isRunnable(cmd: string): boolean {
   return true;
 }
 
-export async function cloneRepo(url: string, pth: string): Promise<boolean> {
-  // should download .zip curl https://github.com/<org>/<repo>/archive/refs/heads/<branch>.zip
-  // or download a release
-  return true;
+export async function withSpinner<T>(text: string, fn: () => Promise<T>): Promise<T> {
+  const spinner = ora({
+    color: "white",
+    text: text,
+  }).start();
+
+  try {
+    return await fn();
+  } finally {
+    spinner.stop();
+  }
 }
 
 export async function withReadline<T>(fn: (rl: readline.Interface) => Promise<T>): Promise<T> {

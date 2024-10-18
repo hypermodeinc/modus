@@ -32,11 +32,13 @@ export default class SDKInstallCommand extends Command {
   static flags = {
     force: Flags.boolean({
       char: "f",
+      default: false,
       description: "Force re-installation if version already exists",
     }),
     prerelease: Flags.boolean({
       char: "p",
       aliases: ["pre"],
+      default: false,
       description: "Install a prerelease version (used with 'latest' version)",
     }),
   };
@@ -58,12 +60,7 @@ export default class SDKInstallCommand extends Command {
       this.log(chalk.dim(`Getting latest ${versionText}`));
       clearLine();
 
-      let ver = await vi.getLatestRuntimeVersion(prerelease);
-      if (!ver && !prerelease) {
-        // if no stable version is found, try again with prerelease
-        ver = await vi.getLatestRuntimeVersion(true);
-      }
-
+      const ver = await vi.getLatestRuntimeVersion(prerelease);
       if (!ver) {
         this.logError(`Failed to fetch latest ${versionText}.`);
         this.exit(1);

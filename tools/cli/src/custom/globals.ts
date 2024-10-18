@@ -24,3 +24,14 @@ export enum SDK {
   AssemblyScript = "AssemblyScript",
   Go = "Go",
 }
+
+export function parseSDK(sdk: string): SDK {
+  switch (sdk.toLowerCase()) {
+    case "assemblyscript":
+      return SDK.AssemblyScript;
+    case "go":
+      return SDK.Go;
+    default:
+      throw new Error(`Unknown SDK: ${sdk}`);
+  }
+}
