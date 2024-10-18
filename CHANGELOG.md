@@ -39,6 +39,7 @@ In previous releases, the name "Hypermode" was used for all three._
 - Update to use new Modus manifest [#462](https://github.com/hypermodeinc/modus/pull/462)
 - Enable GraphQL endpoints to be defined in the manifest [#464](https://github.com/hypermodeinc/modus/pull/464)
 - Publish SDKs and templates via release workflows [#465](https://github.com/hypermodeinc/modus/pull/465)
+- Add ModusDB support to modus runtime [#477](https://github.com/hypermodeinc/modus/pull/477)
 
 ## 2024-10-02 - Version 0.12.7
 
