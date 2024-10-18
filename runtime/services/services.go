@@ -20,6 +20,7 @@ import (
 	"github.com/hypermodeinc/modus/runtime/hostfunctions"
 	"github.com/hypermodeinc/modus/runtime/logger"
 	"github.com/hypermodeinc/modus/runtime/manifestdata"
+	"github.com/hypermodeinc/modus/runtime/modusdb"
 	"github.com/hypermodeinc/modus/runtime/pluginmanager"
 	"github.com/hypermodeinc/modus/runtime/secrets"
 	"github.com/hypermodeinc/modus/runtime/sqlclient"
@@ -52,6 +53,7 @@ func Start() context.Context {
 	secrets.Initialize(ctx)
 	storage.Initialize(ctx)
 	db.Initialize(ctx)
+	modusdb.Init(ctx)
 	collections.Initialize(ctx)
 	manifestdata.MonitorManifestFile(ctx)
 	pluginmanager.Initialize(ctx)
@@ -76,4 +78,5 @@ func Stop(ctx context.Context) {
 	dgraphclient.ShutdownConns()
 	logger.Close()
 	db.Stop(ctx)
+	modusdb.Close(ctx)
 }
