@@ -1,5 +1,6 @@
 # This workflow will test all Go projects in the repository
 name: ci-go-test
+
 on:
   pull_request:
     types:
@@ -11,6 +12,11 @@ on:
       - '**/*.go'
       - '**/go.mod'
       - '**/testdata/**'
+
+permissions:
+  contents: read
+  actions: write
+
 jobs:
   get-dirs:
     if: github.event_name == 'pull_request'

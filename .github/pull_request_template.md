@@ -1,7 +1,9 @@
-# Description
+**Description**
+
 Please explain the changes you made here.
 
-# Checklist
+**Checklist**
+
 - [ ] Code compiles correctly and linting passes locally
 - [ ] Tests for new functionality and regression tests for bug fixes added
 - [ ] Documentation added or updated

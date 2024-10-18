@@ -1,19 +1,22 @@
-name: "Release AssemblyScript SDK"
+name: Release AssemblyScript SDK
+
 on:
   push:
     tags:
-      - "sdk/assemblyscript/v*"
+      - sdk/assemblyscript/v*
+
 permissions:
-  contents: "write"
+  contents: write
   id-token: write
+
 jobs:
   release:
     # note: must use GitHub-hosted runner for publishing to NPM with --provenance flag
     runs-on: ubuntu-latest
     steps:
-      - name: "Validate version"
+      - name: Validate version
         if: ${{ !startsWith(github.ref_name, 'sdk/assemblyscript/v') }}
-        run: 'echo "Modus AssemblyScript SDK version must start with `sdk/assemblyscript/v` && exit 1'
+        run: echo "Modus AssemblyScript SDK version must start with `sdk/assemblyscript/v`" && exit 1
       - uses: actions/checkout@v4
         with:
           ref: "${{ github.ref_name }}"
@@ -26,7 +29,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ">=22"
-          registry-url: "https://registry.npmjs.org"
+          registry-url: https://registry.npmjs.org
       - name: Prepare Templates
         working-directory: sdk/assemblyscript
         run: ./scripts/prepare-templates.sh ${{ steps.parse_sdk_version.outputs.sdk_version }}
