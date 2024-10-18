@@ -54,6 +54,7 @@
     "gitinfo",
     "gjson",
     "goarch",
+    "GOBIN",
     "goccy",
     "godotenv",
     "gojs",

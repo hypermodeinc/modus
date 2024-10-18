@@ -13,7 +13,7 @@ import ora from "ora";
 
 import { spawnSync } from "node:child_process";
 import { createWriteStream, existsSync, mkdirSync } from "node:fs";
-import { homedir } from "node:os";
+import os from "node:os";
 import path from "node:path";
 import readline from "node:readline";
 import { Readable } from "node:stream";
@@ -26,7 +26,7 @@ export async function ensureDir(dir: string): Promise<void> {
 // Expand ~ to the user's home directory
 export function expandHomeDir(filePath: string): string {
   if (filePath.startsWith("~")) {
-    return path.normalize(path.join(homedir(), filePath.slice(1)));
+    return path.normalize(path.join(os.homedir(), filePath.slice(1)));
   }
 
   return path.normalize(filePath);

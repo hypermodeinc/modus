@@ -10,6 +10,7 @@
 import { Command, Flags } from "@oclif/core";
 import chalk from "chalk";
 
+import os from "node:os";
 import path from "node:path";
 import readline from "node:readline";
 
@@ -17,7 +18,7 @@ import * as fs from "../../util/fs.js";
 import * as vi from "../../util/versioninfo.js";
 import { execFile } from "../../util/cp.js";
 import { isOnline } from "../../util/index.js";
-import { SDK, parseSDK } from "../../custom/globals.js";
+import { GitHubOwner, GitHubRepo, ModusHomeDir, SDK, parseSDK } from "../../custom/globals.js";
 import { ask, clearLine, withReadline, withSpinner } from "../../util/index.js";
 import SDKInstallCommand from "../sdk/install/index.js";
 
@@ -155,9 +156,23 @@ export default class NewCommand extends Command {
       }
     }
 
+    // Validate SDK-specific prerequisites
+    switch (sdk) {
+      case SDK.AssemblyScript:
+        if (parseInt(process.versions.node.split(".")[0]) < 22) {
+          this.logError("The Modus AssemblyScript SDK requires Node.js v22 or later.");
+          this.exit(1);
+        }
+        break;
+      case SDK.Go:
+        // TODO: Check for Go and TinyGo installations
+        break;
+    }
+
     // Verify and/or install the Modus SDK
     let installedVersion = await vi.getLatestInstalledVersion();
-    if (await isOnline()) {
+    const online = await isOnline();
+    if (online) {
       let latestVersion: string | undefined;
       await withSpinner(chalk.dim("Checking to see if you have the latest Modus SDK version ..."), async () => {
         latestVersion = await vi.getLatestRuntimeVersion(prerelease);
@@ -202,16 +217,27 @@ export default class NewCommand extends Command {
       this.exit(1);
     }
 
-    // Validate SDK-specific prerequisites
-    switch (sdk) {
-      case SDK.AssemblyScript:
-        if (parseInt(process.versions.node.split(".")[0]) < 22) {
-          this.logError("The Modus AssemblyScript SDK requires Node.js v22 or later.");
+    // Install build tools if needed
+    if (sdk == SDK.Go) {
+      const ext = os.platform() === "win32" ? ".exe" : "";
+      const buildTool = path.join(ModusHomeDir, "sdk", version, "modus-go-build" + ext);
+      if (!(await fs.exists(buildTool))) {
+        if (online) {
+          const module = `github.com/${GitHubOwner}/${GitHubRepo}/sdk/go/tools/modus-go-build@${version}`;
+          await withSpinner("Downloading the Modus Go build tool ...", async () => {
+            await execFile("go", ["install", module], {
+              cwd: ModusHomeDir,
+              env: {
+                ...process.env,
+                GOBIN: path.join(ModusHomeDir, "sdk", version),
+              },
+            });
+          });
+        } else {
+          this.logError("Could not find the Go build tool. Please try again when you are online.");
           this.exit(1);
         }
-        break;
-      case SDK.Go:
-        break;
+      }
     }
 
     // Create the app
@@ -222,12 +248,14 @@ export default class NewCommand extends Command {
       await execFile("tar", ["-xf", templatesArchive, "-C", dir, "--strip-components=2", `templates/${template}`]);
 
       // Apply SDK-specific modifications
+      const execOpts = { env: process.env, cwd: dir };
       switch (sdk) {
         case SDK.AssemblyScript:
-          await execFile("npm", ["pkg", "set", `name=${name}`], { cwd: dir });
-          await execFile("npm", ["install"], { cwd: dir });
+          await execFile("npm", ["pkg", "set", `name=${name}`], execOpts);
+          await execFile("npm", ["install"], execOpts);
           break;
         case SDK.Go:
+          await execFile("go", ["mod", "download"], execOpts);
           break;
       }
     });
