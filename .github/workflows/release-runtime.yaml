@@ -14,6 +14,7 @@ jobs:
         run: 'echo "Modus Runtime version must start with `runtime/v` && exit 1'
       - uses: actions/checkout@v4
         with:
+          fetch-depth: 0
           ref: "${{ github.ref_name }}"
       - uses: actions/setup-go@v5
         with:
@@ -28,3 +29,8 @@ jobs:
         env:
           GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
           GORELEASER_KEY: "${{ secrets.GORELEASER_KEY }}"
+          MACOS_SIGN_P12: "${{ secrets.MACOS_SIGN_P12 }}"
+          MACOS_SIGN_PASSWORD: "${{ secrets.MACOS_SIGN_PASSWORD }}"
+          MACOS_NOTARY_ISSUER_ID: "${{ secrets.MACOS_NOTARY_ISSUER_ID }}"
+          MACOS_NOTARY_KEY_ID: "${{ secrets.MACOS_NOTARY_KEY_ID }}"
+          MACOS_NOTARY_KEY: "${{ secrets.MACOS_NOTARY_KEY }}"
