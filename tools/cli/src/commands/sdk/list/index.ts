@@ -13,7 +13,7 @@ import * as vi from "../../../util/versioninfo.js";
 
 export default class SDKListCommand extends Command {
   static args = {};
-  static description = "List installed Modus SDK versions";
+  static description = "List installed Modus SDKs";
   static examples = ["modus sdk list"];
   static flags = {};
 

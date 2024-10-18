@@ -71,7 +71,7 @@ export default class Run extends Command {
     }),
   };
 
-  static description = "Launch a Modus app to local development";
+  static description = "Start a Modus app locally for development";
 
   static examples = [`<%= config.bin %> <%= command.id %> run ./app-path --watch`];
 
@@ -119,20 +119,20 @@ export default class Run extends Command {
       return;
     }
 
-    let project_name: string;
+    let appName: string;
     try {
-      project_name = JSON.parse(readFileSync(path.join(cwd, "/package.json")).toString()).name;
+      appName = JSON.parse(readFileSync(path.join(cwd, "/package.json")).toString()).name;
     } catch {
       this.logError("Could not read package.json! Please try again");
       return;
     }
 
-    const build_wasm = path.join(cwd, "/build/" + project_name + ".wasm");
+    const build_wasm = path.join(cwd, "/build/" + appName + ".wasm");
     try {
       if (flags.build || !existsSync(build_wasm)) await BuildCommand.run(args.path ? [args.path] : []);
     } catch {}
 
-    const deploy_wasm = expandHomeDir("~/.modus/" + project_name + ".wasm");
+    const deploy_wasm = expandHomeDir("~/.modus/" + appName + ".wasm");
     if (isDev) {
       copyFileSync(build_wasm, deploy_wasm);
     }

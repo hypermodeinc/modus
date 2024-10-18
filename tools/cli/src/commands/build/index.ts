@@ -19,14 +19,14 @@ import { ModusHomeDir, SDK } from "../../custom/globals.js";
 export default class BuildCommand extends Command {
   static args = {
     path: Args.string({
-      description: "./my-project-|-Directory to build",
+      description: "./my-app-|-Directory to build",
       default: ".",
     }),
   };
 
-  static description = "Build a Modus project";
+  static description = "Build a Modus app";
 
-  static examples = ["modus build ./my-project"];
+  static examples = ["modus build ./my-app"];
 
   static flags = {};
 
@@ -37,7 +37,7 @@ export default class BuildCommand extends Command {
     const sdk = await determineSDK(cwd);
 
     // TODO: Reuse the logic from the `modus new` command to check for latest versions when online.
-    // But also, we need to somehow figure out which version of the runtime is compatible with the project.
+    // But also, we need to somehow figure out which version of the runtime is compatible with the app.
     // For now, we'll just use the latest installed version.
     const installedVersion = await vi.getLatestInstalledVersion();
     if (!installedVersion) {
