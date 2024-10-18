@@ -23,7 +23,7 @@ export default class SDKListCommand extends Command {
       this.log(chalk.yellow("No Modus SDK versions installed!"));
     }
 
-    this.log(chalk.cyan(chalk.bold("Installed Modus SDK Versions:")));
+    this.log(chalk.bold.cyan("Installed Modus SDK Versions:"));
     for (const version of versions) {
       this.log(version);
     }
