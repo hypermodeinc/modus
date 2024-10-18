@@ -9,18 +9,28 @@
 
 import { Command, Help, Interfaces } from "@oclif/core";
 import chalk from "chalk";
+import { getLogo } from "./logo.js";
 
 export default class CustomHelp extends Help {
   private target_pad = 15;
   private pre_pad = 0;
   private post_pad = 0;
-  formatRoot(): string {
-    let out = "";
-    out += `${chalk.bold.blueBright("Modus")} CLI ${chalk.dim(`(v${this.config.version})`)}\n\n`;
 
-    // Usage: modus <command> [...flags] [...args]
-    out += chalk.bold("Usage: modus") + " " + chalk.dim("<command>") + " " + chalk.bold.blueBright("[...flags]") + " " + chalk.bold("[...args]");
+  formatHeader(): string {
+    const logo = getLogo();
+
+    let out = "";
+    out += logo;
+    out += "\n";
+    out += chalk.dim(`Modus CLI v${this.config.version}`);
+    out += "\n";
+
     return out;
+  }
+
+  formatRoot(): string {
+    // Usage: modus <command> [...flags] [...args]
+    return chalk.bold("Usage: modus") + " " + chalk.dim("<command>") + " " + chalk.bold.blueBright("[...flags]") + " " + chalk.bold("[...args]");
   }
 
   formatCommand(command: Command.Loadable): string {
@@ -63,8 +73,8 @@ export default class CustomHelp extends Help {
 
   formatTopic(topic: Interfaces.Topic): string {
     let out = "";
-    out += `${chalk.bold.blueBright("Modus")} CLI ${chalk.dim(`(v${this.config.version})`)}\n\n`;
-    if (topic.description) out += chalk.dim(topic.description) + "\n";
+
+    if (topic.description) out += chalk.hex("#A585FF")(topic.description) + "\n";
 
     out += `${chalk.bold("Usage: modus " + topic.name)} ${chalk.bold.blue("[command]")}\n`;
     return out;
@@ -82,25 +92,30 @@ export default class CustomHelp extends Help {
     return out.trim();
   }
 
-  formatRootFooter(): string {
+  formatFooter(): string {
     let out = "";
-    out += "View the docs:" + " ".repeat(Math.max(1, this.pre_pad + this.post_pad - 12)) + chalk.blueBright("https://docs.hypermode.com/introduction") + "\n";
+    out += "View the docs:" + " ".repeat(Math.max(1, this.pre_pad + this.post_pad - 12)) + chalk.blueBright("https://docs.hypermode.com/modus") + "\n";
     out += "View the repo:" + " ".repeat(Math.max(1, this.pre_pad + this.post_pad - 12)) + chalk.blueBright("https://github.com/hypermodeinc/modus") + "\n";
 
     out += "\n";
-    out += "Made with 💖 by " + chalk.magentaBright("https://hypermode.com/");
+    out += "Made with 💖 by " + chalk.hex("#602AF8")("https://hypermode.com");
+    out += "\n";
+
     return out;
   }
 
   async showRootHelp(): Promise<void> {
+    this.log(this.formatHeader());
+
     let rootTopics = this.sortedTopics;
     let rootCommands = this.sortedCommands;
     const state = this.config.pjson?.oclif?.state;
     if (state) {
       this.log(state === "deprecated" ? `${this.config.bin} is deprecated` : `${this.config.bin} is in ${state}.\n`);
     }
+
     this.log(this.formatRoot());
-    this.log("");
+    this.log();
     if (!this.opts.all) {
       rootTopics = rootTopics.filter((t) => !t.name.includes(":"));
       rootCommands = rootCommands.filter((c) => !c.id.includes(":"));
@@ -126,19 +141,23 @@ export default class CustomHelp extends Help {
     this.post_pad = 6 + this.pre_pad + this.post_pad > this.target_pad ? 6 + this.pre_pad + this.post_pad - this.target_pad : this.target_pad - this.pre_pad;
     this.pre_pad += 2;
 
-    if (rootTopics.length > 0) {
-      this.log(this.formatTopics(rootTopics));
-      this.log("");
-    }
     if (rootCommands.length > 0) {
       rootCommands = rootCommands.filter((c) => c.id);
       this.log(this.formatCommands(rootCommands));
-      this.log("");
+      this.log();
     }
-    this.log(this.formatRootFooter());
+
+    if (rootTopics.length > 0) {
+      this.log(this.formatTopics(rootTopics));
+      this.log();
+    }
+
+    this.log(this.formatFooter());
   }
 
   async showTopicHelp(topic: Interfaces.Topic) {
+    this.log(this.formatHeader());
+
     const { name } = topic;
     const commands = this.sortedCommands.filter((c) => c.id.startsWith(name + ":"));
     for (const command of commands) {
@@ -165,30 +184,38 @@ export default class CustomHelp extends Help {
     this.log(this.formatTopic(topic));
     if (commands.length > 0) {
       this.log(this.formatCommands(commands));
-      this.log("");
+      this.log();
     }
+
+    this.log(this.formatFooter());
   }
 
   async showCommandHelp(command: Command.Loadable): Promise<void> {
+    this.log(this.formatHeader());
+
     const margin = 20;
     const name = command.id.replaceAll(":", " ");
     const args = Object.keys(command.args);
     const flags = Object.keys(command.flags);
 
-    this.log(chalk.bold.blueBright("Modus") + " Help " + chalk.dim("(v0.0.0)") + "\n");
-
-    if (command.description) this.log(chalk.dim(command.description));
+    if (command.description) this.log(chalk.hex("#A585FF")(command.description));
 
     this.log(chalk.bold("Usage:") + " " + chalk.bold("modus " + name) + (args.length > 0 ? " [...args]" : "") + (flags.length > 0 ? chalk.blueBright(" [...flags]") : "") + "\n");
     // if (examples) {
     //     this.log();
     //     this.log(chalk.bold("Examples:") + "\n");
-    //     for (const example of examples) this.log("  " + chalk.dim(example));
+    //     for (const example of examples) {
+    //         this.log("  " + chalk.dim(example));
+    //     }
+    //     this.log();
     // }
 
     if (flags.length) {
       this.log(chalk.bold("Flags:"));
-      for (const flag of Object.values(command.flags)) this.log("  " + chalk.bold.blueBright("--" + flag.name) + " ".repeat(margin - flag.name.length) + flag.description);
+      for (const flag of Object.values(command.flags)) {
+        this.log("  " + chalk.bold.blueBright("--" + flag.name) + " ".repeat(margin - flag.name.length) + flag.description);
+      }
+      this.log();
     }
 
     if (args.length) {
@@ -200,9 +227,11 @@ export default class CustomHelp extends Help {
           usage = arg.description.split("-|-")[0];
           desc = arg.description.split("-|-")[1];
         }
-
         this.log("  " + chalk.bold.blueBright(arg.name) + " ".repeat(Math.max(1, margin + 2 - arg.name.length)) + desc);
       }
+      this.log();
     }
+
+    this.log(this.formatFooter());
   }
 }

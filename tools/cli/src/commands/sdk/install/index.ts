@@ -158,7 +158,7 @@ export default class SDKInstallCommand extends Command {
     }
 
     clearLine();
-    this.log(chalk.bold(chalk.cyanBright("Installation successful!")));
+    this.log(chalk.bold.cyanBright("Installation successful!"));
   }
 
   private logError(message: string) {

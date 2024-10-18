@@ -82,7 +82,7 @@ export default class NewCommand extends Command {
               .map((v) => v.toLowerCase())
               .indexOf(flags.sdk?.trim().toLowerCase())
           ]
-        : await this.promptSdkSelection(),
+        : await this.promptSdkSelection()
     );
 
     const template = flags.template || (await this.promptTemplate("default"));
@@ -282,10 +282,10 @@ export default class NewCommand extends Command {
       }
     });
 
-    this.log(chalk.bold(chalk.cyanBright("Successfully created a Modus app!")));
+    this.log(chalk.bold.cyanBright("Successfully created a Modus app!"));
     this.log("To start, run the following command:");
     this.log("$ " + chalk.blueBright(`${dir == process.cwd() ? "" : "cd " + path.basename(dir)} && modus dev --build`));
-    this.log("");
+    this.log();
   }
 
   private logError(message: string) {
