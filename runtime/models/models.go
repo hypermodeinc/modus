@@ -52,10 +52,11 @@ func InvokeModel(ctx context.Context, modelName string, input string) (string, e
 		return "", err
 	}
 
+	// NOTE: Bedrock support is temporarily disabled
 	// TODO: use the provider pattern instead of branching
-	if model.Connection == "aws-bedrock" {
-		return invokeAwsBedrockModel(ctx, model, input)
-	}
+	// if model.Connection == "aws-bedrock" {
+	// 	return invokeAwsBedrockModel(ctx, model, input)
+	// }
 
 	return PostToModelEndpoint[string](ctx, model, input)
 }
