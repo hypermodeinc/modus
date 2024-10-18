@@ -17,7 +17,6 @@ import { Colors } from "assemblyscript/util/terminal.js";
 import { WriteStream as FSWriteStream } from "fs";
 import { WriteStream as TTYWriteStream } from "tty";
 import { FunctionSignature, TypeDefinition } from "./types.js";
-import writeLogo from "./logo.js";
 
 const METADATA_VERSION = 2;
 
@@ -87,28 +86,18 @@ export class Metadata {
     module.addCustomSection("hypermode_meta", encoder.encode(json));
   }
 
-  logToStream(stream: FSWriteStream | TTYWriteStream, markdown = false) {
-    writeLogo(stream, markdown);
-
+  logToStream(stream: FSWriteStream | TTYWriteStream) {
     const isTTY = stream instanceof TTYWriteStream;
     const boldOn = isTTY ? "\u001b[1m" : "";
     const boldOff = isTTY ? "\u001b[0m" : "";
 
     const colors = new Colors(stream as { isTTY: boolean });
     const writeHeader = (text: string) => {
-      if (markdown) {
-        stream.write(`### ${text}\n`);
-      } else {
-        stream.write(boldOn + colors.blue(text) + boldOff + "\n");
-      }
+      stream.write(boldOn + colors.blue(text) + boldOff + "\n");
     };
 
     const writeItem = (text: string) => {
-      if (markdown) {
-        stream.write(`  - ${text}\n`);
-      } else {
-        stream.write(`  ${colors.cyan(text)}\n`);
-      }
+      stream.write(`  ${colors.cyan(text)}\n`);
     };
 
     const writeTable = (rows: string[][]) => {
@@ -121,21 +110,12 @@ export class Metadata {
         [0, 0],
       );
 
-      if (markdown) {
-        stream.write(`| ${" ".repeat(pad[0])} | ${" ".repeat(pad[1])} |\n`);
-        stream.write(`| ${"-".repeat(pad[0])} | ${"-".repeat(pad[1])} |\n`);
-      }
       rows.forEach((row) => {
         if (row) {
-          const padding0 = " ".repeat(pad[0] - row[0].length);
-          const padding1 = " ".repeat(pad[1] - row[1].length);
-          if (markdown) {
-            stream.write(`| ${row[0]}${padding0} | ${row[1]}${padding1} |\n`);
-          } else {
-            const key = colors.cyan(row[0] + ":");
-            const value = colors.blue(row[1]);
-            stream.write(`  ${key}${padding0} ${value}\n`);
-          }
+          const padding = " ".repeat(pad[0] - row[0].length);
+          const key = colors.cyan(row[0] + ":");
+          const value = colors.blue(row[1]);
+          stream.write(`  ${key}${padding} ${value}\n`);
         }
       });
     };

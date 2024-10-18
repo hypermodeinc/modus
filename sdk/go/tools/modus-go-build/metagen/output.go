@@ -10,42 +10,25 @@
 package metagen
 
 import (
-	_ "embed"
 	"fmt"
 	"io"
 	"os"
 	"strings"
 
 	"github.com/fatih/color"
+	"github.com/mattn/go-isatty"
+
 	"github.com/hypermodeinc/modus/sdk/go/tools/modus-go-build/metadata"
 	"github.com/hypermodeinc/modus/sdk/go/tools/modus-go-build/utils"
-	"github.com/mattn/go-isatty"
 )
-
-type outputMode int
-
-const (
-	outputText     outputMode = 1
-	outputMarkdown outputMode = 2
-)
-
-//go:embed logo.txt
-var logo string
-
-func WriteLogo() {
-	w := os.Stdout
-	mode := getOutputMode(w)
-
-	fmt.Fprintln(w)
-	writeAsciiLogo(w, mode)
-}
 
 func LogToConsole(meta *metadata.Metadata) {
 	w := os.Stdout
-	mode := getOutputMode(w)
+	color.Output = w
+	color.NoColor = !isatty.IsTerminal(w.Fd())
 
-	writeHeader(w, mode, "Metadata:")
-	writeTable(w, mode, [][]string{
+	writeHeader(w, "Metadata:")
+	writeTable(w, [][]string{
 		{"Plugin Name", meta.Plugin},
 		{"Go Module", meta.Module},
 		{"Modus SDK", meta.SDK},
@@ -57,10 +40,10 @@ func LogToConsole(meta *metadata.Metadata) {
 	fmt.Fprintln(w)
 
 	if len(meta.FnExports) > 0 {
-		writeHeader(w, mode, "Functions:")
+		writeHeader(w, "Functions:")
 		for _, k := range meta.FnExports.SortedKeys() {
 			fn := meta.FnExports[k]
-			writeItem(w, mode, fn.String(meta))
+			writeItem(w, fn.String(meta))
 		}
 		fmt.Fprintln(w)
 	}
@@ -74,15 +57,15 @@ func LogToConsole(meta *metadata.Metadata) {
 	}
 
 	if len(types) > 0 {
-		writeHeader(w, mode, "Custom Types:")
+		writeHeader(w, "Custom Types:")
 		for _, t := range types {
-			writeItem(w, mode, meta.Types[t].String(meta))
+			writeItem(w, meta.Types[t].String(meta))
 		}
 		fmt.Fprintln(w)
 	}
 
 	if utils.IsDebugModeEnabled() {
-		writeHeader(w, mode, "Metadata JSON:")
+		writeHeader(w, "Metadata JSON:")
 		metaJson, _ := utils.JsonSerialize(meta, true)
 		fmt.Fprintln(w, string(metaJson))
 		fmt.Fprintln(w)
@@ -90,48 +73,19 @@ func LogToConsole(meta *metadata.Metadata) {
 
 }
 
-func getOutputMode(f *os.File) outputMode {
-	color.NoColor = !isatty.IsTerminal(f.Fd())
-	color.Output = f
-	return outputText
+func writeHeader(w io.Writer, text string) {
+	color.Set(color.FgBlue, color.Bold)
+	fmt.Fprintln(w, text)
+	color.Unset()
 }
 
-func writeAsciiLogo(w io.Writer, mode outputMode) {
-	switch mode {
-	case outputText:
-		color.Set(color.FgBlue)
-		fmt.Fprintln(w, logo)
-		color.Unset()
-	case outputMarkdown:
-		fmt.Fprintln(w, "```")
-		fmt.Fprintln(w, logo)
-		fmt.Fprintln(w, "```")
-	}
+func writeItem(w io.Writer, text string) {
+	color.Set(color.FgCyan)
+	fmt.Fprintf(w, "  %s\n", text)
+	color.Unset()
 }
 
-func writeHeader(w io.Writer, mode outputMode, text string) {
-	switch mode {
-	case outputText:
-		color.Set(color.FgBlue, color.Bold)
-		fmt.Fprintln(w, text)
-		color.Unset()
-	case outputMarkdown:
-		fmt.Fprintf(w, "### %s\n", text)
-	}
-}
-
-func writeItem(w io.Writer, mode outputMode, text string) {
-	switch mode {
-	case outputText:
-		color.Set(color.FgCyan)
-		fmt.Fprintf(w, "  %s\n", text)
-		color.Unset()
-	case outputMarkdown:
-		fmt.Fprintf(w, "  - %s\n", text)
-	}
-}
-
-func writeTable(w io.Writer, mode outputMode, rows [][]string) {
+func writeTable(w io.Writer, rows [][]string) {
 	pad := make([]int, len(rows))
 	for _, row := range rows {
 		for i, cell := range row {
@@ -141,31 +95,19 @@ func writeTable(w io.Writer, mode outputMode, rows [][]string) {
 		}
 	}
 
-	if mode == outputMarkdown {
-		fmt.Fprintf(w, "| %s | %s |\n", strings.Repeat(" ", pad[0]), strings.Repeat(" ", pad[1]))
-		fmt.Fprintf(w, "| %s | %s |\n", strings.Repeat("-", pad[0]), strings.Repeat("-", pad[1]))
-	}
-
 	for _, row := range rows {
 		if len(row) != 2 || len(row[0]) == 0 || len(row[1]) == 0 {
 			continue
 		}
 
-		pad0 := strings.Repeat(" ", pad[0]-len(row[0]))
-		pad1 := strings.Repeat(" ", pad[1]-len(row[1]))
+		padding := strings.Repeat(" ", pad[0]-len(row[0]))
 
-		switch mode {
-		case outputText:
-			fmt.Fprint(w, "  ")
-			color.Set(color.FgCyan)
-			fmt.Fprintf(w, "%s:%s ", row[0], pad0)
-			color.Set(color.FgBlue)
-			fmt.Fprint(w, row[1])
-			color.Unset()
-			fmt.Fprint(w, "\n")
-
-		case outputMarkdown:
-			fmt.Fprintf(w, "| %s%s | %s%s |\n", row[0], pad0, row[1], pad1)
-		}
+		fmt.Fprint(w, "  ")
+		color.Set(color.FgCyan)
+		fmt.Fprintf(w, "%s:%s ", row[0], padding)
+		color.Set(color.FgBlue)
+		fmt.Fprint(w, row[1])
+		color.Unset()
+		fmt.Fprint(w, "\n")
 	}
 }
