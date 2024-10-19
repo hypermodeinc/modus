@@ -13,9 +13,14 @@ fi
 version=$1
 
 version=${version#"v"}
-echo "Preparing templates for release with version ${version}"
+echo "Preparing release for version ${version}"
+cd ..
 
-cd ../templates
+# Update the version in the sdk.json file
+jq --arg ver "${version}" '.sdk.version = $ver' sdk.json > tmp.json && mv tmp.json sdk.json
+
+# Update the version of the sdk used in the templates
+cd templates
 for template in *; do
   if [ -d "${template}" ]; then
     cd "${template}"
@@ -26,6 +31,7 @@ for template in *; do
     cd ..
   fi
 done
-
 cd ..
-tar -czvf ../../templates_go_v${version}.tar.gz templates
+
+# Create a tarball of the templates
+tar -czvf templates_go_v${version}.tar.gz templates
