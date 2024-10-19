@@ -44,8 +44,6 @@ func main() {
 
 	color.NoColor = !isatty.IsTerminal(os.Stdout.Fd())
 
-	metagen.WriteLogo()
-
 	if err := codegen.PreProcess(config); err != nil {
 		exitWithError("Error while pre-processing source files", err)
 	}

@@ -52,7 +52,7 @@ if (existsSync(manifestFile)) {
   await copyFile(manifestFile, `build/${manifestFile}`);
 }
 
-console.log(`Building ${pkg}.wasm ...`);
+console.log(`Building ${pkg}.wasm ...\n`);
 const cmdArgs = [
   npmPath,
   "exec",

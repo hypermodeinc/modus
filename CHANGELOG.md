@@ -41,6 +41,7 @@ In previous releases, the name "Hypermode" was used for all three._
 - Publish SDKs and templates via release workflows [#465](https://github.com/hypermodeinc/modus/pull/465)
 - Fix AssemblyScript build failure when no Git repo is present [#475](https://github.com/hypermodeinc/modus/pull/475)
 - Disable AWS Bedrock support temporarily [#479](https://github.com/hypermodeinc/modus/pull/479)
+- Update SDK releases [#480](https://github.com/hypermodeinc/modus/pull/480)
 
 ## 2024-10-02 - Version 0.12.7
 

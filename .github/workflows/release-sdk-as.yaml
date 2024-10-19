@@ -27,12 +27,9 @@ jobs:
         with:
           node-version: ">=22"
           registry-url: "https://registry.npmjs.org"
-      - name: Prepare Templates
+      - name: Prepare Release
         working-directory: sdk/assemblyscript
-        run: ./scripts/prepare-templates.sh ${{ steps.parse_sdk_version.outputs.sdk_version }}
-      - name: Set Package Version
-        working-directory: sdk/assemblyscript/src
-        run: npm version ${{ steps.parse_sdk_version.outputs.sdk_version }} --no-git-tag-version
+        run: ./scripts/prepare-release.sh ${{ steps.parse_sdk_version.outputs.sdk_version }}
       - name: Install Dependencies
         working-directory: sdk/assemblyscript/src
         run: npm ci
@@ -44,6 +41,8 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          files: templates_assemblyscript_${{ steps.parse_sdk_version.outputs.sdk_version }}.tar.gz
+          files: |
+            sdk/assemblyscript/sdk.json
+            sdk/assemblyscript/templates_assemblyscript_${{ steps.parse_sdk_version.outputs.sdk_version }}.tar.gz
           prerelease: ${{ contains(steps.parse_sdk_version.outputs.sdk_version, '-') }}
           make_latest: false
