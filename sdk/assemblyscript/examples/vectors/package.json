@@ -2,7 +2,7 @@
   "name": "vectors-example",
   "private": true,
   "description": "Modus AssemblyScript Vectors Example",
-  "author": "Hypermode, Inc.",
+  "author": "Hypermode Inc.",
   "license": "Apache-2.0",
   "type": "module",
   "scripts": {
