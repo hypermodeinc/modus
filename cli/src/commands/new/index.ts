@@ -280,7 +280,7 @@ export default class NewCommand extends Command {
     this.log();
 
     this.log("To start, run the following command:");
-    this.log("$ " + chalk.blueBright(`${dir == process.cwd() ? "" : "cd " + path.basename(dir)} && modus dev --build`));
+    this.log("$ " + chalk.blueBright(`${dir == process.cwd() ? "" : "cd " + path.basename(dir)} && modus dev`));
     this.log();
   }
 

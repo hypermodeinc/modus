@@ -115,6 +115,7 @@
     "noescape",
     "nolint",
     "nologo",
+    "nowatch",
     "npmjs",
     "nquads",
     "objs",

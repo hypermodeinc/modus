@@ -41,9 +41,9 @@ export default class DevCommand extends Command {
       aliases: ["pre"],
       description: "Use a prerelease version of the Modus runtime.  Not needed if specifying a runtime version.",
     }),
-    watch: Flags.boolean({
-      char: "w",
-      description: "Watch app code for changes and rebuild continually",
+    nowatch: Flags.boolean({
+      aliases: ["no-watch"],
+      description: "Don't watch app code for changes",
     }),
     freq: Flags.integer({
       char: "f",
@@ -54,7 +54,7 @@ export default class DevCommand extends Command {
 
   static description = "Run a Modus app locally for development";
 
-  static examples = ["modus dev", "modus dev --watch", "modus dev ./my-app", "modus dev ./my-app --watch"];
+  static examples = ["modus dev", "modus dev ./my-app", "modus dev ./my-app --no-watch"];
 
   async run(): Promise<void> {
     const { args, flags } = await this.parse(DevCommand);
@@ -146,7 +146,7 @@ export default class DevCommand extends Command {
       },
     });
 
-    if (flags.watch) {
+    if (!flags.nowatch) {
       const delay = flags.freq;
       let lastModified = 0;
       let lastBuild = 0;
