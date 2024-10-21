@@ -6,7 +6,7 @@
   "license": "Apache-2.0",
   "type": "module",
   "scripts": {
-    "build": "modus-as-build",
+    "build": "modus build",
     "lint": "eslint .",
     "pretty": "prettier --write .",
     "pretty:check": "prettier --check ."

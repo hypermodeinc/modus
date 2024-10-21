@@ -22,8 +22,6 @@ export default class ModusTransform extends Transform {
     m.addImportFn(info.importFns);
     m.addTypes(info.types);
     m.writeToModule(module);
-
-    // Write to stdout
-    m.logToStream(process.stdout);
+    m.logResults();
   }
 }
