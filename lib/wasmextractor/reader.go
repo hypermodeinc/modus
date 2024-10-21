@@ -7,7 +7,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-package metadata
+package wasmextractor
 
 import (
 	"encoding/json"
