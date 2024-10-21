@@ -15,18 +15,28 @@ import (
 	"path/filepath"
 )
 
-const pre_file = "hyp_pre_generated.go"
-const post_file = "hyp_post_generated.go"
-
-var allFiles = []string{pre_file, post_file}
+const pre_file = "modus_pre_generated.go"
+const post_file = "modus_post_generated.go"
 
 func cleanup(dir string) error {
-	for _, f := range allFiles {
-		err := os.Remove(filepath.Join(dir, f))
-		if err != nil && !os.IsNotExist(err) {
+	globs := []string{"modus*_generated.go", "hyp*_generated.go"}
+	files := []string{}
+
+	for _, g := range globs {
+		f, err := filepath.Glob(filepath.Join(dir, g))
+		if err != nil {
+			return err
+		}
+		files = append(files, f...)
+	}
+
+	for _, f := range files {
+		err := os.Remove(f)
+		if err != nil {
 			return err
 		}
 	}
+
 	return nil
 }
 

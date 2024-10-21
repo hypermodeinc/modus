@@ -13,7 +13,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"time"
 
 	"github.com/hypermodeinc/modus/lib/manifest"
 	"github.com/hypermodeinc/modus/sdk/go/tools/modus-go-build/codegen"
@@ -22,9 +21,6 @@ import (
 	"github.com/hypermodeinc/modus/sdk/go/tools/modus-go-build/metagen"
 	"github.com/hypermodeinc/modus/sdk/go/tools/modus-go-build/modinfo"
 	"github.com/hypermodeinc/modus/sdk/go/tools/modus-go-build/wasm"
-
-	"github.com/fatih/color"
-	"github.com/mattn/go-isatty"
 )
 
 func main() {
@@ -42,14 +38,9 @@ func main() {
 		exitWithError("Error", err)
 	}
 
-	color.NoColor = !isatty.IsTerminal(os.Stdout.Fd())
-
 	if err := codegen.PreProcess(config); err != nil {
 		exitWithError("Error while pre-processing source files", err)
 	}
-
-	msg := fmt.Sprintf("\nBuilding %s ...", config.WasmFileName)
-	fmt.Printf("%s\n\n", msg)
 
 	if err := compiler.Compile(config, false); err != nil {
 		exitWithError("Error building wasm", err)
@@ -74,12 +65,6 @@ func main() {
 
 	if err := validateAndCopyManifestToOutput(config); err != nil {
 		exitWithError("Manifest error", err)
-	}
-
-	// for dramatic effect
-	if isatty.IsTerminal(os.Stdout.Fd()) {
-		fmt.Printf("\033[2A\033[%dC\U0001F389\n\n", len(msg))
-		time.Sleep(250 * time.Millisecond)
 	}
 
 	metagen.LogToConsole(meta)
