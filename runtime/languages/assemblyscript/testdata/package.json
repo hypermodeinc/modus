@@ -6,7 +6,7 @@
   },
   "dependencies": {
     "@hypermode/modus-sdk-as": "../../../../sdk/assemblyscript/src",
-    "json-as": "^0.9.23"
+    "json-as": "0.9.21"
   },
   "devDependencies": {
     "assemblyscript": "^0.27.30",
