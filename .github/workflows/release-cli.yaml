@@ -29,7 +29,7 @@ jobs:
           registry-url: "https://registry.npmjs.org"
       - name: Prepare Release
         working-directory: cli
-        run: ./scripts/prepare-release.sh ${{ steps.parse_cli_version.outputs.cli_version }}
+        run: npm version ${{ steps.parse_cli_version.outputs.cli_version }} --no-git-tag-version
       - name: Install Dependencies
         working-directory: cli
         run: npm ci
