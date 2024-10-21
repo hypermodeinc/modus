@@ -6,25 +6,24 @@
   "license": "Apache-2.0",
   "type": "module",
   "scripts": {
-    "build": "node ./node_modules/@hypermode/modus-sdk-as/bin/build-plugin.js",
+    "build": "modus-as-build",
     "lint": "eslint .",
     "pretty": "prettier --write .",
     "pretty:check": "prettier --check ."
   },
   "dependencies": {
     "@hypermode/modus-sdk-as": "../../src",
-    "json-as": "^0.9.21"
+    "json-as": "^0.9.23"
   },
   "devDependencies": {
-    "@eslint/js": "^9.11.1",
-    "@hypermode/modus-cli": "file:../../../../cli",
+    "@eslint/js": "^9.13.0",
     "@types/eslint__js": "^8.42.3",
     "assemblyscript": "^0.27.30",
     "assemblyscript-prettier": "^3.0.1",
-    "eslint": "^9.11.1",
+    "eslint": "^9.13.0",
     "prettier": "^3.3.3",
-    "typescript": "^5.6.2",
-    "typescript-eslint": "^8.8.0",
+    "typescript": "^5.6.3",
+    "typescript-eslint": "^8.11.0",
     "visitor-as": "^0.11.4"
   },
   "overrides": {
