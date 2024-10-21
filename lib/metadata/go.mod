@@ -1,4 +1,4 @@
-module github.com/hypermodeinc/modus/lib/metadatareader
+module github.com/hypermodeinc/modus/lib/metadata
 
 go 1.23.0
 
