@@ -8,7 +8,7 @@ import { auth } from "@hypermode/modus-sdk-as";
 
 // This is a simple example of a claims class that can be used to parse the JWT claims.
 @json
-export class ExampleClaims {
+class ExampleClaims {
   public exp!: i64;
   public iat!: i64;
   public iss!: string;

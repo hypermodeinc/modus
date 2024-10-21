@@ -13,9 +13,7 @@ import { execSync } from "child_process";
 import * as path from "path";
 import { Xid } from "xid-ts";
 import binaryen from "assemblyscript/lib/binaryen.js";
-import { Colors } from "assemblyscript/util/terminal.js";
-import { WriteStream as FSWriteStream } from "fs";
-import { WriteStream as TTYWriteStream } from "tty";
+import chalk from "chalk";
 import { FunctionSignature, TypeDefinition } from "./types.js";
 
 const METADATA_VERSION = 2;
@@ -86,18 +84,13 @@ export class Metadata {
     module.addCustomSection("hypermode_meta", encoder.encode(json));
   }
 
-  logToStream(stream: FSWriteStream | TTYWriteStream) {
-    const isTTY = stream instanceof TTYWriteStream;
-    const boldOn = isTTY ? "\u001b[1m" : "";
-    const boldOff = isTTY ? "\u001b[0m" : "";
-
-    const colors = new Colors(stream as { isTTY: boolean });
+  logResults() {
     const writeHeader = (text: string) => {
-      stream.write(boldOn + colors.blue(text) + boldOff + "\n");
+      console.log(chalk.bold.blue(text));
     };
 
     const writeItem = (text: string) => {
-      stream.write(`  ${colors.cyan(text)}\n`);
+      console.log(`  ${chalk.cyan(text)}`);
     };
 
     const writeTable = (rows: string[][]) => {
@@ -113,9 +106,9 @@ export class Metadata {
       rows.forEach((row) => {
         if (row) {
           const padding = " ".repeat(pad[0] - row[0].length);
-          const key = colors.cyan(row[0] + ":");
-          const value = colors.blue(row[1]);
-          stream.write(`  ${key}${padding} ${value}\n`);
+          const key = chalk.cyan(row[0] + ":");
+          const value = chalk.blue(row[1]);
+          console.log(`  ${key}${padding} ${value}`);
         }
       });
     };
@@ -129,23 +122,22 @@ export class Metadata {
       this.gitRepo ? ["Git Repository", this.gitRepo] : undefined,
       this.gitCommit ? ["Git Commit", this.gitCommit] : undefined,
     ]);
-    stream.write("\n");
+    console.log();
 
     writeHeader("Functions:");
     Object.values(this.fnExports).forEach((v) => writeItem(v.toString()));
-    stream.write("\n");
+    console.log();
 
     const types = Object.values(this.types).filter((t) => !t.isHidden());
     if (types.length > 0) {
       writeHeader("Custom Types:");
       types.forEach((t) => writeItem(t.toString()));
-      stream.write("\n");
+      console.log();
     }
 
     if (process.env.MODUS_DEBUG) {
       writeHeader("Metadata JSON:");
-      stream.write(JSON.stringify(this, undefined, 2));
-      stream.write("\n\n");
+      console.log(JSON.stringify(this, undefined, 2) + "\n\n");
     }
   }
 }
@@ -159,7 +151,7 @@ function getSdkInfo(): string {
   );
   const json = readFileSync(filePath).toString();
   const lib = JSON.parse(json);
-  return `${lib.name.split("/")[1]}@${lib.version}`;
+  return `${lib.name.split("/")[1]}@${lib.version || "dev"}`;
 }
 
 function getPluginInfo(): string {

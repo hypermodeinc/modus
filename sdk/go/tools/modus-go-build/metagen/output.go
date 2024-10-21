@@ -16,16 +16,19 @@ import (
 	"strings"
 
 	"github.com/fatih/color"
-	"github.com/mattn/go-isatty"
 
 	"github.com/hypermodeinc/modus/sdk/go/tools/modus-go-build/metadata"
 	"github.com/hypermodeinc/modus/sdk/go/tools/modus-go-build/utils"
 )
 
 func LogToConsole(meta *metadata.Metadata) {
-	w := os.Stdout
-	color.Output = w
-	color.NoColor = !isatty.IsTerminal(w.Fd())
+
+	// FORCE_COLOR is set by Modus CLI
+	forceColor := os.Getenv("FORCE_COLOR")
+	if forceColor != "" && forceColor != "0" {
+		color.NoColor = false
+	}
+	w := color.Output
 
 	writeHeader(w, "Metadata:")
 	writeTable(w, [][]string{
@@ -81,8 +84,9 @@ func writeHeader(w io.Writer, text string) {
 
 func writeItem(w io.Writer, text string) {
 	color.Set(color.FgCyan)
-	fmt.Fprintf(w, "  %s\n", text)
+	fmt.Fprint(w, "  "+text)
 	color.Unset()
+	fmt.Fprintln(w)
 }
 
 func writeTable(w io.Writer, rows [][]string) {
@@ -108,6 +112,6 @@ func writeTable(w io.Writer, rows [][]string) {
 		color.Set(color.FgBlue)
 		fmt.Fprint(w, row[1])
 		color.Unset()
-		fmt.Fprint(w, "\n")
+		fmt.Fprintln(w)
 	}
 }
