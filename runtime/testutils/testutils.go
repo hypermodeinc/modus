@@ -88,7 +88,7 @@ func NewWasmTestFixture(wasmFilePath string, customTypes map[string]reflect.Type
 		panic(err)
 	}
 
-	md, err := metadata.GetMetadataFromCompiledModule(cm)
+	md, err := metadata.GetMetadataFromCompiledModule(content)
 	if err != nil {
 		panic(err)
 	}

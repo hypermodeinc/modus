@@ -6,9 +6,13 @@ require github.com/hypermodeinc/modus/lib/manifest v0.0.0
 
 require github.com/hypermodeinc/modus/lib/metadata v0.0.0
 
+require github.com/hypermodeinc/modus/lib/wasmextractor v0.0.0 // indirect
+
 replace github.com/hypermodeinc/modus/lib/manifest => ../lib/manifest
 
 replace github.com/hypermodeinc/modus/lib/metadata => ../lib/metadata
+
+replace github.com/hypermodeinc/modus/lib/wasmextractor => ../lib/wasmextractor
 
 require (
 	github.com/OneOfOne/xxhash v1.2.8

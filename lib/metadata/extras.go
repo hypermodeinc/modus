@@ -9,20 +9,22 @@
 
 package metadata
 
-import "github.com/tetratelabs/wazero"
+import (
+	"github.com/hypermodeinc/modus/lib/wasmextractor"
+)
 
-func GetMetadataFromCompiledModule(cm wazero.CompiledModule) (*Metadata, error) {
-	customSections := getCustomSections(cm)
+func GetMetadataFromCompiledModule(cm []byte) (*Metadata, error) {
+	customSections, err := getCustomSections(cm)
+	if err != nil {
+		return nil, err
+	}
 	return GetMetadata(customSections)
 }
 
-func getCustomSections(cm wazero.CompiledModule) map[string][]byte {
-	sections := cm.CustomSections()
-	data := make(map[string][]byte, len(sections))
-
-	for _, s := range sections {
-		data[s.Name()] = s.Data()
+func getCustomSections(cm []byte) (map[string][]byte, error) {
+	info, err := wasmextractor.ExtractWasmInfo(cm)
+	if err != nil {
+		return nil, err
 	}
-
-	return data
+	return info.CustomSections, nil
 }
