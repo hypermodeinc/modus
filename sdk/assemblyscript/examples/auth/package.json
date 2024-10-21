@@ -17,6 +17,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.11.1",
+    "@hypermode/modus-cli": "file:../../../../cli",
     "@types/eslint__js": "^8.42.3",
     "assemblyscript": "^0.27.30",
     "assemblyscript-prettier": "^3.0.1",
