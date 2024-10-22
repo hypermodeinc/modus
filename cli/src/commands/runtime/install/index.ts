@@ -27,7 +27,10 @@ export default class RuntimeInstallCommand extends Command {
   static examples = ["modus runtime install", "modus runtime install v1.2.3", "modus runtime install --prerelease"];
 
   static flags = {
-    nologo: Flags.boolean({ hidden: true }),
+    nologo: Flags.boolean({
+      aliases: ["no-logo"],
+      hidden: true,
+    }),
     force: Flags.boolean({
       char: "f",
       default: false,
