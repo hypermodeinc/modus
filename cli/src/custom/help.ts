@@ -208,6 +208,7 @@ export default class CustomHelp extends Help {
     if (flags.length) {
       this.log(chalk.bold("Flags:"));
       for (const flag of Object.values(command.flags)) {
+        if (flag.hidden) continue;
         this.log("  " + chalk.bold.blueBright("--" + flag.name) + " ".repeat(margin - flag.name.length) + flag.description);
       }
       this.log();

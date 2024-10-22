@@ -14,7 +14,7 @@ PACKAGE_ORG="@hypermode"
 PACKAGE_NAME="modus-cli"
 INSTALL_DIR="${MODUS_CLI:-"$HOME/.modus/cli"}"
 VERSION="latest"
-INSTALLER_VERSION="0.1.0"
+INSTALLER_VERSION="0.1.1"
 
 NODE_MIN=22
 NODE_PATH="$(which node)"
@@ -120,6 +120,7 @@ build_path_str() {
   if [[ $profile == *.fish ]]; then
     echo -e "set -gx MODUS_CLI \"$install_dir\"\nstring match -r \".modus\" \"\$PATH\" > /dev/null; or set -gx PATH \"\$MODUS_CLI/bin\" \$PATH"
   else
+    install_dir="${install_dir/#$HOME/\$HOME}"
     echo -e "\n# Modus CLI\nexport MODUS_CLI=\"$install_dir\"\nexport PATH=\"\$MODUS_CLI/bin:\$PATH\""
   fi
 }

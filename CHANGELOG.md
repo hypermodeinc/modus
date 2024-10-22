@@ -6,7 +6,7 @@ _NOTE: This is the first fully open-source release, using the name "Modus" for t
 "Hypermode" still refers to the company and the commercial hosting platform - but not the framework.
 In previous releases, the name "Hypermode" was used for all three._
 
-- Add Modus CLI [#389](https://github.com/hypermodeinc/modus/pull/389) [#483](https://github.com/hypermodeinc/modus/pull/483) [#484](https://github.com/hypermodeinc/modus/pull/484)
+- Add Modus CLI [#389](https://github.com/hypermodeinc/modus/pull/389) [#483](https://github.com/hypermodeinc/modus/pull/483) [#484](https://github.com/hypermodeinc/modus/pull/484) [#485](https://github.com/hypermodeinc/modus/pull/485)
 - Support user defined jwt auth and sdk functions [#405](https://github.com/hypermodeinc/modus/pull/405)
 - Migrate from Hypermode to Modus [#412](https://github.com/hypermodeinc/modus/pull/412)
 - Import WasmExtractor code [#415](https://github.com/hypermodeinc/modus/pull/415)
