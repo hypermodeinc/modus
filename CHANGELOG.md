@@ -44,6 +44,7 @@ In previous releases, the name "Hypermode" was used for all three._
 - Disable AWS Bedrock support temporarily [#479](https://github.com/hypermodeinc/modus/pull/479)
 - Update SDK releases [#480](https://github.com/hypermodeinc/modus/pull/480)
 - Add metadata shared library [#482](https://github.com/hypermodeinc/modus/pull/482)
+- Add `.gitignore` files to default templates [#486](https://github.com/hypermodeinc/modus/pull/486)
 
 ## 2024-10-02 - Version 0.12.7
 
