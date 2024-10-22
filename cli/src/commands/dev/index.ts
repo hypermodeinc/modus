@@ -31,7 +31,10 @@ export default class DevCommand extends Command {
   };
 
   static flags = {
-    nologo: Flags.boolean({ hidden: true }),
+    nologo: Flags.boolean({
+      aliases: ["no-logo"],
+      hidden: true,
+    }),
     runtime: Flags.string({
       char: "r",
       description: "Modus runtime version to use. If not provided, the latest runtime compatible with the app will be used.",
@@ -136,7 +139,7 @@ export default class DevCommand extends Command {
     const ext = os.platform() === "win32" ? ".exe" : "";
     const runtimePath = path.join(vi.getRuntimePath(runtimeVersion), "modus_runtime" + ext);
 
-    await BuildCommand.run([appPath, "--nologo"]);
+    await BuildCommand.run([appPath, "--no-logo"]);
 
     spawn(runtimePath, ["-appPath", path.join(appPath, "build")], {
       stdio: "inherit",
@@ -166,7 +169,7 @@ export default class DevCommand extends Command {
           this.log();
           this.log(chalk.magentaBright("Detected change. Rebuilding..."));
           this.log();
-          await BuildCommand.run([appPath, "--nologo"]);
+          await BuildCommand.run([appPath, "--no-logo"]);
         } catch {}
       }, delay);
 

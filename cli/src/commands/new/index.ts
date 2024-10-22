@@ -28,7 +28,10 @@ export default class NewCommand extends Command {
   static examples = ["modus new", "modus new --name my-app", "modus new --name my-app --sdk go --dir ./my-app --force"];
 
   static flags = {
-    nologo: Flags.boolean({ hidden: true }),
+    nologo: Flags.boolean({
+      aliases: ["no-logo"],
+      hidden: true,
+    }),
     name: Flags.string({
       char: "n",
       description: "App name",
@@ -212,7 +215,7 @@ export default class NewCommand extends Command {
         }
       }
       if (updateSDK) {
-        await SDKInstallCommand.run([sdk, latestVersion!]);
+        await SDKInstallCommand.run([sdk, latestVersion!, "--no-logo"]);
         installedSdkVersion = latestVersion;
       }
     }

@@ -29,7 +29,10 @@ export default class BuildCommand extends Command {
   };
 
   static flags = {
-    nologo: Flags.boolean({ hidden: true }),
+    nologo: Flags.boolean({
+      aliases: ["no-logo"],
+      hidden: true,
+    }),
   };
 
   static description = "Build a Modus app";

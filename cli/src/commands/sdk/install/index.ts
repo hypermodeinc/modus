@@ -34,7 +34,10 @@ export default class SDKInstallCommand extends Command {
   static examples = ["modus sdk install assemblyscript", "modus sdk install assemblyscript v1.2.3", "modus sdk install", "modus sdk install --prerelease"];
 
   static flags = {
-    nologo: Flags.boolean({ hidden: true }),
+    nologo: Flags.boolean({
+      aliases: ["no-logo"],
+      hidden: true,
+    }),
     force: Flags.boolean({
       char: "f",
       default: false,

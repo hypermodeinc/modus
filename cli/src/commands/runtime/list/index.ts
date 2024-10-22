@@ -17,7 +17,10 @@ export default class RuntimeListCommand extends Command {
   static description = "List installed Modus runtimes";
   static examples = ["modus runtime list"];
   static flags = {
-    nologo: Flags.boolean({ hidden: true }),
+    nologo: Flags.boolean({
+      aliases: ["no-logo"],
+      hidden: true,
+    }),
   };
 
   async run(): Promise<void> {

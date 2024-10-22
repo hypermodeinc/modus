@@ -18,7 +18,10 @@ export default class SDKListCommand extends Command {
   static description = "List installed Modus SDKs";
   static examples = ["modus sdk list"];
   static flags = {
-    nologo: Flags.boolean({ hidden: true }),
+    nologo: Flags.boolean({
+      aliases: ["no-logo"],
+      hidden: true,
+    }),
   };
 
   async run(): Promise<void> {
