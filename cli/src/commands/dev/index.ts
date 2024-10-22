@@ -8,10 +8,11 @@
  */
 
 import { Args, Command, Flags } from "@oclif/core";
-import { execFileSync, spawn } from "node:child_process";
+import { spawn } from "node:child_process";
 import path from "node:path";
 import os from "node:os";
 import chalk from "chalk";
+import chokidar from "chokidar";
 
 import * as fs from "../../util/fs.js";
 import * as vi from "../../util/versioninfo.js";
@@ -50,7 +51,7 @@ export default class DevCommand extends Command {
     }),
     freq: Flags.integer({
       char: "f",
-      description: "Frequency to check for changes when using --watch",
+      description: "Frequency to check for changes",
       default: 3000,
     }),
   };
@@ -141,13 +142,14 @@ export default class DevCommand extends Command {
 
     await BuildCommand.run([appPath, "--no-logo"]);
 
-    spawn(runtimePath, ["-appPath", path.join(appPath, "build")], {
+    const runtime = spawn(runtimePath, ["-appPath", path.join(appPath, "build")], {
       stdio: "inherit",
       env: {
         ...process.env,
         MODUS_ENV: "dev",
       },
     });
+    runtime.on("close", (code) => this.exit(code || 1));
 
     if (!flags.nowatch) {
       const delay = flags.freq;
@@ -173,15 +175,21 @@ export default class DevCommand extends Command {
         } catch {}
       }, delay);
 
-      (async () => {
-        const watcher = fs.watch(appPath, { recursive: true });
-        for await (const event of watcher) {
-          if (event.filename && path.dirname(event.filename) !== "build") {
-            lastModified = Date.now();
-            paused = false;
-          }
-        }
-      })();
+      // NOTE: The built-in fs.watch or fsPromises.watch is insufficient for our needs.
+      // Instead, we use chokidar for consistent behavior in cross-platform file watching.
+      const ignoredPaths = [path.join(appPath, "build") + path.sep, path.join(appPath, "node_modules") + path.sep];
+      this.log(chalk.dim("Ignoring paths:"), ignoredPaths);
+      chokidar
+        .watch(appPath, {
+          ignored: (filePath, stats) => (stats?.isFile() || true) && ignoredPaths.some((p) => path.normalize(filePath).startsWith(p)),
+          cwd: appPath,
+          ignoreInitial: true,
+          persistent: true,
+        })
+        .on("all", async (event, path) => {
+          lastModified = Date.now();
+          paused = false;
+        });
     }
   }
 

@@ -62,13 +62,13 @@ export default class BuildCommand extends Command {
       switch (app.sdk) {
         case SDK.AssemblyScript:
           if (!(await fs.exists(path.join(appPath, "node_modules")))) {
-            const results = await execFileWithExitCode("npm", ["install"], { cwd: appPath, env: process.env });
+            const results = await execFileWithExitCode("npm", ["install"], { cwd: appPath, env: process.env, shell: true });
             if (results.exitCode !== 0) {
               this.logError("Failed to install dependencies");
               return results;
             }
           }
-          return await execFileWithExitCode("npx", ["modus-as-build"], { cwd: appPath, env: process.env });
+          return await execFileWithExitCode("npx", ["modus-as-build"], { cwd: appPath, env: process.env, shell: true });
         case SDK.Go:
           const version = app.sdkVersion || (await vi.getLatestInstalledSdkVersion(app.sdk, true));
           if (!version) {
