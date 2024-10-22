@@ -17,7 +17,6 @@ require (
 require (
 	github.com/fatih/color v1.17.0
 	github.com/hashicorp/go-version v1.7.0
-	github.com/mattn/go-isatty v0.0.20
 	github.com/rs/xid v1.6.0
 	github.com/tidwall/sjson v1.2.5
 	golang.org/x/exp v0.0.0-20241009180824-f66d83c29e7c
@@ -27,6 +26,7 @@ require (
 
 require (
 	github.com/mattn/go-colorable v0.1.13 // indirect
+	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/santhosh-tekuri/jsonschema/v5 v5.3.1 // indirect
 	github.com/tidwall/gjson v1.18.0 // indirect
 	github.com/tidwall/jsonc v0.3.2 // indirect

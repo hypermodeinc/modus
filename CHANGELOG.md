@@ -6,6 +6,7 @@ _NOTE: This is the first fully open-source release, using the name "Modus" for t
 "Hypermode" still refers to the company and the commercial hosting platform - but not the framework.
 In previous releases, the name "Hypermode" was used for all three._
 
+- Add Modus CLI [#389](https://github.com/hypermodeinc/modus/pull/389) [#483](https://github.com/hypermodeinc/modus/pull/483) [#484](https://github.com/hypermodeinc/modus/pull/484)
 - Support user defined jwt auth and sdk functions [#405](https://github.com/hypermodeinc/modus/pull/405)
 - Migrate from Hypermode to Modus [#412](https://github.com/hypermodeinc/modus/pull/412)
 - Import WasmExtractor code [#415](https://github.com/hypermodeinc/modus/pull/415)
@@ -41,6 +42,7 @@ In previous releases, the name "Hypermode" was used for all three._
 - Publish SDKs and templates via release workflows [#465](https://github.com/hypermodeinc/modus/pull/465)
 - Fix AssemblyScript build failure when no Git repo is present [#475](https://github.com/hypermodeinc/modus/pull/475)
 - Disable AWS Bedrock support temporarily [#479](https://github.com/hypermodeinc/modus/pull/479)
+- Update SDK releases [#480](https://github.com/hypermodeinc/modus/pull/480)
 
 ## 2024-10-02 - Version 0.12.7
 

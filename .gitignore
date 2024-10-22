@@ -1,9 +1,5 @@
 # Ignore macOS system files
 .DS_Store
-*.generated.go
-*.wasm
-*.gz
-=======
 
 # Ignore environment variable files
 .env
@@ -13,10 +9,13 @@
 *.exe
 *.wasm
 *.wat
+*.gz
+*.zip
 
 # Ignore Go debuger and generated files
 __debug_bin*
 *_generated.go
+*.generated.go
 
 # Ignore build output directories
 build/
@@ -29,5 +28,3 @@ node_modules/
 pnpm-lock.yaml
 yarn.lock
 bun.lockb
-
-dist/
