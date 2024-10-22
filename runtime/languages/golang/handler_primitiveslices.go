@@ -15,9 +15,9 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/hypermodeinc/modus/lib/metadata"
 	"github.com/hypermodeinc/modus/runtime/langsupport"
 	"github.com/hypermodeinc/modus/runtime/langsupport/primitives"
-	"github.com/hypermodeinc/modus/runtime/plugins/metadata"
 	"github.com/hypermodeinc/modus/runtime/utils"
 )
 

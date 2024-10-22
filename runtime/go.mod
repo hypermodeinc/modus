@@ -4,14 +4,21 @@ go 1.23.0
 
 require github.com/hypermodeinc/modus/lib/manifest v0.0.0
 
+require github.com/hypermodeinc/modus/lib/metadata v0.0.0
+
+require github.com/hypermodeinc/modus/lib/wasmextractor v0.0.0 // indirect
+
 replace github.com/hypermodeinc/modus/lib/manifest => ../lib/manifest
+
+replace github.com/hypermodeinc/modus/lib/metadata => ../lib/metadata
+
+replace github.com/hypermodeinc/modus/lib/wasmextractor => ../lib/wasmextractor
 
 require (
 	github.com/OneOfOne/xxhash v1.2.8
 	github.com/archdx/zerolog-sentry v1.8.4
 	github.com/aws/aws-sdk-go-v2 v1.32.2
 	github.com/aws/aws-sdk-go-v2/config v1.27.43
-	github.com/aws/aws-sdk-go-v2/service/bedrockruntime v1.19.2
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.65.3
 	github.com/aws/aws-sdk-go-v2/service/sts v1.32.2
 	github.com/buger/jsonparser v1.1.1

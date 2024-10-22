@@ -10,9 +10,9 @@
 package functions
 
 import (
+	"github.com/hypermodeinc/modus/lib/metadata"
 	"github.com/hypermodeinc/modus/runtime/langsupport"
 	"github.com/hypermodeinc/modus/runtime/plugins"
-	"github.com/hypermodeinc/modus/runtime/plugins/metadata"
 )
 
 type FunctionInfo interface {

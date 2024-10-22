@@ -32,7 +32,7 @@ func GetMetadata(wasmCustomSections map[string][]byte) (*Metadata, error) {
 }
 
 func getPluginMetadataVersion(wasmCustomSections map[string][]byte) (byte, error) {
-	verData, found := wasmCustomSections["hypermode_version"]
+	verData, found := wasmCustomSections["modus_metadata_version"]
 	if !found || len(verData) != 1 {
 		return 0, errors.New("failed to parse plugin metadata version")
 	}
@@ -41,7 +41,7 @@ func getPluginMetadataVersion(wasmCustomSections map[string][]byte) (byte, error
 }
 
 func getPluginMetadata(wasmCustomSections map[string][]byte) (*Metadata, error) {
-	metadataJson, found := wasmCustomSections["hypermode_meta"]
+	metadataJson, found := wasmCustomSections["modus_metadata"]
 	if !found {
 		return nil, ErrMetadataNotFound
 	}

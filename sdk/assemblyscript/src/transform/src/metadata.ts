@@ -77,11 +77,11 @@ export class Metadata {
     this.fnImports = fnImports;
 
     module.addCustomSection(
-      "hypermode_version",
+      "modus_metadata_version",
       Uint8Array.from([METADATA_VERSION]),
     );
 
-    module.addCustomSection("hypermode_meta", encoder.encode(json));
+    module.addCustomSection("modus_metadata", encoder.encode(json));
   }
 
   logResults() {
