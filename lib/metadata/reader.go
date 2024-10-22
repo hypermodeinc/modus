@@ -41,7 +41,7 @@ func getPluginMetadataVersion(wasmCustomSections map[string][]byte) (byte, error
 }
 
 func getPluginMetadata(wasmCustomSections map[string][]byte) (*Metadata, error) {
-	metadataJson, found := wasmCustomSections["modus_meta"]
+	metadataJson, found := wasmCustomSections["modus_metadata"]
 	if !found {
 		return nil, ErrMetadataNotFound
 	}

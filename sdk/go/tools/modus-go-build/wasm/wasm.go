@@ -32,7 +32,7 @@ func WriteMetadata(config *config.Config, meta *metadata.Metadata) error {
 	wasmFilePath := filepath.Join(config.OutputDir, config.WasmFileName)
 	return writeCustomSections(wasmFilePath, map[string][]byte{
 		"modus_metadata_version": {metadata.MetadataVersion},
-		"modus_meta":             metaJson,
+		"modus_metadata":         metaJson,
 	})
 }
 

@@ -84,7 +84,7 @@ export class Metadata {
       Uint8Array.from([METADATA_VERSION]),
     );
 
-    module.addCustomSection("modus_meta", encoder.encode(json));
+    module.addCustomSection("modus_metadata", encoder.encode(json));
   }
 
   logToStream(stream: FSWriteStream | TTYWriteStream, markdown = false) {
