@@ -13,16 +13,16 @@ import (
 	"github.com/hypermodeinc/modus/lib/wasmextractor"
 )
 
-func GetMetadataFromCompiledModule(cm []byte) (*Metadata, error) {
-	customSections, err := getCustomSections(cm)
+func GetMetadataFromWasm(wasm []byte) (*Metadata, error) {
+	customSections, err := getCustomSections(wasm)
 	if err != nil {
 		return nil, err
 	}
 	return GetMetadata(customSections)
 }
 
-func getCustomSections(cm []byte) (map[string][]byte, error) {
-	info, err := wasmextractor.ExtractWasmInfo(cm)
+func getCustomSections(wasm []byte) (map[string][]byte, error) {
+	info, err := wasmextractor.ExtractWasmInfo(wasm)
 	if err != nil {
 		return nil, err
 	}
