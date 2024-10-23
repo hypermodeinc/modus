@@ -94,7 +94,7 @@ export default class NewCommand extends Command {
       this.logError("A template is required.");
       this.exit(1);
     }
-    if (!flags.force && !(await this.confirmAction("Continue? [y/n]"))) {
+    if (!flags.force && !(await this.confirmAction("Continue? [Y/n]"))) {
       this.log(chalk.dim("Aborted."));
       this.exit(1);
     }
@@ -316,11 +316,18 @@ export default class NewCommand extends Command {
     this.log(chalk.red(" ERROR ") + chalk.dim(": " + message));
   }
 
-  private async confirmAction(message: string): Promise<boolean> {
+  private async confirmAction(message: string, defaultToContinue = true): Promise<boolean> {
     this.log(message);
-    const cont = ((await ask(chalk.dim(" -> "))) || "n").toLowerCase().trim();
+    const input = await ask(chalk.dim(" -> "));
+
+    if (input === "") {
+      clearLine(2);
+      return defaultToContinue;
+    }
+
+    const shouldContinue = (input || "n").toLowerCase().trim();
     clearLine(2);
-    return cont === "yes" || cont === "y";
+    return shouldContinue === "yes" || shouldContinue === "y";
   }
 }
 
