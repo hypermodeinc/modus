@@ -3,7 +3,7 @@ module github.com/hypermodeinc/modus/sdk/go
 go 1.23.0
 
 require (
-	github.com/hypermodeinc/modus/lib/manifest v0.13.0-alpha1
+	github.com/hypermodeinc/modus/lib/manifest v0.13.0-alpha2
 	github.com/hypermodeinc/modus/lib/wasmextractor v0.13.0-alpha1
 )
 
