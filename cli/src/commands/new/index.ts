@@ -21,6 +21,7 @@ import { GitHubOwner, GitHubRepo, MinGoVersion, MinNodeVersion, MinTinyGoVersion
 import { ask, clearLine, withSpinner } from "../../util/index.js";
 import SDKInstallCommand from "../sdk/install/index.js";
 import { getHeader } from "../../custom/header.js";
+import * as inquirer from "@inquirer/prompts";
 
 const MODUS_NEW_DEFAULT_NAME = "modus-app";
 const MODUS_NEW_GO_NAME = "modus-go-app";
@@ -124,25 +125,20 @@ export default class NewCommand extends Command {
   }
 
   private async promptSdkSelection(): Promise<string> {
-    this.log("Select an SDK");
-    for (const [index, sdk] of Object.values(SDK).entries()) {
-      this.log(chalk.dim(` ${index + 1}. ${sdk}`));
-    }
+    const answer = inquirer.select({
+      message: "Select a SDK",
+      default: SDK.Go,
+      choices: [
+        {
+          value: SDK.Go,
+        },
+        {
+          value: SDK.AssemblyScript,
+        },
+      ],
+    });
 
-    const selectedIndex = Number.parseInt(((await ask(chalk.dim(" -> "))) || "1").trim(), 10) - 1;
-    const sdk = Object.values(SDK)[selectedIndex];
-    clearLine(Object.values(SDK).length + 2);
-    if (!sdk) this.exit(1);
-    this.log("SDK: " + chalk.dim(sdk));
-    return sdk;
-  }
-
-  private async promptTemplate(defaultValue: string): Promise<string> {
-    this.log("Template? " + chalk.dim(`(${defaultValue})`));
-    const template = ((await ask(chalk.dim(" -> "))) || defaultValue).trim();
-    clearLine(2);
-    this.log("Template: " + chalk.dim(template));
-    return template;
+    return answer;
   }
 
   private async createApp(name: string, dir: string, sdk: SDK, template: string, force: boolean, prerelease: boolean) {
