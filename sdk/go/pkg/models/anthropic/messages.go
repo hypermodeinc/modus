@@ -118,16 +118,16 @@ type ToolChoice struct {
 
 var (
 	// The model will automatically decide whether to use tools.
-	ToolChoiceAuto ToolChoice = ToolChoice{Type: "auto"}
+	ToolChoiceAuto *ToolChoice = &ToolChoice{Type: "auto"}
 
 	// The model will use any available tools.
-	ToolChoiceAny ToolChoice = ToolChoice{Type: "any"}
+	ToolChoiceAny *ToolChoice = &ToolChoice{Type: "any"}
 
 	// The model will use the specified tool.
-	ToolChoiceTool = func(name string) ToolChoice {
+	ToolChoiceTool = func(name string) *ToolChoice {
 		t := ToolChoice{Type: "tool"}
 		t.Name = name
-		return t
+		return &t
 	}
 )
 

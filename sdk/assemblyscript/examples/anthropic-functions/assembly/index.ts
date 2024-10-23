@@ -23,7 +23,7 @@ class StockPriceInput {
 // This model name should match the one defined in the modus.json manifest file.
 const modelName: string = "text-generator";
 
-export function getStockPrice(company: string, useTools: bool): string {
+export function getStockPrice(company: string, useTools: boolean): string {
   const model = models.getModel<AnthropicMessagesModel>(modelName);
   const messages: Message[] = [
     new UserMessage(`what is the stock price of ${company}?`),
