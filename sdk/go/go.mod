@@ -15,7 +15,7 @@ require (
 // replace github.com/hypermodeinc/modus/lib/wasmextractor => ../../lib/wasmextractor
 
 require (
-	github.com/fatih/color v1.17.0
+	github.com/fatih/color v1.18.0
 	github.com/hashicorp/go-version v1.7.0
 	github.com/rs/xid v1.6.0
 	github.com/tidwall/sjson v1.2.5
