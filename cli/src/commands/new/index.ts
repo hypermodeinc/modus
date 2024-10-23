@@ -23,7 +23,6 @@ import SDKInstallCommand from "../sdk/install/index.js";
 import { getHeader } from "../../custom/header.js";
 import * as inquirer from "@inquirer/prompts";
 
-const MODUS_NEW_DEFAULT_NAME = "modus-app";
 const MODUS_NEW_GO_NAME = "modus-go-app";
 const MODUS_NEW_AS_NAME = "modus-as-app";
 
@@ -78,67 +77,47 @@ export default class NewCommand extends Command {
 
     this.log(chalk.hex("#A585FF")(NewCommand.description) + "\n");
 
-    const defaultName = flags.sdk ? (flags.sdk === SDK.AssemblyScript ? MODUS_NEW_AS_NAME : MODUS_NEW_GO_NAME) : MODUS_NEW_DEFAULT_NAME;
-    const name = flags.name || (await this.promptAppName(defaultName));
-    if (!name) {
-      this.logError("An app name is required.");
-      this.exit(1);
-    }
-    const dir = flags.dir ? path.join(process.cwd(), flags.dir) : await this.promptInstallPath("." + path.sep + name);
-    if (!dir) {
-      this.logError("An install directory is required.");
-      this.exit(1);
-    }
-    const sdk = parseSDK(
-      flags.sdk
-        ? Object.values(SDK)[
-            Object.keys(SDK)
-              .map((v) => v.toLowerCase())
-              .indexOf(flags.sdk?.trim().toLowerCase())
-          ]
-        : await this.promptSdkSelection()
-    );
+    let sdk: SDK;
+    if (flags.sdk) {
+      sdk = parseSDK(flags.sdk);
+    } else {
+      const sdkInput = await inquirer.select({
+        message: "Select a SDK",
+        default: SDK.Go,
+        choices: [
+          {
+            value: SDK.Go,
+          },
+          {
+            value: SDK.AssemblyScript,
+          },
+        ],
+      });
 
-    if (!flags.force && !(await this.confirmAction("Continue? [Y/n]"))) {
-      this.log(chalk.dim("Aborted."));
-      this.exit(1);
+      sdk = parseSDK(sdkInput);
     }
+
+    const defaultName = sdk === SDK.Go ? MODUS_NEW_GO_NAME : MODUS_NEW_AS_NAME;
+
+    const name =
+      flags.name ||
+      (await inquirer.input({
+        message: "Pick a name for your app:",
+        default: defaultName,
+      }));
+
+    const dir = flags.dir || "." + path.sep + name;
+
+    if (!flags.force) {
+      const confirm = await inquirer.confirm({ message: "Continue?", default: true });
+      if (!confirm) {
+        this.log(chalk.dim("Aborted"));
+        this.exit(1);
+      }
+    }
+
     this.log();
     await this.createApp(name, dir, sdk, MODUS_DEFAULT_TEMPLATE_NAME, flags.force, flags.prerelease);
-  }
-
-  private async promptAppName(defaultValue: string): Promise<string> {
-    this.log("Pick a name for your app: " + chalk.dim(`(${defaultValue})`));
-    const input = ((await ask(chalk.dim(" -> "))) || "").trim();
-    const name = input ? toValidAppName(input) : defaultValue;
-    clearLine(2);
-    this.log("App Name: " + chalk.dim(name.length ? name : "Not Provided"));
-    return name;
-  }
-
-  private async promptInstallPath(defaultValue: string): Promise<string> {
-    this.log("Install Directory? " + chalk.dim(`(${defaultValue})`));
-    const dir = ((await ask(chalk.dim(" -> "))) || defaultValue).trim();
-    clearLine(2);
-    this.log("Directory: " + chalk.dim(dir));
-    return path.resolve(dir);
-  }
-
-  private async promptSdkSelection(): Promise<string> {
-    const answer = inquirer.select({
-      message: "Select a SDK",
-      default: SDK.Go,
-      choices: [
-        {
-          value: SDK.Go,
-        },
-        {
-          value: SDK.AssemblyScript,
-        },
-      ],
-    });
-
-    return answer;
   }
 
   private async createApp(name: string, dir: string, sdk: SDK, template: string, force: boolean, prerelease: boolean) {
