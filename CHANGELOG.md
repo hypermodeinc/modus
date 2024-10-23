@@ -48,6 +48,7 @@ In previous releases, the name "Hypermode" was used for all three._
 - Fix CLI warnings about Go/TinyGo installation [#487](https://github.com/hypermodeinc/modus/pull/487)
 - Remove deprecated model fields [#488](https://github.com/hypermodeinc/modus/pull/488)
 - Improve dev first use log messages [#489](https://github.com/hypermodeinc/modus/pull/489)
+- Highlight endpoints when running in dev [#490](https://github.com/hypermodeinc/modus/pull/490)
 
 ## 2024-10-02 - Version 0.12.7
 
