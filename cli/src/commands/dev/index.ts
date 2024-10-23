@@ -187,7 +187,6 @@ export default class DevCommand extends Command {
       // NOTE: The built-in fs.watch or fsPromises.watch is insufficient for our needs.
       // Instead, we use chokidar for consistent behavior in cross-platform file watching.
       const ignoredPaths = [path.join(appPath, "build") + path.sep, path.join(appPath, "node_modules") + path.sep];
-      this.log(chalk.dim("Ignoring paths:"), ignoredPaths);
       chokidar
         .watch(appPath, {
           ignored: (filePath, stats) => (stats?.isFile() || true) && ignoredPaths.some((p) => path.normalize(filePath).startsWith(p)),

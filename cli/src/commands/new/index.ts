@@ -163,31 +163,56 @@ export default class NewCommand extends Command {
         break;
       case SDK.Go:
         const goVersion = await getGoVersion();
-        if (!goVersion) {
-          this.logError(`Go is not installed. Please install Go ${MinGoVersion} or newer and try again.`);
-          this.logError(`You will also need to install TinyGo ${MinTinyGoVersion} or newer.`);
-          this.exit(1);
-        }
-        if (semver.lt(goVersion, MinGoVersion)) {
-          this.logError(`The ${sdkText} requires Go version ${MinGoVersion} or newer.`);
-          this.logError(`You have Go version ${goVersion}.`);
-          this.logError(`Please upgrade Go and try again.`);
-          this.exit(1);
-        }
-
         const tinyGoVersion = await getTinyGoVersion();
-        if (!tinyGoVersion) {
-          this.logError(`TinyGo is not installed. Please install Go ${MinTinyGoVersion} or newer and try again.`);
-          this.exit(1);
-        }
-        if (semver.lt(tinyGoVersion, MinTinyGoVersion)) {
-          this.logError(`The Modus Go SDK requires TinyGo version ${MinTinyGoVersion} or newer.`);
-          this.logError(`You have TinyGo version ${tinyGoVersion}.`);
-          this.logError(`Please upgrade TinyGo and try again.`);
-          this.exit(1);
+
+        const foundGo = !!goVersion;
+        const foundTinyGo = !!tinyGoVersion;
+        const okGo = foundGo && semver.gte(goVersion, MinGoVersion);
+        const okTinyGo = foundTinyGo && semver.gte(tinyGoVersion, MinTinyGoVersion);
+
+        if (okGo && okTinyGo) {
+          break;
         }
 
-        break;
+        this.log(`The Modus Go SDK requires both of the following:`);
+
+        if (okGo) {
+          this.log(chalk.dim(`• Go v${MinGoVersion} or newer `) + chalk.green(`(found v${goVersion})`));
+        } else if (foundGo) {
+          this.log(chalk.dim(`• Go v${MinGoVersion} or newer `) + chalk.red(`(found v${goVersion})`));
+        } else {
+          this.log(chalk.dim(`• Go v${MinGoVersion} or newer `) + chalk.red("(not found)"));
+        }
+
+        if (okTinyGo) {
+          this.log(chalk.dim(`• TinyGo v${MinTinyGoVersion} or newer `) + chalk.green(`(found v${tinyGoVersion})`));
+        } else if (foundTinyGo) {
+          this.log(chalk.dim(`• TinyGo v${MinTinyGoVersion} or newer `) + chalk.red(`(found v${tinyGoVersion})`));
+        } else {
+          this.log(chalk.dim(`• TinyGo v${MinTinyGoVersion} or newer `) + chalk.red("(not found)"));
+        }
+
+        this.log();
+
+        if (!okGo) {
+          this.log(chalk.yellow(`Please install Go ${MinGoVersion} or newer from https://go.dev/dl`));
+          this.log();
+        }
+
+        if (!okTinyGo) {
+          this.log(chalk.yellow(`Please install TinyGo ${MinTinyGoVersion} or newer from https://tinygo.org/getting-started/install`));
+          if (os.platform() === "win32") {
+            this.log(`Note that you will need to install the binaryen components for wasi support.`);
+          }
+          this.log();
+        }
+
+        this.log(`Make sure to add Go and TinyGo to your PATH. You can check for yourself by running:`);
+        this.log(`${chalk.dim("$")} go version`);
+        this.log(`${chalk.dim("$")} tinygo version`);
+        this.log();
+
+        this.exit(1);
     }
 
     // Verify and/or install the Modus SDK

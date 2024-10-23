@@ -21,6 +21,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/fatih/color"
 	"github.com/hypermodeinc/modus/lib/manifest"
 	"github.com/hypermodeinc/modus/runtime/config"
 	"github.com/hypermodeinc/modus/runtime/graphql"
@@ -129,6 +130,14 @@ func GetMainHandler(options ...func(map[string]http.Handler)) http.Handler {
 	manifestdata.RegisterManifestLoadedCallback(func(ctx context.Context) error {
 		routes := maps.Clone(defaultRoutes)
 
+		type endpoint struct {
+			apiType string
+			name    string
+			url     string
+		}
+
+		var endpoints []endpoint
+
 		m := manifestdata.GetManifest()
 		for name, ep := range m.Endpoints {
 			switch ep.EndpointType() {
@@ -148,9 +157,9 @@ func GetMainHandler(options ...func(map[string]http.Handler)) http.Handler {
 
 				routes[info.Path] = metrics.InstrumentHandler(handler, name)
 
-				logger.Info(ctx).
-					Str("url", fmt.Sprintf("http://localhost:%d%s", config.Port, info.Path)).
-					Msg("Registered GraphQL endpoint.")
+				url := fmt.Sprintf("http://localhost:%d%s", config.Port, info.Path)
+				logger.Info(ctx).Str("url", url).Msg("Registered GraphQL endpoint.")
+				endpoints = append(endpoints, endpoint{"GraphQL", name, url})
 
 			default:
 				logger.Warn(ctx).Str("endpoint", name).Msg("Unsupported endpoint type.")
@@ -158,6 +167,33 @@ func GetMainHandler(options ...func(map[string]http.Handler)) http.Handler {
 		}
 
 		mux.ReplaceRoutes(routes)
+
+		if len(endpoints) > 0 && config.IsDevEnvironment() {
+			fmt.Println()
+
+			titleColor := color.New(color.FgHiGreen, color.Bold)
+			itemColor := color.New(color.FgHiBlue)
+			urlColor := color.New(color.FgHiCyan)
+			noticeColor := color.New(color.FgGreen, color.Italic)
+
+			if len(endpoints) == 1 {
+				ep := endpoints[0]
+				titleColor.Println("Your local endpoint is ready!")
+				itemColor.Printf("• %s (%s): ", ep.apiType, ep.name)
+				urlColor.Println(ep.url)
+			} else {
+				titleColor.Println("Your local endpoints are ready!")
+				for _, ep := range endpoints {
+					itemColor.Printf("• %s (%s): ", ep.apiType, ep.name)
+					urlColor.Println(ep.url)
+				}
+			}
+
+			fmt.Println()
+			noticeColor.Println("Changes will automatically be applied when you save your files.")
+			noticeColor.Println("Press Ctrl+C at any time to stop the server.")
+			fmt.Println()
+		}
 
 		return nil
 	})
