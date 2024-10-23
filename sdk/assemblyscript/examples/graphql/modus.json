@@ -8,8 +8,6 @@
     }
   },
   "connections": {
-    // This defines the dgraph host that is used by the example functions.
-    // The {{AUTH_TOKEN}} will be replaced by the secret provided in the Hypermode Console.
     "countries-api": {
       "type": "http",
       "endpoint": "https://countries.trevorblades.com/"
