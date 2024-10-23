@@ -13,6 +13,7 @@ import (
 	"context"
 	"io"
 	"os"
+	"sync"
 	"time"
 
 	"github.com/hypermodeinc/modus/runtime/config"
@@ -72,12 +73,18 @@ func Close() {
 }
 
 var adapters []func(context.Context, zerolog.Context) zerolog.Context
+var mu sync.RWMutex
 
 func AddAdapter(adapter func(context.Context, zerolog.Context) zerolog.Context) {
+	mu.Lock()
+	defer mu.Unlock()
 	adapters = append(adapters, adapter)
 }
 
 func Get(ctx context.Context) *zerolog.Logger {
+	mu.RLock()
+	defer mu.RUnlock()
+
 	if len(adapters) == 0 {
 		return &log.Logger
 	}
