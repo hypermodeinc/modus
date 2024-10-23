@@ -19,6 +19,7 @@ import (
 
 	"github.com/hypermodeinc/modus/lib/manifest"
 	"github.com/hypermodeinc/modus/runtime/logger"
+	"github.com/hypermodeinc/modus/runtime/middleware"
 	"github.com/hypermodeinc/modus/runtime/utils"
 )
 
@@ -95,6 +96,20 @@ func ApplyAuthToLocalHypermodeModelRequest(ctx context.Context, connection manif
 
 	if jwt == "" || orgId == "" {
 		return fmt.Errorf("missing HYP_JWT or HYP_ORG_ID environment variables, login to Hypermode using 'hyp login'")
+	}
+
+	// Parse the JWT without verifying its signature
+	claims, err := middleware.ParseJWTUnverified(jwt)
+	if err != nil {
+		return fmt.Errorf("failed to parse JWT: %w", err)
+	}
+
+	isExpired, err := middleware.CheckJWTExpiration(claims)
+	if err != nil {
+		return fmt.Errorf("failed to check JWT expiration: %w", err)
+	}
+	if isExpired {
+		return fmt.Errorf("JWT has expired. Please reauthenticate using `hyp login`")
 	}
 
 	req.Header.Set("Authorization", "Bearer "+jwt)
