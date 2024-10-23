@@ -16,13 +16,17 @@ import (
 	"net/http"
 	"os"
 	"regexp"
+	"time"
 
+	"github.com/fatih/color"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/hypermodeinc/modus/lib/manifest"
 	"github.com/hypermodeinc/modus/runtime/logger"
 	"github.com/hypermodeinc/modus/runtime/utils"
 )
 
 var provider secretsProvider
+var errLocalAuthFailed = fmt.Errorf("local authentication failed")
 
 type secretsProvider interface {
 	initialize(ctx context.Context)
@@ -93,14 +97,52 @@ func ApplyAuthToLocalHypermodeModelRequest(ctx context.Context, connection manif
 	jwt := os.Getenv("HYP_JWT")
 	orgId := os.Getenv("HYP_ORG_ID")
 
+	warningColor := color.New(color.FgHiYellow, color.Bold)
+
 	if jwt == "" || orgId == "" {
-		return fmt.Errorf("missing HYP_JWT or HYP_ORG_ID environment variables, login to Hypermode using 'hyp login'")
+		fmt.Println()
+		warningColor.Println("Warning: Local authentication not found. Please login using `hyp login`")
+		fmt.Println()
+		return errLocalAuthFailed
+	}
+
+	isExpired, err := checkJWTExpiration(jwt)
+	if err != nil {
+		return err
+	}
+	if isExpired {
+		fmt.Println()
+		warningColor.Println("Warning: Local authentication expired. Please login using `hyp login`")
+		fmt.Println()
+		return errLocalAuthFailed
 	}
 
 	req.Header.Set("Authorization", "Bearer "+jwt)
 	req.Header.Set("HYP-ORG-ID", orgId)
 
 	return nil
+}
+
+// checkJWTExpiration checks if the JWT has expired based on the 'exp' claim.
+func checkJWTExpiration(tokenString string) (bool, error) {
+	p := jwt.Parser{}
+	token, _, err := p.ParseUnverified(tokenString, jwt.MapClaims{})
+	if err != nil {
+		return false, fmt.Errorf("failed to parse: %w", err)
+	}
+
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		return false, fmt.Errorf("failed to extract claims from JWT")
+	}
+
+	exp, ok := claims["exp"].(float64)
+	if !ok {
+		return false, fmt.Errorf("exp claim is missing or not a number")
+	}
+
+	expirationTime := time.Unix(int64(exp), 0)
+	return time.Now().After(expirationTime), nil
 }
 
 // ApplySecretsToString evaluates the given string and replaces any placeholders
