@@ -13,7 +13,8 @@ import { Country, CountriesResponse, CountryResponse } from "./classes";
  * The `graphql` module from the Modus SDK allows us to interact with the API.
  */
 
-// Define the host name of the API to be used in the requests. Should match one defined in the modus.json manifest file.
+// Define the host name of the API to be used in the requests.
+// Must match one of the http connections defined in the modus.json manifest file.
 
 const hostName: string = "countries-api";
 

@@ -10,12 +10,9 @@
   "connections": {
     // This defines the dgraph host that is used by the example functions.
     // The {{API_KEY}} will be replaced by the secret's value at run time.
-    "dgraphGraphql": {
+    "countries-api": {
       "type": "http",
-      "endpoint": "https://frozen-mango.aws.cloud.dgraph.io/graphql",
-      "headers": {
-        "X-Auth-Token": "{{AUTH_TOKEN}}"
-      }
+      "endpoint": "https://countries.trevorblades.com/"
     }
   }
 }

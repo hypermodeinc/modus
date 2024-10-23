@@ -6,11 +6,15 @@
 
 package main
 
-type Person struct {
-	FirstName string `json:"firstName,omitempty"`
-	LastName  string `json:"lastName,omitempty"`
+type Country struct {
+	Code    string `json:"code,omitempty"`
+	Name    string `json:"name,omitempty"`
+	Capital string `json:"capital,omitempty"`
 }
 
-type PeopleData struct {
-	People []*Person `json:"people"`
+type CountriesResponse struct {
+	Countries []*Country `json:"countries"`
+}
+type CountryResponse struct {
+	Country *Country `json:"country"`
 }
