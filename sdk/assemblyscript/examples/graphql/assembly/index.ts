@@ -5,120 +5,63 @@
  */
 
 import { graphql } from "@hypermode/modus-sdk-as";
-import {
-  AddPersonPayload,
-  AggregatePersonResult,
-  PeopleData,
-  Person,
-} from "./classes";
+import { Country, CountriesResponse, CountryResponse } from "./classes";
 
-// This host name should match one defined in the modus.json manifest file.
-const hostName: string = "dgraph";
+/*
+ * This application uses a public GraphQL API to retrieve information about countries, continents, and languages.
+ * We are using the API available at: https://github.com/trevorblades/countries
+ * The `graphql` module from the Modus SDK allows us to interact with the API.
+ */
 
-// This function returns the results of querying for all people in the database.
-export function queryPeople(): Person[] | null {
+// Define the host name of the API to be used in the requests.
+// Must match one of the http connections defined in the modus.json manifest file.
+
+const hostName: string = "countries-api";
+
+// Function to list all countries returned by the API
+export function countries(): Country[] | null {
   const statement = `
     query {
-      people: queryPerson {
-        id
-        firstName
-        lastName
+      countries{
+        code
+        name
+        capital
       }
     }
   `;
+  // Execute the GraphQL query using the host name and query statement
+  // The API returns a response of type `CountriesResponse` containing an array of `Country` objects
+  const response = graphql.execute<CountriesResponse>(hostName, statement);
 
-  const response = graphql.execute<PeopleData>(hostName, statement);
+  // If no data is returned (i.e., the API call fails), return an empty array
   if (!response.data) return [];
-  return response.data!.people;
+
+  // Otherwise, return the list of countries from the response
+  return response.data!.countries;
 }
 
-// This function returns the results of querying for a specific person in the database.
-export function querySpecificPerson(
-  firstName: string,
-  lastName: string,
-): Person | null {
+// Function to retrieve a specific country by its unique code
+export function getCountryByCode(code: string): Country | null {
+  // Construct the GraphQL query with a parameter for the country code
   const statement = `
-    query queryPeople($firstName: String!, $lastName: String!) {
-      people: queryPerson(
-          first: 1,
-          filter: { firstName: { eq: $firstName }, lastName: { eq: $lastName } }
-      ) {
-          id
-          firstName
-          lastName
+    query ($code: ID!){
+      country(code: $code){
+        code
+        name
+        capital
       }
     }
   `;
 
+  // Create a new instance of Variables to pass in the `code` parameter
   const vars = new graphql.Variables();
-  vars.set("firstName", firstName);
-  vars.set("lastName", lastName);
+  vars.set("code", code);
+  // Execute the query, passing the variable along with the statement and host name
+  const response = graphql.execute<CountryResponse>(hostName, statement, vars);
 
-  const response = graphql.execute<PeopleData>(hostName, statement, vars);
-
+  // If no data is returned (i.e., the API call fails), return null
   if (!response.data) return null;
-  const people = response.data!.people;
-  if (people.length === 0) return null;
-  return people[0];
-}
 
-// This function returns the results of querying for the count of people in the database.
-function getPersonCount(): i32 {
-  const statement = `
-    query {
-      aggregatePerson {
-        count
-      }
-    }
-  `;
-
-  const response = graphql.execute<AggregatePersonResult>(hostName, statement);
-  return response.data!.aggregatePerson.count;
-}
-
-// This function returns the results of querying for a random person in the database.
-export function getRandomPerson(): Person | null {
-  const count = getPersonCount();
-  const offset = <u32>Math.floor(Math.random() * count);
-  const statement = `
-    query {
-      people: queryPerson(first: 1, offset: ${offset}) {
-        id
-        firstName
-        lastName
-      }
-    }
-  `;
-
-  const response = graphql.execute<PeopleData>(hostName, statement);
-  if (!response.data) return null;
-  const people = response.data!.people;
-  if (people.length === 0) return null;
-  return people[0];
-}
-
-// This function adds a new person to the database and returns that person.
-export function addPerson(firstName: string, lastName: string): Person {
-  const statement = `
-    mutation {
-      addPerson(input: [{firstName: "${firstName}", lastName: "${lastName}" }]) {
-        people: person {
-          id
-          firstName
-          lastName
-        }
-      }
-    }
-  `;
-
-  const response = graphql.execute<AddPersonPayload>(hostName, statement);
-  return response.data!.addPerson.people[0];
-}
-
-// This function demonstrates what happens when a bad query is executed.
-export function testBadQuery(): Person[] {
-  const statement = "this is a bad query";
-  const results = graphql.execute<PeopleData>(hostName, statement);
-  if (!results.data) return [];
-  return results.data!.people;
+  // Otherwise, return the country information from the response
+  return response.data!.country;
 }
