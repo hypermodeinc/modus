@@ -8,8 +8,6 @@
     }
   },
   "connections": {
-    // This defines the dgraph host that is used by the example functions.
-    // The {{API_KEY}} will be replaced by the secret's value at run time.
     "countries-api": {
       "type": "http",
       "endpoint": "https://countries.trevorblades.com/"

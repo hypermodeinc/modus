@@ -7,9 +7,9 @@
 package main
 
 type Country struct {
-	Code    string `json:"code,omitempty"`
-	Name    string `json:"name,omitempty"`
-	Capital string `json:"capital,omitempty"`
+	Code    string `json:"code"`
+	Name    string `json:"name"`
+	Capital string `json:"capital"`
 }
 
 type CountriesResponse struct {
