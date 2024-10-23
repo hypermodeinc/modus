@@ -109,7 +109,7 @@ export default class NewCommand extends Command {
   private async promptAppName(defaultValue: string): Promise<string> {
     this.log("Pick a name for your app: " + chalk.dim(`(${defaultValue})`));
     const input = ((await ask(chalk.dim(" -> "))) || "").trim();
-    const name = toValidAppName(input);
+    const name = input ? toValidAppName(input) : defaultValue;
     clearLine(2);
     this.log("App Name: " + chalk.dim(name.length ? name : "Not Provided"));
     return name;
