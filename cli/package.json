@@ -23,6 +23,7 @@
   "scripts": {
     "pack": "npm pack",
     "build": "rm -rf dist && tsc -b",
+    "watch": "rm -rf dist && tsc -b -w",
     "postpack": "rm -f oclif.manifest.json",
     "prepack": "npm i && npm run build && oclif manifest"
   },

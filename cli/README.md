@@ -7,3 +7,12 @@ This package contains the Modus CLI, which is responsible for the Modus local de
 ## Getting Started
 
 Please refer to the docs at:  https://docs.hypermode.com/modus/quickstart
+
+## Contributing
+
+```bash
+npm i
+npm run watch
+```
+
+Make changes and then run `./bin/modus.js` to test changes.
