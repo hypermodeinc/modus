@@ -110,7 +110,8 @@ export default class NewCommand extends Command {
 
   private async promptAppName(defaultValue: string): Promise<string> {
     this.log("Pick a name for your app: " + chalk.dim(`(${defaultValue})`));
-    const name = ((await ask(chalk.dim(" -> "))) || "").trim();
+    const input = ((await ask(chalk.dim(" -> "))) || "").trim();
+    const name = toValidAppName(input);
     clearLine(2);
     this.log("App Name: " + chalk.dim(name.length ? name : "Not Provided"));
     return name;
@@ -360,4 +361,16 @@ async function getTinyGoVersion(): Promise<string | undefined> {
     const parts = result.stdout.split(" ");
     return parts.length > 2 ? parts[2] : undefined;
   } catch {}
+}
+
+function toValidAppName(input: string): string {
+  // Remove any characters that aren't alphanumeric, spaces, or a few other valid characters.
+  // Replace spaces with hyphens.
+  return input
+    .trim() // Remove leading/trailing spaces
+    .toLowerCase() // Convert to lowercase for consistency
+    .replace(/[^a-z0-9\s-]/g, "") // Remove invalid characters
+    .replace(/\s+/g, "-") // Replace spaces (or multiple spaces) with a single hyphen
+    .replace(/-+/g, "-") // Replace multiple consecutive hyphens with a single hyphen
+    .replace(/^-|-$/g, ""); // Remove leading or trailing hyphens
 }
