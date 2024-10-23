@@ -38,21 +38,16 @@ func SetManifest(m *manifest.Manifest) {
 
 func MonitorManifestFile(ctx context.Context) {
 	loadFile := func(file storage.FileInfo) error {
+		logger.Info(ctx).Str("filename", file.Name).Msg("Loading manifest file.")
 		if file.Name != manifestFileName {
 			return nil
 		}
-		err := loadManifest(ctx)
-		if err == nil {
-			logger.Info(ctx).
-				Str("filename", file.Name).
-				Msg("Loaded manifest file.")
-		} else {
-			logger.Err(ctx, err).
-				Str("filename", file.Name).
-				Msg("Failed to load manifest file.")
+
+		if err := loadManifest(ctx); err != nil {
+			logger.Err(ctx, err).Str("filename", file.Name).Msg("Failed to load manifest file.")
 		}
 
-		return err
+		return nil
 	}
 
 	// NOTE: Removing the manifest file entirely is not currently supported.
