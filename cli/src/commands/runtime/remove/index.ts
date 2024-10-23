@@ -45,7 +45,7 @@ export default class RuntimeRemoveCommand extends Command {
       if (versions.length === 0) {
         this.log(chalk.yellow("No Modus runtimes are installed."));
         this.exit(1);
-      } else if (!flags.force && !(await this.confirmAction("Really, remove all Modus runtimes? [y/n]"))) {
+      } else if (!flags.force && !(await this.confirmAction("Really, remove all Modus runtimes? [y/N]"), false)) {
         this.log(chalk.dim("Aborted."));
         this.exit(1);
       }
@@ -62,7 +62,7 @@ export default class RuntimeRemoveCommand extends Command {
       if (!isInstalled) {
         this.log(chalk.yellow(runtimeText + "is not installed."));
         this.exit(1);
-      } else if (!flags.force && !(await this.confirmAction(`Really, remove ${runtimeText} ? [y/n]`))) {
+      } else if (!flags.force && !(await this.confirmAction(`Really, remove ${runtimeText} ? [y/N]`))) {
         this.log(chalk.dim("Aborted."));
         this.exit(1);
       }
@@ -89,10 +89,17 @@ export default class RuntimeRemoveCommand extends Command {
     this.log(chalk.red(" ERROR ") + chalk.dim(": " + message));
   }
 
-  private async confirmAction(message: string): Promise<boolean> {
+  private async confirmAction(message: string, defaultToContinue = true): Promise<boolean> {
     this.log(message);
-    const cont = ((await ask(chalk.dim(" -> "))) || "n").toLowerCase().trim();
+    const input = await ask(chalk.dim(" -> "));
+
+    if (input === "") {
+      clearLine(2);
+      return defaultToContinue;
+    }
+
+    const shouldContinue = (input || "n").toLowerCase().trim();
     clearLine(2);
-    return cont === "yes" || cont === "y";
+    return shouldContinue === "yes" || shouldContinue === "y";
   }
 }

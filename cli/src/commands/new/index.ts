@@ -142,7 +142,7 @@ export default class NewCommand extends Command {
 
   private async createApp(name: string, dir: string, sdk: SDK, template: string, force: boolean, prerelease: boolean) {
     if (!force && (await fs.exists(dir))) {
-      if (!(await this.confirmAction("Attempting to overwrite a folder that already exists.\nAre you sure you want to continue? [y/n]"))) {
+      if (!(await this.confirmAction("Attempting to overwrite a folder that already exists.\nAre you sure you want to continue? [Y/n]"))) {
         clearLine();
         return;
       } else {
@@ -229,13 +229,13 @@ export default class NewCommand extends Command {
 
       let updateSDK = false;
       if (!installedSdkVersion) {
-        if (!(await this.confirmAction(`You do not have the ${sdkText} installed. Would you like to install it now? [y/n]`))) {
+        if (!(await this.confirmAction(`You do not have the ${sdkText} installed. Would you like to install it now? [Y/n]`))) {
           this.log(chalk.dim("Aborted."));
           this.exit(1);
         }
         updateSDK = true;
       } else if (latestVersion !== installedSdkVersion) {
-        if (await this.confirmAction(`You have ${installedSdkVersion} of the ${sdkText}. The latest is ${latestVersion}. Would you like to update? [y/n]`)) {
+        if (await this.confirmAction(`You have ${installedSdkVersion} of the ${sdkText}. The latest is ${latestVersion}. Would you like to update? [Y/n]`)) {
           updateSDK = true;
         }
       }
