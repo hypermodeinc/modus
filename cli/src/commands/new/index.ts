@@ -22,6 +22,10 @@ import { ask, clearLine, withSpinner } from "../../util/index.js";
 import SDKInstallCommand from "../sdk/install/index.js";
 import { getHeader } from "../../custom/header.js";
 
+const MODUS_NEW_DEFAULT_NAME = "modus-app";
+const MODUS_NEW_GO_NAME = "modus-go-app";
+const MODUS_NEW_AS_NAME = "modus-as-app";
+
 export default class NewCommand extends Command {
   static description = "Create a new Modus app";
 
@@ -70,7 +74,9 @@ export default class NewCommand extends Command {
     }
 
     this.log(chalk.hex("#A585FF")(NewCommand.description) + "\n");
-    const name = flags.name || (await this.promptAppName());
+
+    const defaultName = flags.sdk ? (flags.sdk === SDK.AssemblyScript ? MODUS_NEW_AS_NAME : MODUS_NEW_GO_NAME) : MODUS_NEW_DEFAULT_NAME;
+    const name = flags.name || (await this.promptAppName(defaultName));
     if (!name) {
       this.logError("An app name is required.");
       this.exit(1);
@@ -102,8 +108,8 @@ export default class NewCommand extends Command {
     await this.createApp(name, dir, sdk, template, flags.force, flags.prerelease);
   }
 
-  private async promptAppName(): Promise<string> {
-    this.log("App Name?");
+  private async promptAppName(defaultValue: string): Promise<string> {
+    this.log("Pick a name for your app: " + chalk.dim(`(${defaultValue})`));
     const name = ((await ask(chalk.dim(" -> "))) || "").trim();
     clearLine(2);
     this.log("App Name: " + chalk.dim(name.length ? name : "Not Provided"));
