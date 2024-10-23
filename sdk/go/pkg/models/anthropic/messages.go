@@ -69,7 +69,7 @@ type MessagesModelInput struct {
 	// Note that even with `temperature` of `0.0`, the results will not be fully deterministic.
 	//
 	// The default value is 1.0.
-	Temperature float64 `json:"temperature"` // should we make it *float64?
+	Temperature float64 `json:"temperature"`
 
 	// How the model should use the provided tools.
 	//
@@ -82,7 +82,7 @@ type MessagesModelInput struct {
 	// or more generally whenever you want the model to produce a particular JSON structure of output.
 	//
 	// See Anthropic's [guide](https://docs.anthropic.com/en/docs/tool-use) for more details.
-	Tools []Tool `json:"tools,omitempty"`
+	Tools []*Tool `json:"tools,omitempty"`
 
 	// Only sample from the top K options for each subsequent token.
 	//
@@ -99,7 +99,7 @@ type MessagesModelInput struct {
 
 type Metadata struct {
 	// An external identifier for the user who is associated with the request.
-	UserId *string `json:"user_id,omitempty"`
+	UserId string `json:"user_id,omitempty"`
 }
 
 type ToolChoice struct {
@@ -157,7 +157,7 @@ type MessagesModelOutput struct {
 	StopReason string `json:"stop_reason"`
 
 	// Which custom stop sequence was generated, if any.
-	StopSequence *string `json:"stop_sequence,omitempty"`
+	StopSequence string `json:"stop_sequence,omitempty"`
 
 	// The usage statistics for the request.
 	Usage Usage `json:"usage"`

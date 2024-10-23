@@ -46,7 +46,7 @@ func GetStockPrice(company string, useTools bool) (string, error) {
 	input.MaxTokens = 100
 
 	if useTools {
-		input.Tools = []anthropic.Tool{
+		input.Tools = []*anthropic.Tool{
 			{
 				Name:        "stock_price",
 				InputSchema: `{"type":"object","properties":{"symbol":{"type":"string","description":"The stock symbol"}},"required":["symbol"]}`,
