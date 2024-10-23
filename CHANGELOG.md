@@ -46,6 +46,7 @@ In previous releases, the name "Hypermode" was used for all three._
 - Add metadata shared library [#482](https://github.com/hypermodeinc/modus/pull/482)
 - Add `.gitignore` files to default templates [#486](https://github.com/hypermodeinc/modus/pull/486)
 - Fix CLI warnings about Go/TinyGo installation [#487](https://github.com/hypermodeinc/modus/pull/487)
+- Remove deprecated model fields [#488](https://github.com/hypermodeinc/modus/pull/488)
 
 ## 2024-10-02 - Version 0.12.7
 
