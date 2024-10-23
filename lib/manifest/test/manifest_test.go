@@ -50,12 +50,6 @@ func TestReadManifest(t *testing.T) {
 				SourceModel: "source-model-3",
 				Connection:  "my-model-connection",
 			},
-			"model-4": {
-				Name:        "model-4",
-				SourceModel: "example/source-model-4",
-				Provider:    "hugging-face",
-				Connection:  "hypermode",
-			},
 		},
 		Connections: map[string]manifest.ConnectionInfo{
 			"my-model-connection": manifest.HTTPConnectionInfo{
