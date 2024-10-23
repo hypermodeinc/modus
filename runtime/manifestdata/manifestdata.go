@@ -45,6 +45,7 @@ func MonitorManifestFile(ctx context.Context) {
 
 		if err := loadManifest(ctx); err != nil {
 			logger.Err(ctx, err).Str("filename", file.Name).Msg("Failed to load manifest file.")
+			return err
 		}
 
 		return nil
