@@ -26,6 +26,8 @@ const MODUS_NEW_DEFAULT_NAME = "modus-app";
 const MODUS_NEW_GO_NAME = "modus-go-app";
 const MODUS_NEW_AS_NAME = "modus-as-app";
 
+const MODUS_DEFAULT_TEMPLATE_NAME = "default";
+
 export default class NewCommand extends Command {
   static description = "Create a new Modus app";
 
@@ -49,10 +51,10 @@ export default class NewCommand extends Command {
       char: "s",
       description: "SDK to use",
     }),
-    template: Flags.string({
-      char: "t",
-      description: "Template to use",
-    }),
+    // template: Flags.string({
+    //   char: "t",
+    //   description: "Template to use",
+    // }),
     force: Flags.boolean({
       char: "f",
       default: false,
@@ -95,17 +97,13 @@ export default class NewCommand extends Command {
           ]
         : await this.promptSdkSelection()
     );
-    const template = flags.template || (await this.promptTemplate("default"));
-    if (!template) {
-      this.logError("A template is required.");
-      this.exit(1);
-    }
+
     if (!flags.force && !(await this.confirmAction("Continue? [Y/n]"))) {
       this.log(chalk.dim("Aborted."));
       this.exit(1);
     }
     this.log();
-    await this.createApp(name, dir, sdk, template, flags.force, flags.prerelease);
+    await this.createApp(name, dir, sdk, MODUS_DEFAULT_TEMPLATE_NAME, flags.force, flags.prerelease);
   }
 
   private async promptAppName(defaultValue: string): Promise<string> {
