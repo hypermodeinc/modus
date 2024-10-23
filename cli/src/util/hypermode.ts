@@ -34,9 +34,9 @@ export async function readSettingsJson(): Promise<HypSettings> {
 
   try {
     const jsonContent = JSON.parse(content);
-    settings.email = jsonContent.email;
-    settings.jwt = jsonContent.jwt;
-    settings.orgId = jsonContent.orgId;
+    settings.email = jsonContent.HYP_EMAIL;
+    settings.jwt = jsonContent.HYP_JWT;
+    settings.orgId = jsonContent.HYP_ORG_ID;
   } catch (e) {
     console.warn(chalk.yellow("Error reading " + path), e);
   }
