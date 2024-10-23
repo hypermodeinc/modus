@@ -7,14 +7,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import chalk from "chalk";
 import { getLogo } from "./logo.js";
 
 export function getHeader(cliVersion: string): string {
   let out = "";
   out += getLogo();
   out += "\n";
-  out += chalk.dim(`Modus CLI v${cliVersion}`);
+  out += `Modus CLI v${cliVersion}`;
   out += "\n";
   return out;
 }
