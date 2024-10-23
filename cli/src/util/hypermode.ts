@@ -9,6 +9,8 @@
 
 import * as path from "node:path";
 import * as fs from "node:fs";
+import * as utils from "./fs.js";
+import chalk from "chalk";
 
 function getHypEnvDir(): string {
   return path.join(process.env.HOME || "", ".hypermode");
@@ -18,25 +20,26 @@ function getSettingsFilePath(): string {
   return path.join(getHypEnvDir(), "settings.json");
 }
 
-export function readSettingsJson(): {
-  email: null | string;
-  jwt: null | string;
-  orgId: null | string;
-} {
-  const content = fs.readFileSync(getSettingsFilePath(), "utf-8");
+type HypSettings = {
+  email?: string;
+  jwt?: string;
+  orgId?: string;
+};
 
-  let email: null | string = null;
-  let jwt: null | string = null;
-  let orgId: null | string = null;
+export async function readSettingsJson(): Promise<HypSettings> {
+  const path = getSettingsFilePath();
+  const content = await utils.readFile(path, "utf-8");
+
+  const settings: HypSettings = {};
 
   try {
     const jsonContent = JSON.parse(content);
-    email = jsonContent.HYP_EMAIL || null;
-    jwt = jsonContent.HYP_JWT || null;
-    orgId = jsonContent.HYP_ORG_ID || null;
+    settings.email = jsonContent.email;
+    settings.jwt = jsonContent.jwt;
+    settings.orgId = jsonContent.orgId;
   } catch (e) {
-    console.error("Error reading settings.json", e);
+    console.warn(chalk.yellow("Error reading " + path), e);
   }
 
-  return { email, jwt, orgId };
+  return settings;
 }

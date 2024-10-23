@@ -50,7 +50,7 @@ In previous releases, the name "Hypermode" was used for all three._
 - Improve dev first use log messages [#489](https://github.com/hypermodeinc/modus/pull/489)
 - Highlight endpoints when running in dev [#490](https://github.com/hypermodeinc/modus/pull/490)
 - Fix data race in logging adapter [#491](https://github.com/hypermodeinc/modus/pull/491)
-- move hyp settings for local model invocation to env variables [#495](https://github.com/hypermodeinc/modus/pull/495)
+- Move hyp settings for local model invocation to env variables [#495](https://github.com/hypermodeinc/modus/pull/495)
 
 ## 2024-10-02 - Version 0.12.7
 

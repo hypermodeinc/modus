@@ -144,14 +144,14 @@ export default class DevCommand extends Command {
     await BuildCommand.run([appPath, "--no-logo"]);
 
     // read from settings.json if it exists, load env vars into env
-    const settings = readSettingsJson();
+    const settings = await readSettingsJson();
 
     const env = {
       ...process.env,
       MODUS_ENV: "dev",
-      HYP_EMAIL: settings.email || "",
-      HYP_JWT: settings.jwt || "",
-      HYP_ORG_ID: settings.orgId || "",
+      HYP_EMAIL: settings.email,
+      HYP_JWT: settings.jwt,
+      HYP_ORG_ID: settings.orgId,
     };
 
     const runtime = spawn(runtimePath, ["-appPath", path.join(appPath, "build")], {
