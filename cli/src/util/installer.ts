@@ -11,7 +11,7 @@ import os from "node:os";
 import path from "node:path";
 import * as fs from "./fs.js";
 import * as vi from "./versioninfo.js";
-import { execFile } from "./cp.js";
+import { extract } from "./tar.js";
 import { downloadFile, isOnline } from "./index.js";
 import { GitHubOwner, GitHubRepo, SDK } from "../custom/globals.js";
 
@@ -57,6 +57,6 @@ export async function installRuntime(version: string) {
 
   const installDir = vi.getRuntimePath(version);
   await fs.mkdir(installDir, { recursive: true });
-  await execFile("tar", ["-xf", archivePath, "-C", installDir]);
+  await extract(archivePath, installDir);
   await fs.rm(archivePath);
 }
