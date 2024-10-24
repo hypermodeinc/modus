@@ -169,7 +169,7 @@ export default class DevCommand extends Command {
     };
 
     // Spawn the runtime child process
-    const child = spawn(runtimePath, ["-appPath", path.join(appPath, "build")], {
+    const child = spawn(runtimePath, ["-appPath", path.join(appPath, "build"), "-refresh=1s"], {
       stdio: ["inherit", "inherit", "pipe"],
       env: env,
     });
