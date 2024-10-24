@@ -9,6 +9,7 @@
 
 import { Args, Command, Flags } from "@oclif/core";
 import { spawn } from "node:child_process";
+import { Readable } from "node:stream";
 import path from "node:path";
 import os from "node:os";
 import chalk from "chalk";
@@ -201,65 +202,107 @@ export default class DevCommand extends Command {
 
     // Watch for changes in the app directory and rebuild the app when changes are detected
     if (!flags["no-watch"] && !flags["no-build"]) {
-      let lastModified = 0;
-      let lastBuild = 0;
-      let paused = true;
-      setInterval(async () => {
-        if (paused) {
-          return;
-        }
-        paused = true;
-
-        if (lastBuild > lastModified) {
-          return;
-        }
-        lastBuild = Date.now();
-
-        try {
-          child.stderr.pause();
-          this.log();
-          this.log(chalk.magentaBright("Detected change. Rebuilding..."));
-          this.log();
-          await BuildCommand.run([appPath, "--no-logo"]);
-        } catch (e) {
-          this.log(chalk.magenta("Waiting for more changes..."));
-          this.log(chalk.dim("Press Ctrl+C at any time to stop the server."));
-        } finally {
-          child.stderr.resume();
-        }
-      }, flags.delay);
-
-      const globs = getGlobsToWatch(sdk);
-
-      // NOTE: The built-in fs.watch or fsPromises.watch is insufficient for our needs.
-      // Instead, we use chokidar for consistent behavior in cross-platform file watching.
-      const pmOpts: pm.PicomatchOptions = { posixSlashes: true };
-      chokidar
-        .watch(appPath, {
-          ignored: (filePath, stats) => {
-            const relativePath = path.relative(appPath, filePath);
-            if (!stats || !relativePath) return false;
-
-            let ignore = false;
-            if (pm(globs.excluded, pmOpts)(relativePath)) {
-              ignore = true;
-            } else if (stats.isFile()) {
-              ignore = !pm(globs.included, pmOpts)(relativePath);
-            }
-
-            if (process.env.MODUS_DEBUG) {
-              this.log(chalk.dim(`${ignore ? "ignored: " : "watching:"}  ${relativePath}`));
-            }
-            return ignore;
-          },
-          ignoreInitial: true,
-          persistent: true,
-        })
-        .on("all", () => {
-          lastModified = Date.now();
-          paused = false;
-        });
+      this.watchForManifestChanges(appPath, child.stderr);
+      this.watchForAppCodeChanges(appPath, sdk, child.stderr, flags.delay);
     }
+  }
+
+  private watchForManifestChanges(appPath: string, runtimeOutput: Readable) {
+    // whenever the modus.json file changes, copy it to the build directory.
+    // the runtime will automatically reload the manifest when it detects a change to the copy in the build folder.
+
+    const sourcePath = path.join(appPath, "modus.json");
+    const outputPath = path.join(appPath, "build", "modus.json");
+
+    const onAddOrChange = async () => {
+      this.log();
+      try {
+        this.log(chalk.magentaBright("Detected manifest change. Applying..."));
+        await fs.copyFile(sourcePath, outputPath);
+      } catch (e) {
+        this.log(chalk.red("Failed to copy modus.json to build directory."), e);
+      }
+      this.log();
+    };
+
+    chokidar
+      .watch(sourcePath, {
+        ignoreInitial: true,
+        persistent: true,
+      })
+      .on("add", onAddOrChange)
+      .on("change", onAddOrChange)
+      .on("unlink", async () => {
+        this.log();
+        try {
+          this.log(chalk.magentaBright("Detected manifest deleted. Applying..."));
+          await fs.unlink(outputPath);
+        } catch (e) {
+          this.log(chalk.red("Failed to delete modus.json from build directory."), e);
+        }
+        this.log();
+      });
+  }
+
+  private watchForAppCodeChanges(appPath: string, sdk: SDK, runtimeOutput: Readable, delay: number) {
+    let lastModified = 0;
+    let lastBuild = 0;
+    let paused = true;
+    setInterval(async () => {
+      if (paused) {
+        return;
+      }
+      paused = true;
+
+      if (lastBuild > lastModified) {
+        return;
+      }
+      lastBuild = Date.now();
+
+      try {
+        runtimeOutput.pause();
+        this.log();
+        this.log(chalk.magentaBright("Detected source code change. Rebuilding..."));
+        this.log();
+        await BuildCommand.run([appPath, "--no-logo"]);
+      } catch (e) {
+        this.log(chalk.magenta("Waiting for more changes..."));
+        this.log(chalk.dim("Press Ctrl+C at any time to stop the server."));
+      } finally {
+        runtimeOutput.resume();
+      }
+    }, delay);
+
+    const globs = getGlobsToWatch(sdk);
+
+    // NOTE: The built-in fs.watch or fsPromises.watch is insufficient for our needs.
+    // Instead, we use chokidar for consistent behavior in cross-platform file watching.
+    const pmOpts: pm.PicomatchOptions = { posixSlashes: true };
+    chokidar
+      .watch(appPath, {
+        ignored: (filePath, stats) => {
+          const relativePath = path.relative(appPath, filePath);
+          if (!stats || !relativePath) return false;
+
+          let ignore = false;
+          if (pm(globs.excluded, pmOpts)(relativePath)) {
+            ignore = true;
+          } else if (stats.isFile()) {
+            ignore = !pm(globs.included, pmOpts)(relativePath);
+          }
+
+          if (process.env.MODUS_DEBUG) {
+            this.log(chalk.dim(`${ignore ? "ignored: " : "watching:"}  ${relativePath}`));
+          }
+          return ignore;
+        },
+        ignoreInitial: true,
+        persistent: true,
+      })
+      .on("all", () => {
+        lastModified = Date.now();
+        paused = false;
+      });
   }
 
   private logError(message: string) {
