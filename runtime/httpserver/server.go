@@ -19,21 +19,19 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 
-	"github.com/fatih/color"
 	"github.com/hypermodeinc/modus/lib/manifest"
+	"github.com/hypermodeinc/modus/runtime/app"
 	"github.com/hypermodeinc/modus/runtime/config"
 	"github.com/hypermodeinc/modus/runtime/graphql"
 	"github.com/hypermodeinc/modus/runtime/logger"
 	"github.com/hypermodeinc/modus/runtime/manifestdata"
 	"github.com/hypermodeinc/modus/runtime/metrics"
 	"github.com/hypermodeinc/modus/runtime/middleware"
+
+	"github.com/fatih/color"
 	"github.com/rs/cors"
 )
-
-// shutdownTimeout is the time to wait for the server to shutdown gracefully.
-const shutdownTimeout = 5 * time.Second
 
 func Start(ctx context.Context, local bool) {
 	if local {
@@ -65,7 +63,9 @@ func startHttpServer(ctx context.Context, addresses ...string) {
 	shutdownChan := make(chan bool, len(addresses))
 	for _, server := range servers {
 		go func() {
-			if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			err := server.ListenAndServe()
+			app.SetShuttingDown()
+			if err != nil && !errors.Is(err, http.ErrServerClosed) {
 				logger.Fatal(ctx).Err(err).Msg("HTTP server error.  Exiting.")
 			}
 			shutdownChan <- true
@@ -91,7 +91,7 @@ func startHttpServer(ctx context.Context, addresses ...string) {
 
 	// Shutdown all servers gracefully.
 	for _, server := range servers {
-		shutdownCtx, shutdownRelease := context.WithTimeout(ctx, shutdownTimeout)
+		shutdownCtx, shutdownRelease := context.WithTimeout(ctx, app.ShutdownTimeout)
 		defer shutdownRelease()
 		if err := server.Shutdown(shutdownCtx); err != nil {
 			logger.Fatal(ctx).Err(err).Msg("HTTP server shutdown error.")

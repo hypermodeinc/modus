@@ -12,6 +12,8 @@ package functions
 import (
 	"context"
 	"sync"
+
+	"github.com/hypermodeinc/modus/runtime/app"
 )
 
 type FunctionsLoadedCallback = func(ctx context.Context)
@@ -26,6 +28,9 @@ func RegisterFunctionsLoadedCallback(callback FunctionsLoadedCallback) {
 }
 
 func triggerFunctionsLoaded(ctx context.Context) {
+	if ctx.Err() != nil || app.IsShuttingDown() {
+		return
+	}
 	eventsMutex.RLock()
 	defer eventsMutex.RUnlock()
 	for _, callback := range functionsLoadedCallbacks {

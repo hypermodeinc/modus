@@ -12,6 +12,8 @@ package manifestdata
 import (
 	"context"
 	"sync"
+
+	"github.com/hypermodeinc/modus/runtime/app"
 )
 
 type ManifestLoadedCallback = func(ctx context.Context) error
@@ -26,6 +28,10 @@ func RegisterManifestLoadedCallback(callback ManifestLoadedCallback) {
 }
 
 func triggerManifestLoaded(ctx context.Context) error {
+	if ctx.Err() != nil || app.IsShuttingDown() {
+		return nil
+	}
+
 	eventsMutex.RLock()
 	defer eventsMutex.RUnlock()
 

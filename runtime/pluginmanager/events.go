@@ -14,6 +14,7 @@ import (
 	"sync"
 
 	"github.com/hypermodeinc/modus/lib/metadata"
+	"github.com/hypermodeinc/modus/runtime/app"
 )
 
 type PluginLoadedCallback = func(ctx context.Context, md *metadata.Metadata) error
@@ -28,6 +29,10 @@ func RegisterPluginLoadedCallback(callback PluginLoadedCallback) {
 }
 
 func triggerPluginLoaded(ctx context.Context, md *metadata.Metadata) error {
+	if ctx.Err() != nil || app.IsShuttingDown() {
+		return nil
+	}
+
 	eventsMutex.RLock()
 	defer eventsMutex.RUnlock()
 	for _, callback := range pluginLoadedCallbacks {
