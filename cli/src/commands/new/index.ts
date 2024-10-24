@@ -84,14 +84,19 @@ export default class NewCommand extends Command {
     if (flags.sdk) {
       sdk = parseSDK(flags.sdk);
     } else {
+      const latestGoVersion = await vi.getLatestInstalledSdkVersion(SDK.Go, flags.prerelease);
+      const lastestAsVersion = await vi.getLatestInstalledSdkVersion(SDK.AssemblyScript, flags.prerelease);
+
       const sdkInput = await inquirer.select({
         message: "Select a SDK",
         default: SDK.Go,
         choices: [
           {
+            name: `${SDK.Go} (${latestGoVersion})`,
             value: SDK.Go,
           },
           {
+            name: `${SDK.AssemblyScript} (${lastestAsVersion})`,
             value: SDK.AssemblyScript,
           },
         ],
