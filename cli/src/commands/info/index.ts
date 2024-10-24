@@ -1,12 +1,3 @@
-/*
- * Copyright 2024 Hypermode Inc.
- * Licensed under the terms of the Apache License, Version 2.0
- * See the LICENSE file that accompanied this code for further details.
- *
- * SPDX-FileCopyrightText: 2024 Hypermode Inc. <hello@hypermode.com>
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import { Command, Flags } from "@oclif/core";
 import chalk from "chalk";
 import os from "node:os";
@@ -110,13 +101,13 @@ export default class InfoCommand extends Command {
   }
 
   async getNPMVersion(): Promise<string> {
-    const { stdout } = await execFileWithExitCode("npm", ["--version"]);
+    const { stdout } = await execFileWithExitCode("npm", ["--version"], { shell: true });
     return stdout.trim();
   }
 
   async getGoVersion(): Promise<string> {
     try {
-      const { stdout } = await execFileWithExitCode("go", ["version"]);
+      const { stdout } = await execFileWithExitCode("go", ["version"], { shell: true });
       return stdout.trim().split(" ")[2];
     } catch (error) {
       return "Not installed";
@@ -125,7 +116,7 @@ export default class InfoCommand extends Command {
 
   async getTinyGoVersion(): Promise<string> {
     try {
-      const { stdout } = await execFileWithExitCode("tinygo", ["version"]);
+      const { stdout } = await execFileWithExitCode("tinygo", ["version"], { shell: true });
       return stdout.trim().split(" ")[2];
     } catch (error) {
       return "Not installed";
