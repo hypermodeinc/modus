@@ -70,6 +70,12 @@
       "env": {
         "MODUS_DEBUG": "true"
       }
+    },
+    {
+      "name": "Debug Modus CLI",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/cli/bin/modus.js"
     }
   ],
   "inputs": [
