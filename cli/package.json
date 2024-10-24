@@ -34,11 +34,13 @@
     "chokidar": "^4.0.1",
     "gradient-string": "^3.0.0",
     "ora": "^8.1.0",
+    "picomatch": "^4.0.2",
     "semver": "^7.6.3"
   },
   "devDependencies": {
     "@oclif/test": "^4",
     "@types/node": "^22",
+    "@types/picomatch": "^3.0.1",
     "@types/semver": "^7.5.8",
     "oclif": "^4",
     "ts-node": "^10",

@@ -12,11 +12,13 @@ import { spawn } from "node:child_process";
 import path from "node:path";
 import os from "node:os";
 import chalk from "chalk";
+import pm from "picomatch";
 import chokidar from "chokidar";
 
 import * as fs from "../../util/fs.js";
 import * as vi from "../../util/versioninfo.js";
 import * as installer from "../../util/installer.js";
+import { SDK } from "../../custom/globals.js";
 import { getHeader } from "../../custom/header.js";
 import { getAppInfo } from "../../util/appinfo.js";
 import { isOnline, withSpinner } from "../../util/index.js";
@@ -143,7 +145,6 @@ export default class DevCommand extends Command {
 
     await BuildCommand.run([appPath, "--no-logo"]);
 
-    // read from settings.json if it exists, load env vars into env
     const hypSettings = await readHypermodeSettings();
 
     const env = {
@@ -184,13 +185,29 @@ export default class DevCommand extends Command {
         } catch {}
       }, delay);
 
+      const globs = getGlobsToWatch(sdk);
+
       // NOTE: The built-in fs.watch or fsPromises.watch is insufficient for our needs.
       // Instead, we use chokidar for consistent behavior in cross-platform file watching.
-      const ignoredPaths = [path.join(appPath, "build") + path.sep, path.join(appPath, "node_modules") + path.sep];
+      const pmOpts: pm.PicomatchOptions = { posixSlashes: true };
       chokidar
         .watch(appPath, {
-          ignored: (filePath, stats) => (stats?.isFile() || true) && ignoredPaths.some((p) => path.normalize(filePath).startsWith(p)),
-          cwd: appPath,
+          ignored: (filePath, stats) => {
+            const relativePath = path.relative(appPath, filePath);
+            if (!stats || !relativePath) return false;
+
+            let ignore = false;
+            if (pm(globs.excluded, pmOpts)(relativePath)) {
+              ignore = true;
+            } else if (stats.isFile()) {
+              ignore = !pm(globs.included, pmOpts)(relativePath);
+            }
+
+            if (process.env.MODUS_DEBUG) {
+              this.log(chalk.dim(`${ignore ? "ignored: " : "watching:"}  ${relativePath}`));
+            }
+            return ignore;
+          },
           ignoreInitial: true,
           persistent: true,
         })
@@ -204,4 +221,25 @@ export default class DevCommand extends Command {
   private logError(message: string) {
     this.log(chalk.red(" ERROR ") + chalk.dim(": " + message));
   }
+}
+
+function getGlobsToWatch(sdk: SDK) {
+  const included: string[] = [];
+  const excluded: string[] = [".git/**", "build/**"];
+
+  switch (sdk) {
+    case SDK.AssemblyScript:
+      included.push("**/*.ts", "**/asconfig.json", "**/tsconfig.json", "**/package.json");
+      excluded.push("node_modules/**");
+      break;
+
+    case SDK.Go:
+      included.push("**/*.go", "**/go.mod");
+      excluded.push("**/*_generated.go", "**/*.generated.go", "**/*_test.go");
+      break;
+
+    default:
+      throw new Error(`Unsupported SDK: ${sdk}`);
+  }
+  return { included, excluded };
 }
