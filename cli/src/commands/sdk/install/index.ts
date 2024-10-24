@@ -142,9 +142,9 @@ export default class SDKInstallCommand extends Command {
       await withSpinner(chalk.dim("Downloading and installing " + sdkText), async (spinner) => {
         try {
           await installer.installSDK(sdk, sdkVersion);
-        } catch {
+        } catch (e) {
           spinner.fail(chalk.red(`Failed to download ${sdkText}`));
-          this.exit(1);
+          throw e;
         }
         spinner.succeed(chalk.dim(`Installed ${sdkText}`));
       });
@@ -191,9 +191,9 @@ export default class SDKInstallCommand extends Command {
       await withSpinner(chalk.dim("Downloading and installing " + runtimeText), async (spinner) => {
         try {
           await installer.installRuntime(version);
-        } catch {
+        } catch (e) {
           spinner.fail(chalk.red(`Failed to download ${runtimeText}`));
-          this.exit(1);
+          throw e;
         }
         spinner.succeed(chalk.dim(`Installed ${runtimeText}`));
       });
