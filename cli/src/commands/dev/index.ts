@@ -52,10 +52,10 @@ export default class DevCommand extends Command {
       aliases: ["no-watch"],
       description: "Don't watch app code for changes",
     }),
-    freq: Flags.integer({
+    delay: Flags.integer({
       char: "f",
-      description: "Frequency to check for changes",
-      default: 3000,
+      description: "Delay (in milliseconds) between file change detection and rebuild",
+      default: 500,
     }),
   };
 
@@ -162,7 +162,6 @@ export default class DevCommand extends Command {
     runtime.on("close", (code) => this.exit(code || 1));
 
     if (!flags.nowatch) {
-      const delay = flags.freq;
       let lastModified = 0;
       let lastBuild = 0;
       let paused = true;
@@ -175,15 +174,15 @@ export default class DevCommand extends Command {
         if (lastBuild > lastModified) {
           return;
         }
-
         lastBuild = Date.now();
+
         try {
           this.log();
           this.log(chalk.magentaBright("Detected change. Rebuilding..."));
           this.log();
           await BuildCommand.run([appPath, "--no-logo"]);
         } catch {}
-      }, delay);
+      }, flags.delay);
 
       const globs = getGlobsToWatch(sdk);
 
@@ -211,7 +210,7 @@ export default class DevCommand extends Command {
           ignoreInitial: true,
           persistent: true,
         })
-        .on("all", async (event, path) => {
+        .on("all", () => {
           lastModified = Date.now();
           paused = false;
         });
