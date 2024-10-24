@@ -29,11 +29,11 @@ export default class RuntimeInstallCommand extends Command {
   static flags = {
     help: Flags.help({
       char: "h",
-      helpLabel: '-h, --help',
-      description: "Show help message"
+      helpLabel: "-h, --help",
+      description: "Show help message",
     }),
-    nologo: Flags.boolean({
-      aliases: ["no-logo"],
+    "no-logo": Flags.boolean({
+      aliases: ["nologo"],
       hidden: true,
     }),
     force: Flags.boolean({
@@ -52,7 +52,7 @@ export default class RuntimeInstallCommand extends Command {
   async run(): Promise<void> {
     const { args, flags } = await this.parse(RuntimeInstallCommand);
 
-    if (!flags.nologo) {
+    if (!flags["no-logo"]) {
       this.log(getHeader(this.config.version));
     }
 

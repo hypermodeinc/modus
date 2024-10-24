@@ -38,8 +38,8 @@ export default class NewCommand extends Command {
       helpLabel: "-h, --help",
       description: "Show help message",
     }),
-    nologo: Flags.boolean({
-      aliases: ["no-logo"],
+    "no-logo": Flags.boolean({
+      aliases: ["nologo"],
       hidden: true,
     }),
     name: Flags.string({
@@ -76,7 +76,7 @@ export default class NewCommand extends Command {
     try {
       const { flags } = await this.parse(NewCommand);
 
-      if (!flags.nologo) {
+      if (!flags["no-logo"]) {
         this.log(getHeader(this.config.version));
       }
 

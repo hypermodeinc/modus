@@ -40,8 +40,8 @@ export default class DevCommand extends Command {
       helpLabel: "-h, --help",
       description: "Show help message",
     }),
-    nologo: Flags.boolean({
-      aliases: ["no-logo"],
+    "no-logo": Flags.boolean({
+      aliases: ["nologo"],
       hidden: true,
     }),
     runtime: Flags.string({
@@ -51,14 +51,17 @@ export default class DevCommand extends Command {
     prerelease: Flags.boolean({
       char: "p",
       aliases: ["pre"],
-      description: "Use a prerelease version of the Modus runtime.  Not needed if specifying a runtime version.",
+      description: "Use a prerelease version of the Modus runtime. Not needed if specifying a runtime version.",
     }),
-    nowatch: Flags.boolean({
-      aliases: ["no-watch"],
+    "no-build": Flags.boolean({
+      aliases: ["nobuild"],
+      description: "Don't build the app before running (implies --no-watch)",
+    }),
+    "no-watch": Flags.boolean({
+      aliases: ["nowatch"],
       description: "Don't watch app code for changes",
     }),
     delay: Flags.integer({
-      char: "f",
       description: "Delay (in milliseconds) between file change detection and rebuild",
       default: 500,
     }),
@@ -81,7 +84,7 @@ export default class DevCommand extends Command {
     const app = await getAppInfo(appPath);
     const { sdk, sdkVersion } = app;
 
-    if (!flags.nologo) {
+    if (!flags["no-logo"]) {
       this.log(getHeader(this.config.version));
     }
 
@@ -148,8 +151,12 @@ export default class DevCommand extends Command {
     const ext = os.platform() === "win32" ? ".exe" : "";
     const runtimePath = path.join(vi.getRuntimePath(runtimeVersion), "modus_runtime" + ext);
 
-    await BuildCommand.run([appPath, "--no-logo"]);
+    // Build the app on first run
+    if (!flags["no-build"]) {
+      await BuildCommand.run([appPath, "--no-logo"]);
+    }
 
+    // Read Hypermode settings if they exist, so they can be forwarded to the runtime
     const hypSettings = await readHypermodeSettings();
 
     const env = {
@@ -160,14 +167,40 @@ export default class DevCommand extends Command {
       HYP_ORG_ID: hypSettings.orgId,
     };
 
+    // Spawn the runtime child process
     const child = spawn(runtimePath, ["-appPath", path.join(appPath, "build")], {
       stdio: ["inherit", "inherit", "pipe"],
       env: env,
     });
     child.stderr.pipe(process.stderr);
-    child.on("close", (code) => this.exit(code || 1));
 
-    if (!flags.nowatch) {
+    // Handle the runtime process exit
+    child.on("close", (code) => {
+      // note: can't use "this.exit" here because it would throw an unhandled exception
+      // but "process.exit" works fine.
+      if (code) {
+        this.log(chalk.magentaBright(`Runtime terminated with code ${code}`) + "\n");
+        process.exit(code);
+      } else {
+        this.log(chalk.magentaBright("Runtime terminated successfully.") + "\n");
+        process.exit();
+      }
+    });
+
+    // Forward SIGINT and SIGTERM to the child process for graceful shutdown from user ctrl+c or kill.
+    process.on("SIGINT", () => {
+      if (child && !child.killed) {
+        child.kill("SIGINT");
+      }
+    });
+    process.on("SIGTERM", () => {
+      if (child && !child.killed) {
+        child.kill("SIGTERM");
+      }
+    });
+
+    // Watch for changes in the app directory and rebuild the app when changes are detected
+    if (!flags["no-watch"] && !flags["no-build"]) {
       let lastModified = 0;
       let lastBuild = 0;
       let paused = true;
