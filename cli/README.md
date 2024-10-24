@@ -6,4 +6,15 @@ This package contains the Modus CLI, which is responsible for the Modus local de
 
 ## Getting Started
 
-Please refer to the docs at:  https://docs.hypermode.com/modus/quickstart
+Please refer to the docs at: https://docs.hypermode.com/modus/quickstart
+
+## Contributing
+
+```bash
+npm i
+npm run watch
+```
+
+You can make changes and run `./bin/modus.js` in a terminal to test changes.
+
+Alternatively, you can set breakpoints and use the VS Code debug target `Debug Modus CLI` to launch the terminal to debug issues.

@@ -18,9 +18,12 @@ import * as vi from "../../util/versioninfo.js";
 import { execFile } from "../../util/cp.js";
 import { isOnline } from "../../util/index.js";
 import { GitHubOwner, GitHubRepo, MinGoVersion, MinNodeVersion, MinTinyGoVersion, ModusHomeDir, SDK, parseSDK } from "../../custom/globals.js";
-import { ask, clearLine, withSpinner } from "../../util/index.js";
+import { withSpinner } from "../../util/index.js";
 import SDKInstallCommand from "../sdk/install/index.js";
 import { getHeader } from "../../custom/header.js";
+import * as inquirer from "@inquirer/prompts";
+
+const MODUS_DEFAULT_TEMPLATE_NAME = "default";
 
 export default class NewCommand extends Command {
   static description = "Create a new Modus app";
@@ -45,10 +48,10 @@ export default class NewCommand extends Command {
       char: "s",
       description: "SDK to use",
     }),
-    template: Flags.string({
-      char: "t",
-      description: "Template to use",
-    }),
+    // template: Flags.string({
+    //   char: "t",
+    //   description: "Template to use",
+    // }),
     force: Flags.boolean({
       char: "f",
       default: false,
@@ -70,83 +73,55 @@ export default class NewCommand extends Command {
     }
 
     this.log(chalk.hex("#A585FF")(NewCommand.description) + "\n");
-    const name = flags.name || (await this.promptAppName());
-    if (!name) {
-      this.logError("An app name is required.");
-      this.exit(1);
+
+    let sdk: SDK;
+    if (flags.sdk) {
+      sdk = parseSDK(flags.sdk);
+    } else {
+      const sdkInput = await inquirer.select({
+        message: "Select a SDK",
+        default: SDK.Go,
+        choices: [
+          {
+            value: SDK.Go,
+          },
+          {
+            value: SDK.AssemblyScript,
+          },
+        ],
+      });
+
+      sdk = parseSDK(sdkInput);
     }
-    const dir = flags.dir ? path.join(process.cwd(), flags.dir) : await this.promptInstallPath("." + path.sep + name);
-    if (!dir) {
-      this.logError("An install directory is required.");
-      this.exit(1);
+
+    const defaultAppName = getDefaultAppNameBySdk(sdk);
+    const name =
+      flags.name ||
+      (await inquirer.input({
+        message: "Pick a name for your app:",
+        default: defaultAppName,
+      }));
+
+    const dir = flags.dir || "." + path.sep + name;
+
+    if (!flags.force) {
+      const confirmd = await inquirer.confirm({ message: "Continue?", default: true });
+      if (!confirmd) {
+        this.log(chalk.dim("Aborted"));
+        this.exit(1);
+      }
     }
-    const sdk = parseSDK(
-      flags.sdk
-        ? Object.values(SDK)[
-            Object.keys(SDK)
-              .map((v) => v.toLowerCase())
-              .indexOf(flags.sdk?.trim().toLowerCase())
-          ]
-        : await this.promptSdkSelection()
-    );
-    const template = flags.template || (await this.promptTemplate("default"));
-    if (!template) {
-      this.logError("A template is required.");
-      this.exit(1);
-    }
-    if (!flags.force && !(await this.confirmAction("Continue? [y/n]"))) {
-      this.log(chalk.dim("Aborted."));
-      this.exit(1);
-    }
+
     this.log();
-    await this.createApp(name, dir, sdk, template, flags.force, flags.prerelease);
-  }
-
-  private async promptAppName(): Promise<string> {
-    this.log("App Name?");
-    const name = ((await ask(chalk.dim(" -> "))) || "").trim();
-    clearLine(2);
-    this.log("App Name: " + chalk.dim(name.length ? name : "Not Provided"));
-    return name;
-  }
-
-  private async promptInstallPath(defaultValue: string): Promise<string> {
-    this.log("Install Directory? " + chalk.dim(`(${defaultValue})`));
-    const dir = ((await ask(chalk.dim(" -> "))) || defaultValue).trim();
-    clearLine(2);
-    this.log("Directory: " + chalk.dim(dir));
-    return path.resolve(dir);
-  }
-
-  private async promptSdkSelection(): Promise<string> {
-    this.log("Select an SDK");
-    for (const [index, sdk] of Object.values(SDK).entries()) {
-      this.log(chalk.dim(` ${index + 1}. ${sdk}`));
-    }
-
-    const selectedIndex = Number.parseInt(((await ask(chalk.dim(" -> "))) || "1").trim(), 10) - 1;
-    const sdk = Object.values(SDK)[selectedIndex];
-    clearLine(Object.values(SDK).length + 2);
-    if (!sdk) this.exit(1);
-    this.log("SDK: " + chalk.dim(sdk));
-    return sdk;
-  }
-
-  private async promptTemplate(defaultValue: string): Promise<string> {
-    this.log("Template? " + chalk.dim(`(${defaultValue})`));
-    const template = ((await ask(chalk.dim(" -> "))) || defaultValue).trim();
-    clearLine(2);
-    this.log("Template: " + chalk.dim(template));
-    return template;
+    await this.createApp(name, dir, sdk, MODUS_DEFAULT_TEMPLATE_NAME, flags.force, flags.prerelease);
   }
 
   private async createApp(name: string, dir: string, sdk: SDK, template: string, force: boolean, prerelease: boolean) {
     if (!force && (await fs.exists(dir))) {
-      if (!(await this.confirmAction("Attempting to overwrite a folder that already exists.\nAre you sure you want to continue? [y/n]"))) {
-        clearLine();
-        return;
-      } else {
-        clearLine(2);
+      const confirmd = await inquirer.confirm({ message: "Attempting to overwrite a folder that already exists.\nAre you sure you want to continue?", default: false });
+      if (!confirmd) {
+        this.log(chalk.dim("Aborted"));
+        this.exit(1);
       }
     }
 
@@ -229,13 +204,22 @@ export default class NewCommand extends Command {
 
       let updateSDK = false;
       if (!installedSdkVersion) {
-        if (!(await this.confirmAction(`You do not have the ${sdkText} installed. Would you like to install it now? [y/n]`))) {
-          this.log(chalk.dim("Aborted."));
+        const confirmd = inquirer.confirm({
+          message: `You do not have the ${sdkText} installed. Would you like to install it now?`,
+          default: true,
+        });
+        if (!confirmd) {
+          this.log(chalk.dim("Aborted"));
           this.exit(1);
+        } else {
+          updateSDK = true;
         }
-        updateSDK = true;
       } else if (latestVersion !== installedSdkVersion) {
-        if (await this.confirmAction(`You have ${installedSdkVersion} of the ${sdkText}. The latest is ${latestVersion}. Would you like to update? [y/n]`)) {
+        const confirmed = await inquirer.confirm({
+          message: `You have ${installedSdkVersion} of the ${sdkText}. The latest is ${latestVersion}. Would you like to update?`,
+          default: true,
+        });
+        if (confirmed) {
           updateSDK = true;
         }
       }
@@ -315,13 +299,6 @@ export default class NewCommand extends Command {
   private logError(message: string) {
     this.log(chalk.red(" ERROR ") + chalk.dim(": " + message));
   }
-
-  private async confirmAction(message: string): Promise<boolean> {
-    this.log(message);
-    const cont = ((await ask(chalk.dim(" -> "))) || "n").toLowerCase().trim();
-    clearLine(2);
-    return cont === "yes" || cont === "y";
-  }
 }
 
 async function getGoVersion(): Promise<string | undefined> {
@@ -347,4 +324,31 @@ async function getTinyGoVersion(): Promise<string | undefined> {
     const parts = result.stdout.split(" ");
     return parts.length > 2 ? parts[2] : undefined;
   } catch {}
+}
+
+function toValidAppName(input: string): string {
+  // Remove any characters that aren't alphanumeric, spaces, or a few other valid characters.
+  // Replace spaces with hyphens.
+  return input
+    .trim() // Remove leading/trailing spaces
+    .toLowerCase() // Convert to lowercase for consistency
+    .replace(/[^a-z0-9\s-]/g, "") // Remove invalid characters
+    .replace(/\s+/g, "-") // Replace spaces (or multiple spaces) with a single hyphen
+    .replace(/-+/g, "-") // Replace multiple consecutive hyphens with a single hyphen
+    .replace(/^-|-$/g, ""); // Remove leading or trailing hyphens
+}
+
+const MODUS_NEW_DEFAULT_APP_NAME = "modus-app";
+const MODUS_NEW_GO_APP_NAME = "modus-go-app";
+const MODUS_NEW_AS_APP_NAME = "modus-as-app";
+
+function getDefaultAppNameBySdk(sdk: SDK) {
+  switch (sdk) {
+    case SDK.AssemblyScript:
+      return MODUS_NEW_AS_APP_NAME;
+    case SDK.Go:
+      return MODUS_NEW_GO_APP_NAME;
+    default:
+      return MODUS_NEW_DEFAULT_APP_NAME;
+  }
 }

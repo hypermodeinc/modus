@@ -21,7 +21,7 @@ export default class CustomHelp extends Help {
   }
 
   formatRoot(): string {
-    return `${chalk.bold("Usage:")} modus ${chalk.blueBright("<command or tool> [...flags] [...args]")}`;
+    return `${chalk.bold("Usage:")} modus ${"<command or tool> [flags] [args]"}`;
   }
 
   formatCommands(commands: Command.Loadable[]): string {
@@ -77,11 +77,18 @@ export default class CustomHelp extends Help {
 
   formatFooter(): string {
     let out = "";
-    out += "View the docs:" + " ".repeat(Math.max(1, this.pre_pad + this.post_pad - 12)) + chalk.blueBright("https://docs.hypermode.com/modus") + "\n";
-    out += "View the repo:" + " ".repeat(Math.max(1, this.pre_pad + this.post_pad - 12)) + chalk.blueBright("https://github.com/hypermodeinc/modus") + "\n";
+    const links = [
+      { name: "Docs", url: "https://docs.hypermode.com/modus" },
+      { name: "GitHub", url: "https://github.com/hypermodeinc/modus" },
+      { name: "Discord", url: "https://discord.hypermode.com" },
+    ];
+
+    for (const link of links) {
+      out += `${link.name}: ${" ".repeat(Math.max(1, this.pre_pad + this.post_pad - link.name.length))}${link.url}\n`;
+    }
 
     out += "\n";
-    out += "Made with 💖 by " + chalk.hex("#602AF8")("https://hypermode.com");
+    out += "Made with ♥︎ by Hypermode";
     out += "\n";
 
     return out;

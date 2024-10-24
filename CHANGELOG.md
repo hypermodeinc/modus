@@ -51,6 +51,7 @@ In previous releases, the name "Hypermode" was used for all three._
 - Highlight endpoints when running in dev [#490](https://github.com/hypermodeinc/modus/pull/490)
 - Fix data race in logging adapter [#491](https://github.com/hypermodeinc/modus/pull/491)
 - Add Anthropic model interface to the Go SDK [#493](https://github.com/hypermodeinc/modus/pull/493)
+- Simplify and polish `modus new` experience [#494](https://github.com/hypermodeinc/modus/pull/494)
 - Move hyp settings for local model invocation to env variables [#495](https://github.com/hypermodeinc/modus/pull/495) [#504](https://github.com/hypermodeinc/modus/pull/504)
 - Change GraphQL SDK examples to use a generic public GraphQL API [#501](https://github.com/hypermodeinc/modus/pull/501)
 
