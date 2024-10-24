@@ -75,19 +75,19 @@ export default class CustomHelp extends Help {
     return out.trim();
   }
 
-  formatFlags(topics: Interfaces.Topic[]): string {
-    let out = "";
-    if (topics.find((v) => !v.hidden)) out += chalk.bold("Flags:") + "\n";
-    else return out;
+  // formatFlags(topics: Interfaces.Topic[]): string {
+  //   let out = "";
+  //   if (topics.find((v) => !v.hidden)) out += chalk.bold("Flags:") + "\n";
+  //   else return out;
 
-    for (const topic of topics) {
-      if (topic.hidden) continue;
+  //   for (const topic of topics) {
+  //     if (topic.hidden) continue;
 
-      const fullName = topic.shortName ? `${topic.shortName}, ${topic.name}` : topic.name;
-      out += "  " + chalk.bold.blue(fullName) + " ".repeat(Math.max(1, this.pre_pad + this.post_pad - fullName.length)) + topic.description + "\n";
-    }
-    return out.trim();
-  }
+  //     const fullName = topic.shortName ? `${topic.shortName}, ${topic.name}` : topic.name;
+  //     out += "  " + chalk.bold.blue(fullName) + " ".repeat(Math.max(1, this.pre_pad + this.post_pad - fullName.length)) + topic.description + "\n";
+  //   }
+  //   return out.trim();
+  // }
 
   formatFooter(): string {
     let out = "";
@@ -156,20 +156,20 @@ export default class CustomHelp extends Help {
       this.log();
     }
 
-    const globalFlagTopics: Interfaces.Topic[] = [
-      {
-        name: "--help",
-        description: "Show help message",
-        shortName: "-h",
-      },
-      {
-        name: "--version",
-        description: "Show Modus version",
-        shortName: "-v",
-      },
-    ];
-    this.log(this.formatFlags(globalFlagTopics));
-    this.log();
+    // const globalFlagTopics: Interfaces.Topic[] = [
+    //   {
+    //     name: "--help",
+    //     description: "Show help message",
+    //     shortName: "-h",
+    //   },
+    //   {
+    //     name: "--version",
+    //     description: "Show Modus version",
+    //     shortName: "-v",
+    //   },
+    // ];
+    // this.log(this.formatFlags(globalFlagTopics));
+    // this.log();
 
     this.log(this.formatFooter());
   }
