@@ -82,7 +82,9 @@ export default class CustomHelp extends Help {
 
     for (const topic of topics) {
       if (topic.hidden) continue;
-      out += "  " + chalk.bold.blue(topic.name) + " ".repeat(Math.max(1, this.pre_pad + this.post_pad - topic.name.length)) + topic.description + "\n";
+
+      const fullName = topic.shortName ? `${topic.shortName}, ${topic.name}` : topic.name;
+      out += "  " + chalk.bold.blue(fullName) + " ".repeat(Math.max(1, this.pre_pad + this.post_pad - fullName.length)) + topic.description + "\n";
     }
     return out.trim();
   }
@@ -158,10 +160,12 @@ export default class CustomHelp extends Help {
       {
         name: "--help",
         description: "Show help message",
+        shortName: "-h",
       },
       {
         name: "--version",
         description: "Show Modus version",
+        shortName: "-v",
       },
     ];
     this.log(this.formatFlags(globalFlagTopics));
