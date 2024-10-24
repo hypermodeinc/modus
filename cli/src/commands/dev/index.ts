@@ -20,7 +20,7 @@ import * as installer from "../../util/installer.js";
 import { getHeader } from "../../custom/header.js";
 import { getAppInfo } from "../../util/appinfo.js";
 import { isOnline, withSpinner } from "../../util/index.js";
-import { readSettingsJson } from "../../util/hypermode.js";
+import { readHypermodeSettings } from "../../util/hypermode.js";
 import BuildCommand from "../build/index.js";
 
 export default class DevCommand extends Command {
@@ -144,14 +144,14 @@ export default class DevCommand extends Command {
     await BuildCommand.run([appPath, "--no-logo"]);
 
     // read from settings.json if it exists, load env vars into env
-    const settings = await readSettingsJson();
+    const hypSettings = await readHypermodeSettings();
 
     const env = {
       ...process.env,
       MODUS_ENV: "dev",
-      HYP_EMAIL: settings.email,
-      HYP_JWT: settings.jwt,
-      HYP_ORG_ID: settings.orgId,
+      HYP_EMAIL: hypSettings.email,
+      HYP_JWT: hypSettings.jwt,
+      HYP_ORG_ID: hypSettings.orgId,
     };
 
     const runtime = spawn(runtimePath, ["-appPath", path.join(appPath, "build")], {
