@@ -155,11 +155,12 @@ export default class DevCommand extends Command {
       HYP_ORG_ID: hypSettings.orgId,
     };
 
-    const runtime = spawn(runtimePath, ["-appPath", path.join(appPath, "build")], {
-      stdio: "inherit",
+    const child = spawn(runtimePath, ["-appPath", path.join(appPath, "build")], {
+      stdio: ["inherit", "inherit", "pipe"],
       env: env,
     });
-    runtime.on("close", (code) => this.exit(code || 1));
+    child.stderr.pipe(process.stderr);
+    child.on("close", (code) => this.exit(code || 1));
 
     if (!flags.nowatch) {
       let lastModified = 0;
@@ -177,11 +178,17 @@ export default class DevCommand extends Command {
         lastBuild = Date.now();
 
         try {
+          child.stderr.pause();
           this.log();
           this.log(chalk.magentaBright("Detected change. Rebuilding..."));
           this.log();
           await BuildCommand.run([appPath, "--no-logo"]);
-        } catch {}
+        } catch (e) {
+          this.log(chalk.magenta("Waiting for more changes..."));
+          this.log(chalk.dim("Press Ctrl+C at any time to stop the server."));
+        } finally {
+          child.stderr.resume();
+        }
       }, flags.delay);
 
       const globs = getGlobsToWatch(sdk);

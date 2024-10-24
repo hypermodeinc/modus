@@ -59,16 +59,21 @@ export default class BuildCommand extends Command {
     process.env.FORCE_COLOR = chalk.level.toString();
 
     const results = await withSpinner("Building " + app.name, async () => {
+      const execOpts = {
+        cwd: appPath,
+        env: process.env,
+        shell: true,
+      };
       switch (app.sdk) {
         case SDK.AssemblyScript:
           if (!(await fs.exists(path.join(appPath, "node_modules")))) {
-            const results = await execFileWithExitCode("npm", ["install"], { cwd: appPath, env: process.env, shell: true });
+            const results = await execFileWithExitCode("npm", ["install"], execOpts);
             if (results.exitCode !== 0) {
               this.logError("Failed to install dependencies");
               return results;
             }
           }
-          return await execFileWithExitCode("npx", ["modus-as-build"], { cwd: appPath, env: process.env, shell: true });
+          return await execFileWithExitCode("npx", ["modus-as-build"], execOpts);
         case SDK.Go:
           const version = app.sdkVersion || (await vi.getLatestInstalledSdkVersion(app.sdk, true));
           if (!version) {
@@ -81,7 +86,7 @@ export default class BuildCommand extends Command {
             this.logError("Modus Go Build tool is not installed");
             return;
           }
-          return await execFileWithExitCode(buildTool, ["."], { cwd: appPath, env: process.env });
+          return await execFileWithExitCode(buildTool, ["."], execOpts);
         default:
           this.logError("Unsupported SDK");
           this.exit(1);
