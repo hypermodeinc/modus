@@ -23,7 +23,7 @@ export default class SDKListCommand extends Command {
       helpLabel: "-h, --help",
       description: "Show help message",
     }),
-    nologo: Flags.boolean({
+    "no-logo": Flags.boolean({
       aliases: ["no-logo"],
       hidden: true,
     }),
@@ -32,7 +32,7 @@ export default class SDKListCommand extends Command {
   async run(): Promise<void> {
     const { flags } = await this.parse(SDKListCommand);
 
-    if (!flags.nologo) {
+    if (!flags["no-logo"]) {
       this.log(getHeader(this.config.version));
     }
 

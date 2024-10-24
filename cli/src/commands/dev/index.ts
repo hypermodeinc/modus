@@ -40,7 +40,7 @@ export default class DevCommand extends Command {
       helpLabel: "-h, --help",
       description: "Show help message",
     }),
-    nologo: Flags.boolean({
+    "no-logo": Flags.boolean({
       aliases: ["no-logo"],
       hidden: true,
     }),
@@ -51,14 +51,17 @@ export default class DevCommand extends Command {
     prerelease: Flags.boolean({
       char: "p",
       aliases: ["pre"],
-      description: "Use a prerelease version of the Modus runtime.  Not needed if specifying a runtime version.",
+      description: "Use a prerelease version of the Modus runtime. Not needed if specifying a runtime version.",
     }),
-    nowatch: Flags.boolean({
-      aliases: ["no-watch"],
+    "no-build": Flags.boolean({
+      aliases: ["nobuild"],
+      description: "Don't build the app before running (implies --no-watch)",
+    }),
+    "no-watch": Flags.boolean({
+      aliases: ["nowatch"],
       description: "Don't watch app code for changes",
     }),
     delay: Flags.integer({
-      char: "f",
       description: "Delay (in milliseconds) between file change detection and rebuild",
       default: 500,
     }),
@@ -81,7 +84,7 @@ export default class DevCommand extends Command {
     const app = await getAppInfo(appPath);
     const { sdk, sdkVersion } = app;
 
-    if (!flags.nologo) {
+    if (!flags["no-logo"]) {
       this.log(getHeader(this.config.version));
     }
 
@@ -148,7 +151,9 @@ export default class DevCommand extends Command {
     const ext = os.platform() === "win32" ? ".exe" : "";
     const runtimePath = path.join(vi.getRuntimePath(runtimeVersion), "modus_runtime" + ext);
 
-    await BuildCommand.run([appPath, "--no-logo"]);
+    if (!flags["no-build"]) {
+      await BuildCommand.run([appPath, "--no-logo"]);
+    }
 
     const hypSettings = await readHypermodeSettings();
 
@@ -167,7 +172,7 @@ export default class DevCommand extends Command {
     child.stderr.pipe(process.stderr);
     child.on("close", (code) => this.exit(code || 1));
 
-    if (!flags.nowatch) {
+    if (!flags["no-watch"] && !flags["no-build"]) {
       let lastModified = 0;
       let lastBuild = 0;
       let paused = true;

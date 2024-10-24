@@ -15,7 +15,7 @@ export default class InfoCommand extends Command {
       helpLabel: "-h, --help",
       description: "Show help message",
     }),
-    nologo: Flags.boolean({
+    "no-logo": Flags.boolean({
       aliases: ["no-logo"],
       hidden: true,
     }),
@@ -28,7 +28,7 @@ export default class InfoCommand extends Command {
   async run(): Promise<void> {
     const { flags } = await this.parse(InfoCommand);
 
-    if (!flags.nologo) {
+    if (!flags["no-logo"]) {
       this.log(getHeader(this.config.version));
     }
 
@@ -45,9 +45,9 @@ export default class InfoCommand extends Command {
       "Operating System": `${os.type()} ${os.release()}`,
       "Platform Architecture": process.arch,
       "Node.js Version": process.version,
-      "NPM Version": await getNPMVersion() || "Not installed",
-      "Go Version": await getGoVersion() || "Not installed",
-      "TinyGo Version": await getTinyGoVersion() || "Not installed",
+      "NPM Version": (await getNPMVersion()) || "Not installed",
+      "Go Version": (await getGoVersion()) || "Not installed",
+      "TinyGo Version": (await getTinyGoVersion()) || "Not installed",
     };
   }
 

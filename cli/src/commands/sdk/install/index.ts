@@ -39,7 +39,7 @@ export default class SDKInstallCommand extends Command {
       helpLabel: "-h, --help",
       description: "Show help message",
     }),
-    nologo: Flags.boolean({
+    "no-logo": Flags.boolean({
       aliases: ["no-logo"],
       hidden: true,
     }),
@@ -59,7 +59,7 @@ export default class SDKInstallCommand extends Command {
   async run(): Promise<void> {
     const { args, flags } = await this.parse(SDKInstallCommand);
 
-    if (!flags.nologo) {
+    if (!flags["no-logo"]) {
       this.log(getHeader(this.config.version));
     }
 

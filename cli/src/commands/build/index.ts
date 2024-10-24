@@ -34,7 +34,7 @@ export default class BuildCommand extends Command {
       helpLabel: "-h, --help",
       description: "Show help message",
     }),
-    nologo: Flags.boolean({
+    "no-logo": Flags.boolean({
       aliases: ["no-logo"],
       hidden: true,
     }),
@@ -56,7 +56,7 @@ export default class BuildCommand extends Command {
 
     const app = await getAppInfo(appPath);
 
-    if (!flags.nologo) {
+    if (!flags["no-logo"]) {
       this.log(getHeader(this.config.version));
     }
 

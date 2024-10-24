@@ -112,6 +112,7 @@
     "mydgraph",
     "nanos",
     "Nanotime",
+    "nobuild",
     "noescape",
     "nolint",
     "nologo",

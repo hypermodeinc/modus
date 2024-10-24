@@ -22,7 +22,7 @@ export default class RuntimeListCommand extends Command {
       helpLabel: "-h, --help",
       description: "Show help message",
     }),
-    nologo: Flags.boolean({
+    "no-logo": Flags.boolean({
       aliases: ["no-logo"],
       hidden: true,
     }),
@@ -31,7 +31,7 @@ export default class RuntimeListCommand extends Command {
   async run(): Promise<void> {
     const { flags } = await this.parse(RuntimeListCommand);
 
-    if (!flags.nologo) {
+    if (!flags["no-logo"]) {
       this.log(getHeader(this.config.version));
     }
 
