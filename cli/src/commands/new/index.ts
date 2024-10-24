@@ -105,8 +105,8 @@ export default class NewCommand extends Command {
     const dir = flags.dir || "." + path.sep + name;
 
     if (!flags.force) {
-      const confirm = await inquirer.confirm({ message: "Continue?", default: true });
-      if (!confirm) {
+      const confirmd = await inquirer.confirm({ message: "Continue?", default: true });
+      if (!confirmd) {
         this.log(chalk.dim("Aborted"));
         this.exit(1);
       }
@@ -118,11 +118,10 @@ export default class NewCommand extends Command {
 
   private async createApp(name: string, dir: string, sdk: SDK, template: string, force: boolean, prerelease: boolean) {
     if (!force && (await fs.exists(dir))) {
-      if (!(await this.confirmAction("Attempting to overwrite a folder that already exists.\nAre you sure you want to continue? [Y/n]"))) {
-        clearLine();
-        return;
-      } else {
-        clearLine(2);
+      const confirmd = await inquirer.confirm({ message: "Attempting to overwrite a folder that already exists.\nAre you sure you want to continue?", default: false });
+      if (!confirmd) {
+        this.log(chalk.dim("Aborted"));
+        this.exit(1);
       }
     }
 
@@ -205,13 +204,22 @@ export default class NewCommand extends Command {
 
       let updateSDK = false;
       if (!installedSdkVersion) {
-        if (!(await this.confirmAction(`You do not have the ${sdkText} installed. Would you like to install it now? [Y/n]`))) {
-          this.log(chalk.dim("Aborted."));
+        const confirmd = inquirer.confirm({
+          message: `You do not have the ${sdkText} installed. Would you like to install it now?`,
+          default: true,
+        });
+        if (!confirmd) {
+          this.log(chalk.dim("Aborted"));
           this.exit(1);
+        } else {
+          updateSDK = true;
         }
-        updateSDK = true;
       } else if (latestVersion !== installedSdkVersion) {
-        if (await this.confirmAction(`You have ${installedSdkVersion} of the ${sdkText}. The latest is ${latestVersion}. Would you like to update? [Y/n]`)) {
+        const confirmed = await inquirer.confirm({
+          message: `You have ${installedSdkVersion} of the ${sdkText}. The latest is ${latestVersion}. Would you like to update?`,
+          default: true,
+        });
+        if (confirmed) {
           updateSDK = true;
         }
       }
@@ -290,20 +298,6 @@ export default class NewCommand extends Command {
 
   private logError(message: string) {
     this.log(chalk.red(" ERROR ") + chalk.dim(": " + message));
-  }
-
-  private async confirmAction(message: string, defaultToContinue = true): Promise<boolean> {
-    this.log(message);
-    const input = await ask(chalk.dim(" -> "));
-
-    if (input === "") {
-      clearLine(2);
-      return defaultToContinue;
-    }
-
-    const shouldContinue = (input || "n").toLowerCase().trim();
-    clearLine(2);
-    return shouldContinue === "yes" || shouldContinue === "y";
   }
 }
 
