@@ -3,8 +3,8 @@ module github.com/hypermodeinc/modus/sdk/go
 go 1.23.0
 
 require (
-	github.com/hypermodeinc/modus/lib/manifest v0.13.0-alpha1
-	github.com/hypermodeinc/modus/lib/wasmextractor v0.13.0-alpha1
+	github.com/hypermodeinc/modus/lib/manifest v0.13.0-alpha2
+	github.com/hypermodeinc/modus/lib/wasmextractor v0.13.0-alpha2
 )
 
 // NOTE: during developement, you can use replace directives if needed
@@ -15,7 +15,7 @@ require (
 // replace github.com/hypermodeinc/modus/lib/wasmextractor => ../../lib/wasmextractor
 
 require (
-	github.com/fatih/color v1.17.0
+	github.com/fatih/color v1.18.0
 	github.com/hashicorp/go-version v1.7.0
 	github.com/rs/xid v1.6.0
 	github.com/tidwall/sjson v1.2.5
