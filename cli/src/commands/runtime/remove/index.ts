@@ -24,6 +24,11 @@ export default class RuntimeRemoveCommand extends Command {
   };
 
   static flags = {
+    help: Flags.help({
+      char: "h",
+      helpLabel: "-h, --help",
+      description: "Show help message",
+    }),
     force: Flags.boolean({
       char: "f",
       default: false,

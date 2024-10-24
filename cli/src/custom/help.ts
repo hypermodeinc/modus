@@ -216,7 +216,7 @@ export default class CustomHelp extends Help {
     if (command.description) this.log(chalk.hex("#A585FF")(command.description));
 
     const argsStr = args.length > 0 ? " " + args.map((a) => `<${a}>`).join(" ") : "";
-    const flagsStr = flags.length > 0 ? " [...flags]" : "";
+    const flagsStr = flags.length > 0 ? " [flags]" : "";
     this.log(`${chalk.bold("Usage:")} modus ${name}${chalk.blueBright(argsStr + flagsStr)}\n`);
 
     if (args.length) {
@@ -241,7 +241,9 @@ export default class CustomHelp extends Help {
       this.log(chalk.bold("Flags:"));
       for (const flag of Object.values(command.flags)) {
         if (flag.hidden) continue;
-        this.log("  " + chalk.bold.blueBright("--" + flag.name) + " ".repeat(margin - flag.name.length) + flag.description);
+
+        const flagOptions = flag.char ? `-${flag.char}, --${flag.name}` : `--${flag.name}`;
+        this.log("  " + chalk.bold.blueBright(flagOptions) + " ".repeat(margin + 2 - flagOptions.length) + flag.description);
       }
       this.log();
     }

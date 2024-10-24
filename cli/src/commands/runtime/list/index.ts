@@ -17,6 +17,11 @@ export default class RuntimeListCommand extends Command {
   static description = "List installed Modus runtimes";
   static examples = ["modus runtime list"];
   static flags = {
+    help: Flags.help({
+      char: "h",
+      helpLabel: "-h, --help",
+      description: "Show help message",
+    }),
     nologo: Flags.boolean({
       aliases: ["no-logo"],
       hidden: true,

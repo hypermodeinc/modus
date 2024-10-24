@@ -32,6 +32,11 @@ export default class NewCommand extends Command {
   static examples = ["modus new", "modus new --name my-app", "modus new --name my-app --sdk go --dir ./my-app --force"];
 
   static flags = {
+    help: Flags.help({
+      char: "h",
+      helpLabel: '-h, --help',
+      description: "Show help message"
+    }),
     nologo: Flags.boolean({
       aliases: ["no-logo"],
       hidden: true,

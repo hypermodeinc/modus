@@ -29,6 +29,11 @@ export default class SDKRemoveCommand extends Command {
   };
 
   static flags = {
+    help: Flags.help({
+      char: "h",
+      helpLabel: "-h, --help",
+      description: "Show help message",
+    }),
     runtimes: Flags.boolean({
       char: "r",
       default: false,
