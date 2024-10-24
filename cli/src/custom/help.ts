@@ -75,6 +75,18 @@ export default class CustomHelp extends Help {
     return out.trim();
   }
 
+  formatFlags(topics: Interfaces.Topic[]): string {
+    let out = "";
+    if (topics.find((v) => !v.hidden)) out += chalk.bold("Flags:") + "\n";
+    else return out;
+
+    for (const topic of topics) {
+      if (topic.hidden) continue;
+      out += "  " + chalk.bold.blue(topic.name) + " ".repeat(Math.max(1, this.pre_pad + this.post_pad - topic.name.length)) + topic.description + "\n";
+    }
+    return out.trim();
+  }
+
   formatFooter(): string {
     let out = "";
     const links = [
@@ -141,6 +153,19 @@ export default class CustomHelp extends Help {
       this.log(this.formatTopics(rootTopics));
       this.log();
     }
+
+    const globalFlagTopics: Interfaces.Topic[] = [
+      {
+        name: "--help",
+        description: "Show help message",
+      },
+      {
+        name: "--version",
+        description: "Show Modus version",
+      },
+    ];
+    this.log(this.formatFlags(globalFlagTopics));
+    this.log();
 
     this.log(this.formatFooter());
   }
