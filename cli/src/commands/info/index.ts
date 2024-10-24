@@ -4,7 +4,7 @@ import os from "node:os";
 import * as vi from "../../util/versioninfo.js";
 import { SDK } from "../../custom/globals.js";
 import { getHeader } from "../../custom/header.js";
-import { execFileWithExitCode } from "../../util/cp.js";
+import { getGoVersion, getNPMVersion, getTinyGoVersion } from "../../util/systemVersions.js";
 
 export default class InfoCommand extends Command {
   static args = {};
@@ -45,9 +45,9 @@ export default class InfoCommand extends Command {
       "Operating System": `${os.type()} ${os.release()}`,
       "Platform Architecture": process.arch,
       "Node.js Version": process.version,
-      "NPM Version": await this.getNPMVersion(),
-      "Go Version": await this.getGoVersion(),
-      "TinyGo Version": await this.getTinyGoVersion(),
+      "NPM Version": await getNPMVersion() || "Not installed",
+      "Go Version": await getGoVersion() || "Not installed",
+      "TinyGo Version": await getTinyGoVersion() || "Not installed",
     };
   }
 
@@ -98,28 +98,5 @@ export default class InfoCommand extends Command {
     }
 
     this.log();
-  }
-
-  async getNPMVersion(): Promise<string> {
-    const { stdout } = await execFileWithExitCode("npm", ["--version"], { shell: true });
-    return stdout.trim();
-  }
-
-  async getGoVersion(): Promise<string> {
-    try {
-      const { stdout } = await execFileWithExitCode("go", ["version"], { shell: true });
-      return stdout.trim().split(" ")[2];
-    } catch (error) {
-      return "Not installed";
-    }
-  }
-
-  async getTinyGoVersion(): Promise<string> {
-    try {
-      const { stdout } = await execFileWithExitCode("tinygo", ["version"], { shell: true });
-      return stdout.trim().split(" ")[2];
-    } catch (error) {
-      return "Not installed";
-    }
   }
 }
