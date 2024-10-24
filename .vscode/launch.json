@@ -75,7 +75,8 @@
       "name": "Debug Modus CLI",
       "type": "node",
       "request": "launch",
-      "program": "${workspaceFolder}/cli/bin/modus.js"
+      "program": "${workspaceFolder}/cli/bin/modus.js",
+      "args": []
     }
   ],
   "inputs": [
