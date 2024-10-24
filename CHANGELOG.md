@@ -56,6 +56,7 @@ In previous releases, the name "Hypermode" was used for all three._
 - Change GraphQL SDK examples to use a generic public GraphQL API [#501](https://github.com/hypermodeinc/modus/pull/501)
 - Improve file watching and fix Windows issues [#505](https://github.com/hypermodeinc/modus/pull/505)
 - Improve help messages, add `modus info` and show SDK version in `modus new` [#506](https://github.com/hypermodeinc/modus/pull/506)
+- Fix runtime shutdown issues with `modus dev` [#508](https://github.com/hypermodeinc/modus/pull/508)
 
 ## 2024-10-02 - Version 0.12.7
 
