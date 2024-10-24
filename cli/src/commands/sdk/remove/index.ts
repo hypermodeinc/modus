@@ -71,13 +71,18 @@ export default class SDKRemoveCommand extends Command {
       }
 
       if (!flags.force) {
-        const confirmed = inquirer.confirm({
-          message: "Are you sure you want to remove all Modus SDKs?",
-          default: false,
-        });
-        if (!confirmed) {
-          this.log(chalk.dim("Aborted"));
-          this.exit(1);
+        try {
+          const confirmed = inquirer.confirm({
+            message: "Are you sure you want to remove all Modus SDKs?",
+            default: false,
+          });
+          if (!confirmed) {
+            this.abort();
+          }
+        } catch (err: any) {
+          if (err.name === "ExitPromptError") {
+            this.abort();
+          }
         }
       }
 
@@ -102,13 +107,18 @@ export default class SDKRemoveCommand extends Command {
           this.log(chalk.yellow(`No Modus ${sdk} SDKs are installed.`));
           this.exit(1);
         } else if (!flags.force) {
-          const confirmed = inquirer.confirm({
-            message: `Are you sure you want to remove all Modus ${sdk} SDKs?`,
-            default: false,
-          });
-          if (!confirmed) {
-            this.log(chalk.dim("Aborted"));
-            this.exit(1);
+          try {
+            const confirmed = inquirer.confirm({
+              message: `Are you sure you want to remove all Modus ${sdk} SDKs?`,
+              default: false,
+            });
+            if (!confirmed) {
+              this.abort();
+            }
+          } catch (err: any) {
+            if (err.name === "ExitPromptError") {
+              this.abort();
+            }
           }
         }
 
@@ -125,13 +135,18 @@ export default class SDKRemoveCommand extends Command {
           this.log(chalk.yellow(sdkText + "is not installed."));
           this.exit(1);
         } else if (!flags.force) {
-          const confirmed = inquirer.confirm({
-            message: `Are you sure you want to remove ${sdkText}?`,
-            default: false,
-          });
-          if (!confirmed) {
-            this.log(chalk.dim("Aborted"));
-            this.exit(1);
+          try {
+            const confirmed = inquirer.confirm({
+              message: `Are you sure you want to remove ${sdkText}?`,
+              default: false,
+            });
+            if (!confirmed) {
+              this.abort();
+            }
+          } catch (err: any) {
+            if (err.name === "ExitPromptError") {
+              this.abort();
+            }
           }
         }
 
@@ -170,5 +185,10 @@ export default class SDKRemoveCommand extends Command {
 
   private logError(message: string) {
     this.log(chalk.red(" ERROR ") + chalk.dim(": " + message));
+  }
+
+  private abort() {
+    this.log(chalk.dim("Aborted"));
+    this.exit(1);
   }
 }
