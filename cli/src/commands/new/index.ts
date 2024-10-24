@@ -23,6 +23,7 @@ import { extract } from "../../util/tar.js";
 import SDKInstallCommand from "../sdk/install/index.js";
 import { getHeader } from "../../custom/header.js";
 import * as inquirer from "@inquirer/prompts";
+import { getGoVersion, getTinyGoVersion } from "../../util/systemVersions.js";
 
 const MODUS_DEFAULT_TEMPLATE_NAME = "default";
 
@@ -102,12 +103,14 @@ export default class NewCommand extends Command {
       }
 
       const defaultAppName = getDefaultAppNameBySdk(sdk);
-      const name =
+      let name =
         flags.name ||
         (await inquirer.input({
           message: "Pick a name for your app:",
           default: defaultAppName,
         }));
+
+      name = toValidAppName(name);
 
       const dir = flags.dir || "." + path.sep + name;
 
@@ -315,33 +318,6 @@ export default class NewCommand extends Command {
     this.log(chalk.dim("Aborted"));
     this.exit(1);
   }
-}
-
-async function getGoVersion(): Promise<string | undefined> {
-  try {
-    const result = await execFile("go", ["version"], {
-      shell: true,
-      cwd: ModusHomeDir,
-      env: process.env,
-    });
-    const parts = result.stdout.split(" ");
-    const str = parts.length > 2 ? parts[2] : undefined;
-    if (str?.startsWith("go")) {
-      return str.slice(2);
-    }
-  } catch {}
-}
-
-async function getTinyGoVersion(): Promise<string | undefined> {
-  try {
-    const result = await execFile("tinygo", ["version"], {
-      shell: true,
-      cwd: ModusHomeDir,
-      env: process.env,
-    });
-    const parts = result.stdout.split(" ");
-    return parts.length > 2 ? parts[2] : undefined;
-  } catch {}
 }
 
 function toValidAppName(input: string): string {
