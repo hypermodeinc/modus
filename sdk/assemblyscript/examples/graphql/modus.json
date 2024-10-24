@@ -8,14 +8,9 @@
     }
   },
   "connections": {
-    // This defines the dgraph host that is used by the example functions.
-    // The {{AUTH_TOKEN}} will be replaced by the secret provided in the Hypermode Console.
-    "dgraph": {
+    "countries-api": {
       "type": "http",
-      "endpoint": "https://blue-sky.cloud.dgraph.io/graphql",
-      "headers": {
-        "X-Auth-Token": "{{AUTH_TOKEN}}"
-      }
+      "endpoint": "https://countries.trevorblades.com/"
     }
   }
 }

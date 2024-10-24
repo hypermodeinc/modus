@@ -24,6 +24,7 @@ import (
 )
 
 type HypDSPlanner struct {
+	id        int
 	ctx       context.Context
 	config    HypDSConfig
 	visitor   *plan.Visitor
@@ -50,6 +51,14 @@ func (t *fieldInfo) AliasOrName() string {
 		return t.Alias
 	}
 	return t.Name
+}
+
+func (p *HypDSPlanner) SetID(id int) {
+	p.id = id
+}
+
+func (p *HypDSPlanner) ID() (id int) {
+	return p.id
 }
 
 func (p *HypDSPlanner) UpstreamSchema(dataSourceConfig plan.DataSourceConfiguration[HypDSConfig]) (*ast.Document, bool) {
