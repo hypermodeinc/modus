@@ -100,9 +100,9 @@ func ApplyAuthToLocalHypermodeModelRequest(ctx context.Context, connection manif
 	warningColor := color.New(color.FgHiYellow, color.Bold)
 
 	if jwt == "" || orgId == "" {
-		fmt.Println()
-		warningColor.Println("Warning: Local authentication not found. Please login using `hyp login`")
-		fmt.Println()
+		fmt.Fprintln(os.Stderr)
+		warningColor.Fprintln(os.Stderr, "Warning: Local authentication not found. Please login using `hyp login`")
+		fmt.Fprintln(os.Stderr)
 		return errLocalAuthFailed
 	}
 
@@ -111,9 +111,9 @@ func ApplyAuthToLocalHypermodeModelRequest(ctx context.Context, connection manif
 		return err
 	}
 	if isExpired {
-		fmt.Println()
-		warningColor.Println("Warning: Local authentication expired. Please login using `hyp login`")
-		fmt.Println()
+		fmt.Fprintln(os.Stderr)
+		warningColor.Fprintln(os.Stderr, "Warning: Local authentication expired. Please login using `hyp login`")
+		fmt.Fprintln(os.Stderr)
 		return errLocalAuthFailed
 	}
 

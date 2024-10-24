@@ -11,6 +11,7 @@ package engine
 
 import (
 	"fmt"
+	"os"
 	"sync"
 
 	"context"
@@ -82,7 +83,7 @@ func generateSchema(ctx context.Context, md *metadata.Metadata) (*gql.Schema, *d
 		if config.UseJsonLogging {
 			logger.Debug(ctx).Str("schema", generated.Schema).Msg("Generated schema")
 		} else {
-			fmt.Printf("\n%s\n", generated.Schema)
+			fmt.Fprintf(os.Stderr, "\n%s\n", generated.Schema)
 		}
 	}
 
