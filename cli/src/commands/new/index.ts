@@ -32,6 +32,11 @@ export default class NewCommand extends Command {
   static examples = ["modus new", "modus new --name my-app", "modus new --name my-app --sdk go --dir ./my-app --force"];
 
   static flags = {
+    help: Flags.help({
+      char: "h",
+      helpLabel: "-h, --help",
+      description: "Show help message",
+    }),
     nologo: Flags.boolean({
       aliases: ["no-logo"],
       hidden: true,
@@ -67,65 +72,69 @@ export default class NewCommand extends Command {
   };
 
   async run(): Promise<void> {
-    const { flags } = await this.parse(NewCommand);
+    try {
+      const { flags } = await this.parse(NewCommand);
 
-    if (!flags.nologo) {
-      this.log(getHeader(this.config.version));
-    }
+      if (!flags.nologo) {
+        this.log(getHeader(this.config.version));
+      }
 
-    this.log(chalk.hex("#A585FF")(NewCommand.description) + "\n");
+      this.log(chalk.hex("#A585FF")(NewCommand.description) + "\n");
 
-    let sdk: SDK;
-    if (flags.sdk) {
-      sdk = parseSDK(flags.sdk);
-    } else {
-      const sdkInput = await inquirer.select({
-        message: "Select a SDK",
-        default: SDK.Go,
-        choices: [
-          {
-            value: SDK.Go,
-          },
-          {
-            value: SDK.AssemblyScript,
-          },
-        ],
-      });
+      let sdk: SDK;
+      if (flags.sdk) {
+        sdk = parseSDK(flags.sdk);
+      } else {
+        const sdkInput = await inquirer.select({
+          message: "Select a SDK",
+          default: SDK.Go,
+          choices: [
+            {
+              value: SDK.Go,
+            },
+            {
+              value: SDK.AssemblyScript,
+            },
+          ],
+        });
 
-      sdk = parseSDK(sdkInput);
-    }
+        sdk = parseSDK(sdkInput);
+      }
 
-    const defaultAppName = getDefaultAppNameBySdk(sdk);
-    const name =
-      flags.name ||
-      (await inquirer.input({
-        message: "Pick a name for your app:",
-        default: defaultAppName,
-      }));
+      const defaultAppName = getDefaultAppNameBySdk(sdk);
+      const name =
+        flags.name ||
+        (await inquirer.input({
+          message: "Pick a name for your app:",
+          default: defaultAppName,
+        }));
 
-    const dir = flags.dir || "." + path.sep + name;
+      const dir = flags.dir || "." + path.sep + name;
 
-    if (!flags.force) {
-      const confirmed = await inquirer.confirm({ message: "Continue?", default: true });
-      if (!confirmed) {
-        this.log(chalk.dim("Aborted"));
-        this.exit(1);
+      if (!flags.force && (await fs.exists(dir))) {
+        const confirmed = await inquirer.confirm({ message: `Directory ${dir} already exists. Do you want to overwrite it?`, default: false });
+        if (!confirmed) {
+          this.abort();
+        }
+      }
+
+      if (!flags.force) {
+        const confirmed = await inquirer.confirm({ message: "Continue?", default: true });
+        if (!confirmed) {
+          this.abort();
+        }
+      }
+
+      this.log();
+      await this.createApp(name, dir, sdk, MODUS_DEFAULT_TEMPLATE_NAME, flags.force, flags.prerelease);
+    } catch (err: any) {
+      if (err.name === "ExitPromptError") {
+        this.abort();
       }
     }
-
-    this.log();
-    await this.createApp(name, dir, sdk, MODUS_DEFAULT_TEMPLATE_NAME, flags.force, flags.prerelease);
   }
 
   private async createApp(name: string, dir: string, sdk: SDK, template: string, force: boolean, prerelease: boolean) {
-    if (!force && (await fs.exists(dir))) {
-      const confirmed = await inquirer.confirm({ message: "Attempting to overwrite a folder that already exists.\nAre you sure you want to continue?", default: false });
-      if (!confirmed) {
-        this.log(chalk.dim("Aborted"));
-        this.exit(1);
-      }
-    }
-
     // Validate SDK-specific prerequisites
     const sdkText = `Modus ${sdk} SDK`;
     switch (sdk) {
@@ -210,8 +219,7 @@ export default class NewCommand extends Command {
           default: true,
         });
         if (!confirmed) {
-          this.log(chalk.dim("Aborted"));
-          this.exit(1);
+          this.abort();
         } else {
           updateSDK = true;
         }
@@ -301,6 +309,11 @@ export default class NewCommand extends Command {
 
   private logError(message: string) {
     this.log(chalk.red(" ERROR ") + chalk.dim(": " + message));
+  }
+
+  private abort() {
+    this.log(chalk.dim("Aborted"));
+    this.exit(1);
   }
 }
 

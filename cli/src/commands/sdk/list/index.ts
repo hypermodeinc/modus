@@ -18,6 +18,11 @@ export default class SDKListCommand extends Command {
   static description = "List installed Modus SDKs";
   static examples = ["modus sdk list"];
   static flags = {
+    help: Flags.help({
+      char: "h",
+      helpLabel: "-h, --help",
+      description: "Show help message",
+    }),
     nologo: Flags.boolean({
       aliases: ["no-logo"],
       hidden: true,

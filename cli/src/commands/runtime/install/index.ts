@@ -27,6 +27,11 @@ export default class RuntimeInstallCommand extends Command {
   static examples = ["modus runtime install", "modus runtime install v1.2.3", "modus runtime install --prerelease"];
 
   static flags = {
+    help: Flags.help({
+      char: "h",
+      helpLabel: '-h, --help',
+      description: "Show help message"
+    }),
     nologo: Flags.boolean({
       aliases: ["no-logo"],
       hidden: true,

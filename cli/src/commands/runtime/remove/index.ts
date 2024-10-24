@@ -24,6 +24,11 @@ export default class RuntimeRemoveCommand extends Command {
   };
 
   static flags = {
+    help: Flags.help({
+      char: "h",
+      helpLabel: "-h, --help",
+      description: "Show help message",
+    }),
     force: Flags.boolean({
       char: "f",
       default: false,
@@ -47,13 +52,18 @@ export default class RuntimeRemoveCommand extends Command {
         this.log(chalk.yellow("No Modus runtimes are installed."));
         this.exit(1);
       } else if (!flags.force) {
-        const confirmed = await inquirer.confirm({
-          message: "Are you sure you want to remove all Modus runtimes?",
-          default: false,
-        });
-        if (!confirmed) {
-          this.log(chalk.dim("Aborted"));
-          this.exit(1);
+        try {
+          const confirmed = await inquirer.confirm({
+            message: "Are you sure you want to remove all Modus runtimes?",
+            default: false,
+          });
+          if (!confirmed) {
+            this.abort();
+          }
+        } catch (err: any) {
+          if (err.name === "ExitPromptError") {
+            this.abort();
+          }
         }
       }
 
@@ -70,13 +80,18 @@ export default class RuntimeRemoveCommand extends Command {
         this.log(chalk.yellow(runtimeText + "is not installed."));
         this.exit(1);
       } else if (!flags.force) {
-        const confirmed = await inquirer.confirm({
-          message: `Are you sure you want to remove ${runtimeText}?`,
-          default: false,
-        });
-        if (!confirmed) {
-          this.log(chalk.dim("Aborted"));
-          this.exit(1);
+        try {
+          const confirmed = await inquirer.confirm({
+            message: `Are you sure you want to remove ${runtimeText}?`,
+            default: false,
+          });
+          if (!confirmed) {
+            this.abort();
+          }
+        } catch (err: any) {
+          if (err.name === "ExitPromptError") {
+            this.abort();
+          }
         }
       }
 
@@ -100,5 +115,10 @@ export default class RuntimeRemoveCommand extends Command {
 
   private logError(message: string) {
     this.log(chalk.red(" ERROR ") + chalk.dim(": " + message));
+  }
+
+  private abort() {
+    this.log(chalk.dim("Aborted"));
+    this.exit(1);
   }
 }

@@ -64,6 +64,12 @@
       "runtime": {
         "description": "Modus Runtime Management"
       }
-    }
+    },
+    "additionalHelpFlags": [
+      "-h"
+    ],
+    "additionalVersionFlags": [
+      "-v"
+    ]
   }
 }

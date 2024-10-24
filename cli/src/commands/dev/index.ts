@@ -35,6 +35,11 @@ export default class DevCommand extends Command {
   };
 
   static flags = {
+    help: Flags.help({
+      char: "h",
+      helpLabel: "-h, --help",
+      description: "Show help message",
+    }),
     nologo: Flags.boolean({
       aliases: ["no-logo"],
       hidden: true,

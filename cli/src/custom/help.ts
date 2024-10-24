@@ -75,12 +75,26 @@ export default class CustomHelp extends Help {
     return out.trim();
   }
 
+  formatFlags(topics: Interfaces.Topic[]): string {
+    let out = "";
+    if (topics.find((v) => !v.hidden)) out += chalk.bold("Flags:") + "\n";
+    else return out;
+
+    for (const topic of topics) {
+      if (topic.hidden) continue;
+
+      const fullName = topic.shortName ? `${topic.shortName}, ${topic.name}` : topic.name;
+      out += "  " + chalk.bold.blue(fullName) + " ".repeat(Math.max(1, this.pre_pad + this.post_pad - fullName.length)) + topic.description + "\n";
+    }
+    return out.trim();
+  }
+
   formatFooter(): string {
     let out = "";
     const links = [
       { name: "Docs", url: "https://docs.hypermode.com/modus" },
       { name: "GitHub", url: "https://github.com/hypermodeinc/modus" },
-      { name: "Discord", url: "https://discord.hypermode.com" },
+      { name: "Discord", url: "https://discord.hypermode.com (#modus)" },
     ];
 
     for (const link of links) {
@@ -142,6 +156,21 @@ export default class CustomHelp extends Help {
       this.log();
     }
 
+    const globalFlagTopics: Interfaces.Topic[] = [
+      {
+        name: "--help",
+        description: "Show help message",
+        shortName: "-h",
+      },
+      {
+        name: "--version",
+        description: "Show Modus version",
+        shortName: "-v",
+      },
+    ];
+    this.log(this.formatFlags(globalFlagTopics));
+    this.log();
+
     this.log(this.formatFooter());
   }
 
@@ -191,7 +220,7 @@ export default class CustomHelp extends Help {
     if (command.description) this.log(chalk.hex("#A585FF")(command.description));
 
     const argsStr = args.length > 0 ? " " + args.map((a) => `<${a}>`).join(" ") : "";
-    const flagsStr = flags.length > 0 ? " [...flags]" : "";
+    const flagsStr = flags.length > 0 ? " [flags]" : "";
     this.log(`${chalk.bold("Usage:")} modus ${name}${chalk.blueBright(argsStr + flagsStr)}\n`);
 
     if (args.length) {
@@ -216,7 +245,9 @@ export default class CustomHelp extends Help {
       this.log(chalk.bold("Flags:"));
       for (const flag of Object.values(command.flags)) {
         if (flag.hidden) continue;
-        this.log("  " + chalk.bold.blueBright("--" + flag.name) + " ".repeat(margin - flag.name.length) + flag.description);
+
+        const flagOptions = flag.char ? `-${flag.char}, --${flag.name}` : `--${flag.name}`;
+        this.log("  " + chalk.bold.blueBright(flagOptions) + " ".repeat(margin + 2 - flagOptions.length) + flag.description);
       }
       this.log();
     }

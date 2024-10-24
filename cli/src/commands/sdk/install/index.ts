@@ -34,6 +34,11 @@ export default class SDKInstallCommand extends Command {
   static examples = ["modus sdk install assemblyscript", "modus sdk install assemblyscript v1.2.3", "modus sdk install", "modus sdk install --prerelease"];
 
   static flags = {
+    help: Flags.help({
+      char: "h",
+      helpLabel: "-h, --help",
+      description: "Show help message",
+    }),
     nologo: Flags.boolean({
       aliases: ["no-logo"],
       hidden: true,
