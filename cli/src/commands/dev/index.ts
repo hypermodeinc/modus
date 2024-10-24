@@ -151,10 +151,12 @@ export default class DevCommand extends Command {
     const ext = os.platform() === "win32" ? ".exe" : "";
     const runtimePath = path.join(vi.getRuntimePath(runtimeVersion), "modus_runtime" + ext);
 
+    // Build the app on first run
     if (!flags["no-build"]) {
       await BuildCommand.run([appPath, "--no-logo"]);
     }
 
+    // Read Hypermode settings if they exist, so they can be forwarded to the runtime
     const hypSettings = await readHypermodeSettings();
 
     const env = {
@@ -165,13 +167,39 @@ export default class DevCommand extends Command {
       HYP_ORG_ID: hypSettings.orgId,
     };
 
+    // Spawn the runtime child process
     const child = spawn(runtimePath, ["-appPath", path.join(appPath, "build")], {
       stdio: ["inherit", "inherit", "pipe"],
       env: env,
     });
     child.stderr.pipe(process.stderr);
-    child.on("close", (code) => this.exit(code || 1));
 
+    // Handle the runtime process exit
+    child.on("close", (code) => {
+      // note: can't use "this.exit" here because it would throw an unhandled exception
+      // but "process.exit" works fine.
+      if (code) {
+        this.log(chalk.magentaBright(`Runtime terminated with code ${code}`) + "\n");
+        process.exit(code);
+      } else {
+        this.log(chalk.magentaBright("Runtime terminated successfully.") + "\n");
+        process.exit();
+      }
+    });
+
+    // Forward SIGINT and SIGTERM to the child process for graceful shutdown from user ctrl+c or kill.
+    process.on("SIGINT", () => {
+      if (child && !child.killed) {
+        child.kill("SIGINT");
+      }
+    });
+    process.on("SIGTERM", () => {
+      if (child && !child.killed) {
+        child.kill("SIGTERM");
+      }
+    });
+
+    // Watch for changes in the app directory and rebuild the app when changes are detected
     if (!flags["no-watch"] && !flags["no-build"]) {
       let lastModified = 0;
       let lastBuild = 0;
