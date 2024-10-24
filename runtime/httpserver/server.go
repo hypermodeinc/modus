@@ -169,7 +169,7 @@ func GetMainHandler(options ...func(map[string]http.Handler)) http.Handler {
 		mux.ReplaceRoutes(routes)
 
 		if len(endpoints) > 0 && config.IsDevEnvironment() {
-			fmt.Println()
+			fmt.Fprintln(os.Stderr)
 
 			titleColor := color.New(color.FgHiGreen, color.Bold)
 			itemColor := color.New(color.FgHiBlue)
@@ -178,21 +178,21 @@ func GetMainHandler(options ...func(map[string]http.Handler)) http.Handler {
 
 			if len(endpoints) == 1 {
 				ep := endpoints[0]
-				titleColor.Println("Your local endpoint is ready!")
-				itemColor.Printf("• %s (%s): ", ep.apiType, ep.name)
-				urlColor.Println(ep.url)
+				titleColor.Fprintln(os.Stderr, "Your local endpoint is ready!")
+				itemColor.Fprintf(os.Stderr, "• %s (%s): ", ep.apiType, ep.name)
+				urlColor.Fprintln(os.Stderr, ep.url)
 			} else {
-				titleColor.Println("Your local endpoints are ready!")
+				titleColor.Fprintln(os.Stderr, "Your local endpoints are ready!")
 				for _, ep := range endpoints {
-					itemColor.Printf("• %s (%s): ", ep.apiType, ep.name)
-					urlColor.Println(ep.url)
+					itemColor.Fprintf(os.Stderr, "• %s (%s): ", ep.apiType, ep.name)
+					urlColor.Fprintln(os.Stderr, ep.url)
 				}
 			}
 
-			fmt.Println()
-			noticeColor.Println("Changes will automatically be applied when you save your files.")
-			noticeColor.Println("Press Ctrl+C at any time to stop the server.")
-			fmt.Println()
+			fmt.Fprintln(os.Stderr)
+			noticeColor.Fprintln(os.Stderr, "Changes will automatically be applied when you save your files.")
+			noticeColor.Fprintln(os.Stderr, "Press Ctrl+C at any time to stop the server.")
+			fmt.Fprintln(os.Stderr)
 		}
 
 		return nil

@@ -54,6 +54,7 @@ In previous releases, the name "Hypermode" was used for all three._
 - Simplify and polish `modus new` experience [#494](https://github.com/hypermodeinc/modus/pull/494)
 - Move hyp settings for local model invocation to env variables [#495](https://github.com/hypermodeinc/modus/pull/495) [#504](https://github.com/hypermodeinc/modus/pull/504)
 - Change GraphQL SDK examples to use a generic public GraphQL API [#501](https://github.com/hypermodeinc/modus/pull/501)
+- Improve file watching and fix Windows issues [#505](https://github.com/hypermodeinc/modus/pull/505)
 
 ## 2024-10-02 - Version 0.12.7
 

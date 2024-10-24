@@ -12,11 +12,13 @@ import { spawn } from "node:child_process";
 import path from "node:path";
 import os from "node:os";
 import chalk from "chalk";
+import pm from "picomatch";
 import chokidar from "chokidar";
 
 import * as fs from "../../util/fs.js";
 import * as vi from "../../util/versioninfo.js";
 import * as installer from "../../util/installer.js";
+import { SDK } from "../../custom/globals.js";
 import { getHeader } from "../../custom/header.js";
 import { getAppInfo } from "../../util/appinfo.js";
 import { isOnline, withSpinner } from "../../util/index.js";
@@ -50,10 +52,10 @@ export default class DevCommand extends Command {
       aliases: ["no-watch"],
       description: "Don't watch app code for changes",
     }),
-    freq: Flags.integer({
+    delay: Flags.integer({
       char: "f",
-      description: "Frequency to check for changes",
-      default: 3000,
+      description: "Delay (in milliseconds) between file change detection and rebuild",
+      default: 500,
     }),
   };
 
@@ -83,9 +85,9 @@ export default class DevCommand extends Command {
       await withSpinner(chalk.dim("Downloading and installing " + sdkText), async (spinner) => {
         try {
           await installer.installSDK(sdk, sdkVersion);
-        } catch {
+        } catch (e) {
           spinner.fail(chalk.red(`Failed to download ${sdkText}`));
-          this.exit(1);
+          throw e;
         }
         spinner.succeed(chalk.dim(`Installed ${sdkText}`));
       });
@@ -99,9 +101,9 @@ export default class DevCommand extends Command {
           await withSpinner(chalk.dim("Downloading and installing " + runtimeText), async (spinner) => {
             try {
               await installer.installRuntime(runtimeVersion!);
-            } catch {
+            } catch (e) {
               spinner.fail(chalk.red("Failed to download " + runtimeText));
-              this.exit(1);
+              throw e;
             }
             spinner.succeed(chalk.dim("Installed " + runtimeText));
           });
@@ -117,9 +119,9 @@ export default class DevCommand extends Command {
         await withSpinner(chalk.dim("Downloading and installing " + runtimeText), async (spinner) => {
           try {
             await installer.installRuntime(version!);
-          } catch {
+          } catch (e) {
             spinner.fail(chalk.red("Failed to download " + runtimeText));
-            this.exit(1);
+            throw e;
           }
           spinner.succeed(chalk.dim("Installed " + runtimeText));
         });
@@ -143,7 +145,6 @@ export default class DevCommand extends Command {
 
     await BuildCommand.run([appPath, "--no-logo"]);
 
-    // read from settings.json if it exists, load env vars into env
     const hypSettings = await readHypermodeSettings();
 
     const env = {
@@ -154,14 +155,14 @@ export default class DevCommand extends Command {
       HYP_ORG_ID: hypSettings.orgId,
     };
 
-    const runtime = spawn(runtimePath, ["-appPath", path.join(appPath, "build")], {
-      stdio: "inherit",
+    const child = spawn(runtimePath, ["-appPath", path.join(appPath, "build")], {
+      stdio: ["inherit", "inherit", "pipe"],
       env: env,
     });
-    runtime.on("close", (code) => this.exit(code || 1));
+    child.stderr.pipe(process.stderr);
+    child.on("close", (code) => this.exit(code || 1));
 
     if (!flags.nowatch) {
-      const delay = flags.freq;
       let lastModified = 0;
       let lastBuild = 0;
       let paused = true;
@@ -174,27 +175,49 @@ export default class DevCommand extends Command {
         if (lastBuild > lastModified) {
           return;
         }
-
         lastBuild = Date.now();
+
         try {
+          child.stderr.pause();
           this.log();
           this.log(chalk.magentaBright("Detected change. Rebuilding..."));
           this.log();
           await BuildCommand.run([appPath, "--no-logo"]);
-        } catch {}
-      }, delay);
+        } catch (e) {
+          this.log(chalk.magenta("Waiting for more changes..."));
+          this.log(chalk.dim("Press Ctrl+C at any time to stop the server."));
+        } finally {
+          child.stderr.resume();
+        }
+      }, flags.delay);
+
+      const globs = getGlobsToWatch(sdk);
 
       // NOTE: The built-in fs.watch or fsPromises.watch is insufficient for our needs.
       // Instead, we use chokidar for consistent behavior in cross-platform file watching.
-      const ignoredPaths = [path.join(appPath, "build") + path.sep, path.join(appPath, "node_modules") + path.sep];
+      const pmOpts: pm.PicomatchOptions = { posixSlashes: true };
       chokidar
         .watch(appPath, {
-          ignored: (filePath, stats) => (stats?.isFile() || true) && ignoredPaths.some((p) => path.normalize(filePath).startsWith(p)),
-          cwd: appPath,
+          ignored: (filePath, stats) => {
+            const relativePath = path.relative(appPath, filePath);
+            if (!stats || !relativePath) return false;
+
+            let ignore = false;
+            if (pm(globs.excluded, pmOpts)(relativePath)) {
+              ignore = true;
+            } else if (stats.isFile()) {
+              ignore = !pm(globs.included, pmOpts)(relativePath);
+            }
+
+            if (process.env.MODUS_DEBUG) {
+              this.log(chalk.dim(`${ignore ? "ignored: " : "watching:"}  ${relativePath}`));
+            }
+            return ignore;
+          },
           ignoreInitial: true,
           persistent: true,
         })
-        .on("all", async (event, path) => {
+        .on("all", () => {
           lastModified = Date.now();
           paused = false;
         });
@@ -204,4 +227,25 @@ export default class DevCommand extends Command {
   private logError(message: string) {
     this.log(chalk.red(" ERROR ") + chalk.dim(": " + message));
   }
+}
+
+function getGlobsToWatch(sdk: SDK) {
+  const included: string[] = [];
+  const excluded: string[] = [".git/**", "build/**"];
+
+  switch (sdk) {
+    case SDK.AssemblyScript:
+      included.push("**/*.ts", "**/asconfig.json", "**/tsconfig.json", "**/package.json");
+      excluded.push("node_modules/**");
+      break;
+
+    case SDK.Go:
+      included.push("**/*.go", "**/go.mod");
+      excluded.push("**/*_generated.go", "**/*.generated.go", "**/*_test.go");
+      break;
+
+    default:
+      throw new Error(`Unsupported SDK: ${sdk}`);
+  }
+  return { included, excluded };
 }

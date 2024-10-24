@@ -19,6 +19,7 @@ import { execFile } from "../../util/cp.js";
 import { isOnline } from "../../util/index.js";
 import { GitHubOwner, GitHubRepo, MinGoVersion, MinNodeVersion, MinTinyGoVersion, ModusHomeDir, SDK, parseSDK } from "../../custom/globals.js";
 import { withSpinner } from "../../util/index.js";
+import { extract } from "../../util/tar.js";
 import SDKInstallCommand from "../sdk/install/index.js";
 import { getHeader } from "../../custom/header.js";
 import * as inquirer from "@inquirer/prompts";
@@ -105,8 +106,8 @@ export default class NewCommand extends Command {
     const dir = flags.dir || "." + path.sep + name;
 
     if (!flags.force) {
-      const confirmd = await inquirer.confirm({ message: "Continue?", default: true });
-      if (!confirmd) {
+      const confirmed = await inquirer.confirm({ message: "Continue?", default: true });
+      if (!confirmed) {
         this.log(chalk.dim("Aborted"));
         this.exit(1);
       }
@@ -118,8 +119,8 @@ export default class NewCommand extends Command {
 
   private async createApp(name: string, dir: string, sdk: SDK, template: string, force: boolean, prerelease: boolean) {
     if (!force && (await fs.exists(dir))) {
-      const confirmd = await inquirer.confirm({ message: "Attempting to overwrite a folder that already exists.\nAre you sure you want to continue?", default: false });
-      if (!confirmd) {
+      const confirmed = await inquirer.confirm({ message: "Attempting to overwrite a folder that already exists.\nAre you sure you want to continue?", default: false });
+      if (!confirmed) {
         this.log(chalk.dim("Aborted"));
         this.exit(1);
       }
@@ -204,11 +205,11 @@ export default class NewCommand extends Command {
 
       let updateSDK = false;
       if (!installedSdkVersion) {
-        const confirmd = inquirer.confirm({
+        const confirmed = inquirer.confirm({
           message: `You do not have the ${sdkText} installed. Would you like to install it now?`,
           default: true,
         });
-        if (!confirmd) {
+        if (!confirmed) {
           this.log(chalk.dim("Aborted"));
           this.exit(1);
         } else {
@@ -253,6 +254,7 @@ export default class NewCommand extends Command {
           await withSpinner("Downloading the Modus Go build tool.", async () => {
             await execFile("go", ["install", module], {
               cwd: ModusHomeDir,
+              shell: true,
               env: {
                 ...process.env,
                 GOBIN: sdkPath,
@@ -272,10 +274,11 @@ export default class NewCommand extends Command {
       if (!(await fs.exists(dir))) {
         await fs.mkdir(dir, { recursive: true });
       }
-      await execFile("tar", ["-xf", templatesArchive, "-C", dir, "--strip-components=2", `templates/${template}`]);
+
+      await extract(templatesArchive, dir, "--strip-components=2", `templates/${template}`);
 
       // Apply SDK-specific modifications
-      const execOpts = { env: process.env, cwd: dir };
+      const execOpts = { env: process.env, cwd: dir, shell: true };
       switch (sdk) {
         case SDK.AssemblyScript:
           await execFile("npm", ["pkg", "set", `name=${name}`], execOpts);
@@ -304,6 +307,7 @@ export default class NewCommand extends Command {
 async function getGoVersion(): Promise<string | undefined> {
   try {
     const result = await execFile("go", ["version"], {
+      shell: true,
       cwd: ModusHomeDir,
       env: process.env,
     });
@@ -318,6 +322,7 @@ async function getGoVersion(): Promise<string | undefined> {
 async function getTinyGoVersion(): Promise<string | undefined> {
   try {
     const result = await execFile("tinygo", ["version"], {
+      shell: true,
       cwd: ModusHomeDir,
       env: process.env,
     });

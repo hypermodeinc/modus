@@ -128,6 +128,7 @@
     "PEMS",
     "pgconn",
     "pgxpool",
+    "picomatch",
     "picsum",
     "pjson",
     "pkgs",
