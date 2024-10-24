@@ -57,6 +57,7 @@
     "GOBIN",
     "goccy",
     "godotenv",
+    "gofrs",
     "gojs",
     "gomod",
     "goreleaser",

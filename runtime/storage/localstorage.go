@@ -15,9 +15,12 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/hypermodeinc/modus/runtime/config"
 	"github.com/hypermodeinc/modus/runtime/logger"
+
+	"github.com/gofrs/flock"
 )
 
 type localStorageProvider struct {
@@ -69,9 +72,23 @@ func (stg *localStorageProvider) listFiles(ctx context.Context, extension string
 	return files, nil
 }
 
-func (stg *localStorageProvider) getFileContents(ctx context.Context, name string) ([]byte, error) {
+func (stg *localStorageProvider) getFileContents(ctx context.Context, name string) (content []byte, err error) {
 	path := filepath.Join(config.AppPath, name)
-	content, err := os.ReadFile(path)
+
+	// Acquire a read lock on the file to prevent reading a file that is still being written to.
+	// For example, this can easily happen when using `modus dev` and the user is editing the manifest file.
+
+	lock := flock.New(path)
+	if _, e := lock.TryRLockContext(ctx, 100*time.Millisecond); e != nil {
+		return nil, fmt.Errorf("failed to acquire read lock on file %s: %w", name, e)
+	}
+	defer func() {
+		if e := lock.Unlock(); e != nil && err == nil {
+			err = fmt.Errorf("failed to release read lock on file %s: %w", name, e)
+		}
+	}()
+
+	content, err = os.ReadFile(path)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read contents of file %s from local storage: %w", name, err)
 	}
