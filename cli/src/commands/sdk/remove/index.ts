@@ -13,7 +13,8 @@ import chalk from "chalk";
 import * as fs from "../../../util/fs.js";
 import * as vi from "../../../util/versioninfo.js";
 import { parseSDK, SDK } from "../../../custom/globals.js";
-import { ask, clearLine, withSpinner } from "../../../util/index.js";
+import { withSpinner } from "../../../util/index.js";
+import * as inquirer from "@inquirer/prompts";
 
 export default class SDKRemoveCommand extends Command {
   static args = {
@@ -64,9 +65,15 @@ export default class SDKRemoveCommand extends Command {
         this.exit(1);
       }
 
-      if (!flags.force && !(await this.confirmAction(`Really, remove all Modus SDKs${flags.runtimes ? " and runtimes" : ""}? [y/N]`, false))) {
-        this.log(chalk.dim("Aborted."));
-        this.exit(1);
+      if (!flags.force) {
+        const confirmed = inquirer.confirm({
+          message: "Are you sure you want to remove all Modus SDKs?",
+          default: false,
+        });
+        if (!confirmed) {
+          this.log(chalk.dim("Aborted"));
+          this.exit(1);
+        }
       }
 
       for (const sdk of Object.values(SDK)) {
@@ -89,9 +96,15 @@ export default class SDKRemoveCommand extends Command {
         if (versions.length === 0) {
           this.log(chalk.yellow(`No Modus ${sdk} SDKs are installed.`));
           this.exit(1);
-        } else if (!flags.force && !(await this.confirmAction(`Really, remove all Modus ${sdk} SDKs? [y/N]`, false))) {
-          this.log(chalk.dim("Aborted."));
-          this.exit(1);
+        } else if (!flags.force) {
+          const confirmed = inquirer.confirm({
+            message: `Are you sure you want to remove all Modus ${sdk} SDKs?`,
+            default: false,
+          });
+          if (!confirmed) {
+            this.log(chalk.dim("Aborted"));
+            this.exit(1);
+          }
         }
 
         for (const version of versions) {
@@ -106,9 +119,15 @@ export default class SDKRemoveCommand extends Command {
         if (!isInstalled) {
           this.log(chalk.yellow(sdkText + "is not installed."));
           this.exit(1);
-        } else if (!flags.force && !(await this.confirmAction(`Really, remove ${sdkText} ? [y/N]`, false))) {
-          this.log(chalk.dim("Aborted."));
-          this.exit(1);
+        } else if (!flags.force) {
+          const confirmed = inquirer.confirm({
+            message: `Are you sure you want to remove ${sdkText}?`,
+            default: false,
+          });
+          if (!confirmed) {
+            this.log(chalk.dim("Aborted"));
+            this.exit(1);
+          }
         }
 
         await this.removeSDK(sdk, args.version);
@@ -146,19 +165,5 @@ export default class SDKRemoveCommand extends Command {
 
   private logError(message: string) {
     this.log(chalk.red(" ERROR ") + chalk.dim(": " + message));
-  }
-
-  private async confirmAction(message: string, defaultToContinue = true): Promise<boolean> {
-    this.log(message);
-    const input = await ask(chalk.dim(" -> "));
-
-    if (input === "") {
-      clearLine(2);
-      return defaultToContinue;
-    }
-
-    const shouldContinue = (input || "n").toLowerCase().trim();
-    clearLine(2);
-    return shouldContinue === "yes" || shouldContinue === "y";
   }
 }

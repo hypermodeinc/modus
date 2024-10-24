@@ -12,7 +12,8 @@ import chalk from "chalk";
 
 import * as fs from "../../../util/fs.js";
 import * as vi from "../../../util/versioninfo.js";
-import { ask, clearLine, withSpinner } from "../../../util/index.js";
+import { withSpinner } from "../../../util/index.js";
+import * as inquirer from "@inquirer/prompts";
 
 export default class RuntimeRemoveCommand extends Command {
   static args = {
@@ -36,7 +37,7 @@ export default class RuntimeRemoveCommand extends Command {
   async run(): Promise<void> {
     const { args, flags } = await this.parse(RuntimeRemoveCommand);
     if (!args.version) {
-      this.logError(`No runtime version specified! Run ${chalk.whiteBright("modus runtime remove <version>")}, or ${chalk.whiteBright("modus runtime remove all")}`);
+      this.logError(`No runtime version specified. Run ${chalk.whiteBright("modus runtime remove <version>")}, or ${chalk.whiteBright("modus runtime remove all")}`);
       return;
     }
 
@@ -45,9 +46,15 @@ export default class RuntimeRemoveCommand extends Command {
       if (versions.length === 0) {
         this.log(chalk.yellow("No Modus runtimes are installed."));
         this.exit(1);
-      } else if (!flags.force && !(await this.confirmAction("Really, remove all Modus runtimes? [y/N]"), false)) {
-        this.log(chalk.dim("Aborted."));
-        this.exit(1);
+      } else if (!flags.force) {
+        const confirmed = await inquirer.confirm({
+          message: "Are you sure you want to remove all Modus runtimes?",
+          default: false,
+        });
+        if (!confirmed) {
+          this.log(chalk.dim("Aborted"));
+          this.exit(1);
+        }
       }
 
       for (const version of versions) {
@@ -62,9 +69,15 @@ export default class RuntimeRemoveCommand extends Command {
       if (!isInstalled) {
         this.log(chalk.yellow(runtimeText + "is not installed."));
         this.exit(1);
-      } else if (!flags.force && !(await this.confirmAction(`Really, remove ${runtimeText} ? [y/N]`))) {
-        this.log(chalk.dim("Aborted."));
-        this.exit(1);
+      } else if (!flags.force) {
+        const confirmed = await inquirer.confirm({
+          message: `Are you sure you want to remove ${runtimeText}?`,
+          default: false,
+        });
+        if (!confirmed) {
+          this.log(chalk.dim("Aborted"));
+          this.exit(1);
+        }
       }
 
       await this.removeRuntime(args.version);
@@ -87,19 +100,5 @@ export default class RuntimeRemoveCommand extends Command {
 
   private logError(message: string) {
     this.log(chalk.red(" ERROR ") + chalk.dim(": " + message));
-  }
-
-  private async confirmAction(message: string, defaultToContinue = true): Promise<boolean> {
-    this.log(message);
-    const input = await ask(chalk.dim(" -> "));
-
-    if (input === "") {
-      clearLine(2);
-      return defaultToContinue;
-    }
-
-    const shouldContinue = (input || "n").toLowerCase().trim();
-    clearLine(2);
-    return shouldContinue === "yes" || shouldContinue === "y";
   }
 }

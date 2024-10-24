@@ -48,36 +48,6 @@ export async function withSpinner<T>(text: string, fn: (spinner: Ora) => Promise
   }
 }
 
-export async function ask(question: string, placeholder?: string): Promise<string> {
-  const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout,
-  });
-
-  try {
-    return await new Promise<string>((res, _) => {
-      rl.question(question + (placeholder ? " " + placeholder + " " : ""), (answer) => {
-        res(answer);
-      });
-    });
-  } finally {
-    rl.close();
-  }
-}
-
-export function clearLine(n: number = 1): void {
-  const stream = process.stdout;
-  if (isatty(stream.fd)) {
-    for (let i = 0; i < n; i++) {
-      stream.write("\u001B[1A");
-      stream.write("\u001B[2K");
-      stream.write("\u001B[2K");
-    }
-  } else {
-    stream.write("\n");
-  }
-}
-
 export async function downloadFile(url: string, dest: string): Promise<boolean> {
   const res = await fetch(url);
   if (!res.ok) {
