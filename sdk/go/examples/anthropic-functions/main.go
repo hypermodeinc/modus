@@ -28,7 +28,6 @@ func GetStockPrice(company string, useTools bool) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	model.Debug = true
 
 	input, err := model.CreateInput(
 		anthropic.NewUserMessage(
@@ -62,27 +61,30 @@ func GetStockPrice(company string, useTools bool) (string, error) {
 		return "", err
 	}
 
-	outputs := []string{}
-	for _, content := range output.Content {
-		if content.Type == "text" {
-			outputs = append(outputs, *content.Text)
-		} else if content.Type == "tool_use" {
-			parsed := &stockPriceInput{}
-			if err := json.Unmarshal([]byte(*content.Input), parsed); err != nil {
-				return "", err
-			}
-			symbol := parsed.Symbol
-			price, err := callStockPriceAPI(symbol)
-			if err != nil {
-				return "", err
-			}
-			outputs = append(outputs, fmt.Sprintf("The stock price of %s is %s", symbol, price))
-		} else {
-			return "", fmt.Errorf("unexpected content type: %s", content.Type)
-		}
+	if len(output.Content) != 1 {
+		return "", fmt.Errorf("unexpected output content length")
+	}
+	// If tools are not used, the output will be a text block
+	if output.Content[0].Type == "text" {
+		return strings.TrimSpace(*output.Content[0].Text), nil
+	}
+	if output.Content[0].Type != "tool_use" {
+		return "", fmt.Errorf("unexpected content type: %s", output.Content[0].Type)
 	}
 
-	return strings.Join(outputs, " "), nil
+	toolUse := output.Content[0]
+	inputs := toolUse.Input
+
+	parsedInput := &stockPriceInput{}
+	if err := json.Unmarshal([]byte(*inputs), parsedInput); err != nil {
+		return "", err
+	}
+	symbol := parsedInput.Symbol
+	stockPrice, err := callStockPriceAPI(symbol)
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("The stock price of %s is %s", symbol, stockPrice), nil
 }
 
 type stockPriceAPIResponse struct {
