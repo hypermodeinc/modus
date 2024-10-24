@@ -34,8 +34,8 @@ export default class NewCommand extends Command {
   static flags = {
     help: Flags.help({
       char: "h",
-      helpLabel: '-h, --help',
-      description: "Show help message"
+      helpLabel: "-h, --help",
+      description: "Show help message",
     }),
     nologo: Flags.boolean({
       aliases: ["no-logo"],
@@ -110,6 +110,14 @@ export default class NewCommand extends Command {
 
     const dir = flags.dir || "." + path.sep + name;
 
+    if (!flags.force && (await fs.exists(dir))) {
+      const confirmed = await inquirer.confirm({ message: `Directory ${dir} already exists. Do you want to overwrite it?`, default: false });
+      if (!confirmed) {
+        this.log(chalk.dim("Aborted"));
+        this.exit(1);
+      }
+    }
+
     if (!flags.force) {
       const confirmed = await inquirer.confirm({ message: "Continue?", default: true });
       if (!confirmed) {
@@ -123,14 +131,6 @@ export default class NewCommand extends Command {
   }
 
   private async createApp(name: string, dir: string, sdk: SDK, template: string, force: boolean, prerelease: boolean) {
-    if (!force && (await fs.exists(dir))) {
-      const confirmed = await inquirer.confirm({ message: "Attempting to overwrite a folder that already exists.\nAre you sure you want to continue?", default: false });
-      if (!confirmed) {
-        this.log(chalk.dim("Aborted"));
-        this.exit(1);
-      }
-    }
-
     // Validate SDK-specific prerequisites
     const sdkText = `Modus ${sdk} SDK`;
     switch (sdk) {
