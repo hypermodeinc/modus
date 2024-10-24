@@ -39,7 +39,7 @@ export default class NewCommand extends Command {
       description: "Show help message",
     }),
     "no-logo": Flags.boolean({
-      aliases: ["no-logo"],
+      aliases: ["nologo"],
       hidden: true,
     }),
     name: Flags.string({

@@ -33,7 +33,7 @@ export default class RuntimeInstallCommand extends Command {
       description: "Show help message",
     }),
     "no-logo": Flags.boolean({
-      aliases: ["no-logo"],
+      aliases: ["nologo"],
       hidden: true,
     }),
     force: Flags.boolean({

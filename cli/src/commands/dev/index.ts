@@ -41,7 +41,7 @@ export default class DevCommand extends Command {
       description: "Show help message",
     }),
     "no-logo": Flags.boolean({
-      aliases: ["no-logo"],
+      aliases: ["nologo"],
       hidden: true,
     }),
     runtime: Flags.string({
