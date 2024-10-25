@@ -215,14 +215,17 @@ export default class DevCommand extends Command {
     const outputPath = path.join(appPath, "build", "modus.json");
 
     const onAddOrChange = async () => {
-      this.log();
       try {
+        runtimeOutput.pause();
+        this.log();
         this.log(chalk.magentaBright("Detected manifest change. Applying..."));
         await fs.copyFile(sourcePath, outputPath);
       } catch (e) {
         this.log(chalk.red("Failed to copy modus.json to build directory."), e);
+      } finally {
+        this.log();
+        runtimeOutput.resume();
       }
-      this.log();
     };
 
     chokidar
@@ -235,12 +238,16 @@ export default class DevCommand extends Command {
       .on("unlink", async () => {
         this.log();
         try {
+          runtimeOutput.pause();
+          this.log();
           this.log(chalk.magentaBright("Detected manifest deleted. Applying..."));
           await fs.unlink(outputPath);
         } catch (e) {
           this.log(chalk.red("Failed to delete modus.json from build directory."), e);
+        } finally {
+          this.log();
+          runtimeOutput.resume();
         }
-        this.log();
       });
   }
 
