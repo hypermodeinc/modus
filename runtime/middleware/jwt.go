@@ -14,6 +14,7 @@ import (
 	"crypto/x509"
 	"encoding/json"
 	"encoding/pem"
+	"errors"
 	"net/http"
 	"os"
 	"strings"
@@ -30,107 +31,95 @@ type jwtClaimsKey string
 
 const jwtClaims jwtClaimsKey = "claims"
 
-var authPublicKeys map[string]any
+func publicPemKeysJsonToKeys(publicPemKeysJson string) (map[string]any, error) {
+	var publicKeyStrings map[string]string
+	if err := json.Unmarshal([]byte(publicPemKeysJson), &publicKeyStrings); err != nil {
+		return nil, err
+	}
+	keys := make(map[string]any)
+	for key, value := range publicKeyStrings {
+		block, _ := pem.Decode([]byte(value))
+		if block == nil {
+			return nil, errors.New("Invalid PEM block for key: " + key)
+		}
+
+		pubKey, err := x509.ParsePKIXPublicKey(block.Bytes)
+		if err != nil {
+			return nil, err
+		}
+		keys[key] = pubKey
+	}
+	return keys, nil
+}
+
+func jwksEndpointsJsonToKeys(ctx context.Context, jwksEndpointsJson string) (map[string]any, error) {
+	var jwksEndpoints map[string]string
+	if err := json.Unmarshal([]byte(jwksEndpointsJson), &jwksEndpoints); err != nil {
+		return nil, err
+	}
+	keys := make(map[string]any)
+	for key, value := range jwksEndpoints {
+		jwks, err := jwk.Fetch(ctx, value)
+		if err != nil {
+			return nil, err
+		}
+
+		jwkKey, exists := jwks.Get(0)
+		if !exists {
+			return nil, errors.New("No keys found in JWKS for key: " + key)
+		}
+
+		var rawKey any
+		err = jwkKey.Raw(&rawKey)
+		if err != nil {
+			return nil, err
+		}
+
+		// Marshal the raw key into DER-encoded PKIX format
+		derBytes, err := x509.MarshalPKIXPublicKey(rawKey)
+		if err != nil {
+			return nil, err
+		}
+
+		pubKey, err := x509.ParsePKIXPublicKey(derBytes)
+		if err != nil {
+			return nil, err
+		}
+		keys[key] = pubKey
+	}
+	return keys, nil
+}
 
 func Init(ctx context.Context) {
-	publicKeysJson := os.Getenv("MODUS_PEMS")
+	globalAuthKeys = newAuthKeys()
+	go globalAuthKeys.worker(ctx)
+	publicPemKeysJson := os.Getenv("MODUS_PEMS")
 	jwksEndpointsJson := os.Getenv("MODUS_JWKS_ENDPOINTS")
-	if publicKeysJson == "" && jwksEndpointsJson == "" {
+	if publicPemKeysJson == "" && jwksEndpointsJson == "" {
 		return
 	}
 
-	authPublicKeys = make(map[string]any)
-
-	if publicKeysJson != "" {
-		var publicKeyStrings map[string]string
-		err := json.Unmarshal([]byte(publicKeysJson), &publicKeyStrings)
+	if publicPemKeysJson != "" {
+		keys, err := publicPemKeysJsonToKeys(publicPemKeysJson)
 		if err != nil {
 			if config.IsDevEnvironment() {
-				logger.Fatal(ctx).Err(err).Msg("Auth public keys deserializing error")
+				logger.Fatal(ctx).Err(err).Msg("Auth PEM public keys deserializing error")
 			}
-			logger.Error(ctx).Err(err).Msg("Auth public keys deserializing error")
+			logger.Error(ctx).Err(err).Msg("Auth PEM public keys deserializing error")
 			return
 		}
-		for key, value := range publicKeyStrings {
-			block, _ := pem.Decode([]byte(value))
-			if block == nil {
-				if config.IsDevEnvironment() {
-					logger.Fatal(ctx).Msg("Invalid PEM block for key: " + key)
-				}
-				logger.Error(ctx).Msg("Invalid PEM block for key: " + key)
-				return
-			}
-
-			pubKey, err := x509.ParsePKIXPublicKey(block.Bytes)
-			if err != nil {
-				if config.IsDevEnvironment() {
-					logger.Fatal(ctx).Err(err).Msg("JWT public key parsing error for key: " + key)
-				}
-				logger.Error(ctx).Err(err).Msg("JWT public key parsing error for key: " + key)
-				return
-			}
-			authPublicKeys[key] = pubKey
-		}
+		globalAuthKeys.setPemPublicKeys(keys)
 	}
 	if jwksEndpointsJson != "" {
-		var jwksEndpoints map[string]string
-		err := json.Unmarshal([]byte(jwksEndpointsJson), &jwksEndpoints)
+		keys, err := jwksEndpointsJsonToKeys(ctx, jwksEndpointsJson)
 		if err != nil {
 			if config.IsDevEnvironment() {
-				logger.Fatal(ctx).Err(err).Msg("JWKS endpoints deserializing error")
+				logger.Fatal(ctx).Err(err).Msg("Auth JWKS public keys deserializing error")
 			}
-			logger.Error(ctx).Err(err).Msg("JWKS endpoints deserializing error")
+			logger.Error(ctx).Err(err).Msg("Auth JWKS public keys deserializing error")
 			return
 		}
-		for key, value := range jwksEndpoints {
-			jwks, err := jwk.Fetch(ctx, value)
-			if err != nil {
-				if config.IsDevEnvironment() {
-					logger.Fatal(ctx).Err(err).Msg("JWKS fetching error for key: " + key)
-				}
-				logger.Error(ctx).Err(err).Msg("JWKS fetching error for key: " + key)
-				return
-			}
-
-			jwkKey, exists := jwks.Get(0)
-			if !exists {
-				if config.IsDevEnvironment() {
-					logger.Fatal(ctx).Msg("No keys found in JWKS for key: " + key)
-				}
-				logger.Error(ctx).Msg("No keys found in JWKS for key: " + key)
-				return
-			}
-
-			var rawKey interface{}
-			err = jwkKey.Raw(&rawKey)
-			if err != nil {
-				if config.IsDevEnvironment() {
-					logger.Fatal(ctx).Err(err).Msg("Failed to get raw key for key: " + key)
-				}
-				logger.Error(ctx).Err(err).Msg("Failed to get raw key for key: " + key)
-				return
-			}
-
-			// Marshal the raw key into DER-encoded PKIX format
-			derBytes, err := x509.MarshalPKIXPublicKey(rawKey)
-			if err != nil {
-				if config.IsDevEnvironment() {
-					logger.Fatal(ctx).Err(err).Msg("Failed to marshal raw key for key: " + key)
-				}
-				logger.Error(ctx).Err(err).Msg("Failed to marshal raw key for key: " + key)
-				return
-			}
-
-			pubKey, err := x509.ParsePKIXPublicKey(derBytes)
-			if err != nil {
-				if config.IsDevEnvironment() {
-					logger.Fatal(ctx).Err(err).Msg("JWT public key fetching error for key: " + key)
-				}
-				logger.Error(ctx).Err(err).Msg("JWT public key fetching error for key: " + key)
-				return
-			}
-			authPublicKeys[key] = pubKey
-		}
+		globalAuthKeys.setJwksPublicKeys(keys)
 	}
 }
 
@@ -149,7 +138,7 @@ func HandleJWT(next http.Handler) http.Handler {
 			}
 		}
 
-		if len(authPublicKeys) == 0 {
+		if len(globalAuthKeys.getPemPublicKeys()) == 0 && len(globalAuthKeys.getJwksPublicKeys()) == 0 {
 			if config.IsDevEnvironment() {
 				if tokenStr == "" {
 					next.ServeHTTP(w, r)
@@ -183,9 +172,9 @@ func HandleJWT(next http.Handler) http.Handler {
 		var err error
 		var found bool
 
-		for _, publicKey := range authPublicKeys {
+		for _, pemPublicKey := range globalAuthKeys.getPemPublicKeys() {
 			token, err = jwtParser.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
-				return publicKey, nil
+				return pemPublicKey, nil
 			})
 			if err == nil {
 				if utils.DebugModeEnabled() {
@@ -193,6 +182,20 @@ func HandleJWT(next http.Handler) http.Handler {
 				}
 				found = true
 				break
+			}
+		}
+		if !found {
+			for _, jwksPublicKey := range globalAuthKeys.getJwksPublicKeys() {
+				token, err = jwtParser.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
+					return jwksPublicKey, nil
+				})
+				if err == nil {
+					if utils.DebugModeEnabled() {
+						logger.Debug(ctx).Msg("JWT token parsed successfully")
+					}
+					found = true
+					break
+				}
 			}
 		}
 		if !found {
