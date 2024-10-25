@@ -41,9 +41,6 @@ var warningColor = color.New(color.FgYellow)
 
 func Start(ctx context.Context, local bool) {
 
-	// Initialize our middleware before starting the server.
-	middleware.Init(ctx)
-
 	if local {
 		// If we are running locally, only listen on localhost.
 		// This prevents getting nagged for firewall permissions each launch.
@@ -62,8 +59,14 @@ func Start(ctx context.Context, local bool) {
 
 func startHttpServer(ctx context.Context, addresses ...string) {
 
-	// Setup a server for each address.
+	// Get the main handler for the server.
+	// Note: This must be done first, because it registers for callback events.
 	mux := GetMainHandler()
+
+	// Initialize our middleware before starting the server.
+	middleware.Init(ctx)
+
+	// Setup a server for each address.
 	servers := make([]*http.Server, len(addresses))
 	for i, addr := range addresses {
 		servers[i] = &http.Server{Handler: mux, Addr: addr}
