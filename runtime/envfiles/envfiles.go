@@ -13,6 +13,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 
 	"github.com/hypermodeinc/modus/runtime/config"
 
@@ -20,9 +21,11 @@ import (
 	"github.com/rs/zerolog"
 )
 
+var mu sync.Mutex
 var envVarsUpdated = false
 var originalProcessEnvironmentVariables = os.Environ()
 
+// Allow the env files to use short or long names.
 func getSupportedEnvironmentNames() []string {
 	environment := config.GetEnvironmentName()
 	switch strings.ToLower(environment) {
@@ -40,6 +43,8 @@ func getSupportedEnvironmentNames() []string {
 }
 
 func LoadEnvFiles(log *zerolog.Logger) {
+	mu.Lock()
+	defer mu.Unlock()
 
 	// Restore the original environment variables if necessary
 	if envVarsUpdated {

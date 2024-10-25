@@ -16,6 +16,7 @@ import (
 	"github.com/hypermodeinc/modus/runtime/collections"
 	"github.com/hypermodeinc/modus/runtime/db"
 	"github.com/hypermodeinc/modus/runtime/dgraphclient"
+	"github.com/hypermodeinc/modus/runtime/envfiles"
 	"github.com/hypermodeinc/modus/runtime/graphql"
 	"github.com/hypermodeinc/modus/runtime/hostfunctions"
 	"github.com/hypermodeinc/modus/runtime/logger"
@@ -54,6 +55,7 @@ func Start() context.Context {
 	db.Initialize(ctx)
 	collections.Initialize(ctx)
 	manifestdata.MonitorManifestFile(ctx)
+	envfiles.MonitorEnvFiles(ctx)
 	pluginmanager.Initialize(ctx)
 	graphql.Initialize()
 
