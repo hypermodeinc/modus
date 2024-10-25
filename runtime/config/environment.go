@@ -11,11 +11,6 @@ package config
 
 import (
 	"os"
-	"path/filepath"
-	"strings"
-
-	"github.com/joho/godotenv"
-	"github.com/rs/zerolog"
 )
 
 /*
@@ -35,9 +30,6 @@ DESIGN NOTES:
 
 var environment string
 var namespace string
-
-var envVarsUpdated = false
-var originalProcessEnvironmentVariables = os.Environ()
 
 func GetEnvironmentName() string {
 	return environment
@@ -62,53 +54,4 @@ func readEnvironmentVariables() {
 func IsDevEnvironment() bool {
 	// support either name (but prefer "dev")
 	return environment == "dev" || environment == "development"
-}
-
-func getSupportedEnvironmentNames() []string {
-	switch strings.ToLower(environment) {
-	case "dev", "development":
-		return []string{"dev", "development"}
-	case "stage", "staging":
-		return []string{"stage", "staging"}
-	case "test", "testing":
-		return []string{"test", "testing"}
-	case "prod", "production":
-		return []string{"prod", "production"}
-	default:
-		return []string{environment}
-	}
-}
-
-func LoadEnvFiles(log *zerolog.Logger) {
-
-	// Restore the original environment variables if necessary
-	if envVarsUpdated {
-		os.Clearenv()
-		for _, envVar := range originalProcessEnvironmentVariables {
-			parts := strings.SplitN(envVar, "=", 2)
-			if len(parts) == 2 {
-				os.Setenv(parts[0], parts[1])
-			}
-		}
-	}
-
-	// Load environment variables from .env file(s)
-	envNames := getSupportedEnvironmentNames()
-	files := make([]string, 0, len(envNames)*2+2)
-	for _, envName := range envNames {
-		files = append(files, ".env."+envName+".local")
-		files = append(files, ".env."+envName)
-	}
-	files = append(files, ".env.local")
-	files = append(files, ".env")
-
-	for _, file := range files {
-		path := filepath.Join(AppPath, file)
-		if _, err := os.Stat(path); err == nil {
-			if err := godotenv.Load(path); err != nil {
-				log.Warn().Err(err).Msgf("Failed to load %s file.", file)
-			}
-			envVarsUpdated = true
-		}
-	}
 }
