@@ -42,20 +42,20 @@ func GetGraphQLSchema(ctx context.Context, md *metadata.Metadata) (*GraphQLSchem
 	inputTypeDefs, errors := transformTypes(md.Types, lti, true)
 	resultTypeDefs, errs := transformTypes(md.Types, lti, false)
 	errors = append(errors, errs...)
-	functions, errs := transformFunctions(md.FnExports, inputTypeDefs, resultTypeDefs, lti)
+	fields, errs := transformFunctions(md.FnExports, inputTypeDefs, resultTypeDefs, lti)
 	errors = append(errors, errs...)
 
 	if len(errors) > 0 {
 		return nil, fmt.Errorf("failed to generate schema: %+v", errors)
 	}
 
-	functions = filterFunctions(functions)
+	fields = filterFields(fields)
 	scalarTypes := extractCustomScalarTypes(inputTypeDefs, resultTypeDefs)
-	inputTypes := filterTypes(utils.MapValues(inputTypeDefs), functions, true)
-	resultTypes := filterTypes(utils.MapValues(resultTypeDefs), functions, false)
+	inputTypes := filterTypes(utils.MapValues(inputTypeDefs), fields, true)
+	resultTypes := filterTypes(utils.MapValues(resultTypeDefs), fields, false)
 
 	buf := bytes.Buffer{}
-	writeSchema(&buf, functions, scalarTypes, inputTypes, resultTypes)
+	writeSchema(&buf, fields, scalarTypes, inputTypes, resultTypes)
 
 	mapTypes := make([]string, 0, len(resultTypeDefs))
 	for _, t := range resultTypeDefs {
@@ -119,9 +119,9 @@ func transformTypes(types metadata.TypeMap, lti langsupport.LanguageTypeInfo, fo
 	return typeDefs, errors
 }
 
-type FunctionSignature struct {
+type FieldDefinition struct {
 	Name       string
-	Parameters []*ParameterSignature
+	Arguments  []*ArgumentDefinition
 	ReturnType string
 }
 
@@ -136,14 +136,14 @@ type NameTypePair struct {
 	Type string
 }
 
-type ParameterSignature struct {
+type ArgumentDefinition struct {
 	Name    string
 	Type    string
 	Default *any
 }
 
-func transformFunctions(functions metadata.FunctionMap, inputTypeDefs, resultTypeDefs map[string]*TypeDefinition, lti langsupport.LanguageTypeInfo) ([]*FunctionSignature, []*TransformError) {
-	output := make([]*FunctionSignature, len(functions))
+func transformFunctions(functions metadata.FunctionMap, inputTypeDefs, resultTypeDefs map[string]*TypeDefinition, lti langsupport.LanguageTypeInfo) ([]*FieldDefinition, []*TransformError) {
+	fields := make([]*FieldDefinition, len(functions))
 	errors := make([]*TransformError, 0)
 
 	i := 0
@@ -152,7 +152,7 @@ func transformFunctions(functions metadata.FunctionMap, inputTypeDefs, resultTyp
 	for _, name := range fnNames {
 		f := functions[name]
 
-		params, err := convertParameters(f.Parameters, lti, inputTypeDefs)
+		args, err := convertParameters(f.Parameters, lti, inputTypeDefs)
 		if err != nil {
 			errors = append(errors, &TransformError{f, err})
 			continue
@@ -164,23 +164,23 @@ func transformFunctions(functions metadata.FunctionMap, inputTypeDefs, resultTyp
 			continue
 		}
 
-		output[i] = &FunctionSignature{
+		fields[i] = &FieldDefinition{
 			Name:       f.Name,
-			Parameters: params,
+			Arguments:  args,
 			ReturnType: returnType,
 		}
 
 		i++
 	}
 
-	return output, errors
+	return fields, errors
 }
 
-func filterFunctions(functions []*FunctionSignature) []*FunctionSignature {
-	fnFilter := getFnFilter()
-	results := make([]*FunctionSignature, 0, len(functions))
-	for _, f := range functions {
-		if fnFilter(f) {
+func filterFields(fields []*FieldDefinition) []*FieldDefinition {
+	filter := getFieldFilter()
+	results := make([]*FieldDefinition, 0, len(fields))
+	for _, f := range fields {
+		if filter(f) {
 			results = append(results, f)
 		}
 	}
@@ -188,8 +188,8 @@ func filterFunctions(functions []*FunctionSignature) []*FunctionSignature {
 	return results
 }
 
-func filterTypes(types []*TypeDefinition, functions []*FunctionSignature, forInput bool) []*TypeDefinition {
-	// Filter out types that are not used by any function.
+func filterTypes(types []*TypeDefinition, fields []*FieldDefinition, forInput bool) []*TypeDefinition {
+	// Filter out types that are not used by any field.
 	// Also then recursively filter out types that are not used by any type.
 
 	// Make a map of all types
@@ -199,11 +199,11 @@ func filterTypes(types []*TypeDefinition, functions []*FunctionSignature, forInp
 		typeMap[name] = t
 	}
 
-	// Get all types used by functions, including subtypes
+	// Get all types used by fields, including subtypes
 	usedTypes := make(map[string]bool)
-	for _, f := range functions {
+	for _, f := range fields {
 		if forInput {
-			for _, p := range f.Parameters {
+			for _, p := range f.Arguments {
 				addUsedTypes(p.Type, typeMap, usedTypes)
 			}
 		} else {
@@ -263,13 +263,13 @@ func getBaseType(name string) string {
 	return name
 }
 
-func writeSchema(buf *bytes.Buffer, functions []*FunctionSignature, scalarTypes []string, inputTypeDefs, resultTypeDefs []*TypeDefinition) {
+func writeSchema(buf *bytes.Buffer, fields []*FieldDefinition, scalarTypes []string, inputTypeDefs, resultTypeDefs []*TypeDefinition) {
 
 	// write header
 	buf.WriteString("# Modus GraphQL Schema (auto-generated)\n\n")
 
 	// sort everything
-	slices.SortFunc(functions, func(a, b *FunctionSignature) int {
+	slices.SortFunc(fields, func(a, b *FieldDefinition) int {
 		return cmp.Compare(strings.ToLower(a.Name), strings.ToLower(b.Name))
 	})
 	slices.SortFunc(scalarTypes, func(a, b string) int {
@@ -282,14 +282,14 @@ func writeSchema(buf *bytes.Buffer, functions []*FunctionSignature, scalarTypes 
 		return cmp.Compare(strings.ToLower(a.Name), strings.ToLower(b.Name))
 	})
 
-	// write query functions
+	// write query object
 	buf.WriteString("type Query {\n")
-	for _, f := range functions {
+	for _, f := range fields {
 		buf.WriteString("  ")
 		buf.WriteString(f.Name)
-		if len(f.Parameters) > 0 {
+		if len(f.Arguments) > 0 {
 			buf.WriteByte('(')
-			for i, p := range f.Parameters {
+			for i, p := range f.Arguments {
 				if i > 0 {
 					buf.WriteString(", ")
 				}
@@ -358,12 +358,12 @@ func writeSchema(buf *bytes.Buffer, functions []*FunctionSignature, scalarTypes 
 	buf.WriteByte('\n')
 }
 
-func convertParameters(parameters []*metadata.Parameter, lti langsupport.LanguageTypeInfo, typeDefs map[string]*TypeDefinition) ([]*ParameterSignature, error) {
+func convertParameters(parameters []*metadata.Parameter, lti langsupport.LanguageTypeInfo, typeDefs map[string]*TypeDefinition) ([]*ArgumentDefinition, error) {
 	if len(parameters) == 0 {
 		return nil, nil
 	}
 
-	output := make([]*ParameterSignature, len(parameters))
+	args := make([]*ArgumentDefinition, len(parameters))
 	for i, p := range parameters {
 
 		t, err := convertType(p.Type, lti, typeDefs, false, true)
@@ -371,13 +371,13 @@ func convertParameters(parameters []*metadata.Parameter, lti langsupport.Languag
 			return nil, err
 		}
 
-		output[i] = &ParameterSignature{
+		args[i] = &ArgumentDefinition{
 			Name:    p.Name,
 			Type:    t,
 			Default: p.Default,
 		}
 	}
-	return output, nil
+	return args, nil
 }
 
 func convertResults(results []*metadata.Result, lti langsupport.LanguageTypeInfo, typeDefs map[string]*TypeDefinition) (string, error) {
