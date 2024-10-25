@@ -42,20 +42,23 @@ func GetGraphQLSchema(ctx context.Context, md *metadata.Metadata) (*GraphQLSchem
 	inputTypeDefs, errors := transformTypes(md.Types, lti, true)
 	resultTypeDefs, errs := transformTypes(md.Types, lti, false)
 	errors = append(errors, errs...)
-	fields, errs := transformFunctions(md.FnExports, inputTypeDefs, resultTypeDefs, lti)
+	queryFields, mutationFields, errs := transformFunctions(md.FnExports, inputTypeDefs, resultTypeDefs, lti)
 	errors = append(errors, errs...)
 
 	if len(errors) > 0 {
 		return nil, fmt.Errorf("failed to generate schema: %+v", errors)
 	}
 
-	fields = filterFields(fields)
+	queryFields = filterFields(queryFields)
+	mutationFields = filterFields(mutationFields)
+	allFields := append(queryFields, mutationFields...)
+
 	scalarTypes := extractCustomScalarTypes(inputTypeDefs, resultTypeDefs)
-	inputTypes := filterTypes(utils.MapValues(inputTypeDefs), fields, true)
-	resultTypes := filterTypes(utils.MapValues(resultTypeDefs), fields, false)
+	inputTypes := filterTypes(utils.MapValues(inputTypeDefs), allFields, true)
+	resultTypes := filterTypes(utils.MapValues(resultTypeDefs), allFields, false)
 
 	buf := bytes.Buffer{}
-	writeSchema(&buf, fields, scalarTypes, inputTypes, resultTypes)
+	writeSchema(&buf, queryFields, mutationFields, scalarTypes, inputTypes, resultTypes)
 
 	mapTypes := make([]string, 0, len(resultTypeDefs))
 	for _, t := range resultTypeDefs {
@@ -142,11 +145,11 @@ type ArgumentDefinition struct {
 	Default *any
 }
 
-func transformFunctions(functions metadata.FunctionMap, inputTypeDefs, resultTypeDefs map[string]*TypeDefinition, lti langsupport.LanguageTypeInfo) ([]*FieldDefinition, []*TransformError) {
-	fields := make([]*FieldDefinition, len(functions))
+func transformFunctions(functions metadata.FunctionMap, inputTypeDefs, resultTypeDefs map[string]*TypeDefinition, lti langsupport.LanguageTypeInfo) ([]*FieldDefinition, []*FieldDefinition, []*TransformError) {
+	queryFields := make([]*FieldDefinition, 0, len(functions))
+	mutationFields := make([]*FieldDefinition, 0, len(functions))
 	errors := make([]*TransformError, 0)
 
-	i := 0
 	fnNames := utils.MapKeys(functions)
 	sort.Strings(fnNames)
 	for _, name := range fnNames {
@@ -164,16 +167,20 @@ func transformFunctions(functions metadata.FunctionMap, inputTypeDefs, resultTyp
 			continue
 		}
 
-		fields[i] = &FieldDefinition{
-			Name:       f.Name,
+		field := &FieldDefinition{
+			Name:       getFieldName(f.Name),
 			Arguments:  args,
 			ReturnType: returnType,
 		}
 
-		i++
+		if isMutation(f.Name) {
+			mutationFields = append(mutationFields, field)
+		} else {
+			queryFields = append(queryFields, field)
+		}
 	}
 
-	return fields, errors
+	return queryFields, mutationFields, errors
 }
 
 func filterFields(fields []*FieldDefinition) []*FieldDefinition {
@@ -263,13 +270,16 @@ func getBaseType(name string) string {
 	return name
 }
 
-func writeSchema(buf *bytes.Buffer, fields []*FieldDefinition, scalarTypes []string, inputTypeDefs, resultTypeDefs []*TypeDefinition) {
+func writeSchema(buf *bytes.Buffer, queryFields []*FieldDefinition, mutationFields []*FieldDefinition, scalarTypes []string, inputTypeDefs, resultTypeDefs []*TypeDefinition) {
 
 	// write header
-	buf.WriteString("# Modus GraphQL Schema (auto-generated)\n\n")
+	buf.WriteString("# Modus GraphQL Schema (auto-generated)\n")
 
 	// sort everything
-	slices.SortFunc(fields, func(a, b *FieldDefinition) int {
+	slices.SortFunc(queryFields, func(a, b *FieldDefinition) int {
+		return cmp.Compare(strings.ToLower(a.Name), strings.ToLower(b.Name))
+	})
+	slices.SortFunc(mutationFields, func(a, b *FieldDefinition) int {
 		return cmp.Compare(strings.ToLower(a.Name), strings.ToLower(b.Name))
 	})
 	slices.SortFunc(scalarTypes, func(a, b string) int {
@@ -283,49 +293,38 @@ func writeSchema(buf *bytes.Buffer, fields []*FieldDefinition, scalarTypes []str
 	})
 
 	// write query object
-	buf.WriteString("type Query {\n")
-	for _, f := range fields {
-		buf.WriteString("  ")
-		buf.WriteString(f.Name)
-		if len(f.Arguments) > 0 {
-			buf.WriteByte('(')
-			for i, p := range f.Arguments {
-				if i > 0 {
-					buf.WriteString(", ")
-				}
-				buf.WriteString(p.Name)
-				buf.WriteString(": ")
-				buf.WriteString(p.Type)
-				if p.Default != nil {
-					val, err := utils.JsonSerialize(*p.Default)
-					if err == nil {
-						buf.WriteString(" = ")
-						buf.Write(val)
-					}
-				}
-			}
-			buf.WriteByte(')')
-		}
-		buf.WriteString(": ")
-		buf.WriteString(f.ReturnType)
+	if len(queryFields) > 0 {
 		buf.WriteByte('\n')
+		buf.WriteString("type Query {\n")
+		for _, field := range queryFields {
+			writeField(buf, field)
+		}
+		buf.WriteString("}\n")
 	}
-	buf.WriteByte('}')
+
+	// write mutation object
+	if len(mutationFields) > 0 {
+		buf.WriteByte('\n')
+		buf.WriteString("type Mutation {\n")
+		for _, field := range mutationFields {
+			writeField(buf, field)
+		}
+		buf.WriteString("}\n")
+	}
 
 	// write scalars
-	for i, scalar := range scalarTypes {
-		if i == 0 {
+	if len(scalarTypes) > 0 {
+		buf.WriteByte('\n')
+		for _, scalar := range scalarTypes {
+			buf.WriteString("scalar ")
+			buf.WriteString(scalar)
 			buf.WriteByte('\n')
 		}
-
-		buf.WriteByte('\n')
-		buf.WriteString("scalar ")
-		buf.WriteString(scalar)
 	}
 
 	// write input types
 	for _, t := range inputTypeDefs {
-		buf.WriteString("\n\n")
+		buf.WriteByte('\n')
 		buf.WriteString("input ")
 		buf.WriteString(t.Name)
 		buf.WriteString(" {\n")
@@ -336,12 +335,12 @@ func writeSchema(buf *bytes.Buffer, fields []*FieldDefinition, scalarTypes []str
 			buf.WriteString(f.Type)
 			buf.WriteByte('\n')
 		}
-		buf.WriteByte('}')
+		buf.WriteString("}\n")
 	}
 
 	// write result types
 	for _, t := range resultTypeDefs {
-		buf.WriteString("\n\n")
+		buf.WriteByte('\n')
 		buf.WriteString("type ")
 		buf.WriteString(t.Name)
 		buf.WriteString(" {\n")
@@ -352,9 +351,34 @@ func writeSchema(buf *bytes.Buffer, fields []*FieldDefinition, scalarTypes []str
 			buf.WriteString(f.Type)
 			buf.WriteByte('\n')
 		}
-		buf.WriteByte('}')
+		buf.WriteString("}\n")
 	}
+}
 
+func writeField(buf *bytes.Buffer, field *FieldDefinition) {
+	buf.WriteString("  ")
+	buf.WriteString(field.Name)
+	if len(field.Arguments) > 0 {
+		buf.WriteByte('(')
+		for i, p := range field.Arguments {
+			if i > 0 {
+				buf.WriteString(", ")
+			}
+			buf.WriteString(p.Name)
+			buf.WriteString(": ")
+			buf.WriteString(p.Type)
+			if p.Default != nil {
+				val, err := utils.JsonSerialize(*p.Default)
+				if err == nil {
+					buf.WriteString(" = ")
+					buf.Write(val)
+				}
+			}
+		}
+		buf.WriteByte(')')
+	}
+	buf.WriteString(": ")
+	buf.WriteString(field.ReturnType)
 	buf.WriteByte('\n')
 }
 

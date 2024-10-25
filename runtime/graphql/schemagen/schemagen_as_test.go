@@ -86,7 +86,7 @@ func Test_GetGraphQLSchema_AssemblyScript(t *testing.T) {
 	md.FnExports.AddFunction("getPerson").
 		WithResult("assembly/test/Person")
 
-	md.FnExports.AddFunction("getPeople").
+	md.FnExports.AddFunction("listPeople").
 		WithResult("~lib/array/Array<assembly/test/Person>")
 
 	md.FnExports.AddFunction("addPerson").
@@ -177,13 +177,11 @@ func Test_GetGraphQLSchema_AssemblyScript(t *testing.T) {
 # Modus GraphQL Schema (auto-generated)
 
 type Query {
-  add(a: Int!, b: Int!): Int!
-  addPerson(person: PersonInput!): Void
   currentTime: Timestamp!
   doNothing: Void
-  getPeople: [Person!]!
-  getPerson: Person!
-  getProductMap: [StringProductPair!]!
+  people: [Person!]!
+  person: Person!
+  productMap: [StringProductPair!]!
   sayHello(name: String!): String!
   testDefaultArrayParams(a: [Int!]!, b: [Int!]! = [], c: [Int!]! = [1,2,3], d: [Int!], e: [Int!] = null, f: [Int!] = [], g: [Int!] = [1,2,3]): Void
   testDefaultIntParams(a: Int!, b: Int! = 0, c: Int! = 1): Void
@@ -193,6 +191,11 @@ type Query {
   testObj3(obj: Obj3Input!): Void
   testObj4(obj: Obj4Input!): Void
   transform(items: [StringStringPairInput!]!): [StringStringPair!]!
+}
+
+type Mutation {
+  add(a: Int!, b: Int!): Int!
+  addPerson(person: PersonInput!): Void
 }
 
 scalar Timestamp

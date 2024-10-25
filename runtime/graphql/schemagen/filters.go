@@ -12,14 +12,18 @@ package schemagen
 import "github.com/hypermodeinc/modus/runtime/manifestdata"
 
 func getFieldFilter() func(*FieldDefinition) bool {
-	embedders := make(map[string]bool)
-	for _, collection := range manifestdata.GetManifest().Collections {
-		for _, searchMethod := range collection.SearchMethods {
-			embedders[searchMethod.Embedder] = true
-		}
-	}
-
+	embedders := getEmbedderFields()
 	return func(f *FieldDefinition) bool {
 		return !embedders[f.Name]
 	}
+}
+
+func getEmbedderFields() map[string]bool {
+	embedders := make(map[string]bool)
+	for _, collection := range manifestdata.GetManifest().Collections {
+		for _, searchMethod := range collection.SearchMethods {
+			embedders[getFieldName(searchMethod.Embedder)] = true
+		}
+	}
+	return embedders
 }

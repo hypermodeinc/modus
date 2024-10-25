@@ -85,7 +85,7 @@ func Test_GetGraphQLSchema_Go(t *testing.T) {
 	md.FnExports.AddFunction("getPerson").
 		WithResult("testdata.Person")
 
-	md.FnExports.AddFunction("getPeople").
+	md.FnExports.AddFunction("listPeople").
 		WithResult("[]testdata.Person")
 
 	md.FnExports.AddFunction("addPerson").
@@ -205,13 +205,11 @@ func Test_GetGraphQLSchema_Go(t *testing.T) {
 # Modus GraphQL Schema (auto-generated)
 
 type Query {
-  add(a: Int!, b: Int!): Int!
-  addPerson(person: PersonInput!): Void
   currentTime: Timestamp!
   doNothing: Void
-  getPeople: [Person!]
-  getPerson: Person!
-  getProductMap: [StringProductPair!]
+  people: [Person!]
+  person: Person!
+  productMap: [StringProductPair!]
   sayHello(name: String!): String!
   testDefaultArrayParams(a: [Int!], b: [Int!] = [], c: [Int!] = [1,2,3], d: [Int!], e: [Int!] = null, f: [Int!] = [], g: [Int!] = [1,2,3]): Void
   testDefaultIntParams(a: Int!, b: Int! = 0, c: Int! = 1): Void
@@ -224,6 +222,11 @@ type Query {
   testObj6: [Obj6!]
   testPointers(a: Int, b: [Int], c: [Int!], d: [PersonInput], e: [PersonInput!]): Person
   transform(items: [StringStringPairInput!]): [StringStringPair!]
+}
+
+type Mutation {
+  add(a: Int!, b: Int!): Int!
+  addPerson(person: PersonInput!): Void
 }
 
 scalar Timestamp
