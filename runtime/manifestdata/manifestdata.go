@@ -51,7 +51,7 @@ func MonitorManifestFile(ctx context.Context) {
 		return nil
 	}
 
-	sm := storage.NewStorageMonitor(".json")
+	sm := storage.NewStorageMonitor("*.json")
 	sm.Added = loadFile
 	sm.Modified = loadFile
 	sm.Removed = func(file storage.FileInfo) error {

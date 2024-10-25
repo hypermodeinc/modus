@@ -33,7 +33,7 @@ func monitorPlugins(ctx context.Context) {
 		return err
 	}
 
-	sm := storage.NewStorageMonitor(".wasm")
+	sm := storage.NewStorageMonitor("*.wasm")
 	sm.Added = loadPluginFile
 	sm.Modified = loadPluginFile
 	sm.Removed = func(fi storage.FileInfo) error {

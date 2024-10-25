@@ -13,8 +13,8 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path"
 	"path/filepath"
-	"strings"
 	"time"
 
 	"github.com/hypermodeinc/modus/runtime/config"
@@ -47,7 +47,7 @@ func (stg *localStorageProvider) initialize(ctx context.Context) {
 	}
 }
 
-func (stg *localStorageProvider) listFiles(ctx context.Context, extension string) ([]FileInfo, error) {
+func (stg *localStorageProvider) listFiles(ctx context.Context, patterns ...string) ([]FileInfo, error) {
 	entries, err := os.ReadDir(config.AppPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list files in storage directory: %w", err)
@@ -56,14 +56,27 @@ func (stg *localStorageProvider) listFiles(ctx context.Context, extension string
 	var files = make([]FileInfo, 0, len(entries))
 	for _, entry := range entries {
 
-		if entry.IsDir() || !strings.HasSuffix(entry.Name(), extension) {
+		if entry.IsDir() {
+			continue
+		}
+
+		filename := entry.Name()
+
+		matched := false
+		for _, pattern := range patterns {
+			if match, err := path.Match(pattern, filename); err == nil && match {
+				matched = true
+				break
+			}
+		}
+		if !matched {
 			continue
 		}
 
 		info, err := entry.Info()
 		if err == nil {
 			files = append(files, FileInfo{
-				Name:         entry.Name(),
+				Name:         filename,
 				LastModified: info.ModTime(),
 			})
 		}
