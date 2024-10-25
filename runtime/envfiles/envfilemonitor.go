@@ -11,8 +11,19 @@ package envfiles
 
 import (
 	"context"
+
+	"github.com/hypermodeinc/modus/runtime/logger"
+	"github.com/hypermodeinc/modus/runtime/storage"
 )
 
 func MonitorEnvFiles(ctx context.Context) {
-	// TODO: Implement this function
+	sm := storage.NewStorageMonitor(".env", ".env.*")
+	sm.Changed = func(errors []error) {
+		logger.Info(ctx).Msg("Env files changed. Updating environment variables.")
+		if len(errors) == 0 {
+			LoadEnvFiles(logger.Get(ctx))
+		}
+	}
+
+	sm.Start(ctx)
 }
