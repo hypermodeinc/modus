@@ -30,6 +30,7 @@ require (
 	github.com/getsentry/sentry-go v0.29.1
 	github.com/go-viper/mapstructure/v2 v2.2.1
 	github.com/goccy/go-json v0.10.3
+	github.com/gofrs/flock v0.12.1
 	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/google/renameio v1.0.1
 	github.com/google/uuid v1.6.0

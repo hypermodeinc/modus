@@ -10,6 +10,8 @@
 package app
 
 import (
+	"path"
+	"runtime"
 	"sync"
 	"time"
 )
@@ -30,4 +32,13 @@ func SetShuttingDown() {
 	mu.Lock()
 	defer mu.Unlock()
 	shuttingDown = true
+}
+
+func GetRootSourcePath() string {
+	_, filename, _, ok := runtime.Caller(0)
+	if !ok {
+		return ""
+	}
+
+	return path.Join(path.Dir(filename), "../") + "/"
 }

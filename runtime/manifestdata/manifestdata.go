@@ -51,11 +51,19 @@ func MonitorManifestFile(ctx context.Context) {
 		return nil
 	}
 
-	// NOTE: Removing the manifest file entirely is not currently supported.
-
-	sm := storage.NewStorageMonitor(".json")
+	sm := storage.NewStorageMonitor("*.json")
 	sm.Added = loadFile
 	sm.Modified = loadFile
+	sm.Removed = func(file storage.FileInfo) error {
+		if file.Name == manifestFileName {
+			logger.Warn(ctx).Str("filename", file.Name).Msg("Manifest file removed.")
+			if err := unloadManifest(ctx); err != nil {
+				logger.Err(ctx, err).Str("filename", file.Name).Msg("Failed to unload manifest file.")
+				return err
+			}
+		}
+		return nil
+	}
 	sm.Start(ctx)
 }
 
@@ -83,8 +91,10 @@ func loadManifest(ctx context.Context) error {
 	// Only update the Manifest global when we have successfully read the manifest.
 	SetManifest(m)
 
-	// Trigger the manifest loaded event.
-	err = triggerManifestLoaded(ctx)
+	return triggerManifestLoaded(ctx)
+}
 
-	return err
+func unloadManifest(ctx context.Context) error {
+	SetManifest(&manifest.Manifest{})
+	return triggerManifestLoaded(ctx)
 }

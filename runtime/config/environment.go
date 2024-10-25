@@ -35,6 +35,10 @@ func GetEnvironmentName() string {
 	return environment
 }
 
+func GetNamespace() string {
+	return namespace
+}
+
 func readEnvironmentVariables() {
 	environment = os.Getenv("MODUS_ENV")
 
@@ -50,8 +54,4 @@ func readEnvironmentVariables() {
 func IsDevEnvironment() bool {
 	// support either name (but prefer "dev")
 	return environment == "dev" || environment == "development"
-}
-
-func GetNamespace() string {
-	return namespace
 }
