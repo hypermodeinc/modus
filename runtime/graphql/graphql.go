@@ -59,8 +59,7 @@ func handleGraphQLRequest(w http.ResponseWriter, r *http.Request) {
 
 	// Read the incoming GraphQL request
 	var gqlRequest gql.Request
-	err := gql.UnmarshalHttpRequest(r, &gqlRequest)
-	if err != nil {
+	if err := gql.UnmarshalHttpRequest(r, &gqlRequest); err != nil {
 		// NOTE: we intentionally don't log this, to avoid a bad actor spamming the logs
 		// TODO: we should capture metrics here though
 		msg := "Failed to parse GraphQL request."
@@ -97,8 +96,7 @@ func handleGraphQLRequest(w http.ResponseWriter, r *http.Request) {
 
 	// Execute the GraphQL query
 	resultWriter := gql.NewEngineResultWriter()
-	err = engine.Execute(ctx, &gqlRequest, &resultWriter, options...)
-	if err != nil {
+	if err := engine.Execute(ctx, &gqlRequest, &resultWriter, options...); err != nil {
 
 		if report, ok := err.(operationreport.Report); ok {
 			if len(report.InternalErrors) > 0 {
@@ -110,8 +108,7 @@ func handleGraphQLRequest(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
-		requestErrors := graphqlerrors.RequestErrorsFromError(err)
-		if len(requestErrors) > 0 {
+		if requestErrors := graphqlerrors.RequestErrorsFromError(err); len(requestErrors) > 0 {
 			// NOTE: we intentionally don't log this, to avoid a bad actor spamming the logs
 			// TODO: we should capture metrics here though
 			utils.WriteJsonContentHeader(w)
@@ -124,17 +121,14 @@ func handleGraphQLRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := resultWriter.Bytes()
-	response, err = addOutputToResponse(response, output)
-	if err != nil {
+	if response, err := addOutputToResponse(resultWriter.Bytes(), output); err != nil {
 		msg := "Failed to add function output to response."
 		logger.Err(ctx, err).Msg(msg)
 		http.Error(w, fmt.Sprintf("%s\n%v", msg, err), http.StatusInternalServerError)
+	} else {
+		utils.WriteJsonContentHeader(w)
+		_, _ = w.Write(response)
 	}
-
-	// Return the response
-	utils.WriteJsonContentHeader(w)
-	_, _ = w.Write(response)
 }
 
 func addOutputToResponse(response []byte, output map[string]wasmhost.ExecutionInfo) ([]byte, error) {
