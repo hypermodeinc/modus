@@ -33,6 +33,12 @@ import (
 	"github.com/rs/cors"
 )
 
+var titleColor = color.New(color.FgHiGreen, color.Bold)
+var itemColor = color.New(color.FgHiBlue)
+var urlColor = color.New(color.FgHiCyan)
+var noticeColor = color.New(color.FgGreen, color.Italic)
+var warningColor = color.New(color.FgYellow)
+
 func Start(ctx context.Context, local bool) {
 	if local {
 		// If we are running locally, only listen on localhost.
@@ -168,20 +174,19 @@ func GetMainHandler(options ...func(map[string]http.Handler)) http.Handler {
 
 		mux.ReplaceRoutes(routes)
 
-		if len(endpoints) > 0 && config.IsDevEnvironment() {
+		if config.IsDevEnvironment() {
 			fmt.Fprintln(os.Stderr)
 
-			titleColor := color.New(color.FgHiGreen, color.Bold)
-			itemColor := color.New(color.FgHiBlue)
-			urlColor := color.New(color.FgHiCyan)
-			noticeColor := color.New(color.FgGreen, color.Italic)
-
-			if len(endpoints) == 1 {
+			switch len(endpoints) {
+			case 0:
+				warningColor.Fprintln(os.Stderr, "No local endpoints are configured.")
+				warningColor.Fprintln(os.Stderr, "Please add one or more endpoints to your modus.json file.")
+			case 1:
 				ep := endpoints[0]
 				titleColor.Fprintln(os.Stderr, "Your local endpoint is ready!")
 				itemColor.Fprintf(os.Stderr, "• %s (%s): ", ep.apiType, ep.name)
 				urlColor.Fprintln(os.Stderr, ep.url)
-			} else {
+			default:
 				titleColor.Fprintln(os.Stderr, "Your local endpoints are ready!")
 				for _, ep := range endpoints {
 					itemColor.Fprintf(os.Stderr, "• %s (%s): ", ep.apiType, ep.name)
