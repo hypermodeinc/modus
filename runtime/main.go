@@ -10,13 +10,10 @@
 package main
 
 import (
-	"path"
-	"runtime"
-
+	"github.com/hypermodeinc/modus/runtime/app"
 	"github.com/hypermodeinc/modus/runtime/config"
 	"github.com/hypermodeinc/modus/runtime/httpserver"
 	"github.com/hypermodeinc/modus/runtime/logger"
-	"github.com/hypermodeinc/modus/runtime/middleware"
 	"github.com/hypermodeinc/modus/runtime/services"
 	"github.com/hypermodeinc/modus/runtime/utils"
 )
@@ -36,8 +33,8 @@ func main() {
 	// Load environment variables from .env file(s)
 	config.LoadEnvFiles(log)
 
-	// Initialize Sentry
-	rootSourcePath := getRootSourcePath()
+	// Initialize Sentry (if enabled)
+	rootSourcePath := app.GetRootSourcePath()
 	utils.InitSentry(rootSourcePath)
 	defer utils.FlushSentryEvents()
 
@@ -45,22 +42,10 @@ func main() {
 	ctx := services.Start()
 	defer services.Stop(ctx)
 
-	// Retrieve auth private keys
-	middleware.Init(ctx)
-
 	// Set local mode in development
 	local := config.IsDevEnvironment()
 
 	// Start the HTTP server to listen for requests.
 	// Note, this function blocks, and handles shutdown gracefully.
 	httpserver.Start(ctx, local)
-}
-
-func getRootSourcePath() string {
-	_, filename, _, ok := runtime.Caller(0)
-	if !ok {
-		return ""
-	}
-
-	return path.Dir(filename) + "/"
 }

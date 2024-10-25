@@ -40,6 +40,10 @@ var noticeColor = color.New(color.FgGreen, color.Italic)
 var warningColor = color.New(color.FgYellow)
 
 func Start(ctx context.Context, local bool) {
+
+	// Initialize our middleware before starting the server.
+	middleware.Init(ctx)
+
 	if local {
 		// If we are running locally, only listen on localhost.
 		// This prevents getting nagged for firewall permissions each launch.
