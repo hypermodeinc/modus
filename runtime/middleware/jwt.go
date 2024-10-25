@@ -23,6 +23,7 @@ import (
 	"github.com/hypermodeinc/modus/runtime/utils"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/lestrrat-go/jwx/jwk"
 )
 
 type jwtClaimsKey string
@@ -33,38 +34,103 @@ var authPublicKeys map[string]any
 
 func Init(ctx context.Context) {
 	publicKeysJson := os.Getenv("MODUS_PEMS")
-	if publicKeysJson == "" {
+	jwksEndpointsJson := os.Getenv("MODUS_JWKS_ENDPOINTS")
+	if publicKeysJson == "" && jwksEndpointsJson == "" {
 		return
 	}
-	var publicKeyStrings map[string]string
-	err := json.Unmarshal([]byte(publicKeysJson), &publicKeyStrings)
-	if err != nil {
-		if config.IsDevEnvironment() {
-			logger.Fatal(ctx).Err(err).Msg("Auth public keys deserializing error")
-		}
-		logger.Error(ctx).Err(err).Msg("Auth public keys deserializing error")
-		return
-	}
-	authPublicKeys = make(map[string]any)
-	for key, value := range publicKeyStrings {
-		block, _ := pem.Decode([]byte(value))
-		if block == nil {
-			if config.IsDevEnvironment() {
-				logger.Fatal(ctx).Msg("Invalid PEM block for key: " + key)
-			}
-			logger.Error(ctx).Msg("Invalid PEM block for key: " + key)
-			return
-		}
 
-		pubKey, err := x509.ParsePKIXPublicKey(block.Bytes)
+	authPublicKeys = make(map[string]any)
+
+	if publicKeysJson != "" {
+		var publicKeyStrings map[string]string
+		err := json.Unmarshal([]byte(publicKeysJson), &publicKeyStrings)
 		if err != nil {
 			if config.IsDevEnvironment() {
-				logger.Fatal(ctx).Err(err).Msg("JWT public key parsing error for key: " + key)
+				logger.Fatal(ctx).Err(err).Msg("Auth public keys deserializing error")
 			}
-			logger.Error(ctx).Err(err).Msg("JWT public key parsing error for key: " + key)
+			logger.Error(ctx).Err(err).Msg("Auth public keys deserializing error")
 			return
 		}
-		authPublicKeys[key] = pubKey
+		for key, value := range publicKeyStrings {
+			block, _ := pem.Decode([]byte(value))
+			if block == nil {
+				if config.IsDevEnvironment() {
+					logger.Fatal(ctx).Msg("Invalid PEM block for key: " + key)
+				}
+				logger.Error(ctx).Msg("Invalid PEM block for key: " + key)
+				return
+			}
+
+			pubKey, err := x509.ParsePKIXPublicKey(block.Bytes)
+			if err != nil {
+				if config.IsDevEnvironment() {
+					logger.Fatal(ctx).Err(err).Msg("JWT public key parsing error for key: " + key)
+				}
+				logger.Error(ctx).Err(err).Msg("JWT public key parsing error for key: " + key)
+				return
+			}
+			authPublicKeys[key] = pubKey
+		}
+	}
+	if jwksEndpointsJson != "" {
+		var jwksEndpoints map[string]string
+		err := json.Unmarshal([]byte(jwksEndpointsJson), &jwksEndpoints)
+		if err != nil {
+			if config.IsDevEnvironment() {
+				logger.Fatal(ctx).Err(err).Msg("JWKS endpoints deserializing error")
+			}
+			logger.Error(ctx).Err(err).Msg("JWKS endpoints deserializing error")
+			return
+		}
+		for key, value := range jwksEndpoints {
+			jwks, err := jwk.Fetch(ctx, value)
+			if err != nil {
+				if config.IsDevEnvironment() {
+					logger.Fatal(ctx).Err(err).Msg("JWKS fetching error for key: " + key)
+				}
+				logger.Error(ctx).Err(err).Msg("JWKS fetching error for key: " + key)
+				return
+			}
+
+			jwkKey, exists := jwks.Get(0)
+			if !exists {
+				if config.IsDevEnvironment() {
+					logger.Fatal(ctx).Msg("No keys found in JWKS for key: " + key)
+				}
+				logger.Error(ctx).Msg("No keys found in JWKS for key: " + key)
+				return
+			}
+
+			var rawKey interface{}
+			err = jwkKey.Raw(&rawKey)
+			if err != nil {
+				if config.IsDevEnvironment() {
+					logger.Fatal(ctx).Err(err).Msg("Failed to get raw key for key: " + key)
+				}
+				logger.Error(ctx).Err(err).Msg("Failed to get raw key for key: " + key)
+				return
+			}
+
+			// Marshal the raw key into DER-encoded PKIX format
+			derBytes, err := x509.MarshalPKIXPublicKey(rawKey)
+			if err != nil {
+				if config.IsDevEnvironment() {
+					logger.Fatal(ctx).Err(err).Msg("Failed to marshal raw key for key: " + key)
+				}
+				logger.Error(ctx).Err(err).Msg("Failed to marshal raw key for key: " + key)
+				return
+			}
+
+			pubKey, err := x509.ParsePKIXPublicKey(derBytes)
+			if err != nil {
+				if config.IsDevEnvironment() {
+					logger.Fatal(ctx).Err(err).Msg("JWT public key fetching error for key: " + key)
+				}
+				logger.Error(ctx).Err(err).Msg("JWT public key fetching error for key: " + key)
+				return
+			}
+			authPublicKeys[key] = pubKey
+		}
 	}
 }
 
