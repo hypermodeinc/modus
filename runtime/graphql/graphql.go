@@ -14,7 +14,9 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 
+	"github.com/hypermodeinc/modus/runtime/config"
 	"github.com/hypermodeinc/modus/runtime/graphql/engine"
 	"github.com/hypermodeinc/modus/runtime/logger"
 	"github.com/hypermodeinc/modus/runtime/manifestdata"
@@ -59,12 +61,15 @@ func handleGraphQLRequest(w http.ResponseWriter, r *http.Request) {
 
 	// Read the incoming GraphQL request
 	var gqlRequest gql.Request
-	err := gql.UnmarshalHttpRequest(r, &gqlRequest)
-	if err != nil {
-		// NOTE: we intentionally don't log this, to avoid a bad actor spamming the logs
-		// TODO: we should capture metrics here though
+	if err := gql.UnmarshalHttpRequest(r, &gqlRequest); err != nil {
+		// TODO: we should capture metrics here
 		msg := "Failed to parse GraphQL request."
 		http.Error(w, msg, http.StatusBadRequest)
+
+		// NOTE: We only log these in dev, to avoid a bad actor spamming the logs in prod.
+		if config.IsDevEnvironment() {
+			logger.Warn(ctx).Err(err).Msg(msg)
+		}
 		return
 	}
 
@@ -97,8 +102,7 @@ func handleGraphQLRequest(w http.ResponseWriter, r *http.Request) {
 
 	// Execute the GraphQL query
 	resultWriter := gql.NewEngineResultWriter()
-	err = engine.Execute(ctx, &gqlRequest, &resultWriter, options...)
-	if err != nil {
+	if err := engine.Execute(ctx, &gqlRequest, &resultWriter, options...); err != nil {
 
 		if report, ok := err.(operationreport.Report); ok {
 			if len(report.InternalErrors) > 0 {
@@ -110,12 +114,18 @@ func handleGraphQLRequest(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
-		requestErrors := graphqlerrors.RequestErrorsFromError(err)
-		if len(requestErrors) > 0 {
-			// NOTE: we intentionally don't log this, to avoid a bad actor spamming the logs
-			// TODO: we should capture metrics here though
+		if requestErrors := graphqlerrors.RequestErrorsFromError(err); len(requestErrors) > 0 {
+			// TODO: we should capture metrics here
 			utils.WriteJsonContentHeader(w)
 			_, _ = requestErrors.WriteResponse(w)
+
+			// NOTE: We only log these in dev, to avoid a bad actor spamming the logs in prod.
+			if config.IsDevEnvironment() {
+				// cleanup empty arrays from error message before logging
+				errMsg := strings.Replace(err.Error(), ", locations: []", "", 1)
+				errMsg = strings.Replace(errMsg, ", path: []", "", 1)
+				logger.Warn(ctx).Str("error", errMsg).Msg("Failed to execute GraphQL query.")
+			}
 		} else {
 			msg := "Failed to execute GraphQL query."
 			logger.Err(ctx, err).Msg(msg)
@@ -124,17 +134,14 @@ func handleGraphQLRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := resultWriter.Bytes()
-	response, err = addOutputToResponse(response, output)
-	if err != nil {
+	if response, err := addOutputToResponse(resultWriter.Bytes(), output); err != nil {
 		msg := "Failed to add function output to response."
 		logger.Err(ctx, err).Msg(msg)
 		http.Error(w, fmt.Sprintf("%s\n%v", msg, err), http.StatusInternalServerError)
+	} else {
+		utils.WriteJsonContentHeader(w)
+		_, _ = w.Write(response)
 	}
-
-	// Return the response
-	utils.WriteJsonContentHeader(w)
-	_, _ = w.Write(response)
 }
 
 func addOutputToResponse(response []byte, output map[string]wasmhost.ExecutionInfo) ([]byte, error) {

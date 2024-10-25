@@ -58,6 +58,7 @@ In previous releases, the name "Hypermode" was used for all three._
 - Improve help messages, add `modus info` and show SDK version in `modus new` [#506](https://github.com/hypermodeinc/modus/pull/506)
 - Fix runtime shutdown issues with `modus dev` [#508](https://github.com/hypermodeinc/modus/pull/508)
 - Monitored manifest and env files for changes [#509](https://github.com/hypermodeinc/modus/pull/509)
+- Log bad GraphQL requests in dev [#510](https://github.com/hypermodeinc/modus/pull/510)
 
 ## 2024-10-02 - Version 0.12.7
 
