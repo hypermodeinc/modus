@@ -10,9 +10,7 @@
 package main
 
 import (
-	"os"
 	"path"
-	"path/filepath"
 	"runtime"
 
 	"github.com/hypermodeinc/modus/runtime/config"
@@ -21,8 +19,6 @@ import (
 	"github.com/hypermodeinc/modus/runtime/middleware"
 	"github.com/hypermodeinc/modus/runtime/services"
 	"github.com/hypermodeinc/modus/runtime/utils"
-	"github.com/joho/godotenv"
-	"github.com/rs/zerolog"
 )
 
 func main() {
@@ -38,7 +34,7 @@ func main() {
 		Msg("Starting Modus Runtime.")
 
 	// Load environment variables from .env file(s)
-	loadEnvFiles(log)
+	config.LoadEnvFiles(log)
 
 	// Initialize Sentry
 	rootSourcePath := getRootSourcePath()
@@ -58,26 +54,6 @@ func main() {
 	// Start the HTTP server to listen for requests.
 	// Note, this function blocks, and handles shutdown gracefully.
 	httpserver.Start(ctx, local)
-}
-
-func loadEnvFiles(log *zerolog.Logger) {
-	envName := config.GetEnvironmentName()
-
-	files := []string{
-		".env." + envName + ".local",
-		".env." + envName,
-		".env.local",
-		".env",
-	}
-
-	for _, file := range files {
-		path := filepath.Join(config.AppPath, file)
-		if _, err := os.Stat(path); err == nil {
-			if err := godotenv.Load(path); err != nil {
-				log.Warn().Err(err).Msgf("Failed to load %s file.", file)
-			}
-		}
-	}
 }
 
 func getRootSourcePath() string {
