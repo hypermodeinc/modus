@@ -57,6 +57,7 @@ In previous releases, the name "Hypermode" was used for all three._
 - Improve file watching and fix Windows issues [#505](https://github.com/hypermodeinc/modus/pull/505)
 - Improve help messages, add `modus info` and show SDK version in `modus new` [#506](https://github.com/hypermodeinc/modus/pull/506)
 - Fix runtime shutdown issues with `modus dev` [#508](https://github.com/hypermodeinc/modus/pull/508)
+- Monitored manifest and env files for changes [#509](https://github.com/hypermodeinc/modus/pull/509)
 
 ## 2024-10-02 - Version 0.12.7
 
