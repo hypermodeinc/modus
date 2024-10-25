@@ -55,6 +55,7 @@ func LoadEnvFiles(log *zerolog.Logger) {
 				os.Setenv(parts[0], parts[1])
 			}
 		}
+		envVarsUpdated = false
 	}
 
 	// Load environment variables from .env file(s)
