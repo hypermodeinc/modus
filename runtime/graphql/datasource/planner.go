@@ -71,7 +71,7 @@ func (p *HypDSPlanner) DownstreamResponseFieldAlias(downstreamFieldRef int) (ali
 
 func (p *HypDSPlanner) DataSourcePlanningBehavior() plan.DataSourcePlanningBehavior {
 	return plan.DataSourcePlanningBehavior{
-		// This needs to be true, so we can distinguish results for multiple function calls in the same query.
+		// This needs to be true, so we can distinguish results for multiple function calls in the same operation.
 		// Example:
 		// query SayHello {
 		//     a: sayHello(name: "Sam")
@@ -101,12 +101,12 @@ func (p *HypDSPlanner) EnterDocument(operation, definition *ast.Document) {
 
 func (p *HypDSPlanner) EnterField(ref int) {
 
-	// Capture information about every field in the query.
+	// Capture information about every field in the operation.
 	f := p.captureField(ref)
 	p.fields[ref] = *f
 
-	// If the field is enclosed by a root node, then it represents the function we want to call.
-	if p.enclosingTypeIsRootNode() {
+	// Capture only the fields that represent function calls.
+	if p.currentNodeIsFunctionCall() {
 
 		// Save the field for the function.
 		p.template.function = f
@@ -126,7 +126,7 @@ func (p *HypDSPlanner) LeaveDocument(operation, definition *ast.Document) {
 }
 
 func (p *HypDSPlanner) stitchFields(f *fieldInfo) {
-	if len(f.fieldRefs) == 0 {
+	if f == nil || len(f.fieldRefs) == 0 {
 		return
 	}
 
@@ -138,14 +138,21 @@ func (p *HypDSPlanner) stitchFields(f *fieldInfo) {
 	}
 }
 
-func (p *HypDSPlanner) enclosingTypeIsRootNode() bool {
-	enclosingTypeDef := p.visitor.Walker.EnclosingTypeDefinition
-	for _, node := range p.visitor.Operation.RootNodes {
-		if node.Ref == enclosingTypeDef.Ref {
-			return true
-		}
+func (p *HypDSPlanner) currentNodeIsFunctionCall() bool {
+	if p.visitor.Walker.CurrentKind != ast.NodeKindField {
+		return false
 	}
-	return false
+
+	enclosingTypeDef := p.visitor.Walker.EnclosingTypeDefinition
+	if enclosingTypeDef.Kind != ast.NodeKindObjectTypeDefinition {
+		return false
+	}
+
+	// TODO: This works, but it's a hack. We should find a better way to determine if the field is a function call.
+	// The previous approach of root node testing worked for queries, but not for mutations.
+	// The enclosing type name should not be relevant.
+	enclosingTypeName := p.visitor.Definition.ObjectTypeDefinitionNameString(enclosingTypeDef.Ref)
+	return enclosingTypeName == "Query" || enclosingTypeName == "Mutation"
 }
 
 func (p *HypDSPlanner) captureField(ref int) *fieldInfo {
