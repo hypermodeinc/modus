@@ -26,6 +26,9 @@ import { isOnline, withSpinner } from "../../util/index.js";
 import { readHypermodeSettings } from "../../util/hypermode.js";
 import BuildCommand from "../build/index.js";
 
+const MANIFEST_FILE = "modus.json";
+const ENV_FILES = [".env", ".env.local", ".env.development", ".env.dev", ".env.development.local", ".env.dev.local"];
+
 export default class DevCommand extends Command {
   static args = {
     path: Args.directory({
@@ -56,7 +59,7 @@ export default class DevCommand extends Command {
     }),
     "no-build": Flags.boolean({
       aliases: ["nobuild"],
-      description: "Don't build the app before running (implies --no-watch)",
+      description: "Don't build the app before running (or when watching for changes)",
     }),
     "no-watch": Flags.boolean({
       aliases: ["nowatch"],
@@ -76,8 +79,8 @@ export default class DevCommand extends Command {
     const { args, flags } = await this.parse(DevCommand);
 
     const appPath = path.resolve(args.path);
-    if (!(await fs.exists(path.join(appPath, "modus.json")))) {
-      this.log(chalk.red("A modus.json file was not found at " + appPath));
+    if (!(await fs.exists(path.join(appPath, MANIFEST_FILE)))) {
+      this.log(chalk.red(`A ${MANIFEST_FILE} file was not found at ${appPath}`));
       this.log(chalk.red("Please either execute the modus command from the app directory, or specify the path to the app you want to run."));
       this.exit(1);
     }
@@ -152,10 +155,15 @@ export default class DevCommand extends Command {
     const ext = os.platform() === "win32" ? ".exe" : "";
     const runtimePath = path.join(vi.getRuntimePath(runtimeVersion), "modus_runtime" + ext);
 
-    // Build the app on first run
+    // Build the app on first run (this includes copying the manifest file)
     if (!flags["no-build"]) {
       await BuildCommand.run([appPath, "--no-logo"]);
     }
+
+    const appBuildPath = path.join(appPath, "build");
+
+    // Copy env files to the build directory
+    await copyEnvFiles(appPath, appBuildPath);
 
     // Read Hypermode settings if they exist, so they can be forwarded to the runtime
     const hypSettings = await readHypermodeSettings();
@@ -169,7 +177,7 @@ export default class DevCommand extends Command {
     };
 
     // Spawn the runtime child process
-    const child = spawn(runtimePath, ["-appPath", path.join(appPath, "build"), "-refresh=1s"], {
+    const child = spawn(runtimePath, ["-appPath", appBuildPath, "-refresh=1s"], {
       stdio: ["inherit", "inherit", "pipe"],
       env: env,
     });
@@ -201,18 +209,74 @@ export default class DevCommand extends Command {
     });
 
     // Watch for changes in the app directory and rebuild the app when changes are detected
-    if (!flags["no-watch"] && !flags["no-build"]) {
+    if (!flags["no-watch"]) {
+      this.watchForEnvFileChanges(appPath, child.stderr);
       this.watchForManifestChanges(appPath, child.stderr);
-      this.watchForAppCodeChanges(appPath, sdk, child.stderr, flags.delay);
+
+      if (!flags["no-build"]) {
+        this.watchForAppCodeChanges(appPath, sdk, child.stderr, flags.delay);
+      }
     }
   }
 
-  private watchForManifestChanges(appPath: string, runtimeOutput: Readable) {
-    // whenever the modus.json file changes, copy it to the build directory.
-    // the runtime will automatically reload the manifest when it detects a change to the copy in the build folder.
+  private watchForEnvFileChanges(appPath: string, runtimeOutput: Readable) {
+    // Whenever any of the env files change, copy to the build directory.
+    // The runtime will automatically reload them when it detects a change to the copies in the build folder.
 
-    const sourcePath = path.join(appPath, "modus.json");
-    const outputPath = path.join(appPath, "build", "modus.json");
+    const sourcePaths = ENV_FILES.map((file) => path.join(appPath, file));
+
+    const onAddOrChange = async (sourcePath: string) => {
+      const filename = path.basename(sourcePath);
+      const outputPath = path.join(appPath, "build", filename);
+      try {
+        runtimeOutput.pause();
+        this.log();
+        this.log(chalk.magentaBright(`Detected change in ${filename} file. Applying...`));
+        await fs.copyFile(sourcePath, outputPath);
+      } catch (e) {
+        this.log(chalk.red(`Failed to copy ${filename} to build directory.`), e);
+      } finally {
+        this.log();
+        runtimeOutput.resume();
+      }
+    };
+
+    chokidar
+      .watch(appPath, {
+        ignored: (filePath) => {
+          if (filePath === appPath) {
+            return false;
+          }
+          return !ENV_FILES.includes(path.basename(filePath));
+        },
+        ignoreInitial: true,
+        persistent: true,
+      })
+      .on("add", onAddOrChange)
+      .on("change", onAddOrChange)
+      .on("unlink", async (sourcePath) => {
+        const filename = path.basename(sourcePath);
+        const outputPath = path.join(appPath, "build", filename);
+        try {
+          runtimeOutput.pause();
+          this.log();
+          this.log(chalk.magentaBright(`Detected ${filename} deleted. Applying...`));
+          await fs.unlink(outputPath);
+        } catch (e) {
+          this.log(chalk.red(`Failed to delete ${filename} from build directory.`), e);
+        } finally {
+          this.log();
+          runtimeOutput.resume();
+        }
+      });
+  }
+
+  private watchForManifestChanges(appPath: string, runtimeOutput: Readable) {
+    // Whenever the manifest file changes, copy it to the build directory.
+    // The runtime will automatically reload the manifest when it detects a change to the copy in the build folder.
+
+    const sourcePath = path.join(appPath, MANIFEST_FILE);
+    const outputPath = path.join(appPath, "build", MANIFEST_FILE);
 
     const onAddOrChange = async () => {
       try {
@@ -221,7 +285,7 @@ export default class DevCommand extends Command {
         this.log(chalk.magentaBright("Detected manifest change. Applying..."));
         await fs.copyFile(sourcePath, outputPath);
       } catch (e) {
-        this.log(chalk.red("Failed to copy modus.json to build directory."), e);
+        this.log(chalk.red(`Failed to copy ${MANIFEST_FILE} to build directory.`), e);
       } finally {
         this.log();
         runtimeOutput.resume();
@@ -236,14 +300,13 @@ export default class DevCommand extends Command {
       .on("add", onAddOrChange)
       .on("change", onAddOrChange)
       .on("unlink", async () => {
-        this.log();
         try {
           runtimeOutput.pause();
           this.log();
           this.log(chalk.magentaBright("Detected manifest deleted. Applying..."));
           await fs.unlink(outputPath);
         } catch (e) {
-          this.log(chalk.red("Failed to delete modus.json from build directory."), e);
+          this.log(chalk.red(`Failed to delete ${MANIFEST_FILE} from build directory.`), e);
         } finally {
           this.log();
           runtimeOutput.resume();
@@ -336,4 +399,16 @@ function getGlobsToWatch(sdk: SDK) {
       throw new Error(`Unsupported SDK: ${sdk}`);
   }
   return { included, excluded };
+}
+
+async function copyEnvFiles(appPath: string, buildPath: string): Promise<void> {
+  for (const file of ENV_FILES) {
+    const src = path.join(appPath, file);
+    const dest = path.join(buildPath, file);
+    if (await fs.exists(src)) {
+      await fs.copyFile(src, dest);
+    } else if (await fs.exists(dest)) {
+      await fs.unlink(dest);
+    }
+  }
 }
