@@ -17,6 +17,7 @@ import (
 	"context"
 	"strings"
 
+	"github.com/fatih/color"
 	"github.com/hypermodeinc/modus/lib/metadata"
 	"github.com/hypermodeinc/modus/runtime/config"
 	"github.com/hypermodeinc/modus/runtime/graphql/datasource"
@@ -83,7 +84,7 @@ func generateSchema(ctx context.Context, md *metadata.Metadata) (*gql.Schema, *d
 		if config.UseJsonLogging {
 			logger.Debug(ctx).Str("schema", generated.Schema).Msg("Generated schema")
 		} else {
-			fmt.Fprintf(os.Stderr, "\n%s\n", generated.Schema)
+			fmt.Fprintf(os.Stderr, "\n%s\n", color.BlueString(generated.Schema))
 		}
 	}
 

@@ -8,6 +8,7 @@
       "mode": "auto",
       "program": "${workspaceFolder}/runtime",
       "env": {
+        "FORCE_COLOR": "1",
         "MODUS_ENV": "dev",
         "MODUS_DEBUG": "true",
         "MODUS_DB": "postgresql://postgres:postgres@localhost:5433/my-runtime-db?sslmode=disable"
@@ -25,6 +26,7 @@
       "mode": "auto",
       "program": "${workspaceFolder}/runtime",
       "env": {
+        "FORCE_COLOR": "1",
         "MODUS_ENV": "dev",
         "MODUS_DEBUG": "true",
         "MODUS_DB": "postgresql://postgres:postgres@localhost:5433/my-runtime-db?sslmode=disable"
@@ -39,6 +41,7 @@
       "preLaunchTask": "go: generate code",
       "program": "${workspaceFolder}/runtime",
       "env": {
+        "FORCE_COLOR": "1",
         "MODUS_ENV": "dev",
         "MODUS_DEBUG": "true",
         "AWS_REGION": "${input:awsRegion}",
@@ -58,7 +61,11 @@
       "type": "node-terminal",
       "request": "launch",
       "command": "npm install --prefix ${workspaceFolder}/sdk/assemblyscript/src && npm install && npm run build",
-      "cwd": "${workspaceFolder}/sdk/assemblyscript/examples/${input:exampleApp}"
+      "cwd": "${workspaceFolder}/sdk/assemblyscript/examples/${input:exampleApp}",
+      "env": {
+        "FORCE_COLOR": "1",
+        "MODUS_DEBUG": "true"
+      }
     },
     {
       "name": "Debug Build Example Go App",
@@ -68,6 +75,7 @@
       "program": "${workspaceFolder}/sdk/go/tools/modus-go-build",
       "args": ["${workspaceFolder}/sdk/go/examples/${input:exampleApp}"],
       "env": {
+        "FORCE_COLOR": "1",
         "MODUS_DEBUG": "true"
       }
     },
@@ -76,7 +84,10 @@
       "type": "node",
       "request": "launch",
       "program": "${workspaceFolder}/cli/bin/modus.js",
-      "args": []
+      "env": {
+        "FORCE_COLOR": "1",
+        "MODUS_DEBUG": "true"
+      }
     }
   ],
   "inputs": [
