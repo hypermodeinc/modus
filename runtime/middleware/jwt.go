@@ -31,65 +31,6 @@ type jwtClaimsKey string
 
 const jwtClaims jwtClaimsKey = "claims"
 
-func publicPemKeysJsonToKeys(publicPemKeysJson string) (map[string]any, error) {
-	var publicKeyStrings map[string]string
-	if err := json.Unmarshal([]byte(publicPemKeysJson), &publicKeyStrings); err != nil {
-		return nil, err
-	}
-	keys := make(map[string]any)
-	for key, value := range publicKeyStrings {
-		block, _ := pem.Decode([]byte(value))
-		if block == nil {
-			return nil, errors.New("Invalid PEM block for key: " + key)
-		}
-
-		pubKey, err := x509.ParsePKIXPublicKey(block.Bytes)
-		if err != nil {
-			return nil, err
-		}
-		keys[key] = pubKey
-	}
-	return keys, nil
-}
-
-func jwksEndpointsJsonToKeys(ctx context.Context, jwksEndpointsJson string) (map[string]any, error) {
-	var jwksEndpoints map[string]string
-	if err := json.Unmarshal([]byte(jwksEndpointsJson), &jwksEndpoints); err != nil {
-		return nil, err
-	}
-	keys := make(map[string]any)
-	for key, value := range jwksEndpoints {
-		jwks, err := jwk.Fetch(ctx, value)
-		if err != nil {
-			return nil, err
-		}
-
-		jwkKey, exists := jwks.Get(0)
-		if !exists {
-			return nil, errors.New("No keys found in JWKS for key: " + key)
-		}
-
-		var rawKey any
-		err = jwkKey.Raw(&rawKey)
-		if err != nil {
-			return nil, err
-		}
-
-		// Marshal the raw key into DER-encoded PKIX format
-		derBytes, err := x509.MarshalPKIXPublicKey(rawKey)
-		if err != nil {
-			return nil, err
-		}
-
-		pubKey, err := x509.ParsePKIXPublicKey(derBytes)
-		if err != nil {
-			return nil, err
-		}
-		keys[key] = pubKey
-	}
-	return keys, nil
-}
-
 func Init(ctx context.Context) {
 	globalAuthKeys = newAuthKeys()
 	go globalAuthKeys.worker(ctx)
@@ -121,6 +62,11 @@ func Init(ctx context.Context) {
 		}
 		globalAuthKeys.setJwksPublicKeys(keys)
 	}
+}
+
+func Shutdown() {
+	close(globalAuthKeys.quit)
+	<-globalAuthKeys.done
 }
 
 func HandleJWT(next http.Handler) http.Handler {
@@ -224,4 +170,63 @@ func GetJWTClaims(ctx context.Context) string {
 		return claims
 	}
 	return ""
+}
+
+func publicPemKeysJsonToKeys(publicPemKeysJson string) (map[string]any, error) {
+	var publicKeyStrings map[string]string
+	if err := json.Unmarshal([]byte(publicPemKeysJson), &publicKeyStrings); err != nil {
+		return nil, err
+	}
+	keys := make(map[string]any)
+	for key, value := range publicKeyStrings {
+		block, _ := pem.Decode([]byte(value))
+		if block == nil {
+			return nil, errors.New("Invalid PEM block for key: " + key)
+		}
+
+		pubKey, err := x509.ParsePKIXPublicKey(block.Bytes)
+		if err != nil {
+			return nil, err
+		}
+		keys[key] = pubKey
+	}
+	return keys, nil
+}
+
+func jwksEndpointsJsonToKeys(ctx context.Context, jwksEndpointsJson string) (map[string]any, error) {
+	var jwksEndpoints map[string]string
+	if err := json.Unmarshal([]byte(jwksEndpointsJson), &jwksEndpoints); err != nil {
+		return nil, err
+	}
+	keys := make(map[string]any)
+	for key, value := range jwksEndpoints {
+		jwks, err := jwk.Fetch(ctx, value)
+		if err != nil {
+			return nil, err
+		}
+
+		jwkKey, exists := jwks.Get(0)
+		if !exists {
+			return nil, errors.New("No keys found in JWKS for key: " + key)
+		}
+
+		var rawKey any
+		err = jwkKey.Raw(&rawKey)
+		if err != nil {
+			return nil, err
+		}
+
+		// Marshal the raw key into DER-encoded PKIX format
+		derBytes, err := x509.MarshalPKIXPublicKey(rawKey)
+		if err != nil {
+			return nil, err
+		}
+
+		pubKey, err := x509.ParsePKIXPublicKey(derBytes)
+		if err != nil {
+			return nil, err
+		}
+		keys[key] = pubKey
+	}
+	return keys, nil
 }

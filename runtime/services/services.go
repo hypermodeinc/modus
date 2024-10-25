@@ -21,6 +21,7 @@ import (
 	"github.com/hypermodeinc/modus/runtime/hostfunctions"
 	"github.com/hypermodeinc/modus/runtime/logger"
 	"github.com/hypermodeinc/modus/runtime/manifestdata"
+	"github.com/hypermodeinc/modus/runtime/middleware"
 	"github.com/hypermodeinc/modus/runtime/pluginmanager"
 	"github.com/hypermodeinc/modus/runtime/secrets"
 	"github.com/hypermodeinc/modus/runtime/sqlclient"
@@ -74,6 +75,7 @@ func Stop(ctx context.Context) {
 	// Unlike start, these should each block until they are fully stopped.
 
 	collections.Shutdown(ctx)
+	middleware.Shutdown()
 	sqlclient.ShutdownPGPools()
 	dgraphclient.ShutdownConns()
 	logger.Close()
