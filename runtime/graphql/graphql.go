@@ -100,14 +100,14 @@ func handleGraphQLRequest(w http.ResponseWriter, r *http.Request) {
 		options = append(options, eng.WithRequestTraceOptions(traceOpts))
 	}
 
-	// Execute the GraphQL query
+	// Execute the GraphQL operation
 	resultWriter := gql.NewEngineResultWriter()
 	if err := engine.Execute(ctx, &gqlRequest, &resultWriter, options...); err != nil {
 
 		if report, ok := err.(operationreport.Report); ok {
 			if len(report.InternalErrors) > 0 {
 				// Log internal errors, but don't return them to the client
-				msg := "Failed to execute GraphQL query."
+				msg := "Failed to execute GraphQL operation."
 				logger.Err(ctx, err).Msg(msg)
 				http.Error(w, msg, http.StatusInternalServerError)
 				return
@@ -124,10 +124,10 @@ func handleGraphQLRequest(w http.ResponseWriter, r *http.Request) {
 				// cleanup empty arrays from error message before logging
 				errMsg := strings.Replace(err.Error(), ", locations: []", "", 1)
 				errMsg = strings.Replace(errMsg, ", path: []", "", 1)
-				logger.Warn(ctx).Str("error", errMsg).Msg("Failed to execute GraphQL query.")
+				logger.Warn(ctx).Str("error", errMsg).Msg("Failed to execute GraphQL operation.")
 			}
 		} else {
-			msg := "Failed to execute GraphQL query."
+			msg := "Failed to execute GraphQL operation."
 			logger.Err(ctx, err).Msg(msg)
 			http.Error(w, fmt.Sprintf("%s\n%v", msg, err), http.StatusInternalServerError)
 		}
