@@ -1,6 +1,6 @@
 # Change Log
 
-## UNRELEASED (work in progress)
+## 2024-10-25 - Version 0.13.0
 
 _NOTE: This is the first fully open-source release, using the name "Modus" for the framework.
 "Hypermode" still refers to the company and the commercial hosting platform - but not the framework.
