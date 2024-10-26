@@ -1,13 +1,22 @@
 <!-- markdownlint-disable first-line-heading -->
-[![chat](https://img.shields.io/discord/1267579648657850441)](https://discord.gg/NJQ4bJpffF)
+<div align="center">
 
-# Modus
+  [![GitHub License](https://img.shields.io/github/license/hypermodeinc/modus)](https://github.com/hypermodeinc/modus?tab=Apache-2.0-1-ov-file#readme)
+  [![chat](https://img.shields.io/discord/1267579648657850441)](https://discord.gg/NJQ4bJpffF)
+  [![GitHub Repo stars](https://img.shields.io/github/stars/hypermodeinc/modus)](https://github.com/hypermodeinc/modus/stargazers)
 
-Modus is an open-source, serverless framework for building intelligent functions and APIs, powered by WebAssembly.
+  [![GitHub commit activity](https://img.shields.io/github/commit-activity/m/hypermodeinc/modus)](https://github.com/hypermodeinc/modus/commits/main/)
+  [![GitHub commits since latest release](https://img.shields.io/github/commits-since/hypermodeinc/modus/latest)](https://github.com/hypermodeinc/modus/commits/main/)
+  
+  [![modus](https://github.com/user-attachments/assets/a0652fa6-6836-49f6-9c8c-c007cafab000)](https://github.com/hypermodeinc/modus)
+
+</div>
+
+**Modus is an open-source, serverless framework for building intelligent functions and APIs, powered by WebAssembly.**
 
 This repository contains the Modus source code, including the Modus runtime, SDKs, CLI, and introductory examples.
 
-_Please note that prior to version 0.13.0, Modus was simply referred to as "Hypermode".  Please bear with us if you find name conflicts while we are in transition!_
+> ❕ Note: prior to version 0.13, Modus was simply referred to as "Hypermode". Please bear with us if you find name conflicts while we are in transition!
 
 ## Getting Started
 
@@ -42,7 +51,7 @@ They also include specialty features such as model hosting that are purposefully
 Thus, for the best experience, please consider hosting your Modus apps on Hypermode. See [hypermode.com](https://hypermode.com/) for details and pricing.
 
 As Modus is a free, open-source framework, you’re welcome to run your Modus apps on your own hardware or on any
-hosting platform that meets your needs.  However, please understand that we cannot directly support issues related
+hosting platform that meets your needs. However, please understand that we cannot directly support issues related
 to third-party hosting.
 
 ## Support
