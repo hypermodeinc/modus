@@ -14,6 +14,7 @@ import (
 )
 
 type HypDSConfig struct {
-	WasmHost wasmhost.WasmHost
-	MapTypes []string
+	WasmHost          wasmhost.WasmHost
+	FieldsToFunctions map[string]string
+	MapTypes          []string
 }

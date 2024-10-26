@@ -31,8 +31,9 @@ type HypDSPlanner struct {
 	variables resolve.Variables
 	fields    map[int]fieldInfo
 	template  struct {
-		function *fieldInfo
-		data     []byte
+		fieldInfo    *fieldInfo
+		functionName string
+		data         []byte
 	}
 }
 
@@ -108,12 +109,10 @@ func (p *HypDSPlanner) EnterField(ref int) {
 	// Capture only the fields that represent function calls.
 	if p.currentNodeIsFunctionCall() {
 
-		// Save the field for the function.
-		p.template.function = f
+		p.template.fieldInfo = f
+		p.template.functionName = p.config.FieldsToFunctions[f.Name]
 
-		// Also capture the input data for the function.
-		err := p.captureInputData(ref)
-		if err != nil {
+		if err := p.captureInputData(ref); err != nil {
 			logger.Err(p.ctx, err).Msg("Error capturing input data.")
 			return
 		}
@@ -122,7 +121,7 @@ func (p *HypDSPlanner) EnterField(ref int) {
 
 func (p *HypDSPlanner) LeaveDocument(operation, definition *ast.Document) {
 	// Stitch the captured fields together to form a tree.
-	p.stitchFields(p.template.function)
+	p.stitchFields(p.template.fieldInfo)
 }
 
 func (p *HypDSPlanner) stitchFields(f *fieldInfo) {
@@ -224,7 +223,13 @@ func (p *HypDSPlanner) captureInputData(fieldRef int) error {
 }
 
 func (p *HypDSPlanner) ConfigureFetch() resolve.FetchConfiguration {
-	fnJson, err := utils.JsonSerialize(p.template.function)
+	fieldInfoJson, err := utils.JsonSerialize(p.template.fieldInfo)
+	if err != nil {
+		logger.Error(p.ctx).Err(err).Msg("Error serializing json while configuring graphql fetch.")
+		return resolve.FetchConfiguration{}
+	}
+
+	functionNameJson, err := utils.JsonSerialize(p.template.functionName)
 	if err != nil {
 		logger.Error(p.ctx).Err(err).Msg("Error serializing json while configuring graphql fetch.")
 		return resolve.FetchConfiguration{}
@@ -233,7 +238,7 @@ func (p *HypDSPlanner) ConfigureFetch() resolve.FetchConfiguration {
 	// Note: we have to build the rest of the template manually, because the data field may
 	// contain placeholders for variables, such as $$0$$ which are not valid in JSON.
 	// They are replaced with the actual values by the time Load is called.
-	inputTemplate := fmt.Sprintf(`{"fn":%s,"data":%s}`, fnJson, p.template.data)
+	inputTemplate := fmt.Sprintf(`{"field":%s,"function":%s,"data":%s}`, fieldInfoJson, functionNameJson, p.template.data)
 
 	return resolve.FetchConfiguration{
 		Input:     inputTemplate,

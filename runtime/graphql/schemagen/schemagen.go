@@ -25,8 +25,9 @@ import (
 )
 
 type GraphQLSchema struct {
-	Schema   string
-	MapTypes []string
+	Schema            string
+	FieldsToFunctions map[string]string
+	MapTypes          []string
 }
 
 func GetGraphQLSchema(ctx context.Context, md *metadata.Metadata) (*GraphQLSchema, error) {
@@ -42,7 +43,7 @@ func GetGraphQLSchema(ctx context.Context, md *metadata.Metadata) (*GraphQLSchem
 	inputTypeDefs, errors := transformTypes(md.Types, lti, true)
 	resultTypeDefs, errs := transformTypes(md.Types, lti, false)
 	errors = append(errors, errs...)
-	queryFields, mutationFields, errs := transformFunctions(md.FnExports, inputTypeDefs, resultTypeDefs, lti)
+	fieldsToFunctions, queryFields, mutationFields, errs := transformFunctions(md.FnExports, inputTypeDefs, resultTypeDefs, lti)
 	errors = append(errors, errs...)
 
 	if len(errors) > 0 {
@@ -68,8 +69,9 @@ func GetGraphQLSchema(ctx context.Context, md *metadata.Metadata) (*GraphQLSchem
 	}
 
 	return &GraphQLSchema{
-		Schema:   buf.String(),
-		MapTypes: mapTypes,
+		Schema:            buf.String(),
+		FieldsToFunctions: fieldsToFunctions,
+		MapTypes:          mapTypes,
 	}, nil
 }
 
@@ -145,7 +147,10 @@ type ArgumentDefinition struct {
 	Default *any
 }
 
-func transformFunctions(functions metadata.FunctionMap, inputTypeDefs, resultTypeDefs map[string]*TypeDefinition, lti langsupport.LanguageTypeInfo) ([]*FieldDefinition, []*FieldDefinition, []*TransformError) {
+// TODO: refactor for readability
+
+func transformFunctions(functions metadata.FunctionMap, inputTypeDefs, resultTypeDefs map[string]*TypeDefinition, lti langsupport.LanguageTypeInfo) (map[string]string, []*FieldDefinition, []*FieldDefinition, []*TransformError) {
+	fieldsToFunctions := make(map[string]string, len(functions))
 	queryFields := make([]*FieldDefinition, 0, len(functions))
 	mutationFields := make([]*FieldDefinition, 0, len(functions))
 	errors := make([]*TransformError, 0)
@@ -153,34 +158,37 @@ func transformFunctions(functions metadata.FunctionMap, inputTypeDefs, resultTyp
 	fnNames := utils.MapKeys(functions)
 	sort.Strings(fnNames)
 	for _, name := range fnNames {
-		f := functions[name]
+		fn := functions[name]
 
-		args, err := convertParameters(f.Parameters, lti, inputTypeDefs)
+		args, err := convertParameters(fn.Parameters, lti, inputTypeDefs)
 		if err != nil {
-			errors = append(errors, &TransformError{f, err})
+			errors = append(errors, &TransformError{fn, err})
 			continue
 		}
 
-		returnType, err := convertResults(f.Results, lti, resultTypeDefs)
+		returnType, err := convertResults(fn.Results, lti, resultTypeDefs)
 		if err != nil {
-			errors = append(errors, &TransformError{f, err})
+			errors = append(errors, &TransformError{fn, err})
 			continue
 		}
+
+		fieldName := getFieldName(fn.Name)
+		fieldsToFunctions[fieldName] = fn.Name
 
 		field := &FieldDefinition{
-			Name:       getFieldName(f.Name),
+			Name:       fieldName,
 			Arguments:  args,
 			ReturnType: returnType,
 		}
 
-		if isMutation(f.Name) {
+		if isMutation(fn.Name) {
 			mutationFields = append(mutationFields, field)
 		} else {
 			queryFields = append(queryFields, field)
 		}
 	}
 
-	return queryFields, mutationFields, errors
+	return fieldsToFunctions, queryFields, mutationFields, errors
 }
 
 func filterFields(fields []*FieldDefinition) []*FieldDefinition {
