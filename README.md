@@ -8,9 +8,9 @@
   [![GitHub commit activity](https://img.shields.io/github/commit-activity/m/hypermodeinc/modus)](https://github.com/hypermodeinc/modus/commits/main/)
   [![GitHub commits since latest release](https://img.shields.io/github/commits-since/hypermodeinc/modus/latest)](https://github.com/hypermodeinc/modus/commits/main/)
 
-</div>
+  ![modus](https://github.com/user-attachments/assets/a959990d-7431-482a-8030-e24c88f0e592)
 
-# Modus
+</div>
 
 Modus is an open-source, serverless framework for building intelligent functions and APIs, powered by WebAssembly.
 
