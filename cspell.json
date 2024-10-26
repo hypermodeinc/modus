@@ -88,6 +88,7 @@
     "jsonlogs",
     "jsonparser",
     "jsonschema",
+    "JWKS",
     "langsupport",
     "ldflags",
     "legacymodels",

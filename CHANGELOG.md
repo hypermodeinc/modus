@@ -59,7 +59,8 @@ In previous releases, the name "Hypermode" was used for all three._
 - Fix runtime shutdown issues with `modus dev` [#508](https://github.com/hypermodeinc/modus/pull/508)
 - Monitored manifest and env files for changes [#509](https://github.com/hypermodeinc/modus/pull/509)
 - Log bad GraphQL requests in dev [#510](https://github.com/hypermodeinc/modus/pull/510)
-- Add jwks endpoint key support to auth [#511](https://github.com/hypermodeinc/modus/pull/511)
+- Add JWKS endpoint key support to auth [#511](https://github.com/hypermodeinc/modus/pull/511)
+- Use conventions to support GraphQL mutations and adjust query names [#513](https://github.com/hypermodeinc/modus/pull/513)
 
 ## 2024-10-02 - Version 0.12.7
 
