@@ -22,18 +22,7 @@ The fastest path to setting up a development environment for Modus is through VS
 
 ### Clone the Modus repository
 
-To contribute code, start by cloning the Modus repository,
-
-```bash
-git clone https://github.com/hypermodeinc/modus.git
-```
-
-and create a branch for your work.
-
-```bash
-cd modus
-git checkout -b my-new-branch
-```
+To contribute code, start by forking the Modus repository. In the top-right of the [repo](https://github.com/hypermodeinc/modus), click **Fork**. Follow the instructions to create a fork of the repo in your GitHub workspace.
 
 ### Building and running tests
 
@@ -45,7 +34,7 @@ go test ./...
 
 ### Opening a pull request
 
-When you're ready, open a pull request. Include a clear, detailed description of the changes you've made. Be sure to add and update tests and docs as needed.
+When you're ready, open a pull request against the `main` branch in the Modus repo. Include a clear, detailed description of the changes you've made. Be sure to add and update tests and docs as needed.
 
 We do our best to respond to PRs within a few days. If you've not heard back, feel free to ping on Discord.
 
