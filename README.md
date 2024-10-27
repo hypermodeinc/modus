@@ -25,6 +25,7 @@ To get started using Modus, please refer to [the Modus docs](https://docs.hyperm
 ## Open Source
 
 Modus is developed by [Hypermode](https://hypermode.com/) as an open-source project, integral but independent from Hypermode.
+
 We welcome external contributions. See the [CONTRIBUTING.md](./CONTRIBUTING.md) file if you would like to get involved.
 
 ## Programming Languages
@@ -57,13 +58,14 @@ to third-party hosting.
 ## Support
 
 Hypermode paid hosting plans include standard or premium support that covers both Hypermode and Modus, with response-time guarantees.
+
 Click the _support_ link after signing in to Hypermode, or email help@hypermode.com for paid support if you are a Hypermode customer.
 
 For free community-based support or if you'd just like to share your experiences with
-Modus or Hypermode, please chat with us on [Discord](https://discord.gg/NJQ4bJpffF).
+Modus or Hypermode, please join the [Hypermode Discord](https://discord.hypermode.com) and start a discussion in the [#modus](https://discord.com/channels/1267579648657850441/1292948253796466730) channel.
 We'd be happy to hear from you!
 
-If you believe you have found a bug in Modus, please file a [Github issue](https://github.com/hypermodeinc/modus/issues)
+If you believe you have found a bug in Modus, please file a [GitHub issue](https://github.com/hypermodeinc/modus/issues)
 so we can triage the problem and route it to our engineers as efficiently as possible.
 
 ## License
