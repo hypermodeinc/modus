@@ -75,7 +75,7 @@ so we can triage the problem and route it to our engineers as efficiently as pos
 > – Sir Isaac Newton
 >
 
-It's taken a lot of hard work to bring Modus to life, but we couldn't have done it alone. Modus is built upon _many_ open source components and projects.  We'd especially like to express our gratitude to the following core dependencies:
+It's taken a lot of hard work to bring Modus to life, but we couldn't have done it alone. Modus is built upon _many_ open source components and projects.  We'd especially like to express our gratitude to the authors and teams of our core dependencies:
 
 - Takeshi Yoneda, author of [Wazero](https://wazero.io/), and other contributors to the Wazero project - and to [Tetrate](https://tetrate.io/) for continuing its support of Wazero.  Modus uses Wazero to execute WebAssembly modules.
 - Jens Neuse, Stefan Avram, and the rest of the team at [Wundergraph](https://wundergraph.com/).  Modus uses Wundergraph's [GraphQL Go Tools](https://github.com/wundergraph/graphql-go-tools) library to process incoming GraphQL API requests.
