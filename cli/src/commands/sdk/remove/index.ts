@@ -72,7 +72,7 @@ export default class SDKRemoveCommand extends Command {
 
       if (!flags.force) {
         try {
-          const confirmed = inquirer.confirm({
+          const confirmed = await inquirer.confirm({
             message: "Are you sure you want to remove all Modus SDKs?",
             default: false,
           });
@@ -108,7 +108,7 @@ export default class SDKRemoveCommand extends Command {
           this.exit(1);
         } else if (!flags.force) {
           try {
-            const confirmed = inquirer.confirm({
+            const confirmed = await inquirer.confirm({
               message: `Are you sure you want to remove all Modus ${sdk} SDKs?`,
               default: false,
             });
@@ -136,7 +136,7 @@ export default class SDKRemoveCommand extends Command {
           this.exit(1);
         } else if (!flags.force) {
           try {
-            const confirmed = inquirer.confirm({
+            const confirmed = await inquirer.confirm({
               message: `Are you sure you want to remove ${sdkText}?`,
               default: false,
             });
