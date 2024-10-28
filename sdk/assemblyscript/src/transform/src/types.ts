@@ -7,6 +7,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { CommentKind, CommentNode } from "assemblyscript/dist/assemblyscript.js";
 import { getTypeName } from "./extractor.js";
 
 export class ProgramInfo {
@@ -20,12 +21,28 @@ export class Result {
   public type: string;
 }
 
+export class Docs {
+  constructor(public description: string) { }
+  static from(nodes: CommentNode[]): Docs | null {
+    for (const node of nodes.reverse()) {
+      if (node.commentKind != CommentKind.Block || !node.text.startsWith("/**")) continue;
+      const lines = node.text.split("\n").filter(v => v.trim().startsWith("*") && v.trim().length > 1);
+      const description = lines[0].replace("*", "").trim();
+      // const returnTypeDesc
+      // const paramDesc
+      return new Docs(description);
+    }
+    return null;
+  }
+}
+
 export class FunctionSignature {
   constructor(
     public name: string,
     public parameters: Parameter[],
     public results: Result[],
-  ) {}
+    public docs: Docs | null = null
+  ) { }
 
   toString() {
     let params = "";
@@ -56,6 +73,10 @@ export class FunctionSignature {
       output["results"] = this.results;
     }
 
+    if (this.docs) {
+      output["docs"] = this.docs;
+    }
+
     return output;
   }
 }
@@ -65,7 +86,8 @@ export class TypeDefinition {
     public name: string,
     public id: number,
     public fields?: Field[],
-  ) {}
+    public docs: Docs | null = null
+  ) { }
 
   toString() {
     const name = getTypeName(this.name);
@@ -108,6 +130,7 @@ export interface Parameter {
 interface Field {
   name: string;
   type: string;
+  docs: Docs | null;
 }
 
 export const typeMap = new Map<string, string>([

@@ -11,6 +11,8 @@ import binaryen from "assemblyscript/lib/binaryen.js";
 import {
   ArrayLiteralExpression,
   Class,
+  CommentKind,
+  CommentNode,
   ElementKind,
   Expression,
   FloatLiteralExpression,
@@ -22,9 +24,11 @@ import {
   NodeKind,
   Program,
   Property,
+  Range,
   StringLiteralExpression,
 } from "assemblyscript/dist/assemblyscript.js";
 import {
+  Docs,
   FunctionSignature,
   JsonLiteral,
   Parameter,
@@ -33,6 +37,7 @@ import {
   typeMap,
 } from "./types.js";
 import ModusTransform from "./index.js";
+import { Visitor } from "./visitor.js";
 
 export class Extractor {
   binaryen: typeof binaryen;
@@ -40,9 +45,15 @@ export class Extractor {
   program: Program;
   transform: ModusTransform;
 
-  constructor(transform: ModusTransform, module: binaryen.Module) {
-    this.program = transform.program;
+  constructor(transform: ModusTransform) {
     this.binaryen = transform.binaryen;
+  }
+
+  initHook(program: Program): void {
+    this.program = program;
+  }
+
+  compileHook(module: binaryen.Module): void {
     this.module = module;
   }
 
@@ -157,6 +168,7 @@ export class Extractor {
       .map((f) => ({
         name: f.name,
         type: f.type.toString(),
+        docs: null
       }));
   }
 
@@ -216,9 +228,88 @@ export class Extractor {
       });
     }
 
-    return new FunctionSignature(e.name, params, [
+    const signature = new FunctionSignature(e.name, params, [
       { type: f.signature.returnType.toString() },
     ]);
+
+    signature.docs = this.getDocsFromComment(signature);
+    return signature;
+  }
+  private getDocsFromComment(signature: FunctionSignature) {
+    const visitor = new Visitor();
+
+    visitor.visitFunctionDeclaration = (node: FunctionDeclaration) => {
+      const source = node.range.source;
+      // Exported/Imported name may differ from real defined name
+      // TODO: Track renaming and aliasing of function identifiers
+
+      if (node.name.text == signature.name) {
+        const nodeIndex = source.statements.indexOf(node);
+        const prevNode = source.statements[Math.max(nodeIndex - 1, 0)];
+
+        const start = nodeIndex > 0 ? prevNode.range.start : 0;
+        const end = node.range.start;
+
+        const newRange = new Range(start, end);
+        newRange.source = source;
+        const commentNodes = this.parseComments(newRange);
+        if (!commentNodes.length) return;
+        console.log("Start: " + start);
+        console.log("End: " + end);
+        console.log("Text: " + source.text.slice(start, end));
+        console.log("Comment: ", commentNodes);
+        return Docs.from(commentNodes);
+      }
+    }
+
+    visitor.visit(this.program.sources);
+    return null;
+  }
+  private parseComments(range: Range): CommentNode[] {
+    const nodes: CommentNode[] = [];
+    const text = range.source.text.slice(range.start, range.end).trim();
+
+    let commentKind: CommentKind;
+
+    if (text.startsWith("//")) {
+      commentKind = text.startsWith("///") ? CommentKind.Triple : CommentKind.Line;
+
+      const end = range.source.text.indexOf("\n", range.start + 1);
+      if (end === -1) return [];
+      range.start = range.source.text.indexOf("//", range.start);
+      const newRange = new Range(range.start, end);
+      newRange.source = range.source;
+      const node = new CommentNode(commentKind, newRange.source.text.slice(newRange.start, newRange.end), newRange);
+
+      nodes.push(node);
+
+      if (end < range.end) {
+        const newRange = new Range(end, range.end);
+        newRange.source = range.source;
+        nodes.push(...this.parseComments(newRange));
+      }
+    } else if (text.startsWith("/*")) {
+      commentKind = CommentKind.Block;
+      const end = range.source.text.indexOf("*/", range.start) + 2;
+      if (end === 1) return [];
+
+      range.start = range.source.text.indexOf("/**", range.start);
+      const newRange = new Range(range.start, end);
+      newRange.source = range.source;
+      const node = new CommentNode(commentKind, newRange.source.text.slice(newRange.start, newRange.end), newRange);
+
+      nodes.push(node);
+
+      if (end < range.end) {
+        const newRange = new Range(end, range.end);
+        newRange.source = range.source;
+        nodes.push(...this.parseComments(newRange));
+      }
+    } else {
+      return [];
+    }
+
+    return nodes;
   }
 }
 
