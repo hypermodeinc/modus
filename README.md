@@ -79,6 +79,8 @@ It's taken a lot of hard work to bring Modus to life, but we couldn't have done 
 
 - Takeshi Yoneda, author of [Wazero](https://wazero.io/), and other contributors to the Wazero project - and to [Tetrate](https://tetrate.io/) for continuing its support of Wazero.  Modus uses Wazero to execute WebAssembly modules.
 - Jens Neuse, Stefan Avram, and the rest of the team at [Wundergraph](https://wundergraph.com/).  Modus uses Wundergraph's [GraphQL Go Tools](https://github.com/wundergraph/graphql-go-tools) library to process incoming GraphQL API requests.
+- Max Graey, Daniel Wirtz, and other contributors to the [AssemblyScript](https://www.assemblyscript.org/) project.  Modus chose AssemblyScript as one of its core languages because it is ideal for web developers getting started with Web Assembly.
+- The [Go language](https://go.dev/) team, and also the maintainers of [TinyGo](https://tinygo.org/).  The Modus Runtime is written in Go, and the Modus Go SDK uses TinyGo.
 
 ## License
 
