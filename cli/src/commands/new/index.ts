@@ -133,6 +133,8 @@ export default class NewCommand extends Command {
     } catch (err: any) {
       if (err.name === "ExitPromptError") {
         this.abort();
+      } else {
+        throw err;
       }
     }
   }
