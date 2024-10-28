@@ -50,107 +50,97 @@ export default class SDKRemoveCommand extends Command {
   static examples = ["modus sdk remove assemblyscript v0.0.0", "modus sdk remove all"];
 
   async run(): Promise<void> {
-    const { args, flags } = await this.parse(SDKRemoveCommand);
-    if (!args.version) {
-      this.logError(`No SDK specified! Run ${chalk.whiteBright("modus sdk remove <name> [version]")}, or ${chalk.whiteBright("modus sdk remove all")}`);
-      return;
-    }
+    try {
+      const { args, flags } = await this.parse(SDKRemoveCommand);
+      if (!args.version) {
+        this.logError(`No SDK specified! Run ${chalk.whiteBright("modus sdk remove <name> [version]")}, or ${chalk.whiteBright("modus sdk remove all")}`);
+        return;
+      }
 
-    if (args.name.toLowerCase() === "all") {
-      let found = false;
-      for (const sdk of Object.values(SDK)) {
-        const versions = await vi.getInstalledSdkVersions(sdk);
-        if (versions.length > 0) {
-          found = true;
-          break;
+      if (args.name.toLowerCase() === "all") {
+        let found = false;
+        for (const sdk of Object.values(SDK)) {
+          const versions = await vi.getInstalledSdkVersions(sdk);
+          if (versions.length > 0) {
+            found = true;
+            break;
+          }
         }
-      }
-      if (!found) {
-        this.log(chalk.yellow("No Modus SDKs are installed."));
-        this.exit(1);
-      }
+        if (!found) {
+          this.log(chalk.yellow("No Modus SDKs are installed."));
+          this.exit(1);
+        }
 
-      if (!flags.force) {
-        try {
-          const confirmed = inquirer.confirm({
+        if (!flags.force) {
+          const confirmed = await inquirer.confirm({
             message: "Are you sure you want to remove all Modus SDKs?",
             default: false,
           });
           if (!confirmed) {
             this.abort();
           }
-        } catch (err: any) {
-          if (err.name === "ExitPromptError") {
-            this.abort();
+        }
+
+        for (const sdk of Object.values(SDK)) {
+          const versions = await vi.getInstalledSdkVersions(sdk);
+          for (const version of versions) {
+            await this.removeSDK(sdk, version);
           }
         }
-      }
 
-      for (const sdk of Object.values(SDK)) {
-        const versions = await vi.getInstalledSdkVersions(sdk);
-        for (const version of versions) {
-          await this.removeSDK(sdk, version);
+        if (flags.runtimes) {
+          const versions = await vi.getInstalledRuntimeVersions();
+          for (const version of versions) {
+            await this.removeRuntime(version);
+          }
         }
-      }
-
-      if (flags.runtimes) {
-        const versions = await vi.getInstalledRuntimeVersions();
-        for (const version of versions) {
-          await this.removeRuntime(version);
-        }
-      }
-    } else {
-      const sdk = parseSDK(args.name);
-      if (args.version.toLowerCase() === "all") {
-        const versions = await vi.getInstalledSdkVersions(sdk);
-        if (versions.length === 0) {
-          this.log(chalk.yellow(`No Modus ${sdk} SDKs are installed.`));
-          this.exit(1);
-        } else if (!flags.force) {
-          try {
-            const confirmed = inquirer.confirm({
+      } else {
+        const sdk = parseSDK(args.name);
+        if (args.version.toLowerCase() === "all") {
+          const versions = await vi.getInstalledSdkVersions(sdk);
+          if (versions.length === 0) {
+            this.log(chalk.yellow(`No Modus ${sdk} SDKs are installed.`));
+            this.exit(1);
+          } else if (!flags.force) {
+            const confirmed = await inquirer.confirm({
               message: `Are you sure you want to remove all Modus ${sdk} SDKs?`,
               default: false,
             });
             if (!confirmed) {
               this.abort();
             }
-          } catch (err: any) {
-            if (err.name === "ExitPromptError") {
-              this.abort();
-            }
           }
-        }
 
-        for (const version of versions) {
-          await this.removeSDK(sdk, version);
-        }
-      } else if (!args.version.startsWith("v")) {
-        this.logError("Version must start with 'v'.");
-        this.exit(1);
-      } else {
-        const sdkText = `Modus ${sdk} SDK ${args.version}`;
-        const isInstalled = await vi.sdkVersionIsInstalled(sdk, args.version);
-        if (!isInstalled) {
-          this.log(chalk.yellow(sdkText + "is not installed."));
+          for (const version of versions) {
+            await this.removeSDK(sdk, version);
+          }
+        } else if (!args.version.startsWith("v")) {
+          this.logError("Version must start with 'v'.");
           this.exit(1);
-        } else if (!flags.force) {
-          try {
-            const confirmed = inquirer.confirm({
+        } else {
+          const sdkText = `Modus ${sdk} SDK ${args.version}`;
+          const isInstalled = await vi.sdkVersionIsInstalled(sdk, args.version);
+          if (!isInstalled) {
+            this.log(chalk.yellow(sdkText + "is not installed."));
+            this.exit(1);
+          } else if (!flags.force) {
+            const confirmed = await inquirer.confirm({
               message: `Are you sure you want to remove ${sdkText}?`,
               default: false,
             });
             if (!confirmed) {
               this.abort();
             }
-          } catch (err: any) {
-            if (err.name === "ExitPromptError") {
-              this.abort();
-            }
           }
-        }
 
-        await this.removeSDK(sdk, args.version);
+          await this.removeSDK(sdk, args.version);
+        }
+      }
+    } catch (err: any) {
+      if (err.name === "ExitPromptError") {
+        this.abort();
+      } else {
+        throw err;
       }
     }
   }

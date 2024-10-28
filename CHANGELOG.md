@@ -1,6 +1,10 @@
 # Change Log
 
-## 2024-10-25 - Version 0.13.0
+## 2024-01-28 - CLI Version 0.13.1
+
+- Fix issues with interactive CLI prompts [#517](https://github.com/hypermodeinc/modus/pull/517)
+
+## 2024-10-25 - Version 0.13.0 (all components)
 
 _NOTE: This is the first fully open-source release, using the name "Modus" for the framework.
 "Hypermode" still refers to the company and the commercial hosting platform - but not the framework.

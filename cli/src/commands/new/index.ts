@@ -133,6 +133,8 @@ export default class NewCommand extends Command {
     } catch (err: any) {
       if (err.name === "ExitPromptError") {
         this.abort();
+      } else {
+        throw err;
       }
     }
   }
@@ -217,7 +219,7 @@ export default class NewCommand extends Command {
 
       let updateSDK = false;
       if (!installedSdkVersion) {
-        const confirmed = inquirer.confirm({
+        const confirmed = await inquirer.confirm({
           message: `You do not have the ${sdkText} installed. Would you like to install it now?`,
           default: true,
         });
