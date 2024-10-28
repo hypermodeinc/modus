@@ -71,7 +71,8 @@ so we can triage the problem and route it to our engineers as efficiently as pos
 ## Acknowledgements
 
 > _"If I have seen further, it is by standing on the shoulders of giants."_
-> - Sir Isaac Newton
+>  
+> – Sir Isaac Newton
 >
 
 It's taken a lot of hard work to bring Modus to life, but we couldn't have done it alone. Modus is built upon _many_ open source components and projects.  We'd especially like to express our gratitude to the following core dependencies:
