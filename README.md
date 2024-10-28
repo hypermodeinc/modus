@@ -68,6 +68,20 @@ We'd be happy to hear from you!
 If you believe you have found a bug in Modus, please file a [GitHub issue](https://github.com/hypermodeinc/modus/issues)
 so we can triage the problem and route it to our engineers as efficiently as possible.
 
+## Acknowledgements
+
+> _"If I have seen further, it is by standing on the shoulders of giants."_
+>  
+> – Sir Isaac Newton
+>
+
+It's taken a lot of hard work to bring Modus to life, but we couldn't have done it alone. Modus is built upon _many_ open source components and projects.  We'd especially like to express our gratitude to the authors and teams of our core dependencies:
+
+- Takeshi Yoneda, author of [Wazero](https://wazero.io/), and other contributors to the Wazero project - and to [Tetrate](https://tetrate.io/) for continuing its support of Wazero.  Modus uses Wazero to execute WebAssembly modules.
+- Jens Neuse, Stefan Avram, and the rest of the team at [Wundergraph](https://wundergraph.com/).  Modus uses Wundergraph's [GraphQL Go Tools](https://github.com/wundergraph/graphql-go-tools) library to process incoming GraphQL API requests.
+- Max Graey, Daniel Wirtz, and other contributors to the [AssemblyScript](https://www.assemblyscript.org/) project.  Modus chose AssemblyScript as one of its core languages because it is ideal for web developers getting started with Web Assembly.
+- The [Go language](https://go.dev/) team, and also the maintainers of [TinyGo](https://tinygo.org/).  The Modus Runtime is written in Go, and the Modus Go SDK uses TinyGo.
+
 ## License
 
 Modus and its components are Copyright 2024 Hypermode Inc., and licensed under the terms of the Apache License, Version 2.0.
