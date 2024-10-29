@@ -1,10 +1,14 @@
 # Change Log
 
-## 2024-01-28 - CLI Version 0.13.2
+## 2024-10-29 - CLI Version 0.13.3
 
-- Fix CLI hang on Linux [#522](https://github.com/hypermodeinc/modus/pull/522)
+- Fix Go not found on first install [#522](https://github.com/hypermodeinc/modus/pull/522)
 
-## 2024-01-28 - CLI Version 0.13.1
+## 2024-10-28 - CLI Version 0.13.2
+
+- Fix CLI hang on Linux [#521](https://github.com/hypermodeinc/modus/pull/521)
+
+## 2024-10-28 - CLI Version 0.13.1
 
 - Fix issues with interactive CLI prompts [#517](https://github.com/hypermodeinc/modus/pull/517)
 
