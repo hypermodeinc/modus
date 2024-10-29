@@ -14,6 +14,7 @@ import (
 
 	"github.com/hypermodeinc/modus/runtime/app"
 	"github.com/hypermodeinc/modus/runtime/config"
+	"github.com/hypermodeinc/modus/runtime/envfiles"
 	"github.com/hypermodeinc/modus/runtime/httpserver"
 	"github.com/hypermodeinc/modus/runtime/logger"
 	"github.com/hypermodeinc/modus/runtime/services"
@@ -34,6 +35,11 @@ func main() {
 		Str("version", config.GetVersionNumber()).
 		Str("environment", config.GetEnvironmentName()).
 		Msg("Starting Modus Runtime.")
+
+	err := envfiles.LoadEnvFiles(ctx)
+	if err != nil {
+		log.Warn().Err(err).Msg("Failed to load environment files.")
+	}
 
 	// Initialize Sentry (if enabled)
 	rootSourcePath := app.GetRootSourcePath()
