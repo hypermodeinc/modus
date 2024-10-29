@@ -113,7 +113,7 @@ func TestMain(m *testing.M) {
 	config.Port = httpListenPort
 
 	// setup runtime services
-	ctx := services.Start()
+	ctx := services.Start(ctx)
 	defer services.Stop(ctx)
 
 	// start HTTP server
