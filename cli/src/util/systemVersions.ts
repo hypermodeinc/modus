@@ -7,12 +7,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import process from "node:process";
 import { execFile } from "./cp.js";
-import { ModusHomeDir } from "../custom/globals.js";
 
 const EXEC_OPTIONS = {
   shell: true,
-  cwd: ModusHomeDir,
   env: process.env,
 };
 
