@@ -8,44 +8,19 @@
  */
 
 import chalk from "chalk";
-import ora, { Ora } from "ora";
+import { oraPromise, Ora } from "ora";
 
-import os from "node:os";
 import path from "node:path";
-import readline from "node:readline";
-import { isatty } from "node:tty";
 import { Readable } from "node:stream";
 import { finished } from "node:stream/promises";
-import { spawnSync } from "node:child_process";
 import { createWriteStream } from "node:fs";
 import * as fs from "./fs.js";
 
-// Expand ~ to the user's home directory
-export function expandHomeDir(filePath: string): string {
-  if (filePath.startsWith("~")) {
-    return path.normalize(path.join(os.homedir(), filePath.slice(1)));
-  }
-
-  return path.normalize(filePath);
-}
-
-export function isRunnable(cmd: string): boolean {
-  const shell = spawnSync(cmd);
-  if (!shell) return false;
-  return true;
-}
-
 export async function withSpinner<T>(text: string, fn: (spinner: Ora) => Promise<T>): Promise<T> {
-  const spinner = ora({
+  return await oraPromise(fn, {
     color: "white",
     text: text,
-  }).start();
-
-  try {
-    return await fn(spinner);
-  } finally {
-    spinner.stop();
-  }
+  });
 }
 
 export async function downloadFile(url: string, dest: string): Promise<boolean> {
