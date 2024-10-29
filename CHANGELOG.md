@@ -1,5 +1,9 @@
 # Change Log
 
+## 2024-01-28 - CLI Version 0.13.2
+
+- Fix CLI hang on Linux [#522](https://github.com/hypermodeinc/modus/pull/522)
+
 ## 2024-01-28 - CLI Version 0.13.1
 
 - Fix issues with interactive CLI prompts [#517](https://github.com/hypermodeinc/modus/pull/517)
