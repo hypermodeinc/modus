@@ -20,6 +20,7 @@ import (
 	"strings"
 
 	"github.com/hypermodeinc/modus/runtime/config"
+	"github.com/hypermodeinc/modus/runtime/envfiles"
 	"github.com/hypermodeinc/modus/runtime/logger"
 	"github.com/hypermodeinc/modus/runtime/utils"
 
@@ -34,6 +35,11 @@ const jwtClaims jwtClaimsKey = "claims"
 func Init(ctx context.Context) {
 	globalAuthKeys = newAuthKeys()
 	go globalAuthKeys.worker(ctx)
+	envfiles.RegisterEnvFilesLoadedCallback(initKeys)
+	initKeys(ctx)
+}
+
+func initKeys(ctx context.Context) {
 	publicPemKeysJson := os.Getenv("MODUS_PEMS")
 	jwksEndpointsJson := os.Getenv("MODUS_JWKS_ENDPOINTS")
 	if publicPemKeysJson == "" && jwksEndpointsJson == "" {
