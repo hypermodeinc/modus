@@ -112,8 +112,11 @@ func TestMain(m *testing.M) {
 	config.RefreshInterval = refreshPluginInterval
 	config.Port = httpListenPort
 
+	// Create the main background context
+	ctx := context.Background()
+
 	// setup runtime services
-	ctx := services.Start(ctx)
+	services.Start(ctx)
 	defer services.Stop(ctx)
 
 	// start HTTP server
