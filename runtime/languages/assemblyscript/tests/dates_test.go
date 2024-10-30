@@ -16,11 +16,19 @@ import (
 	"github.com/hypermodeinc/modus/runtime/utils"
 )
 
-var testTime, _ = time.Parse(time.RFC3339, "2024-12-31T23:59:59.999Z")
+var testTimeStr = "2024-12-31T23:59:59.999Z"
+var testTime, _ = time.Parse(time.RFC3339, testTimeStr)
 
 func TestDateInput(t *testing.T) {
 	fnName := "testDateInput"
 	if _, err := fixture.CallFunction(t, fnName, testTime); err != nil {
+		t.Error(err)
+	}
+}
+
+func TestDateStrInput(t *testing.T) {
+	fnName := "testDateInput"
+	if _, err := fixture.CallFunction(t, fnName, testTimeStr); err != nil {
 		t.Error(err)
 	}
 }
