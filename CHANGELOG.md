@@ -1,5 +1,9 @@
 # Change Log
 
+## UNRELEASED
+
+- Fix timestamp parsing bug [#527](https://github.com/hypermodeinc/modus/pull/527)
+
 ## 2024-10-29 - CLI Version 0.13.4
 
 - `modus build` should install SDK if not already installed [#524](https://github.com/hypermodeinc/modus/pull/524)
