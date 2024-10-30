@@ -18,6 +18,7 @@ import { getHeader } from "../../custom/header.js";
 import { getAppInfo } from "../../util/appinfo.js";
 import { withSpinner } from "../../util/index.js";
 import { execFileWithExitCode } from "../../util/cp.js";
+import SDKInstallCommand from "../sdk/install/index.js";
 
 export default class BuildCommand extends Command {
   static args = {
@@ -62,6 +63,10 @@ export default class BuildCommand extends Command {
 
     // pass chalk level to child processes so they can colorize output
     process.env.FORCE_COLOR = chalk.level.toString();
+
+    if (!(await vi.sdkVersionIsInstalled(app.sdk, app.sdkVersion))) {
+      await SDKInstallCommand.run([app.sdk, app.sdkVersion, "--no-logo"]);
+    }
 
     const results = await withSpinner("Building " + app.name, async () => {
       const execOpts = {

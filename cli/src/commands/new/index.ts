@@ -17,7 +17,7 @@ import * as fs from "../../util/fs.js";
 import * as vi from "../../util/versioninfo.js";
 import { execFile } from "../../util/cp.js";
 import { isOnline } from "../../util/index.js";
-import { GitHubOwner, GitHubRepo, MinGoVersion, MinNodeVersion, MinTinyGoVersion, ModusHomeDir, SDK, parseSDK } from "../../custom/globals.js";
+import { MinGoVersion, MinNodeVersion, MinTinyGoVersion, SDK, parseSDK } from "../../custom/globals.js";
 import { withSpinner } from "../../util/index.js";
 import { extract } from "../../util/tar.js";
 import SDKInstallCommand from "../sdk/install/index.js";
@@ -250,35 +250,10 @@ export default class NewCommand extends Command {
 
     const sdkVersion = installedSdkVersion;
     const sdkPath = vi.getSdkPath(sdk, sdkVersion);
-
     const templatesArchive = path.join(sdkPath, "templates.tar.gz");
     if (!(await fs.exists(templatesArchive))) {
       this.logError(`Could not find any templates for ${sdkText} ${sdkVersion}`);
       this.exit(1);
-    }
-
-    // Install build tools if needed
-    if (sdk == SDK.Go) {
-      const ext = os.platform() === "win32" ? ".exe" : "";
-      const buildTool = path.join(sdkPath, "modus-go-build" + ext);
-      if (!(await fs.exists(buildTool))) {
-        if (await isOnline()) {
-          const module = `github.com/${GitHubOwner}/${GitHubRepo}/sdk/go/tools/modus-go-build@${sdkVersion}`;
-          await withSpinner("Downloading the Modus Go build tool.", async () => {
-            await execFile("go", ["install", module], {
-              cwd: ModusHomeDir,
-              shell: true,
-              env: {
-                ...process.env,
-                GOBIN: sdkPath,
-              },
-            });
-          });
-        } else {
-          this.logError("Could not find the Modus Go build tool. Please try again when you are online.");
-          this.exit(1);
-        }
-      }
     }
 
     // Create the app

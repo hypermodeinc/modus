@@ -4,7 +4,20 @@
 
 - Add env file callback support for auth key reloading [#520](https://github.com/hypermodeinc/modus/pull/520)
 
-## 2024-01-28 - CLI Version 0.13.1
+## 2024-10-29 - CLI Version 0.13.4
+
+- `modus build` should install SDK if not already installed [#524](https://github.com/hypermodeinc/modus/pull/524)
+
+## 2024-10-29 - CLI Version 0.13.3
+
+- Fix Go not found on first install [#522](https://github.com/hypermodeinc/modus/pull/522)
+
+## 2024-10-28 - CLI Version 0.13.2
+
+- Fix CLI hang on Linux [#521](https://github.com/hypermodeinc/modus/pull/521)
+
+## 2024-10-28 - CLI Version 0.13.1
+>>>>>>> main
 
 - Fix issues with interactive CLI prompts [#517](https://github.com/hypermodeinc/modus/pull/517)
 

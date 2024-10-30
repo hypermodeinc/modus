@@ -7,7 +7,7 @@
 
   [![GitHub commit activity](https://img.shields.io/github/commit-activity/m/hypermodeinc/modus)](https://github.com/hypermodeinc/modus/commits/main/)
   [![GitHub commits since latest release](https://img.shields.io/github/commits-since/hypermodeinc/modus/latest)](https://github.com/hypermodeinc/modus/commits/main/)
-  
+
   [![modus](https://github.com/user-attachments/assets/a0652fa6-6836-49f6-9c8c-c007cafab000)](https://github.com/hypermodeinc/modus)
 
 </div>
@@ -21,6 +21,8 @@ This repository contains the Modus source code, including the Modus runtime, SDK
 ## Getting Started
 
 To get started using Modus, please refer to [the Modus docs](https://docs.hypermode.com/modus) site.
+
+[![Getting started with Modus video](https://img.youtube.com/vi/3CcJTXTmz88/0.jpg)](https://www.youtube.com/watch?v=3CcJTXTmz88)
 
 ## Open Source
 
@@ -71,7 +73,7 @@ so we can triage the problem and route it to our engineers as efficiently as pos
 ## Acknowledgements
 
 > _"If I have seen further, it is by standing on the shoulders of giants."_
->  
+>
 > – Sir Isaac Newton
 >
 
