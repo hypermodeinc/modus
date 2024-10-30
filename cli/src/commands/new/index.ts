@@ -294,6 +294,8 @@ export default class NewCommand extends Command {
 
       if (createGitRepo) {
         await execFile("git", ["init"], execOpts);
+        await execFile("git", ["add", "."], execOpts);
+        await execFile("git", ["commit", "-m", "'Initial Commit'"], execOpts);
       }
     });
 
