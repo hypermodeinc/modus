@@ -12,11 +12,10 @@ import chalk from "chalk";
 import semver from "semver";
 import os from "node:os";
 import path from "node:path";
-import { execSync } from "node:child_process";
 
 import * as fs from "../../util/fs.js";
 import * as vi from "../../util/versioninfo.js";
-import { execFile } from "../../util/cp.js";
+import { execFile, exec } from "../../util/cp.js";
 import { isOnline } from "../../util/index.js";
 import { MinGoVersion, MinNodeVersion, MinTinyGoVersion, SDK, parseSDK } from "../../custom/globals.js";
 import { withSpinner } from "../../util/index.js";
@@ -53,9 +52,9 @@ export default class NewCommand extends Command {
       aliases: ["directory"],
       description: "App directory",
     }),
-    git: Flags.boolean({
+    "no-git": Flags.boolean({
       default: false,
-      description: "Init a git repository",
+      description: "Do not initialize a git repository",
     }),
     sdk: Flags.string({
       char: "s",
@@ -127,9 +126,15 @@ export default class NewCommand extends Command {
         }
       }
 
-      const gitInPath = isGitInPath();
-      const isCwdNotInGitRepo = gitInPath && !isInGitRepo(process.cwd());
-      const createGitRepo = isCwdNotInGitRepo ? flags.git || (await inquirer.confirm({ message: "Initialize a git repository?", default: true })) : false;
+      const gitInPath = await isGitInPath();
+      const isCwdInGitRepo = await isInGitRepo(process.cwd());
+
+      let createGitRepo: boolean;
+      if (!gitInPath || isCwdInGitRepo || flags["no-git"]) {
+        createGitRepo = false;
+      } else {
+        createGitRepo = await inquirer.confirm({ message: "Initialize a git repository?", default: true });
+      }
 
       if (!flags.force) {
         const confirmed = await inquirer.confirm({ message: "Continue?", default: true });
@@ -323,18 +328,18 @@ function toValidAppName(input: string): string {
     .replace(/^-|-$/g, ""); // Remove leading or trailing hyphens
 }
 
-function isGitInPath() {
+async function isGitInPath() {
   try {
-    execSync("git --version", { stdio: "ignore" });
+    await exec("git --version");
     return true;
   } catch {
     return false;
   }
 }
 
-function isInGitRepo(dir: string) {
+async function isInGitRepo(dir: string) {
   try {
-    execSync("git rev-parse --is-inside-work-tree", { cwd: dir, stdio: "ignore" });
+    await exec("git rev-parse --is-inside-work-tree", { cwd: dir });
 
     return true;
   } catch (err) {
