@@ -12,6 +12,7 @@ import chalk from "chalk";
 import semver from "semver";
 import os from "node:os";
 import path from "node:path";
+import { execSync } from "node:child_process";
 
 import * as fs from "../../util/fs.js";
 import * as vi from "../../util/versioninfo.js";
@@ -51,6 +52,10 @@ export default class NewCommand extends Command {
       char: "d",
       aliases: ["directory"],
       description: "App directory",
+    }),
+    git: Flags.boolean({
+      default: false,
+      description: "Init a git repository",
     }),
     sdk: Flags.string({
       char: "s",
@@ -122,6 +127,10 @@ export default class NewCommand extends Command {
         }
       }
 
+      const gitInPath = isGitInPath();
+      const isCwdNotInGitRepo = gitInPath && !isInGitRepo(process.cwd());
+      const createGitRepo = isCwdNotInGitRepo ? flags.git || (await inquirer.confirm({ message: "Initialize a git repository?", default: true })) : false;
+
       if (!flags.force) {
         const confirmed = await inquirer.confirm({ message: "Continue?", default: true });
         if (!confirmed) {
@@ -130,7 +139,7 @@ export default class NewCommand extends Command {
       }
 
       this.log();
-      await this.createApp(name, dir, sdk, MODUS_DEFAULT_TEMPLATE_NAME, flags.force, flags.prerelease);
+      await this.createApp(name, dir, sdk, MODUS_DEFAULT_TEMPLATE_NAME, flags.force, flags.prerelease, createGitRepo);
     } catch (err: any) {
       if (err.name === "ExitPromptError") {
         this.abort();
@@ -140,7 +149,7 @@ export default class NewCommand extends Command {
     }
   }
 
-  private async createApp(name: string, dir: string, sdk: SDK, template: string, force: boolean, prerelease: boolean) {
+  private async createApp(name: string, dir: string, sdk: SDK, template: string, force: boolean, prerelease: boolean, createGitRepo: boolean) {
     // Validate SDK-specific prerequisites
     const sdkText = `Modus ${sdk} SDK`;
     switch (sdk) {
@@ -277,6 +286,10 @@ export default class NewCommand extends Command {
           await execFile("go", ["mod", "download"], execOpts);
           break;
       }
+
+      if (createGitRepo) {
+        await execFile("git", ["init"], execOpts);
+      }
     });
 
     this.log();
@@ -308,4 +321,23 @@ function toValidAppName(input: string): string {
     .replace(/\s+/g, "-") // Replace spaces (or multiple spaces) with a single hyphen
     .replace(/-+/g, "-") // Replace multiple consecutive hyphens with a single hyphen
     .replace(/^-|-$/g, ""); // Remove leading or trailing hyphens
+}
+
+function isGitInPath() {
+  try {
+    execSync("git --version", { stdio: "ignore" });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function isInGitRepo(dir: string) {
+  try {
+    execSync("git rev-parse --is-inside-work-tree", { cwd: dir, stdio: "ignore" });
+
+    return true;
+  } catch (err) {
+    return false;
+  }
 }
