@@ -1,5 +1,9 @@
 # Change Log
 
+## 2024-10-30 - AssemblyScript SDK 0.13.3
+
+- Actually fix issue with git info capture [#537](https://github.com/hypermodeinc/modus/pull/537)
+
 ## 2024-10-30 - AssemblyScript SDK 0.13.2
 
 - Fix issue with git info capture [#536](https://github.com/hypermodeinc/modus/pull/536)

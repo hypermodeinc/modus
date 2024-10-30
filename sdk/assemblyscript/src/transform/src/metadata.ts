@@ -39,8 +39,15 @@ export class Metadata {
     m.sdk = getSdkInfo();
 
     if (isGitRepo()) {
-      m.gitRepo = getGitRepo();
-      m.gitCommit = getGitCommit();
+      const gitRepo = getGitRepo();
+      if (gitRepo) {
+        m.gitRepo = getGitRepo();
+      }
+
+      const gitCommit = getGitCommit();
+      if (gitCommit) {
+        m.gitCommit = getGitCommit();
+      }
     }
 
     return m;
@@ -182,7 +189,11 @@ function isGitRepo(): boolean {
 
 function getGitRepo(): string | undefined {
   try {
-    let url = execSync("git remote get-url origin").toString().trim();
+    let url = execSync("git remote get-url origin", {
+      stdio: ["ignore", "pipe", "ignore"],
+    })
+      .toString()
+      .trim();
 
     // Convert ssh to https
     if (url.startsWith("git@")) {
@@ -202,7 +213,11 @@ function getGitRepo(): string | undefined {
 
 function getGitCommit(): string | undefined {
   try {
-    return execSync("git rev-parse HEAD").toString().trim();
+    return execSync("git rev-parse HEAD", {
+      stdio: ["ignore", "pipe", "ignore"],
+    })
+      .toString()
+      .trim();
   } catch {
     return undefined;
   }
