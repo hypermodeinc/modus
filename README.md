@@ -7,7 +7,6 @@
   [![chat](https://img.shields.io/discord/1267579648657850441)](https://discord.gg/NJQ4bJpffF)
   [![GitHub Repo stars](https://img.shields.io/github/stars/hypermodeinc/modus)](https://github.com/hypermodeinc/modus/stargazers)
   [![GitHub commit activity](https://img.shields.io/github/commit-activity/m/hypermodeinc/modus)](https://github.com/hypermodeinc/modus/commits/main/)
-  [![GitHub commits since latest release](https://img.shields.io/github/commits-since/hypermodeinc/modus/latest)](https://github.com/hypermodeinc/modus/commits/main/)
 
 </div>
 
@@ -17,16 +16,43 @@
    <a href="https://discord.com/invite/MAZgkhP6C6">Discord</a>
 <p>
 
+**Modus is an open-source, serverless framework for building APIs powered by WebAssembly.** It simplifies integrating AI models, data, and business logic with sandboxed execution. And, it's really fast.
 
-**Modus is an open-source, serverless framework for building intelligent functions and APIs, powered by WebAssembly.**
+We built Modus to put code back at the heart of development.
 
-This repository contains the Modus source code, including the Modus runtime, SDKs, CLI, and introductory examples. It simplifies the integration of AI models, data, and business logic with sandboxed execution, providing a code-first workbench for building AI-enabled apps. 
+You write a function.
 
-It's really fast.
+```ts
+export function sayHello(name: string | null = null): string {
+  return `Hello, ${name || "World"}!`;
+}
+```
 
-> ❕ Note: prior to version 0.13, Modus was simply referred to as "Hypermode". Please bear with us if you find name conflicts while we are in transition.
+Then, Modus:
+- extracts the metadata of your functions
+- compiles your code with optimizations based on the host environment
+- caches the compiled module in memory for fast retrieval
+- prepares an invocation plan for each function
+- extracts connections, models, and other configuration details from the app’s manifest
+- generates an API schema and activates the endpoint
 
-## Quick Install
+You query the endpoint
+
+```graphql
+query SayHello {
+  sayHello
+}
+```
+
+In a few milliseconds, Modus:
+- loads your compiled code into a sandboxed execution environment with a dedicated memory space
+- runs your code, aided by host functions that power the Modus APIs
+- securely queries data and AI models as needed, without exposing credentials to your code
+- responds via the API result and releases the execution environment
+
+**Now you have a production ready scalable endpoint for your AI-enabled app. AI-ready when you’re ready. Launch and iterate.**
+
+## Quickstart
 
 Install the Modus CLI
 
