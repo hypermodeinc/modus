@@ -24,6 +24,7 @@ import SDKInstallCommand from "../sdk/install/index.js";
 import { getHeader } from "../../custom/header.js";
 import * as inquirer from "@inquirer/prompts";
 import { getGoVersion, getTinyGoVersion } from "../../util/systemVersions.js";
+import { generateAppName } from "../../util/appname.js";
 
 const MODUS_DEFAULT_TEMPLATE_NAME = "default";
 
@@ -102,7 +103,7 @@ export default class NewCommand extends Command {
         sdk = parseSDK(sdkInput);
       }
 
-      const defaultAppName = getDefaultAppNameBySdk(sdk);
+      const defaultAppName = generateAppName();
       let name =
         flags.name ||
         (await inquirer.input({
@@ -307,19 +308,4 @@ function toValidAppName(input: string): string {
     .replace(/\s+/g, "-") // Replace spaces (or multiple spaces) with a single hyphen
     .replace(/-+/g, "-") // Replace multiple consecutive hyphens with a single hyphen
     .replace(/^-|-$/g, ""); // Remove leading or trailing hyphens
-}
-
-const MODUS_NEW_DEFAULT_APP_NAME = "modus-app";
-const MODUS_NEW_GO_APP_NAME = "modus-go-app";
-const MODUS_NEW_AS_APP_NAME = "modus-as-app";
-
-function getDefaultAppNameBySdk(sdk: SDK) {
-  switch (sdk) {
-    case SDK.AssemblyScript:
-      return MODUS_NEW_AS_APP_NAME;
-    case SDK.Go:
-      return MODUS_NEW_GO_APP_NAME;
-    default:
-      return MODUS_NEW_DEFAULT_APP_NAME;
-  }
 }
