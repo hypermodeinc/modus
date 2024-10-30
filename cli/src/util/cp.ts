@@ -17,7 +17,7 @@ const execFile = util.promisify(cp.execFile);
 export { execFile };
 
 /**
- * Promisified version of `child_process.execSync`.
+ * Promisified version of `child_process.exec`.
  */
 const exec = util.promisify(cp.exec);
 export { exec };
