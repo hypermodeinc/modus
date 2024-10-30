@@ -49,7 +49,7 @@ require (
 	github.com/tidwall/gjson v1.18.0
 	github.com/tidwall/sjson v1.2.5
 	github.com/viterin/vek v0.4.2
-	github.com/wundergraph/graphql-go-tools/execution v1.0.7
+	github.com/wundergraph/graphql-go-tools/execution v1.0.8-0.20241029111645-b67804508c1b
 	github.com/wundergraph/graphql-go-tools/v2 v2.0.0-rc.115
 	golang.org/x/exp v0.0.0-20240909161429-701f63a606c0
 	google.golang.org/grpc v1.67.1
@@ -122,7 +122,7 @@ require (
 	github.com/tidwall/pretty v1.2.1 // indirect
 	github.com/viterin/partial v1.1.0 // indirect
 	github.com/wundergraph/astjson v0.0.0-20240910140849-bb15f94bd362 // indirect
-	github.com/wundergraph/cosmo/composition-go v0.0.0-20240926091419-7c3781f4f507 // indirect
+	github.com/wundergraph/cosmo/composition-go v0.0.0-20241020204711-78f240a77c99 // indirect
 	github.com/wundergraph/cosmo/router v0.0.0-20240926091419-7c3781f4f507 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.55.0 // indirect
 	go.opentelemetry.io/otel v1.30.0 // indirect
