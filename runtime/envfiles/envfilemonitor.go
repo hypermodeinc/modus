@@ -17,18 +17,7 @@ import (
 )
 
 func MonitorEnvFiles(ctx context.Context) {
-	loadFile := func(file storage.FileInfo) error {
-		logger.Info(ctx).Str("filename", file.Name).Msg("Env file changed. Loading environment variables.")
-		err := LoadEnvFiles(ctx)
-		if err != nil {
-			logger.Err(ctx, err).Str("filename", file.Name).Msg("Failed to load env file.")
-			return err
-		}
-
-		return nil
-	}
 	sm := storage.NewStorageMonitor(".env", ".env.*")
-	sm.Added = loadFile
 	sm.Changed = func(errors []error) {
 		logger.Info(ctx).Msg("Env files changed. Updating environment variables.")
 		if len(errors) == 0 {
