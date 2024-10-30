@@ -52,13 +52,13 @@ func (t JSONTime) String() string {
 // If time is not included, it is assumed to be midnight.
 // Allow space or T as separator between date and time.
 var inputTimeFormats = []string{
-	"2006-01-02T15:04:05.999Z07:00",
+	"2006-01-02T15:04:05.999999999Z07:00",
 	"2006-01-02T15:04Z07:00",
-	"2006-01-02T15:04:05.999",
+	"2006-01-02T15:04:05.999999999",
 	"2006-01-02T15:04",
-	"2006-01-02 15:04:05.999Z07:00",
+	"2006-01-02 15:04:05.999999999Z07:00",
 	"2006-01-02 15:04Z07:00",
-	"2006-01-02 15:04:05.999",
+	"2006-01-02 15:04:05.999999999",
 	"2006-01-02 15:04",
 	"2006-01-02",
 }
@@ -83,4 +83,23 @@ func ParseTime(s string) (time.Time, error) {
 // GetTime returns the current time.
 func GetTime() time.Time {
 	return time.Now().UTC()
+}
+
+func ConvertToTimestamp(obj any) (time.Time, error) {
+	switch t := obj.(type) {
+	case time.Time:
+		return t.UTC(), nil
+	case *time.Time:
+		return t.UTC(), nil
+	case JSONTime:
+		return time.Time(t).UTC(), nil
+	case *JSONTime:
+		return time.Time(*t).UTC(), nil
+	case string:
+		return ParseTime(t)
+	case *string:
+		return ParseTime(*t)
+	default:
+		return time.Time{}, fmt.Errorf("incompatible type for timestamp: %T", obj)
+	}
 }

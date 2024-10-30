@@ -12,7 +12,6 @@ package golang
 import (
 	"context"
 	"errors"
-	"fmt"
 	"time"
 	"unsafe"
 
@@ -52,12 +51,12 @@ func (h *timeHandler) Read(ctx context.Context, wa langsupport.WasmAdapter, offs
 }
 
 func (h *timeHandler) Write(ctx context.Context, wa langsupport.WasmAdapter, offset uint32, obj any) (utils.Cleaner, error) {
-	t, ok := obj.(time.Time)
-	if !ok {
-		return nil, fmt.Errorf("expected time.Time, got %T", obj)
+	tm, err := utils.ConvertToTimestamp(obj)
+	if err != nil {
+		return nil, err
 	}
 
-	wall, ext := getTimeVals(t)
+	wall, ext := getTimeVals(tm)
 
 	if !wa.Memory().WriteUint64Le(offset, wall) {
 		return nil, errors.New("failed to write time.Time.wall to WASM memory")
@@ -84,12 +83,12 @@ func (h *timeHandler) Decode(ctx context.Context, wa langsupport.WasmAdapter, va
 }
 
 func (h *timeHandler) Encode(ctx context.Context, wa langsupport.WasmAdapter, obj any) ([]uint64, utils.Cleaner, error) {
-	t, ok := obj.(time.Time)
-	if !ok {
-		return []uint64{0}, nil, fmt.Errorf("expected time.Time, got %T", obj)
+	tm, err := utils.ConvertToTimestamp(obj)
+	if err != nil {
+		return []uint64{0}, nil, err
 	}
 
-	wall, ext := getTimeVals(t)
+	wall, ext := getTimeVals(tm)
 
 	// skip loc - we only support UTC
 

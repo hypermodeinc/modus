@@ -12,7 +12,6 @@ package assemblyscript
 import (
 	"context"
 	"errors"
-	"fmt"
 	"time"
 
 	"github.com/hypermodeinc/modus/lib/metadata"
@@ -54,18 +53,9 @@ func (h *dateHandler) Read(ctx context.Context, wa langsupport.WasmAdapter, offs
 }
 
 func (h *dateHandler) Write(ctx context.Context, wa langsupport.WasmAdapter, offset uint32, obj any) (utils.Cleaner, error) {
-	var tm time.Time
-	switch t := obj.(type) {
-	case time.Time:
-		tm = t.UTC()
-	case *time.Time:
-		tm = t.UTC()
-	case utils.JSONTime:
-		tm = time.Time(t).UTC()
-	case *utils.JSONTime:
-		tm = time.Time(*t).UTC()
-	default:
-		return nil, fmt.Errorf("incompatible type for Date object: %T", obj)
+	tm, err := utils.ConvertToTimestamp(obj)
+	if err != nil {
+		return nil, err
 	}
 
 	if ok := wa.Memory().WriteUint32Le(offset, uint32(tm.Year())); !ok {

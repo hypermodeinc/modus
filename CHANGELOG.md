@@ -3,6 +3,7 @@
 ## UNRELEASED
 
 - Add env file callback support for auth key reloading [#520](https://github.com/hypermodeinc/modus/pull/520)
+- Fix timestamp parsing bug [#527](https://github.com/hypermodeinc/modus/pull/527)
 
 ## 2024-10-29 - CLI Version 0.13.4
 
@@ -17,7 +18,6 @@
 - Fix CLI hang on Linux [#521](https://github.com/hypermodeinc/modus/pull/521)
 
 ## 2024-10-28 - CLI Version 0.13.1
->>>>>>> main
 
 - Fix issues with interactive CLI prompts [#517](https://github.com/hypermodeinc/modus/pull/517)
 
