@@ -1,5 +1,9 @@
 # Change Log
 
+## 2024-10-29 - CLI Version 0.13.4
+
+- `modus build` should install SDK if not already installed [#524](https://github.com/hypermodeinc/modus/pull/524)
+
 ## 2024-10-29 - CLI Version 0.13.3
 
 - Fix Go not found on first install [#522](https://github.com/hypermodeinc/modus/pull/522)

@@ -151,6 +151,9 @@ export default class SDKInstallCommand extends Command {
           spinner.fail(chalk.red(`Failed to download ${sdkText}`));
           throw e;
         }
+
+        await installer.installBuildTools(sdk, sdkVersion);
+
         spinner.succeed(chalk.dim(`Installed ${sdkText}`));
       });
     }

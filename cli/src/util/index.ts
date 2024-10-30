@@ -8,7 +8,7 @@
  */
 
 import chalk from "chalk";
-import { oraPromise, Ora } from "ora";
+import ora, { Ora } from "ora";
 
 import path from "node:path";
 import { Readable } from "node:stream";
@@ -17,10 +17,18 @@ import { createWriteStream } from "node:fs";
 import * as fs from "./fs.js";
 
 export async function withSpinner<T>(text: string, fn: (spinner: Ora) => Promise<T>): Promise<T> {
-  return await oraPromise(fn, {
+  // NOTE: Ora comes with "oraPromise", but it doesn't clear the original text on completion.
+  // Thus, we use this custom async function to ensure the spinner is applied correctly.
+  const spinner = ora({
     color: "white",
     text: text,
-  });
+  }).start();
+
+  try {
+    return await fn(spinner);
+  } finally {
+    spinner.stop();
+  }
 }
 
 export async function downloadFile(url: string, dest: string): Promise<boolean> {
