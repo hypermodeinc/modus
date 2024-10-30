@@ -13,7 +13,7 @@ import * as fs from "./fs.js";
 import * as vi from "./versioninfo.js";
 import { extract } from "./tar.js";
 import { execFile } from "./cp.js";
-import { downloadFile, isOnline, withSpinner } from "./index.js";
+import { downloadFile, isOnline } from "./index.js";
 import { GitHubOwner, GitHubRepo, SDK } from "../custom/globals.js";
 
 export async function installSDK(sdk: SDK, version: string) {
@@ -84,13 +84,11 @@ async function installGoBuildTools(sdkVersion: string) {
   }
 
   const module = `github.com/${GitHubOwner}/${GitHubRepo}/sdk/go/tools/modus-go-build@${sdkVersion}`;
-  await withSpinner("Downloading the Modus Go build tool.", async () => {
-    await execFile("go", ["install", module], {
-      shell: true,
-      env: {
-        ...process.env,
-        GOBIN: sdkPath,
-      },
-    });
+  await execFile("go", ["install", module], {
+    shell: true,
+    env: {
+      ...process.env,
+      GOBIN: sdkPath,
+    },
   });
 }

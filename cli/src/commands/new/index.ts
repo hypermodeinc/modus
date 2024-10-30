@@ -24,7 +24,6 @@ import SDKInstallCommand from "../sdk/install/index.js";
 import { getHeader } from "../../custom/header.js";
 import * as inquirer from "@inquirer/prompts";
 import { getGoVersion, getTinyGoVersion } from "../../util/systemVersions.js";
-import { installBuildTools } from "../../util/installer.js";
 
 const MODUS_DEFAULT_TEMPLATE_NAME = "default";
 
@@ -256,9 +255,6 @@ export default class NewCommand extends Command {
       this.logError(`Could not find any templates for ${sdkText} ${sdkVersion}`);
       this.exit(1);
     }
-
-    // Install build tools if needed
-    await installBuildTools(sdk, sdkVersion);
 
     // Create the app
     this.log(chalk.dim(`Using ${sdkText} ${sdkVersion}`));
