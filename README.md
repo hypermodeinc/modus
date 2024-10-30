@@ -50,7 +50,7 @@ modus dev
 
 <div align="center">
 
-[![Getting started with Modus video](https://img.youtube.com/vi/3CcJTXTmz88/0.jpg)](https://www.youtube.com/watch?v=3CcJTXTmz88)
+[![Modus Demo](https://github.com/user-attachments/assets/12ac5db9-ca32-418c-a70d-67aef797a9e3)](https://www.youtube.com/watch?v=3CcJTXTmz88)
 
 </div>
 
