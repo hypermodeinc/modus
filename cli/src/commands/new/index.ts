@@ -53,6 +53,7 @@ export default class NewCommand extends Command {
       description: "App directory",
     }),
     "no-git": Flags.boolean({
+      aliases: ["nogit"],
       default: false,
       description: "Do not initialize a git repository",
     }),
@@ -65,7 +66,7 @@ export default class NewCommand extends Command {
     //   description: "Template to use",
     // }),
     "no-prompt": Flags.boolean({
-      char: "f",
+      aliases: ["noprompt"],
       default: false,
       description: "Initialize without prompting",
     }),
@@ -143,7 +144,7 @@ export default class NewCommand extends Command {
       }
 
       const allRequiredFlagsProvided = flags.sdk && flags.name && flags.dir;
-      if (!flags['no-prompt'] && !allRequiredFlagsProvided) {
+      if (!flags["no-prompt"] && !allRequiredFlagsProvided) {
         const confirmed = await inquirer.confirm({ message: "Continue?", default: true });
         if (!confirmed) {
           this.abort();
