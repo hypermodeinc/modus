@@ -23,12 +23,13 @@ We built Modus to put code back at the heart of development.
 You write a function.
 
 ```ts
-export function sayHello(name: string | null = null): string {
-  return `Hello, ${name || "World"}!`;
+export function sayHello(name: string): string {
+  return `Hello, ${name}!`;
 }
 ```
 
 Then, Modus:
+
 - extracts the metadata of your functions
 - compiles your code with optimizations based on the host environment
 - caches the compiled module in memory for fast retrieval
@@ -40,11 +41,12 @@ You query the endpoint
 
 ```graphql
 query SayHello {
-  sayHello
+  sayHello(name: "World")
 }
 ```
 
 In a few milliseconds, Modus:
+
 - loads your compiled code into a sandboxed execution environment with a dedicated memory space
 - runs your code, aided by host functions that power the Modus APIs
 - securely queries data and AI models as needed, without exposing credentials to your code
