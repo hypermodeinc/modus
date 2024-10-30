@@ -10,15 +10,16 @@
 package envfiles
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"strings"
 	"sync"
 
 	"github.com/hypermodeinc/modus/runtime/config"
+	"github.com/hypermodeinc/modus/runtime/logger"
 
 	"github.com/joho/godotenv"
-	"github.com/rs/zerolog"
 )
 
 var mu sync.Mutex
@@ -42,7 +43,7 @@ func getSupportedEnvironmentNames() []string {
 	}
 }
 
-func LoadEnvFiles(log *zerolog.Logger) {
+func LoadEnvFiles(ctx context.Context) error {
 	mu.Lock()
 	defer mu.Unlock()
 
@@ -72,9 +73,11 @@ func LoadEnvFiles(log *zerolog.Logger) {
 		path := filepath.Join(config.AppPath, file)
 		if _, err := os.Stat(path); err == nil {
 			if err := godotenv.Load(path); err != nil {
-				log.Warn().Err(err).Msgf("Failed to load %s file.", file)
+				logger.Warn(ctx).Err(err).Msgf("Failed to load %s file.", file)
 			}
 			envVarsUpdated = true
 		}
 	}
+
+	return triggerEnvFilesLoaded(ctx)
 }

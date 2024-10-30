@@ -2,6 +2,7 @@
 
 ## UNRELEASED
 
+- Add env file callback support for auth key reloading [#520](https://github.com/hypermodeinc/modus/pull/520)
 - Fix timestamp parsing bug [#527](https://github.com/hypermodeinc/modus/pull/527)
 
 ## 2024-10-29 - CLI Version 0.13.4
