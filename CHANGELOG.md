@@ -1,11 +1,17 @@
 # Change Log
 
-## UNRELEASED
+## 2024-10-30 - Runtime Version 0.13.1
 
 - Add env file callback support for auth key reloading [#520](https://github.com/hypermodeinc/modus/pull/520)
 - Fix timestamp parsing bug [#527](https://github.com/hypermodeinc/modus/pull/527)
-- Use `<adj>-<noun>` for default app name [#528](https://github.com/hypermodeinc/modus/pull/528)
+
+## 2024-10-30 - Go/AS SDKs 0.13.1
+
 - Add env file to default project templates [#530](https://github.com/hypermodeinc/modus/pull/530)
+
+## 2024-10-30 - CLI Version 0.13.5
+
+- Use `<adj>-<noun>` for default app name. [#528](https://github.com/hypermodeinc/modus/pull/528)
 
 ## 2024-10-29 - CLI Version 0.13.4
 
