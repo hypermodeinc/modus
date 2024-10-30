@@ -1,5 +1,14 @@
 # Change Log
 
+## 2024-10-30 - AssemblyScript SDK 0.13.3
+
+- Actually fix issue with git info capture [#537](https://github.com/hypermodeinc/modus/pull/537)
+- `modus new`: Initialize git repo on interactive flow: [#538](https://github.com/hypermodeinc/modus/pull/538)
+
+## 2024-10-30 - AssemblyScript SDK 0.13.2
+
+- Fix issue with git info capture [#536](https://github.com/hypermodeinc/modus/pull/536)
+
 ## 2024-10-30 - Runtime Version 0.13.1
 
 - Add env file callback support for auth key reloading [#520](https://github.com/hypermodeinc/modus/pull/520)

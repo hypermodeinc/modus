@@ -15,7 +15,7 @@ import path from "node:path";
 
 import * as fs from "../../util/fs.js";
 import * as vi from "../../util/versioninfo.js";
-import { execFile } from "../../util/cp.js";
+import { execFile, exec } from "../../util/cp.js";
 import { isOnline } from "../../util/index.js";
 import { MinGoVersion, MinNodeVersion, MinTinyGoVersion, SDK, parseSDK } from "../../custom/globals.js";
 import { withSpinner } from "../../util/index.js";
@@ -51,6 +51,10 @@ export default class NewCommand extends Command {
       char: "d",
       aliases: ["directory"],
       description: "App directory",
+    }),
+    "no-git": Flags.boolean({
+      default: false,
+      description: "Do not initialize a git repository",
     }),
     sdk: Flags.string({
       char: "s",
@@ -122,6 +126,16 @@ export default class NewCommand extends Command {
         }
       }
 
+      const gitInPath = await isGitInPath();
+      const isCwdInGitRepo = await isInGitRepo(process.cwd());
+
+      let createGitRepo: boolean;
+      if (!gitInPath || isCwdInGitRepo || flags["no-git"]) {
+        createGitRepo = false;
+      } else {
+        createGitRepo = await inquirer.confirm({ message: "Initialize a git repository?", default: true });
+      }
+
       if (!flags.force) {
         const confirmed = await inquirer.confirm({ message: "Continue?", default: true });
         if (!confirmed) {
@@ -130,7 +144,7 @@ export default class NewCommand extends Command {
       }
 
       this.log();
-      await this.createApp(name, dir, sdk, MODUS_DEFAULT_TEMPLATE_NAME, flags.force, flags.prerelease);
+      await this.createApp(name, dir, sdk, MODUS_DEFAULT_TEMPLATE_NAME, flags.force, flags.prerelease, createGitRepo);
     } catch (err: any) {
       if (err.name === "ExitPromptError") {
         this.abort();
@@ -140,7 +154,7 @@ export default class NewCommand extends Command {
     }
   }
 
-  private async createApp(name: string, dir: string, sdk: SDK, template: string, force: boolean, prerelease: boolean) {
+  private async createApp(name: string, dir: string, sdk: SDK, template: string, force: boolean, prerelease: boolean, createGitRepo: boolean) {
     // Validate SDK-specific prerequisites
     const sdkText = `Modus ${sdk} SDK`;
     switch (sdk) {
@@ -277,6 +291,12 @@ export default class NewCommand extends Command {
           await execFile("go", ["mod", "download"], execOpts);
           break;
       }
+
+      if (createGitRepo) {
+        await execFile("git", ["init"], execOpts);
+        await execFile("git", ["add", "."], execOpts);
+        await execFile("git", ["commit", "-m", "'Initial Commit'"], execOpts);
+      }
     });
 
     this.log();
@@ -308,4 +328,23 @@ function toValidAppName(input: string): string {
     .replace(/\s+/g, "-") // Replace spaces (or multiple spaces) with a single hyphen
     .replace(/-+/g, "-") // Replace multiple consecutive hyphens with a single hyphen
     .replace(/^-|-$/g, ""); // Remove leading or trailing hyphens
+}
+
+async function isGitInPath() {
+  try {
+    await exec("git --version");
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function isInGitRepo(dir: string) {
+  try {
+    await exec("git rev-parse --is-inside-work-tree", { cwd: dir });
+
+    return true;
+  } catch (err) {
+    return false;
+  }
 }
