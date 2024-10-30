@@ -253,7 +253,7 @@ export default class NewCommand extends Command {
         }
       } else if (latestVersion !== installedSdkVersion) {
         const confirmed = await inquirer.confirm({
-          message: `You have ${installedSdkVersion} of the ${sdkText}. The latest is ${latestVersion}. Would you like to update?`,
+          message: `You have ${installedSdkVersion} of the ${sdkText}.\n  The latest is ${latestVersion}. Would you like to update?`,
           default: true,
         });
         if (confirmed) {
