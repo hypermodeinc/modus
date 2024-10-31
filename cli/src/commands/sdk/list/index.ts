@@ -12,7 +12,7 @@ import chalk from "chalk";
 import * as vi from "../../../util/versioninfo.js";
 import { getHeader } from "../../../custom/header.js";
 import { SDK } from "../../../custom/globals.js";
-import { BaseCommand } from "../../baseCommand.js";
+import { BaseCommand } from "../../../baseCommand.js";
 
 export default class SDKListCommand extends BaseCommand {
   static args = {};

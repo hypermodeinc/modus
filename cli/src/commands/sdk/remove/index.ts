@@ -15,7 +15,7 @@ import * as vi from "../../../util/versioninfo.js";
 import { parseSDK, SDK } from "../../../custom/globals.js";
 import { withSpinner } from "../../../util/index.js";
 import * as inquirer from "@inquirer/prompts";
-import { BaseCommand } from "../../baseCommand.js";
+import { BaseCommand } from "../../../baseCommand.js";
 
 export default class SDKRemoveCommand extends BaseCommand {
   static args = {

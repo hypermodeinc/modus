@@ -6,6 +6,7 @@ export abstract class BaseCommand extends Command {
       char: "h",
       helpLabel: "-h, --help",
       description: "Show help message",
+      helpGroup: "Global",
     }),
     "no-logo": Flags.boolean({
       aliases: ["nologo"],

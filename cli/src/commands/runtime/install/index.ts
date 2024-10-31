@@ -14,7 +14,7 @@ import * as vi from "../../../util/versioninfo.js";
 import * as installer from "../../../util/installer.js";
 import { isOnline, withSpinner } from "../../../util/index.js";
 import { getHeader } from "../../../custom/header.js";
-import { BaseCommand } from "../../baseCommand.js";
+import { BaseCommand } from "../../../baseCommand.js";
 
 export default class RuntimeInstallCommand extends BaseCommand {
   static args = {

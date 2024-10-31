@@ -17,7 +17,7 @@ import * as installer from "../../../util/installer.js";
 import { isOnline, withSpinner } from "../../../util/index.js";
 import { getHeader } from "../../../custom/header.js";
 import { SDK, parseSDK } from "../../../custom/globals.js";
-import { BaseCommand } from "../../baseCommand.js";
+import { BaseCommand } from "../../../baseCommand.js";
 
 export default class SDKInstallCommand extends BaseCommand {
   static args = {

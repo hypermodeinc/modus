@@ -25,7 +25,7 @@ import { getAppInfo } from "../../util/appinfo.js";
 import { isOnline, withSpinner } from "../../util/index.js";
 import { readHypermodeSettings } from "../../util/hypermode.js";
 import BuildCommand from "../build/index.js";
-import { BaseCommand } from "../baseCommand.js";
+import { BaseCommand } from "../../baseCommand.js";
 
 const MANIFEST_FILE = "modus.json";
 const ENV_FILES = [".env", ".env.local", ".env.development", ".env.dev", ".env.development.local", ".env.dev.local"];

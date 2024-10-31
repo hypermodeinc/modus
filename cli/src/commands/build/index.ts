@@ -19,7 +19,7 @@ import { getAppInfo } from "../../util/appinfo.js";
 import { withSpinner } from "../../util/index.js";
 import { execFileWithExitCode } from "../../util/cp.js";
 import SDKInstallCommand from "../sdk/install/index.js";
-import { BaseCommand } from "../baseCommand.js";
+import { BaseCommand } from "../../baseCommand.js";
 
 export default class BuildCommand extends BaseCommand {
   static args = {
