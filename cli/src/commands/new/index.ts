@@ -107,6 +107,8 @@ export default class NewCommand extends BaseCommand {
         sdk = parseSDK(sdkInput);
       }
 
+      await this.validateSdkPrereq(sdk);
+
       const defaultAppName = generateAppName();
       let name =
         flags.name ||
@@ -155,8 +157,7 @@ export default class NewCommand extends BaseCommand {
     }
   }
 
-  private async createApp(name: string, dir: string, sdk: SDK, template: string, force: boolean, prerelease: boolean, createGitRepo: boolean) {
-    // Validate SDK-specific prerequisites
+  private async validateSdkPrereq(sdk: string) {
     const sdkText = `Modus ${sdk} SDK`;
     switch (sdk) {
       case SDK.AssemblyScript:
@@ -218,8 +219,12 @@ export default class NewCommand extends BaseCommand {
         this.log(`${chalk.dim("$")} tinygo version`);
         this.log();
 
-        this.exit(1);
+        this.exit(0);
     }
+  }
+
+  private async createApp(name: string, dir: string, sdk: SDK, template: string, force: boolean, prerelease: boolean, createGitRepo: boolean) {
+    const sdkText = `Modus ${sdk} SDK`;
 
     // Verify and/or install the Modus SDK
     let installedSdkVersion = await vi.getLatestInstalledSdkVersion(sdk, prerelease);
