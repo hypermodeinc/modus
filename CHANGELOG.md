@@ -1,5 +1,9 @@
 # Change Log
 
+## UNRELEASED
+
+- For CLI to track non-prereleases, pull from releases json to remove rate limiting issues from github releases [#543](https://github.com/hypermodeinc/modus/pull/543)
+
 ## 2024-10-30 - AssemblyScript SDK 0.13.3
 
 - Actually fix issue with git info capture [#537](https://github.com/hypermodeinc/modus/pull/537)
