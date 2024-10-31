@@ -31,7 +31,7 @@ const MODUS_DEFAULT_TEMPLATE_NAME = "default";
 export default class NewCommand extends Command {
   static description = "Create a new Modus app";
 
-  static examples = ["modus new", "modus new --name my-app", "modus new --name my-app --sdk go --dir ./my-app --force"];
+  static examples = ["modus new", "modus new --name my-app", "modus new --name my-app --sdk go --dir ./my-app --no-prompt"];
 
   static flags = {
     help: Flags.help({
@@ -53,6 +53,7 @@ export default class NewCommand extends Command {
       description: "App directory",
     }),
     "no-git": Flags.boolean({
+      aliases: ["nogit"],
       default: false,
       description: "Do not initialize a git repository",
     }),
@@ -64,8 +65,8 @@ export default class NewCommand extends Command {
     //   char: "t",
     //   description: "Template to use",
     // }),
-    force: Flags.boolean({
-      char: "f",
+    "no-prompt": Flags.boolean({
+      aliases: ["noprompt"],
       default: false,
       description: "Initialize without prompting",
     }),
@@ -80,6 +81,12 @@ export default class NewCommand extends Command {
   async run(): Promise<void> {
     try {
       const { flags } = await this.parse(NewCommand);
+      const isTty = process.stdin.isTTY;
+
+      if (!isTty && (!flags.sdk || !flags.name || !flags.dir)) {
+        this.logError("Non-interactive mode. Please provide required flags sdk, name, and dir.");
+        this.exit(1);
+      }
 
       if (!flags["no-logo"]) {
         this.log(getHeader(this.config.version));
@@ -119,7 +126,7 @@ export default class NewCommand extends Command {
 
       const dir = flags.dir || "." + path.sep + name;
 
-      if (!flags.force && (await fs.exists(dir))) {
+      if (!flags["no-prompt"] && (await fs.exists(dir))) {
         const confirmed = await inquirer.confirm({ message: `Directory ${dir} already exists. Do you want to overwrite it?`, default: false });
         if (!confirmed) {
           this.abort();
@@ -136,7 +143,8 @@ export default class NewCommand extends Command {
         createGitRepo = await inquirer.confirm({ message: "Initialize a git repository?", default: true });
       }
 
-      if (!flags.force) {
+      const allRequiredFlagsProvided = flags.sdk && flags.name && flags.dir;
+      if (!flags["no-prompt"] && !allRequiredFlagsProvided) {
         const confirmed = await inquirer.confirm({ message: "Continue?", default: true });
         if (!confirmed) {
           this.abort();
@@ -245,7 +253,7 @@ export default class NewCommand extends Command {
         }
       } else if (latestVersion !== installedSdkVersion) {
         const confirmed = await inquirer.confirm({
-          message: `You have ${installedSdkVersion} of the ${sdkText}. The latest is ${latestVersion}. Would you like to update?`,
+          message: `You have ${installedSdkVersion} of the ${sdkText}.\n  The latest is ${latestVersion}. Would you like to update?`,
           default: true,
         });
         if (confirmed) {
