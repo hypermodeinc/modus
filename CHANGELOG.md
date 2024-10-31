@@ -1,5 +1,11 @@
 # Change Log
 
+## UNRELEASED
+
+- Consistent padding in the help section
+- `modus new`: Enum options need to print possible options
+- Validate SDK prereq immediately after choosing SDK
+
 ## 2024-10-30 - CLI 0.13.6
 
 - `modus new`: Initialize git repo on interactive flow [#538](https://github.com/hypermodeinc/modus/pull/538)
