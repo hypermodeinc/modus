@@ -39,7 +39,7 @@ type Metadata struct {
 }
 
 type Docs struct {
-	Description string `json:"description"`;
+	Description string `json:"description"`
 }
 
 type Function struct {
@@ -53,6 +53,7 @@ type TypeDefinition struct {
 	Name   string   `json:"-"`
 	Id     uint32   `json:"id,omitempty"`
 	Fields []*Field `json:"fields,omitempty"`
+	Docs   *Docs    `json:"docs,omitempty"`
 }
 
 type Parameter struct {
@@ -127,9 +128,9 @@ func (m *Metadata) SdkVersion() string {
 func (m *Metadata) GetTypeDefinition(typ string) (*TypeDefinition, error) {
 	switch typ {
 	case "[]byte":
-		return &TypeDefinition{typ, 1, nil}, nil
+		return &TypeDefinition{typ, 1, nil, nil}, nil
 	case "string":
-		return &TypeDefinition{typ, 2, nil}, nil
+		return &TypeDefinition{typ, 2, nil, nil}, nil
 	}
 
 	def, ok := m.Types[typ]

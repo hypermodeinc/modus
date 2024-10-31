@@ -119,6 +119,7 @@ func transformTypes(types metadata.TypeMap, lti langsupport.LanguageTypeInfo, fo
 		typeDefs[name] = &TypeDefinition{
 			Name:   name,
 			Fields: fields,
+			Docs:   t.Docs,
 		}
 	}
 	return typeDefs, errors
@@ -128,12 +129,14 @@ type FieldDefinition struct {
 	Name       string
 	Arguments  []*ArgumentDefinition
 	ReturnType string
+	Docs       *metadata.Docs
 }
 
 type TypeDefinition struct {
 	Name      string
 	Fields    []*NameTypePair
 	IsMapType bool
+	Docs      *metadata.Docs
 }
 
 type NameTypePair struct {
@@ -145,6 +148,7 @@ type ArgumentDefinition struct {
 	Name    string
 	Type    string
 	Default *any
+	Docs    *metadata.Docs
 }
 
 // TODO: refactor for readability
@@ -179,6 +183,7 @@ func transformFunctions(functions metadata.FunctionMap, inputTypeDefs, resultTyp
 			Name:       fieldName,
 			Arguments:  args,
 			ReturnType: returnType,
+			Docs:       fn.Docs,
 		}
 
 		if isMutation(fn.Name) {
@@ -333,6 +338,11 @@ func writeSchema(buf *bytes.Buffer, queryFields []*FieldDefinition, mutationFiel
 	// write input types
 	for _, t := range inputTypeDefs {
 		buf.WriteByte('\n')
+		if t.Docs != nil {
+			for _, l := range strings.Split(t.Docs.Description, "\n") {
+				buf.WriteString("# " + l + "\n")
+			}
+		}
 		buf.WriteString("input ")
 		buf.WriteString(t.Name)
 		buf.WriteString(" {\n")
@@ -365,6 +375,12 @@ func writeSchema(buf *bytes.Buffer, queryFields []*FieldDefinition, mutationFiel
 
 func writeField(buf *bytes.Buffer, field *FieldDefinition) {
 	buf.WriteString("  ")
+	if field.Docs != nil {
+		for _, l := range strings.Split(field.Docs.Description, "\n") {
+			buf.WriteString("# " + l + "\n")
+		}
+		buf.WriteString("  ")
+	}
 	buf.WriteString(field.Name)
 	if len(field.Arguments) > 0 {
 		buf.WriteByte('(')

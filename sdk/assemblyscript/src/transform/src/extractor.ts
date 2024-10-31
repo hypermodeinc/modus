@@ -11,6 +11,7 @@ import binaryen from "assemblyscript/lib/binaryen.js";
 import {
   ArrayLiteralExpression,
   Class,
+  ClassDeclaration,
   CommentKind,
   CommentNode,
   ElementKind,
@@ -18,6 +19,7 @@ import {
   FloatLiteralExpression,
   Function as Func,
   FunctionDeclaration,
+  IdentifierExpression,
   IntegerLiteralExpression,
   LiteralExpression,
   LiteralKind,
@@ -29,6 +31,7 @@ import {
 } from "assemblyscript/dist/assemblyscript.js";
 import {
   Docs,
+  Field,
   FunctionSignature,
   JsonLiteral,
   Parameter,
@@ -73,7 +76,7 @@ export class Extractor {
           return new TypeDefinition(
             c.type.toString(),
             c.id,
-            this.getClassFields(c),
+            this.getClassFields(c)
           );
         })
         .map((t) => [t.name, t]),
@@ -103,10 +106,11 @@ export class Extractor {
       a.name.localeCompare(b.name),
     );
 
+    
     return {
       exportFns: exportedFunctions,
       importFns: importedFunctions,
-      types,
+      types: types.map(v => this.getTypeDocs(v)),
     };
   }
 
@@ -165,11 +169,10 @@ export class Extractor {
         return instance as Property;
       })
       .filter((p) => p && p.isField)
-      .map((f) => ({
+      .map((f) => <Field>{
         name: f.name,
-        type: f.type.toString(),
-        docs: null
-      }));
+        type: f.type.toString()
+      });
   }
 
   private getExportedFunctions() {
@@ -232,11 +235,12 @@ export class Extractor {
       { type: f.signature.returnType.toString() },
     ]);
 
-    signature.docs = this.getDocsFromComment(signature);
+    signature.docs = this.getDocsFromFunction(signature);
     return signature;
   }
-  private getDocsFromComment(signature: FunctionSignature) {
+  private getDocsFromFunction(signature: FunctionSignature) {
     const visitor = new Visitor();
+    let docs: Docs | null = null;
 
     visitor.visitFunctionDeclaration = (node: FunctionDeclaration) => {
       const source = node.range.source;
@@ -254,21 +258,55 @@ export class Extractor {
         newRange.source = source;
         const commentNodes = this.parseComments(newRange);
         if (!commentNodes.length) return;
-        console.log("Start: " + start);
-        console.log("End: " + end);
-        console.log("Text: " + source.text.slice(start, end));
-        console.log("Comment: ", commentNodes);
-        return Docs.from(commentNodes);
+        console.log("Got docs from func")
+        docs = Docs.from(commentNodes);
       }
     }
-
     visitor.visit(this.program.sources);
-    return null;
+    return docs;
+  }
+  private getTypeDocs(type: TypeDefinition): TypeDefinition {
+    const name = (() => {
+      if (type.name.startsWith("~lib/")) return null;
+      return type.name.slice(
+        Math.max(
+          type.name.lastIndexOf("<"),
+          type.name.lastIndexOf("/") + 1
+        ),
+        Math.max(
+          type.name.indexOf(">"),
+          type.name.length
+        )
+      );
+    })();
+    if (!name) return type;
+    for (const _node of Array.from(this.program.managedClasses.values())) {
+      if (_node.name != name) continue;
+      const node = _node.declaration as ClassDeclaration;
+      const source = node.range.source;
+      const nodeIndex = source.statements.indexOf(node);
+      const prevNode = source.statements[Math.max(nodeIndex - 1, 0)];
+
+      const start = nodeIndex > 0 ? prevNode.range.start : 0;
+      const end = node.range.start;
+
+      const newRange = new Range(start, end);
+      console.log("Range: " + source.text.slice(newRange.start, newRange.end))
+      newRange.source = source;
+      const commentNodes = this.parseComments(newRange);
+      if (!commentNodes.length) break;
+      type.docs = Docs.from(commentNodes);
+    }
+    return type;
   }
   private parseComments(range: Range): CommentNode[] {
     const nodes: CommentNode[] = [];
-    const text = range.source.text.slice(range.start, range.end).trim();
-
+    let text = range.source.text.slice(range.start, range.end).trim();
+    const start = Math.min(
+      text.indexOf("/*") === -1 ? Infinity : text.indexOf("/*"),
+      text.indexOf("//") === -1 ? Infinity : text.indexOf("//")
+    );
+    if (start !== Infinity) text = text.slice(start);
     let commentKind: CommentKind;
 
     if (text.startsWith("//")) {

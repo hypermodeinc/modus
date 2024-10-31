@@ -14,7 +14,7 @@ import (
 	"strings"
 )
 
-var version string
+var version = "v0.12.7-38-gacb19ff"
 
 func init() {
 	// The "version" variable is set by the makefile using -ldflags when using "make build" or goreleaser.

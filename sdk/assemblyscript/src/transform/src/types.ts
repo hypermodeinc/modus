@@ -41,7 +41,7 @@ export class FunctionSignature {
     public name: string,
     public parameters: Parameter[],
     public results: Result[],
-    public docs: Docs | null = null
+    public docs: Docs | undefined = undefined
   ) { }
 
   toString() {
@@ -86,7 +86,7 @@ export class TypeDefinition {
     public name: string,
     public id: number,
     public fields?: Field[],
-    public docs: Docs | null = null
+    public docs: Docs | undefined = undefined
   ) { }
 
   toString() {
@@ -105,6 +105,7 @@ export class TypeDefinition {
     return {
       id: this.id,
       fields: this.fields,
+      docs: this.docs
     };
   }
 
@@ -127,10 +128,19 @@ export interface Parameter {
   default?: JsonLiteral;
 }
 
-interface Field {
-  name: string;
-  type: string;
-  docs: Docs | null;
+export class Field {
+  constructor(
+    public name: string,
+    public type: string,
+    public docs: Docs | undefined = undefined
+  ) { }
+  toJSON() {
+    return {
+      name: this.name,
+      type: this.type,
+      docs: this.docs
+    }
+  }
 }
 
 export const typeMap = new Map<string, string>([
