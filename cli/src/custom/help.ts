@@ -55,7 +55,7 @@ export default class CustomHelp extends Help {
     for (const topic of topics) {
       if (topic.hidden) continue;
 
-      out += getMessageWithPad(chalk.bold.blue(topic.name), topic.description || "", FIRST_PAD, SECOND_PAD) + "\n";
+      out += getMessageWithPad(chalk.bold.blue(topic.name), topic.description || "", FIRST_PAD, SECOND_PAD, topic.name.length) + "\n";
     }
     return out.trim();
   }
@@ -129,8 +129,6 @@ export default class CustomHelp extends Help {
   }
 
   async showCommandHelp(command: Command.Loadable): Promise<void> {
-    console.log("here");
-
     this.log(this.formatHeader());
 
     const name = command.id.replaceAll(":", " ");
@@ -147,17 +145,20 @@ export default class CustomHelp extends Help {
       this.log(chalk.bold("Args:"));
       for (let arg of Object.values(command.args)) {
         let usage = "";
-        let desc = arg.description;
+        let desc = arg.description || "";
         if (arg.description?.includes("-|-")) {
           usage = arg.description.split("-|-")[0];
           desc = arg.description.split("-|-")[1];
         }
-        let defaultValue = "";
         if (arg.default) {
-          defaultValue = chalk.dim(` (default: '${arg.default}')`);
+          desc += chalk.dim(` (default: '${arg.default}')`);
         }
 
-        this.log(getMessageWithPad(chalk.bold.blueBright(arg.name), desc + defaultValue, FIRST_PAD, SECOND_PAD, arg.name.length));
+        if (arg.options) {
+          desc += chalk.dim(` (options: ${arg.options.join(", ")})`);
+        }
+
+        this.log(getMessageWithPad(chalk.bold.blueBright(arg.name), desc, FIRST_PAD, SECOND_PAD, arg.name.length));
       }
       this.log();
     }
@@ -168,7 +169,14 @@ export default class CustomHelp extends Help {
         if (flag.hidden) continue;
 
         const flagOptions = flag.char ? `-${flag.char}, --${flag.name}` : `--${flag.name}`;
-        this.log(getMessageWithPad(chalk.bold.blueBright(flagOptions), flag.description || "", FIRST_PAD, SECOND_PAD, flagOptions.length));
+
+        let desc = flag.description || "";
+        // The interface doesn't have `options`, but `options` is a valid property of a flag
+        if ("options" in flag && flag.options) {
+          desc += chalk.dim(` (${flag.options.join(", ")})`);
+        }
+
+        if (flag) this.log(getMessageWithPad(chalk.bold.blueBright(flagOptions), desc, FIRST_PAD, SECOND_PAD, flagOptions.length));
       }
       this.log();
     }

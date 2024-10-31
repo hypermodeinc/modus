@@ -7,7 +7,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Command, Flags } from "@oclif/core";
+import { Flags } from "@oclif/core";
 import chalk from "chalk";
 import semver from "semver";
 import os from "node:os";
@@ -52,6 +52,7 @@ export default class NewCommand extends BaseCommand {
     sdk: Flags.string({
       char: "s",
       description: "SDK to use",
+      options: ["go", "assemblyscript"],
     }),
     // template: Flags.string({
     //   char: "t",
