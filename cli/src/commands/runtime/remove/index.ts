@@ -23,18 +23,7 @@ export default class RuntimeRemoveCommand extends Command {
     }),
   };
 
-  static flags = {
-    help: Flags.help({
-      char: "h",
-      helpLabel: "-h, --help",
-      description: "Show help message",
-    }),
-    force: Flags.boolean({
-      char: "f",
-      default: false,
-      description: "Remove without prompting",
-    }),
-  };
+  static flags = {};
 
   static description = "Remove a Modus runtime";
   static examples = ["modus runtime remove v0.0.0", "modus runtime remove all"];

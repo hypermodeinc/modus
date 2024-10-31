@@ -25,11 +25,12 @@ import { getAppInfo } from "../../util/appinfo.js";
 import { isOnline, withSpinner } from "../../util/index.js";
 import { readHypermodeSettings } from "../../util/hypermode.js";
 import BuildCommand from "../build/index.js";
+import { BaseCommand } from "../baseCommand.js";
 
 const MANIFEST_FILE = "modus.json";
 const ENV_FILES = [".env", ".env.local", ".env.development", ".env.dev", ".env.development.local", ".env.dev.local"];
 
-export default class DevCommand extends Command {
+export default class DevCommand extends BaseCommand {
   static args = {
     path: Args.directory({
       description: "Path to app directory",
@@ -39,15 +40,6 @@ export default class DevCommand extends Command {
   };
 
   static flags = {
-    help: Flags.help({
-      char: "h",
-      helpLabel: "-h, --help",
-      description: "Show help message",
-    }),
-    "no-logo": Flags.boolean({
-      aliases: ["nologo"],
-      hidden: true,
-    }),
     runtime: Flags.string({
       char: "r",
       description: "Modus runtime version to use. If not provided, the latest runtime compatible with the app will be used.",

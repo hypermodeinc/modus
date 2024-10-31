@@ -12,22 +12,13 @@ import chalk from "chalk";
 import * as vi from "../../../util/versioninfo.js";
 import { getHeader } from "../../../custom/header.js";
 import { SDK } from "../../../custom/globals.js";
+import { BaseCommand } from "../../baseCommand.js";
 
-export default class SDKListCommand extends Command {
+export default class SDKListCommand extends BaseCommand {
   static args = {};
   static description = "List installed Modus SDKs";
   static examples = ["modus sdk list"];
-  static flags = {
-    help: Flags.help({
-      char: "h",
-      helpLabel: "-h, --help",
-      description: "Show help message",
-    }),
-    "no-logo": Flags.boolean({
-      aliases: ["nologo"],
-      hidden: true,
-    }),
-  };
+  static flags = {};
 
   async run(): Promise<void> {
     const { flags } = await this.parse(SDKListCommand);

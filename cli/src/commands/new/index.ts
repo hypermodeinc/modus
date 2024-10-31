@@ -25,24 +25,16 @@ import { getHeader } from "../../custom/header.js";
 import * as inquirer from "@inquirer/prompts";
 import { getGoVersion, getTinyGoVersion } from "../../util/systemVersions.js";
 import { generateAppName } from "../../util/appname.js";
+import { BaseCommand } from "../baseCommand.js";
 
 const MODUS_DEFAULT_TEMPLATE_NAME = "default";
 
-export default class NewCommand extends Command {
+export default class NewCommand extends BaseCommand {
   static description = "Create a new Modus app";
 
   static examples = ["modus new", "modus new --name my-app", "modus new --name my-app --sdk go --dir ./my-app --no-prompt"];
 
   static flags = {
-    help: Flags.help({
-      char: "h",
-      helpLabel: "-h, --help",
-      description: "Show help message",
-    }),
-    "no-logo": Flags.boolean({
-      aliases: ["nologo"],
-      hidden: true,
-    }),
     name: Flags.string({
       char: "n",
       description: "App name",

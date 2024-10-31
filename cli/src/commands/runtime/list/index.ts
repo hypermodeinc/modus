@@ -11,22 +11,13 @@ import { Command, Flags } from "@oclif/core";
 import chalk from "chalk";
 import * as vi from "../../../util/versioninfo.js";
 import { getHeader } from "../../../custom/header.js";
+import { BaseCommand } from "../../baseCommand.js";
 
-export default class RuntimeListCommand extends Command {
+export default class RuntimeListCommand extends BaseCommand {
   static args = {};
   static description = "List installed Modus runtimes";
   static examples = ["modus runtime list"];
-  static flags = {
-    help: Flags.help({
-      char: "h",
-      helpLabel: "-h, --help",
-      description: "Show help message",
-    }),
-    "no-logo": Flags.boolean({
-      aliases: ["nologo"],
-      hidden: true,
-    }),
-  };
+  static flags = {};
 
   async run(): Promise<void> {
     const { flags } = await this.parse(RuntimeListCommand);
