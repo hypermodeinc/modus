@@ -4,10 +4,15 @@
 
 - For CLI to track non-prereleases, pull from releases json to remove rate limiting issues from github releases [#543](https://github.com/hypermodeinc/modus/pull/543)
 
+## 2024-10-30 - CLI 0.13.6
+
+- `modus new`: Initialize git repo on interactive flow [#538](https://github.com/hypermodeinc/modus/pull/538)
+- `modus new`: Skip confirmation if all required params are provided [#539](https://github.com/hypermodeinc/modus/pull/539)
+- `modus new`: Fix issues with Go/TinyGo version detection [#540](https://github.com/hypermodeinc/modus/pull/540)
+
 ## 2024-10-30 - AssemblyScript SDK 0.13.3
 
 - Actually fix issue with git info capture [#537](https://github.com/hypermodeinc/modus/pull/537)
-- `modus new`: Initialize git repo on interactive flow: [#538](https://github.com/hypermodeinc/modus/pull/538)
 
 ## 2024-10-30 - AssemblyScript SDK 0.13.2
 
