@@ -144,7 +144,7 @@ export default class NewCommand extends BaseCommand {
       }
 
       this.log();
-      await this.createApp(name, dir, sdk, MODUS_DEFAULT_TEMPLATE_NAME, flags.force, flags.prerelease, createGitRepo);
+      await this.createApp(name, dir, sdk, MODUS_DEFAULT_TEMPLATE_NAME, flags["no-prompt"], flags.prerelease, createGitRepo);
     } catch (err: any) {
       if (err.name === "ExitPromptError") {
         this.abort();
