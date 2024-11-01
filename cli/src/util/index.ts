@@ -59,8 +59,7 @@ export async function isOnline(): Promise<boolean> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 1000);
   try {
-    const headers = getGitHubApiHeaders();
-    const response = await fetch("https://api.github.com", { signal: controller.signal, headers });
+    const response = await fetch(`https://releases.hypermode.com/modus-latest.json`, {});
     online = response.ok;
   } catch {
     online = false;
