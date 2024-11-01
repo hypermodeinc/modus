@@ -19,7 +19,6 @@ export default class RuntimeRemoveCommand extends Command {
   static args = {
     version: Args.string({
       description: "Runtime version to remove, or 'all' to remove all runtimes.",
-      required: true,
     }),
   };
 
@@ -31,8 +30,42 @@ export default class RuntimeRemoveCommand extends Command {
   async run(): Promise<void> {
     try {
       const { args, flags } = await this.parse(RuntimeRemoveCommand);
+
       if (!args.version) {
-        this.logError(`No runtime version specified. Run ${chalk.whiteBright("modus runtime remove <version>")}, or ${chalk.whiteBright("modus runtime remove all")}`);
+        const versions = await vi.getInstalledRuntimeVersions();
+
+        if (versions.length === 0) {
+          this.log(chalk.yellow("No Modus runtimes are installed."));
+          this.exit(1);
+        }
+
+        const runtimeVersionToRemove = await inquirer.select({
+          message: "Select a runtime version to remove",
+          choices: [
+            ...versions.map((v) => ({ name: v, value: v })),
+            {
+              name: chalk.bold("All versions"),
+              value: "all",
+            },
+          ],
+        });
+
+        if (runtimeVersionToRemove === "all") {
+          const confirmed = await inquirer.confirm({
+            message: "Are you sure you want to remove all Modus runtimes?",
+            default: false,
+          });
+          if (!confirmed) {
+            this.abort();
+          }
+
+          for (const version of versions) {
+            await this.removeRuntime(version);
+          }
+        } else {
+          await this.removeRuntime(runtimeVersionToRemove);
+        }
+
         return;
       }
 

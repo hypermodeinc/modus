@@ -7,7 +7,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Command, Flags } from "@oclif/core";
 import chalk from "chalk";
 import * as vi from "../../../util/versioninfo.js";
 import { getHeader } from "../../../custom/header.js";

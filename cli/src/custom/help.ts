@@ -180,7 +180,7 @@ export default class CustomHelp extends Help {
           desc = arg.description.split("-|-")[1];
         }
         if (arg.default) {
-          desc += chalk.dim(` (default: '${arg.default}')`);
+          desc += chalk.dim(` (default: ${arg.default})`);
         }
 
         if (arg.options) {

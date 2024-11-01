@@ -7,7 +7,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Args, Command, Flags } from "@oclif/core";
+import { Args, Flags } from "@oclif/core";
 import chalk from "chalk";
 
 import * as fs from "../../../util/fs.js";
@@ -20,8 +20,8 @@ import { BaseCommand } from "../../../baseCommand.js";
 export default class SDKRemoveCommand extends BaseCommand {
   static args = {
     name: Args.string({
-      description: "SDK name to remove (or 'all' to remove all SDKs)",
-      required: true,
+      description: "SDK name to remove",
+      options: ["all", "go", "golang", "assemblyscript", "as"],
     }),
     version: Args.string({
       description: "SDK version to remove, if removing a specific SDK. Leave blank to remove all versions of the SDK.",
@@ -48,6 +48,58 @@ export default class SDKRemoveCommand extends BaseCommand {
   async run(): Promise<void> {
     try {
       const { args, flags } = await this.parse(SDKRemoveCommand);
+
+      if (!args.name) {
+        const goSdkVersions = await vi.getInstalledSdkVersions(SDK.Go);
+        const asSdkVersions = await vi.getInstalledSdkVersions(SDK.AssemblyScript);
+
+        if (goSdkVersions.length === 0 && asSdkVersions.length === 0) {
+          this.log(chalk.yellow("No Modus SDKs are installed."));
+          this.exit(1);
+        }
+
+        const sdkVersions: { sdk: SDK; version: string }[] = [...goSdkVersions.map((version) => ({ sdk: SDK.Go, version })), ...asSdkVersions.map((version) => ({ sdk: SDK.AssemblyScript, version }))];
+        if (goSdkVersions.length > 0) {
+          sdkVersions.push({
+            sdk: SDK.Go,
+            version: "all",
+          });
+        }
+        if (asSdkVersions.length > 0) {
+          sdkVersions.push({
+            sdk: SDK.AssemblyScript,
+            version: "all",
+          });
+        }
+
+        const sdkVersionToRemove = await inquirer.select({
+          message: "Select a SDK version to remove",
+          choices: sdkVersions.map((item) => ({
+            name: item.version === "all" ? chalk.bold(`All ${item.sdk} SDK versions`) : `${item.sdk} SDK ${item.version}`,
+            value: item,
+          })),
+        });
+
+        if (sdkVersionToRemove.version === "all") {
+          const versions = await vi.getInstalledSdkVersions(sdkVersionToRemove.sdk);
+          const confirmed = await inquirer.confirm({
+            message: `Are you sure you want to remove all Modus ${sdkVersionToRemove.sdk} SDKs?`,
+            default: false,
+          });
+          if (!confirmed) {
+            this.abort();
+          }
+
+          for (const version of versions) {
+            await this.removeSDK(sdkVersionToRemove.sdk, version);
+          }
+        } else {
+          await this.removeSDK(parseSDK(sdkVersionToRemove.sdk), sdkVersionToRemove.version);
+        }
+
+        return;
+      }
+
       if (!args.version) {
         this.logError(`No SDK specified! Run ${chalk.whiteBright("modus sdk remove <name> [version]")}, or ${chalk.whiteBright("modus sdk remove all")}`);
         return;
