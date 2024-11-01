@@ -13,11 +13,8 @@ import { execSync } from "child_process";
 import * as path from "path";
 import { Xid } from "xid-ts";
 import binaryen from "assemblyscript/lib/binaryen.js";
-import { Colors } from "assemblyscript/util/terminal.js";
-import { WriteStream as FSWriteStream } from "fs";
-import { WriteStream as TTYWriteStream } from "tty";
+import chalk from "chalk";
 import { FunctionSignature, TypeDefinition } from "./types.js";
-import writeLogo from "./logo.js";
 
 const METADATA_VERSION = 2;
 
@@ -42,8 +39,15 @@ export class Metadata {
     m.sdk = getSdkInfo();
 
     if (isGitRepo()) {
-      m.gitRepo = getGitRepo();
-      m.gitCommit = getGitCommit();
+      const gitRepo = getGitRepo();
+      if (gitRepo) {
+        m.gitRepo = getGitRepo();
+      }
+
+      const gitCommit = getGitCommit();
+      if (gitCommit) {
+        m.gitCommit = getGitCommit();
+      }
     }
 
     return m;
@@ -80,38 +84,24 @@ export class Metadata {
     this.fnImports = fnImports;
 
     module.addCustomSection(
-      "hypermode_version",
+      "modus_metadata_version",
       Uint8Array.from([METADATA_VERSION]),
     );
 
-    module.addCustomSection("hypermode_meta", encoder.encode(json));
+    module.addCustomSection("modus_metadata", encoder.encode(json));
   }
 
-  logToStream(stream: FSWriteStream | TTYWriteStream, markdown = false) {
-    writeLogo(stream, markdown);
-
-    const isTTY = stream instanceof TTYWriteStream;
-    const boldOn = isTTY ? "\u001b[1m" : "";
-    const boldOff = isTTY ? "\u001b[0m" : "";
-
-    const colors = new Colors(stream as { isTTY: boolean });
+  logResults() {
     const writeHeader = (text: string) => {
-      if (markdown) {
-        stream.write(`### ${text}\n`);
-      } else {
-        stream.write(boldOn + colors.blue(text) + boldOff + "\n");
-      }
+      console.log(chalk.bold.blue(text));
     };
 
     const writeItem = (text: string) => {
-      if (markdown) {
-        stream.write(`  - ${text}\n`);
-      } else {
-        stream.write(`  ${colors.cyan(text)}\n`);
-      }
+      console.log(`  ${chalk.cyan(text)}`);
     };
 
     const writeTable = (rows: string[][]) => {
+      rows = rows.filter((r) => !!r);
       const pad = rows.reduce(
         (max, row) => [
           Math.max(max[0], row[0].length),
@@ -120,21 +110,12 @@ export class Metadata {
         [0, 0],
       );
 
-      if (markdown) {
-        stream.write(`| ${" ".repeat(pad[0])} | ${" ".repeat(pad[1])} |\n`);
-        stream.write(`| ${"-".repeat(pad[0])} | ${"-".repeat(pad[1])} |\n`);
-      }
       rows.forEach((row) => {
         if (row) {
-          const padding0 = " ".repeat(pad[0] - row[0].length);
-          const padding1 = " ".repeat(pad[1] - row[1].length);
-          if (markdown) {
-            stream.write(`| ${row[0]}${padding0} | ${row[1]}${padding1} |\n`);
-          } else {
-            const key = colors.cyan(row[0] + ":");
-            const value = colors.blue(row[1]);
-            stream.write(`  ${key}${padding0} ${value}\n`);
-          }
+          const padding = " ".repeat(pad[0] - row[0].length);
+          const key = chalk.cyan(row[0] + ":");
+          const value = chalk.blue(row[1]);
+          console.log(`  ${key}${padding} ${value}`);
         }
       });
     };
@@ -148,23 +129,22 @@ export class Metadata {
       this.gitRepo ? ["Git Repository", this.gitRepo] : undefined,
       this.gitCommit ? ["Git Commit", this.gitCommit] : undefined,
     ]);
-    stream.write("\n");
+    console.log();
 
     writeHeader("Functions:");
     Object.values(this.fnExports).forEach((v) => writeItem(v.toString()));
-    stream.write("\n");
+    console.log();
 
     const types = Object.values(this.types).filter((t) => !t.isHidden());
     if (types.length > 0) {
       writeHeader("Custom Types:");
       types.forEach((t) => writeItem(t.toString()));
-      stream.write("\n");
+      console.log();
     }
 
     if (process.env.MODUS_DEBUG) {
       writeHeader("Metadata JSON:");
-      stream.write(JSON.stringify(this, undefined, 2));
-      stream.write("\n\n");
+      console.log(JSON.stringify(this, undefined, 2) + "\n\n");
     }
   }
 }
@@ -178,7 +158,7 @@ function getSdkInfo(): string {
   );
   const json = readFileSync(filePath).toString();
   const lib = JSON.parse(json);
-  return `${lib.name.split("/")[1]}@${lib.version}`;
+  return `${lib.name.split("/")[1]}@${lib.version || "dev"}`;
 }
 
 function getPluginInfo(): string {
@@ -207,22 +187,38 @@ function isGitRepo(): boolean {
   }
 }
 
-function getGitRepo(): string {
-  let url = execSync("git remote get-url origin").toString().trim();
+function getGitRepo(): string | undefined {
+  try {
+    let url = execSync("git remote get-url origin", {
+      stdio: ["ignore", "pipe", "ignore"],
+    })
+      .toString()
+      .trim();
 
-  // Convert ssh to https
-  if (url.startsWith("git@")) {
-    url = url.replace(":", "/").replace("git@", "https://");
+    // Convert ssh to https
+    if (url.startsWith("git@")) {
+      url = url.replace(":", "/").replace("git@", "https://");
+    }
+
+    // Remove the .git suffix
+    if (url.endsWith(".git")) {
+      url = url.slice(0, -4);
+    }
+
+    return url;
+  } catch {
+    return undefined;
   }
-
-  // Remove the .git suffix
-  if (url.endsWith(".git")) {
-    url = url.slice(0, -4);
-  }
-
-  return url;
 }
 
-function getGitCommit(): string {
-  return execSync("git rev-parse HEAD").toString().trim();
+function getGitCommit(): string | undefined {
+  try {
+    return execSync("git rev-parse HEAD", {
+      stdio: ["ignore", "pipe", "ignore"],
+    })
+      .toString()
+      .trim();
+  } catch {
+    return undefined;
+  }
 }

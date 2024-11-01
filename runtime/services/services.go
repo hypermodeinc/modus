@@ -16,10 +16,12 @@ import (
 	"github.com/hypermodeinc/modus/runtime/collections"
 	"github.com/hypermodeinc/modus/runtime/db"
 	"github.com/hypermodeinc/modus/runtime/dgraphclient"
+	"github.com/hypermodeinc/modus/runtime/envfiles"
 	"github.com/hypermodeinc/modus/runtime/graphql"
 	"github.com/hypermodeinc/modus/runtime/hostfunctions"
 	"github.com/hypermodeinc/modus/runtime/logger"
 	"github.com/hypermodeinc/modus/runtime/manifestdata"
+	"github.com/hypermodeinc/modus/runtime/middleware"
 	"github.com/hypermodeinc/modus/runtime/modusdb"
 	"github.com/hypermodeinc/modus/runtime/pluginmanager"
 	"github.com/hypermodeinc/modus/runtime/secrets"
@@ -30,9 +32,7 @@ import (
 )
 
 // Starts any services that need to be started when the runtime starts.
-func Start() context.Context {
-	// Create the main background context
-	ctx := context.Background()
+func Start(ctx context.Context) {
 
 	// Note, we cannot start a Sentry transaction here, or it will also be used for the background services, post-initiation.
 
@@ -56,10 +56,10 @@ func Start() context.Context {
 	modusdb.Init(ctx)
 	collections.Initialize(ctx)
 	manifestdata.MonitorManifestFile(ctx)
+	envfiles.MonitorEnvFiles(ctx)
 	pluginmanager.Initialize(ctx)
 	graphql.Initialize()
 
-	return ctx
 }
 
 // Stops any services that need to be stopped when the runtime stops.
@@ -74,6 +74,7 @@ func Stop(ctx context.Context) {
 	// Unlike start, these should each block until they are fully stopped.
 
 	collections.Shutdown(ctx)
+	middleware.Shutdown()
 	sqlclient.ShutdownPGPools()
 	dgraphclient.ShutdownConns()
 	logger.Close()

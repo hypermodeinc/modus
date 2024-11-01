@@ -31,8 +31,8 @@ func WriteMetadata(config *config.Config, meta *metadata.Metadata) error {
 
 	wasmFilePath := filepath.Join(config.OutputDir, config.WasmFileName)
 	return writeCustomSections(wasmFilePath, map[string][]byte{
-		"hypermode_version": {metadata.MetadataVersion},
-		"hypermode_meta":    metaJson,
+		"modus_metadata_version": {metadata.MetadataVersion},
+		"modus_metadata":         metaJson,
 	})
 }
 

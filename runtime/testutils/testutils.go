@@ -17,11 +17,11 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/hypermodeinc/modus/lib/metadata"
 	"github.com/hypermodeinc/modus/runtime/functions"
 	"github.com/hypermodeinc/modus/runtime/langsupport"
 	"github.com/hypermodeinc/modus/runtime/logger"
 	"github.com/hypermodeinc/modus/runtime/plugins"
-	"github.com/hypermodeinc/modus/runtime/plugins/metadata"
 	"github.com/hypermodeinc/modus/runtime/utils"
 	"github.com/hypermodeinc/modus/runtime/wasmhost"
 )
@@ -88,7 +88,7 @@ func NewWasmTestFixture(wasmFilePath string, customTypes map[string]reflect.Type
 		panic(err)
 	}
 
-	md, err := metadata.GetMetadataFromCompiledModule(cm)
+	md, err := metadata.GetMetadataFromWasm(content)
 	if err != nil {
 		panic(err)
 	}

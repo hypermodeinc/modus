@@ -11,15 +11,19 @@ package schemagen
 
 import "github.com/hypermodeinc/modus/runtime/manifestdata"
 
-func getFnFilter() func(*FunctionSignature) bool {
+func getFieldFilter() func(*FieldDefinition) bool {
+	embedders := getEmbedderFields()
+	return func(f *FieldDefinition) bool {
+		return !embedders[f.Name]
+	}
+}
+
+func getEmbedderFields() map[string]bool {
 	embedders := make(map[string]bool)
 	for _, collection := range manifestdata.GetManifest().Collections {
 		for _, searchMethod := range collection.SearchMethods {
-			embedders[searchMethod.Embedder] = true
+			embedders[getFieldName(searchMethod.Embedder)] = true
 		}
 	}
-
-	return func(f *FunctionSignature) bool {
-		return !embedders[f.Name]
-	}
+	return embedders
 }
