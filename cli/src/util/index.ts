@@ -59,7 +59,7 @@ export async function isOnline(): Promise<boolean> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 1000);
   try {
-    const response = await fetch(`https://releases.hypermode.com/modus-latest.json`, {});
+    const response = await fetch(`https://releases.hypermode.com/modus-latest.json`, { signal: controller.signal });
     online = response.ok;
   } catch {
     online = false;
