@@ -112,12 +112,10 @@ export default class CustomHelp extends Help {
       {
         name: "--help",
         description: "Show help message",
-        shortName: "-h",
       },
       {
         name: "--version",
         description: "Show Modus version",
-        shortName: "-v",
       },
     ];
     this.log(this.formatRootFlags(globalFlagTopics));
@@ -134,7 +132,7 @@ export default class CustomHelp extends Help {
     for (const topic of topics) {
       if (topic.hidden) continue;
 
-      const fullName = topic.shortName ? `${topic.shortName}, ${topic.name}` : topic.name;
+      const fullName = topic.name;
       out += getMessageWithPad(chalk.bold.blue(fullName), topic.description || "", FIRST_PAD, SECOND_PAD, fullName.length) + "\n";
     }
     return out.trim();
