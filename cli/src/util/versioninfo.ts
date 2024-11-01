@@ -28,11 +28,68 @@ export function isPrerelease(version: string): boolean {
   return !!semver.prerelease(version);
 }
 
+export async function fetchFromModusLatestNoPrerelease(): Promise<{ [key: string]: string }> {
+  const response = await fetch(`https://releases.hypermode.com/modus-latest.json`, {});
+  if (!response.ok) {
+    throw new Error(`Error fetching latest SDK version: ${response.statusText}`);
+  }
+
+  return await response.json();
+}
+
+export async function fetchFromModusAllNoPrerelease(): Promise<{ [key: string]: string[] }> {
+  const response = await fetch(`https://releases.hypermode.com/modus-all.json`, {});
+  if (!response.ok) {
+    throw new Error(`Error fetching all SDK versions: ${response.statusText}`);
+  }
+
+  return await response.json();
+}
+
+export async function fetchItemVersionsFromModusAllNoPrerelease(item: string): Promise<string[]> {
+  const data = await fetchFromModusAllNoPrerelease();
+
+  if (item.endsWith("/")) {
+    item = item.slice(0, -1);
+  }
+
+  const versions = data[item];
+  if (!versions) {
+    throw new Error("Not a valid item in releases");
+  }
+
+  return versions.map((version) => `v${version}`);
+}
+
+export async function getLatestSdkVersionNoPrerelease(sdk: globals.SDK): Promise<string | undefined> {
+  const data = await fetchFromModusLatestNoPrerelease();
+  const version = data["sdk/" + sdk.toLowerCase()];
+  return version ? "v" + version : undefined;
+}
+
+export async function getLatestRuntimeVersionNoPrerelease(): Promise<string | undefined> {
+  const data = await fetchFromModusLatestNoPrerelease();
+  const version = data["runtime"];
+  return version ? "v" + version : undefined;
+}
+
+export async function getLatestCliVersionNoPrerelease(): Promise<string | undefined> {
+  const data = await fetchFromModusLatestNoPrerelease();
+  const version = data["cli"];
+  return version ? "v" + version : undefined;
+}
+
 export async function getLatestSdkVersion(sdk: globals.SDK, includePrerelease: boolean): Promise<string | undefined> {
+  if (!includePrerelease) {
+    return await getLatestSdkVersionNoPrerelease(sdk);
+  }
   return await getLatestVersion(globals.GitHubOwner, globals.GitHubRepo, globals.GetSdkTagPrefix(sdk), includePrerelease);
 }
 
 export async function getLatestRuntimeVersion(includePrerelease: boolean): Promise<string | undefined> {
+  if (!includePrerelease) {
+    return await getLatestRuntimeVersionNoPrerelease();
+  }
   return await getLatestVersion(globals.GitHubOwner, globals.GitHubRepo, globals.GitHubRuntimeTagPrefix, includePrerelease);
 }
 
@@ -61,6 +118,9 @@ export async function getAllRuntimeVersions(includePrerelease: boolean): Promise
 
 async function getAllVersions(owner: string, repo: string, prefix: string, includePrerelease: boolean): Promise<string[]> {
   try {
+    if (!includePrerelease) {
+      return await fetchItemVersionsFromModusAllNoPrerelease(prefix);
+    }
     let tags = await getAllReleaseTags(owner, repo, prefix, includePrerelease);
     if (tags.length === 0 && !includePrerelease) {
       // If no stable release was found, look for prereleases
