@@ -14,6 +14,7 @@ import (
 
 	"github.com/hypermodeinc/modus/sdk/go/tools/modus-go-build/metadata"
 	"github.com/hypermodeinc/modus/sdk/go/tools/modus-go-build/utils"
+	"golang.org/x/tools/go/packages"
 )
 
 func transformStruct(name string, s *types.Struct) *metadata.TypeDefinition {
@@ -37,7 +38,7 @@ func transformStruct(name string, s *types.Struct) *metadata.TypeDefinition {
 	}
 }
 
-func transformFunc(name string, f *types.Func) *metadata.Function {
+func transformFunc(name string, f *types.Func, pkgs map[string]*packages.Package) *metadata.Function {
 	if f == nil {
 		return nil
 	}
@@ -48,6 +49,7 @@ func transformFunc(name string, f *types.Func) *metadata.Function {
 
 	ret := metadata.Function{
 		Name: name,
+		Docs: getFuncDocumentation(pkgs, f),
 	}
 
 	if params != nil {

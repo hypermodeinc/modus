@@ -29,14 +29,14 @@ func CollectProgramInfo(config *config.Config, meta *metadata.Metadata, wasmFunc
 
 	for name, f := range getExportedFunctions(pkgs) {
 		if _, ok := wasmFunctions.Exports[name]; ok {
-			meta.FnExports[name] = transformFunc(name, f)
+			meta.FnExports[name] = transformFunc(name, f, pkgs)
 			findRequiredTypes(f, requiredTypes)
 		}
 	}
 
 	for name, f := range getImportedFunctions(pkgs) {
 		if _, ok := wasmFunctions.Imports[name]; ok {
-			meta.FnImports[name] = transformFunc(name, f)
+			meta.FnImports[name] = transformFunc(name, f, pkgs)
 			findRequiredTypes(f, requiredTypes)
 		}
 	}
@@ -44,7 +44,7 @@ func CollectProgramInfo(config *config.Config, meta *metadata.Metadata, wasmFunc
 	// proxy imports overwrite regular imports
 	for name, f := range getProxyImportFunctions(pkgs) {
 		if _, ok := meta.FnImports[name]; ok {
-			meta.FnImports[name] = transformFunc(name, f)
+			meta.FnImports[name] = transformFunc(name, f, pkgs)
 			findRequiredTypes(f, requiredTypes)
 		}
 	}

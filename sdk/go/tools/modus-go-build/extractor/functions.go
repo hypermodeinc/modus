@@ -16,6 +16,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/hypermodeinc/modus/sdk/go/tools/modus-go-build/metadata"
 	"golang.org/x/tools/go/packages"
 )
 
@@ -25,6 +26,31 @@ var wellKnownTypes = map[string]bool{
 	"time.Time":     true,
 	"time.Duration": true,
 }
+
+func getFuncDocumentation(pkgs map[string]*packages.Package, fn *types.Func) *metadata.Docs {
+	var comments []string
+
+	for _, pkg := range pkgs {
+		for _, file := range pkg.Syntax {
+			for _, decl := range file.Decls {
+				if fd, ok := decl.(*ast.FuncDecl); ok {
+					if fd.Name.Name == fn.Name() {
+						if fd.Doc != nil {
+							for _, comment := range fd.Doc.List {
+								comments = append(comments, comment.Text)
+							}
+						}
+						return &metadata.Docs{
+							Description: strings.Join(comments, "\n"),
+						}
+					}
+				}
+			}
+		}
+	}
+	return nil
+}
+
 
 func getExportedFunctions(pkgs map[string]*packages.Package) map[string]*types.Func {
 	results := make(map[string]*types.Func)

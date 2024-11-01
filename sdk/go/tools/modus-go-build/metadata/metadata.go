@@ -37,16 +37,22 @@ type Metadata struct {
 	Types     TypeMap     `json:"types,omitempty"`
 }
 
+type Docs struct {
+	Description string `json:"description"`
+}
+
 type Function struct {
 	Name       string       `json:"-"`
 	Parameters []*Parameter `json:"parameters,omitempty"`
 	Results    []*Result    `json:"results,omitempty"`
+	Docs       *Docs        `json:"docs,omitempty"`
 }
 
 type TypeDefinition struct {
 	Id     uint32   `json:"id"`
 	Name   string   `json:"-"`
 	Fields []*Field `json:"fields,omitempty"`
+	Docs       *Docs        `json:"docs,omitempty"`
 }
 
 type Parameter struct {
