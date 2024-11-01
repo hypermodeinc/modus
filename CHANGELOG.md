@@ -2,9 +2,10 @@
 
 ## UNRELEASED
 
-- Consistent padding in the help section [#542](https://github.com/hypermodeinc/modus/pull/542)
-- `modus new`: Enum options need to print possible options [#542](https://github.com/hypermodeinc/modus/pull/542)
-- Validate SDK prereq immediately after choosing SDK [#542](https://github.com/hypermodeinc/modus/pull/542)
+- Consistent help + print enum options + validate SDK prereq [#542](https://github.com/hypermodeinc/modus/pull/542)
+  - Consistent padding in the help section 
+  - `modus new`: Enum options need to print possible options
+  - Validate SDK prereq immediately after choosing SDK
 - For CLI to track non-prereleases, pull from releases json to remove rate limiting issues from github releases [#543](https://github.com/hypermodeinc/modus/pull/543)
 
 ## 2024-10-30 - CLI 0.13.6

@@ -52,7 +52,7 @@ export default class NewCommand extends BaseCommand {
     sdk: Flags.string({
       char: "s",
       description: "SDK to use",
-      options: ["go", "assemblyscript"],
+      options: ["go", "golang", "assemblyscript", "as"],
     }),
     // template: Flags.string({
     //   char: "t",
@@ -219,7 +219,7 @@ export default class NewCommand extends BaseCommand {
         this.log(`${chalk.dim("$")} tinygo version`);
         this.log();
 
-        this.exit(0);
+        this.exit(1);
     }
   }
 
