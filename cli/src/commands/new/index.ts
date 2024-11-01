@@ -7,7 +7,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Command, Flags } from "@oclif/core";
+import { Flags } from "@oclif/core";
 import chalk from "chalk";
 import semver from "semver";
 import os from "node:os";
@@ -25,24 +25,16 @@ import { getHeader } from "../../custom/header.js";
 import * as inquirer from "@inquirer/prompts";
 import { getGoVersion, getTinyGoVersion } from "../../util/systemVersions.js";
 import { generateAppName } from "../../util/appname.js";
+import { BaseCommand } from "../../baseCommand.js";
 
 const MODUS_DEFAULT_TEMPLATE_NAME = "default";
 
-export default class NewCommand extends Command {
+export default class NewCommand extends BaseCommand {
   static description = "Create a new Modus app";
 
   static examples = ["modus new", "modus new --name my-app", "modus new --name my-app --sdk go --dir ./my-app --no-prompt"];
 
   static flags = {
-    help: Flags.help({
-      char: "h",
-      helpLabel: "-h, --help",
-      description: "Show help message",
-    }),
-    "no-logo": Flags.boolean({
-      aliases: ["nologo"],
-      hidden: true,
-    }),
     name: Flags.string({
       char: "n",
       description: "App name",
@@ -60,6 +52,7 @@ export default class NewCommand extends Command {
     sdk: Flags.string({
       char: "s",
       description: "SDK to use",
+      options: ["go", "golang", "assemblyscript", "as"],
     }),
     // template: Flags.string({
     //   char: "t",
@@ -114,6 +107,8 @@ export default class NewCommand extends Command {
         sdk = parseSDK(sdkInput);
       }
 
+      await this.validateSdkPrereq(sdk);
+
       const defaultAppName = generateAppName();
       let name =
         flags.name ||
@@ -152,7 +147,7 @@ export default class NewCommand extends Command {
       }
 
       this.log();
-      await this.createApp(name, dir, sdk, MODUS_DEFAULT_TEMPLATE_NAME, flags.force, flags.prerelease, createGitRepo);
+      await this.createApp(name, dir, sdk, MODUS_DEFAULT_TEMPLATE_NAME, flags["no-prompt"], flags.prerelease, createGitRepo);
     } catch (err: any) {
       if (err.name === "ExitPromptError") {
         this.abort();
@@ -162,8 +157,7 @@ export default class NewCommand extends Command {
     }
   }
 
-  private async createApp(name: string, dir: string, sdk: SDK, template: string, force: boolean, prerelease: boolean, createGitRepo: boolean) {
-    // Validate SDK-specific prerequisites
+  private async validateSdkPrereq(sdk: string) {
     const sdkText = `Modus ${sdk} SDK`;
     switch (sdk) {
       case SDK.AssemblyScript:
@@ -227,6 +221,10 @@ export default class NewCommand extends Command {
 
         this.exit(1);
     }
+  }
+
+  private async createApp(name: string, dir: string, sdk: SDK, template: string, force: boolean, prerelease: boolean, createGitRepo: boolean) {
+    const sdkText = `Modus ${sdk} SDK`;
 
     // Verify and/or install the Modus SDK
     let installedSdkVersion = await vi.getLatestInstalledSdkVersion(sdk, prerelease);

@@ -17,8 +17,9 @@ import * as installer from "../../../util/installer.js";
 import { isOnline, withSpinner } from "../../../util/index.js";
 import { getHeader } from "../../../custom/header.js";
 import { SDK, parseSDK } from "../../../custom/globals.js";
+import { BaseCommand } from "../../../baseCommand.js";
 
-export default class SDKInstallCommand extends Command {
+export default class SDKInstallCommand extends BaseCommand {
   static args = {
     name: Args.string({
       description: "SDK name to install, or 'all' to install all SDKs",
@@ -34,15 +35,6 @@ export default class SDKInstallCommand extends Command {
   static examples = ["modus sdk install assemblyscript", "modus sdk install assemblyscript v1.2.3", "modus sdk install", "modus sdk install --prerelease"];
 
   static flags = {
-    help: Flags.help({
-      char: "h",
-      helpLabel: "-h, --help",
-      description: "Show help message",
-    }),
-    "no-logo": Flags.boolean({
-      aliases: ["nologo"],
-      hidden: true,
-    }),
     force: Flags.boolean({
       char: "f",
       default: false,

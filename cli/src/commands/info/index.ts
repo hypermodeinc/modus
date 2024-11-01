@@ -5,21 +5,12 @@ import * as vi from "../../util/versioninfo.js";
 import { SDK } from "../../custom/globals.js";
 import { getHeader } from "../../custom/header.js";
 import { getGoVersion, getNPMVersion, getTinyGoVersion } from "../../util/systemVersions.js";
+import { BaseCommand } from "../../baseCommand.js";
 
-export default class InfoCommand extends Command {
+export default class InfoCommand extends BaseCommand {
   static args = {};
 
-  static flags = {
-    help: Flags.help({
-      char: "h",
-      helpLabel: "-h, --help",
-      description: "Show help message",
-    }),
-    "no-logo": Flags.boolean({
-      aliases: ["nologo"],
-      hidden: true,
-    }),
-  };
+  static flags = {};
 
   static description = "Show Modus info";
 

@@ -19,8 +19,9 @@ import { getAppInfo } from "../../util/appinfo.js";
 import { withSpinner } from "../../util/index.js";
 import { execFileWithExitCode } from "../../util/cp.js";
 import SDKInstallCommand from "../sdk/install/index.js";
+import { BaseCommand } from "../../baseCommand.js";
 
-export default class BuildCommand extends Command {
+export default class BuildCommand extends BaseCommand {
   static args = {
     path: Args.directory({
       description: "Path to app directory",
@@ -29,17 +30,7 @@ export default class BuildCommand extends Command {
     }),
   };
 
-  static flags = {
-    help: Flags.help({
-      char: "h",
-      helpLabel: "-h, --help",
-      description: "Show help message",
-    }),
-    "no-logo": Flags.boolean({
-      aliases: ["nologo"],
-      hidden: true,
-    }),
-  };
+  static flags = {};
 
   static description = "Build a Modus app";
 
