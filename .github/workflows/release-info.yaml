@@ -1,0 +1,43 @@
+name: "Generate Release Info"
+on:
+  workflow_dispatch:
+  workflow_call:
+permissions:
+  contents: read
+jobs:
+  release-info:
+    runs-on: warp-ubuntu-latest-x64-2x
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: "${{ github.ref_name }}"
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ">=22"
+          registry-url: "https://registry.npmjs.org"
+      - name: Install Dependencies
+        working-directory: tools/release-info
+        run: npm ci
+      - name: Build
+        working-directory: tools/release-info
+        run: npm run build
+      - name: Run
+        working-directory: tools/release-info
+        run: node dist/index.js
+      - name: Push to R2 Bucket
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_TOKEN }}
+          version: "3.83.0"
+          workingDirectory: "tools/release-info"
+          preCommands: |
+            cat modus-latest.json
+            cat modus-preview.json
+            cat modus-all.json
+            cat modus-preview-all.json
+          command: |
+            r2 object put releases/modus-latest.json modus-latest.json
+            r2 object put releases/modus-preview.json modus-preview.json
+            r2 object put releases/modus-all.json modus-all.json
+            r2 object put releases/modus-preview-all.json modus-preview-all.json
