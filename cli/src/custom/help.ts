@@ -108,34 +108,34 @@ export default class CustomHelp extends Help {
       this.log();
     }
 
-    const globalFlagTopics: Interfaces.Topic[] = [
-      {
-        name: "--help",
-        description: "Show help message",
-      },
-      {
-        name: "--version",
-        description: "Show Modus version",
-      },
-    ];
-    this.log(this.formatRootFlags(globalFlagTopics));
     this.log();
 
     this.log(this.formatFooter());
   }
 
-  formatRootFlags(topics: Interfaces.Topic[]): string {
+  printRootFlags() {
+    const globalFlags = [
+      {
+        name: "--help",
+        shortName: "-h",
+        description: "Show help message",
+      },
+      {
+        name: "--version",
+        shortName: "-v",
+        description: "Show Modus version",
+      },
+    ];
+
     let out = "";
-    if (topics.find((v) => !v.hidden)) out += chalk.bold("Flags:") + "\n";
-    else return out;
+    out += chalk.bold("Flags:") + "\n";
 
-    for (const topic of topics) {
-      if (topic.hidden) continue;
-
-      const fullName = topic.name;
-      out += getMessageWithPad(chalk.bold.blue(fullName), topic.description || "", FIRST_PAD, SECOND_PAD, fullName.length) + "\n";
+    for (const flag of globalFlags) {
+      const fullName = flag.shortName ? `${flag.shortName}, ${flag.name}` : flag.name;
+      out += getMessageWithPad(chalk.bold.blue(fullName), flag.description || "", FIRST_PAD, SECOND_PAD, fullName.length) + "\n";
     }
-    return out.trim();
+
+    this.log(out.trim());
   }
 
   async showTopicHelp(topic: Interfaces.Topic) {
