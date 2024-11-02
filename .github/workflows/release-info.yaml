@@ -1,6 +1,5 @@
 name: "Generate Release Info"
 on:
-  push:
   workflow_dispatch:
   workflow_call:
 permissions:
@@ -30,7 +29,7 @@ jobs:
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_TOKEN }}
-          version: "3.83.0"
+          wranglerVersion: "3.83.0"
           workingDirectory: "tools/release-info"
           preCommands: |
             cat modus-latest.json
@@ -38,7 +37,7 @@ jobs:
             cat modus-all.json
             cat modus-preview-all.json
           command: |
-            r2 object put releases/modus-latest.json modus-latest.json
-            r2 object put releases/modus-preview.json modus-preview.json
-            r2 object put releases/modus-all.json modus-all.json
-            r2 object put releases/modus-preview-all.json modus-preview-all.json
+            r2 object put releases/modus-latest.json -f modus-latest.json
+            r2 object put releases/modus-preview.json -f modus-preview.json
+            r2 object put releases/modus-all.json -f modus-all.json
+            r2 object put releases/modus-preview-all.json -f modus-preview-all.json
