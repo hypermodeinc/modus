@@ -1,0 +1,26 @@
+name: ci-cli-build
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
+    paths:
+      - "cli/**"
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: "22"
+      - name: Install dependencies
+        run: npm install
+        working-directory: cli
+      - name: Build Program
+        run: npm run build
+        working-directory: cli
