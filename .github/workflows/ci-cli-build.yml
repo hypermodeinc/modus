@@ -6,8 +6,6 @@ on:
       - synchronize
       - reopened
       - ready_for_review
-    paths:
-      - "cli/**"
 jobs:
   build:
     runs-on: ubuntu-latest
