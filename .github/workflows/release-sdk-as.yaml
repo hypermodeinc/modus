@@ -49,5 +49,5 @@ jobs:
           make_latest: false
   release-info:
     needs: release
-    name: "Generate Release Info"
+    name: Generate Release Info
     uses: ./.github/workflows/release-info.yaml

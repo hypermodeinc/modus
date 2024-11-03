@@ -37,5 +37,5 @@ jobs:
           MACOS_NOTARY_KEY: "${{ secrets.MACOS_NOTARY_KEY }}"
   release-info:
     needs: release
-    name: "Generate Release Info"
+    name: Generate Release Info
     uses: ./.github/workflows/release-info.yaml

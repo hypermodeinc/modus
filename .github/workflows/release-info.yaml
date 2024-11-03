@@ -1,4 +1,4 @@
-name: "Generate Release Info"
+name: Generate Release Info
 on:
   workflow_dispatch:
   workflow_call:
