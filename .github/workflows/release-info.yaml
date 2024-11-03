@@ -1,6 +1,5 @@
 name: "Generate Release Info"
 on:
-  push:
   workflow_dispatch:
   workflow_call:
 permissions:
