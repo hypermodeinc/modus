@@ -39,7 +39,6 @@ jobs:
             cat modus-all.json
             cat modus-preview-all.json
           command: |
-            whoami
             r2 object put releases/modus-latest.json -f modus-latest.json
             r2 object put releases/modus-preview.json -f modus-preview.json
             r2 object put releases/modus-all.json -f modus-all.json
