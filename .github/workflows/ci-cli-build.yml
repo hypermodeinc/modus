@@ -6,8 +6,6 @@ on:
       - synchronize
       - reopened
       - ready_for_review
-    paths:
-      - "cli/**"
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -23,4 +21,7 @@ jobs:
         working-directory: cli
       - name: Build Program
         run: npm run build
+        working-directory: cli
+      - name: Run Modus
+        run: ./bin/modus.js
         working-directory: cli
