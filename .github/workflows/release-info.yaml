@@ -38,7 +38,7 @@ jobs:
             cat modus-all.json
             cat modus-preview-all.json
           command: |
-            r2 object put releases/modus-latest.json -f modus-latest.json
-            r2 object put releases/modus-preview.json -f modus-preview.json
-            r2 object put releases/modus-all.json -f modus-all.json
-            r2 object put releases/modus-preview-all.json -f modus-preview-all.json
+            r2 object put releases/modus-latest.json -f modus-latest.json --content-type application/json
+            r2 object put releases/modus-preview.json -f modus-preview.json --content-type application/json
+            r2 object put releases/modus-all.json -f modus-all.json --content-type application/json
+            r2 object put releases/modus-preview-all.json -f modus-preview-all.json --content-type application/json
