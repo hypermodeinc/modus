@@ -15,39 +15,18 @@ const FIRST_PAD = 2;
 const SECOND_PAD = 20;
 
 export default class CustomHelp extends Help {
-  formatHeader(): string {
-    return getHeader(this.config.version);
-  }
-
-  formatRoot(): string {
+  override formatRoot(): string {
     return `${chalk.bold("Usage:")} modus ${"<command or tool> [flags] [args]"}`;
   }
 
-  formatCommands(commands: Command.Loadable[]): string {
-    let out = "";
-    out += chalk.bold("Commands:") + "\n";
-
-    for (const command of commands) {
-      if (command.id === "autocomplete") continue;
-
-      const rawName = command.id.includes(":") ? command.id.split(":")[1] : command.id;
-      const name = chalk.bold.blueBright(rawName);
-      const description = command.description!;
-      const aliases = command.aliases.length > 0 ? chalk.dim(" (" + command.aliases.join("/") + ")") : "";
-
-      out += getMessageWithPad(name, description + aliases, FIRST_PAD, SECOND_PAD, rawName.length) + "\n";
-    }
-    return out.trim();
-  }
-
-  formatTopic(topic: Interfaces.Topic): string {
+  override formatTopic(topic: Interfaces.Topic): string {
     let out = "";
     if (topic.description) out += chalk.hex("#A585FF")(topic.description) + "\n";
     out += `${chalk.bold("Usage:")} modus ${topic.name} ${chalk.blueBright("<command> [...flags] [...args]")}\n`;
     return out;
   }
 
-  formatTopics(topics: Interfaces.Topic[]): string {
+  override formatTopics(topics: Interfaces.Topic[]): string {
     let out = "";
     if (topics.find((v) => !v.hidden)) out += chalk.bold("Tools:") + "\n";
     else return out;
@@ -60,27 +39,7 @@ export default class CustomHelp extends Help {
     return out.trim();
   }
 
-  formatFooter(): string {
-    let out = "";
-
-    const links = [
-      { name: "Docs", url: "https://docs.hypermode.com/modus" },
-      { name: "GitHub", url: "https://github.com/hypermodeinc/modus" },
-      { name: "Discord", url: "https://discord.hypermode.com (#modus)" },
-    ];
-
-    for (const link of links) {
-      out += getMessageWithPad(link.name, link.url, 0, SECOND_PAD) + "\n";
-    }
-
-    out += "\n";
-    out += "Made with ♥︎ by Hypermode";
-    out += "\n";
-
-    return out;
-  }
-
-  async showRootHelp(): Promise<void> {
+  override async showRootHelp(): Promise<void> {
     this.log(this.formatHeader());
 
     let rootTopics = this.sortedTopics;
@@ -108,54 +67,29 @@ export default class CustomHelp extends Help {
       this.log();
     }
 
-    this.log();
+    this.log(this.formatRootFlags());
 
     this.log(this.formatFooter());
   }
 
-  printRootFlags() {
-    const globalFlags = [
-      {
-        name: "--help",
-        shortName: "-h",
-        description: "Show help message",
-      },
-      {
-        name: "--version",
-        shortName: "-v",
-        description: "Show Modus version",
-      },
-    ];
-
+  override formatCommands(commands: Command.Loadable[]): string {
     let out = "";
-    out += chalk.bold("Flags:") + "\n";
+    out += chalk.bold("Commands:") + "\n";
 
-    for (const flag of globalFlags) {
-      const fullName = flag.shortName ? `${flag.shortName}, ${flag.name}` : flag.name;
-      out += getMessageWithPad(chalk.bold.blue(fullName), flag.description || "", FIRST_PAD, SECOND_PAD, fullName.length) + "\n";
+    for (const command of commands) {
+      if (command.id === "autocomplete") continue;
+
+      const rawName = command.id.includes(":") ? command.id.split(":")[1] : command.id;
+      const name = chalk.bold.blueBright(rawName);
+      const description = command.description!;
+      const aliases = command.aliases.length > 0 ? chalk.dim(" (" + command.aliases.join("/") + ")") : "";
+
+      out += getMessageWithPad(name, description + aliases, FIRST_PAD, SECOND_PAD, rawName.length) + "\n";
     }
-
-    this.log(out.trim());
+    return out.trim();
   }
 
-  async showTopicHelp(topic: Interfaces.Topic) {
-    this.log(this.formatHeader());
-
-    const { name } = topic;
-    const commands = this.sortedCommands.filter((c) => c.id.startsWith(name + ":"));
-
-    const state = this.config.pjson?.oclif?.state;
-    if (state) this.log(`This topic is in ${state}.\n`);
-    this.log(this.formatTopic(topic));
-    if (commands.length > 0) {
-      this.log(this.formatCommands(commands));
-      this.log();
-    }
-
-    this.log(this.formatFooter());
-  }
-
-  async showCommandHelp(command: Command.Loadable): Promise<void> {
+  override async showCommandHelp(command: Command.Loadable): Promise<void> {
     this.log(this.formatHeader());
 
     const name = command.id.replaceAll(":", " ");
@@ -205,6 +139,72 @@ export default class CustomHelp extends Help {
 
         if (flag) this.log(getMessageWithPad(chalk.bold.blueBright(flagOptions), desc, FIRST_PAD, SECOND_PAD, flagOptions.length));
       }
+      this.log();
+    }
+
+    this.log(this.formatFooter());
+  }
+
+  formatHeader(): string {
+    return getHeader(this.config.version);
+  }
+
+  formatFooter(): string {
+    let out = "";
+
+    const links = [
+      { name: "Docs:", url: "https://docs.hypermode.com/modus" },
+      { name: "GitHub:", url: "https://github.com/hypermodeinc/modus" },
+      { name: "Discord:", url: "https://discord.hypermode.com (#modus)" },
+    ];
+
+    for (const link of links) {
+      out += getMessageWithPad(link.name, link.url, 0, SECOND_PAD) + "\n";
+    }
+
+    out += "\n";
+    out += "Made with ♥︎ by Hypermode";
+    out += "\n";
+
+    return out;
+  }
+
+  formatRootFlags() {
+    const globalFlags = [
+      {
+        name: "--help",
+        shortName: "-h",
+        description: "Show help message",
+      },
+      {
+        name: "--version",
+        shortName: "-v",
+        description: "Show Modus version",
+      },
+    ];
+
+    let out = "";
+    out += chalk.bold("Flags:") + "\n";
+
+    for (const flag of globalFlags) {
+      const fullName = flag.shortName ? `${flag.shortName}, ${flag.name}` : flag.name;
+      out += getMessageWithPad(chalk.bold.blue(fullName), flag.description || "", FIRST_PAD, SECOND_PAD, fullName.length) + "\n";
+    }
+
+    return out;
+  }
+
+  override async showTopicHelp(topic: Interfaces.Topic) {
+    this.log(this.formatHeader());
+
+    const { name } = topic;
+    const commands = this.sortedCommands.filter((c) => c.id.startsWith(name + ":"));
+
+    const state = this.config.pjson?.oclif?.state;
+    if (state) this.log(`This topic is in ${state}.\n`);
+    this.log(this.formatTopic(topic));
+    if (commands.length > 0) {
+      this.log(this.formatCommands(commands));
       this.log();
     }
 
