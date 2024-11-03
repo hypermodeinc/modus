@@ -2,6 +2,7 @@
 
 ## UNRELEASED
 
+- Automatically generate and push releases info to R2 bucket on every release [#526](https://github.com/hypermodeinc/modus/pull/526)
 - Consistent help + print enum options + validate SDK prereq [#542](https://github.com/hypermodeinc/modus/pull/542)
   - Consistent padding in the help section 
   - `modus new`: Enum options need to print possible options
