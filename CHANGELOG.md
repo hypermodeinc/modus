@@ -13,6 +13,7 @@
 - remove all github api call references, add prerelease support to CLI [#545](https://github.com/hypermodeinc/modus/pull/545)
 - Add CLI build CI [#547](https://github.com/hypermodeinc/modus/pull/547)
 - Add CLI Lint CI [#550](https://github.com/hypermodeinc/modus/pull/550)
+- Update installer script [#551](https://github.com/hypermodeinc/modus/pull/551)
 
 ## 2024-10-30 - CLI 0.13.6
 

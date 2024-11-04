@@ -11,7 +11,6 @@ import semver from "semver";
 import path from "node:path";
 import * as fs from "./fs.js";
 import * as globals from "../custom/globals.js";
-import { getGitHubApiHeaders } from "./index.js";
 
 export function getSdkPath(sdk: globals.SDK, version: string): string {
   return path.join(globals.ModusHomeDir, "sdk", sdk.toLowerCase(), version);
