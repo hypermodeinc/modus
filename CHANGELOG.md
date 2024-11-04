@@ -9,6 +9,7 @@
   - `modus sdk remove`: Use select prompt to allow selection
 - For CLI to track non-prereleases, pull from releases json to remove rate limiting issues from github releases [#543](https://github.com/hypermodeinc/modus/pull/543)
 - Modify isOnline in CLI to query releases.json [#544](https://github.com/hypermodeinc/modus/pull/544)
+- remove all github api call references, add prerelease support to CLI [#545](https://github.com/hypermodeinc/modus/pull/545)
 - Add CLI build CI [#547](https://github.com/hypermodeinc/modus/pull/547)
 - Add CLI Lint CI [#550](https://github.com/hypermodeinc/modus/pull/550)
 
