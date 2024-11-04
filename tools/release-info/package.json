@@ -8,7 +8,9 @@
   "scripts": {
     "build": "rm -rf dist && tsc -b",
     "watch": "rm -rf dist && tsc -b -w",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "pretty": "prettier --write .",
+    "pretty:check": "prettier --check ."
   },
   "repository": "github:hypermodeinc/modus",
   "author": "Hypermode Inc.",
