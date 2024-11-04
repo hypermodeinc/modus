@@ -13,6 +13,7 @@ on:
 permissions:
   contents: read
   actions: write
+
 jobs:
   runtime-integration-tests:
     name: test (runtime)
