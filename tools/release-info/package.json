@@ -7,7 +7,8 @@
   "type": "module",
   "scripts": {
     "build": "rm -rf dist && tsc -b",
-    "watch": "rm -rf dist && tsc -b -w"
+    "watch": "rm -rf dist && tsc -b -w",
+    "lint": "eslint ."
   },
   "repository": "github:hypermodeinc/modus",
   "author": "Hypermode Inc.",
@@ -20,7 +21,12 @@
     "semver": "^7.6.3"
   },
   "devDependencies": {
+    "@eslint/js": "^9.14.0",
+    "@types/eslint__js": "^8.42.3",
     "@types/node": "^22.8.6",
-    "@types/semver": "^7.5.8"
+    "@types/semver": "^7.5.8",
+    "eslint": "^9.14.0",
+    "typescript": "^5.6.3",
+    "typescript-eslint": "^8.12.2"
   }
 }

@@ -10,18 +10,6 @@
 import semver from "semver";
 import * as globals from "./constants.js";
 
-function getGitHubApiHeaders() {
-  const headers = new Headers({
-    Accept: "application/vnd.github.v3+json",
-    "X-GitHub-Api-Version": "2022-11-28",
-    "User-Agent": "Modus CLI",
-  });
-  if (process.env.GITHUB_TOKEN) {
-    headers.append("Authorization", `Bearer ${process.env.GITHUB_TOKEN}`);
-  }
-  return headers;
-}
-
 export function isPrerelease(version: string): boolean {
   if (version.startsWith("v")) {
     version = version.slice(1);
@@ -90,7 +78,11 @@ async function getAllVersions(owner: string, repo: string, prefix: string, inclu
   }
 }
 
-const headers = getGitHubApiHeaders();
+const headers = {
+  Accept: "application/vnd.github.v3+json",
+  "X-GitHub-Api-Version": "2022-11-28",
+  "User-Agent": "Modus CLI",
+};
 
 async function findLatestReleaseTag(owner: string, repo: string, prefix: string, includePrerelease: boolean): Promise<string | undefined> {
   let page = 1;
