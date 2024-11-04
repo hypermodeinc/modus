@@ -1,0 +1,75 @@
+{
+  "name": "@hypermode/modus-cli",
+  "version": "",
+  "description": "The Modus CLI",
+  "author": "Hypermode Inc.",
+  "license": "Apache-2.0",
+  "homepage": "https://github.com/hypermodeinc/modus",
+  "repository": "github:hypermodeinc/modus",
+  "bugs": {
+    "url": "https://github.com/hypermodeinc/modus/issues"
+  },
+  "keywords": [
+    "Hypermode",
+    "Modus",
+    "CLI"
+  ],
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "type": "module",
+  "bin": {
+    "modus": "./bin/modus.js"
+  },
+  "scripts": {
+    "pack": "npm pack",
+    "build": "rm -rf dist && tsc -b",
+    "watch": "rm -rf dist && tsc -b -w",
+    "postpack": "rm -f oclif.manifest.json",
+    "prepack": "npm i && npm run build && oclif manifest"
+  },
+  "dependencies": {
+    "@inquirer/prompts": "^7.0.0",
+    "@oclif/core": "^4",
+    "chalk": "^5.3.0",
+    "chokidar": "^4.0.1",
+    "gradient-string": "^3.0.0",
+    "ora": "^8.1.0",
+    "picomatch": "^4.0.2",
+    "semver": "^7.6.3"
+  },
+  "devDependencies": {
+    "@oclif/test": "^4",
+    "@types/node": "^22",
+    "@types/picomatch": "^3.0.1",
+    "@types/semver": "^7.5.8",
+    "oclif": "^4",
+    "ts-node": "^10",
+    "typescript": "^5"
+  },
+  "files": [
+    "/bin",
+    "/dist",
+    "/oclif.manifest.json"
+  ],
+  "oclif": {
+    "bin": "modus",
+    "helpClass": "./dist/custom/help",
+    "dirname": "modus",
+    "commands": "./dist/commands",
+    "topicSeparator": " ",
+    "topics": {
+      "sdk": {
+        "description": "Modus SDK Management"
+      },
+      "runtime": {
+        "description": "Modus Runtime Management"
+      }
+    },
+    "additionalHelpFlags": [
+      "-h"
+    ],
+    "additionalVersionFlags": [
+      "-v"
+    ]
+  }
+}

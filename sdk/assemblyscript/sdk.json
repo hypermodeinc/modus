@@ -1,0 +1,9 @@
+{
+  "sdk": {
+    "language": "AssemblyScript",
+    "version": "dev"
+  },
+  "runtime": {
+    "version": "^0.13.0"
+  }
+}

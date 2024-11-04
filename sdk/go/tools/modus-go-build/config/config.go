@@ -16,9 +16,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
-
-	"github.com/fatih/color"
-	"github.com/mattn/go-isatty"
 )
 
 type Config struct {
@@ -41,13 +38,10 @@ func GetConfig() (*Config, error) {
 	flag.StringVar(&c.OutputDir, "output", "build", "Output directory for the generated files. Relative paths are resolved relative to the source directory.")
 
 	flag.Usage = func() {
-		color.NoColor = !isatty.IsTerminal(os.Stderr.Fd())
-		color.Set(color.FgCyan)
 		fmt.Fprintln(os.Stderr, "modus-go-build - The build tool for Go-based Modus apps")
 		fmt.Fprintln(os.Stderr, "Usage: modus-go-build [options] <source directory> [... additional compiler options ...]")
 		fmt.Fprintln(os.Stderr, "Options:")
 		flag.PrintDefaults()
-		color.Unset()
 	}
 
 	flag.Parse()

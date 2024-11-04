@@ -11,16 +11,18 @@ package engine
 
 import (
 	"fmt"
+	"os"
 	"sync"
 
 	"context"
 	"strings"
 
+	"github.com/fatih/color"
+	"github.com/hypermodeinc/modus/lib/metadata"
 	"github.com/hypermodeinc/modus/runtime/config"
 	"github.com/hypermodeinc/modus/runtime/graphql/datasource"
 	"github.com/hypermodeinc/modus/runtime/graphql/schemagen"
 	"github.com/hypermodeinc/modus/runtime/logger"
-	"github.com/hypermodeinc/modus/runtime/plugins/metadata"
 	"github.com/hypermodeinc/modus/runtime/utils"
 	"github.com/hypermodeinc/modus/runtime/wasmhost"
 
@@ -82,7 +84,7 @@ func generateSchema(ctx context.Context, md *metadata.Metadata) (*gql.Schema, *d
 		if config.UseJsonLogging {
 			logger.Debug(ctx).Str("schema", generated.Schema).Msg("Generated schema")
 		} else {
-			fmt.Printf("\n%s\n", generated.Schema)
+			fmt.Fprintf(os.Stderr, "\n%s\n", color.BlueString(generated.Schema))
 		}
 	}
 
@@ -92,8 +94,9 @@ func generateSchema(ctx context.Context, md *metadata.Metadata) (*gql.Schema, *d
 	}
 
 	cfg := &datasource.HypDSConfig{
-		WasmHost: wasmhost.GetWasmHost(ctx),
-		MapTypes: generated.MapTypes,
+		WasmHost:          wasmhost.GetWasmHost(ctx),
+		FieldsToFunctions: generated.FieldsToFunctions,
+		MapTypes:          generated.MapTypes,
 	}
 
 	return schema, cfg, nil
@@ -104,24 +107,25 @@ func getDatasourceConfig(ctx context.Context, schema *gql.Schema, cfg *datasourc
 	defer span.Finish()
 
 	queryTypeName := schema.QueryTypeName()
-	queryFieldNames := getAllQueryFields(ctx, schema)
+	queryFieldNames := getTypeFields(ctx, schema, queryTypeName)
+
+	mutationTypeName := schema.MutationTypeName()
+	mutationFieldNames := getTypeFields(ctx, schema, mutationTypeName)
+
 	rootNodes := []plan.TypeField{
 		{
 			TypeName:   queryTypeName,
 			FieldNames: queryFieldNames,
 		},
+		{
+			TypeName:   mutationTypeName,
+			FieldNames: mutationFieldNames,
+		},
 	}
 
-	var childNodes []plan.TypeField
-	for _, f := range queryFieldNames {
-		fields := schema.GetAllNestedFieldChildrenFromTypeField(queryTypeName, f, gql.NewSkipReservedNamesFunc())
-		for _, field := range fields {
-			childNodes = append(childNodes, plan.TypeField{
-				TypeName:   field.TypeName,
-				FieldNames: field.FieldNames,
-			})
-		}
-	}
+	childNodes := []plan.TypeField{}
+	childNodes = append(childNodes, getChildNodes(queryFieldNames, schema, queryTypeName)...)
+	childNodes = append(childNodes, getChildNodes(mutationFieldNames, schema, mutationTypeName)...)
 
 	return plan.NewDataSourceConfiguration(
 		datasource.DataSourceName,
@@ -129,6 +133,24 @@ func getDatasourceConfig(ctx context.Context, schema *gql.Schema, cfg *datasourc
 		&plan.DataSourceMetadata{RootNodes: rootNodes, ChildNodes: childNodes},
 		*cfg,
 	)
+}
+
+func getChildNodes(fieldNames []string, schema *gql.Schema, typeName string) []plan.TypeField {
+	var foundFields = make(map[string]bool)
+	var childNodes []plan.TypeField
+	for _, fieldName := range fieldNames {
+		fields := schema.GetAllNestedFieldChildrenFromTypeField(typeName, fieldName, gql.NewSkipReservedNamesFunc())
+		for _, field := range fields {
+			if !foundFields[field.TypeName] {
+				foundFields[field.TypeName] = true
+				childNodes = append(childNodes, plan.TypeField{
+					TypeName:   field.TypeName,
+					FieldNames: field.FieldNames,
+				})
+			}
+		}
+	}
+	return childNodes
 }
 
 func makeEngine(ctx context.Context, schema *gql.Schema, datasourceConfig plan.DataSourceConfiguration[datasource.HypDSConfig]) (*engine.ExecutionEngine, error) {
@@ -148,17 +170,14 @@ func makeEngine(ctx context.Context, schema *gql.Schema, datasourceConfig plan.D
 	return engine.NewExecutionEngine(ctx, adapter, engineConfig, resolverOptions)
 }
 
-func getAllQueryFields(ctx context.Context, s *gql.Schema) []string {
+func getTypeFields(ctx context.Context, s *gql.Schema, typeName string) []string {
 	span, _ := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
 
 	doc := s.Document()
-	queryTypeName := s.QueryTypeName()
-
 	fields := make([]string, 0)
 	for _, objectType := range doc.ObjectTypeDefinitions {
-		typeName := doc.Input.ByteSliceString(objectType.Name)
-		if typeName == queryTypeName {
+		if doc.Input.ByteSliceString(objectType.Name) == typeName {
 			for _, fieldRef := range objectType.FieldsDefinition.Refs {
 				field := doc.FieldDefinitions[fieldRef]
 				fieldName := doc.Input.ByteSliceString(field.Name)

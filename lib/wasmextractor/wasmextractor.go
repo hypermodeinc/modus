@@ -17,8 +17,9 @@ import (
 )
 
 type WasmInfo struct {
-	Imports []WasmItem
-	Exports []WasmItem
+	Imports        []WasmItem
+	Exports        []WasmItem
+	CustomSections map[string][]byte
 }
 
 type WasmItem struct {
@@ -74,7 +75,9 @@ func ExtractWasmInfo(wasmBytes []byte) (*WasmInfo, error) {
 		return nil, err
 	}
 
-	info := &WasmInfo{}
+	info := &WasmInfo{
+		CustomSections: make(map[string][]byte),
+	}
 	offset := 8
 	for offset < len(wasmBytes) {
 		sectionID := wasmBytes[offset]
@@ -84,6 +87,11 @@ func ExtractWasmInfo(wasmBytes []byte) (*WasmInfo, error) {
 		offset += n
 
 		switch sectionID {
+		case 0: // Custom section
+			nameLen, n := binary.Uvarint(wasmBytes[offset:])
+			name := string(wasmBytes[offset+n : offset+n+int(nameLen)])
+			data := wasmBytes[offset+n+int(nameLen) : offset+int(size)]
+			info.CustomSections[name] = data
 		case 2: // Import section
 			info.Imports = readImports(wasmBytes[offset : offset+int(size)])
 

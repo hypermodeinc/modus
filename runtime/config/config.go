@@ -9,7 +9,18 @@
 
 package config
 
+import (
+	"os"
+
+	"github.com/fatih/color"
+)
+
 func Initialize() {
+	forceColor := os.Getenv("FORCE_COLOR")
+	if forceColor != "" && forceColor != "0" {
+		color.NoColor = false
+	}
+
 	parseCommandLineFlags()
 	readEnvironmentVariables()
 }

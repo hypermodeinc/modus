@@ -22,12 +22,6 @@
     "model-3": {
       "sourceModel": "source-model-3",
       "connection": "my-model-connection"
-    },
-    "model-4": {
-      "sourceModel": "example/source-model-4",
-      "provider": "hugging-face",
-      "connection": "hypermode",
-      "dedicated": true
     }
   },
   "connections": {

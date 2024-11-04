@@ -14,7 +14,6 @@ import (
 	"fmt"
 	"io"
 	"path"
-	"strings"
 
 	"github.com/hypermodeinc/modus/runtime/aws"
 	"github.com/hypermodeinc/modus/runtime/config"
@@ -39,7 +38,7 @@ func (stg *awsStorageProvider) initialize(ctx context.Context) {
 	stg.s3Client = s3.NewFromConfig(cfg)
 }
 
-func (stg *awsStorageProvider) listFiles(ctx context.Context, extension string) ([]FileInfo, error) {
+func (stg *awsStorageProvider) listFiles(ctx context.Context, patterns ...string) ([]FileInfo, error) {
 
 	input := &s3.ListObjectsV2Input{
 		Bucket: &config.S3Bucket,
@@ -53,11 +52,20 @@ func (stg *awsStorageProvider) listFiles(ctx context.Context, extension string) 
 
 	var files = make([]FileInfo, 0, *result.KeyCount)
 	for _, obj := range result.Contents {
-		if !strings.HasSuffix(*obj.Key, extension) {
+
+		_, filename := path.Split(*obj.Key)
+
+		matched := false
+		for _, pattern := range patterns {
+			if match, err := path.Match(pattern, filename); err == nil && match {
+				matched = true
+				break
+			}
+		}
+		if !matched {
 			continue
 		}
 
-		_, filename := path.Split(*obj.Key)
 		files = append(files, FileInfo{
 			Name:         filename,
 			Hash:         *obj.ETag,

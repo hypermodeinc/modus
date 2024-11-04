@@ -7,89 +7,63 @@
 package main
 
 import (
-	"errors"
-
 	"github.com/hypermodeinc/modus/sdk/go/pkg/graphql"
 )
 
-const hostName = "dgraphGraphql"
+/*
+ * This application uses a public GraphQL API to retrieve information about countries.
+ * We are using the API available at: https://github.com/trevorblades/countries
+ * The `graphql` module from the Modus SDK allows us to interact with the API.
+ */
 
-func QueryPeople() ([]*Person, error) {
-	query := `
-	query {
-		people: queryPerson {
-		  id
-		  firstName
-		  lastName
+// Define the host name of the API to be used in the requests.
+// Must match one of the http connections defined in the modus.json manifest file.
+
+const hostName = "countries-api"
+
+// Function to list all countries returned by the API
+func Countries() ([]*Country, error) {
+	statement := `
+	  query {
+		countries{
+		  code
+		  name
+		  capital
 		}
 	  }
 	`
+	// Execute the GraphQL query using the host name and query statement
+	// The API returns a response of type `CountriesResponse` containing an array of `Country` objects
+	response, err := graphql.Execute[CountriesResponse](hostName, statement, nil)
 
-	response, err := graphql.Execute[PeopleData](hostName, query, nil)
+	// If err is returned (i.e., the API call fails), return the error
 	if err != nil {
 		return nil, err
 	}
+	// Otherwise, return the list of countries from the response
+	return response.Data.Countries, nil
 
-	return response.Data.People, nil
 }
 
-func QuerySpecificPerson(firstName, lastName string) (*Person, error) {
+// Function to retrieve a specific country by its unique code
+func GetCountryByCode(code string) (*Country, error) {
 	statement := `
-	query queryPeople($firstName: String!, $lastName: String!) {
-		people: queryPerson(
-			first: 1,
-			filter: { firstName: { eq: $firstName }, lastName: { eq: $lastName } }
-		) {
-			id
-			firstName
-			lastName
-		}
-	  }
+	query ($code: ID!){
+      country(code: $code){
+        code
+        name
+        capital
+      }
+    }
 	`
-
+	// Create a vars map to pass in the `code` parameter
 	vars := map[string]any{
-		"firstName": firstName,
-		"lastName":  lastName,
+		"code": code,
 	}
 
-	response, err := graphql.Execute[PeopleData](hostName, statement, vars)
+	response, err := graphql.Execute[CountryResponse](hostName, statement, vars)
 	if err != nil {
 		return nil, err
 	}
-
-	if len(response.Data.People) == 0 {
-		return nil, nil // Person not found
-	}
-
-	return response.Data.People[0], nil
-}
-
-func AddPerson(firstName, lastName string) (*Person, error) {
-	statement := `
-	mutation addPerson($firstName: String!, $lastName: String!) {
-		addPerson(input: [{ firstName: $firstName, lastName: $lastName }]) {
-			people: person {
-				id
-				firstName
-				lastName
-			}
-		}
-	}
-	`
-
-	vars := map[string]any{
-		"firstName": firstName,
-		"lastName":  lastName,
-	}
-
-	response, err := graphql.Execute[PeopleData](hostName, statement, vars)
-	if err != nil {
-		return nil, err
-	}
-
-	if len(response.Data.People) == 0 {
-		return nil, errors.New("Failed to add the person.")
-	}
-
-	return response.Data.People[0], nil
+	return response.Data.Country, nil
 }

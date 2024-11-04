@@ -18,12 +18,12 @@ import (
 )
 
 type StorageMonitor struct {
-	extension string
-	files     map[string]*monitoredFile
-	Added     func(FileInfo) error
-	Modified  func(FileInfo) error
-	Removed   func(FileInfo) error
-	Changed   func([]error)
+	patterns []string
+	files    map[string]*monitoredFile
+	Added    func(FileInfo) error
+	Modified func(FileInfo) error
+	Removed  func(FileInfo) error
+	Changed  func([]error)
 }
 
 type monitoredFile struct {
@@ -31,14 +31,14 @@ type monitoredFile struct {
 	lastSeen time.Time
 }
 
-func NewStorageMonitor(extension string) *StorageMonitor {
+func NewStorageMonitor(patterns ...string) *StorageMonitor {
 	return &StorageMonitor{
-		extension: extension,
-		files:     make(map[string]*monitoredFile),
-		Added:     func(FileInfo) error { return nil },
-		Modified:  func(FileInfo) error { return nil },
-		Removed:   func(FileInfo) error { return nil },
-		Changed:   func([]error) {},
+		patterns: patterns,
+		files:    make(map[string]*monitoredFile),
+		Added:    func(FileInfo) error { return nil },
+		Modified: func(FileInfo) error { return nil },
+		Removed:  func(FileInfo) error { return nil },
+		Changed:  func([]error) {},
 	}
 }
 
@@ -50,11 +50,11 @@ func (sm *StorageMonitor) Start(ctx context.Context) {
 		var loggedError = false
 
 		for {
-			files, err := provider.listFiles(ctx, sm.extension)
+			files, err := provider.listFiles(ctx, sm.patterns...)
 			if err != nil {
 				// Don't stop watching. We'll just try again on the next cycle.
 				if !loggedError {
-					logger.Err(ctx, err).Msgf("Failed to list %s files.", sm.extension)
+					logger.Err(ctx, err).Msgf("Failed to list %s files.", sm.patterns)
 					loggedError = true
 				}
 				continue

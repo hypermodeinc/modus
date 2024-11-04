@@ -22,7 +22,7 @@ var provider storageProvider
 
 type storageProvider interface {
 	initialize(ctx context.Context)
-	listFiles(ctx context.Context, extension string) ([]FileInfo, error)
+	listFiles(ctx context.Context, patterns ...string) ([]FileInfo, error)
 	getFileContents(ctx context.Context, name string) ([]byte, error)
 }
 
@@ -45,8 +45,8 @@ func Initialize(ctx context.Context) {
 	provider.initialize(ctx)
 }
 
-func ListFiles(ctx context.Context, extension string) ([]FileInfo, error) {
-	return provider.listFiles(ctx, extension)
+func ListFiles(ctx context.Context, patterns ...string) ([]FileInfo, error) {
+	return provider.listFiles(ctx, patterns...)
 }
 
 func GetFileContents(ctx context.Context, name string) ([]byte, error) {

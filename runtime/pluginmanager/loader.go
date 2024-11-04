@@ -13,10 +13,10 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/hypermodeinc/modus/lib/metadata"
 	"github.com/hypermodeinc/modus/runtime/db"
 	"github.com/hypermodeinc/modus/runtime/logger"
 	"github.com/hypermodeinc/modus/runtime/plugins"
-	"github.com/hypermodeinc/modus/runtime/plugins/metadata"
 	"github.com/hypermodeinc/modus/runtime/storage"
 	"github.com/hypermodeinc/modus/runtime/utils"
 	"github.com/hypermodeinc/modus/runtime/wasmhost"
@@ -33,7 +33,7 @@ func monitorPlugins(ctx context.Context) {
 		return err
 	}
 
-	sm := storage.NewStorageMonitor(".wasm")
+	sm := storage.NewStorageMonitor("*.wasm")
 	sm.Added = loadPluginFile
 	sm.Modified = loadPluginFile
 	sm.Removed = func(fi storage.FileInfo) error {
@@ -72,7 +72,7 @@ func loadPlugin(ctx context.Context, filename string) error {
 	}
 
 	// Get the metadata for the plugin.
-	md, err := metadata.GetMetadataFromCompiledModule(cm)
+	md, err := metadata.GetMetadataFromWasm(bytes)
 	if err == metadata.ErrMetadataNotFound {
 		logger.Error(ctx).
 			Bool("user_visible", true).
