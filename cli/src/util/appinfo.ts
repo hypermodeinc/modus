@@ -48,7 +48,9 @@ async function getAssemblyScriptAppInfo(appPath: string): Promise<ModusAppInfo> 
       const lockfile = JSON.parse(await fs.readFile(path.join(appPath, "package-lock.json"), "utf8"));
       sdkVersion = lockfile.packages["node_modules/@hypermode/modus-sdk-as"].version;
     }
-  } catch {}
+  } catch {
+    /* empty */
+  }
 
   if (!sdkVersion || !semver.valid(sdkVersion)) {
     try {
@@ -63,7 +65,9 @@ async function getAssemblyScriptAppInfo(appPath: string): Promise<ModusAppInfo> 
           sdkVersion = maxSatisfying;
         }
       }
-    } catch {}
+    } catch {
+      /* empty */
+    }
   }
 
   if (!sdkVersion || !semver.valid(sdkVersion)) {
@@ -99,7 +103,9 @@ async function getGoAppInfo(appPath: string): Promise<ModusAppInfo> {
         sdkVersion = parts[1];
       }
     }
-  } catch {}
+  } catch {
+    /* empty */
+  }
   if (!sdkVersion || sdkVersion == "v0.0.0" || !sdkVersion.startsWith("v")) {
     sdkVersion = "latest";
   }

@@ -47,7 +47,7 @@ export async function downloadFile(url: string, dest: string): Promise<boolean> 
 
   const fileStream = createWriteStream(dest);
 
-  // @ts-ignore
+  // @ts-expect-error necessary
   await finished(Readable.fromWeb(res.body).pipe(fileStream));
   return true;
 }

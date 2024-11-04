@@ -1,4 +1,3 @@
-import { Command, Flags } from "@oclif/core";
 import chalk from "chalk";
 import os from "node:os";
 import * as vi from "../../util/versioninfo.js";

@@ -104,11 +104,9 @@ export default class CustomHelp extends Help {
 
     if (args.length) {
       this.log(chalk.bold("Args:"));
-      for (let arg of Object.values(command.args)) {
-        let usage = "";
+      for (const arg of Object.values(command.args)) {
         let desc = arg.description || "";
         if (arg.description?.includes("-|-")) {
-          usage = arg.description.split("-|-")[0];
           desc = arg.description.split("-|-")[1];
         }
         if (arg.default) {
