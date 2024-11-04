@@ -7,8 +7,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Model } from "../../assembly/models";
-import { JSON } from "json-as";
+import { Model } from "../../assembly/models"
+import { JSON } from "json-as"
 
 /**
  * Provides input and output types that conform to the OpenAI Chat API.
@@ -23,8 +23,8 @@ export class OpenAIChatModel extends Model<OpenAIChatInput, OpenAIChatOutput> {
    * @returns An input object that can be passed to the `invoke` method.
    */
   createInput(messages: Message[]): OpenAIChatInput {
-    const model = this.info.fullName;
-    return <OpenAIChatInput>{ model, messages };
+    const model = this.info.fullName
+    return <OpenAIChatInput>{ model, messages }
   }
 }
 
@@ -42,12 +42,12 @@ export class OpenAIChatInput {
    * This field is automatically set by the `createInput` method when creating this object.
    * It does not need to be set manually.
    */
-  model!: string;
+  model!: string
 
   /**
    * An array of messages to send to the chat model.
    */
-  messages!: Message[];
+  messages!: Message[]
 
   /**
    * Number between `-2.0` and `2.0`.
@@ -59,7 +59,7 @@ export class OpenAIChatInput {
    */
   @alias("frequency_penalty")
   @omitif("this.frequencyPenalty == 0.0")
-  frequencyPenalty: f64 = 0.0;
+  frequencyPenalty: f64 = 0.0
 
   /**
    * Modifies the likelihood of specified tokens appearing in the completion.
@@ -71,7 +71,7 @@ export class OpenAIChatInput {
    */
   @alias("logit_bias")
   @omitnull()
-  logitBias: Map<string, f64> | null = null;
+  logitBias: Map<string, f64> | null = null
 
   /**
    * Whether to return log probabilities of the output tokens or not,
@@ -81,7 +81,7 @@ export class OpenAIChatInput {
    * @default false
    */
   @omitif("this.logprobs == false")
-  logprobs: bool = false;
+  logprobs: bool = false
 
   /**
    * An integer between 0 and 20 specifying the number of most likely tokens to return at each token position,
@@ -89,7 +89,7 @@ export class OpenAIChatInput {
    */
   @alias("top_logprobs")
   @omitif("this.logprobs == false")
-  topLogprobs: i32 = 0;
+  topLogprobs: i32 = 0
 
   /**
    * The maximum number of tokens to generate in the chat completion.
@@ -98,13 +98,13 @@ export class OpenAIChatInput {
    */
   @alias("max_tokens")
   @omitif("this.maxTokens == 4096")
-  maxTokens: i32 = 4096; // TODO: make this an `i32 | null` when supported
+  maxTokens: i32 = 4096 // TODO: make this an `i32 | null` when supported
 
   /**
    * The number of completions to generate for each prompt.
    */
   @omitif("this.n == 1")
-  n: i32 = 1;
+  n: i32 = 1
 
   /**
    *
@@ -117,7 +117,7 @@ export class OpenAIChatInput {
    */
   @alias("presence_penalty")
   @omitif("this.presencePenalty == 0.0")
-  presencePenalty: f64 = 0.0;
+  presencePenalty: f64 = 0.0
 
   /**
    * Specifies the format for the response.
@@ -131,7 +131,7 @@ export class OpenAIChatInput {
    */
   @alias("response_format")
   @omitif("this.responseFormat.type == 'text'")
-  responseFormat: ResponseFormat = ResponseFormat.Text;
+  responseFormat: ResponseFormat = ResponseFormat.Text
 
   /**
    * If specified, the model will make a best effort to sample deterministically, such that
@@ -140,20 +140,20 @@ export class OpenAIChatInput {
    * parameter to monitor changes in the backend.
    */
   @omitif("this.seed == -1")
-  seed: i32 = -1; // TODO: make this an `i32 | null` when supported
+  seed: i32 = -1 // TODO: make this an `i32 | null` when supported
 
   /**
    * Specifies the latency tier to use for processing the request.
    */
   @alias("service_tier")
   @omitnull()
-  serviceTier: ServiceTier | null = null;
+  serviceTier: ServiceTier | null = null
 
   /**
    * Up to 4 sequences where the API will stop generating further tokens.
    */
   @omitnull()
-  stop: string[] | null = null;
+  stop: string[] | null = null
 
   // stream: bool = false;
 
@@ -172,7 +172,7 @@ export class OpenAIChatInput {
    * @default 1.0
    */
   @omitif("this.temperature == 1.0")
-  temperature: f64 = 1.0;
+  temperature: f64 = 1.0
 
   /**
    * An alternative to sampling with temperature, called nucleus sampling, where the model
@@ -184,7 +184,7 @@ export class OpenAIChatInput {
    */
   @alias("top_p")
   @omitif("this.topP == 1.0")
-  topP: f64 = 1.0;
+  topP: f64 = 1.0
 
   /**
    * A list of tools the model may call. Currently, only functions are supported as a tool.
@@ -192,7 +192,7 @@ export class OpenAIChatInput {
    * A max of 128 functions are supported.
    */
   @omitnull()
-  tools: Tool[] | null = null;
+  tools: Tool[] | null = null
 
   /**
    * Controls which (if any) tool is called by the model.
@@ -205,7 +205,7 @@ export class OpenAIChatInput {
    */
   @alias("tool_choice")
   @omitnull()
-  toolChoice: string | null = null; // TODO: Make this work with a custom tool object
+  toolChoice: string | null = null // TODO: Make this work with a custom tool object
 
   /**
    * Whether to enable parallel function calling during tool use.
@@ -214,7 +214,7 @@ export class OpenAIChatInput {
    */
   @alias("parallel_tool_calls")
   @omitif("this.parallelToolCalls == true || !this.tools || this.tools!.length == 0")
-  parallelToolCalls: bool = true;
+  parallelToolCalls: bool = true
 
   /**
    * The user ID to associate with the request.
@@ -222,7 +222,7 @@ export class OpenAIChatInput {
    * See https://platform.openai.com/docs/guides/safety-best-practices/end-user-ids
    */
   @omitnull()
-  user: string | null = null;
+  user: string | null = null
 }
 
 /**
@@ -233,15 +233,15 @@ export namespace ServiceTier {
   /**
    * The OpenAI system will utilize scale tier credits until they are exhausted.
    */
-  export const Auto = "auto";
+  export const Auto = "auto"
 
   /**
    * The request will be processed using the default OpenAI service tier with a lower
    * uptime SLA and no latency guarantee.
    */
-  export const Default = "default";
+  export const Default = "default"
 }
-export type ServiceTier = string;
+export type ServiceTier = string
 
 /**
  * The output object for the OpenAI Chat API.
@@ -251,29 +251,29 @@ export class OpenAIChatOutput {
   /**
    * A unique identifier for the chat completion.
    */
-  id!: string;
+  id!: string
 
   /**
    * The name of the output object type returned by the API.
    * Always `"chat.completion"`.
    */
-  object!: string;
+  object!: string
 
   /**
    * A list of chat completion choices. Can be more than one if `n` is greater than 1 in the input options.
    */
-  choices!: Choice[];
+  choices!: Choice[]
 
   /**
    * The Unix timestamp (in seconds) of when the chat completion was created.
    */
-  created!: i32;
+  created!: i32
 
   /**
    * The model used for the chat completion.
    * In most cases, this will match the requested `model` field in the input.
    */
-  model!: string;
+  model!: string
 
   /**
    * The service tier used for processing the request.
@@ -281,7 +281,7 @@ export class OpenAIChatOutput {
    * This field is only included if the `serviceTier` parameter is specified in the request.
    */
   @alias("service_tier")
-  serviceTier: string | null = null;
+  serviceTier: string | null = null
 
   /**
    * This fingerprint represents the OpenAI backend configuration that the model runs with.
@@ -290,15 +290,15 @@ export class OpenAIChatOutput {
    * have been made that might impact determinism.
    */
   @alias("system_fingerprint")
-  systemFingerprint!: string;
+  systemFingerprint!: string
 
   /**
    * The usage statistics for the request.
    */
-  usage!: Usage;
+  usage!: Usage
 }
 
-type JsonSchemaFunction = (jsonSchema: string) => ResponseFormat;
+type JsonSchemaFunction = (jsonSchema: string) => ResponseFormat
 
 /**
  * An object specifying the format that the model must output.
@@ -308,14 +308,14 @@ export class ResponseFormat {
   /**
    * The type of response format.  Must be one of `"text"` or `"json_object"`.
    */
-  readonly type!: string;
+  readonly type!: string
 
   /**
    * The JSON schema to use for the response format.
    */
   @omitnull()
   @alias("json_schema")
-  readonly jsonSchema: JSON.Raw | null = null;
+  readonly jsonSchema: JSON.Raw | null = null
 
   /**
    * Instructs the model to output the response as a JSON object.
@@ -326,21 +326,19 @@ export class ResponseFormat {
    * Additionally, if you need an array you must ask for an object that wraps the array,
    * because the model will not reliably produce arrays directly (ie., there is no `json_array` option).
    */
-  static Json: ResponseFormat = { type: "json_object", jsonSchema: null };
+  static Json: ResponseFormat = { type: "json_object", jsonSchema: null }
 
   /**
    * Enables Structured Outputs which guarantees the model will match your supplied JSON schema.
    *
    * See https://platform.openai.com/docs/guides/structured-outputs
    */
-  static JsonSchema: JsonSchemaFunction = (
-    jsonSchema: string,
-  ): ResponseFormat => {
+  static JsonSchema: JsonSchemaFunction = (jsonSchema: string): ResponseFormat => {
     return {
       type: "json_schema",
       jsonSchema: jsonSchema,
-    };
-  };
+    }
+  }
 
   /**
    * Instructs the model to output the response as a plain text string.
@@ -348,7 +346,7 @@ export class ResponseFormat {
    * @remarks
    * This is the default response format.
    */
-  static Text: ResponseFormat = { type: "text", jsonSchema: null };
+  static Text: ResponseFormat = { type: "text", jsonSchema: null }
 }
 
 // @json
@@ -369,12 +367,12 @@ export class Tool {
    *
    * @default "function"
    */
-  type: string = "function";
+  type: string = "function"
 
   /**
    * The definition of the function.
    */
-  function!: FunctionDefinition;
+  function!: FunctionDefinition
 }
 
 /**
@@ -387,13 +385,13 @@ export class FunctionDefinition {
    *
    * Must be a-z, A-Z, 0-9, or contain underscores and dashes, with a maximum length of 64.
    */
-  name!: string;
+  name!: string
 
   /**
    * An optional description of what the function does, used by the model to choose when and how to call the function.
    */
   @omitnull()
-  description: string | null = null;
+  description: string | null = null
 
   /**
    * Whether to enable strict schema adherence when generating the function call.
@@ -410,7 +408,7 @@ export class FunctionDefinition {
    * @default false
    */
   @omitif("this.strict == false")
-  strict: bool = false;
+  strict: bool = false
 
   /**
    * The parameters the functions accepts, described as a JSON Schema object.
@@ -418,7 +416,7 @@ export class FunctionDefinition {
    * See https://platform.openai.com/docs/guides/function-calling
    */
   @omitnull()
-  parameters: JSON.Raw | null = null;
+  parameters: JSON.Raw | null = null
 }
 
 /**
@@ -429,19 +427,19 @@ export class ToolCall {
   /**
    * The ID of the tool call.
    */
-  id!: string;
+  id!: string
 
   /**
    * The type of the tool. Currently, only `"function"` is supported.
    *
    * @default "function"
    */
-  type: string = "function";
+  type: string = "function"
 
   /**
    * The function that the model called.
    */
-  function!: FunctionCall;
+  function!: FunctionCall
 }
 
 /**
@@ -452,7 +450,7 @@ export class FunctionCall {
   /**
    * The name of the function to call.
    */
-  name!: string;
+  name!: string
 
   /**
    * The arguments to call the function with, as generated by the model in JSON format.
@@ -461,7 +459,7 @@ export class FunctionCall {
    * Note that the model does not always generate valid JSON, and may hallucinate parameters not
    * defined by your function schema. Validate the arguments in your code before calling your function.
    */
-  arguments!: string;
+  arguments!: string
 }
 
 /**
@@ -473,19 +471,19 @@ export class Usage {
    * The number of completion tokens used in the response.
    */
   @alias("completion_tokens")
-  completionTokens!: i32;
+  completionTokens!: i32
 
   /**
    * The number of prompt tokens used in the request.
    */
   @alias("prompt_tokens")
-  promptTokens!: i32;
+  promptTokens!: i32
 
   /**
    * The total number of tokens used in the request and response.
    */
   @alias("total_tokens")
-  totalTokens!: i32;
+  totalTokens!: i32
 }
 
 /**
@@ -503,22 +501,22 @@ export class Choice {
    * - `"tool_calls"` if the model called a tool
    */
   @alias("finish_reason")
-  finishReason!: string;
+  finishReason!: string
 
   /**
    * The index of the choice in the list of choices.
    */
-  index!: i32;
+  index!: i32
 
   /**
    * A chat completion message generated by the model.
    */
-  message!: CompletionMessage;
+  message!: CompletionMessage
 
   /**
    * Log probability information for the choice.
    */
-  logprobs!: Logprobs | null;
+  logprobs!: Logprobs | null
 }
 
 /**
@@ -529,7 +527,7 @@ export class Logprobs {
   /**
    * A list of message content tokens with log probability information.
    */
-  content: LogprobsContent[] | null = null;
+  content: LogprobsContent[] | null = null
 }
 
 /**
@@ -540,13 +538,13 @@ export class LogprobsContent {
   /**
    * The token.
    */
-  token!: string;
+  token!: string
 
   /**
    * The log probability of this token, if it is within the top 20 most likely tokens.
    * Otherwise, the value `-9999.0` is used to signify that the token is very unlikely.
    */
-  logprob!: f64;
+  logprob!: f64
 
   /**
    * A list of integers representing the UTF-8 bytes representation of the token.
@@ -555,14 +553,14 @@ export class LogprobsContent {
    * representations must be combined to generate the correct text representation.
    * Can be null if there is no bytes representation for the token.
    */
-  bytes!: u8[] | null; // TODO: verify this works
+  bytes!: u8[] | null // TODO: verify this works
 
   /**
    * List of the most likely tokens and their log probability, at this token position.
    * In rare cases, there may be fewer than the number of requested `topLogprobs` returned.
    */
   @alias("top_logprobs")
-  topLogprobs!: TopLogprobsContent[]; // TODO: verify this works
+  topLogprobs!: TopLogprobsContent[] // TODO: verify this works
 }
 
 /**
@@ -573,13 +571,13 @@ export class TopLogprobsContent {
   /**
    * The token.
    */
-  token!: string;
+  token!: string
 
   /**
    * The log probability of this token, if it is within the top 20 most likely tokens.
    * Otherwise, the value `-9999.0` is used to signify that the token is very unlikely.
    */
-  logprob!: f64;
+  logprob!: f64
 
   /**
    * A list of integers representing the UTF-8 bytes representation of the token.
@@ -587,7 +585,7 @@ export class TopLogprobsContent {
    * representations must be combined to generate the correct text representation.
    * Can be null if there is no bytes representation for the token.
    */
-  bytes!: u8[] | null; // TODO: verify this works
+  bytes!: u8[] | null // TODO: verify this works
 }
 
 /**
@@ -602,25 +600,25 @@ abstract class Message {
    * @param content The contents of the message.
    */
   constructor(role: string, content: string) {
-    this._role = role;
-    this.content = content;
+    this._role = role
+    this.content = content
   }
 
 
   @alias("role")
-  protected _role: string;
+  protected _role: string
 
   /**
    * The role of the author of this message.
    */
   get role(): string {
-    return this._role;
+    return this._role
   }
 
   /**
    * The contents of the message.
    */
-  content: string;
+  content: string
 }
 
 /**
@@ -634,7 +632,7 @@ export class SystemMessage extends Message {
    * @param content The contents of the message.
    */
   constructor(content: string) {
-    super("system", content);
+    super("system", content)
   }
 
   /**
@@ -642,7 +640,7 @@ export class SystemMessage extends Message {
    * Provides the model information to differentiate between participants of the same role.
    */
   @omitnull()
-  name: string | null = null;
+  name: string | null = null
 }
 
 /**
@@ -656,7 +654,7 @@ export class UserMessage extends Message {
    * @param content The contents of the message.
    */
   constructor(content: string) {
-    super("user", content);
+    super("user", content)
   }
 
   /**
@@ -664,7 +662,7 @@ export class UserMessage extends Message {
    * Provides the model information to differentiate between participants of the same role.
    */
   @omitnull()
-  name: string | null = null;
+  name: string | null = null
 }
 
 /**
@@ -678,7 +676,7 @@ export class AssistantMessage extends Message {
    * @param content The contents of the message.
    */
   constructor(content: string) {
-    super("assistant", content);
+    super("assistant", content)
   }
 
   /**
@@ -686,14 +684,14 @@ export class AssistantMessage extends Message {
    * Provides the model information to differentiate between participants of the same role.
    */
   @omitnull()
-  name: string | null = null;
+  name: string | null = null
 
   /**
    * The tool calls generated by the model, such as function calls.
    */
   @alias("tool_calls")
   @omitif("this.toolCalls.length == 0")
-  toolCalls: ToolCall[] = [];
+  toolCalls: ToolCall[] = []
 }
 
 /**
@@ -707,15 +705,15 @@ export class ToolMessage extends Message {
    * @param content The contents of the message.
    */
   constructor(content: string, toolCallId: string) {
-    super("tool", content);
-    this.toolCallId = toolCallId;
+    super("tool", content)
+    this.toolCallId = toolCallId
   }
 
   /**
    * Tool call that this message is responding to.
    */
   @alias("tool_call_id")
-  toolCallId!: string;
+  toolCallId!: string
 }
 
 /**
@@ -730,17 +728,17 @@ export class CompletionMessage extends Message {
    * @param content The contents of the message.
    */
   constructor(role: string, content: string) {
-    super(role, content);
+    super(role, content)
   }
 
   /**
    * The refusal message generated by the model.
    */
-  refusal: string | null = null;
+  refusal: string | null = null
 
   /**
    * The tool calls generated by the model, such as function calls.
    */
   @alias("tool_calls")
-  toolCalls: ToolCall[] = [];
+  toolCalls: ToolCall[] = []
 }

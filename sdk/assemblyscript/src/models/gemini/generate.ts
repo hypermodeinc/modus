@@ -7,18 +7,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Model } from "../../assembly/models";
-import { JSON } from "json-as";
+import { Model } from "../../assembly/models"
+import { JSON } from "json-as"
 
 /**
  * Provides input and output types that conform to the Gemini Generate Content API.
  *
  * Reference: https://ai.google.dev/api/generate-content
  */
-export class GeminiGenerateModel extends Model<
-  GeminiGenerateInput,
-  GeminiGenerateOutput
-> {
+export class GeminiGenerateModel extends Model<GeminiGenerateInput, GeminiGenerateOutput> {
   /**
    * Creates an input object for the Gemini Generate Content API.
    *
@@ -27,7 +24,7 @@ export class GeminiGenerateModel extends Model<
    */
   createInput(contents: PromptContent[]): GeminiGenerateInput {
     // for Gemini, the model is part of the URL, not the request body
-    return <GeminiGenerateInput>{ contents };
+    return <GeminiGenerateInput>{ contents }
   }
 }
 
@@ -43,32 +40,32 @@ export class PromptContent {
    * @param parts The multi-part content message.
    */
   constructor(role: string, parts: Part[]) {
-    this._role = role;
-    this.parts = parts;
+    this._role = role
+    this.parts = parts
   }
 
 
   @alias("role")
-  protected _role: string;
+  protected _role: string
 
   /**
    * The role of the author of this content.
    */
   get role(): string {
-    return this._role;
+    return this._role
   }
 
   /**
    * The multi-part content message.
    * For now it can only be a text, even though Gemini supports more complex types.
    */
-  parts: Part[];
+  parts: Part[]
 }
 
 
 @json
 export class Part {
-  text!: string;
+  text!: string
 }
 
 /**
@@ -82,7 +79,7 @@ export class UserContent extends PromptContent {
    * @param parts The multi-part content message.
    */
   constructor(parts: Part[]) {
-    super("user", parts);
+    super("user", parts)
   }
 }
 
@@ -97,7 +94,7 @@ export class UserTextContent extends UserContent {
    * @param content The contents of the message.
    */
   constructor(content: string) {
-    super([{ text: content }]);
+    super([{ text: content }])
   }
 }
 
@@ -112,7 +109,7 @@ export class SystemTextContent extends PromptContent {
    * @param content The contents of the message.
    */
   constructor(content: string) {
-    super("system", [{ text: content }]);
+    super("system", [{ text: content }])
   }
 }
 
@@ -127,7 +124,7 @@ export class ModelContent extends PromptContent {
    * @param parts The multi-part content message.
    */
   constructor(parts: Part[]) {
-    super("model", parts);
+    super("model", parts)
   }
 }
 
@@ -142,7 +139,7 @@ export class ModelTextContent extends ModelContent {
    * @param content The contents of the message.
    */
   constructor(content: string) {
-    super([{ text: content }]);
+    super([{ text: content }])
   }
 }
 
@@ -154,30 +151,30 @@ export class GeminiGenerateInput {
   /**
    * The content of the current conversation with the model.
    */
-  contents!: PromptContent[];
+  contents!: PromptContent[]
 
   /**
    * Developer set system instruction. Currently, text only.
    */
   @omitnull()
-  systemInstruction: PromptContent | null = null;
+  systemInstruction: PromptContent | null = null
 
   /**
    * Configuration options for model generation and outputs.
    */
-  generationConfig: GenerationConfig | null = null;
+  generationConfig: GenerationConfig | null = null
 
   /**
    * A list of unique SafetySetting instances for blocking unsafe content.
    */
   @omitnull()
-  safetySettings: SafetySetting[] | null = null;
+  safetySettings: SafetySetting[] | null = null
 
   /**
    * The name of the cached content used as context to serve the prediction.
    */
   @omitnull()
-  cachedContent: string | null = null;
+  cachedContent: string | null = null
 
   // TODO: support `tools` and `toolConfig` fields
 }
@@ -193,13 +190,13 @@ export class GenerationConfig {
    *
    * @default 1
    */
-  candidateCount: i32 = 1;
+  candidateCount: i32 = 1
 
   /**
    * The set of character sequences (up to 5) that will stop output generation.
    */
   @omitnull()
-  stopSequences: string[] | null = null;
+  stopSequences: string[] | null = null
 
   /**
    * The maximum number of tokens to include in a candidate.
@@ -209,7 +206,7 @@ export class GenerationConfig {
    * See the `outputTokenLimit` of the model variant for the exact value.
    */
   @omitif("this.maxOutputTokens == -1")
-  maxOutputTokens: i32 = -1;
+  maxOutputTokens: i32 = -1
 
   /**
    * Controls the randomness of the output.
@@ -222,7 +219,7 @@ export class GenerationConfig {
    * `maxTemperature` of the model variant for the exact values.
    */
   @omitif("this.temperature == -1.0")
-  temperature: f64 = -1.0;
+  temperature: f64 = -1.0
 
   /**
    * The maximum cumulative probability of tokens to consider when sampling.
@@ -232,7 +229,7 @@ export class GenerationConfig {
    * See the `topP` of the model variant for the exact value.
    */
   @omitif("this.topP == -1.0")
-  topP: f64 = -1.0;
+  topP: f64 = -1.0
 
   /**
    * The maximum number of tokens to consider when sampling.
@@ -242,7 +239,7 @@ export class GenerationConfig {
    * See the `topK` of the model variant for the exact value.
    */
   @omitif("this.topK == -1")
-  topK: i32 = -1;
+  topK: i32 = -1
 
   /**
    * Output response mimetype of the generated candidate text.
@@ -251,7 +248,7 @@ export class GenerationConfig {
    *   `application/json`: JSON response in the candidates.
    */
   @omitif("this.responseMimeType == 'text/plain'")
-  responseMimeType: string = "text/plain";
+  responseMimeType: string = "text/plain"
 
   /**
    * Output response schema of the generated candidate text.
@@ -259,7 +256,7 @@ export class GenerationConfig {
    * this is limited to `application/json`.
    */
   @omitnull()
-  responseSchema: JSON.Raw | null = null;
+  responseSchema: JSON.Raw | null = null
 }
 
 /**
@@ -267,8 +264,8 @@ export class GenerationConfig {
  */
 @json
 export class SafetySetting {
-  category!: HarmCategory;
-  threshold!: HarmBlockThreshold;
+  category!: HarmCategory
+  threshold!: HarmBlockThreshold
 }
 
 /**
@@ -276,13 +273,13 @@ export class SafetySetting {
  */
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace HarmCategory {
-  export const UNSPECIFIED = "HARM_CATEGORY_UNSPECIFIED";
-  export const HATE_SPEECH = "HARM_CATEGORY_HATE_SPEECH";
-  export const SEXUALLY_EXPLICIT = "HARM_CATEGORY_SEXUALLY_EXPLICIT";
-  export const HARASSMENT = "HARM_CATEGORY_HARASSMENT";
-  export const DANGEROUS_CONTENT = "HARM_CATEGORY_DANGEROUS_CONTENT";
+  export const UNSPECIFIED = "HARM_CATEGORY_UNSPECIFIED"
+  export const HATE_SPEECH = "HARM_CATEGORY_HATE_SPEECH"
+  export const SEXUALLY_EXPLICIT = "HARM_CATEGORY_SEXUALLY_EXPLICIT"
+  export const HARASSMENT = "HARM_CATEGORY_HARASSMENT"
+  export const DANGEROUS_CONTENT = "HARM_CATEGORY_DANGEROUS_CONTENT"
 }
-export type HarmCategory = string;
+export type HarmCategory = string
 
 /**
  * Threshold above which a prompt or candidate will be blocked.
@@ -292,30 +289,29 @@ export namespace HarmBlockThreshold {
   /**
    * Threshold is unspecified.
    */
-  export const HARM_BLOCK_THRESHOLD_UNSPECIFIED =
-    "HARM_BLOCK_THRESHOLD_UNSPECIFIED";
+  export const HARM_BLOCK_THRESHOLD_UNSPECIFIED = "HARM_BLOCK_THRESHOLD_UNSPECIFIED"
 
   /**
    * Content with NEGLIGIBLE will be allowed.
    */
-  export const BLOCK_LOW_AND_ABOVE = "BLOCK_LOW_AND_ABOVE";
+  export const BLOCK_LOW_AND_ABOVE = "BLOCK_LOW_AND_ABOVE"
 
   /**
    * Content with NEGLIGIBLE and LOW will be allowed.
    */
-  export const BLOCK_MEDIUM_AND_ABOVE = "BLOCK_MEDIUM_AND_ABOVE";
+  export const BLOCK_MEDIUM_AND_ABOVE = "BLOCK_MEDIUM_AND_ABOVE"
 
   /**
    * Content with NEGLIGIBLE, LOW, and MEDIUM will be allowed.
    */
-  export const BLOCK_ONLY_HIGH = "BLOCK_ONLY_HIGH";
+  export const BLOCK_ONLY_HIGH = "BLOCK_ONLY_HIGH"
 
   /**
    * All content will be allowed.
    */
-  export const BLOCK_NONE = "BLOCK_NONE";
+  export const BLOCK_NONE = "BLOCK_NONE"
 }
-export type HarmBlockThreshold = string;
+export type HarmBlockThreshold = string
 
 /**
  * The output object for the Gemini Generate Content API.
@@ -325,18 +321,18 @@ export class GeminiGenerateOutput {
   /**
    * Candidate responses from the model.
    */
-  candidates!: Candidate[];
+  candidates!: Candidate[]
 
   /**
    * Returns the prompt's feedback related to the content filters.
    */
   @omitnull()
-  promptFeedback: PromptFeedback | null = null;
+  promptFeedback: PromptFeedback | null = null
 
   /**
    * Metadata on the generation requests' token usage.
    */
-  usageMetadata!: UsageMetadata;
+  usageMetadata!: UsageMetadata
 }
 
 /**
@@ -347,31 +343,31 @@ export class Candidate {
   /**
    * Index of the candidate in the list of candidates.
    */
-  index!: i8;
+  index!: i8
 
   /**
    * Generated content returned from the model.
    */
   @omitnull()
-  content: ResponseContent | null = null;
+  content: ResponseContent | null = null
 
   /**
    * The reason why the model stopped generating tokens.
    */
   @omitnull()
-  finishReason: FinishReason | null = null;
+  finishReason: FinishReason | null = null
 
   /**
    * List of ratings for the safety of a response candidate.
    */
   @omitnull()
-  safetyRatings: SafetyRating[] | null = null;
+  safetyRatings: SafetyRating[] | null = null
 
   /**
    * Citation information for model-generated candidate.
    */
   @omitnull()
-  citationMetadata: CitationMetadata | null = null;
+  citationMetadata: CitationMetadata | null = null
 }
 
 /**
@@ -379,13 +375,13 @@ export class Candidate {
  */
 @json
 export class ResponseContent {
-  role!: string;
+  role!: string
 
   /**
    * The multi-part content message.
    * For now it can only be a text, even though Gemini supports more complex types.
    */
-  parts!: Part[];
+  parts!: Part[]
 }
 
 /**
@@ -396,47 +392,47 @@ export namespace FinishReason {
   /**
    * Default value. This value is unused.
    */
-  export const FINISH_REASON_UNSPECIFIED = "FINISH_REASON_UNSPECIFIED";
+  export const FINISH_REASON_UNSPECIFIED = "FINISH_REASON_UNSPECIFIED"
 
   /**
    * Natural stop point of the model or provided stop sequence.
    */
-  export const STOP = "STOP";
+  export const STOP = "STOP"
 
   /**
    * The maximum number of tokens as specified in the request was reached.
    */
-  export const MAX_TOKENS = "MAX_TOKENS";
+  export const MAX_TOKENS = "MAX_TOKENS"
 
   /**
    * The candidate content was flagged for safety reasons.
    */
-  export const SAFETY = "SAFETY";
+  export const SAFETY = "SAFETY"
 
   /**
    * The candidate content was flagged for recitation reasons.
    */
-  export const RECITATION = "RECITATION";
+  export const RECITATION = "RECITATION"
 
   /**
    * The candidate content was flagged for using an unsupported language.
    */
-  export const LANGUAGE = "LANGUAGE";
+  export const LANGUAGE = "LANGUAGE"
 
   /**
    * Unknown reason.
    */
-  export const OTHER = "OTHER";
+  export const OTHER = "OTHER"
 }
-export type FinishReason = string;
+export type FinishReason = string
 
 /**
  * Safety setting, affecting the safety-blocking behavior.
  */
 @json
 export class SafetyRating {
-  category!: HarmCategory;
-  probability!: HarmProbability;
+  category!: HarmCategory
+  probability!: HarmProbability
 }
 
 /**
@@ -447,36 +443,36 @@ export namespace HarmProbability {
   /**
    * Probability is unspecified.
    */
-  export const HARM_PROBABILITY_UNSPECIFIED = "HARM_PROBABILITY_UNSPECIFIED";
+  export const HARM_PROBABILITY_UNSPECIFIED = "HARM_PROBABILITY_UNSPECIFIED"
 
   /**
    * Content has a negligible chance of being unsafe.
    */
-  export const NEGLIGIBLE = "NEGLIGIBLE";
+  export const NEGLIGIBLE = "NEGLIGIBLE"
 
   /**
    * Content has a low chance of being unsafe.
    */
-  export const LOW = "LOW";
+  export const LOW = "LOW"
 
   /**
    * Content has a medium chance of being unsafe.
    */
-  export const MEDIUM = "MEDIUM";
+  export const MEDIUM = "MEDIUM"
 
   /**
    * Content has a high chance of being unsafe.
    */
-  export const HIGH = "HIGH";
+  export const HIGH = "HIGH"
 }
-export type HarmProbability = string;
+export type HarmProbability = string
 
 /**
  * Citation metadata that may be found on a {@link Candidate}.
  */
 @json
 export class CitationMetadata {
-  citationSources!: CitationSource[];
+  citationSources!: CitationSource[]
 }
 
 /**
@@ -488,24 +484,24 @@ export class CitationSource {
    * Start of segment of the response that is attributed to this source.
    */
   @omitnull()
-  startIndex!: i64;
+  startIndex!: i64
 
   /**
    * End of the attributed segment, exclusive.
    */
   @omitnull()
-  endIndex!: i64;
+  endIndex!: i64
 
   /**
    * URI that is attributed as a source for a portion of the text.
    */
   @omitnull()
-  uri: string | null = null;
+  uri: string | null = null
 
   /**
    * License for the GitHub project that is attributed as a source for segment.
    */
-  license: string | null = null;
+  license: string | null = null
 }
 
 /**
@@ -515,8 +511,8 @@ export class CitationSource {
  */
 @json
 export class PromptFeedback {
-  blockReason!: BlockReason;
-  safetyRatings!: SafetyRating[];
+  blockReason!: BlockReason
+  safetyRatings!: SafetyRating[]
 }
 
 /**
@@ -527,19 +523,19 @@ export namespace BlockReason {
   /**
    * A blocked reason was not specified.
    */
-  export const BLOCKED_REASON_UNSPECIFIED = "BLOCKED_REASON_UNSPECIFIED";
+  export const BLOCKED_REASON_UNSPECIFIED = "BLOCKED_REASON_UNSPECIFIED"
 
   /**
    * Content was blocked by safety settings.
    */
-  export const SAFETY = "SAFETY";
+  export const SAFETY = "SAFETY"
 
   /**
    * Content was blocked, but the reason is uncategorized.
    */
-  export const OTHER = "OTHER";
+  export const OTHER = "OTHER"
 }
-export type BlockReason = string;
+export type BlockReason = string
 
 /**
  * Metadata on the generation request's token usage.
@@ -549,7 +545,7 @@ export class UsageMetadata {
   /**
    * Number of tokens in the prompt.
    */
-  promptTokenCount!: i32;
+  promptTokenCount!: i32
 
   /**
    * Total number of tokens across the generated candidates.
@@ -557,15 +553,15 @@ export class UsageMetadata {
    * @remarks
    * This value will be zero if the prompt was blocked due to safety reasons.
    */
-  candidatesTokenCount: i32 = 0; // TODO: make this an `i32 | null` when supported
+  candidatesTokenCount: i32 = 0 // TODO: make this an `i32 | null` when supported
 
   /**
    * Total token count for the generation request (prompt + candidates).
    */
-  totalTokenCount!: i32;
+  totalTokenCount!: i32
 
   /**
    * Total token count in the cached part of the prompt, i.e. in the cached content.
    */
-  cachedContentTokenCount: i32 = 0; // TODO: make this an `i32 | null` when supported
+  cachedContentTokenCount: i32 = 0 // TODO: make this an `i32 | null` when supported
 }

@@ -7,56 +7,56 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { getTypeName } from "./extractor.js";
+import { getTypeName } from "./extractor.js"
 
 export class ProgramInfo {
-  exportFns: FunctionSignature[];
-  importFns: FunctionSignature[];
-  types: TypeDefinition[];
+  exportFns: FunctionSignature[]
+  importFns: FunctionSignature[]
+  types: TypeDefinition[]
 }
 
 export class Result {
-  public name?: string;
-  public type: string;
+  public name?: string
+  public type: string
 }
 
 export class FunctionSignature {
   constructor(
     public name: string,
     public parameters: Parameter[],
-    public results: Result[],
+    public results: Result[]
   ) {}
 
   toString() {
-    let params = "";
+    let params = ""
     for (let i = 0; i < this.parameters.length; i++) {
-      const param = this.parameters[i]!;
-      const defaultValue = param.default;
-      if (i > 0) params += ", ";
-      params += `${param.name}: ${getTypeName(param.type)}`;
+      const param = this.parameters[i]!
+      const defaultValue = param.default
+      if (i > 0) params += ", "
+      params += `${param.name}: ${getTypeName(param.type)}`
       if (defaultValue !== undefined) {
-        params += ` = ${JSON.stringify(defaultValue)}`;
+        params += ` = ${JSON.stringify(defaultValue)}`
       }
     }
-    return `${this.name}(${params}): ${getTypeName(this.results[0].type)}`;
+    return `${this.name}(${params}): ${getTypeName(this.results[0].type)}`
   }
 
   toJSON() {
-    const output = {};
+    const output = {}
 
     // always omit the function name
 
     // omit empty parameters
     if (this.parameters.length > 0) {
-      output["parameters"] = this.parameters;
+      output["parameters"] = this.parameters
     }
 
     // omit void result types
     if (this.results[0].type !== "void") {
-      output["results"] = this.results;
+      output["results"] = this.results
     }
 
-    return output;
+    return output
   }
 }
 
@@ -64,30 +64,28 @@ export class TypeDefinition {
   constructor(
     public name: string,
     public id: number,
-    public fields?: Field[],
+    public fields?: Field[]
   ) {}
 
   toString() {
-    const name = getTypeName(this.name);
+    const name = getTypeName(this.name)
     if (!this.fields || this.fields.length === 0) {
-      return name;
+      return name
     }
 
-    const fields = this.fields
-      .map((f) => `${f.name}: ${getTypeName(f.type)}`)
-      .join(", ");
-    return `${name} { ${fields} }`;
+    const fields = this.fields.map((f) => `${f.name}: ${getTypeName(f.type)}`).join(", ")
+    return `${name} { ${fields} }`
   }
 
   toJSON() {
     return {
       id: this.id,
       fields: this.fields,
-    };
+    }
   }
 
   isHidden() {
-    return this.name.startsWith("~lib/");
+    return this.name.startsWith("~lib/")
   }
 }
 
@@ -97,17 +95,17 @@ export type JsonLiteral =
   | number
   | string
   | Array<JsonLiteral>
-  | { [key: string]: JsonLiteral };
+  | { [key: string]: JsonLiteral }
 
 export interface Parameter {
-  name: string;
-  type: string;
-  default?: JsonLiteral;
+  name: string
+  type: string
+  default?: JsonLiteral
 }
 
 interface Field {
-  name: string;
-  type: string;
+  name: string
+  type: string
 }
 
 export const typeMap = new Map<string, string>([
@@ -116,4 +114,4 @@ export const typeMap = new Map<string, string>([
   ["~lib/map/Map", "Map"],
   ["~lib/date/Date", "Date"],
   ["~lib/wasi_date/wasi_Date", "Date"],
-]);
+])

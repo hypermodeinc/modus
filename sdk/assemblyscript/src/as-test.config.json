@@ -6,9 +6,7 @@
     "coverage": true
   },
   "buildOptions": {
-    "args": [
-      "--config ./node_modules/@hypermode/modus-sdk-as/plugin.asconfig.json"
-    ],
+    "args": ["--config ./node_modules/@hypermode/modus-sdk-as/plugin.asconfig.json"],
     "target": "bindings"
   },
   "runOptions": {

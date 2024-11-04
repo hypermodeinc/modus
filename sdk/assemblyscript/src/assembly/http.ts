@@ -7,13 +7,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { JSON } from "json-as";
+import { JSON } from "json-as"
 
-const emptyArrayBuffer = new ArrayBuffer(0);
+const emptyArrayBuffer = new ArrayBuffer(0)
 
 // @ts-expect-error: decorator
 @external("modus_http_client", "fetch")
-declare function hostFetch(request: Request): Response;
+declare function hostFetch(request: Request): Response
 
 /**
  * Performs an HTTP request and returns the response.
@@ -22,25 +22,25 @@ declare function hostFetch(request: Request): Response;
  */
 export function fetch<T>(
   requestOrUrl: T,
-  options: RequestOptions = new RequestOptions(),
+  options: RequestOptions = new RequestOptions()
 ): Response {
-  let request: Request;
+  let request: Request
   if (isString<T>()) {
-    const url = changetype<string>(requestOrUrl);
-    request = new Request(url, options);
+    const url = changetype<string>(requestOrUrl)
+    request = new Request(url, options)
   } else if (idof<T>() == idof<Request>()) {
-    const r = changetype<Request>(requestOrUrl);
-    request = Request.clone(r, options);
+    const r = changetype<Request>(requestOrUrl)
+    request = Request.clone(r, options)
   } else {
-    throw new Error("Unsupported request type.");
+    throw new Error("Unsupported request type.")
   }
 
-  const response = hostFetch(request);
+  const response = hostFetch(request)
   if (!response) {
-    throw new Error("HTTP fetch failed. Check the logs for more information.");
+    throw new Error("HTTP fetch failed. Check the logs for more information.")
   }
 
-  return response;
+  return response
 }
 
 /**
@@ -51,23 +51,23 @@ export class Request {
    * The URL to send the request to.
    * Example: "https://example.com/whatever"
    */
-  readonly url: string;
+  readonly url: string
 
   /**
    * The HTTP method to use for the request.
    * Example: "GET"
    */
-  readonly method: string;
+  readonly method: string
 
   /**
    * The HTTP headers for the request.
    */
-  readonly headers: Headers;
+  readonly headers: Headers
 
   /**
    * The raw HTTP request body, as an `ArrayBuffer`.
    */
-  readonly body: ArrayBuffer;
+  readonly body: ArrayBuffer
 
   /**
    * Creates a new `Request` instance.
@@ -75,10 +75,10 @@ export class Request {
    * @param options - The optional parameters for the request.
    */
   constructor(url: string, options: RequestOptions = new RequestOptions()) {
-    this.url = url;
-    this.method = options.method ? options.method!.toUpperCase() : "GET";
-    this.headers = options.headers;
-    this.body = options.body ? options.body!.data : emptyArrayBuffer;
+    this.url = url
+    this.method = options.method ? options.method!.toUpperCase() : "GET"
+    this.headers = options.headers
+    this.body = options.body ? options.body!.data : emptyArrayBuffer
   }
 
   /**
@@ -87,29 +87,26 @@ export class Request {
    * @param options - The options to set on the new request.
    * @returns - A new `Request` instance.
    */
-  static clone(
-    request: Request,
-    options: RequestOptions = new RequestOptions(),
-  ): Request {
+  static clone(request: Request, options: RequestOptions = new RequestOptions()): Request {
     const newOptions = {
       method: options.method || request.method,
       body: options.body || Content.from(request.body),
-    } as RequestOptions;
+    } as RequestOptions
 
     if (options.headers.entries().length > 0) {
-      newOptions.headers = options.headers;
+      newOptions.headers = options.headers
     } else {
-      newOptions.headers = request.headers;
+      newOptions.headers = request.headers
     }
 
-    return new Request(request.url, newOptions);
+    return new Request(request.url, newOptions)
   }
 
   /**
    * Returns the request body as a text string.
    */
   text(): string {
-    return Content.from(this.body).text();
+    return Content.from(this.body).text()
   }
 
   /**
@@ -119,7 +116,7 @@ export class Request {
    * @throws An error if the response body cannot be deserialized into the specified type.
    */
   json<T>(): T {
-    return Content.from(this.body).json<T>();
+    return Content.from(this.body).json<T>()
   }
 }
 
@@ -131,17 +128,17 @@ export class RequestOptions {
    * The HTTP method to use for the request.
    * Default: "GET"
    */
-  method: string | null = null;
+  method: string | null = null
 
   /**
    * The HTTP headers for the request.
    */
-  headers: Headers = new Headers();
+  headers: Headers = new Headers()
 
   /**
    * The HTTP request body.
    */
-  body: Content | null = null;
+  body: Content | null = null
 }
 
 /**
@@ -149,10 +146,10 @@ export class RequestOptions {
  */
 export class Content {
   // TODO: This should be a ReadableStream, but we can't support that yet.
-  readonly data: ArrayBuffer;
+  readonly data: ArrayBuffer
 
   private constructor(data: ArrayBuffer) {
-    this.data = data;
+    this.data = data
   }
 
   /**
@@ -162,11 +159,11 @@ export class Content {
    */
   static from<T>(value: T): Content {
     if (idof<T>() == idof<ArrayBuffer>()) {
-      return new Content(value as ArrayBuffer);
+      return new Content(value as ArrayBuffer)
     } else if (isString<T>()) {
-      return new Content(String.UTF8.encode(value as string));
+      return new Content(String.UTF8.encode(value as string))
     } else {
-      return Content.from(JSON.stringify(value));
+      return Content.from(JSON.stringify(value))
     }
   }
 
@@ -174,7 +171,7 @@ export class Content {
    * Returns the content as a text string.
    */
   text(): string {
-    return String.UTF8.decode(this.data);
+    return String.UTF8.decode(this.data)
   }
 
   /**
@@ -184,7 +181,7 @@ export class Content {
    * @throws An error if the cannot be deserialized into the specified type.
    */
   json<T>(): T {
-    return JSON.parse<T>(this.text());
+    return JSON.parse<T>(this.text())
   }
 }
 
@@ -196,23 +193,23 @@ export class Response {
    * The HTTP response status code.
    * Example: 200
    */
-  readonly status: u16 = 0;
+  readonly status: u16 = 0
 
   /**
    * The HTTP response status text.
    * Example: "OK"
    */
-  readonly statusText: string = "";
+  readonly statusText: string = ""
 
   /**
    * The HTTP response headers.
    */
-  readonly headers: Headers = new Headers();
+  readonly headers: Headers = new Headers()
 
   /**
    * The raw HTTP response body, as an `ArrayBuffer`.
    */
-  readonly body: ArrayBuffer = emptyArrayBuffer;
+  readonly body: ArrayBuffer = emptyArrayBuffer
 
   private constructor() {}
 
@@ -220,14 +217,14 @@ export class Response {
    * Returns whether the response status is OK (status code 2xx).
    */
   get ok(): bool {
-    return this.status >= 200 && this.status < 300;
+    return this.status >= 200 && this.status < 300
   }
 
   /**
    * Returns the response body as a text string.
    */
   text(): string {
-    return Content.from(this.body).text();
+    return Content.from(this.body).text()
   }
 
   /**
@@ -237,7 +234,7 @@ export class Response {
    * @throws An error if the response body cannot be deserialized into the specified type.
    */
   json<T>(): T {
-    return Content.from(this.body).json<T>();
+    return Content.from(this.body).json<T>()
   }
 }
 
@@ -248,12 +245,12 @@ class Header {
   /**
    * The header name.
    */
-  name!: string;
+  name!: string
 
   /**
    * The header values.
    */
-  values!: string[];
+  values!: string[]
 }
 
 /**
@@ -263,7 +260,7 @@ export class Headers {
   // The data key is lower case, since HTTP header keys are case-insensitive.
   // We preserve the original case in the header object's name field.
   // The first header added determines the original case.
-  private data: Map<string, Header> = new Map<string, Header>();
+  private data: Map<string, Header> = new Map<string, Header>()
 
   /**
    * Appends a new header to the collection.
@@ -272,11 +269,11 @@ export class Headers {
    * @param value - The header value.
    */
   append(name: string, value: string): void {
-    const key = name.toLowerCase();
+    const key = name.toLowerCase()
     if (this.data.has(key)) {
-      this.data.get(key).values.push(value);
+      this.data.get(key).values.push(value)
     } else {
-      this.data.set(key, { name, values: [value] });
+      this.data.set(key, { name, values: [value] })
     }
   }
 
@@ -284,15 +281,15 @@ export class Headers {
    * Returns all of the headers.
    */
   entries(): string[][] {
-    const entries: string[][] = [];
-    const headers = this.data.values();
+    const entries: string[][] = []
+    const headers = this.data.values()
     for (let i = 0; i < headers.length; i++) {
-      const header = headers[i];
+      const header = headers[i]
       for (let j = 0; j < header.values.length; j++) {
-        entries.push([header.name, header.values[j]]);
+        entries.push([header.name, header.values[j]])
       }
     }
-    return entries;
+    return entries
   }
 
   /**
@@ -302,13 +299,13 @@ export class Headers {
    * @returns The header value, or `null` if the header does not exist.
    */
   get(name: string): string | null {
-    const key = name.toLowerCase();
+    const key = name.toLowerCase()
     if (!this.data.has(key)) {
-      return null;
+      return null
     }
 
-    const header = this.data.get(key);
-    return header.values.join(",");
+    const header = this.data.get(key)
+    return header.values.join(",")
   }
 
   /**
@@ -321,38 +318,38 @@ export class Headers {
   public static from<T>(value: T): Headers {
     switch (idof<T>()) {
       case idof<string[][]>(): {
-        const headers = new Headers();
-        const arr = changetype<string[][]>(value);
+        const headers = new Headers()
+        const arr = changetype<string[][]>(value)
         for (let i = 0; i < arr.length; i++) {
           for (let j = 1; j < arr[i].length; j++) {
-            headers.append(arr[i][0], arr[i][j]);
+            headers.append(arr[i][0], arr[i][j])
           }
         }
-        return headers;
+        return headers
       }
       case idof<Map<string, string>>(): {
-        const headers = new Headers();
-        const map = changetype<Map<string, string>>(value);
-        const keys = map.keys();
+        const headers = new Headers()
+        const map = changetype<Map<string, string>>(value)
+        const keys = map.keys()
         for (let i = 0; i < keys.length; i++) {
-          headers.append(keys[i], map.get(keys[i]));
+          headers.append(keys[i], map.get(keys[i]))
         }
-        return headers;
+        return headers
       }
       case idof<Map<string, string[]>>(): {
-        const headers = new Headers();
-        const map = changetype<Map<string, string[]>>(value);
-        const keys = map.keys();
+        const headers = new Headers()
+        const map = changetype<Map<string, string[]>>(value)
+        const keys = map.keys()
         for (let i = 0; i < keys.length; i++) {
-          const values = map.get(keys[i]);
+          const values = map.get(keys[i])
           for (let j = 0; j < values.length; j++) {
-            headers.append(keys[i], values[j]);
+            headers.append(keys[i], values[j])
           }
         }
-        return headers;
+        return headers
       }
       default:
-        throw new Error("Unsupported value type to create headers from.");
+        throw new Error("Unsupported value type to create headers from.")
     }
   }
 }

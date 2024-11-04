@@ -7,7 +7,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import binaryen from "assemblyscript/lib/binaryen.js";
+import binaryen from "assemblyscript/lib/binaryen.js"
 import {
   ArrayLiteralExpression,
   Class,
@@ -23,7 +23,7 @@ import {
   Program,
   Property,
   StringLiteralExpression,
-} from "assemblyscript/dist/assemblyscript.js";
+} from "assemblyscript/dist/assemblyscript.js"
 import {
   FunctionSignature,
   JsonLiteral,
@@ -31,160 +31,148 @@ import {
   ProgramInfo,
   TypeDefinition,
   typeMap,
-} from "./types.js";
-import ModusTransform from "./index.js";
+} from "./types.js"
+import ModusTransform from "./index.js"
 
 export class Extractor {
-  binaryen: typeof binaryen;
-  module: binaryen.Module;
-  program: Program;
-  transform: ModusTransform;
+  binaryen: typeof binaryen
+  module: binaryen.Module
+  program: Program
+  transform: ModusTransform
 
   constructor(transform: ModusTransform, module: binaryen.Module) {
-    this.program = transform.program;
-    this.binaryen = transform.binaryen;
-    this.module = module;
+    this.program = transform.program
+    this.binaryen = transform.binaryen
+    this.module = module
   }
 
   getProgramInfo(): ProgramInfo {
     const exportedFunctions = this.getExportedFunctions()
       .map((e) => this.convertToFunctionSignature(e))
-      .sort((a, b) => a.name.localeCompare(b.name));
+      .sort((a, b) => a.name.localeCompare(b.name))
 
     const importedFunctions = this.getImportedFunctions()
       .map((e) => this.convertToFunctionSignature(e))
-      .sort((a, b) => a.name.localeCompare(b.name));
+      .sort((a, b) => a.name.localeCompare(b.name))
 
     const allTypes = new Map<string, TypeDefinition>(
       Array.from(this.program.managedClasses.values())
         .filter((c) => c.id > 2) // skip built-in classes
         .map((c) => {
-          return new TypeDefinition(
-            c.type.toString(),
-            c.id,
-            this.getClassFields(c),
-          );
+          return new TypeDefinition(c.type.toString(), c.id, this.getClassFields(c))
         })
-        .map((t) => [t.name, t]),
-    );
+        .map((t) => [t.name, t])
+    )
     const typePathsUsed = new Set(
       exportedFunctions
         .concat(importedFunctions)
-        .flatMap((f) =>
-          f.parameters.map((p) => p.type).concat(f.results[0]?.type),
-        )
-        .map((p) => makeNonNullable(p)),
-    );
+        .flatMap((f) => f.parameters.map((p) => p.type).concat(f.results[0]?.type))
+        .map((p) => makeNonNullable(p))
+    )
 
-    const typesUsed = new Map<string, TypeDefinition>();
+    const typesUsed = new Map<string, TypeDefinition>()
 
     allTypes.forEach((t) => {
       if (typePathsUsed.has(t.name)) {
-        typesUsed.set(t.name, t);
+        typesUsed.set(t.name, t)
       }
-    });
+    })
 
     typesUsed.forEach((t) => {
-      this.expandDependentTypes(t, allTypes, typesUsed);
-    });
+      this.expandDependentTypes(t, allTypes, typesUsed)
+    })
 
-    const types = Array.from(typesUsed.values()).sort((a, b) =>
-      a.name.localeCompare(b.name),
-    );
+    const types = Array.from(typesUsed.values()).sort((a, b) => a.name.localeCompare(b.name))
 
     return {
       exportFns: exportedFunctions,
       importFns: importedFunctions,
       types,
-    };
+    }
   }
 
   private expandDependentTypes(
     type: TypeDefinition,
     allTypes: Map<string, TypeDefinition>,
-    typesUsed: Map<string, TypeDefinition>,
+    typesUsed: Map<string, TypeDefinition>
   ) {
     // collect dependent types into this set
-    const dependentTypes = new Set<TypeDefinition>();
+    const dependentTypes = new Set<TypeDefinition>()
 
     // include fields
     if (type.fields) {
       type.fields.forEach((f) => {
-        const path = makeNonNullable(f.type);
-        const typeDef = allTypes.get(path);
+        const path = makeNonNullable(f.type)
+        const typeDef = allTypes.get(path)
         if (typeDef) {
-          dependentTypes.add(typeDef);
+          dependentTypes.add(typeDef)
         }
-      });
+      })
     }
 
     // include generic type arguments
-    const cls = this.program.managedClasses.get(type.id);
+    const cls = this.program.managedClasses.get(type.id)
     if (cls.typeArguments) {
       cls.typeArguments.forEach((t) => {
-        const typeDef = allTypes.get(t.toString());
+        const typeDef = allTypes.get(t.toString())
         if (typeDef) {
-          dependentTypes.add(typeDef);
+          dependentTypes.add(typeDef)
         }
-      });
+      })
     }
 
     // recursively expand dependencies of dependent types
     dependentTypes.forEach((t) => {
       if (!typesUsed.has(t.name)) {
-        typesUsed.set(t.name, t);
-        this.expandDependentTypes(t, allTypes, typesUsed);
+        typesUsed.set(t.name, t)
+        this.expandDependentTypes(t, allTypes, typesUsed)
       }
-    });
+    })
   }
 
   private getClassFields(c: Class) {
-    if (
-      c.isArrayLike ||
-      typeMap.has(c.type.toString()) ||
-      typeMap.has(c.prototype.internalName)
-    ) {
-      return undefined;
+    if (c.isArrayLike || typeMap.has(c.type.toString()) || typeMap.has(c.prototype.internalName)) {
+      return undefined
     }
 
     return Array.from(c.members.values())
       .filter((m) => m.kind === ElementKind.PropertyPrototype)
       .map((m) => {
-        const instance = this.program.instancesByName.get(m.internalName);
-        return instance as Property;
+        const instance = this.program.instancesByName.get(m.internalName)
+        return instance as Property
       })
       .filter((p) => p && p.isField)
       .map((f) => ({
         name: f.name,
         type: f.type.toString(),
-      }));
+      }))
   }
 
   private getExportedFunctions() {
-    const results: importExportInfo[] = [];
+    const results: importExportInfo[] = []
 
     for (let i = 0; i < this.module.getNumExports(); ++i) {
-      const ref = this.module.getExportByIndex(i);
-      const info = this.binaryen.getExportInfo(ref);
+      const ref = this.module.getExportByIndex(i)
+      const info = this.binaryen.getExportInfo(ref)
 
       if (info.kind !== binaryen.ExternalFunction) {
-        continue;
+        continue
       }
 
-      const exportName = info.name;
+      const exportName = info.name
       if (exportName.startsWith("_")) {
-        continue;
+        continue
       }
 
-      const functionName = info.value.replace(/^export:/, "");
-      results.push({ name: exportName, function: functionName });
+      const functionName = info.value.replace(/^export:/, "")
+      results.push({ name: exportName, function: functionName })
     }
 
-    return results;
+    return results
   }
 
   private getImportedFunctions() {
-    const results: importExportInfo[] = [];
+    const results: importExportInfo[] = []
 
     this.program.moduleImports.forEach((module, modName) => {
       module.forEach((e, fnName) => {
@@ -192,159 +180,152 @@ export class Extractor {
           results.push({
             name: `${modName}.${fnName}`,
             function: e.internalName,
-          });
+          })
         }
-      });
-    });
+      })
+    })
 
-    return results;
+    return results
   }
 
   private convertToFunctionSignature(e: importExportInfo): FunctionSignature {
-    const f = this.program.instancesByName.get(e.function) as Func;
-    const d = f.declaration as FunctionDeclaration;
-    const params: Parameter[] = [];
+    const f = this.program.instancesByName.get(e.function) as Func
+    const d = f.declaration as FunctionDeclaration
+    const params: Parameter[] = []
     for (let i = 0; i < f.signature.parameterTypes.length; i++) {
-      const param = d.signature.parameters[i];
-      const type = f.signature.parameterTypes[i];
-      const name = param.name.text;
-      const defaultValue = getLiteral(param.initializer);
+      const param = d.signature.parameters[i]
+      const type = f.signature.parameterTypes[i]
+      const name = param.name.text
+      const defaultValue = getLiteral(param.initializer)
       params.push({
         name,
         type: type.toString(),
         default: defaultValue,
-      });
+      })
     }
 
-    return new FunctionSignature(e.name, params, [
-      { type: f.signature.returnType.toString() },
-    ]);
+    return new FunctionSignature(e.name, params, [{ type: f.signature.returnType.toString() }])
   }
 }
 
 interface importExportInfo {
-  name: string;
-  function: string;
+  name: string
+  function: string
 }
 
 export function getTypeName(path: string): string {
   if (path.startsWith("~lib/array/Array")) {
-    const type = getTypeName(
-      path.slice(path.indexOf("<") + 1, path.lastIndexOf(">")),
-    );
+    const type = getTypeName(path.slice(path.indexOf("<") + 1, path.lastIndexOf(">")))
     if (isNullable(type)) {
-      return "(" + type + ")[]";
+      return "(" + type + ")[]"
     }
-    return type + "[]";
+    return type + "[]"
   }
 
   if (isNullable(path)) {
-    return makeNullable(getTypeName(makeNonNullable(path)));
+    return makeNullable(getTypeName(makeNonNullable(path)))
   }
 
-  const name = typeMap.get(path);
-  if (name) return name;
+  const name = typeMap.get(path)
+  if (name) return name
 
   if (path.startsWith("~lib/map/Map")) {
-    const [keyType, valueType] = getMapSubtypes(path);
-    return "Map<" + getTypeName(keyType) + ", " + getTypeName(valueType) + ">";
+    const [keyType, valueType] = getMapSubtypes(path)
+    return "Map<" + getTypeName(keyType) + ", " + getTypeName(valueType) + ">"
   }
 
   if (path.startsWith("~lib/@hypermode")) {
-    const lastIndex = path.lastIndexOf("/");
-    const module = path.slice(
-      path.lastIndexOf("/", lastIndex - 1) + 1,
-      lastIndex,
-    );
-    const ty = path.slice(lastIndex + 1);
-    return module + "." + ty;
+    const lastIndex = path.lastIndexOf("/")
+    const module = path.slice(path.lastIndexOf("/", lastIndex - 1) + 1, lastIndex)
+    const ty = path.slice(lastIndex + 1)
+    return module + "." + ty
   }
 
-  return path.slice(path.lastIndexOf("/") + 1);
+  return path.slice(path.lastIndexOf("/") + 1)
 }
 
 export function getLiteral(node: Expression | null): JsonLiteral {
-  if (!node) return undefined;
+  if (!node) return undefined
   switch (node.kind) {
     case NodeKind.True: {
-      return true;
+      return true
     }
     case NodeKind.False: {
-      return false;
+      return false
     }
     case NodeKind.Null: {
-      return null;
+      return null
     }
     case NodeKind.Literal: {
-      const _node = node as LiteralExpression;
+      const _node = node as LiteralExpression
       switch (_node.literalKind) {
         case LiteralKind.Integer: {
-          return i64_to_f64((_node as IntegerLiteralExpression).value);
+          return i64_to_f64((_node as IntegerLiteralExpression).value)
         }
         case LiteralKind.Float: {
-          return (_node as FloatLiteralExpression).value;
+          return (_node as FloatLiteralExpression).value
         }
         case LiteralKind.String: {
-          return (_node as StringLiteralExpression).value;
+          return (_node as StringLiteralExpression).value
         }
         case LiteralKind.Array: {
-          const out = [];
-          const literals = (_node as ArrayLiteralExpression).elementExpressions;
+          const out = []
+          const literals = (_node as ArrayLiteralExpression).elementExpressions
           for (let i = 0; i < literals.length; i++) {
-            const lit = getLiteral(literals[i]);
-            out.push(lit);
+            const lit = getLiteral(literals[i])
+            out.push(lit)
           }
-          return out;
+          return out
         }
       }
     }
   }
-  return "";
+  return ""
 }
 
-const nullableTypeRegex = /\s?\|\s?null$/;
+const nullableTypeRegex = /\s?\|\s?null$/
 
 function isNullable(type: string) {
-  return nullableTypeRegex.test(type);
+  return nullableTypeRegex.test(type)
 }
 
 function makeNonNullable(type?: string) {
-  return type?.replace(nullableTypeRegex, "");
+  return type?.replace(nullableTypeRegex, "")
 }
 
 function makeNullable(type?: string) {
   if (isNullable(type)) {
-    return type;
+    return type
   } else {
-    return type + " | null";
+    return type + " | null"
   }
 }
 
 function getMapSubtypes(type: string): [string, string] {
-  const prefix = "~lib/map/Map<";
+  const prefix = "~lib/map/Map<"
   if (!type.startsWith(prefix)) {
-    return ["", ""];
+    return ["", ""]
   }
 
-  let n = 1;
-  let c = 0;
+  let n = 1
+  let c = 0
   for (let i = prefix.length; i < type.length; i++) {
     switch (type.charAt(i)) {
       case "<":
-        n++;
-        break;
+        n++
+        break
       case ",":
         if (n == 1) {
-          c = i;
+          c = i
         }
-        break;
+        break
       case ">":
-        n--;
+        n--
         if (n == 0) {
-          return [type.slice(prefix.length, c), type.slice(c + 1, i)];
+          return [type.slice(prefix.length, c), type.slice(c + 1, i)]
         }
     }
   }
 
-  return ["", ""];
+  return ["", ""]
 }

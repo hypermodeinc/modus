@@ -7,26 +7,26 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import * as postgresql from "./postgresql";
-export { postgresql };
+import * as postgresql from "./postgresql"
+export { postgresql }
 
-import * as dgraph from "./dgraph";
-export { dgraph };
+import * as dgraph from "./dgraph"
+export { dgraph }
 
-import * as graphql from "./graphql";
-export { graphql };
+import * as graphql from "./graphql"
+export { graphql }
 
-import * as http from "./http";
-export { http };
+import * as http from "./http"
+export { http }
 
-import * as collections from "./collections";
-export { collections };
+import * as collections from "./collections"
+export { collections }
 
-import models from "./models";
-export { models };
+import models from "./models"
+export { models }
 
-import * as vectors from "./vectors";
-export { vectors };
+import * as vectors from "./vectors"
+export { vectors }
 
-import * as auth from "./auth";
-export { auth };
+import * as auth from "./auth"
+export { auth }

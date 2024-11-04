@@ -7,21 +7,18 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { JSON } from "json-as";
-import * as utils from "./utils";
+import { JSON } from "json-as"
+import * as utils from "./utils"
 
-type ModelInvoker = (modelName: string, inputJson: string) => string | null;
+type ModelInvoker = (modelName: string, inputJson: string) => string | null
 
 // @ts-expect-error: decorator
 @external("modus_models", "getModelInfo")
-declare function hostGetModelInfo(modelName: string): ModelInfo;
+declare function hostGetModelInfo(modelName: string): ModelInfo
 
 // @ts-expect-error: decorator
 @external("modus_models", "invokeModel")
-declare function hostInvokeModel(
-  modelName: string,
-  input: string,
-): string | null;
+declare function hostInvokeModel(modelName: string, input: string): string | null
 
 class ModusModelFactory implements ModelFactory {
   constructor() {
@@ -29,7 +26,7 @@ class ModusModelFactory implements ModelFactory {
     // from the `invoke` method.  It would be preferable to use an instance private or protected
     // property on the model instance, and that does compile in AssemblyScript, but ends up displaying
     // an error in VS Code when the model type is requested from `getModel` in the factory.
-    Model.invoker = hostInvokeModel;
+    Model.invoker = hostInvokeModel
   }
 
   /**
@@ -38,31 +35,31 @@ class ModusModelFactory implements ModelFactory {
    * @returns An instance of the model object, which can be used to interact with the model.
    */
   getModel<T extends Model>(modelName: string): T {
-    const info = hostGetModelInfo(modelName);
+    const info = hostGetModelInfo(modelName)
     if (utils.resultIsInvalid(info)) {
-      throw new Error(`Model ${modelName} not found.`);
+      throw new Error(`Model ${modelName} not found.`)
     }
 
-    return instantiate<T>(info);
+    return instantiate<T>(info)
   }
 }
 
 export class ModelInfo {
   constructor(
     public readonly name: string,
-    public readonly fullName: string = name,
+    public readonly fullName: string = name
   ) {}
 }
 
 export interface ModelFactory {
-  getModel<T extends Model>(modelName: string): T;
+  getModel<T extends Model>(modelName: string): T
 }
 
 export abstract class Model<TInput = unknown, TOutput = unknown> {
-  static invoker: ModelInvoker | null = null;
+  static invoker: ModelInvoker | null = null
   protected constructor(public info: ModelInfo) {}
 
-  debug: boolean = false;
+  debug: boolean = false
 
   /**
    * Invokes the model with the given input.
@@ -71,27 +68,27 @@ export abstract class Model<TInput = unknown, TOutput = unknown> {
    */
   invoke(input: TInput): TOutput {
     if (!Model.invoker) {
-      throw new Error("Model invoker is not set.");
+      throw new Error("Model invoker is not set.")
     }
 
-    const modelName = this.info.name;
-    const inputJson = JSON.stringify(input);
+    const modelName = this.info.name
+    const inputJson = JSON.stringify(input)
     if (this.debug) {
-      console.debug(`Invoking ${modelName} model with input: ${inputJson}`);
+      console.debug(`Invoking ${modelName} model with input: ${inputJson}`)
     }
 
-    const outputJson = Model.invoker(modelName, inputJson);
+    const outputJson = Model.invoker(modelName, inputJson)
     if (!outputJson) {
-      throw new Error(`Failed to invoke ${modelName} model.`);
+      throw new Error(`Failed to invoke ${modelName} model.`)
     }
 
     if (this.debug) {
-      console.debug(`Received output: ${outputJson}`);
+      console.debug(`Received output: ${outputJson}`)
     }
 
-    return JSON.parse<TOutput>(outputJson);
+    return JSON.parse<TOutput>(outputJson)
   }
 }
 
-const factory = new ModusModelFactory();
-export default factory;
+const factory = new ModusModelFactory()
+export default factory

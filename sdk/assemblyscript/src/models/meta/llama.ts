@@ -7,12 +7,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Model } from "../../assembly/models";
+import { Model } from "../../assembly/models"
 
-export class TextGenerationModel extends Model<
-  TextGenerationInput,
-  TextGenerationOutput
-> {
+export class TextGenerationModel extends Model<TextGenerationInput, TextGenerationOutput> {
   /**
    * Creates a new input object for the model.
    * @param prompt The prompt text to pass to the model.
@@ -21,7 +18,7 @@ export class TextGenerationModel extends Model<
    * control the behavior of the model.
    */
   createInput(prompt: string): TextGenerationInput {
-    return <TextGenerationInput>{ prompt };
+    return <TextGenerationInput>{ prompt }
   }
 }
 
@@ -33,7 +30,7 @@ export class TextGenerationInput {
    * May contain special tokens to control the behavior of the model.
    * See https://llama.meta.com/docs/model-cards-and-prompt-formats/meta-llama-2/
    */
-  prompt!: string;
+  prompt!: string
 
   /**
    * The temperature of the generated text, which controls the randomness of the output.
@@ -43,7 +40,7 @@ export class TextGenerationInput {
    * Default: 0.6
    */
   @omitif("this.temperature == 0.6")
-  temperature: f64 = 0.6;
+  temperature: f64 = 0.6
 
   /**
    * The maximum probability threshold for generating tokens.
@@ -53,7 +50,7 @@ export class TextGenerationInput {
    */
   @omitif("this.topP == 0.9")
   @alias("top_p")
-  topP: f64 = 0.9;
+  topP: f64 = 0.9
 
   /**
    * The maximum number of tokens in the generated text.
@@ -62,7 +59,7 @@ export class TextGenerationInput {
    */
   @omitif("this.maxGenLen == 512")
   @alias("max_gen_len")
-  maxGenLen: i32 = 512;
+  maxGenLen: i32 = 512
 }
 
 
@@ -71,19 +68,19 @@ export class TextGenerationOutput {
   /**
    * The generated text.
    */
-  generation!: string;
+  generation!: string
 
   /**
    * The number of tokens in the prompt text.
    */
   @alias("prompt_token_count")
-  promptTokenCount!: i32;
+  promptTokenCount!: i32
 
   /**
    * The number of tokens in the generated text.
    */
   @alias("generation_token_count")
-  generationTokenCount!: i32;
+  generationTokenCount!: i32
 
   /**
    * The reason why the response stopped generating text.
@@ -93,5 +90,5 @@ export class TextGenerationOutput {
    *   token length specified by `maxGenLen` in the input.
    */
   @alias("stop_reason")
-  stopReason!: string;
+  stopReason!: string
 }

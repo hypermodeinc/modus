@@ -7,24 +7,24 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { JSON } from "json-as";
-import * as utils from "./utils";
+import { JSON } from "json-as"
+import * as utils from "./utils"
 
 // @ts-expect-error: decorator
 @external("modus_dgraph_client", "executeQuery")
-declare function hostExecuteQuery(hostName: string, request: Request): Response;
+declare function hostExecuteQuery(hostName: string, request: Request): Response
 
 // @ts-expect-error: decorator
 @external("modus_dgraph_client", "alterSchema")
-declare function hostAlterSchema(hostName: string, schema: string): string;
+declare function hostAlterSchema(hostName: string, schema: string): string
 
 // @ts-expect-error: decorator
 @external("modus_dgraph_client", "dropAttribute")
-declare function hostDropAttribute(hostName: string, attr: string): string;
+declare function hostDropAttribute(hostName: string, attr: string): string
 
 // @ts-expect-error: decorator
 @external("modus_dgraph_client", "dropAllData")
-declare function hostDropAllData(hostName: string): string;
+declare function hostDropAllData(hostName: string): string
 
 /**
  *
@@ -36,12 +36,12 @@ declare function hostDropAllData(hostName: string): string;
  * @returns The response from the Dgraph server
  */
 export function execute(hostName: string, request: Request): Response {
-  const response = hostExecuteQuery(hostName, request);
+  const response = hostExecuteQuery(hostName, request)
   if (!response) {
-    throw new Error("Error executing DQL.");
+    throw new Error("Error executing DQL.")
   }
 
-  return response;
+  return response
 }
 
 /**
@@ -53,12 +53,12 @@ export function execute(hostName: string, request: Request): Response {
  * @returns The response from the Dgraph server
  */
 export function alterSchema(hostName: string, schema: string): string {
-  const response = hostAlterSchema(hostName, schema);
+  const response = hostAlterSchema(hostName, schema)
   if (utils.resultIsInvalid(response)) {
-    throw new Error("Error invoking DQL.");
+    throw new Error("Error invoking DQL.")
   }
 
-  return response;
+  return response
 }
 
 /**
@@ -70,12 +70,12 @@ export function alterSchema(hostName: string, schema: string): string {
  * @returns The response from the Dgraph server
  */
 export function dropAttr(hostName: string, attr: string): string {
-  const response = hostDropAttribute(hostName, attr);
+  const response = hostDropAttribute(hostName, attr)
   if (utils.resultIsInvalid(response)) {
-    throw new Error("Error invoking DQL.");
+    throw new Error("Error invoking DQL.")
   }
 
-  return response;
+  return response
 }
 
 /**
@@ -86,12 +86,12 @@ export function dropAttr(hostName: string, attr: string): string {
  * @returns The response from the Dgraph server
  */
 export function dropAll(hostName: string): string {
-  const response = hostDropAllData(hostName);
+  const response = hostDropAllData(hostName)
   if (utils.resultIsInvalid(response)) {
-    throw new Error("Error invoking DQL.");
+    throw new Error("Error invoking DQL.")
   }
 
-  return response;
+  return response
 }
 
 /**
@@ -102,14 +102,14 @@ export function dropAll(hostName: string): string {
 export class Request {
   constructor(Query: Query | null = null, Mutations: Mutation[] | null = null) {
     if (Query) {
-      this.query = Query;
+      this.query = Query
     }
     if (Mutations) {
-      this.mutations = Mutations;
+      this.mutations = Mutations
     }
   }
-  query: Query = new Query();
-  mutations: Mutation[] = [];
+  query: Query = new Query()
+  mutations: Mutation[] = []
 }
 
 /**
@@ -119,11 +119,11 @@ export class Request {
  */
 export class Query {
   constructor(query: string = "", variables: Variables = new Variables()) {
-    this.query = query;
-    this.variables = variables.toMap();
+    this.query = query
+    this.variables = variables.toMap()
   }
-  query: string = "";
-  variables: Map<string, string> = new Map<string, string>();
+  query: string = ""
+  variables: Map<string, string> = new Map<string, string>()
 }
 
 /**
@@ -137,7 +137,7 @@ export class Mutation {
     public delJson: string = "",
     public setNquads: string = "",
     public delNquads: string = "",
-    public condition: string = "",
+    public condition: string = ""
   ) {}
 }
 
@@ -147,34 +147,34 @@ export class Mutation {
  *
  */
 export class Response {
-  Json: string = "";
-  Uids: Map<string, string> | null = null;
+  Json: string = ""
+  Uids: Map<string, string> | null = null
 }
 
 export class Variables {
-  private data: Map<string, string> = new Map<string, string>();
+  private data: Map<string, string> = new Map<string, string>()
 
   public set<T>(name: string, value: T): void {
     if (isString<T>()) {
-      this.data.set(name, value as string);
-      return;
+      this.data.set(name, value as string)
+      return
     } else if (isInteger<T>()) {
-      this.data.set(name, JSON.stringify(value));
-      return;
+      this.data.set(name, JSON.stringify(value))
+      return
     } else if (isFloat<T>()) {
-      this.data.set(name, JSON.stringify(value));
-      return;
+      this.data.set(name, JSON.stringify(value))
+      return
     } else if (isBoolean<T>()) {
-      this.data.set(name, JSON.stringify(value));
-      return;
+      this.data.set(name, JSON.stringify(value))
+      return
     } else {
       throw new Error(
-        "Unsupported variable type in dgraph. Must be string, integer, float, boolean.",
-      );
+        "Unsupported variable type in dgraph. Must be string, integer, float, boolean."
+      )
     }
   }
 
   public toMap(): Map<string, string> {
-    return this.data;
+    return this.data
   }
 }

@@ -7,57 +7,52 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import * as db from "./database";
-import {
-  PositionalParams as Params,
-  Response,
-  QueryResponse,
-  ScalarResponse,
-} from "./database";
+import * as db from "./database"
+import { PositionalParams as Params, Response, QueryResponse, ScalarResponse } from "./database"
 
-export { Params, Response, QueryResponse, ScalarResponse };
+export { Params, Response, QueryResponse, ScalarResponse }
 
-const dbType = "postgresql";
+const dbType = "postgresql"
 
 export function execute(
   hostName: string,
   statement: string,
-  params: Params = new Params(),
+  params: Params = new Params()
 ): Response {
-  return db.execute(hostName, dbType, statement, params);
+  return db.execute(hostName, dbType, statement, params)
 }
 
 export function query<T>(
   hostName: string,
   statement: string,
-  params: Params = new Params(),
+  params: Params = new Params()
 ): QueryResponse<T> {
-  return db.query<T>(hostName, dbType, statement, params);
+  return db.query<T>(hostName, dbType, statement, params)
 }
 
 export function queryScalar<T>(
   hostName: string,
   statement: string,
-  params: Params = new Params(),
+  params: Params = new Params()
 ): ScalarResponse<T> {
-  return db.queryScalar<T>(hostName, dbType, statement, params);
+  return db.queryScalar<T>(hostName, dbType, statement, params)
 }
 
 function parsePointString(data: string): f64[] {
   if (!data.startsWith("(") || !data.endsWith(")")) {
-    console.error(`Invalid Point string: "${data}"`);
-    return [];
+    console.error(`Invalid Point string: "${data}"`)
+    return []
   }
 
-  const parts = data.substring(1, data.length - 1).split(",");
+  const parts = data.substring(1, data.length - 1).split(",")
   if (parts.length != 2) {
-    console.error(`Invalid Point string: "${data}"`);
-    return [];
+    console.error(`Invalid Point string: "${data}"`)
+    return []
   }
 
-  const x = parseFloat(parts[0].trim());
-  const y = parseFloat(parts[1].trim());
-  return [x, y];
+  const x = parseFloat(parts[0].trim())
+  const y = parseFloat(parts[1].trim())
+  return [x, y]
 }
 
 /**
@@ -69,19 +64,19 @@ function parsePointString(data: string): f64[] {
 export class Point {
   constructor(
     public x: f64,
-    public y: f64,
+    public y: f64
   ) {}
 
   public toString(): string {
-    return `(${this.x},${this.y})`;
+    return `(${this.x},${this.y})`
   }
 
   public static fromString(data: string): Point | null {
-    const p = parsePointString(data);
+    const p = parsePointString(data)
     if (p.length == 0) {
-      return null;
+      return null
     }
-    return new Point(p[0], p[1]);
+    return new Point(p[0], p[1])
   }
 
   // The following methods are required for custom JSON serialization
@@ -89,11 +84,11 @@ export class Point {
   // serialized to a string in PostgreSQL format.
 
   __INITIALIZE(): this {
-    return this;
+    return this
   }
 
   __SERIALIZE(): string {
-    return this.toString();
+    return this.toString()
   }
 
   /* eslint-disable @typescript-eslint/no-unused-vars */
@@ -102,24 +97,20 @@ export class Point {
     key_start: i32,
     key_end: i32,
     value_start: i32,
-    value_end: i32,
+    value_end: i32
   ): boolean {
-    if (
-      data.length < 7 ||
-      data.charAt(0) != '"' ||
-      data.charAt(data.length - 1) != '"'
-    ) {
-      return false;
+    if (data.length < 7 || data.charAt(0) != '"' || data.charAt(data.length - 1) != '"') {
+      return false
     }
 
-    const p = parsePointString(data.substring(1, data.length - 1));
+    const p = parsePointString(data.substring(1, data.length - 1))
     if (p.length == 0) {
-      return false;
+      return false
     }
 
-    this.x = p[0];
-    this.y = p[1];
-    return true;
+    this.x = p[0]
+    this.y = p[1]
+    return true
   }
 }
 
@@ -132,19 +123,19 @@ export class Point {
 export class Location {
   constructor(
     public longitude: f64,
-    public latitude: f64,
+    public latitude: f64
   ) {}
 
   public toString(): string {
-    return `(${this.longitude},${this.latitude})`;
+    return `(${this.longitude},${this.latitude})`
   }
 
   public static fromString(data: string): Point | null {
-    const p = parsePointString(data);
+    const p = parsePointString(data)
     if (p.length == 0) {
-      return null;
+      return null
     }
-    return new Point(p[0], p[1]);
+    return new Point(p[0], p[1])
   }
 
   // The following methods are required for custom JSON serialization
@@ -152,11 +143,11 @@ export class Location {
   // serialized to a string in PostgreSQL format.
 
   __INITIALIZE(): this {
-    return this;
+    return this
   }
 
   __SERIALIZE(): string {
-    return this.toString();
+    return this.toString()
   }
 
   /* eslint-disable @typescript-eslint/no-unused-vars */
@@ -165,23 +156,19 @@ export class Location {
     key_start: i32,
     key_end: i32,
     value_start: i32,
-    value_end: i32,
+    value_end: i32
   ): boolean {
-    if (
-      data.length < 7 ||
-      data.charAt(0) != '"' ||
-      data.charAt(data.length - 1) != '"'
-    ) {
-      return false;
+    if (data.length < 7 || data.charAt(0) != '"' || data.charAt(data.length - 1) != '"') {
+      return false
     }
 
-    const p = parsePointString(data.substring(1, data.length - 1));
+    const p = parsePointString(data.substring(1, data.length - 1))
     if (p.length == 0) {
-      return false;
+      return false
     }
 
-    this.longitude = p[0];
-    this.latitude = p[1];
-    return true;
+    this.longitude = p[0]
+    this.latitude = p[1]
+    return true
   }
 }

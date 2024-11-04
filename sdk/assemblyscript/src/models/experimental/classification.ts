@@ -7,7 +7,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Model } from "../../assembly/models";
+import { Model } from "../../assembly/models"
 
 /**
  * A model that returns classification results for a list of text strings.
@@ -16,10 +16,7 @@ import { Model } from "../../assembly/models";
  * This model interface is experimental and may change in the future.
  * It is primarily intended for use with with classification models hosted on Hypermode.
  */
-export class ClassificationModel extends Model<
-  ClassificationInput,
-  ClassificationOutput
-> {
+export class ClassificationModel extends Model<ClassificationInput, ClassificationOutput> {
   /**
    * Creates an input object for the classification model.
    *
@@ -27,7 +24,7 @@ export class ClassificationModel extends Model<
    * @returns An input object that can be passed to the `invoke` method.
    */
   createInput(instances: string[]): ClassificationInput {
-    return <ClassificationInput>{ instances };
+    return <ClassificationInput>{ instances }
   }
 }
 
@@ -39,7 +36,7 @@ export class ClassificationInput {
   /**
    * A list of one or more text strings of text to classify.
    */
-  instances!: string[];
+  instances!: string[]
 }
 
 /**
@@ -50,7 +47,7 @@ export class ClassificationOutput {
   /**
    * A list of prediction results that correspond to each input text string.
    */
-  predictions!: ClassifierResult[];
+  predictions!: ClassifierResult[]
 }
 
 /**
@@ -61,17 +58,17 @@ export class ClassifierResult {
   /**
    * The classification label with the highest confidence.
    */
-  label!: string;
+  label!: string
 
   /**
    * The confidence score for the classification label.
    */
-  confidence!: f32;
+  confidence!: f32
 
   /**
    * The list of all classification labels with their corresponding probabilities.
    */
-  probabilities!: ClassifierLabel[];
+  probabilities!: ClassifierLabel[]
 }
 
 /**
@@ -82,10 +79,10 @@ export class ClassifierLabel {
   /**
    * The classification label.
    */
-  label!: string;
+  label!: string
 
   /**
    * The probability value.
    */
-  probability!: f32;
+  probability!: f32
 }

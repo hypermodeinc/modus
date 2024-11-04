@@ -7,7 +7,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Model } from "../../assembly/models";
+import { Model } from "../../assembly/models"
 
 /**
  * A model that returns embeddings for a list of text strings.
@@ -24,7 +24,7 @@ export class EmbeddingsModel extends Model<EmbeddingsInput, EmbeddingsOutput> {
    * @returns An input object that can be passed to the `invoke` method.
    */
   createInput(instances: string[]): EmbeddingsInput {
-    return <EmbeddingsInput>{ instances };
+    return <EmbeddingsInput>{ instances }
   }
 }
 
@@ -36,7 +36,7 @@ export class EmbeddingsInput {
   /**
    * A list of one or more text strings to create vector embeddings for.
    */
-  instances!: string[];
+  instances!: string[]
 }
 
 /**
@@ -47,5 +47,5 @@ export class EmbeddingsOutput {
   /**
    * A list of vector embeddings that correspond to each input text string.
    */
-  predictions!: f32[][];
+  predictions!: f32[][]
 }
