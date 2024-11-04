@@ -7,13 +7,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Args, Command, Flags } from "@oclif/core";
+import { Args, Command } from "@oclif/core";
 import chalk from "chalk";
 
 import * as fs from "../../../util/fs.js";
 import * as vi from "../../../util/versioninfo.js";
 import { withSpinner } from "../../../util/index.js";
 import * as inquirer from "@inquirer/prompts";
+import { isErrorWithName } from "../../../util/errors.js";
 
 export default class RuntimeRemoveCommand extends Command {
   static args = {
@@ -108,8 +109,8 @@ export default class RuntimeRemoveCommand extends Command {
 
         await this.removeRuntime(args.version);
       }
-    } catch (err: any) {
-      if (err.name === "ExitPromptError") {
+    } catch (err) {
+      if (isErrorWithName(err) && err.name === "ExitPromptError") {
         this.abort();
       } else {
         throw err;

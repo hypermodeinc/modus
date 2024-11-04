@@ -7,7 +7,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Args, Command, Flags } from "@oclif/core";
+import { Args, Flags } from "@oclif/core";
 import { spawn } from "node:child_process";
 import { Readable } from "node:stream";
 import path from "node:path";
@@ -215,8 +215,6 @@ export default class DevCommand extends BaseCommand {
     // Whenever any of the env files change, copy to the build directory.
     // The runtime will automatically reload them when it detects a change to the copies in the build folder.
 
-    const sourcePaths = ENV_FILES.map((file) => path.join(appPath, file));
-
     const onAddOrChange = async (sourcePath: string) => {
       const filename = path.basename(sourcePath);
       const outputPath = path.join(appPath, "build", filename);
@@ -327,7 +325,7 @@ export default class DevCommand extends BaseCommand {
         this.log(chalk.magentaBright("Detected source code change. Rebuilding..."));
         this.log();
         await BuildCommand.run([appPath, "--no-logo"]);
-      } catch (e) {
+      } catch {
         this.log(chalk.magenta("Waiting for more changes..."));
         this.log(chalk.dim("Press Ctrl+C at any time to stop the server."));
       } finally {

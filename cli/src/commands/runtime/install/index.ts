@@ -7,7 +7,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Args, Command, Flags } from "@oclif/core";
+import { Args, Flags } from "@oclif/core";
 import chalk from "chalk";
 import * as fs from "../../../util/fs.js";
 import * as vi from "../../../util/versioninfo.js";

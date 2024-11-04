@@ -26,6 +26,7 @@ import * as inquirer from "@inquirer/prompts";
 import { getGoVersion, getTinyGoVersion } from "../../util/systemVersions.js";
 import { generateAppName } from "../../util/appname.js";
 import { BaseCommand } from "../../baseCommand.js";
+import { isErrorWithName } from "../../util/errors.js";
 
 const MODUS_DEFAULT_TEMPLATE_NAME = "default";
 
@@ -148,8 +149,8 @@ export default class NewCommand extends BaseCommand {
 
       this.log();
       await this.createApp(name, dir, sdk, MODUS_DEFAULT_TEMPLATE_NAME, flags["no-prompt"], flags.prerelease, createGitRepo);
-    } catch (err: any) {
-      if (err.name === "ExitPromptError") {
+    } catch (err) {
+      if (isErrorWithName(err) && err.name === "ExitPromptError") {
         this.abort();
       } else {
         throw err;
@@ -168,7 +169,7 @@ export default class NewCommand extends BaseCommand {
           this.exit(1);
         }
         break;
-      case SDK.Go:
+      case SDK.Go: {
         const goVersion = await getGoVersion();
         const tinyGoVersion = await getTinyGoVersion();
 
@@ -220,6 +221,7 @@ export default class NewCommand extends BaseCommand {
         this.log();
 
         this.exit(1);
+      }
     }
   }
 
@@ -350,7 +352,7 @@ async function isInGitRepo(dir: string) {
     await exec("git rev-parse --is-inside-work-tree", { cwd: dir });
 
     return true;
-  } catch (err) {
+  } catch {
     return false;
   }
 }

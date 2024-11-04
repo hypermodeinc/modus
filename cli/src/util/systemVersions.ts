@@ -26,7 +26,9 @@ export async function getGoVersion(): Promise<string | undefined> {
       // if version is two parts, add a .0 to make it semver compatible
       return ver.split(".").length === 2 ? ver + ".0" : ver;
     }
-  } catch {}
+  } catch {
+    /* empty */
+  }
 }
 
 export async function getTinyGoVersion(): Promise<string | undefined> {
@@ -38,7 +40,9 @@ export async function getTinyGoVersion(): Promise<string | undefined> {
 
     // if version is two parts, add a .0 to make it semver compatible
     return ver.split(".").length === 2 ? ver + ".0" : ver;
-  } catch {}
+  } catch {
+    /* empty */
+  }
 }
 
 export async function getNPMVersion(): Promise<string | undefined> {
@@ -46,5 +50,7 @@ export async function getNPMVersion(): Promise<string | undefined> {
     const result = await execFile("npm", ["--version"], EXEC_OPTIONS);
     const parts = result.stdout.split(" ");
     return parts.length > 0 ? parts[0].trim() : undefined;
-  } catch {}
+  } catch {
+    /* empty */
+  }
 }
