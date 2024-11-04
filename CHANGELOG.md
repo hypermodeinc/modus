@@ -10,6 +10,7 @@
 - For CLI to track non-prereleases, pull from releases json to remove rate limiting issues from github releases [#543](https://github.com/hypermodeinc/modus/pull/543)
 - Modify isOnline in CLI to query releases.json [#544](https://github.com/hypermodeinc/modus/pull/544)
 - Add CLI build CI [#547](https://github.com/hypermodeinc/modus/pull/547)
+- Add CLI Lint CI [#550](https://github.com/hypermodeinc/modus/pull/550)
 
 ## 2024-10-30 - CLI 0.13.6
 
