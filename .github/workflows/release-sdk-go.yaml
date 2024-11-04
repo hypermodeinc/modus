@@ -1,17 +1,20 @@
-name: "Release Go SDK"
+name: Release Go SDK
+
 on:
   push:
     tags:
-      - "sdk/go/v*"
+      - sdk/go/v*
+
 permissions:
-  contents: "write"
+  contents: write
+
 jobs:
   release:
     runs-on: warp-ubuntu-latest-x64-4x
     steps:
-      - name: "Validate version"
+      - name: Validate version
         if: ${{ !startsWith(github.ref_name, 'sdk/go/v') }}
-        run: 'echo "Modus Go SDK version must start with `sdk/go/v` && exit 1'
+        run: echo "Modus Go SDK version must start with `sdk/go/v`" && exit 1
       - uses: actions/checkout@v4
         with:
           ref: "${{ github.ref_name }}"

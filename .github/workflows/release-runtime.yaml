@@ -1,17 +1,20 @@
-name: "Release Runtime"
+name: Release Runtime
+
 on:
   push:
     tags:
-      - "runtime/v*"
+      - runtime/v*
+
 permissions:
-  contents: "write"
+  contents: write
+
 jobs:
   release:
     runs-on: warp-ubuntu-latest-x64-4x
     steps:
-      - name: "Validate version"
+      - name: Validate version
         if: ${{ !startsWith(github.ref_name, 'runtime/v') }}
-        run: 'echo "Modus Runtime version must start with `runtime/v` && exit 1'
+        run: echo "Modus Runtime version must start with 'runtime/v'" && exit 1
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
@@ -24,7 +27,7 @@ jobs:
       - uses: goreleaser/goreleaser-action@v6
         with:
           distribution: goreleaser-pro
-          version: "2.3.2"
+          version: 2.3.2
           args: release --clean -f ./runtime/.goreleaser.yaml
         env:
           GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"

@@ -1,11 +1,14 @@
 name: "Release CLI"
+
 on:
   push:
     tags:
-      - "cli/v*"
+      - cli/v*
+
 permissions:
-  contents: "write"
+  contents: write
   id-token: write
+
 jobs:
   release:
     # note: must use GitHub-hosted runner for publishing to NPM with --provenance flag
