@@ -339,9 +339,9 @@ func writeSchema(buf *bytes.Buffer, queryFields []*FieldDefinition, mutationFiel
 	for _, t := range inputTypeDefs {
 		buf.WriteByte('\n')
 		if t.Docs != nil {
-			for _, l := range strings.Split(t.Docs.Description, "\n") {
-				buf.WriteString("# " + l + "\n")
-			}
+			buf.WriteString("\"\"\"\n")
+			buf.WriteString(t.Docs.Description)
+			buf.WriteString("\"\"\"\n")
 		}
 		buf.WriteString("input ")
 		buf.WriteString(t.Name)
@@ -376,9 +376,9 @@ func writeSchema(buf *bytes.Buffer, queryFields []*FieldDefinition, mutationFiel
 func writeField(buf *bytes.Buffer, field *FieldDefinition) {
 	buf.WriteString("  ")
 	if field.Docs != nil {
-		for _, l := range strings.Split(field.Docs.Description, "\n") {
-			buf.WriteString("# " + l + "\n")
-		}
+		buf.WriteString("\"\"\"\n")
+		buf.WriteString(field.Docs.Description)
+		buf.WriteString("\"\"\"\n")
 		buf.WriteString("  ")
 	}
 	buf.WriteString(field.Name)
