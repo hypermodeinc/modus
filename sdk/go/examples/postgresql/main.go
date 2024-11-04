@@ -89,3 +89,19 @@ func DeletePerson(id int) (string, error) {
 
 	return "success", nil
 }
+
+func GetID(firstName string) (*string, error) {
+
+	id, _, err := postgresql.QueryScalar[postgresql.UUID]("my-database", "SELECT id FROM users WHERE first_name = $1", firstName)
+	if err != nil {
+		return nil, err
+	}
+
+	fmt.Println("ID is this", id)
+
+	uuid := id.String()
+
+	fmt.Println("UUID is this", uuid)
+
+	return &uuid, nil
+}
