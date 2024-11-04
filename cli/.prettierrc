@@ -1,4 +1,7 @@
 {
-  "singleQuote": false,
-  "printWidth": 1024
+  "bracketSpacing": true,
+  "semi": false,
+  "trailingComma": "es5",
+  "printWidth": 100,
+  "tabWidth": 2
 }

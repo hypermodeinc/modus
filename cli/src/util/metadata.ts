@@ -9,7 +9,7 @@
 
 export class Metadata {
   // Installed runtimes - sorted by date
-  static runtimes: string[] = [];
+  static runtimes: string[] = []
 
   static initialize(): void {
     // search hypermode.json / package.json for wanted runtime version

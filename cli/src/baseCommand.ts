@@ -1,4 +1,4 @@
-import { Command, Flags } from "@oclif/core";
+import { Command, Flags } from "@oclif/core"
 
 export abstract class BaseCommand extends Command {
   static baseFlags = {
@@ -12,5 +12,5 @@ export abstract class BaseCommand extends Command {
       aliases: ["nologo"],
       hidden: true,
     }),
-  };
+  }
 }

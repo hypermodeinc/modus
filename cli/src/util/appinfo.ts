@@ -7,102 +7,106 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import path from "node:path";
-import semver from "semver";
-import * as fs from "./fs.js";
-import * as vi from "./versioninfo.js";
-import { SDK } from "../custom/globals.js";
+import path from "node:path"
+import semver from "semver"
+import * as fs from "./fs.js"
+import * as vi from "./versioninfo.js"
+import { SDK } from "../custom/globals.js"
 
 export type ModusAppInfo = {
-  name: string;
-  sdk: SDK;
-  sdkVersion: string;
-};
+  name: string
+  sdk: SDK
+  sdkVersion: string
+}
 
 export async function getAppInfo(appPath: string): Promise<ModusAppInfo> {
   if (await fs.exists(path.join(appPath, "package.json"))) {
-    return await getAssemblyScriptAppInfo(appPath);
+    return await getAssemblyScriptAppInfo(appPath)
   }
 
   if (await fs.exists(path.join(appPath, "go.mod"))) {
-    return await getGoAppInfo(appPath);
+    return await getGoAppInfo(appPath)
   }
 
-  throw new Error("Could not determine which Modus SDK to use.");
+  throw new Error("Could not determine which Modus SDK to use.")
 }
 
 async function getAssemblyScriptAppInfo(appPath: string): Promise<ModusAppInfo> {
-  const sdk = SDK.AssemblyScript;
+  const sdk = SDK.AssemblyScript
 
-  let name: string;
+  let name: string
   try {
-    const appPackage = JSON.parse(await fs.readFile(path.join(appPath, "package.json"), "utf8"));
-    name = appPackage.name;
+    const appPackage = JSON.parse(await fs.readFile(path.join(appPath, "package.json"), "utf8"))
+    name = appPackage.name
   } catch {
-    throw new Error("Failed to read name from package.json");
+    throw new Error("Failed to read name from package.json")
   }
 
-  let sdkVersion: string | undefined;
+  let sdkVersion: string | undefined
   try {
     if (await fs.exists(path.join(appPath, "package-lock.json"))) {
-      const lockfile = JSON.parse(await fs.readFile(path.join(appPath, "package-lock.json"), "utf8"));
-      sdkVersion = lockfile.packages["node_modules/@hypermode/modus-sdk-as"].version;
+      const lockfile = JSON.parse(
+        await fs.readFile(path.join(appPath, "package-lock.json"), "utf8")
+      )
+      sdkVersion = lockfile.packages["node_modules/@hypermode/modus-sdk-as"].version
     }
   } catch {}
 
   if (!sdkVersion || !semver.valid(sdkVersion)) {
     try {
-      const appPackage = JSON.parse(await fs.readFile(path.join(appPath, "package.json"), "utf8"));
-      const constraint = appPackage.dependencies["@hypermode/modus-sdk-as"];
+      const appPackage = JSON.parse(await fs.readFile(path.join(appPath, "package.json"), "utf8"))
+      const constraint = appPackage.dependencies["@hypermode/modus-sdk-as"]
       if (semver.valid(constraint)) {
-        sdkVersion = constraint;
+        sdkVersion = constraint
       } else if (semver.validRange(constraint)) {
-        const versions = (await vi.getInstalledSdkVersions(sdk)).map((v) => v.slice(1));
-        const maxSatisfying = semver.maxSatisfying(versions, constraint, { includePrerelease: true });
+        const versions = (await vi.getInstalledSdkVersions(sdk)).map((v) => v.slice(1))
+        const maxSatisfying = semver.maxSatisfying(versions, constraint, {
+          includePrerelease: true,
+        })
         if (maxSatisfying) {
-          sdkVersion = maxSatisfying;
+          sdkVersion = maxSatisfying
         }
       }
     } catch {}
   }
 
   if (!sdkVersion || !semver.valid(sdkVersion)) {
-    sdkVersion = "latest";
+    sdkVersion = "latest"
   } else {
-    sdkVersion = "v" + sdkVersion;
+    sdkVersion = "v" + sdkVersion
   }
 
-  return { name, sdk, sdkVersion };
+  return { name, sdk, sdkVersion }
 }
 
 async function getGoAppInfo(appPath: string): Promise<ModusAppInfo> {
-  const sdk = SDK.Go;
+  const sdk = SDK.Go
 
-  const data = await fs.readFile(path.join(appPath, "go.mod"), "utf8");
-  const lines = data.split("\n");
+  const data = await fs.readFile(path.join(appPath, "go.mod"), "utf8")
+  const lines = data.split("\n")
 
-  const moduleLine = lines.find((line) => line.startsWith("module"));
+  const moduleLine = lines.find((line) => line.startsWith("module"))
   if (!moduleLine) {
-    throw new Error("Could not determine the module name from go.mod");
+    throw new Error("Could not determine the module name from go.mod")
   }
-  const name = moduleLine.split(" ")[1];
+  const name = moduleLine.split(" ")[1]
 
-  const modName = "github.com/hypermodeinc/modus/sdk/go";
-  const versionLine = lines.find((line) => line.includes(modName))?.trim();
-  let sdkVersion: string | undefined;
+  const modName = "github.com/hypermodeinc/modus/sdk/go"
+  const versionLine = lines.find((line) => line.includes(modName))?.trim()
+  let sdkVersion: string | undefined
   try {
     if (versionLine) {
-      const parts = versionLine.split(" ");
+      const parts = versionLine.split(" ")
       if (parts[0] == "require") {
-        sdkVersion = parts[2];
+        sdkVersion = parts[2]
       } else {
-        sdkVersion = parts[1];
+        sdkVersion = parts[1]
       }
     }
   } catch {}
   if (!sdkVersion || sdkVersion == "v0.0.0" || !sdkVersion.startsWith("v")) {
-    sdkVersion = "latest";
+    sdkVersion = "latest"
   }
 
-  return { name, sdk, sdkVersion };
+  return { name, sdk, sdkVersion }
 }

@@ -7,15 +7,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import gradient from "gradient-string";
+import gradient from "gradient-string"
 
 const logo = `
 ▗▖  ▗▖ ▗▄▖ ▗▄▄▄ ▗▖ ▗▖ ▗▄▄▖
 ▐▛▚▞▜▌▐▌ ▐▌▐▌  █▐▌ ▐▌▐▌   
 ▐▌  ▐▌▐▌ ▐▌▐▌  █▐▌ ▐▌ ▝▀▚▖
 ▐▌  ▐▌▝▚▄▞▘▐▙▄▄▀▝▚▄▞▘▗▄▄▞▘
-`;
+`
 
 export function getLogo(): string {
-  return gradient(["#E3BFFF", "#602AF8"]).multiline(logo);
+  return gradient(["#E3BFFF", "#602AF8"]).multiline(logo)
 }

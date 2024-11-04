@@ -7,36 +7,36 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import os from "node:os";
-import * as path from "node:path";
-import * as fs from "./fs.js";
-import chalk from "chalk";
+import os from "node:os"
+import * as path from "node:path"
+import * as fs from "./fs.js"
+import chalk from "chalk"
 
 type HypSettings = {
-  email?: string;
-  jwt?: string;
-  orgId?: string;
-};
+  email?: string
+  jwt?: string
+  orgId?: string
+}
 
 export async function readHypermodeSettings(): Promise<HypSettings> {
-  const path = getSettingsFilePath();
+  const path = getSettingsFilePath()
   if (!(await fs.exists(path))) {
-    return {};
+    return {}
   }
 
   try {
-    const settings = JSON.parse(await fs.readFile(path, "utf-8"));
+    const settings = JSON.parse(await fs.readFile(path, "utf-8"))
     return {
       email: settings.HYP_EMAIL,
       jwt: settings.HYP_JWT,
       orgId: settings.HYP_ORG_ID,
-    };
+    }
   } catch (e) {
-    console.warn(chalk.yellow("Error reading " + path), e);
-    return {};
+    console.warn(chalk.yellow("Error reading " + path), e)
+    return {}
   }
 }
 
 function getSettingsFilePath(): string {
-  return path.join(os.homedir(), ".hypermode", "settings.json");
+  return path.join(os.homedir(), ".hypermode", "settings.json")
 }

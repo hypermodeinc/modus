@@ -7,14 +7,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import fs from "node:fs";
-export * from "node:fs/promises";
+import fs from "node:fs"
+export * from "node:fs/promises"
 
 export async function exists(path: string) {
   try {
-    await fs.promises.stat(path);
-    return true;
+    await fs.promises.stat(path)
+    return true
   } catch {
-    return false;
+    return false
   }
 }

@@ -7,36 +7,36 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Args, Command, Flags } from "@oclif/core";
-import chalk from "chalk";
+import { Args, Command, Flags } from "@oclif/core"
+import chalk from "chalk"
 
-import * as fs from "../../../util/fs.js";
-import * as vi from "../../../util/versioninfo.js";
-import { withSpinner } from "../../../util/index.js";
-import * as inquirer from "@inquirer/prompts";
+import * as fs from "../../../util/fs.js"
+import * as vi from "../../../util/versioninfo.js"
+import { withSpinner } from "../../../util/index.js"
+import * as inquirer from "@inquirer/prompts"
 
 export default class RuntimeRemoveCommand extends Command {
   static args = {
     version: Args.string({
       description: "Runtime version to remove, or 'all' to remove all runtimes.",
     }),
-  };
+  }
 
-  static flags = {};
+  static flags = {}
 
-  static description = "Remove a Modus runtime";
-  static examples = ["modus runtime remove v0.0.0", "modus runtime remove all"];
+  static description = "Remove a Modus runtime"
+  static examples = ["modus runtime remove v0.0.0", "modus runtime remove all"]
 
   async run(): Promise<void> {
     try {
-      const { args, flags } = await this.parse(RuntimeRemoveCommand);
+      const { args, flags } = await this.parse(RuntimeRemoveCommand)
 
       if (!args.version) {
-        const versions = await vi.getInstalledRuntimeVersions();
+        const versions = await vi.getInstalledRuntimeVersions()
 
         if (versions.length === 0) {
-          this.log(chalk.yellow("No Modus runtimes are installed."));
-          this.exit(1);
+          this.log(chalk.yellow("No Modus runtimes are installed."))
+          this.exit(1)
         }
 
         const runtimeVersionToRemove = await inquirer.select({
@@ -48,95 +48,95 @@ export default class RuntimeRemoveCommand extends Command {
               value: "all",
             },
           ],
-        });
+        })
 
         if (runtimeVersionToRemove === "all") {
           const confirmed = await inquirer.confirm({
             message: "Are you sure you want to remove all Modus runtimes?",
             default: false,
-          });
+          })
           if (!confirmed) {
-            this.abort();
+            this.abort()
           }
 
           for (const version of versions) {
-            await this.removeRuntime(version);
+            await this.removeRuntime(version)
           }
         } else {
-          await this.removeRuntime(runtimeVersionToRemove);
+          await this.removeRuntime(runtimeVersionToRemove)
         }
 
-        return;
+        return
       }
 
       if (args.version.toLowerCase() === "all") {
-        const versions = await vi.getInstalledRuntimeVersions();
+        const versions = await vi.getInstalledRuntimeVersions()
         if (versions.length === 0) {
-          this.log(chalk.yellow("No Modus runtimes are installed."));
-          this.exit(1);
+          this.log(chalk.yellow("No Modus runtimes are installed."))
+          this.exit(1)
         } else if (!flags.force) {
           const confirmed = await inquirer.confirm({
             message: "Are you sure you want to remove all Modus runtimes?",
             default: false,
-          });
+          })
           if (!confirmed) {
-            this.abort();
+            this.abort()
           }
         }
 
         for (const version of versions) {
-          await this.removeRuntime(version);
+          await this.removeRuntime(version)
         }
       } else if (!args.version.startsWith("v")) {
-        this.logError("Version must start with 'v'.");
-        this.exit(1);
+        this.logError("Version must start with 'v'.")
+        this.exit(1)
       } else {
-        const runtimeText = `Modus Runtime ${args.version}`;
-        const isInstalled = await vi.runtimeVersionIsInstalled(args.version);
+        const runtimeText = `Modus Runtime ${args.version}`
+        const isInstalled = await vi.runtimeVersionIsInstalled(args.version)
         if (!isInstalled) {
-          this.log(chalk.yellow(runtimeText + "is not installed."));
-          this.exit(1);
+          this.log(chalk.yellow(runtimeText + "is not installed."))
+          this.exit(1)
         } else if (!flags.force) {
           const confirmed = await inquirer.confirm({
             message: `Are you sure you want to remove ${runtimeText}?`,
             default: false,
-          });
+          })
           if (!confirmed) {
-            this.abort();
+            this.abort()
           }
         }
 
-        await this.removeRuntime(args.version);
+        await this.removeRuntime(args.version)
       }
     } catch (err: any) {
       if (err.name === "ExitPromptError") {
-        this.abort();
+        this.abort()
       } else {
-        throw err;
+        throw err
       }
     }
   }
 
   private async removeRuntime(version: string): Promise<void> {
-    const runtimeText = `Modus Runtime ${version}`;
+    const runtimeText = `Modus Runtime ${version}`
     await withSpinner(chalk.dim("Removing " + runtimeText), async (spinner) => {
-      const dir = vi.getRuntimePath(version);
+      const dir = vi.getRuntimePath(version)
       try {
-        await fs.rm(dir, { recursive: true, force: true });
-        spinner.succeed(chalk.dim("Removed " + runtimeText));
+        await fs.rm(dir, { recursive: true, force: true })
+        spinner.succeed(chalk.dim("Removed " + runtimeText))
       } catch (e) {
-        spinner.fail(chalk.red("Failed to remove " + runtimeText));
-        throw e;
+        spinner.fail(chalk.red("Failed to remove " + runtimeText))
+        throw e
       }
-    });
+    })
   }
 
   private logError(message: string) {
-    this.log(chalk.red(" ERROR ") + chalk.dim(": " + message));
+    this.log(chalk.red(" ERROR ") + chalk.dim(": " + message))
   }
 
   private abort() {
-    this.log(chalk.dim("Aborted"));
-    this.exit(1);
+    this.log(chalk.dim("Aborted"))
+    this.exit(1)
   }
 }

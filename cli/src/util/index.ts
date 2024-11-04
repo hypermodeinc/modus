@@ -7,14 +7,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import chalk from "chalk";
-import ora, { Ora } from "ora";
+import chalk from "chalk"
+import ora, { Ora } from "ora"
 
-import path from "node:path";
-import { Readable } from "node:stream";
-import { finished } from "node:stream/promises";
-import { createWriteStream } from "node:fs";
-import * as fs from "./fs.js";
+import path from "node:path"
+import { Readable } from "node:stream"
+import { finished } from "node:stream/promises"
+import { createWriteStream } from "node:fs"
+import * as fs from "./fs.js"
 
 export async function withSpinner<T>(text: string, fn: (spinner: Ora) => Promise<T>): Promise<T> {
   // NOTE: Ora comes with "oraPromise", but it doesn't clear the original text on completion.
@@ -22,51 +22,53 @@ export async function withSpinner<T>(text: string, fn: (spinner: Ora) => Promise
   const spinner = ora({
     color: "white",
     text: text,
-  }).start();
+  }).start()
 
   try {
-    return await fn(spinner);
+    return await fn(spinner)
   } finally {
-    spinner.stop();
+    spinner.stop()
   }
 }
 
 export async function downloadFile(url: string, dest: string): Promise<boolean> {
-  const res = await fetch(url);
+  const res = await fetch(url)
   if (!res.ok) {
-    console.log(chalk.red(" ERROR ") + chalk.dim(": Could not download file."));
-    console.log(chalk.dim("   url : " + url));
-    console.log(chalk.dim(`result : ${res.status} ${res.statusText}`));
-    return false;
+    console.log(chalk.red(" ERROR ") + chalk.dim(": Could not download file."))
+    console.log(chalk.dim("   url : " + url))
+    console.log(chalk.dim(`result : ${res.status} ${res.statusText}`))
+    return false
   }
 
-  const dir = path.dirname(dest);
+  const dir = path.dirname(dest)
   if (!(await fs.exists(dir))) {
-    await fs.mkdir(dir, { recursive: true });
+    await fs.mkdir(dir, { recursive: true })
   }
 
-  const fileStream = createWriteStream(dest);
+  const fileStream = createWriteStream(dest)
 
   // @ts-ignore
-  await finished(Readable.fromWeb(res.body).pipe(fileStream));
-  return true;
+  await finished(Readable.fromWeb(res.body).pipe(fileStream))
+  return true
 }
 
-let online: boolean | undefined;
+let online: boolean | undefined
 export async function isOnline(): Promise<boolean> {
   // Cache this, as we only need to check once per use of any CLI command that requires it.
-  if (online !== undefined) return online;
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 1000);
+  if (online !== undefined) return online
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), 1000)
   try {
-    const response = await fetch(`https://releases.hypermode.com/modus-latest.json`, { signal: controller.signal });
-    online = response.ok;
+    const response = await fetch(`https://releases.hypermode.com/modus-latest.json`, {
+      signal: controller.signal,
+    })
+    online = response.ok
   } catch {
-    online = false;
+    online = false
   } finally {
-    clearTimeout(timeout);
+    clearTimeout(timeout)
   }
-  return online;
+  return online
 }
 
 export function getGitHubApiHeaders() {
@@ -74,9 +76,9 @@ export function getGitHubApiHeaders() {
     Accept: "application/vnd.github.v3+json",
     "X-GitHub-Api-Version": "2022-11-28",
     "User-Agent": "Modus CLI",
-  });
+  })
   if (process.env.GITHUB_TOKEN) {
-    headers.append("Authorization", `Bearer ${process.env.GITHUB_TOKEN}`);
+    headers.append("Authorization", `Bearer ${process.env.GITHUB_TOKEN}`)
   }
-  return headers;
+  return headers
 }

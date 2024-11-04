@@ -7,4 +7,4 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-export { run } from "@oclif/core";
+export { run } from "@oclif/core"
