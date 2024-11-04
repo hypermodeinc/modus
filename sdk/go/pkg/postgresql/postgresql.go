@@ -9,7 +9,9 @@
 
 package postgresql
 
-import "github.com/hypermodeinc/modus/sdk/go/pkg/db"
+import (
+	"github.com/hypermodeinc/modus/sdk/go/pkg/db"
+)
 
 const dbType = "postgresql"
 
@@ -18,6 +20,21 @@ func Query[T any](hostName, statement string, params ...any) ([]T, uint, error) 
 }
 
 func QueryScalar[T any](hostName, statement string, params ...any) (T, uint, error) {
+	var zero T
+	switch any(zero).(type) {
+	case UUID:
+		data, affected, err := db.QueryScalar[[]interface{}](hostName, dbType, statement, params...)
+		if err != nil {
+			var zero T
+			return zero, affected, err
+		}
+		uuid, err := InterfaceSliceToUUID(data)
+		if err != nil {
+			return zero, affected, err
+		}
+
+		return any(*uuid).(T), affected, nil
+	}
 	return db.QueryScalar[T](hostName, dbType, statement, params...)
 }
 
