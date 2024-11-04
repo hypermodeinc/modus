@@ -29,53 +29,21 @@ export function isPrerelease(version: string): boolean {
   return !!semver.prerelease(version);
 }
 
-export async function getLatestSdkVersion(
-  sdk: globals.SDK,
-  includePrerelease: boolean,
-): Promise<string | undefined> {
-  return await getLatestVersion(
-    globals.GitHubOwner,
-    globals.GitHubRepo,
-    globals.GetSdkTagPrefix(sdk),
-    includePrerelease,
-  );
+export async function getLatestSdkVersion(sdk: globals.SDK, includePrerelease: boolean): Promise<string | undefined> {
+  return await getLatestVersion(globals.GitHubOwner, globals.GitHubRepo, globals.GetSdkTagPrefix(sdk), includePrerelease);
 }
 
-export async function getLatestRuntimeVersion(
-  includePrerelease: boolean,
-): Promise<string | undefined> {
-  return await getLatestVersion(
-    globals.GitHubOwner,
-    globals.GitHubRepo,
-    globals.GitHubRuntimeTagPrefix,
-    includePrerelease,
-  );
+export async function getLatestRuntimeVersion(includePrerelease: boolean): Promise<string | undefined> {
+  return await getLatestVersion(globals.GitHubOwner, globals.GitHubRepo, globals.GitHubRuntimeTagPrefix, includePrerelease);
 }
 
-export async function getLatestCliVersion(
-  includePrerelease: boolean,
-): Promise<string | undefined> {
-  return await getLatestVersion(
-    globals.GitHubOwner,
-    globals.GitHubRepo,
-    globals.GitHubCliTagPrefix,
-    includePrerelease,
-  );
+export async function getLatestCliVersion(includePrerelease: boolean): Promise<string | undefined> {
+  return await getLatestVersion(globals.GitHubOwner, globals.GitHubRepo, globals.GitHubCliTagPrefix, includePrerelease);
 }
 
-async function getLatestVersion(
-  owner: string,
-  repo: string,
-  prefix: string,
-  includePrerelease: boolean,
-): Promise<string | undefined> {
+async function getLatestVersion(owner: string, repo: string, prefix: string, includePrerelease: boolean): Promise<string | undefined> {
   try {
-    let tag = await findLatestReleaseTag(
-      owner,
-      repo,
-      prefix,
-      includePrerelease,
-    );
+    let tag = await findLatestReleaseTag(owner, repo, prefix, includePrerelease);
     if (!tag && !includePrerelease) {
       // If no stable release was found, look for a prerelease
       tag = await findLatestReleaseTag(owner, repo, prefix, true);
@@ -88,46 +56,19 @@ async function getLatestVersion(
   }
 }
 
-export async function getAllSdkVersions(
-  sdk: globals.SDK,
-  includePrerelease: boolean,
-): Promise<string[]> {
-  return await getAllVersions(
-    globals.GitHubOwner,
-    globals.GitHubRepo,
-    globals.GetSdkTagPrefix(sdk),
-    includePrerelease,
-  );
+export async function getAllSdkVersions(sdk: globals.SDK, includePrerelease: boolean): Promise<string[]> {
+  return await getAllVersions(globals.GitHubOwner, globals.GitHubRepo, globals.GetSdkTagPrefix(sdk), includePrerelease);
 }
 
-export async function getAllCliVersions(
-  includePrerelease: boolean,
-): Promise<string[]> {
-  return await getAllVersions(
-    globals.GitHubOwner,
-    globals.GitHubRepo,
-    globals.GitHubCliTagPrefix,
-    includePrerelease,
-  );
+export async function getAllCliVersions(includePrerelease: boolean): Promise<string[]> {
+  return await getAllVersions(globals.GitHubOwner, globals.GitHubRepo, globals.GitHubCliTagPrefix, includePrerelease);
 }
 
-export async function getAllRuntimeVersions(
-  includePrerelease: boolean,
-): Promise<string[]> {
-  return await getAllVersions(
-    globals.GitHubOwner,
-    globals.GitHubRepo,
-    globals.GitHubRuntimeTagPrefix,
-    includePrerelease,
-  );
+export async function getAllRuntimeVersions(includePrerelease: boolean): Promise<string[]> {
+  return await getAllVersions(globals.GitHubOwner, globals.GitHubRepo, globals.GitHubRuntimeTagPrefix, includePrerelease);
 }
 
-async function getAllVersions(
-  owner: string,
-  repo: string,
-  prefix: string,
-  includePrerelease: boolean,
-): Promise<string[]> {
+async function getAllVersions(owner: string, repo: string, prefix: string, includePrerelease: boolean): Promise<string[]> {
   try {
     let tags = await getAllReleaseTags(owner, repo, prefix, includePrerelease);
     if (tags.length === 0 && !includePrerelease) {
@@ -151,18 +92,10 @@ async function getAllVersions(
 
 const headers = getGitHubApiHeaders();
 
-async function findLatestReleaseTag(
-  owner: string,
-  repo: string,
-  prefix: string,
-  includePrerelease: boolean,
-): Promise<string | undefined> {
+async function findLatestReleaseTag(owner: string, repo: string, prefix: string, includePrerelease: boolean): Promise<string | undefined> {
   let page = 1;
   while (true) {
-    const response = await fetch(
-      `https://api.github.com/repos/${owner}/${repo}/releases?page=${page}`,
-      { headers },
-    );
+    const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/releases?page=${page}`, { headers });
 
     if (!response.ok) {
       throw new Error(`Error fetching releases: ${response.statusText}`);
@@ -189,20 +122,12 @@ async function findLatestReleaseTag(
   }
 }
 
-async function getAllReleaseTags(
-  owner: string,
-  repo: string,
-  prefix: string,
-  includePrerelease: boolean,
-): Promise<string[]> {
+async function getAllReleaseTags(owner: string, repo: string, prefix: string, includePrerelease: boolean): Promise<string[]> {
   const results: string[] = [];
 
   let page = 1;
   while (true) {
-    const response = await fetch(
-      `https://api.github.com/repos/${owner}/${repo}/releases?per_page=100&page=${page}`,
-      { headers },
-    );
+    const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/releases?per_page=100&page=${page}`, { headers });
 
     if (!response.ok) {
       throw new Error(`Error fetching releases: ${response.statusText}`);
