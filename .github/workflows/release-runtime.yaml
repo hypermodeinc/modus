@@ -10,6 +10,7 @@ permissions:
 
 jobs:
   release:
+    name: Release
     runs-on: warp-ubuntu-latest-x64-4x
     steps:
       - name: Validate version
@@ -37,3 +38,7 @@ jobs:
           MACOS_NOTARY_ISSUER_ID: "${{ secrets.MACOS_NOTARY_ISSUER_ID }}"
           MACOS_NOTARY_KEY_ID: "${{ secrets.MACOS_NOTARY_KEY_ID }}"
           MACOS_NOTARY_KEY: "${{ secrets.MACOS_NOTARY_KEY }}"
+  release-info:
+    needs: release
+    name: Generate Release Info
+    uses: ./.github/workflows/release-info.yaml
