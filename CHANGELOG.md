@@ -1,5 +1,9 @@
 # Change Log
 
+## UNRELEASED
+
+- Add API Explorer stub to CLI [#554](https://github.com/hypermodeinc/modus/pull/554)
+
 ## 2024-11-04 - CLI 0.13.7
 
 - Automatically generate and push releases info to R2 bucket on every release [#526](https://github.com/hypermodeinc/modus/pull/526)
