@@ -22,19 +22,19 @@
     <textarea id="response" rows="10" cols="50" readonly></textarea>
 
     <script>
-      // Populate the endpoint dropdown from the "endpoints" parameter on the query string, which
-      // is a json-encoded object of endpoint names to urls as key-value pairs.
-
-      const urlParams = new URLSearchParams(window.location.search);
-      const endpoints = JSON.parse(urlParams.get("endpoints"));
-
-      const endpointSelect = document.getElementById("endpoint");
-      for (const [name, url] of Object.entries(endpoints)) {
-        const option = document.createElement("option");
-        option.value = url;
-        option.text = `${name}: ${url}`;
-        endpointSelect.appendChild(option);
+      async function populateEndpoints() {
+        const response = await fetch("/api/endpoints");
+        const endpoints = await response.json();
+        const endpointSelect = document.getElementById("endpoint");
+        for (const [name, url] of Object.entries(endpoints)) {
+          const option = document.createElement("option");
+          option.value = url;
+          option.text = `${name}: ${url}`;
+          endpointSelect.appendChild(option);
+        }
       }
+
+      populateEndpoints();
 
       document.getElementById("submit").addEventListener("click", async () => {
         const endpoint = document.getElementById("endpoint").value;
