@@ -7,34 +7,31 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import fs from "node:fs";
-import http from "node:http";
+import * as fs from "../util/fs.js";
 import net from "node:net";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import open from "open";
+import express from "express";
+import chalk from "chalk";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const filePath = path.resolve(__dirname, "../../content/index.html");
+const MANIFEST_FILE = "modus.json";
+const CONTENT_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../content");
 
-export async function openApiExplorer(endpoints: { [key: string]: string }) {
-  const server = http.createServer((req, res) => {
-    fs.readFile(filePath, (err, content) => {
-      if (err) {
-        res.writeHead(500);
-        res.end(`Error loading file: ${err}`);
-      } else {
-        res.writeHead(200, { "Content-Type": "text/html" });
-        res.end(content);
-      }
-    });
+export async function openApiExplorer(appPath: string, runtimePort: number) {
+  const app = express();
+  app.use(express.static(CONTENT_DIR));
+
+  app.get("/api/endpoints", async (_, res) => {
+    const endpoints = await getGraphQLEndpointsFromManifest(appPath, runtimePort);
+    res.json(endpoints);
   });
 
   const port = await findAvailablePort(3000, 3100);
-  server.listen(port, async () => {
-    console.log(`API Explorer running at http://localhost:${port}`);
-    await open(`http://localhost:${port}?endpoints=${encodeURIComponent(JSON.stringify(endpoints))}`);
+  app.listen(port, async () => {
+    const url = `http://localhost:${port}`;
+    console.log(chalk.greenBright("Modus API Explorer is running at: ") + chalk.cyanBright(url) + "\n");
+    await open(url);
   });
 }
 
@@ -66,4 +63,25 @@ function checkPort(port: number): Promise<boolean> {
 
     server.listen(port);
   });
+}
+
+async function getGraphQLEndpointsFromManifest(appPath: string, port: number): Promise<{ [key: string]: string }> {
+  const manifestPath = path.join(appPath, MANIFEST_FILE);
+  if (!(await fs.exists(manifestPath))) {
+    throw new Error(`Manifest file not found at ${manifestPath}`);
+  }
+
+  const manifestContent = await fs.readFile(manifestPath, "utf-8");
+  const manifest = JSON.parse(manifestContent);
+
+  if (!manifest.endpoints) {
+    return {};
+  }
+
+  const results: { [key: string]: string } = {};
+  for (const key in manifest.endpoints) {
+    const ep = manifest.endpoints[key];
+    results[key] = `http://localhost:${port}${ep.path}`;
+  }
+  return results;
 }

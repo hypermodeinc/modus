@@ -202,9 +202,8 @@ export default class DevCommand extends BaseCommand {
     });
 
     // TODO: sync the port number with the runtime somehow
-    const endpoints = await getGraphQLEndpointsFromManifest(appPath, 8686);
-
-    await openApiExplorer(endpoints);
+    const runtimePort = 8686;
+    await openApiExplorer(appPath, runtimePort);
 
     // Watch for changes in the app directory and rebuild the app when changes are detected
     if (!flags["no-watch"]) {
@@ -407,25 +406,4 @@ async function copyEnvFiles(appPath: string, buildPath: string): Promise<void> {
       await fs.unlink(dest);
     }
   }
-}
-
-async function getGraphQLEndpointsFromManifest(appPath: string, port: number): Promise<{ [key: string]: string }> {
-  const manifestPath = path.join(appPath, MANIFEST_FILE);
-  if (!(await fs.exists(manifestPath))) {
-    throw new Error(`Manifest file not found at ${manifestPath}`);
-  }
-
-  const manifestContent = await fs.readFile(manifestPath, "utf-8");
-  const manifest = JSON.parse(manifestContent);
-
-  if (!manifest.endpoints) {
-    return {};
-  }
-
-  const results: { [key: string]: string } = {};
-  for (const key in manifest.endpoints) {
-    const ep = manifest.endpoints[key];
-    results[key] = `http://localhost:${port}${ep.path}`;
-  }
-  return results;
 }
