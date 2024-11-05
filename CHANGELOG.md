@@ -1,6 +1,8 @@
 # Change Log
 
 ## UNRELEASED
+
+- Add API Explorer stub to CLI [#554](https://github.com/hypermodeinc/modus/pull/554)
 - Add `secrets: inherit` when calling release-info workflow [#555](https://github.com/hypermodeinc/modus/pull/555)
 
 ## 2024-11-04 - CLI 0.13.7
