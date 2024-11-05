@@ -54,3 +54,4 @@ jobs:
     needs: release
     name: Generate Release Info
     uses: ./.github/workflows/release-info.yaml
+    secrets: inherit
