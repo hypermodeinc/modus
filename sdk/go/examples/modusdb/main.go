@@ -95,7 +95,7 @@ func QuerySpecificPerson(firstName, lastName string) (*Person, error) {
 	return peopleData.People[0], nil
 }
 
-func AddPersonAsRDF(firstName, lastName string) (map[string]uint64, error) {
+func AddPersonAsRDF(firstName, lastName string) (*map[string]uint64, error) {
 	mutation := fmt.Sprintf(`
   _:user1 <firstName> "%s" .
   _:user1 <lastName> "%s" .
@@ -116,7 +116,7 @@ func AddPersonAsRDF(firstName, lastName string) (map[string]uint64, error) {
 	return response, nil
 }
 
-func AddPersonAsJSON(firstName, lastName string) (map[string]uint64, error) {
+func AddPersonAsJSON(firstName, lastName string) (*map[string]uint64, error) {
 	person := Person{
 		Uid:       "_:user1",
 		FirstName: firstName,

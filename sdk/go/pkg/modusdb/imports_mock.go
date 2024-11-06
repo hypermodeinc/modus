@@ -59,10 +59,10 @@ func hostQuery(query string) *Response {
 	}
 }
 
-func hostMutate(mutationReq *MutationRequest) map[string]uint64 {
+func hostMutate(mutationReq *MutationRequest) *map[string]uint64 {
 	ModusDBMutateCallStack.Push(mutationReq)
 
-	return map[string]uint64{
+	return &map[string]uint64{
 		"uid1": 1,
 		"uid2": 2,
 	}

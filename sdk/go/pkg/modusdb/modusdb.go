@@ -114,7 +114,7 @@ func AlterSchema(schema string) error {
  * @param mutationReq - the mutation request
  * @returns The response from the Dgraph server
  */
-func Mutate(mutationReq *MutationRequest) (map[string]uint64, error) {
+func Mutate(mutationReq *MutationRequest) (*map[string]uint64, error) {
 	response := hostMutate(mutationReq)
 	if response == nil {
 		return nil, errors.New("Failed to mutate the database.")

@@ -27,11 +27,15 @@ func hostAlterSchema(schema *string) *string
 
 //go:noescape
 //go:wasmimport modus_modusdb_client mutate
-func _hostMutate(mutationReq unsafe.Pointer) map[string]uint64
+func _hostMutate(mutationReq unsafe.Pointer) unsafe.Pointer
 
 //modus:import modus_modusdb_client mutate
-func hostMutate(mutationReq *MutationRequest) map[string]uint64 {
-	return _hostMutate(unsafe.Pointer(mutationReq))
+func hostMutate(mutationReq *MutationRequest) *map[string]uint64 {
+	resp := _hostMutate(unsafe.Pointer(mutationReq))
+	if resp == nil {
+		return nil
+	}
+	return (*map[string]uint64)(resp)
 }
 
 //go:noescape
