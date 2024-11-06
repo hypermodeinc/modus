@@ -1,3 +1,5 @@
+github.com/hypermodeinc/modus/sdk/go v0.13.1 h1:i12jiBwAAhq/c9HwEvwA0ugXOCvg/wlP9kGtTsg7w9U=
+github.com/hypermodeinc/modus/sdk/go v0.13.1/go.mod h1:0TaYvERi5P95n35uLCm7I+Dq7qjnoc95Bu2Yjqr+GIo=
 github.com/tidwall/gjson v1.14.2/go.mod h1:/wbyibRr2FHMks5tjHJ5F8dMZh3AcwJEMf5vlfC0lxk=
 github.com/tidwall/gjson v1.18.0 h1:FIDeeyB800efLX89e5a8Y0BNH+LOngJyGrIWxG2FKQY=
 github.com/tidwall/gjson v1.18.0/go.mod h1:/wbyibRr2FHMks5tjHJ5F8dMZh3AcwJEMf5vlfC0lxk=
