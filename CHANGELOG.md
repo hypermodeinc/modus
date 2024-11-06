@@ -8,6 +8,7 @@
 - Make `modus --version` just print modus CLI's version [#563](https://github.com/hypermodeinc/modus/pull/563)
 - Refactor metadata dependencies [#564](https://github.com/hypermodeinc/modus/pull/564)
 - Use Go workspace to simplify project dependencies [#565](https://github.com/hypermodeinc/modus/pull/565)
+- fix: "WASM Host not found in context" error on shutdown [#566](https://github.com/hypermodeinc/modus/pull/566)
 
 ## 2024-11-04 - CLI 0.13.7
 
