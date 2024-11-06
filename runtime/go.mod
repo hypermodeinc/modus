@@ -16,7 +16,7 @@ replace github.com/hypermodeinc/modus/lib/wasmextractor => ../lib/wasmextractor
 
 require (
 	github.com/OneOfOne/xxhash v1.2.8
-	github.com/archdx/zerolog-sentry v1.8.4
+	github.com/archdx/zerolog-sentry v1.8.5
 	github.com/aws/aws-sdk-go-v2 v1.32.3
 	github.com/aws/aws-sdk-go-v2/config v1.28.1
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.66.2
@@ -50,8 +50,8 @@ require (
 	github.com/tidwall/gjson v1.18.0
 	github.com/tidwall/sjson v1.2.5
 	github.com/viterin/vek v0.4.2
-	github.com/wundergraph/graphql-go-tools/execution v1.0.8-0.20241029111645-b67804508c1b
-	github.com/wundergraph/graphql-go-tools/v2 v2.0.0-rc.115
+	github.com/wundergraph/graphql-go-tools/execution v1.0.10-0.20241106142005-ef9f492df7ad
+	github.com/wundergraph/graphql-go-tools/v2 v2.0.0-rc.118
 	golang.org/x/exp v0.0.0-20240909161429-701f63a606c0
 	google.golang.org/grpc v1.67.1
 )
@@ -119,7 +119,7 @@ require (
 	github.com/go-sourcemap/sourcemap v2.1.4+incompatible // indirect
 	github.com/gobwas/httphead v0.1.0 // indirect
 	github.com/gobwas/pool v0.2.1 // indirect
-	github.com/gobwas/ws v1.3.1 // indirect
+	github.com/gobwas/ws v1.4.0 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/geo v0.0.0-20230421003525-6adc56603217 // indirect
 	github.com/golang/glog v1.2.2 // indirect
@@ -205,7 +205,7 @@ require (
 	github.com/twpayne/go-geom v1.5.7 // indirect
 	github.com/uber/jaeger-client-go v2.28.0+incompatible // indirect
 	github.com/viterin/partial v1.1.0 // indirect
-	github.com/wundergraph/astjson v0.0.0-20240910140849-bb15f94bd362 // indirect
+	github.com/wundergraph/astjson v0.0.0-20241105103047-3b2e8a2b2779 // indirect
 	github.com/wundergraph/cosmo/composition-go v0.0.0-20241020204711-78f240a77c99 // indirect
 	github.com/wundergraph/cosmo/router v0.0.0-20240926091419-7c3781f4f507 // indirect
 	github.com/xdg/scram v1.0.5 // indirect
