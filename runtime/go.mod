@@ -49,8 +49,8 @@ require (
 	github.com/tidwall/gjson v1.18.0
 	github.com/tidwall/sjson v1.2.5
 	github.com/viterin/vek v0.4.2
-	github.com/wundergraph/graphql-go-tools/execution v1.0.9
-	github.com/wundergraph/graphql-go-tools/v2 v2.0.0-rc.115
+	github.com/wundergraph/graphql-go-tools/execution v1.0.10-0.20241106142005-ef9f492df7ad
+	github.com/wundergraph/graphql-go-tools/v2 v2.0.0-rc.118
 	golang.org/x/exp v0.0.0-20240909161429-701f63a606c0
 	google.golang.org/grpc v1.67.1
 )
@@ -86,7 +86,7 @@ require (
 	github.com/go-sourcemap/sourcemap v2.1.4+incompatible // indirect
 	github.com/gobwas/httphead v0.1.0 // indirect
 	github.com/gobwas/pool v0.2.1 // indirect
-	github.com/gobwas/ws v1.3.1 // indirect
+	github.com/gobwas/ws v1.4.0 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/google/pprof v0.0.0-20240925223930-fa3061bff0bc // indirect
 	github.com/hashicorp/golang-lru v1.0.2 // indirect
@@ -121,7 +121,7 @@ require (
 	github.com/tidwall/match v1.1.1 // indirect
 	github.com/tidwall/pretty v1.2.1 // indirect
 	github.com/viterin/partial v1.1.0 // indirect
-	github.com/wundergraph/astjson v0.0.0-20240910140849-bb15f94bd362 // indirect
+	github.com/wundergraph/astjson v0.0.0-20241105103047-3b2e8a2b2779 // indirect
 	github.com/wundergraph/cosmo/composition-go v0.0.0-20241020204711-78f240a77c99 // indirect
 	github.com/wundergraph/cosmo/router v0.0.0-20240926091419-7c3781f4f507 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.55.0 // indirect
