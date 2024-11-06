@@ -2,17 +2,11 @@ module github.com/hypermodeinc/modus/runtime
 
 go 1.23.0
 
-require github.com/hypermodeinc/modus/lib/manifest v0.0.0
-
-require github.com/hypermodeinc/modus/lib/metadata v0.0.0
-
-require github.com/hypermodeinc/modus/lib/wasmextractor v0.0.0 // indirect
-
-replace github.com/hypermodeinc/modus/lib/manifest => ../lib/manifest
-
-replace github.com/hypermodeinc/modus/lib/metadata => ../lib/metadata
-
-replace github.com/hypermodeinc/modus/lib/wasmextractor => ../lib/wasmextractor
+require (
+	github.com/hypermodeinc/modus/lib/manifest v0.13.0
+	github.com/hypermodeinc/modus/lib/metadata v0.13.0
+	github.com/hypermodeinc/modus/lib/wasmextractor v0.13.0 // indirect
+)
 
 require (
 	github.com/OneOfOne/xxhash v1.2.8
@@ -51,7 +45,7 @@ require (
 	github.com/viterin/vek v0.4.2
 	github.com/wundergraph/graphql-go-tools/execution v1.0.10-0.20241106142005-ef9f492df7ad
 	github.com/wundergraph/graphql-go-tools/v2 v2.0.0-rc.118
-	golang.org/x/exp v0.0.0-20240909161429-701f63a606c0
+	golang.org/x/exp v0.0.0-20241009180824-f66d83c29e7c
 	google.golang.org/grpc v1.67.1
 )
 
@@ -79,7 +73,7 @@ require (
 	github.com/distribution/reference v0.6.0 // indirect
 	github.com/dlclark/regexp2 v1.11.4 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
-	github.com/dop251/goja v0.0.0-20240919115326-6c7d1df7ff05 // indirect
+	github.com/dop251/goja v0.0.0-20241024094426-79f3a7efcdbd // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/go-logr/logr v1.4.2 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
@@ -88,14 +82,14 @@ require (
 	github.com/gobwas/pool v0.2.1 // indirect
 	github.com/gobwas/ws v1.4.0 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
-	github.com/google/pprof v0.0.0-20240925223930-fa3061bff0bc // indirect
+	github.com/google/pprof v0.0.0-20241101162523-b92577c0c142 // indirect
 	github.com/hashicorp/golang-lru v1.0.2 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
 	github.com/jackc/puddle/v2 v2.2.2 // indirect
 	github.com/jensneuse/byte-template v0.0.0-20231025215717-69252eb3ed56 // indirect
 	github.com/kingledion/go-tools v0.6.0 // indirect
-	github.com/klauspost/compress v1.17.10 // indirect
+	github.com/klauspost/compress v1.17.11 // indirect
 	github.com/lestrrat-go/backoff/v2 v2.0.8 // indirect
 	github.com/lestrrat-go/blackmagic v1.0.2 // indirect
 	github.com/lestrrat-go/httpcc v1.0.1 // indirect
@@ -122,23 +116,23 @@ require (
 	github.com/tidwall/pretty v1.2.1 // indirect
 	github.com/viterin/partial v1.1.0 // indirect
 	github.com/wundergraph/astjson v0.0.0-20241105103047-3b2e8a2b2779 // indirect
-	github.com/wundergraph/cosmo/composition-go v0.0.0-20241020204711-78f240a77c99 // indirect
-	github.com/wundergraph/cosmo/router v0.0.0-20240926091419-7c3781f4f507 // indirect
-	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.55.0 // indirect
-	go.opentelemetry.io/otel v1.30.0 // indirect
-	go.opentelemetry.io/otel/metric v1.30.0 // indirect
-	go.opentelemetry.io/otel/trace v1.30.0 // indirect
+	github.com/wundergraph/cosmo/composition-go v0.0.0-20241106155333-133ea404e4b4 // indirect
+	github.com/wundergraph/cosmo/router v0.0.0-20241106155333-133ea404e4b4 // indirect
+	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.56.0 // indirect
+	go.opentelemetry.io/otel v1.31.0 // indirect
+	go.opentelemetry.io/otel/metric v1.31.0 // indirect
+	go.opentelemetry.io/otel/trace v1.31.0 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.27.0 // indirect
 	golang.org/x/crypto v0.28.0 // indirect
-	golang.org/x/net v0.29.0 // indirect
+	golang.org/x/net v0.30.0 // indirect
 	golang.org/x/sync v0.8.0 // indirect
 	golang.org/x/sys v0.26.0 // indirect
 	golang.org/x/text v0.19.0 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20240924160255-9d4c2d233b61 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20240924160255-9d4c2d233b61 // indirect
-	google.golang.org/protobuf v1.34.2 // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20241104194629-dd2ea8efbc28 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20241104194629-dd2ea8efbc28 // indirect
+	google.golang.org/protobuf v1.35.1 // indirect
 	gopkg.in/cenkalti/backoff.v1 v1.1.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	gotest.tools/v3 v3.5.1 // indirect
