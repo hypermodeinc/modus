@@ -7,7 +7,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Args, Command, Flags } from "@oclif/core";
+import { Args, Flags } from "@oclif/core";
 import { spawn } from "node:child_process";
 import { Readable } from "node:stream";
 import path from "node:path";
@@ -26,6 +26,7 @@ import { isOnline, withSpinner } from "../../util/index.js";
 import { readHypermodeSettings } from "../../util/hypermode.js";
 import BuildCommand from "../build/index.js";
 import { BaseCommand } from "../../baseCommand.js";
+import { openApiExplorer } from "../../custom/apiExplorer.js";
 
 const MANIFEST_FILE = "modus.json";
 const ENV_FILES = [".env", ".env.local", ".env.development", ".env.dev", ".env.development.local", ".env.dev.local"];
@@ -200,6 +201,10 @@ export default class DevCommand extends BaseCommand {
       }
     });
 
+    // TODO: sync the port number with the runtime somehow
+    const runtimePort = 8686;
+    await openApiExplorer(appPath, runtimePort);
+
     // Watch for changes in the app directory and rebuild the app when changes are detected
     if (!flags["no-watch"]) {
       this.watchForEnvFileChanges(appPath, child.stderr);
@@ -214,8 +219,6 @@ export default class DevCommand extends BaseCommand {
   private watchForEnvFileChanges(appPath: string, runtimeOutput: Readable) {
     // Whenever any of the env files change, copy to the build directory.
     // The runtime will automatically reload them when it detects a change to the copies in the build folder.
-
-    const sourcePaths = ENV_FILES.map((file) => path.join(appPath, file));
 
     const onAddOrChange = async (sourcePath: string) => {
       const filename = path.basename(sourcePath);
@@ -327,7 +330,7 @@ export default class DevCommand extends BaseCommand {
         this.log(chalk.magentaBright("Detected source code change. Rebuilding..."));
         this.log();
         await BuildCommand.run([appPath, "--no-logo"]);
-      } catch (e) {
+      } catch {
         this.log(chalk.magenta("Waiting for more changes..."));
         this.log(chalk.dim("Press Ctrl+C at any time to stop the server."));
       } finally {

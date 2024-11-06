@@ -2,6 +2,13 @@
 
 ## UNRELEASED
 
+- Add API Explorer stub to CLI [#554](https://github.com/hypermodeinc/modus/pull/554) [#556](https://github.com/hypermodeinc/modus/pull/556)
+- Add `secrets: inherit` when calling release-info workflow [#555](https://github.com/hypermodeinc/modus/pull/555)
+- Fix introspection query when only mutations exist [#558](https://github.com/hypermodeinc/modus/pull/558)
+
+## 2024-11-04 - CLI 0.13.7
+
+- Automatically generate and push releases info to R2 bucket on every release [#526](https://github.com/hypermodeinc/modus/pull/526)
 - Consistent help + print enum options + validate SDK prereq [#542](https://github.com/hypermodeinc/modus/pull/542)
   - Consistent padding in the help section 
   - `modus new`: Enum options need to print possible options
@@ -9,6 +16,10 @@
   - `modus sdk remove`: Use select prompt to allow selection
 - For CLI to track non-prereleases, pull from releases json to remove rate limiting issues from github releases [#543](https://github.com/hypermodeinc/modus/pull/543)
 - Modify isOnline in CLI to query releases.json [#544](https://github.com/hypermodeinc/modus/pull/544)
+- remove all github api call references, add prerelease support to CLI [#545](https://github.com/hypermodeinc/modus/pull/545)
+- Add CLI build CI [#547](https://github.com/hypermodeinc/modus/pull/547)
+- Add CLI Lint CI [#550](https://github.com/hypermodeinc/modus/pull/550)
+- Update installer script [#551](https://github.com/hypermodeinc/modus/pull/551)
 
 ## 2024-10-30 - CLI 0.13.6
 

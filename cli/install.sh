@@ -14,7 +14,7 @@ PACKAGE_ORG="@hypermode"
 PACKAGE_NAME="modus-cli"
 INSTALL_DIR="${MODUS_CLI:-"$HOME/.modus/cli"}"
 VERSION="latest"
-INSTALLER_VERSION="0.1.1"
+INSTALLER_VERSION="0.1.2"
 
 NODE_MIN=22
 NODE_PATH="$(which node)"
@@ -44,9 +44,8 @@ else
 fi
 
 get_latest_version() {
-  local url="https://registry.npmjs.org/${PACKAGE_ORG:+$PACKAGE_ORG/}$PACKAGE_NAME"
-
-  curl --silent "$url" | jq -r '.["dist-tags"].latest'
+  local url="https://releases.hypermode.com/modus-latest.json"
+  curl -sL "$url" | grep '"cli"' | sed -E 's/.*"cli": "v([^"]+)".*/\1/'
 }
 
 ARCHIVE_URL=""

@@ -7,7 +7,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Args, Command, Flags } from "@oclif/core";
+import { Args } from "@oclif/core";
 import chalk from "chalk";
 import path from "node:path";
 import os from "node:os";
@@ -75,7 +75,7 @@ export default class BuildCommand extends BaseCommand {
             }
           }
           return await execFileWithExitCode("npx", ["modus-as-build"], execOpts);
-        case SDK.Go:
+        case SDK.Go: {
           const version = app.sdkVersion || (await vi.getLatestInstalledSdkVersion(app.sdk, true));
           if (!version) {
             this.logError("No installed version of the Modus Go SDK");
@@ -88,6 +88,7 @@ export default class BuildCommand extends BaseCommand {
             return;
           }
           return await execFileWithExitCode(buildTool, ["."], execOpts);
+        }
         default:
           this.logError("Unsupported SDK");
           this.exit(1);

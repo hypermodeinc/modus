@@ -16,6 +16,7 @@ import { parseSDK, SDK } from "../../../custom/globals.js";
 import { withSpinner } from "../../../util/index.js";
 import * as inquirer from "@inquirer/prompts";
 import { BaseCommand } from "../../../baseCommand.js";
+import { isErrorWithName } from "../../../util/errors.js";
 
 export default class SDKRemoveCommand extends BaseCommand {
   static args = {
@@ -184,8 +185,8 @@ export default class SDKRemoveCommand extends BaseCommand {
           await this.removeSDK(sdk, args.version);
         }
       }
-    } catch (err: any) {
-      if (err.name === "ExitPromptError") {
+    } catch (err) {
+      if (isErrorWithName(err) && err.name === "ExitPromptError") {
         this.abort();
       } else {
         throw err;
