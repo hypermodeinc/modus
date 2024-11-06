@@ -47,7 +47,7 @@ func main() {
 	defer utils.FlushSentryEvents()
 
 	// Start the background services
-	services.Start(ctx)
+	ctx = services.Start(ctx)
 	defer services.Stop(ctx)
 
 	// Set local mode in development
