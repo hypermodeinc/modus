@@ -1,14 +1,18 @@
 # Change Log
 
-## UNRELEASED
+## UNRELEASED - CLI
 
-- Add API Explorer stub to CLI [#554](https://github.com/hypermodeinc/modus/pull/554) [#556](https://github.com/hypermodeinc/modus/pull/556)
-- Add `secrets: inherit` when calling release-info workflow [#555](https://github.com/hypermodeinc/modus/pull/555)
-- Fix introspection query when only mutations exist [#558](https://github.com/hypermodeinc/modus/pull/558)
-- Make `modus --version` just print modus CLI's version [#563](https://github.com/hypermodeinc/modus/pull/563)
-- Refactor metadata dependencies [#564](https://github.com/hypermodeinc/modus/pull/564)
-- Use Go workspace to simplify project dependencies [#565](https://github.com/hypermodeinc/modus/pull/565)
+- feat: Add API Explorer stub to CLI [#554](https://github.com/hypermodeinc/modus/pull/554)
+- feat: Improve local dev server for API explorer [#556](https://github.com/hypermodeinc/modus/pull/556)
+- fix: Make `modus --version` just print modus CLI's version [#563](https://github.com/hypermodeinc/modus/pull/563)
+
+## UNRELEASED - Runtime
+
+- fix: Introspection query should succeed when only mutations exist [#558](https://github.com/hypermodeinc/modus/pull/558)
 - fix: "WASM Host not found in context" error on shutdown [#566](https://github.com/hypermodeinc/modus/pull/566)
+- ci: Add `secrets: inherit` when calling release-info workflow [#555](https://github.com/hypermodeinc/modus/pull/555)
+- chore: Refactor metadata dependencies [#564](https://github.com/hypermodeinc/modus/pull/564)
+- chore: Use Go workspace to simplify project dependencies [#565](https://github.com/hypermodeinc/modus/pull/565)
 
 ## 2024-11-04 - CLI 0.13.7
 
