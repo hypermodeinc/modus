@@ -23,7 +23,6 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/sts v1.32.3
 	github.com/buger/jsonparser v1.1.1
 	github.com/chewxy/math32 v1.11.1
-	github.com/dgraph-io/dgo/v230 v230.0.1
 	github.com/dgraph-io/dgo/v240 v240.0.0
 	github.com/docker/docker v27.3.1+incompatible
 	github.com/docker/go-connections v0.5.0
@@ -35,7 +34,7 @@ require (
 	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/google/renameio v1.0.1
 	github.com/google/uuid v1.6.0
-	github.com/hypermodeinc/modusdb v0.0.0-20241014091931-3ea5b634529d
+	github.com/hypermodeinc/modusdb v0.0.0-20241020214203-ecbf5a6df77f
 	github.com/jackc/pgx/v5 v5.7.1
 	github.com/jensneuse/abstractlogger v0.0.4
 	github.com/joho/godotenv v1.5.1
@@ -94,7 +93,7 @@ require (
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.3.0 // indirect
 	github.com/dgraph-io/badger/v4 v4.3.1 // indirect
-	github.com/dgraph-io/dgraph/v24 v24.0.3-0.20241011161008-a60ce1dd90b5 // indirect
+	github.com/dgraph-io/dgraph/v24 v24.0.4-test.0.20241017132253-b6c6176683a7 // indirect
 	github.com/dgraph-io/gqlgen v0.13.2 // indirect
 	github.com/dgraph-io/gqlparser/v2 v2.2.2 // indirect
 	github.com/dgraph-io/ristretto v1.0.0 // indirect
