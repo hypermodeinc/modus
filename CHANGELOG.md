@@ -6,6 +6,7 @@
 - Add `secrets: inherit` when calling release-info workflow [#555](https://github.com/hypermodeinc/modus/pull/555)
 - Fix introspection query when only mutations exist [#558](https://github.com/hypermodeinc/modus/pull/558)
 - Make `modus --version` just print modus CLI's version [#563](https://github.com/hypermodeinc/modus/pull/563)
+- Refactor metadata dependencies [#564](https://github.com/hypermodeinc/modus/pull/564)
 
 ## 2024-11-04 - CLI 0.13.7
 
