@@ -16,15 +16,15 @@ import (
 )
 
 func init() {
-	const module_name = "modus_db"
+	const module_name = "modus_modusdb_client"
 
 	registerHostFunction(module_name, "dropAll", modusdb.DropAll,
-		withStartingMessage("Dropping all data."),
-		withCompletedMessage("Completed dropping all data."),
-		withCancelledMessage("Cancelled dropping all data."),
-		withErrorMessage("Error dropping all data."),
+		withStartingMessage("Dropping all."),
+		withCompletedMessage("Completed dropping all."),
+		withCancelledMessage("Cancelled dropping all."),
+		withErrorMessage("Error dropping all."),
 		withMessageDetail(func() string {
-			return "Dropping all data."
+			return "Dropping all."
 		}))
 
 	registerHostFunction(module_name, "dropData", modusdb.DropData,
@@ -50,8 +50,8 @@ func init() {
 		withCompletedMessage("Completed mutation."),
 		withCancelledMessage("Cancelled mutation."),
 		withErrorMessage("Error executing mutation."),
-		withMessageDetail(func(clientMus []*modusdb.Mutation) string {
-			return fmt.Sprintf("Mutations: %s", fmt.Sprint(clientMus))
+		withMessageDetail(func(mutationReq modusdb.MutationRequest) string {
+			return fmt.Sprintf("Mutations: %s", fmt.Sprint(mutationReq))
 		}))
 
 	registerHostFunction(module_name, "query", modusdb.Query,

@@ -9,6 +9,10 @@
 
 package modusdb
 
+type MutationRequest struct {
+	Mutations []*Mutation
+}
+
 type Mutation struct {
 	SetJson   string
 	DelJson   string
@@ -23,7 +27,7 @@ type Response struct {
 	Latency *Latency
 	Metrics *Metrics
 	Uids    map[string]string
-	Rdf     []byte
+	Rdf     []uint8
 	Hdrs    map[string]*ListOfString
 }
 

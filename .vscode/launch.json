@@ -149,6 +149,10 @@
           "value": "http"
         },
         {
+          "label": "ModusDB Example",
+          "value": "modusdb"
+        },
+        {
           "label": "PostgreSQL Client Example",
           "value": "postgresql"
         },

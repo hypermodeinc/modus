@@ -21,7 +21,7 @@ var mdb *modusdb.DB
 
 func Init(ctx context.Context) {
 	var err error
-	mdb, err = modusdb.New(modusdb.NewDefaultConfig())
+	mdb, err = modusdb.New(modusdb.NewDefaultConfig().WithDataDir("data"))
 	if err != nil {
 		logger.Fatal(ctx).Err(err).Msg("Error initializing modusdb")
 	}
@@ -33,21 +33,34 @@ func Close(ctx context.Context) {
 	}
 }
 
-func DropAll(ctx context.Context) error {
-	return mdb.DropAll(ctx)
+func DropAll(ctx context.Context) (string, error) {
+	err := mdb.DropAll(ctx)
+	if err != nil {
+		return "", err
+	}
+	return "success", nil
 }
 
-func DropData(ctx context.Context) error {
-	return mdb.DropData(ctx)
+func DropData(ctx context.Context) (string, error) {
+	err := mdb.DropData(ctx)
+	if err != nil {
+		return "", err
+	}
+	return "success", nil
 }
 
-func AlterSchema(ctx context.Context, schema string) error {
-	return mdb.AlterSchema(ctx, schema)
+func AlterSchema(ctx context.Context, schema string) (string, error) {
+	err := mdb.AlterSchema(ctx, schema)
+	if err != nil {
+		return "", err
+	}
+	return "success", nil
 }
 
-func Mutate(ctx context.Context, clientMus []*Mutation) (map[string]uint64, error) {
-	mus := make([]*api.Mutation, 0, len(clientMus))
-	for _, m := range clientMus {
+func Mutate(ctx context.Context, mutationReq MutationRequest) (map[string]uint64, error) {
+	mutations := mutationReq.Mutations
+	mus := make([]*api.Mutation, 0, len(mutations))
+	for _, m := range mutations {
 		mu := &api.Mutation{}
 		if m.SetJson != "" {
 			mu.SetJson = []byte(m.SetJson)

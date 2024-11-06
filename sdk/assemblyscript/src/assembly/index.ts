@@ -30,3 +30,6 @@ export { vectors };
 
 import * as auth from "./auth";
 export { auth };
+
+import * as modusdb from "./modusdb";
+export { modusdb };
