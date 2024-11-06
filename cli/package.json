@@ -67,6 +67,9 @@
     "helpClass": "./dist/custom/help",
     "dirname": "modus",
     "commands": "./dist/commands",
+    "hooks": {
+      "init": "./dist/hooks/init"
+    },
     "topicSeparator": " ",
     "topics": {
       "sdk": {
