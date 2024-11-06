@@ -18,7 +18,6 @@ import (
 	"github.com/hypermodeinc/modus/runtime/dgraphclient"
 	"github.com/hypermodeinc/modus/runtime/envfiles"
 	"github.com/hypermodeinc/modus/runtime/graphql"
-	"github.com/hypermodeinc/modus/runtime/hostfunctions"
 	"github.com/hypermodeinc/modus/runtime/logger"
 	"github.com/hypermodeinc/modus/runtime/manifestdata"
 	"github.com/hypermodeinc/modus/runtime/middleware"
@@ -26,25 +25,19 @@ import (
 	"github.com/hypermodeinc/modus/runtime/secrets"
 	"github.com/hypermodeinc/modus/runtime/sqlclient"
 	"github.com/hypermodeinc/modus/runtime/storage"
-	"github.com/hypermodeinc/modus/runtime/utils"
 	"github.com/hypermodeinc/modus/runtime/wasmhost"
 )
 
 // Starts any services that need to be started when the runtime starts.
 func Start(ctx context.Context) {
 
-	// Note, we cannot start a Sentry transaction here, or it will also be used for the background services, post-initiation.
-
-	// Init the wasm host and put it in context
-	registrations := hostfunctions.GetRegistrations()
-	host := wasmhost.InitWasmHost(ctx, registrations...)
-	ctx = context.WithValue(ctx, utils.WasmHostContextKey, host)
-
 	// Start the background services.  None of these should block. If they need to do background work, they should start a goroutine internally.
 
 	// NOTE: Initialization order is important in some cases.
 	// If you need to change the order or add new services, be sure to test thoroughly.
 	// Generally, new services should be added to the end of the list, unless there is a specific reason to do otherwise.
+
+	// Note, we cannot start a Sentry transaction here, or it will also be used for the background services, post-initiation.
 
 	sqlclient.Initialize()
 	dgraphclient.Initialize()
@@ -57,7 +50,6 @@ func Start(ctx context.Context) {
 	envfiles.MonitorEnvFiles(ctx)
 	pluginmanager.Initialize(ctx)
 	graphql.Initialize()
-
 }
 
 // Stops any services that need to be stopped when the runtime stops.

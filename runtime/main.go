@@ -15,10 +15,12 @@ import (
 	"github.com/hypermodeinc/modus/runtime/app"
 	"github.com/hypermodeinc/modus/runtime/config"
 	"github.com/hypermodeinc/modus/runtime/envfiles"
+	"github.com/hypermodeinc/modus/runtime/hostfunctions"
 	"github.com/hypermodeinc/modus/runtime/httpserver"
 	"github.com/hypermodeinc/modus/runtime/logger"
 	"github.com/hypermodeinc/modus/runtime/services"
 	"github.com/hypermodeinc/modus/runtime/utils"
+	"github.com/hypermodeinc/modus/runtime/wasmhost"
 )
 
 func main() {
@@ -45,6 +47,11 @@ func main() {
 	rootSourcePath := app.GetRootSourcePath()
 	utils.InitSentry(rootSourcePath)
 	defer utils.FlushSentryEvents()
+
+	// Init the wasm host and put it in context
+	registrations := hostfunctions.GetRegistrations()
+	host := wasmhost.InitWasmHost(ctx, registrations...)
+	ctx = context.WithValue(ctx, utils.WasmHostContextKey, host)
 
 	// Start the background services
 	services.Start(ctx)
