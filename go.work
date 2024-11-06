@@ -1,0 +1,23 @@
+go 1.23.2
+
+use (
+	./lib/manifest
+	./lib/metadata
+	./lib/wasmextractor
+	./runtime
+	./runtime/languages/golang/testdata
+	./sdk/go
+	./sdk/go/examples/anthropic-functions
+	./sdk/go/examples/auth
+	./sdk/go/examples/classification
+	./sdk/go/examples/collections
+	./sdk/go/examples/dgraph
+	./sdk/go/examples/embedding
+	./sdk/go/examples/graphql
+	./sdk/go/examples/http
+	./sdk/go/examples/postgresql
+	./sdk/go/examples/simple
+	./sdk/go/examples/textgeneration
+	./sdk/go/examples/vectors
+	./sdk/go/templates/default
+)
