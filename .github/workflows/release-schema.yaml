@@ -1,8 +1,8 @@
 name: Release Modus Schema
 on:
   push:
-    # tags:
-    #   - lib/manifest/*
+    tags:
+      - lib/manifest/*
   workflow_dispatch:
 permissions:
   contents: read
