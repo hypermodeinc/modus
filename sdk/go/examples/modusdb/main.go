@@ -26,7 +26,7 @@ func AlterSchema() string {
 	schema := `
 	firstName: string @index(term) .
 	lastName: string @index(term) .
-	modusdb.type: [string] @index(exact) .
+	dgraph.type: [string] @index(exact) .
   
 	type Person {
 		firstName
@@ -48,12 +48,12 @@ func QueryPeople() ([]*Person, error) {
 		uid
 		firstName
 		lastName
-		modusdb.type
+		dgraph.type
 	  }
 	}
 	`
 
-	response, err := modusdb.Query(query)
+	response, err := modusdb.Query(&query)
 	if err != nil {
 		return nil, err
 	}
@@ -66,6 +66,38 @@ func QueryPeople() ([]*Person, error) {
 	return peopleData.People, nil
 }
 
+func QueryPlugins() ([]*Plugin, error) {
+	query := `
+	{
+	  plugins(func: type(Plugin)) {
+		uid
+		id
+		name
+		version
+		language
+		sdk_version
+		build_id
+		build_time
+		git_repo
+		git_commit
+		dgraph.type
+	  }
+	}
+	`
+
+	response, err := modusdb.Query(&query)
+	if err != nil {
+		return nil, err
+	}
+
+	var pluginData PluginData
+	if err := json.Unmarshal([]byte(response.Json), &pluginData); err != nil {
+		return nil, err
+	}
+
+	return pluginData.Plugins, nil
+}
+
 func QuerySpecificPerson(firstName, lastName string) (*Person, error) {
 	query := fmt.Sprintf(`
 	query queryPerson {
@@ -73,12 +105,12 @@ func QuerySpecificPerson(firstName, lastName string) (*Person, error) {
 		  uid
 		  firstName
 		  lastName
-		  modusdb.type
+		  dgraph.type
 	  }
   }
 	`, firstName, lastName)
 
-	response, err := modusdb.Query(query)
+	response, err := modusdb.Query(&query)
 	if err != nil {
 		return nil, err
 	}
@@ -99,7 +131,7 @@ func AddPersonAsRDF(firstName, lastName string) (*map[string]uint64, error) {
 	mutation := fmt.Sprintf(`
   _:user1 <firstName> "%s" .
   _:user1 <lastName> "%s" .
-  _:user1 <modusdb.type> "Person" .
+  _:user1 <dgraph.type> "Person" .
   `, firstName, lastName)
 
 	response, err := modusdb.Mutate(&modusdb.MutationRequest{

@@ -76,7 +76,7 @@ func TestAlterSchema(t *testing.T) {
 }
 
 func TestQuery(t *testing.T) {
-	response, err := modusdb.Query(query)
+	response, err := modusdb.Query(&query)
 	if err != nil {
 		t.Errorf("Expected no error, but received: %s", err.Error())
 	}

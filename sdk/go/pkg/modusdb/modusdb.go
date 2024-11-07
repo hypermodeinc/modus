@@ -130,7 +130,7 @@ func Mutate(mutationReq *MutationRequest) (*map[string]uint64, error) {
  * @param query - the query to execute
  * @returns The response from the Dgraph server
  */
-func Query(query string) (*Response, error) {
+func Query(query *string) (*Response, error) {
 	response := hostQuery(query)
 	if response == nil {
 		return nil, errors.New("Failed to query the database.")

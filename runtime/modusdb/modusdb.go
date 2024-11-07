@@ -11,6 +11,8 @@ package modusdb
 
 import (
 	"context"
+	"fmt"
+	"os"
 
 	"github.com/dgraph-io/dgo/v240/protos/api"
 	"github.com/hypermodeinc/modus/runtime/logger"
@@ -18,12 +20,24 @@ import (
 )
 
 var mdb *modusdb.DB
+var dataDir = "data"
 
 func Init(ctx context.Context) {
 	var err error
+	// check if data directory exists
+	shouldAlterSchema := false
+	if _, err := os.Stat(dataDir); os.IsNotExist(err) {
+		shouldAlterSchema = true
+	}
 	mdb, err = modusdb.New(modusdb.NewDefaultConfig().WithDataDir("data"))
 	if err != nil {
 		logger.Fatal(ctx).Err(err).Msg("Error initializing modusdb")
+	}
+	if shouldAlterSchema {
+		err = mdb.AlterSchema(ctx, internalSchema)
+		if err != nil {
+			logger.Fatal(ctx).Err(err).Msg("Error initializing modusdb schema")
+		}
 	}
 }
 
@@ -50,7 +64,8 @@ func DropData(ctx context.Context) (string, error) {
 }
 
 func AlterSchema(ctx context.Context, schema string) (string, error) {
-	err := mdb.AlterSchema(ctx, schema)
+	totalSchema := fmt.Sprintf("%s\n%s", internalSchema, schema)
+	err := mdb.AlterSchema(ctx, totalSchema)
 	if err != nil {
 		return "", err
 	}

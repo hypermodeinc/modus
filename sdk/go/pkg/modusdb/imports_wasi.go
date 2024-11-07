@@ -40,10 +40,10 @@ func hostMutate(mutationReq *MutationRequest) *map[string]uint64 {
 
 //go:noescape
 //go:wasmimport modus_modusdb_client query
-func _hostQuery(query string) unsafe.Pointer
+func _hostQuery(query *string) unsafe.Pointer
 
 //modus:import modus_modusdb_client query
-func hostQuery(query string) *Response {
+func hostQuery(query *string) *Response {
 	response := _hostQuery(query)
 	if response == nil {
 		return nil

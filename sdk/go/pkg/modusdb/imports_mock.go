@@ -43,7 +43,7 @@ func hostDropAll() *string {
 	return &success
 }
 
-func hostQuery(query string) *Response {
+func hostQuery(query *string) *Response {
 	ModusDBQueryCallStack.Push(query)
 
 	json := `{"data": {"query": "query"}}`

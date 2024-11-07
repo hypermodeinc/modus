@@ -5,7 +5,7 @@
  */
 
 import { modusdb } from "@hypermode/modus-sdk-as";
-import { PeopleData, Person } from "./classes";
+import { PeopleData, Person, Plugin, PluginData } from "./classes";
 import { JSON } from "json-as";
 import { MutationRequest } from "@hypermode/modus-sdk-as/assembly/modusdb";
 
@@ -46,6 +46,30 @@ export function queryPeople(): Person[] {
   const resp = modusdb.query(query);
 
   return JSON.parse<PeopleData>(resp.Json).people;
+}
+
+export function queryPlugins(): Plugin[] {
+  const query = `
+  {
+	  plugins(func: type(Plugin)) {
+		uid
+		id
+		name
+		version
+		language
+		sdk_version
+		build_id
+		build_time
+		git_repo
+		git_commit
+		dgraph.type
+	  }
+	}
+  `;
+
+  const resp = modusdb.query(query);
+
+  return JSON.parse<PluginData>(resp.Json).plugins;
 }
 
 // This function returns the results of querying for a specific person in the database.
