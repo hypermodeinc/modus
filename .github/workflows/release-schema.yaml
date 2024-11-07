@@ -24,4 +24,4 @@ jobs:
           preCommands: |
             cat modus_schema.json
           command: |
-            r2 object put releases/modus_schema.json -f modus_schema.json --content-type application/json
+            r2 object put schema/modus_schema.json -f modus_schema.json --content-type application/json
