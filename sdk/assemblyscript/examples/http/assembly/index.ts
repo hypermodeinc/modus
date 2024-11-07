@@ -1,5 +1,5 @@
 /**
- * This is some documentation       
+ * This is some documentation
  */
 // This is a single line comment
 @json
@@ -11,12 +11,16 @@ export function foo(player: Player): void {}
 @json
 class Vec3 {
   x: f32 = 0.0;
+  /**
+   * This represents the x axis
+   */
   y: f32 = 0.0;
   z: f32 = 0.0;
 }
 
 /**
  * This class represents a player in a fictitious game
+ * @field firstName - ""
  */
 @json
 class Player {
@@ -27,7 +31,6 @@ class Player {
    * This is some docs describing lastActive
   */
   lastActive!: i32[];
-  // This is some single line docs describing age
   @omitif("this.age < 18")
   age!: i32;
   @omitnull()

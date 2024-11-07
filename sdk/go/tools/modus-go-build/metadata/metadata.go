@@ -52,7 +52,7 @@ type TypeDefinition struct {
 	Id     uint32   `json:"id"`
 	Name   string   `json:"-"`
 	Fields []*Field `json:"fields,omitempty"`
-	Docs       *Docs        `json:"docs,omitempty"`
+	Docs   *Docs    `json:"docs,omitempty"`
 }
 
 type Parameter struct {

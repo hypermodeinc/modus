@@ -16,10 +16,10 @@ import {
   CommentNode,
   ElementKind,
   Expression,
+  FieldDeclaration,
   FloatLiteralExpression,
   Function as Func,
   FunctionDeclaration,
-  IdentifierExpression,
   IntegerLiteralExpression,
   LiteralExpression,
   LiteralKind,
@@ -251,14 +251,13 @@ export class Extractor {
         const nodeIndex = source.statements.indexOf(node);
         const prevNode = source.statements[Math.max(nodeIndex - 1, 0)];
 
-        const start = nodeIndex > 0 ? prevNode.range.start : 0;
+        const start = nodeIndex > 0 ? prevNode.range.end : 0;
         const end = node.range.start;
 
         const newRange = new Range(start, end);
         newRange.source = source;
         const commentNodes = this.parseComments(newRange);
         if (!commentNodes.length) return;
-        console.log("Got docs from func")
         docs = Docs.from(commentNodes);
       }
     }
@@ -287,17 +286,49 @@ export class Extractor {
       const nodeIndex = source.statements.indexOf(node);
       const prevNode = source.statements[Math.max(nodeIndex - 1, 0)];
 
-      const start = nodeIndex > 0 ? prevNode.range.start : 0;
+      const start = nodeIndex > 0 ? prevNode.range.end : 0;
       const end = node.range.start;
 
       const newRange = new Range(start, end);
-      console.log("Range: " + source.text.slice(newRange.start, newRange.end))
       newRange.source = source;
       const commentNodes = this.parseComments(newRange);
       if (!commentNodes.length) break;
       type.docs = Docs.from(commentNodes);
+
+      if (node.members.length) {
+        const memberDocs = this.getFieldsDocs(node.members.filter(v => v.kind == NodeKind.FieldDeclaration) as FieldDeclaration[], node);
+        if (!memberDocs) continue;
+        for (let i = 0; i < memberDocs.length; i++) {
+          const docs = memberDocs[i];
+          if (docs) {
+            console.log("Got docs: ", docs.description);
+            const index = type.fields.findIndex(v => v.name == node.members[i].name.text);
+            if (index < 0) continue;
+            type.fields[index].docs = docs;
+          }
+        }
+      }
     }
     return type;
+  }
+  private getFieldsDocs(nodes: FieldDeclaration[], parent: ClassDeclaration): (Docs | null)[] {
+    const docs = new Array<Docs | null>(nodes.length).fill(null);
+    console.log("Members: " + nodes.length)
+    for (let i = 0; i < nodes.length; i++) {
+      const node = nodes[i];
+      const source = node.range.source;
+
+      const start = i == 0 ? parent.range.start : nodes[i-1].range.end;
+      const end = node.range.start;
+
+      console.log("text: " + source.text.slice(start, end))
+      const newRange = new Range(start, end);
+      newRange.source = source;
+      const commentNodes = this.parseComments(newRange);
+      if (!commentNodes.length) continue;
+      docs[i] = Docs.from(commentNodes);
+    }
+    return docs;
   }
   private parseComments(range: Range): CommentNode[] {
     const nodes: CommentNode[] = [];

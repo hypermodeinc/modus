@@ -37,7 +37,9 @@ func getFuncDocumentation(pkgs map[string]*packages.Package, fn *types.Func) *me
 					if fd.Name.Name == fn.Name() {
 						if fd.Doc != nil {
 							for _, comment := range fd.Doc.List {
-								comments = append(comments, comment.Text)
+								if strings.HasPrefix(strings.TrimSpace(comment.Text), "// ") {
+									comments = append(comments, comment.Text)
+								}
 							}
 						}
 						return &metadata.Docs{
