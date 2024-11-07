@@ -1,0 +1,27 @@
+name: Release Modus Schema
+on:
+  push:
+    tags:
+      - lib/manifest/*
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  release:
+    name: Release
+    runs-on: warp-ubuntu-latest-x64-2x
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: "${{ github.ref_name }}"
+      - name: Push to R2 Bucket
+        uses: cloudflare/wrangler-action@v3
+        with:
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          apiToken: ${{ secrets.CLOUDFLARE_TOKEN }}
+          wranglerVersion: "3.83.0"
+          workingDirectory: "lib/manifest"
+          preCommands: |
+            cat modus_schema.json
+          command: |
+            r2 object put schema/modus_schema.json -f modus_schema.json --content-type application/json
