@@ -55,3 +55,22 @@ jobs:
     name: Generate Release Info
     uses: ./.github/workflows/release-info.yaml
     secrets: inherit
+  release-install-script:
+    needs: release
+    name: Release Install Script
+    runs-on: warp-ubuntu-latest-x64-2x
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        ref: "${{ github.ref_name }}"
+    - name: Push to R2 Bucket
+      uses: cloudflare/wrangler-action@v3
+      with:
+        accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        apiToken: ${{ secrets.CLOUDFLARE_TOKEN }}
+        wranglerVersion: "3.83.0"
+        workingDirectory: cli
+        preCommands: |
+          cat install.sh
+        command: |
+          r2 object put install/modus.sh -f install.sh --content-type text/x-sh
