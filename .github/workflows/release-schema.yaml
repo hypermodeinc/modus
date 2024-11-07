@@ -22,6 +22,6 @@ jobs:
           wranglerVersion: "3.83.0"
           workingDirectory: "lib/manifest"
           preCommands: |
-            cat modus-schema.json
+            cat modus_schema.json
           command: |
-            r2 object put releases/modus-schema.json -f modus-schema.json --content-type application/json
+            r2 object put releases/modus_schema.json -f modus_schema.json --content-type application/json
