@@ -1,5 +1,9 @@
 # Change Log
 
+## UNRELEASED - AssemblyScript SDK
+
+- fix: Don't empty previous contents of build dir [#568](https://github.com/hypermodeinc/modus/pull/568)
+
 ## UNRELEASED - CLI
 
 - feat: Add API Explorer stub to CLI [#554](https://github.com/hypermodeinc/modus/pull/554)
@@ -9,10 +13,10 @@
 ## UNRELEASED - Runtime
 
 - fix: Introspection query should succeed when only mutations exist [#558](https://github.com/hypermodeinc/modus/pull/558)
-- fix: "WASM Host not found in context" error on shutdown [#566](https://github.com/hypermodeinc/modus/pull/566)
 - ci: Add `secrets: inherit` when calling release-info workflow [#555](https://github.com/hypermodeinc/modus/pull/555)
 - chore: Refactor metadata dependencies [#564](https://github.com/hypermodeinc/modus/pull/564)
 - chore: Use Go workspace to simplify project dependencies [#565](https://github.com/hypermodeinc/modus/pull/565)
+- fix: "WASM Host not found in context" error on shutdown [#566](https://github.com/hypermodeinc/modus/pull/566)
 
 ## 2024-11-04 - CLI 0.13.7
 
