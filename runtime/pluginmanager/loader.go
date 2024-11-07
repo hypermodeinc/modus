@@ -16,7 +16,6 @@ import (
 	"github.com/hypermodeinc/modus/lib/metadata"
 	"github.com/hypermodeinc/modus/runtime/db"
 	"github.com/hypermodeinc/modus/runtime/logger"
-	"github.com/hypermodeinc/modus/runtime/modusdb"
 	"github.com/hypermodeinc/modus/runtime/plugins"
 	"github.com/hypermodeinc/modus/runtime/storage"
 	"github.com/hypermodeinc/modus/runtime/utils"
@@ -91,8 +90,7 @@ func loadPlugin(ctx context.Context, filename string) error {
 
 	// Write the plugin info to the database.
 	// Note, this may update the ID if a plugin with the same BuildID is in the db already.
-	db.WritePluginInfo(ctx, plugin)
-	err = modusdb.WritePluginInfo(ctx, plugin)
+	err = db.WritePluginInfo(ctx, plugin)
 	if err != nil {
 		return err
 	}

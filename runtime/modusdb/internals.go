@@ -10,11 +10,7 @@
 package modusdb
 
 import (
-	"context"
-	"encoding/json"
 	"time"
-
-	"github.com/hypermodeinc/modus/runtime/plugins"
 )
 
 const internalSchema = `
@@ -61,21 +57,22 @@ type Inference {
 `
 
 type Plugin struct {
-	Uid        string   `json:"uid,omitempty"`
-	Id         string   `json:"id,omitempty"`
-	Name       string   `json:"name,omitempty"`
-	Version    string   `json:"version,omitempty"`
-	Language   string   `json:"language,omitempty"`
-	SdkVersion string   `json:"sdk_version,omitempty"`
-	BuildId    string   `json:"build_id,omitempty"`
-	BuildTime  string   `json:"build_time,omitempty"`
-	GitRepo    string   `json:"git_repo,omitempty"`
-	GitCommit  string   `json:"git_commit,omitempty"`
-	DType      []string `json:"dgraph.type,omitempty"`
+	Uid        string      `json:"uid,omitempty"`
+	Id         string      `json:"id,omitempty"`
+	Name       string      `json:"name,omitempty"`
+	Version    string      `json:"version,omitempty"`
+	Language   string      `json:"language,omitempty"`
+	SdkVersion string      `json:"sdk_version,omitempty"`
+	BuildId    string      `json:"build_id,omitempty"`
+	BuildTime  string      `json:"build_time,omitempty"`
+	GitRepo    string      `json:"git_repo,omitempty"`
+	GitCommit  string      `json:"git_commit,omitempty"`
+	Inferences []Inference `json:"inferences,omitempty"`
+	DType      []string    `json:"dgraph.type,omitempty"`
 }
 
 type PluginData struct {
-	Plugins []*Plugin `json:"plugins"`
+	Plugins []Plugin `json:"plugins"`
 }
 
 type Inference struct {
@@ -86,44 +83,11 @@ type Inference struct {
 	Output     string    `json:"output,omitempty"`
 	StartedAt  time.Time `json:"started_at,omitempty"`
 	DurationMs int64     `json:"duration_ms,omitempty"`
-	Plugin     string    `json:"plugin,omitempty"`
+	Plugin     *Plugin   `json:"plugin,omitempty"`
 	Function   string    `json:"function,omitempty"`
 	DType      []string  `json:"dgraph.type,omitempty"`
 }
 
 type InferenceData struct {
-	Inferences []*Inference `json:"inferences"`
-}
-
-func WritePluginInfo(ctx context.Context, plugin *plugins.Plugin) error {
-	p := Plugin{
-		Id:         plugin.Id,
-		Name:       plugin.Metadata.Name(),
-		Version:    plugin.Metadata.Version(),
-		Language:   plugin.Language.Name(),
-		SdkVersion: plugin.Metadata.SdkVersion(),
-		BuildId:    plugin.Metadata.BuildId,
-		BuildTime:  plugin.Metadata.BuildTime,
-		GitRepo:    plugin.Metadata.GitRepo,
-		GitCommit:  plugin.Metadata.GitCommit,
-		DType:      []string{"Plugin"},
-	}
-
-	data, err := json.Marshal(p)
-	if err != nil {
-		return err
-	}
-
-	_, err = Mutate(ctx, MutationRequest{
-		Mutations: []*Mutation{
-			{
-				SetJson: string(data),
-			},
-		},
-	})
-	if err != nil {
-		return err
-	}
-
-	return nil
+	Inferences []Inference `json:"inferences"`
 }

@@ -18,7 +18,7 @@ import (
 func init() {
 	const module_name = "modus_modusdb_client"
 
-	registerHostFunction(module_name, "dropAll", modusdb.DropAll,
+	registerHostFunction(module_name, "dropAll", modusdb.ExtDropAll,
 		withStartingMessage("Dropping all."),
 		withCompletedMessage("Completed dropping all."),
 		withCancelledMessage("Cancelled dropping all."),
@@ -27,7 +27,7 @@ func init() {
 			return "Dropping all."
 		}))
 
-	registerHostFunction(module_name, "dropData", modusdb.DropData,
+	registerHostFunction(module_name, "dropData", modusdb.ExtDropData,
 		withStartingMessage("Dropping data."),
 		withCompletedMessage("Completed dropping data."),
 		withCancelledMessage("Cancelled dropping data."),
@@ -36,7 +36,7 @@ func init() {
 			return "Dropping data."
 		}))
 
-	registerHostFunction(module_name, "alterSchema", modusdb.AlterSchema,
+	registerHostFunction(module_name, "alterSchema", modusdb.ExtAlterSchema,
 		withStartingMessage("Altering schema."),
 		withCompletedMessage("Completed altering schema."),
 		withCancelledMessage("Cancelled altering schema."),
@@ -45,7 +45,7 @@ func init() {
 			return fmt.Sprintf("Schema: %s", schema)
 		}))
 
-	registerHostFunction(module_name, "mutate", modusdb.Mutate,
+	registerHostFunction(module_name, "mutate", modusdb.ExtMutate,
 		withStartingMessage("Executing mutation."),
 		withCompletedMessage("Completed mutation."),
 		withCancelledMessage("Cancelled mutation."),
@@ -54,7 +54,7 @@ func init() {
 			return fmt.Sprintf("Mutations: %s", fmt.Sprint(mutationReq))
 		}))
 
-	registerHostFunction(module_name, "query", modusdb.Query,
+	registerHostFunction(module_name, "query", modusdb.ExtQuery,
 		withStartingMessage("Executing query."),
 		withCompletedMessage("Completed query."),
 		withCancelledMessage("Cancelled query."),

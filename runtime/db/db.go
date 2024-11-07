@@ -11,6 +11,7 @@ package db
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"sync"
@@ -20,6 +21,7 @@ import (
 	"github.com/hypermodeinc/modus/runtime/config"
 	"github.com/hypermodeinc/modus/runtime/logger"
 	"github.com/hypermodeinc/modus/runtime/metrics"
+	"github.com/hypermodeinc/modus/runtime/modusdb"
 	"github.com/hypermodeinc/modus/runtime/plugins"
 	"github.com/hypermodeinc/modus/runtime/secrets"
 	"github.com/hypermodeinc/modus/runtime/utils"
@@ -41,8 +43,6 @@ var errDbNotConfigured = errors.New("database not configured")
 const batchSize = 100
 const chanSize = 10000
 
-const pluginsTable = "plugins"
-const inferencesTable = "inferences"
 const collectionTextsTable = "collection_texts"
 const collectionVectorsTable = "collection_vectors"
 
@@ -184,60 +184,59 @@ func Stop(ctx context.Context) {
 	pool.Close()
 }
 
-func WritePluginInfo(ctx context.Context, plugin *plugins.Plugin) {
-
-	err := WithTx(ctx, func(tx pgx.Tx) error {
-
-		// Check if the plugin is already in the database
-		// If so, update the ID to match
-		id, err := getPluginId(ctx, tx, plugin.Metadata.BuildId)
-		if err != nil {
-			return err
-		}
-		if id != "" {
-			plugin.Id = id
-			return nil
-		}
-
-		// Insert the plugin info - still check for conflicts, in case another instance of the service is running
-		query := fmt.Sprintf(`INSERT INTO %s
-(id, name, version, language, sdk_version, build_id, build_time, git_repo, git_commit)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-ON CONFLICT (build_id) DO NOTHING`,
-			pluginsTable)
-
-		ct, err := tx.Exec(ctx, query,
-			plugin.Id,
-			plugin.Metadata.Name(),
-			utils.NilIfEmpty(plugin.Metadata.Version()),
-			plugin.Language.Name(),
-			plugin.Metadata.SdkVersion(),
-			plugin.Metadata.BuildId,
-			plugin.Metadata.BuildTime,
-			utils.NilIfEmpty(plugin.Metadata.GitRepo),
-			utils.NilIfEmpty(plugin.Metadata.GitCommit),
-		)
-		if err != nil {
-			return err
-		}
-
-		if ct.RowsAffected() == 0 {
-			// Edge case - the plugin is now in the database, but we didn't insert it
-			// It must have been inserted by another instance of the service
-			// Get the ID set by the other instance
-			id, err := getPluginId(ctx, tx, plugin.Metadata.BuildId)
-			if err != nil {
-				return err
-			}
-			plugin.Id = id
-		}
-
-		return nil
-	})
-
+func WritePluginInfo(ctx context.Context, plugin *plugins.Plugin) error {
+	// Check if the plugin is already in the database
+	// If so, update the ID to match
+	id, err := getPluginId(ctx, plugin.Metadata.BuildId)
 	if err != nil {
-		logDbWarningOrError(ctx, err, "Plugin info not written to database.")
+		return err
 	}
+	if id != "" {
+		plugin.Id = id
+		return nil
+	}
+
+	p := modusdb.Plugin{
+		Id:         plugin.Id,
+		Name:       plugin.Metadata.Name(),
+		Version:    plugin.Metadata.Version(),
+		Language:   plugin.Language.Name(),
+		SdkVersion: plugin.Metadata.SdkVersion(),
+		BuildId:    plugin.Metadata.BuildId,
+		BuildTime:  plugin.Metadata.BuildTime,
+		GitRepo:    plugin.Metadata.GitRepo,
+		GitCommit:  plugin.Metadata.GitCommit,
+		DType:      []string{"Plugin"},
+	}
+
+	data, err := json.Marshal(p)
+	if err != nil {
+		return err
+	}
+
+	resp, err := modusdb.IntMutate(ctx, modusdb.MutationRequest{
+		Mutations: []*modusdb.Mutation{
+			{
+				SetJson: string(data),
+			},
+		},
+	})
+	if err != nil {
+		return err
+	}
+
+	if len(resp) == 0 {
+		// Edge case - the plugin is now in the database, but we didn't insert it
+		// It must have been inserted by another instance of the service
+		// Get the ID set by the other instance
+		id, err := getPluginId(ctx, plugin.Metadata.BuildId)
+		if err != nil {
+			return err
+		}
+		plugin.Id = id
+	}
+
+	return nil
 }
 
 func logDbWarningOrError(ctx context.Context, err error, msg string) {
@@ -252,19 +251,93 @@ func logDbWarningOrError(ctx context.Context, err error, msg string) {
 	}
 }
 
-func getPluginId(ctx context.Context, tx pgx.Tx, buildId string) (string, error) {
-	query := fmt.Sprintf("SELECT id FROM %s WHERE build_id = $1", pluginsTable)
-	rows, err := tx.Query(ctx, query, buildId)
+func getPluginId(ctx context.Context, buildId string) (string, error) {
+	query := fmt.Sprintf(`
+	query queryPlugin {
+		plugins(func: eq(build_id, "%s")) {
+			id
+		}
+	}
+	`, buildId)
+
+	response, err := modusdb.IntQuery(ctx, query)
 	if err != nil {
 		return "", err
 	}
-	defer rows.Close()
-	if rows.Next() {
-		var id string
-		err := rows.Scan(&id)
-		return id, err
+
+	var pluginData modusdb.PluginData
+	if err := json.Unmarshal([]byte(response.Json), &pluginData); err != nil {
+		return "", err
 	}
-	return "", nil
+
+	if len(pluginData.Plugins) == 0 {
+		return "", nil
+	}
+
+	return pluginData.Plugins[0].Id, nil
+}
+
+func getPluginUid(ctx context.Context, id string) (string, error) {
+	query := fmt.Sprintf(`
+	query queryPlugin {
+		plugins(func: eq(id, "%s")) {
+			uid
+		}
+	}
+	`, id)
+
+	response, err := modusdb.IntQuery(ctx, query)
+	if err != nil {
+		return "", err
+	}
+
+	var pluginData modusdb.PluginData
+	if err := json.Unmarshal([]byte(response.Json), &pluginData); err != nil {
+		return "", err
+	}
+
+	if len(pluginData.Plugins) == 0 {
+		return "", nil
+	}
+
+	return pluginData.Plugins[0].Uid, nil
+}
+
+func QueryPlugins(ctx context.Context) ([]modusdb.Plugin, error) {
+	query := `
+	{
+	  plugins(func: type(Plugin)) {
+		uid
+		id
+		name
+		version
+		language
+		sdk_version
+		build_id
+		build_time
+		git_repo
+		git_commit
+		dgraph.type
+		inferences: ~plugin {
+			uid
+			dgraph.type
+			expand(_all_)
+		}
+	  }
+	}
+	`
+
+	response, err := modusdb.IntQuery(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+
+	var pluginData modusdb.PluginData
+	if err := json.Unmarshal([]byte(response.Json), &pluginData); err != nil {
+		return nil, err
+	}
+
+	return pluginData.Plugins, nil
 }
 
 func WriteInferenceHistory(ctx context.Context, model *manifest.ModelInfo, input, output any, start, end time.Time) {
@@ -621,46 +694,97 @@ func WriteInferenceHistoryToDB(ctx context.Context, batch []inferenceHistory) {
 		return
 	}
 
-	err := WithTx(ctx, func(tx pgx.Tx) error {
-		b := &pgx.Batch{}
-		for _, data := range batch {
-			input, output, err := data.getJson()
-			if err != nil {
-				return err
-			}
-			query := fmt.Sprintf(`INSERT INTO %s
-(id, model_hash, input, output, started_at, duration_ms, plugin_id, function)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-`, inferencesTable)
-			args := []any{
-				utils.GenerateUUIDv7(),
-				data.model.Hash(),
-				input,
-				output,
-				data.start,
-				data.end.Sub(data.start).Milliseconds(),
-				data.pluginId,
-				data.function,
-			}
-			b.Queue(query, args...)
+	var m modusdb.Inference
+
+	for _, data := range batch {
+		input, output, err := data.getJson()
+		if err != nil {
+			logDbWarningOrError(ctx, err, "Inference history not written to database.")
+			continue
 		}
 
-		br := tx.SendBatch(ctx, b)
-		defer br.Close()
+		var pluginUid string
+		var function string
 
-		for range batch {
-			_, err := br.Exec()
+		if data.pluginId == nil {
+			pluginUid = ""
+		} else {
+			pluginUid, err = getPluginUid(ctx, *data.pluginId)
 			if err != nil {
-				return err
+				logDbWarningOrError(ctx, err, "Inference history not written to database, could not fetch plugin.")
+				continue
 			}
 		}
 
-		return nil
-	})
+		if data.function == nil {
+			function = ""
+		} else {
+			function = *data.function
+		}
 
-	if err != nil {
-		logDbWarningOrError(ctx, err, "Inference history not written to database.")
+		m = modusdb.Inference{
+			ModelHash:  data.model.Hash(),
+			Input:      string(input),
+			Output:     string(output),
+			StartedAt:  data.start,
+			DurationMs: data.end.Sub(data.start).Milliseconds(),
+			Plugin:     &modusdb.Plugin{Uid: pluginUid},
+			Function:   function,
+			DType:      []string{"Inference"},
+		}
+
+		data, err := json.Marshal(m)
+		if err != nil {
+			logDbWarningOrError(ctx, err, "Inference history not written to database. Could not marshal data.")
+			continue
+		}
+
+		_, err = modusdb.IntMutate(ctx, modusdb.MutationRequest{
+			Mutations: []*modusdb.Mutation{
+				{
+					SetJson: string(data),
+				},
+			},
+		})
+		if err != nil {
+			logDbWarningOrError(ctx, err, "Inference history not written to database. Could not mutate data.")
+		}
 	}
+}
+
+func QueryInferences(ctx context.Context) ([]modusdb.Inference, error) {
+	query := `
+	{
+	  inferences(func: type(Inference)) {
+		uid
+		id
+		model_hash
+		input
+		output
+		started_at
+		duration_ms
+		plugin {
+			uid
+			dgraph.type
+			expand(_all_)
+		}
+		function
+		dgraph.type
+	  }
+	}
+	`
+
+	response, err := modusdb.IntQuery(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+
+	var inferenceData modusdb.InferenceData
+	if err := json.Unmarshal([]byte(response.Json), &inferenceData); err != nil {
+		return nil, err
+	}
+
+	return inferenceData.Inferences, nil
 }
 
 func Initialize(ctx context.Context) {

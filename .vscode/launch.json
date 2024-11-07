@@ -11,7 +11,10 @@
         "FORCE_COLOR": "1",
         "MODUS_ENV": "dev",
         "MODUS_DEBUG": "true",
-        "MODUS_DB": "postgresql://postgres:postgres@localhost:5433/my-runtime-db?sslmode=disable"
+        "MODUS_DB": "postgresql://postgres:postgres@localhost:5433/my-runtime-db?sslmode=disable",
+        "HYP_EMAIL": "jai@hypermode.com",
+        "HYP_JWT": "eyJhbGciOiJSUzI1NiIsImNhdCI6ImNsX0I3ZDRQRDIyMkFBQSIsImtpZCI6Imluc18yWHJpUmJJUWhqSDc2NVV2dTE4MUs2d3VXdUkiLCJ0eXAiOiJKV1QifQ.eyJleHAiOjE3MzE1NTcwNDgsImlhdCI6MTczMDk1MjI0OCwiaXNzIjoiaHR0cHM6Ly9jbGVyay5oeXBlcm1vZGUuY29tIiwianRpIjoiODJjZmIzNmU5ZDk2ZjBlZTkyNTAiLCJuYmYiOjE3MzA5NTIyNDMsInN1YiI6InVzZXJfMmc5bVNFYnA1UjFhU0NwVThzb0p4aDVSZkFYIiwidXNlci1pZCI6InVzZXJfMmc5bVNFYnA1UjFhU0NwVThzb0p4aDVSZkFYIn0.XkU_Rf1H6SnaJu1O_6F9S_DIF8K5PFvHrVybSCydJeyPyTRhuwJu_pcMGt3IR2RtiSVrJ3VeOjbfor1OSS__D-YU_xd2wZxvO-6BXhnqDueYoTZcC6uouZ55_MlwpGmspQYH_7NmD3lnABdwsNVtDvoLdUDUBxHoZFlUPK1t-mFk2akS9kWMkK3wVzutM-hu4ouhTyN7o9H9A5BVPfgsitpmYbMcUz0GW9PrpPGnV9H8J_74SkpmhFqW9NMGC4wmFIrMtJjd1cFGER6gQk6yLSK-mHVmgmA05zo54GZ5L0gbEyhTQWC-Zt9DEIRRG0z4LvjCGFoz9iIhyrVxuygtOw",
+        "HYP_ORG_ID": "org-018f1679-d9eb-7ce8-84d3-5304f97617c3"
       },
       "args": [
         "--refresh=1s",

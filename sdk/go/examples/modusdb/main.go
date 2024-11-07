@@ -9,7 +9,10 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
+	"github.com/hypermodeinc/modus/sdk/go/pkg/models"
+	"github.com/hypermodeinc/modus/sdk/go/pkg/models/openai"
 	"github.com/hypermodeinc/modus/sdk/go/pkg/modusdb"
 )
 
@@ -66,7 +69,7 @@ func QueryPeople() ([]*Person, error) {
 	return peopleData.People, nil
 }
 
-func QueryPlugins() ([]*Plugin, error) {
+func QueryPlugins() ([]Plugin, error) {
 	query := `
 	{
 	  plugins(func: type(Plugin)) {
@@ -81,6 +84,11 @@ func QueryPlugins() ([]*Plugin, error) {
 		git_repo
 		git_commit
 		dgraph.type
+		inferences: ~plugin {
+			uid
+			dgraph.type
+			expand(_all_)
+		}
 	  }
 	}
 	`
@@ -96,6 +104,41 @@ func QueryPlugins() ([]*Plugin, error) {
 	}
 
 	return pluginData.Plugins, nil
+}
+
+func QueryInferences() ([]Inference, error) {
+	query := `
+	{
+	  inferences(func: type(Inference)) {
+		uid
+		id
+		model_hash
+		input
+		output
+		started_at
+		duration_ms
+		plugin {
+			uid
+			dgraph.type
+			expand(_all_)
+		}
+		function
+		dgraph.type
+	  }
+	}
+	`
+
+	response, err := modusdb.Query(&query)
+	if err != nil {
+		return nil, err
+	}
+
+	var inferenceData InferenceData
+	if err := json.Unmarshal([]byte(response.Json), &inferenceData); err != nil {
+		return nil, err
+	}
+
+	return inferenceData.Inferences, nil
 }
 
 func QuerySpecificPerson(firstName, lastName string) (*Person, error) {
@@ -173,4 +216,31 @@ func AddPersonAsJSON(firstName, lastName string) (*map[string]uint64, error) {
 	}
 
 	return response, nil
+}
+
+func GenerateText(prompt string) (*string, error) {
+
+	// The imported ChatModel type follows the OpenAI Chat completion model input format.
+	model, err := models.GetModel[openai.ChatModel]("text-generator")
+	if err != nil {
+		return nil, err
+	}
+
+	input, err := model.CreateInput(
+		openai.NewSystemMessage("You are a helpful assistant. Try and be as concise as possible."),
+		openai.NewUserMessage(prompt),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	input.Temperature = 0.7
+
+	output, err := model.Invoke(input)
+	if err != nil {
+		return nil, err
+	}
+
+	outputStr := strings.TrimSpace(output.Choices[0].Message.Content)
+	return &outputStr, nil
 }
