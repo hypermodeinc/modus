@@ -5,6 +5,7 @@
 - feat: Add API Explorer stub to CLI [#554](https://github.com/hypermodeinc/modus/pull/554)
 - feat: Improve local dev server for API explorer [#556](https://github.com/hypermodeinc/modus/pull/556)
 - fix: Make `modus --version` just print modus CLI's version [#563](https://github.com/hypermodeinc/modus/pull/563)
+- fix: `modus new` fails when there's no SDK installed and user is offline [#571](https://github.com/hypermodeinc/modus/pull/571)
 
 ## UNRELEASED - Runtime
 
