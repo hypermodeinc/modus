@@ -65,6 +65,11 @@ func (*ModusDataSource) LoadWithFiles(ctx context.Context, input []byte, files [
 
 func (ds *ModusDataSource) callFunction(ctx context.Context, callInfo *callInfo) (any, []resolve.GraphQLError, error) {
 
+	// Handle special case for __typename on root Query or Mutation
+	if callInfo.FieldInfo.Name == "__typename" {
+		return callInfo.FieldInfo.ParentType, nil, nil
+	}
+
 	// Get the function info
 	fnInfo, err := ds.WasmHost.GetFunctionInfo(callInfo.FunctionName)
 	if err != nil {
