@@ -12,6 +12,7 @@
 - chore: Refactor metadata dependencies [#564](https://github.com/hypermodeinc/modus/pull/564)
 - chore: Use Go workspace to simplify project dependencies [#565](https://github.com/hypermodeinc/modus/pull/565)
 - fix: "WASM Host not found in context" error on shutdown [#566](https://github.com/hypermodeinc/modus/pull/566)
+- fix: `__typename` should succeed on root fields [#573](https://github.com/hypermodeinc/modus/pull/573)
 
 ## 2024-11-06 - AssemblyScript SDK 0.13.4
 
