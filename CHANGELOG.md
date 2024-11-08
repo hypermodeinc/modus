@@ -1,11 +1,11 @@
 # Change Log
 
-## UNRELEASED - CLI
+## 2024-11-08 - CLI 0.13.8
 
 - fix: Make `modus --version` just print modus CLI's version [#563](https://github.com/hypermodeinc/modus/pull/563)
 - fix: implement retry and caching for CLI downloads [#571](https://github.com/hypermodeinc/modus/pull/571) [#574](https://github.com/hypermodeinc/modus/pull/574)
 
-## UNRELEASED - Runtime
+## 2024-11-08 - Runtime 0.13.2
 
 - fix: Introspection query should succeed when only mutations exist [#558](https://github.com/hypermodeinc/modus/pull/558)
 - ci: Add `secrets: inherit` when calling release-info workflow [#555](https://github.com/hypermodeinc/modus/pull/555)
@@ -47,7 +47,7 @@
 
 - Fix issue with git info capture [#536](https://github.com/hypermodeinc/modus/pull/536)
 
-## 2024-10-30 - Runtime Version 0.13.1
+## 2024-10-30 - Runtime 0.13.1
 
 - Add env file callback support for auth key reloading [#520](https://github.com/hypermodeinc/modus/pull/520)
 - Fix timestamp parsing bug [#527](https://github.com/hypermodeinc/modus/pull/527)
@@ -56,23 +56,23 @@
 
 - Add env file to default project templates [#530](https://github.com/hypermodeinc/modus/pull/530)
 
-## 2024-10-30 - CLI Version 0.13.5
+## 2024-10-30 - CLI 0.13.5
 
 - Use `<adj>-<noun>` for default app name. [#528](https://github.com/hypermodeinc/modus/pull/528)
 
-## 2024-10-29 - CLI Version 0.13.4
+## 2024-10-29 - CLI 0.13.4
 
 - `modus build` should install SDK if not already installed [#524](https://github.com/hypermodeinc/modus/pull/524)
 
-## 2024-10-29 - CLI Version 0.13.3
+## 2024-10-29 - CLI 0.13.3
 
 - Fix Go not found on first install [#522](https://github.com/hypermodeinc/modus/pull/522)
 
-## 2024-10-28 - CLI Version 0.13.2
+## 2024-10-28 - CLI 0.13.2
 
 - Fix CLI hang on Linux [#521](https://github.com/hypermodeinc/modus/pull/521)
 
-## 2024-10-28 - CLI Version 0.13.1
+## 2024-10-28 - CLI 0.13.1
 
 - Fix issues with interactive CLI prompts [#517](https://github.com/hypermodeinc/modus/pull/517)
 
