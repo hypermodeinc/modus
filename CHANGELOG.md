@@ -3,6 +3,7 @@
 ## UNRELEASED - CLI
 
 - fix: Make `modus --version` just print modus CLI's version [#563](https://github.com/hypermodeinc/modus/pull/563)
+- fix: implement retry and caching for CLI downloads [#571](https://github.com/hypermodeinc/modus/pull/571)
 
 ## UNRELEASED - Runtime
 

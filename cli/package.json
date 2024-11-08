@@ -34,6 +34,7 @@
     "chalk": "^5.3.0",
     "chokidar": "^4.0.1",
     "gradient-string": "^3.0.0",
+    "ky": "^1.7.2",
     "open": "^10.1.0",
     "ora": "^8.1.1",
     "picomatch": "^4.0.2",

@@ -230,7 +230,8 @@ export default class NewCommand extends BaseCommand {
 
     // Verify and/or install the Modus SDK
     let installedSdkVersion = await vi.getLatestInstalledSdkVersion(sdk, prerelease);
-    if (await isOnline()) {
+    const isClientOnline = await isOnline();
+    if (isClientOnline) {
       let latestVersion: string | undefined;
       await withSpinner(chalk.dim(`Checking to see if you have the latest version of the ${sdkText}.`), async () => {
         latestVersion = await vi.getLatestSdkVersion(sdk, prerelease);
@@ -267,8 +268,13 @@ export default class NewCommand extends BaseCommand {
     }
 
     if (!installedSdkVersion) {
-      this.logError(`Could not find an installed ${sdkText}.`);
-      this.exit(1);
+      if (isClientOnline) {
+        this.logError(`Could not find an installed ${sdkText}.`);
+        this.exit(1);
+      } else {
+        this.logError(`Could not find a locally installed ${sdkText}. Please connect to the internet and try again.`);
+        this.exit(1);
+      }
     }
 
     const sdkVersion = installedSdkVersion;
