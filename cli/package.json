@@ -29,14 +29,13 @@
     "prepack": "npm i && npm run build && oclif manifest"
   },
   "dependencies": {
-    "@inquirer/prompts": "^7.0.0",
+    "@inquirer/prompts": "^7.0.1",
     "@oclif/core": "^4",
     "chalk": "^5.3.0",
     "chokidar": "^4.0.1",
-    "express": "^4.21.1",
     "gradient-string": "^3.0.0",
     "open": "^10.1.0",
-    "ora": "^8.1.0",
+    "ora": "^8.1.1",
     "picomatch": "^4.0.2",
     "semver": "^7.6.3"
   },
@@ -44,21 +43,19 @@
     "@eslint/js": "^9.14.0",
     "@oclif/test": "^4",
     "@types/eslint__js": "^8.42.3",
-    "@types/express": "^5.0.0",
     "@types/node": "^22",
     "@types/picomatch": "^3.0.1",
     "@types/semver": "^7.5.8",
-    "@typescript-eslint/eslint-plugin": "^8.12.2",
-    "@typescript-eslint/parser": "^8.12.2",
+    "@typescript-eslint/eslint-plugin": "^8.13.0",
+    "@typescript-eslint/parser": "^8.13.0",
     "eslint": "^9.14.0",
     "oclif": "^4",
     "ts-node": "^10",
     "typescript": "^5.6.3",
-    "typescript-eslint": "^8.12.2"
+    "typescript-eslint": "^8.13.0"
   },
   "files": [
     "/bin",
-    "/content",
     "/dist",
     "/oclif.manifest.json"
   ],
