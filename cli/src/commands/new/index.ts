@@ -272,7 +272,7 @@ export default class NewCommand extends BaseCommand {
         this.logError(`Could not find an installed ${sdkText}.`);
         this.exit(1);
       } else {
-        this.logError(`Could not find a locally installed ${sdkText}. Please connect to the internet and try again.`);
+        this.logError(`Could not find a locally installed ${sdkText}, and you appear to be offline. Please connect to the internet and try again.`);
         this.exit(1);
       }
     }
