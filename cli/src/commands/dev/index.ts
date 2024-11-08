@@ -26,7 +26,6 @@ import { isOnline, withSpinner } from "../../util/index.js";
 import { readHypermodeSettings } from "../../util/hypermode.js";
 import BuildCommand from "../build/index.js";
 import { BaseCommand } from "../../baseCommand.js";
-import { openApiExplorer } from "../../custom/apiExplorer.js";
 
 const MANIFEST_FILE = "modus.json";
 const ENV_FILES = [".env", ".env.local", ".env.development", ".env.dev", ".env.development.local", ".env.dev.local"];
@@ -200,10 +199,6 @@ export default class DevCommand extends BaseCommand {
         child.kill("SIGTERM");
       }
     });
-
-    // TODO: sync the port number with the runtime somehow
-    const runtimePort = 8686;
-    await openApiExplorer(appPath, runtimePort);
 
     // Watch for changes in the app directory and rebuild the app when changes are detected
     if (!flags["no-watch"]) {
