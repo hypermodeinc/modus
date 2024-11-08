@@ -9,14 +9,13 @@
 
 import chalk from "chalk";
 import ora, { Ora } from "ora";
-
+import dns from "node:dns";
 import path from "node:path";
 import { Readable } from "node:stream";
 import { finished } from "node:stream/promises";
 import { createWriteStream } from "node:fs";
 import * as http from "./http.js";
 import * as fs from "./fs.js";
-import * as vi from "./versioninfo.js";
 
 export async function withSpinner<T>(text: string, fn: (spinner: Ora) => Promise<T>): Promise<T> {
   // NOTE: Ora comes with "oraPromise", but it doesn't clear the original text on completion.
@@ -60,8 +59,7 @@ export async function isOnline(): Promise<boolean> {
   if (online !== undefined) return online;
 
   try {
-    // we don't need the result here, just checking if the request is successful
-    await vi.fetchModusLatest();
+    await dns.promises.lookup("releases.hypermode.com");
     online = true;
   } catch {
     online = false;
