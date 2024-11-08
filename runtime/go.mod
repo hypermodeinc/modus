@@ -8,11 +8,15 @@ require github.com/hypermodeinc/modus/lib/metadata v0.0.0
 
 require github.com/hypermodeinc/modus/lib/wasmextractor v0.0.0 // indirect
 
+require github.com/hypermodeinc/modusdb v0.0.0
+
 replace github.com/hypermodeinc/modus/lib/manifest => ../lib/manifest
 
 replace github.com/hypermodeinc/modus/lib/metadata => ../lib/metadata
 
 replace github.com/hypermodeinc/modus/lib/wasmextractor => ../lib/wasmextractor
+
+replace github.com/hypermodeinc/modusdb => ../../modusdb
 
 require (
 	github.com/OneOfOne/xxhash v1.2.8
@@ -34,7 +38,6 @@ require (
 	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/google/renameio v1.0.1
 	github.com/google/uuid v1.6.0
-	github.com/hypermodeinc/modusdb v0.0.0-20241020214203-ecbf5a6df77f
 	github.com/jackc/pgx/v5 v5.7.1
 	github.com/jensneuse/abstractlogger v0.0.4
 	github.com/joho/godotenv v1.5.1

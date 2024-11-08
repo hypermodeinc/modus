@@ -87,7 +87,7 @@ func startHttpServer(ctx context.Context, addresses ...string) {
 	}
 
 	// i want to make a new server that just serves a string
-	inferenceHIstoryHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	inferenceHistoryHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		resp, err := db.QueryInferences(ctx)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -96,8 +96,24 @@ func startHttpServer(ctx context.Context, addresses ...string) {
 		fmt.Fprint(w, resp)
 	})
 
+	pluginHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		resp, err := db.QueryPlugins(ctx)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		fmt.Fprint(w, resp)
+	})
+
 	// Create a new server for the inference history endpoint.
-	inferenceHistoryServer := &http.Server{Handler: inferenceHIstoryHandler, Addr: "/inference-history"}
+	inferenceHistoryMux := http.NewServeMux()
+	inferenceHistoryMux.Handle("/inferences.json", inferenceHistoryHandler)
+	inferenceHistoryServer := &http.Server{Handler: inferenceHistoryMux, Addr: ":5054"}
+
+	// Create a new server for the plugin endpoint.
+	pluginMux := http.NewServeMux()
+	pluginMux.Handle("/plugins.json", pluginHandler)
+	pluginServer := &http.Server{Handler: pluginMux, Addr: ":5055"}
 
 	// Start the inference history server.
 	go func() {
@@ -105,6 +121,16 @@ func startHttpServer(ctx context.Context, addresses ...string) {
 		app.SetShuttingDown()
 		if err != nil && !errors.Is(err, http.ErrServerClosed) {
 			logger.Fatal(ctx).Err(err).Msg("Inference history server error.  Exiting.")
+		}
+		shutdownChan <- true
+	}()
+
+	// Start the plugin server.
+	go func() {
+		err := pluginServer.ListenAndServe()
+		app.SetShuttingDown()
+		if err != nil && !errors.Is(err, http.ErrServerClosed) {
+			logger.Fatal(ctx).Err(err).Msg("Plugin server error.  Exiting.")
 		}
 		shutdownChan <- true
 	}()
