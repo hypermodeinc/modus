@@ -1,5 +1,9 @@
 # Change Log
 
+## UNRELEASED - Runtime
+
+- feat: Reduce logger output during development [#576](https://github.com/hypermodeinc/modus/pull/576)
+
 ## 2024-11-08 - CLI 0.13.8
 
 - fix: Make `modus --version` just print modus CLI's version [#563](https://github.com/hypermodeinc/modus/pull/563)
