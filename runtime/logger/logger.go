@@ -41,10 +41,28 @@ func Initialize() *zerolog.Logger {
 		// In console mode, we can use local time and be a bit prettier.
 		// We'll still log with millisecond precision.
 		zerolog.TimeFieldFormat = zerolog.TimeFormatUnixMs
-		writer = zerolog.ConsoleWriter{
-			Out:        os.Stderr,
-			TimeFormat: "2006-01-02 15:04:05.000 -07:00",
+		consoleWriter := zerolog.ConsoleWriter{Out: os.Stderr}
+		if config.IsDevEnvironment() {
+			consoleWriter.TimeFormat = "15:04:05.000"
+			consoleWriter.FieldsExclude = []string{
+				"build_id",
+				"build_ts",
+				"git_commit",
+				"git_repo",
+				"plugin",
+				"user_visible",
+			}
+			consoleWriter.FieldsOrder = []string{
+				"detail",
+				"function",
+				"execution_id",
+				"duration_ms",
+			}
+		} else {
+			consoleWriter.TimeFormat = "2006-01-02 15:04:05.000 -07:00"
 		}
+
+		writer = consoleWriter
 	}
 
 	// Log the runtime version to every log line, except in development.
