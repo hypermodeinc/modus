@@ -37,11 +37,16 @@ func getFuncDocumentation(pkgs map[string]*packages.Package, fn *types.Func) *me
 					if fd.Name.Name == fn.Name() {
 						if fd.Doc != nil {
 							for _, comment := range fd.Doc.List {
-								if strings.HasPrefix(strings.TrimSpace(comment.Text), "// ") {
-									comments = append(comments, comment.Text)
+								txt := comment.Text
+								if strings.HasPrefix(txt, "// ") {
+									comments = append(comments, strings.TrimPrefix(txt, "// "))
 								}
 							}
 						}
+						if len(comments) == 0 {
+							return nil
+						}
+
 						return &metadata.Docs{
 							Description: strings.Join(comments, "\n"),
 						}
@@ -52,7 +57,6 @@ func getFuncDocumentation(pkgs map[string]*packages.Package, fn *types.Func) *me
 	}
 	return nil
 }
-
 
 func getExportedFunctions(pkgs map[string]*packages.Package) map[string]*types.Func {
 	results := make(map[string]*types.Func)

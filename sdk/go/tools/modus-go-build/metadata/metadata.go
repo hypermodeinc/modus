@@ -70,6 +70,7 @@ type Result struct {
 type Field struct {
 	Name string `json:"name"`
 	Type string `json:"type"`
+	Docs *Docs  `json:"docs,omitempty"`
 }
 
 func NewMetadata() *Metadata {

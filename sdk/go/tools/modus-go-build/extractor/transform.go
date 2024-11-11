@@ -10,31 +10,101 @@
 package extractor
 
 import (
+	"fmt"
+	"go/ast"
+	"go/token"
 	"go/types"
+	"strings"
 
 	"github.com/hypermodeinc/modus/sdk/go/tools/modus-go-build/metadata"
 	"github.com/hypermodeinc/modus/sdk/go/tools/modus-go-build/utils"
 	"golang.org/x/tools/go/packages"
 )
 
-func transformStruct(name string, s *types.Struct) *metadata.TypeDefinition {
+func transformStruct(name string, s *types.Struct, pkgs map[string]*packages.Package) *metadata.TypeDefinition {
 	if s == nil {
 		return nil
 	}
 
-	fields := make([]*metadata.Field, s.NumFields())
+	var structComments []string
 
+	name = name[strings.Index(name, ".")+1:]
+	fields := make([]*metadata.Field, s.NumFields())
+	
 	for i := 0; i < s.NumFields(); i++ {
 		f := s.Field(i)
-		fields[i] = &metadata.Field{
-			Name: utils.CamelCase(f.Name()),
-			Type: f.Type().String(),
+
+		var fieldComments []string
+
+		for _, pkg := range pkgs {
+			for _, file := range pkg.Syntax {
+				for _, decl := range file.Decls {
+					if genDecl, ok := decl.(*ast.GenDecl); ok && genDecl.Tok == token.TYPE {
+						for _, spec := range genDecl.Specs {
+							if typeSpec, ok := spec.(*ast.TypeSpec); ok {
+								if typeSpec.Name.Name == name {
+									if structType, ok := typeSpec.Type.(*ast.StructType); ok {
+										if typeSpec.Doc != nil {
+											for _, comment := range typeSpec.Doc.List {
+												txt := comment.Text
+												if strings.HasPrefix(txt, "// ") {
+													structComments = append(structComments, strings.TrimPrefix(txt, "// "))
+												}
+											}
+										}
+										// fmt.Println("Type:", typeSpec.Name.Name)
+										// fmt.Println("Comments:", typeSpec.Comment)
+										// fmt.Println("Docs: ", typeSpec.Doc)
+										for _, field := range structType.Fields.List {
+											if field.Names != nil && field.Names[0].Name == f.Name() {
+												if field.Doc != nil {
+													for _, comment := range field.Doc.List {
+														txt := comment.Text
+														if strings.HasPrefix(txt, "// ") {
+															fieldComments = append(fieldComments, strings.TrimPrefix(txt, "// "))
+														}
+													}
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+
+		if len(fieldComments) == 0 {
+			fields[i] = &metadata.Field{
+				Name: utils.CamelCase(f.Name()),
+				Type: f.Type().String(),
+			}
+		} else {
+			fields[i] = &metadata.Field{
+				Name: utils.CamelCase(f.Name()),
+				Type: f.Type().String(),
+				Docs: &metadata.Docs{
+					Description: strings.Join(fieldComments, "\n"),
+				},
+			}
 		}
 	}
 
-	return &metadata.TypeDefinition{
-		Name:   name,
-		Fields: fields,
+	if len(structComments) == 0 {
+		return &metadata.TypeDefinition{
+			Name:   name,
+			Fields: fields,
+		}
+	} else {
+		return &metadata.TypeDefinition{
+			Name:   name,
+			Fields: fields,
+			Docs: &metadata.Docs{
+				Description: strings.Join(structComments, "\n"),
+			},
+		}
 	}
 }
 

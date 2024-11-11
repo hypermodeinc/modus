@@ -55,7 +55,7 @@ func CollectProgramInfo(config *config.Config, meta *metadata.Metadata, wasmFunc
 	for _, name := range keys {
 		t := requiredTypes[name]
 		if s, ok := t.(*types.Struct); ok && !wellKnownTypes[name] {
-			t := transformStruct(name, s)
+			t := transformStruct(name, s, pkgs)
 			t.Id = id
 			meta.Types[name] = t
 		} else {
