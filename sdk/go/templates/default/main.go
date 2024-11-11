@@ -1,15 +1,17 @@
 package main
 
-import "fmt"
+// this is struct docs
+type Field struct {
+	// this is struct name docs
+	Name string `json:"name"`
+	// this is struct type docs
+	Type string `json:"type"`
+}
 
-func SayHello(name *string) string {
-
-	var s string
-	if name == nil {
-		s = "World"
-	} else {
-		s = *name
+// this is some documentation
+func SayHello(name *string) Field {
+	return Field{
+		Name: "foo",
+		Type: "bar",
 	}
-
-	return fmt.Sprintf("Hello, %s!", s)
 }

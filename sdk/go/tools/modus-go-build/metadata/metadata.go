@@ -38,7 +38,7 @@ type Metadata struct {
 }
 
 type Docs struct {
-	Description string `json:"description"`
+	Lines []string `json:"lines"`
 }
 
 type Function struct {

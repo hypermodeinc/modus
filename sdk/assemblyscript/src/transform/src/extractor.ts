@@ -301,7 +301,6 @@ export class Extractor {
         for (let i = 0; i < memberDocs.length; i++) {
           const docs = memberDocs[i];
           if (docs) {
-            console.log("Got docs: ", docs.description);
             const index = type.fields.findIndex(v => v.name == node.members[i].name.text);
             if (index < 0) continue;
             type.fields[index].docs = docs;
@@ -313,7 +312,6 @@ export class Extractor {
   }
   private getFieldsDocs(nodes: FieldDeclaration[], parent: ClassDeclaration): (Docs | null)[] {
     const docs = new Array<Docs | null>(nodes.length).fill(null);
-    console.log("Members: " + nodes.length)
     for (let i = 0; i < nodes.length; i++) {
       const node = nodes[i];
       const source = node.range.source;
@@ -321,7 +319,6 @@ export class Extractor {
       const start = i == 0 ? parent.range.start : nodes[i-1].range.end;
       const end = node.range.start;
 
-      console.log("text: " + source.text.slice(start, end))
       const newRange = new Range(start, end);
       newRange.source = source;
       const commentNodes = this.parseComments(newRange);

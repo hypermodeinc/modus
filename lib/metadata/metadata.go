@@ -39,7 +39,7 @@ type Metadata struct {
 }
 
 type Docs struct {
-	Description string `json:"description"`
+	Lines []string `json:"lines"`
 }
 
 type Function struct {
@@ -70,6 +70,7 @@ type Result struct {
 type Field struct {
 	Name string `json:"name"`
 	Type string `json:"type"`
+	Docs *Docs  `json:"docs,omitempty"`
 }
 
 func (p *Parameter) UnmarshalJSON(data []byte) error {

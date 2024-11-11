@@ -22,15 +22,12 @@ export class Result {
 }
 
 export class Docs {
-  constructor(public description: string) { }
+  constructor(public lines: string[]) { }
   static from(nodes: CommentNode[]): Docs | null {
     for (const node of nodes.reverse()) {
       if (node.commentKind != CommentKind.Block || !node.text.startsWith("/**")) continue;
-      const lines = node.text.split("\n").filter(v => v.trim().startsWith("* "));
-      const description = lines[0].trim().slice(2);
-      // const returnTypeDesc
-      // const paramDesc
-      return new Docs(description);
+      const lines = node.text.split("\n").filter(v => v.trim().startsWith("* ")).map(v => v.trim().slice(2));
+      return new Docs(lines);
     }
     return null;
   }

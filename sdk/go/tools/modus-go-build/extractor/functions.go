@@ -48,7 +48,7 @@ func getFuncDocumentation(pkgs map[string]*packages.Package, fn *types.Func) *me
 						}
 
 						return &metadata.Docs{
-							Description: strings.Join(comments, "\n"),
+							Lines: comments,
 						}
 					}
 				}

@@ -134,7 +134,7 @@ type FieldDefinition struct {
 
 type TypeDefinition struct {
 	Name      string
-	Fields    []*NameTypePair
+	Fields    []*metadata.Field
 	IsMapType bool
 	Docs      *metadata.Docs
 }
@@ -340,8 +340,8 @@ func writeSchema(buf *bytes.Buffer, queryFields []*FieldDefinition, mutationFiel
 		buf.WriteByte('\n')
 		if t.Docs != nil {
 			buf.WriteString("\"\"\"\n")
-			buf.WriteString(t.Docs.Description)
-			buf.WriteString("\"\"\"\n")
+			buf.WriteString(strings.Join(t.Docs.Lines, "\n"))
+			buf.WriteString("\n\"\"\"\n")
 		}
 		buf.WriteString("input ")
 		buf.WriteString(t.Name)
@@ -361,13 +361,18 @@ func writeSchema(buf *bytes.Buffer, queryFields []*FieldDefinition, mutationFiel
 		buf.WriteByte('\n')
 		if t.Docs != nil {
 			buf.WriteString("\"\"\"\n")
-			buf.WriteString(t.Docs.Description)
-			buf.WriteString("\"\"\"\n")
+			buf.WriteString(strings.Join(t.Docs.Lines, "\n"))
+			buf.WriteString("\n\"\"\"\n")
 		}
 		buf.WriteString("type ")
 		buf.WriteString(t.Name)
 		buf.WriteString(" {\n")
 		for _, f := range t.Fields {
+			if f.Docs != nil {
+				buf.WriteString("  \"\"\"\n  ")
+				buf.WriteString(strings.Join(f.Docs.Lines, "\n  "))
+				buf.WriteString("  \n  \"\"\"\n")
+			}
 			buf.WriteString("  ")
 			buf.WriteString(f.Name)
 			buf.WriteString(": ")
@@ -380,9 +385,9 @@ func writeSchema(buf *bytes.Buffer, queryFields []*FieldDefinition, mutationFiel
 
 func writeField(buf *bytes.Buffer, field *FieldDefinition) {
 	if field.Docs != nil {
-		buf.WriteString("  \"\"\"\n")
-		buf.WriteString("  " + field.Docs.Description)
-		buf.WriteString("  \"\"\"\n")
+		buf.WriteString("  \"\"\"\n  ")
+		buf.WriteString(strings.Join(field.Docs.Lines, "\n  "))
+		buf.WriteString("  \n  \"\"\"\n")
 	}
 	buf.WriteString("  ")
 	buf.WriteString(field.Name)
@@ -441,7 +446,7 @@ func convertResults(results []*metadata.Result, lti langsupport.LanguageTypeInfo
 		return convertType(results[0].Type, lti, typeDefs, false, false)
 	}
 
-	fields := make([]*NameTypePair, len(results))
+	fields := make([]*metadata.Field, len(results))
 	for i, r := range results {
 		name := r.Name
 		if name == "" {
@@ -453,7 +458,7 @@ func convertResults(results []*metadata.Result, lti langsupport.LanguageTypeInfo
 			return "", err
 		}
 
-		fields[i] = &NameTypePair{
+		fields[i] = &metadata.Field{
 			Name: name,
 			Type: typ,
 		}
@@ -463,7 +468,7 @@ func convertResults(results []*metadata.Result, lti langsupport.LanguageTypeInfo
 	return t, nil
 }
 
-func getTypeForFields(fields []*NameTypePair, typeDefs map[string]*TypeDefinition) string {
+func getTypeForFields(fields []*metadata.Field, typeDefs map[string]*TypeDefinition) string {
 	// see if an existing type already matches
 	for _, t := range typeDefs {
 		if len(t.Fields) != len(fields) {
@@ -495,20 +500,22 @@ func getTypeForFields(fields []*NameTypePair, typeDefs map[string]*TypeDefinitio
 	return newType(name, fields, typeDefs)
 }
 
-func convertFields(fields []*metadata.Field, lti langsupport.LanguageTypeInfo, typeDefs map[string]*TypeDefinition, forInput bool) ([]*NameTypePair, error) {
+func convertFields(fields []*metadata.Field, lti langsupport.LanguageTypeInfo, typeDefs map[string]*TypeDefinition, forInput bool) ([]*metadata.Field, error) {
 	if len(fields) == 0 {
 		return nil, nil
 	}
 
-	results := make([]*NameTypePair, len(fields))
+	results := make([]*metadata.Field, len(fields))
 	for i, f := range fields {
 		t, err := convertType(f.Type, lti, typeDefs, true, forInput)
 		if err != nil {
 			return nil, err
 		}
-		results[i] = &NameTypePair{
+
+		results[i] = &metadata.Field{
 			Name: f.Name,
 			Type: t,
+			Docs: f.Docs,
 		}
 	}
 	return results, nil
@@ -653,7 +660,10 @@ func convertType(typ string, lti langsupport.LanguageTypeInfo, typeDefs map[stri
 			typeName += "Input"
 		}
 
-		newMapType(typeName, []*NameTypePair{{"key", kt}, {"value", vt}}, typeDefs)
+		newMapType(typeName, []*metadata.Field{
+			{Name: "key", Type: kt, Docs: nil},
+			{Name: "value", Type: vt, Docs: nil},
+		}, typeDefs)
 
 		// The map is represented as a list of the pair type.
 		// The list might be nullable, but the pair type within the list is always non-nullable.
@@ -695,7 +705,7 @@ func newScalar(name string, typeDefs map[string]*TypeDefinition) string {
 	return newType(name, nil, typeDefs)
 }
 
-func newType(name string, fields []*NameTypePair, typeDefs map[string]*TypeDefinition) string {
+func newType(name string, fields []*metadata.Field, typeDefs map[string]*TypeDefinition) string {
 	if _, ok := typeDefs[name]; !ok {
 		typeDefs[name] = &TypeDefinition{
 			Name:   name,
@@ -705,7 +715,7 @@ func newType(name string, fields []*NameTypePair, typeDefs map[string]*TypeDefin
 	return name
 }
 
-func newMapType(name string, fields []*NameTypePair, typeDefs map[string]*TypeDefinition) string {
+func newMapType(name string, fields []*metadata.Field, typeDefs map[string]*TypeDefinition) string {
 	if _, ok := typeDefs[name]; !ok {
 		typeDefs[name] = &TypeDefinition{
 			Name:      name,

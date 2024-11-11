@@ -51,9 +51,6 @@ func transformStruct(name string, s *types.Struct, pkgs map[string]*packages.Pac
 												}
 											}
 										}
-										// fmt.Println("Type:", typeSpec.Name.Name)
-										// fmt.Println("Comments:", typeSpec.Comment)
-										// fmt.Println("Docs: ", typeSpec.Doc)
 										for _, field := range structType.Fields.List {
 											if field.Names != nil && field.Names[0].Name == f.Name() {
 												if field.Doc != nil {
@@ -85,7 +82,7 @@ func transformStruct(name string, s *types.Struct, pkgs map[string]*packages.Pac
 				Name: utils.CamelCase(f.Name()),
 				Type: f.Type().String(),
 				Docs: &metadata.Docs{
-					Description: strings.Join(fieldComments, "\n"),
+					Lines: fieldComments,
 				},
 			}
 		}
@@ -101,7 +98,7 @@ func transformStruct(name string, s *types.Struct, pkgs map[string]*packages.Pac
 			Name:   name,
 			Fields: fields,
 			Docs: &metadata.Docs{
-				Description: strings.Join(structComments, "\n"),
+				Lines: structComments,
 			},
 		}
 	}
