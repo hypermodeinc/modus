@@ -10,7 +10,6 @@
 package extractor
 
 import (
-	"fmt"
 	"go/ast"
 	"go/token"
 	"go/types"
