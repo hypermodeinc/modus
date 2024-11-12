@@ -4,6 +4,7 @@
 
 - feat: Reduce logger output during development [#576](https://github.com/hypermodeinc/modus/pull/576)
 - chore: Trigger internal release pipeline at the end of the release-runtime workflow  [#577](https://github.com/hypermodeinc/modus/pull/577)
+- feat: Add API explorer to runtime [#578](https://github.com/hypermodeinc/modus/pull/578)
 
 ## 2024-11-08 - CLI 0.13.8
 
