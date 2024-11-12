@@ -29,7 +29,7 @@ func transformStruct(name string, s *types.Struct, pkgs map[string]*packages.Pac
 
 	name = name[strings.Index(name, ".")+1:]
 	fields := make([]*metadata.Field, s.NumFields())
-	
+
 	for i := 0; i < s.NumFields(); i++ {
 		f := s.Field(i)
 

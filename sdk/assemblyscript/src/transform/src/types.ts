@@ -7,7 +7,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { CommentKind, CommentNode } from "assemblyscript/dist/assemblyscript.js";
+import {
+  CommentKind,
+  CommentNode,
+} from "assemblyscript/dist/assemblyscript.js";
 import { getTypeName } from "./extractor.js";
 
 export class ProgramInfo {
@@ -22,11 +25,15 @@ export class Result {
 }
 
 export class Docs {
-  constructor(public lines: string[]) { }
+  constructor(public lines: string[]) {}
   static from(nodes: CommentNode[]): Docs | null {
     for (const node of nodes.reverse()) {
-      if (node.commentKind != CommentKind.Block || !node.text.startsWith("/**")) continue;
-      const lines = node.text.split("\n").filter(v => v.trim().startsWith("* ")).map(v => v.trim().slice(2));
+      if (node.commentKind != CommentKind.Block || !node.text.startsWith("/**"))
+        continue;
+      const lines = node.text
+        .split("\n")
+        .filter((v) => v.trim().startsWith("* "))
+        .map((v) => v.trim().slice(2));
       return new Docs(lines);
     }
     return null;
@@ -38,8 +45,8 @@ export class FunctionSignature {
     public name: string,
     public parameters: Parameter[],
     public results: Result[],
-    public docs: Docs | undefined = undefined
-  ) { }
+    public docs: Docs | undefined = undefined,
+  ) {}
 
   toString() {
     let params = "";
@@ -83,8 +90,8 @@ export class TypeDefinition {
     public name: string,
     public id: number,
     public fields?: Field[],
-    public docs: Docs | undefined = undefined
-  ) { }
+    public docs: Docs | undefined = undefined,
+  ) {}
 
   toString() {
     const name = getTypeName(this.name);
@@ -102,7 +109,7 @@ export class TypeDefinition {
     return {
       id: this.id,
       fields: this.fields,
-      docs: this.docs
+      docs: this.docs,
     };
   }
 
@@ -129,14 +136,14 @@ export class Field {
   constructor(
     public name: string,
     public type: string,
-    public docs: Docs | undefined = undefined
-  ) { }
+    public docs: Docs | undefined = undefined,
+  ) {}
   toJSON() {
     return {
       name: this.name,
       type: this.type,
-      docs: this.docs
-    }
+      docs: this.docs,
+    };
   }
 }
 

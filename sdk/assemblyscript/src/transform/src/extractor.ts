@@ -76,7 +76,7 @@ export class Extractor {
           return new TypeDefinition(
             c.type.toString(),
             c.id,
-            this.getClassFields(c)
+            this.getClassFields(c),
           );
         })
         .map((t) => [t.name, t]),
@@ -106,11 +106,10 @@ export class Extractor {
       a.name.localeCompare(b.name),
     );
 
-    
     return {
       exportFns: exportedFunctions,
       importFns: importedFunctions,
-      types: types.map(v => this.getTypeDocs(v)),
+      types: types.map((v) => this.getTypeDocs(v)),
     };
   }
 
@@ -169,10 +168,13 @@ export class Extractor {
         return instance as Property;
       })
       .filter((p) => p && p.isField)
-      .map((f) => <Field>{
-        name: f.name,
-        type: f.type.toString()
-      });
+      .map(
+        (f) =>
+          <Field>{
+            name: f.name,
+            type: f.type.toString(),
+          },
+      );
   }
 
   private getExportedFunctions() {
@@ -260,7 +262,7 @@ export class Extractor {
         if (!commentNodes.length) return;
         docs = Docs.from(commentNodes);
       }
-    }
+    };
     visitor.visit(this.program.sources);
     return docs;
   }
@@ -268,14 +270,8 @@ export class Extractor {
     const name = (() => {
       if (type.name.startsWith("~lib/")) return null;
       return type.name.slice(
-        Math.max(
-          type.name.lastIndexOf("<"),
-          type.name.lastIndexOf("/") + 1
-        ),
-        Math.max(
-          type.name.indexOf(">"),
-          type.name.length
-        )
+        Math.max(type.name.lastIndexOf("<"), type.name.lastIndexOf("/") + 1),
+        Math.max(type.name.indexOf(">"), type.name.length),
       );
     })();
     if (!name) return type;
@@ -296,12 +292,19 @@ export class Extractor {
       type.docs = Docs.from(commentNodes);
 
       if (node.members.length) {
-        const memberDocs = this.getFieldsDocs(node.members.filter(v => v.kind == NodeKind.FieldDeclaration) as FieldDeclaration[], node);
+        const memberDocs = this.getFieldsDocs(
+          node.members.filter(
+            (v) => v.kind == NodeKind.FieldDeclaration,
+          ) as FieldDeclaration[],
+          node,
+        );
         if (!memberDocs) continue;
         for (let i = 0; i < memberDocs.length; i++) {
           const docs = memberDocs[i];
           if (docs) {
-            const index = type.fields.findIndex(v => v.name == node.members[i].name.text);
+            const index = type.fields.findIndex(
+              (v) => v.name == node.members[i].name.text,
+            );
             if (index < 0) continue;
             type.fields[index].docs = docs;
           }
@@ -310,13 +313,16 @@ export class Extractor {
     }
     return type;
   }
-  private getFieldsDocs(nodes: FieldDeclaration[], parent: ClassDeclaration): (Docs | null)[] {
+  private getFieldsDocs(
+    nodes: FieldDeclaration[],
+    parent: ClassDeclaration,
+  ): (Docs | null)[] {
     const docs = new Array<Docs | null>(nodes.length).fill(null);
     for (let i = 0; i < nodes.length; i++) {
       const node = nodes[i];
       const source = node.range.source;
 
-      const start = i == 0 ? parent.range.start : nodes[i-1].range.end;
+      const start = i == 0 ? parent.range.start : nodes[i - 1].range.end;
       const end = node.range.start;
 
       const newRange = new Range(start, end);
@@ -332,20 +338,26 @@ export class Extractor {
     let text = range.source.text.slice(range.start, range.end).trim();
     const start = Math.min(
       text.indexOf("/*") === -1 ? Infinity : text.indexOf("/*"),
-      text.indexOf("//") === -1 ? Infinity : text.indexOf("//")
+      text.indexOf("//") === -1 ? Infinity : text.indexOf("//"),
     );
     if (start !== Infinity) text = text.slice(start);
     let commentKind: CommentKind;
 
     if (text.startsWith("//")) {
-      commentKind = text.startsWith("///") ? CommentKind.Triple : CommentKind.Line;
+      commentKind = text.startsWith("///")
+        ? CommentKind.Triple
+        : CommentKind.Line;
 
       const end = range.source.text.indexOf("\n", range.start + 1);
       if (end === -1) return [];
       range.start = range.source.text.indexOf("//", range.start);
       const newRange = new Range(range.start, end);
       newRange.source = range.source;
-      const node = new CommentNode(commentKind, newRange.source.text.slice(newRange.start, newRange.end), newRange);
+      const node = new CommentNode(
+        commentKind,
+        newRange.source.text.slice(newRange.start, newRange.end),
+        newRange,
+      );
 
       nodes.push(node);
 
@@ -362,7 +374,11 @@ export class Extractor {
       range.start = range.source.text.indexOf("/**", range.start);
       const newRange = new Range(range.start, end);
       newRange.source = range.source;
-      const node = new CommentNode(commentKind, newRange.source.text.slice(newRange.start, newRange.end), newRange);
+      const node = new CommentNode(
+        commentKind,
+        newRange.source.text.slice(newRange.start, newRange.end),
+        newRange,
+      );
 
       nodes.push(node);
 

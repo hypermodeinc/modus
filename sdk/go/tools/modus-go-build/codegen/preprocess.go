@@ -257,7 +257,6 @@ func writeFuncWrappers(b *bytes.Buffer, pkg *packages.Package, imports map[strin
 			results.List = results.List[:len(results.List)-1]
 		}
 
-		
 		if fn.Doc != nil {
 			var docStrings []string
 			for _, comment := range fn.Doc.List {
