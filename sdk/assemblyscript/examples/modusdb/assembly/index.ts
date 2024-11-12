@@ -9,10 +9,6 @@ import { PeopleData, Person, Plugin, PluginData } from "./classes";
 import { JSON } from "json-as";
 import { MutationRequest } from "@hypermode/modus-sdk-as/assembly/modusdb";
 
-export function dropAll(): string {
-  return modusdb.dropAll();
-}
-
 export function dropData(): string {
   return modusdb.dropData();
 }

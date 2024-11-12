@@ -35,14 +35,6 @@ func hostDropData() *string {
 	return &success
 }
 
-func hostDropAll() *string {
-	ModusDBDropAllCallStack.Push()
-
-	success := "Success"
-
-	return &success
-}
-
 func hostQuery(query *string) *Response {
 	ModusDBQueryCallStack.Push(query)
 

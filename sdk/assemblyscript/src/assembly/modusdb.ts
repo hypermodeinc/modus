@@ -10,10 +10,6 @@
 import * as utils from "./utils";
 
 // @ts-expect-error: decorator
-@external("modus_modusdb_client", "dropAll")
-declare function hostDropAll(): string;
-
-// @ts-expect-error: decorator
 @external("modus_modusdb_client", "dropData")
 declare function hostDropData(): string;
 
@@ -30,21 +26,6 @@ declare function hostMutate(
 // @ts-expect-error: decorator
 @external("modus_modusdb_client", "query")
 declare function hostQuery(query: string): Response;
-
-/**
- *
- * Drops all from the database
- *
- * @returns The response from the ModusDB server
- */
-export function dropAll(): string {
-  const response = hostDropAll();
-  if (utils.resultIsInvalid(response)) {
-    throw new Error("Error dropping all from modusDB.");
-  }
-
-  return response;
-}
 
 /**
  *

@@ -18,16 +18,7 @@ import (
 func init() {
 	const module_name = "modus_modusdb_client"
 
-	registerHostFunction(module_name, "dropAll", modusdb.ExtDropAll,
-		withStartingMessage("Dropping all."),
-		withCompletedMessage("Completed dropping all."),
-		withCancelledMessage("Cancelled dropping all."),
-		withErrorMessage("Error dropping all."),
-		withMessageDetail(func() string {
-			return "Dropping all."
-		}))
-
-	registerHostFunction(module_name, "dropData", modusdb.ExtDropData,
+	registerHostFunction(module_name, "dropData", modusdb.DropData,
 		withStartingMessage("Dropping data."),
 		withCompletedMessage("Completed dropping data."),
 		withCancelledMessage("Cancelled dropping data."),
@@ -36,7 +27,7 @@ func init() {
 			return "Dropping data."
 		}))
 
-	registerHostFunction(module_name, "alterSchema", modusdb.ExtAlterSchema,
+	registerHostFunction(module_name, "alterSchema", modusdb.AlterSchema,
 		withStartingMessage("Altering schema."),
 		withCompletedMessage("Completed altering schema."),
 		withCancelledMessage("Cancelled altering schema."),

@@ -62,21 +62,6 @@ type ListOfString struct {
 
 /**
  *
- * drops all from the database
- *
- * @returns The response from the Dgraph server
- */
-func DropAll() error {
-	response := hostDropAll()
-	if response == nil {
-		return errors.New("Failed to drop all data.")
-	}
-
-	return nil
-}
-
-/**
- *
  * drops all data from the database
  *
  * @returns The response from the Dgraph server

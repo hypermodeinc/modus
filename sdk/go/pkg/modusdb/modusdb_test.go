@@ -34,18 +34,6 @@ var (
 	query  = "query"
 )
 
-func TestDropAll(t *testing.T) {
-	err := modusdb.DropAll()
-	if err != nil {
-		t.Errorf("Expected no error, but received: %s", err.Error())
-	}
-
-	values := modusdb.ModusDBDropAllCallStack.Pop()
-	if values != nil {
-		t.Error("Expected no value, but was found: ", values)
-	}
-}
-
 func TestDropData(t *testing.T) {
 	err := modusdb.DropData()
 	if err != nil {

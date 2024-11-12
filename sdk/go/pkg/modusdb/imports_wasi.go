@@ -14,10 +14,6 @@ package modusdb
 import "unsafe"
 
 //go:noescape
-//go:wasmimport modus_modusdb_client dropAll
-func hostDropAll() *string
-
-//go:noescape
 //go:wasmimport modus_modusdb_client dropData
 func hostDropData() *string
 

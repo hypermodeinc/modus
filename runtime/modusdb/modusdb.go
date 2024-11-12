@@ -11,62 +11,49 @@ package modusdb
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/dgraph-io/dgo/v240/protos/api"
 	"github.com/hypermodeinc/modus/runtime/logger"
 	"github.com/hypermodeinc/modusdb"
 )
 
-var mdbExt *modusdb.DB
-var mdbInt *modusdb.DB
+var mdbConfig modusdb.Config
+var mdb *modusdb.DB
 var dataDir = "data"
-var internalDataDir = "internal_data"
 
 func Init(ctx context.Context) {
 	var err error
-	mdbExt, err = modusdb.New(modusdb.NewDefaultConfig().WithDataDir(dataDir))
+	mdbConfig = modusdb.NewDefaultConfig(dataDir)
+	mdb, err = modusdb.New(mdbConfig)
 	if err != nil {
 		logger.Fatal(ctx).Err(err).Msg("Error initializing modusdb")
 	}
-	mdbInt, err = modusdb.New(modusdb.NewDefaultConfig().WithDataDir(internalDataDir))
+	err = mdb.NewNamespace(ctx, 1)
 	if err != nil {
-		logger.Fatal(ctx).Err(err).Msg("Error initializing modusdb")
+		logger.Fatal(ctx).Err(err).Msg("Error initializing modusdb namespace")
 	}
-	err = mdbInt.AlterSchema(ctx, internalSchema)
+	err = mdb.AlterSchema(ctx, internalSchema, 1)
 	if err != nil {
 		logger.Fatal(ctx).Err(err).Msg("Error initializing modusdb schema")
 	}
 }
 
 func Close(ctx context.Context) {
-	if mdbExt != nil {
-		mdbExt.Close()
-	}
-	if mdbInt != nil {
-		mdbInt.Close()
+	if mdb != nil {
+		mdb.Close()
 	}
 }
 
-func ExtDropAll(ctx context.Context) (string, error) {
-	err := mdbExt.DropAll(ctx)
+func DropData(ctx context.Context) (string, error) {
+	err := mdb.DropDataInNamespace(ctx, 0)
 	if err != nil {
 		return "", err
 	}
 	return "success", nil
 }
 
-func ExtDropData(ctx context.Context) (string, error) {
-	err := mdbExt.DropData(ctx)
-	if err != nil {
-		return "", err
-	}
-	return "success", nil
-}
-
-func ExtAlterSchema(ctx context.Context, schema string) (string, error) {
-	totalSchema := fmt.Sprintf("%s\n%s", internalSchema, schema)
-	err := mdbExt.AlterSchema(ctx, totalSchema)
+func AlterSchema(ctx context.Context, schema string) (string, error) {
+	err := mdb.AlterSchema(ctx, schema, 0)
 	if err != nil {
 		return "", err
 	}
@@ -96,11 +83,11 @@ func ExtMutate(ctx context.Context, mutationReq MutationRequest) (map[string]uin
 
 		mus = append(mus, mu)
 	}
-	return mdbExt.Mutate(ctx, mus)
+	return mdb.Mutate(ctx, mus, 0)
 }
 
 func ExtQuery(ctx context.Context, query string) (*Response, error) {
-	resp, err := mdbExt.Query(ctx, query)
+	resp, err := mdb.Query(ctx, query, 0)
 	if err != nil {
 		return nil, err
 	}
@@ -136,7 +123,7 @@ func ExtQuery(ctx context.Context, query string) (*Response, error) {
 
 func IntMutate(ctx context.Context, mutationReq MutationRequest) (map[string]uint64, error) {
 	mutations := mutationReq.Mutations
-	mus := make([]*api.Mutation, 0, len(mutations))
+	mus := make([]*api.Mutation, 1, len(mutations))
 	for _, m := range mutations {
 		mu := &api.Mutation{}
 		if m.SetJson != "" {
@@ -155,13 +142,13 @@ func IntMutate(ctx context.Context, mutationReq MutationRequest) (map[string]uin
 			mu.Cond = m.Condition
 		}
 
-		mus = append(mus, mu)
+		mus[0] = mu
 	}
-	return mdbInt.Mutate(ctx, mus)
+	return mdb.Mutate(ctx, mus, 1)
 }
 
 func IntQuery(ctx context.Context, query string) (*Response, error) {
-	resp, err := mdbInt.Query(ctx, query)
+	resp, err := mdb.Query(ctx, query, 1)
 	if err != nil {
 		return nil, err
 	}

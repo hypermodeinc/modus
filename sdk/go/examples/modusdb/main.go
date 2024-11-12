@@ -16,15 +16,6 @@ import (
 	"github.com/hypermodeinc/modus/sdk/go/pkg/modusdb"
 )
 
-func DropAll() string {
-	err := modusdb.DropAll()
-	if err != nil {
-		return err.Error()
-	}
-
-	return "Success"
-}
-
 func AlterSchema() string {
 	schema := `
 	firstName: string @index(term) .
