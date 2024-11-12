@@ -58,6 +58,15 @@ func Initialize() {
 }
 
 func handleGraphQLRequest(w http.ResponseWriter, r *http.Request) {
+
+	// In dev, redirect non-GraphQL requests to the explorer
+	if config.IsDevEnvironment() &&
+		r.Method == http.MethodGet &&
+		!strings.Contains(r.Header.Get("Accept"), "application/json") {
+		http.Redirect(w, r, "/explorer", http.StatusTemporaryRedirect)
+		return
+	}
+
 	ctx := r.Context()
 
 	// Read the incoming GraphQL request
