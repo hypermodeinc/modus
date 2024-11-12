@@ -24,6 +24,7 @@ import (
 	"github.com/hypermodeinc/modus/runtime/utils"
 	"github.com/hypermodeinc/modus/runtime/wasmhost"
 
+	"github.com/tidwall/gjson"
 	"github.com/tidwall/sjson"
 	eng "github.com/wundergraph/graphql-go-tools/execution/engine"
 	gql "github.com/wundergraph/graphql-go-tools/execution/graphql"
@@ -57,6 +58,15 @@ func Initialize() {
 }
 
 func handleGraphQLRequest(w http.ResponseWriter, r *http.Request) {
+
+	// In dev, redirect non-GraphQL requests to the explorer
+	if config.IsDevEnvironment() &&
+		r.Method == http.MethodGet &&
+		!strings.Contains(r.Header.Get("Accept"), "application/json") {
+		http.Redirect(w, r, "/explorer", http.StatusTemporaryRedirect)
+		return
+	}
+
 	ctx := r.Context()
 
 	// Read the incoming GraphQL request
@@ -140,6 +150,20 @@ func handleGraphQLRequest(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, fmt.Sprintf("%s\n%v", msg, err), http.StatusInternalServerError)
 	} else {
 		utils.WriteJsonContentHeader(w)
+
+		// An introspection query will always return a Query type, but if only mutations were defined,
+		// the fields of the Query type will be null.  That will fail the introspection query, so we need
+		// to replace the null with an empty array.
+		if ok, _ := gqlRequest.IsIntrospectionQuery(); ok {
+			if q := gjson.GetBytes(response, `data.__schema.types.#(name="Query")`); q.Exists() {
+				if f := q.Get("fields"); f.Type == gjson.Null {
+					response[f.Index] = '['
+					response[f.Index+1] = ']'
+					response = append(response[:f.Index+2], response[f.Index+4:]...)
+				}
+			}
+		}
+
 		_, _ = w.Write(response)
 	}
 }

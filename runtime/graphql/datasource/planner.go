@@ -38,13 +38,14 @@ type HypDSPlanner struct {
 }
 
 type fieldInfo struct {
-	ref       int         `json:"-"`
-	Name      string      `json:"name"`
-	Alias     string      `json:"alias,omitempty"`
-	TypeName  string      `json:"type,omitempty"`
-	Fields    []fieldInfo `json:"fields,omitempty"`
-	IsMapType bool        `json:"isMapType,omitempty"`
-	fieldRefs []int       `json:"-"`
+	ref        int         `json:"-"`
+	Name       string      `json:"name"`
+	Alias      string      `json:"alias,omitempty"`
+	TypeName   string      `json:"type,omitempty"`
+	ParentType string      `json:"parentType,omitempty"`
+	Fields     []fieldInfo `json:"fields,omitempty"`
+	IsMapType  bool        `json:"isMapType,omitempty"`
+	fieldRefs  []int       `json:"-"`
 }
 
 func (t *fieldInfo) AliasOrName() string {
@@ -168,6 +169,7 @@ func (p *HypDSPlanner) captureField(ref int) *fieldInfo {
 	def, ok := walker.FieldDefinition(ref)
 	if ok {
 		f.TypeName = definition.FieldDefinitionTypeNameString(def)
+		f.ParentType = walker.EnclosingTypeDefinition.NameString(definition)
 		f.IsMapType = slices.Contains(p.config.MapTypes, f.TypeName)
 	}
 

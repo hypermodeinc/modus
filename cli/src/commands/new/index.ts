@@ -7,7 +7,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Command, Flags } from "@oclif/core";
+import { Flags } from "@oclif/core";
 import chalk from "chalk";
 import semver from "semver";
 import os from "node:os";
@@ -15,33 +15,27 @@ import path from "node:path";
 
 import * as fs from "../../util/fs.js";
 import * as vi from "../../util/versioninfo.js";
-import { execFile } from "../../util/cp.js";
+import { execFile, exec } from "../../util/cp.js";
 import { isOnline } from "../../util/index.js";
-import { GitHubOwner, GitHubRepo, MinGoVersion, MinNodeVersion, MinTinyGoVersion, ModusHomeDir, SDK, parseSDK } from "../../custom/globals.js";
+import { MinGoVersion, MinNodeVersion, MinTinyGoVersion, SDK, parseSDK } from "../../custom/globals.js";
 import { withSpinner } from "../../util/index.js";
 import { extract } from "../../util/tar.js";
 import SDKInstallCommand from "../sdk/install/index.js";
 import { getHeader } from "../../custom/header.js";
 import * as inquirer from "@inquirer/prompts";
 import { getGoVersion, getTinyGoVersion } from "../../util/systemVersions.js";
+import { generateAppName } from "../../util/appname.js";
+import { BaseCommand } from "../../baseCommand.js";
+import { isErrorWithName } from "../../util/errors.js";
 
 const MODUS_DEFAULT_TEMPLATE_NAME = "default";
 
-export default class NewCommand extends Command {
+export default class NewCommand extends BaseCommand {
   static description = "Create a new Modus app";
 
-  static examples = ["modus new", "modus new --name my-app", "modus new --name my-app --sdk go --dir ./my-app --force"];
+  static examples = ["modus new", "modus new --name my-app", "modus new --name my-app --sdk go --dir ./my-app --no-prompt"];
 
   static flags = {
-    help: Flags.help({
-      char: "h",
-      helpLabel: "-h, --help",
-      description: "Show help message",
-    }),
-    "no-logo": Flags.boolean({
-      aliases: ["nologo"],
-      hidden: true,
-    }),
     name: Flags.string({
       char: "n",
       description: "App name",
@@ -51,16 +45,22 @@ export default class NewCommand extends Command {
       aliases: ["directory"],
       description: "App directory",
     }),
+    "no-git": Flags.boolean({
+      aliases: ["nogit"],
+      default: false,
+      description: "Do not initialize a git repository",
+    }),
     sdk: Flags.string({
       char: "s",
       description: "SDK to use",
+      options: ["go", "golang", "assemblyscript", "as"],
     }),
     // template: Flags.string({
     //   char: "t",
     //   description: "Template to use",
     // }),
-    force: Flags.boolean({
-      char: "f",
+    "no-prompt": Flags.boolean({
+      aliases: ["noprompt"],
       default: false,
       description: "Initialize without prompting",
     }),
@@ -75,6 +75,12 @@ export default class NewCommand extends Command {
   async run(): Promise<void> {
     try {
       const { flags } = await this.parse(NewCommand);
+      const isTty = process.stdin.isTTY;
+
+      if (!isTty && (!flags.sdk || !flags.name || !flags.dir)) {
+        this.logError("Non-interactive mode. Please provide required flags sdk, name, and dir.");
+        this.exit(1);
+      }
 
       if (!flags["no-logo"]) {
         this.log(getHeader(this.config.version));
@@ -102,7 +108,9 @@ export default class NewCommand extends Command {
         sdk = parseSDK(sdkInput);
       }
 
-      const defaultAppName = getDefaultAppNameBySdk(sdk);
+      await this.validateSdkPrereq(sdk);
+
+      const defaultAppName = generateAppName();
       let name =
         flags.name ||
         (await inquirer.input({
@@ -114,14 +122,25 @@ export default class NewCommand extends Command {
 
       const dir = flags.dir || "." + path.sep + name;
 
-      if (!flags.force && (await fs.exists(dir))) {
+      if (!flags["no-prompt"] && (await fs.exists(dir))) {
         const confirmed = await inquirer.confirm({ message: `Directory ${dir} already exists. Do you want to overwrite it?`, default: false });
         if (!confirmed) {
           this.abort();
         }
       }
 
-      if (!flags.force) {
+      const gitInPath = await isGitInPath();
+      const isCwdInGitRepo = await isInGitRepo(process.cwd());
+
+      let createGitRepo: boolean;
+      if (!gitInPath || isCwdInGitRepo || flags["no-git"]) {
+        createGitRepo = false;
+      } else {
+        createGitRepo = await inquirer.confirm({ message: "Initialize a git repository?", default: true });
+      }
+
+      const allRequiredFlagsProvided = flags.sdk && flags.name && flags.dir;
+      if (!flags["no-prompt"] && !allRequiredFlagsProvided) {
         const confirmed = await inquirer.confirm({ message: "Continue?", default: true });
         if (!confirmed) {
           this.abort();
@@ -129,9 +148,9 @@ export default class NewCommand extends Command {
       }
 
       this.log();
-      await this.createApp(name, dir, sdk, MODUS_DEFAULT_TEMPLATE_NAME, flags.force, flags.prerelease);
-    } catch (err: any) {
-      if (err.name === "ExitPromptError") {
+      await this.createApp(name, dir, sdk, MODUS_DEFAULT_TEMPLATE_NAME, flags["no-prompt"], flags.prerelease, createGitRepo);
+    } catch (err) {
+      if (isErrorWithName(err) && err.name === "ExitPromptError") {
         this.abort();
       } else {
         throw err;
@@ -139,8 +158,7 @@ export default class NewCommand extends Command {
     }
   }
 
-  private async createApp(name: string, dir: string, sdk: SDK, template: string, force: boolean, prerelease: boolean) {
-    // Validate SDK-specific prerequisites
+  private async validateSdkPrereq(sdk: string) {
     const sdkText = `Modus ${sdk} SDK`;
     switch (sdk) {
       case SDK.AssemblyScript:
@@ -151,7 +169,7 @@ export default class NewCommand extends Command {
           this.exit(1);
         }
         break;
-      case SDK.Go:
+      case SDK.Go: {
         const goVersion = await getGoVersion();
         const tinyGoVersion = await getTinyGoVersion();
 
@@ -203,11 +221,17 @@ export default class NewCommand extends Command {
         this.log();
 
         this.exit(1);
+      }
     }
+  }
+
+  private async createApp(name: string, dir: string, sdk: SDK, template: string, force: boolean, prerelease: boolean, createGitRepo: boolean) {
+    const sdkText = `Modus ${sdk} SDK`;
 
     // Verify and/or install the Modus SDK
     let installedSdkVersion = await vi.getLatestInstalledSdkVersion(sdk, prerelease);
-    if (await isOnline()) {
+    const isClientOnline = await isOnline();
+    if (isClientOnline) {
       let latestVersion: string | undefined;
       await withSpinner(chalk.dim(`Checking to see if you have the latest version of the ${sdkText}.`), async () => {
         latestVersion = await vi.getLatestSdkVersion(sdk, prerelease);
@@ -230,7 +254,7 @@ export default class NewCommand extends Command {
         }
       } else if (latestVersion !== installedSdkVersion) {
         const confirmed = await inquirer.confirm({
-          message: `You have ${installedSdkVersion} of the ${sdkText}. The latest is ${latestVersion}. Would you like to update?`,
+          message: `You have ${installedSdkVersion} of the ${sdkText}.\n  The latest is ${latestVersion}. Would you like to update?`,
           default: true,
         });
         if (confirmed) {
@@ -244,41 +268,21 @@ export default class NewCommand extends Command {
     }
 
     if (!installedSdkVersion) {
-      this.logError(`Could not find an installed ${sdkText}.`);
-      this.exit(1);
+      if (isClientOnline) {
+        this.logError(`Could not find an installed ${sdkText}.`);
+        this.exit(1);
+      } else {
+        this.logError(`Could not find a locally installed ${sdkText}, and you appear to be offline. Please connect to the internet and try again.`);
+        this.exit(1);
+      }
     }
 
     const sdkVersion = installedSdkVersion;
     const sdkPath = vi.getSdkPath(sdk, sdkVersion);
-
     const templatesArchive = path.join(sdkPath, "templates.tar.gz");
     if (!(await fs.exists(templatesArchive))) {
       this.logError(`Could not find any templates for ${sdkText} ${sdkVersion}`);
       this.exit(1);
-    }
-
-    // Install build tools if needed
-    if (sdk == SDK.Go) {
-      const ext = os.platform() === "win32" ? ".exe" : "";
-      const buildTool = path.join(sdkPath, "modus-go-build" + ext);
-      if (!(await fs.exists(buildTool))) {
-        if (await isOnline()) {
-          const module = `github.com/${GitHubOwner}/${GitHubRepo}/sdk/go/tools/modus-go-build@${sdkVersion}`;
-          await withSpinner("Downloading the Modus Go build tool.", async () => {
-            await execFile("go", ["install", module], {
-              cwd: ModusHomeDir,
-              shell: true,
-              env: {
-                ...process.env,
-                GOBIN: sdkPath,
-              },
-            });
-          });
-        } else {
-          this.logError("Could not find the Modus Go build tool. Please try again when you are online.");
-          this.exit(1);
-        }
-      }
     }
 
     // Create the app
@@ -300,6 +304,12 @@ export default class NewCommand extends Command {
         case SDK.Go:
           await execFile("go", ["mod", "download"], execOpts);
           break;
+      }
+
+      if (createGitRepo) {
+        await execFile("git", ["init"], execOpts);
+        await execFile("git", ["add", "."], execOpts);
+        await execFile("git", ["commit", "-m", "'Initial Commit'"], execOpts);
       }
     });
 
@@ -334,17 +344,21 @@ function toValidAppName(input: string): string {
     .replace(/^-|-$/g, ""); // Remove leading or trailing hyphens
 }
 
-const MODUS_NEW_DEFAULT_APP_NAME = "modus-app";
-const MODUS_NEW_GO_APP_NAME = "modus-go-app";
-const MODUS_NEW_AS_APP_NAME = "modus-as-app";
+async function isGitInPath() {
+  try {
+    await exec("git --version");
+    return true;
+  } catch {
+    return false;
+  }
+}
 
-function getDefaultAppNameBySdk(sdk: SDK) {
-  switch (sdk) {
-    case SDK.AssemblyScript:
-      return MODUS_NEW_AS_APP_NAME;
-    case SDK.Go:
-      return MODUS_NEW_GO_APP_NAME;
-    default:
-      return MODUS_NEW_DEFAULT_APP_NAME;
+async function isInGitRepo(dir: string) {
+  try {
+    await exec("git rev-parse --is-inside-work-tree", { cwd: dir });
+
+    return true;
+  } catch {
+    return false;
   }
 }

@@ -11,9 +11,11 @@ package langsupport
 
 import (
 	"context"
+	"errors"
 	"reflect"
 
 	"github.com/hypermodeinc/modus/lib/metadata"
+	"github.com/hypermodeinc/modus/runtime/utils"
 )
 
 type TypeInfo interface {
@@ -130,7 +132,7 @@ func GetTypeInfo(ctx context.Context, lti LanguageTypeInfo, typeName string, typ
 	} else if lti.IsObjectType(typeName) {
 		flags |= tfObject
 
-		md, err := metadata.GetMetadataFromContext(ctx)
+		md, err := getMetadataFromContext(ctx)
 		if err != nil {
 			return nil, err
 		}
@@ -301,4 +303,12 @@ func (h *typeInfo) ObjectFieldTypes() []TypeInfo {
 
 func (h *typeInfo) ObjectFieldOffsets() []uint32 {
 	return h.fieldOffsets
+}
+
+func getMetadataFromContext(ctx context.Context) (*metadata.Metadata, error) {
+	v := ctx.Value(utils.MetadataContextKey)
+	if v == nil {
+		return nil, errors.New("metadata not found in context")
+	}
+	return v.(*metadata.Metadata), nil
 }

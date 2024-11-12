@@ -39,8 +39,15 @@ export class Metadata {
     m.sdk = getSdkInfo();
 
     if (isGitRepo()) {
-      m.gitRepo = getGitRepo();
-      m.gitCommit = getGitCommit();
+      const gitRepo = getGitRepo();
+      if (gitRepo) {
+        m.gitRepo = getGitRepo();
+      }
+
+      const gitCommit = getGitCommit();
+      if (gitCommit) {
+        m.gitCommit = getGitCommit();
+      }
     }
 
     return m;
@@ -180,22 +187,38 @@ function isGitRepo(): boolean {
   }
 }
 
-function getGitRepo(): string {
-  let url = execSync("git remote get-url origin").toString().trim();
+function getGitRepo(): string | undefined {
+  try {
+    let url = execSync("git remote get-url origin", {
+      stdio: ["ignore", "pipe", "ignore"],
+    })
+      .toString()
+      .trim();
 
-  // Convert ssh to https
-  if (url.startsWith("git@")) {
-    url = url.replace(":", "/").replace("git@", "https://");
+    // Convert ssh to https
+    if (url.startsWith("git@")) {
+      url = url.replace(":", "/").replace("git@", "https://");
+    }
+
+    // Remove the .git suffix
+    if (url.endsWith(".git")) {
+      url = url.slice(0, -4);
+    }
+
+    return url;
+  } catch {
+    return undefined;
   }
-
-  // Remove the .git suffix
-  if (url.endsWith(".git")) {
-    url = url.slice(0, -4);
-  }
-
-  return url;
 }
 
-function getGitCommit(): string {
-  return execSync("git rev-parse HEAD").toString().trim();
+function getGitCommit(): string | undefined {
+  try {
+    return execSync("git rev-parse HEAD", {
+      stdio: ["ignore", "pipe", "ignore"],
+    })
+      .toString()
+      .trim();
+  } catch {
+    return undefined;
+  }
 }

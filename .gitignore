@@ -28,3 +28,7 @@ node_modules/
 pnpm-lock.yaml
 yarn.lock
 bun.lockb
+
+# We commit go.work so projects can depend on eachother within the repo.
+# But we don't need to commit the go.work.sum file for that purpose.
+go.work.sum

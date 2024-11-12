@@ -1,19 +1,23 @@
-name: "Release AssemblyScript SDK"
+name: Release AssemblyScript SDK
+
 on:
   push:
     tags:
-      - "sdk/assemblyscript/v*"
+      - sdk/assemblyscript/v*
+
 permissions:
-  contents: "write"
+  contents: write
   id-token: write
+
 jobs:
   release:
+    name: Release
     # note: must use GitHub-hosted runner for publishing to NPM with --provenance flag
     runs-on: ubuntu-latest
     steps:
-      - name: "Validate version"
+      - name: Validate version
         if: ${{ !startsWith(github.ref_name, 'sdk/assemblyscript/v') }}
-        run: 'echo "Modus AssemblyScript SDK version must start with `sdk/assemblyscript/v` && exit 1'
+        run: echo "Modus AssemblyScript SDK version must start with `sdk/assemblyscript/v`" && exit 1
       - uses: actions/checkout@v4
         with:
           ref: "${{ github.ref_name }}"
@@ -46,3 +50,8 @@ jobs:
             sdk/assemblyscript/templates_assemblyscript_${{ steps.parse_sdk_version.outputs.sdk_version }}.tar.gz
           prerelease: ${{ contains(steps.parse_sdk_version.outputs.sdk_version, '-') }}
           make_latest: false
+  release-info:
+    needs: release
+    name: Generate Release Info
+    uses: ./.github/workflows/release-info.yaml
+    secrets: inherit

@@ -21,7 +21,10 @@ func MonitorEnvFiles(ctx context.Context) {
 	sm.Changed = func(errors []error) {
 		logger.Info(ctx).Msg("Env files changed. Updating environment variables.")
 		if len(errors) == 0 {
-			LoadEnvFiles(logger.Get(ctx))
+			err := LoadEnvFiles(ctx)
+			if err != nil {
+				logger.Err(ctx, err).Msg("Failed to load env files.")
+			}
 		}
 	}
 

@@ -7,34 +7,23 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Args, Command, Flags } from "@oclif/core";
+import { Args, Command } from "@oclif/core";
 import chalk from "chalk";
 
 import * as fs from "../../../util/fs.js";
 import * as vi from "../../../util/versioninfo.js";
 import { withSpinner } from "../../../util/index.js";
 import * as inquirer from "@inquirer/prompts";
+import { isErrorWithName } from "../../../util/errors.js";
 
 export default class RuntimeRemoveCommand extends Command {
   static args = {
     version: Args.string({
       description: "Runtime version to remove, or 'all' to remove all runtimes.",
-      required: true,
     }),
   };
 
-  static flags = {
-    help: Flags.help({
-      char: "h",
-      helpLabel: "-h, --help",
-      description: "Show help message",
-    }),
-    force: Flags.boolean({
-      char: "f",
-      default: false,
-      description: "Remove without prompting",
-    }),
-  };
+  static flags = {};
 
   static description = "Remove a Modus runtime";
   static examples = ["modus runtime remove v0.0.0", "modus runtime remove all"];
@@ -42,8 +31,42 @@ export default class RuntimeRemoveCommand extends Command {
   async run(): Promise<void> {
     try {
       const { args, flags } = await this.parse(RuntimeRemoveCommand);
+
       if (!args.version) {
-        this.logError(`No runtime version specified. Run ${chalk.whiteBright("modus runtime remove <version>")}, or ${chalk.whiteBright("modus runtime remove all")}`);
+        const versions = await vi.getInstalledRuntimeVersions();
+
+        if (versions.length === 0) {
+          this.log(chalk.yellow("No Modus runtimes are installed."));
+          this.exit(1);
+        }
+
+        const runtimeVersionToRemove = await inquirer.select({
+          message: "Select a runtime version to remove",
+          choices: [
+            ...versions.map((v) => ({ name: v, value: v })),
+            {
+              name: chalk.bold("All versions"),
+              value: "all",
+            },
+          ],
+        });
+
+        if (runtimeVersionToRemove === "all") {
+          const confirmed = await inquirer.confirm({
+            message: "Are you sure you want to remove all Modus runtimes?",
+            default: false,
+          });
+          if (!confirmed) {
+            this.abort();
+          }
+
+          for (const version of versions) {
+            await this.removeRuntime(version);
+          }
+        } else {
+          await this.removeRuntime(runtimeVersionToRemove);
+        }
+
         return;
       }
 
@@ -86,8 +109,8 @@ export default class RuntimeRemoveCommand extends Command {
 
         await this.removeRuntime(args.version);
       }
-    } catch (err: any) {
-      if (err.name === "ExitPromptError") {
+    } catch (err) {
+      if (isErrorWithName(err) && err.name === "ExitPromptError") {
         this.abort();
       } else {
         throw err;

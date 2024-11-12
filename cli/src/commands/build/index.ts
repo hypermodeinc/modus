@@ -7,7 +7,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Args, Command, Flags } from "@oclif/core";
+import { Args } from "@oclif/core";
 import chalk from "chalk";
 import path from "node:path";
 import os from "node:os";
@@ -18,8 +18,10 @@ import { getHeader } from "../../custom/header.js";
 import { getAppInfo } from "../../util/appinfo.js";
 import { withSpinner } from "../../util/index.js";
 import { execFileWithExitCode } from "../../util/cp.js";
+import SDKInstallCommand from "../sdk/install/index.js";
+import { BaseCommand } from "../../baseCommand.js";
 
-export default class BuildCommand extends Command {
+export default class BuildCommand extends BaseCommand {
   static args = {
     path: Args.directory({
       description: "Path to app directory",
@@ -28,17 +30,7 @@ export default class BuildCommand extends Command {
     }),
   };
 
-  static flags = {
-    help: Flags.help({
-      char: "h",
-      helpLabel: "-h, --help",
-      description: "Show help message",
-    }),
-    "no-logo": Flags.boolean({
-      aliases: ["nologo"],
-      hidden: true,
-    }),
-  };
+  static flags = {};
 
   static description = "Build a Modus app";
 
@@ -63,6 +55,10 @@ export default class BuildCommand extends Command {
     // pass chalk level to child processes so they can colorize output
     process.env.FORCE_COLOR = chalk.level.toString();
 
+    if (!(await vi.sdkVersionIsInstalled(app.sdk, app.sdkVersion))) {
+      await SDKInstallCommand.run([app.sdk, app.sdkVersion, "--no-logo"]);
+    }
+
     const results = await withSpinner("Building " + app.name, async () => {
       const execOpts = {
         cwd: appPath,
@@ -79,7 +75,7 @@ export default class BuildCommand extends Command {
             }
           }
           return await execFileWithExitCode("npx", ["modus-as-build"], execOpts);
-        case SDK.Go:
+        case SDK.Go: {
           const version = app.sdkVersion || (await vi.getLatestInstalledSdkVersion(app.sdk, true));
           if (!version) {
             this.logError("No installed version of the Modus Go SDK");
@@ -92,6 +88,7 @@ export default class BuildCommand extends Command {
             return;
           }
           return await execFileWithExitCode(buildTool, ["."], execOpts);
+        }
         default:
           this.logError("Unsupported SDK");
           this.exit(1);

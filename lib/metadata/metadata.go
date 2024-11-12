@@ -10,12 +10,8 @@
 package metadata
 
 import (
-	"context"
-	"errors"
 	"fmt"
 	"strings"
-
-	"github.com/hypermodeinc/modus/runtime/utils"
 
 	"github.com/tidwall/gjson"
 )
@@ -156,12 +152,4 @@ func parseNameAndVersion(s string) (name string, version string) {
 		return s, ""
 	}
 	return s[:i], s[i+1:]
-}
-
-func GetMetadataFromContext(ctx context.Context) (*Metadata, error) {
-	v := ctx.Value(utils.MetadataContextKey)
-	if v == nil {
-		return nil, errors.New("metadata not found in context")
-	}
-	return v.(*Metadata), nil
 }

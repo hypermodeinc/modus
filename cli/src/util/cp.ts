@@ -17,6 +17,12 @@ const execFile = util.promisify(cp.execFile);
 export { execFile };
 
 /**
+ * Promisified version of `child_process.exec`.
+ */
+const exec = util.promisify(cp.exec);
+export { exec };
+
+/**
  * Promisified version of `child_process.execFile`, but returns the exit code instead of throwing an error.
  */
 export async function execFileWithExitCode(file: string, args?: string[], options?: cp.ExecFileOptions): Promise<{ stdout: string; stderr: string; exitCode: number }> {

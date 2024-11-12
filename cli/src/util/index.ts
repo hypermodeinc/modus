@@ -9,33 +9,17 @@
 
 import chalk from "chalk";
 import ora, { Ora } from "ora";
-
-import os from "node:os";
+import dns from "node:dns";
 import path from "node:path";
-import readline from "node:readline";
-import { isatty } from "node:tty";
 import { Readable } from "node:stream";
 import { finished } from "node:stream/promises";
-import { spawnSync } from "node:child_process";
 import { createWriteStream } from "node:fs";
+import * as http from "./http.js";
 import * as fs from "./fs.js";
 
-// Expand ~ to the user's home directory
-export function expandHomeDir(filePath: string): string {
-  if (filePath.startsWith("~")) {
-    return path.normalize(path.join(os.homedir(), filePath.slice(1)));
-  }
-
-  return path.normalize(filePath);
-}
-
-export function isRunnable(cmd: string): boolean {
-  const shell = spawnSync(cmd);
-  if (!shell) return false;
-  return true;
-}
-
 export async function withSpinner<T>(text: string, fn: (spinner: Ora) => Promise<T>): Promise<T> {
+  // NOTE: Ora comes with "oraPromise", but it doesn't clear the original text on completion.
+  // Thus, we use this custom async function to ensure the spinner is applied correctly.
   const spinner = ora({
     color: "white",
     text: text,
@@ -49,7 +33,7 @@ export async function withSpinner<T>(text: string, fn: (spinner: Ora) => Promise
 }
 
 export async function downloadFile(url: string, dest: string): Promise<boolean> {
-  const res = await fetch(url);
+  const res = await http.get(url, false);
   if (!res.ok) {
     console.log(chalk.red(" ERROR ") + chalk.dim(": Could not download file."));
     console.log(chalk.dim("   url : " + url));
@@ -64,7 +48,7 @@ export async function downloadFile(url: string, dest: string): Promise<boolean> 
 
   const fileStream = createWriteStream(dest);
 
-  // @ts-ignore
+  // @ts-expect-error necessary
   await finished(Readable.fromWeb(res.body).pipe(fileStream));
   return true;
 }
@@ -73,17 +57,14 @@ let online: boolean | undefined;
 export async function isOnline(): Promise<boolean> {
   // Cache this, as we only need to check once per use of any CLI command that requires it.
   if (online !== undefined) return online;
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 1000);
+
   try {
-    const headers = getGitHubApiHeaders();
-    const response = await fetch("https://api.github.com", { signal: controller.signal, headers });
-    online = response.ok;
+    await dns.promises.lookup("releases.hypermode.com");
+    online = true;
   } catch {
     online = false;
-  } finally {
-    clearTimeout(timeout);
   }
+
   return online;
 }
 

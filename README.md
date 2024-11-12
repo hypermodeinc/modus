@@ -1,32 +1,92 @@
 <!-- markdownlint-disable first-line-heading -->
 <div align="center">
 
+  [![modus](https://github.com/user-attachments/assets/a0652fa6-6836-49f6-9c8c-c007cafab000)](https://github.com/hypermodeinc/modus)
+
   [![GitHub License](https://img.shields.io/github/license/hypermodeinc/modus)](https://github.com/hypermodeinc/modus?tab=Apache-2.0-1-ov-file#readme)
   [![chat](https://img.shields.io/discord/1267579648657850441)](https://discord.gg/NJQ4bJpffF)
   [![GitHub Repo stars](https://img.shields.io/github/stars/hypermodeinc/modus)](https://github.com/hypermodeinc/modus/stargazers)
-
   [![GitHub commit activity](https://img.shields.io/github/commit-activity/m/hypermodeinc/modus)](https://github.com/hypermodeinc/modus/commits/main/)
-  [![GitHub commits since latest release](https://img.shields.io/github/commits-since/hypermodeinc/modus/latest)](https://github.com/hypermodeinc/modus/commits/main/)
-  
-  [![modus](https://github.com/user-attachments/assets/a0652fa6-6836-49f6-9c8c-c007cafab000)](https://github.com/hypermodeinc/modus)
 
 </div>
 
-**Modus is an open-source, serverless framework for building intelligent functions and APIs, powered by WebAssembly.**
+<p align="center">
+   <a href="https://docs.hypermode.com/modus/quickstart">Get Started</a> · 
+   <a href="https://docs.hypermode.com/">Docs</a> · 
+   <a href="https://discord.com/invite/MAZgkhP6C6">Discord</a>
+<p>
 
-This repository contains the Modus source code, including the Modus runtime, SDKs, CLI, and introductory examples.
+**Modus is an open-source, serverless framework for building APIs powered by WebAssembly.** It simplifies integrating AI models, data, and business logic with sandboxed execution. And, it's really fast.
 
-> ❕ Note: prior to version 0.13, Modus was simply referred to as "Hypermode". Please bear with us if you find name conflicts while we are in transition!
+We built Modus to put code back at the heart of development.
 
-## Getting Started
+You write a function.
 
-To get started using Modus, please refer to [the Modus docs](https://docs.hypermode.com/modus) site.
+```ts
+export function sayHello(name: string): string {
+  return `Hello, ${name}!`;
+}
+```
 
-## Open Source
+Then, Modus:
 
-Modus is developed by [Hypermode](https://hypermode.com/) as an open-source project, integral but independent from Hypermode.
+- extracts the metadata of your functions
+- compiles your code with optimizations based on the host environment
+- caches the compiled module in memory for fast retrieval
+- prepares an invocation plan for each function
+- extracts connections, models, and other configuration details from the app’s manifest
+- generates an API schema and activates the endpoint
 
-We welcome external contributions. See the [CONTRIBUTING.md](./CONTRIBUTING.md) file if you would like to get involved.
+You query the endpoint
+
+```graphql
+query SayHello {
+  sayHello(name: "World")
+}
+```
+
+In a few milliseconds, Modus:
+
+- loads your compiled code into a sandboxed execution environment with a dedicated memory space
+- runs your code, aided by host functions that power the Modus APIs
+- securely queries data and AI models as needed, without exposing credentials to your code
+- responds via the API result and releases the execution environment
+
+**Now you have a production ready scalable endpoint for your AI-enabled app. AI-ready when you’re ready. Launch and iterate.**
+
+## Quickstart
+
+Install the Modus CLI
+
+```bash
+npm install -g @hypermode/modus-cli
+```
+
+Initialize your Modus app
+
+```bash
+modus new
+```
+
+Run your app locally with fast refresh
+
+```bash
+modus dev
+```
+
+## Demo
+
+<div align="center">
+
+[![Modus Demo](https://github.com/user-attachments/assets/12ac5db9-ca32-418c-a70d-67aef797a9e3)](https://www.youtube.com/watch?v=3CcJTXTmz88)
+
+</div>
+
+## What's it good for?
+
+We designed Modus primarily as a general-purpose framework, it just happens to treat models as a first-class component. With Modus you can use models, as appropriate, without additional complexity.
+
+Modus is optimized for applications that require sub-second response times. We’ve made trade-offs to prioritize speed and simplicity.
 
 ## Programming Languages
 
@@ -46,27 +106,26 @@ Additional programming languages may be supported in the future.
 ## Hosting
 
 We have designed Hypermode to be the best place to run your Modus app.
-Hypermode hosting plans include features you might expect, such as professional support, telemetry, and high availability.
+Hypermode hosting plans include features you might expect, such as support, telemetry, and high availability.
 They also include specialty features such as model hosting that are purposefully designed to work in tandem with Modus apps.
 
-Thus, for the best experience, please consider hosting your Modus apps on Hypermode. See [hypermode.com](https://hypermode.com/) for details and pricing.
-
 As Modus is a free, open-source framework, you’re welcome to run your Modus apps on your own hardware or on any
-hosting platform that meets your needs. However, please understand that we cannot directly support issues related
-to third-party hosting.
+hosting platform that meets your needs.
 
-## Support
+## Open Source
 
-Hypermode paid hosting plans include standard or premium support that covers both Hypermode and Modus, with response-time guarantees.
+Modus is developed by [Hypermode](https://hypermode.com/) as an open-source project, integral but independent from Hypermode.
 
-Click the _support_ link after signing in to Hypermode, or email help@hypermode.com for paid support if you are a Hypermode customer.
+We welcome external contributions. See the [CONTRIBUTING.md](./CONTRIBUTING.md) file if you would like to get involved.
 
-For free community-based support or if you'd just like to share your experiences with
-Modus or Hypermode, please join the [Hypermode Discord](https://discord.hypermode.com) and start a discussion in the [#modus](https://discord.com/channels/1267579648657850441/1292948253796466730) channel.
-We'd be happy to hear from you!
+## Acknowledgements
 
-If you believe you have found a bug in Modus, please file a [GitHub issue](https://github.com/hypermodeinc/modus/issues)
-so we can triage the problem and route it to our engineers as efficiently as possible.
+It's taken a lot of hard work to bring Modus to life, but we couldn't have done it alone. Modus is built upon _many_ open source components and projects.  We'd especially like to express our gratitude to the authors and teams of our core dependencies:
+
+- Takeshi Yoneda, author of [Wazero](https://wazero.io/), and other contributors to the Wazero project - and to [Tetrate](https://tetrate.io/) for continuing its support of Wazero.  Modus uses Wazero to execute WebAssembly modules.
+- Jens Neuse, Stefan Avram, and the rest of the team at [Wundergraph](https://wundergraph.com/).  Modus uses Wundergraph's [GraphQL Go Tools](https://github.com/wundergraph/graphql-go-tools) library to process incoming GraphQL API requests.
+- Max Graey, Daniel Wirtz, and other contributors to the [AssemblyScript](https://www.assemblyscript.org/) project.  Modus chose AssemblyScript as one of its core languages because it is ideal for web developers getting started with Web Assembly.
+- The [Go language](https://go.dev/) team, and also the maintainers of [TinyGo](https://tinygo.org/).  The Modus Runtime is written in Go, and the Modus Go SDK uses TinyGo.
 
 ## License
 

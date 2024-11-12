@@ -7,15 +7,16 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Args, Command, Flags } from "@oclif/core";
+import { Args, Flags } from "@oclif/core";
 import chalk from "chalk";
 import * as fs from "../../../util/fs.js";
 import * as vi from "../../../util/versioninfo.js";
 import * as installer from "../../../util/installer.js";
 import { isOnline, withSpinner } from "../../../util/index.js";
 import { getHeader } from "../../../custom/header.js";
+import { BaseCommand } from "../../../baseCommand.js";
 
-export default class RuntimeInstallCommand extends Command {
+export default class RuntimeInstallCommand extends BaseCommand {
   static args = {
     version: Args.string({
       description: "Runtime version to install",
@@ -27,15 +28,6 @@ export default class RuntimeInstallCommand extends Command {
   static examples = ["modus runtime install", "modus runtime install v1.2.3", "modus runtime install --prerelease"];
 
   static flags = {
-    help: Flags.help({
-      char: "h",
-      helpLabel: "-h, --help",
-      description: "Show help message",
-    }),
-    "no-logo": Flags.boolean({
-      aliases: ["nologo"],
-      hidden: true,
-    }),
     force: Flags.boolean({
       char: "f",
       default: false,

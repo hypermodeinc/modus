@@ -9,9 +9,9 @@
 
 import semver from "semver";
 import path from "node:path";
+import * as http from "./http.js";
 import * as fs from "./fs.js";
 import * as globals from "../custom/globals.js";
-import { getGitHubApiHeaders } from "./index.js";
 
 export function getSdkPath(sdk: globals.SDK, version: string): string {
   return path.join(globals.ModusHomeDir, "sdk", sdk.toLowerCase(), version);
@@ -28,53 +28,140 @@ export function isPrerelease(version: string): boolean {
   return !!semver.prerelease(version);
 }
 
+const versionData: {
+  latest?: { [key: string]: string };
+  preview?: { [key: string]: string };
+  all?: { [key: string]: string[] };
+  allPreview?: { [key: string]: string[] };
+} = {};
+
+export async function fetchModusLatest() {
+  if (versionData.latest) return versionData.latest;
+
+  const response = await http.get(`https://releases.hypermode.com/modus-latest.json`);
+  if (!response.ok) {
+    throw new Error(`Error fetching latest SDK versions: ${response.statusText}`);
+  }
+
+  const data = (await response.json()) as { [key: string]: string };
+  if (!data) {
+    throw new Error(`Error fetching latest SDK versions: response was empty`);
+  }
+
+  versionData.latest = data;
+  return data;
+}
+
+export async function fetchModusPreview() {
+  if (versionData.preview) return versionData.preview;
+
+  const response = await http.get(`https://releases.hypermode.com/modus-preview.json`);
+  if (!response.ok) {
+    throw new Error(`Error fetching latest preview SDK versions: ${response.statusText}`);
+  }
+
+  const data = (await response.json()) as { [key: string]: string };
+  if (!data) {
+    throw new Error(`Error fetching latest preview SDK versions: response was empty`);
+  }
+
+  versionData.preview = data;
+  return data;
+}
+
+export async function fetchModusAll() {
+  if (versionData.all) return versionData.all;
+
+  const response = await http.get(`https://releases.hypermode.com/modus-all.json`);
+  if (!response.ok) {
+    throw new Error(`Error fetching all SDK versions: ${response.statusText}`);
+  }
+
+  const data = (await response.json()) as { [key: string]: string[] };
+  if (!data) {
+    throw new Error(`Error fetching all SDK versions: response was empty`);
+  }
+
+  versionData.all = data;
+  return data;
+}
+
+export async function fetchModusPreviewAll() {
+  if (versionData.allPreview) return versionData.allPreview;
+
+  const response = await http.get(`https://releases.hypermode.com/modus-preview-all.json`);
+  if (!response.ok) {
+    throw new Error(`Error fetching all preview SDK versions: ${response.statusText}`);
+  }
+
+  const data = (await response.json()) as { [key: string]: string[] };
+  if (!data) {
+    throw new Error(`Error fetching all preview SDK versions: response was empty`);
+  }
+
+  versionData.allPreview = data;
+  return data;
+}
+
+export async function fetchItemVersionsFromModusAll(item: string): Promise<string[]> {
+  const data = await fetchModusAll();
+
+  if (item.endsWith("/")) {
+    item = item.slice(0, -1);
+  }
+
+  const versions = data[item];
+  if (!versions) {
+    throw new Error("Not a valid item in releases");
+  }
+
+  return versions;
+}
+
+export async function fetchItemVersionsFromModusPreviewAll(item: string): Promise<string[]> {
+  const data = await fetchModusPreviewAll();
+
+  if (item.endsWith("/")) {
+    item = item.slice(0, -1);
+  }
+
+  const versions = data[item];
+  if (!versions) {
+    throw new Error("Not a valid item in releases");
+  }
+
+  return versions;
+}
+
 export async function getLatestSdkVersion(sdk: globals.SDK, includePrerelease: boolean): Promise<string | undefined> {
-  return await getLatestVersion(globals.GitHubOwner, globals.GitHubRepo, globals.GetSdkTagPrefix(sdk), includePrerelease);
+  const data = includePrerelease ? await fetchModusPreview() : await fetchModusLatest();
+  const version = data["sdk/" + sdk.toLowerCase()];
+  return version ? version : undefined;
 }
 
 export async function getLatestRuntimeVersion(includePrerelease: boolean): Promise<string | undefined> {
-  return await getLatestVersion(globals.GitHubOwner, globals.GitHubRepo, globals.GitHubRuntimeTagPrefix, includePrerelease);
+  const data = includePrerelease ? await fetchModusPreview() : await fetchModusLatest();
+  const version = data["runtime"];
+  return version ? version : undefined;
 }
 
-async function getLatestVersion(owner: string, repo: string, prefix: string, includePrerelease: boolean): Promise<string | undefined> {
-  try {
-    let tag = await findLatestReleaseTag(owner, repo, prefix, includePrerelease);
-    if (!tag && !includePrerelease) {
-      // If no stable release was found, look for a prerelease
-      tag = await findLatestReleaseTag(owner, repo, prefix, true);
-    }
-    if (tag) {
-      return tag.slice(prefix.length);
-    }
-  } catch (e) {
-    console.error(e);
-  }
+export async function getLatestCliVersion(includePrerelease: boolean): Promise<string | undefined> {
+  const data = includePrerelease ? await fetchModusPreview() : await fetchModusLatest();
+  const version = data["cli"];
+  return version ? version : undefined;
 }
 
 export async function getAllSdkVersions(sdk: globals.SDK, includePrerelease: boolean): Promise<string[]> {
-  return await getAllVersions(globals.GitHubOwner, globals.GitHubRepo, globals.GetSdkTagPrefix(sdk), includePrerelease);
+  return await getAllVersions(globals.GetSdkTagPrefix(sdk), includePrerelease);
 }
 
 export async function getAllRuntimeVersions(includePrerelease: boolean): Promise<string[]> {
-  return await getAllVersions(globals.GitHubOwner, globals.GitHubRepo, globals.GitHubRuntimeTagPrefix, includePrerelease);
+  return await getAllVersions(globals.GitHubRuntimeTagPrefix, includePrerelease);
 }
 
-async function getAllVersions(owner: string, repo: string, prefix: string, includePrerelease: boolean): Promise<string[]> {
+async function getAllVersions(prefix: string, includePrerelease: boolean): Promise<string[]> {
   try {
-    let tags = await getAllReleaseTags(owner, repo, prefix, includePrerelease);
-    if (tags.length === 0 && !includePrerelease) {
-      // If no stable release was found, look for prereleases
-      tags = await getAllReleaseTags(owner, repo, prefix, true);
-    }
-    let versions = tags.map((tag) => {
-      let version = tag.slice(prefix.length);
-      if (version.startsWith("v")) {
-        version = version.slice(1);
-      }
-      return version;
-    });
-    versions = semver.rsort(versions);
-    return versions.map((v) => "v" + v);
+    return includePrerelease ? await fetchItemVersionsFromModusPreviewAll(prefix) : await fetchItemVersionsFromModusAll(prefix);
   } catch (e) {
     console.error(e);
     return [];
@@ -82,12 +169,13 @@ async function getAllVersions(owner: string, repo: string, prefix: string, inclu
 }
 
 export async function sdkReleaseExists(sdk: globals.SDK, version: string): Promise<boolean> {
-  const prefix = globals.GetSdkTagPrefix(sdk);
-  return releaseExists(globals.GitHubOwner, globals.GitHubRepo, `${prefix}${version}`);
+  const versions = await getAllSdkVersions(sdk, true);
+  return versions.includes(version);
 }
 
 export async function runtimeReleaseExists(version: string): Promise<boolean> {
-  return releaseExists(globals.GitHubOwner, globals.GitHubRepo, `${globals.GitHubRuntimeTagPrefix}${version}`);
+  const versions = await getAllRuntimeVersions(true);
+  return versions.includes(version);
 }
 
 export async function sdkVersionIsInstalled(sdk: globals.SDK, version: string): Promise<boolean> {
@@ -202,74 +290,5 @@ export async function findLatestCompatibleRuntimeVersion(sdk: globals.SDK, sdkVe
     if (compatibleVersions.length > 0) {
       return compatibleVersions[0];
     }
-  }
-}
-
-const headers = getGitHubApiHeaders();
-
-async function releaseExists(owner: string, repo: string, tag: string): Promise<boolean> {
-  const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/releases/tags/${encodeURIComponent(tag)}`, { headers });
-  return response.ok;
-}
-
-async function findLatestReleaseTag(owner: string, repo: string, prefix: string, includePrerelease: boolean): Promise<string | undefined> {
-  let page = 1;
-  while (true) {
-    const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/releases?page=${page}`, { headers });
-
-    if (!response.ok) {
-      throw new Error(`Error fetching releases: ${response.statusText}`);
-    }
-
-    const releases = await response.json();
-    if (releases.length === 0) {
-      return;
-    }
-
-    for (const release of releases) {
-      if (!includePrerelease && release.prerelease) {
-        continue;
-      }
-
-      if (prefix && !release.tag_name.startsWith(prefix)) {
-        continue;
-      }
-
-      return release.tag_name;
-    }
-
-    page++;
-  }
-}
-
-async function getAllReleaseTags(owner: string, repo: string, prefix: string, includePrerelease: boolean): Promise<string[]> {
-  const results: string[] = [];
-
-  let page = 1;
-  while (true) {
-    const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/releases?per_page=100&page=${page}`, { headers });
-
-    if (!response.ok) {
-      throw new Error(`Error fetching releases: ${response.statusText}`);
-    }
-
-    const releases = await response.json();
-    if (releases.length === 0) {
-      return results;
-    }
-
-    for (const release of releases) {
-      if (!includePrerelease && release.prerelease) {
-        continue;
-      }
-
-      if (prefix && !release.tag_name.startsWith(prefix)) {
-        continue;
-      }
-
-      results.push(release.tag_name);
-    }
-
-    page++;
   }
 }

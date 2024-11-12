@@ -7,7 +7,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Args, Command, Flags } from "@oclif/core";
+import { Args, Flags } from "@oclif/core";
 import { spawn } from "node:child_process";
 import { Readable } from "node:stream";
 import path from "node:path";
@@ -25,11 +25,12 @@ import { getAppInfo } from "../../util/appinfo.js";
 import { isOnline, withSpinner } from "../../util/index.js";
 import { readHypermodeSettings } from "../../util/hypermode.js";
 import BuildCommand from "../build/index.js";
+import { BaseCommand } from "../../baseCommand.js";
 
 const MANIFEST_FILE = "modus.json";
 const ENV_FILES = [".env", ".env.local", ".env.development", ".env.dev", ".env.development.local", ".env.dev.local"];
 
-export default class DevCommand extends Command {
+export default class DevCommand extends BaseCommand {
   static args = {
     path: Args.directory({
       description: "Path to app directory",
@@ -39,15 +40,6 @@ export default class DevCommand extends Command {
   };
 
   static flags = {
-    help: Flags.help({
-      char: "h",
-      helpLabel: "-h, --help",
-      description: "Show help message",
-    }),
-    "no-logo": Flags.boolean({
-      aliases: ["nologo"],
-      hidden: true,
-    }),
     runtime: Flags.string({
       char: "r",
       description: "Modus runtime version to use. If not provided, the latest runtime compatible with the app will be used.",
@@ -223,8 +215,6 @@ export default class DevCommand extends Command {
     // Whenever any of the env files change, copy to the build directory.
     // The runtime will automatically reload them when it detects a change to the copies in the build folder.
 
-    const sourcePaths = ENV_FILES.map((file) => path.join(appPath, file));
-
     const onAddOrChange = async (sourcePath: string) => {
       const filename = path.basename(sourcePath);
       const outputPath = path.join(appPath, "build", filename);
@@ -335,7 +325,7 @@ export default class DevCommand extends Command {
         this.log(chalk.magentaBright("Detected source code change. Rebuilding..."));
         this.log();
         await BuildCommand.run([appPath, "--no-logo"]);
-      } catch (e) {
+      } catch {
         this.log(chalk.magenta("Waiting for more changes..."));
         this.log(chalk.dim("Press Ctrl+C at any time to stop the server."));
       } finally {
