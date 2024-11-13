@@ -121,7 +121,7 @@ func CreateGithubIssue(owner, repo, title, body string) (*Issue, error) {
 	}
 
 	// The response will contain the issue data, including the URL of the issue on GitHub.
-	var issue *Issue
-	response.JSON(issue)
-	return issue, nil
+	var issue Issue
+	response.JSON(&issue)
+	return &issue, nil
 }
