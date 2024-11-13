@@ -74,7 +74,7 @@ func AlterSchema(ctx context.Context, schema string) (string, error) {
 
 func ExtMutate(ctx context.Context, mutationReq MutationRequest) (map[string]uint64, error) {
 	mutations := mutationReq.Mutations
-	mus := make([]*api.Mutation, len(mutations))
+	mus := make([]*api.Mutation, 0, len(mutations))
 	for _, m := range mutations {
 		mu := &api.Mutation{}
 		if m.SetJson != "" {
@@ -135,7 +135,7 @@ func ExtQuery(ctx context.Context, query string) (*Response, error) {
 
 func IntMutate(ctx context.Context, mutationReq MutationRequest) (map[string]uint64, error) {
 	mutations := mutationReq.Mutations
-	mus := make([]*api.Mutation, 1, len(mutations))
+	mus := make([]*api.Mutation, 0, len(mutations))
 	for _, m := range mutations {
 		mu := &api.Mutation{}
 		if m.SetJson != "" {
@@ -154,7 +154,7 @@ func IntMutate(ctx context.Context, mutationReq MutationRequest) (map[string]uin
 			mu.Cond = m.Condition
 		}
 
-		mus[0] = mu
+		mus = append(mus, mu)
 	}
 	return mdbInt.Mutate(ctx, mus)
 }
