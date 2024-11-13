@@ -5,7 +5,7 @@ updates:
     schedule:
       interval: weekly
       day: wednesday
-      time: 16:00
+      time: "16:00"
     groups:
       actions:
         update-types:
@@ -31,7 +31,6 @@ updates:
         update-types:
           - minor
           - patch
-          - digest
 
   - package-ecosystem: npm
     versioning-strategy: increase
@@ -42,14 +41,13 @@ updates:
     schedule:
       interval: weekly
       day: wednesday
-      time: 16:00
+      time: "16:00"
     groups:
       minor-and-patch:
         applies-to: version-updates
         update-types:
           - minor
           - patch
-          - digest
     ignore:
       # We target Node.js 22
       - dependency-name: "@types/node"
