@@ -44,7 +44,7 @@ require (
 	github.com/tidwall/sjson v1.2.5
 	github.com/viterin/vek v0.4.2
 	github.com/wundergraph/graphql-go-tools/execution v1.0.10-0.20241106142005-ef9f492df7ad
-	github.com/wundergraph/graphql-go-tools/v2 v2.0.0-rc.118
+	github.com/wundergraph/graphql-go-tools/v2 v2.0.0-rc.122
 	golang.org/x/exp v0.0.0-20241009180824-f66d83c29e7c
 	google.golang.org/grpc v1.68.0
 )
@@ -115,7 +115,7 @@ require (
 	github.com/tidwall/match v1.1.1 // indirect
 	github.com/tidwall/pretty v1.2.1 // indirect
 	github.com/viterin/partial v1.1.0 // indirect
-	github.com/wundergraph/astjson v0.0.0-20241105103047-3b2e8a2b2779 // indirect
+	github.com/wundergraph/astjson v0.0.0-20241108124845-44485579ffa5 // indirect
 	github.com/wundergraph/cosmo/composition-go v0.0.0-20241106155333-133ea404e4b4 // indirect
 	github.com/wundergraph/cosmo/router v0.0.0-20241106155333-133ea404e4b4 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.56.0 // indirect
