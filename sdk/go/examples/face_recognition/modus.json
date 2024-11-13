@@ -1,0 +1,16 @@
+{
+  "$schema": "https://schema.hypermode.com/modus.json",
+  "endpoints": {
+    "default": {
+      "type": "graphql",
+      "path": "/graphql",
+      "auth": "bearer-token"
+    }
+  },
+  "connections": {
+    "face-model": {
+      "type": "http",
+      "endpoint": "http://10.10.14.29:5000/upload"
+    }
+  }
+}

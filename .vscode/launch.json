@@ -170,6 +170,10 @@
         {
           "label": "Vectors API Example",
           "value": "vectors"
+        },
+        {
+          "label": "Face Recognition",
+          "value": "face_recognition"
         }
       ]
     },
