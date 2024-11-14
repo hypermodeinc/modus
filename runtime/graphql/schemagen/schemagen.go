@@ -59,7 +59,7 @@ func GetGraphQLSchema(ctx context.Context, md *metadata.Metadata) (*GraphQLSchem
 	resultTypes := filterTypes(utils.MapValues(resultTypeDefs), allFields, false)
 
 	buf := bytes.Buffer{}
-	writeSchema(&buf, queryFields, mutationFields, scalarTypes, inputTypes, resultTypes)
+	writeSchema(&buf, queryFields, mutationFields, scalarTypes, inputTypes, resultTypes, md)
 
 	mapTypes := make([]string, 0, len(resultTypeDefs))
 	for _, t := range resultTypeDefs {
@@ -119,7 +119,6 @@ func transformTypes(types metadata.TypeMap, lti langsupport.LanguageTypeInfo, fo
 		typeDefs[name] = &TypeDefinition{
 			Name:   name,
 			Fields: fields,
-			Docs:   t.Docs,
 		}
 	}
 	return typeDefs, errors
@@ -129,14 +128,12 @@ type FieldDefinition struct {
 	Name       string
 	Arguments  []*ArgumentDefinition
 	ReturnType string
-	Docs       *metadata.Docs
 }
 
 type TypeDefinition struct {
 	Name      string
-	Fields    []*metadata.Field
+	Fields    []*NameTypePair
 	IsMapType bool
-	Docs      *metadata.Docs
 }
 
 type NameTypePair struct {
@@ -148,7 +145,6 @@ type ArgumentDefinition struct {
 	Name    string
 	Type    string
 	Default *any
-	Docs    *metadata.Docs
 }
 
 // TODO: refactor for readability
@@ -183,7 +179,6 @@ func transformFunctions(functions metadata.FunctionMap, inputTypeDefs, resultTyp
 			Name:       fieldName,
 			Arguments:  args,
 			ReturnType: returnType,
-			Docs:       fn.Docs,
 		}
 
 		if isMutation(fn.Name) {
@@ -283,8 +278,7 @@ func getBaseType(name string) string {
 	return name
 }
 
-func writeSchema(buf *bytes.Buffer, queryFields []*FieldDefinition, mutationFields []*FieldDefinition, scalarTypes []string, inputTypeDefs, resultTypeDefs []*TypeDefinition) {
-
+func writeSchema(buf *bytes.Buffer, queryFields []*FieldDefinition, mutationFields []*FieldDefinition, scalarTypes []string, inputTypeDefs, resultTypeDefs []*TypeDefinition, md *metadata.Metadata) {
 	// write header
 	buf.WriteString("# Modus GraphQL Schema (auto-generated)\n")
 
@@ -310,7 +304,7 @@ func writeSchema(buf *bytes.Buffer, queryFields []*FieldDefinition, mutationFiel
 		buf.WriteByte('\n')
 		buf.WriteString("type Query {\n")
 		for _, field := range queryFields {
-			writeField(buf, field)
+			writeField(buf, field, md)
 		}
 		buf.WriteString("}\n")
 	}
@@ -320,7 +314,7 @@ func writeSchema(buf *bytes.Buffer, queryFields []*FieldDefinition, mutationFiel
 		buf.WriteByte('\n')
 		buf.WriteString("type Mutation {\n")
 		for _, field := range mutationFields {
-			writeField(buf, field)
+			writeField(buf, field, md)
 		}
 		buf.WriteString("}\n")
 	}
@@ -334,19 +328,34 @@ func writeSchema(buf *bytes.Buffer, queryFields []*FieldDefinition, mutationFiel
 			buf.WriteByte('\n')
 		}
 	}
-
 	// write input types
 	for _, t := range inputTypeDefs {
+		var ty *metadata.TypeDefinition
 		buf.WriteByte('\n')
-		if t.Docs != nil {
-			buf.WriteString("\"\"\"\n")
-			buf.WriteString(strings.Join(t.Docs.Lines, "\n"))
-			buf.WriteString("\n\"\"\"\n")
+		for key, tt := range md.Types {
+			if strings.HasSuffix(key, strings.TrimSuffix(t.Name, "Input")) {
+				if tt.Docs != nil {
+					buf.WriteString("\"\"\"\n")
+					buf.WriteString(strings.Join(tt.Docs.Lines, "\n"))
+					buf.WriteString("\n\"\"\"\n")
+				}
+				ty = tt
+				break
+			}
 		}
 		buf.WriteString("input ")
 		buf.WriteString(t.Name)
 		buf.WriteString(" {\n")
 		for _, f := range t.Fields {
+			if ty != nil {
+				for _, ff := range ty.Fields {
+					if ff.Docs != nil && ff.Name == f.Name {
+						buf.WriteString("  \"\"\"\n  ")
+						buf.WriteString(strings.Join(ff.Docs.Lines, "\n  "))
+						buf.WriteString("  \n  \"\"\"\n")
+					}
+				}
+			}
 			buf.WriteString("  ")
 			buf.WriteString(f.Name)
 			buf.WriteString(": ")
@@ -358,20 +367,31 @@ func writeSchema(buf *bytes.Buffer, queryFields []*FieldDefinition, mutationFiel
 
 	// write result types
 	for _, t := range resultTypeDefs {
+		var ty *metadata.TypeDefinition
 		buf.WriteByte('\n')
-		if t.Docs != nil {
-			buf.WriteString("\"\"\"\n")
-			buf.WriteString(strings.Join(t.Docs.Lines, "\n"))
-			buf.WriteString("\n\"\"\"\n")
+		for key, tt := range md.Types {
+			if strings.HasSuffix(key, strings.TrimSuffix(t.Name, "Input")) {
+				if tt.Docs != nil {
+					buf.WriteString("\"\"\"\n")
+					buf.WriteString(strings.Join(tt.Docs.Lines, "\n"))
+					buf.WriteString("\n\"\"\"\n")
+				}
+				ty = tt
+				break
+			}
 		}
 		buf.WriteString("type ")
 		buf.WriteString(t.Name)
 		buf.WriteString(" {\n")
 		for _, f := range t.Fields {
-			if f.Docs != nil {
-				buf.WriteString("  \"\"\"\n  ")
-				buf.WriteString(strings.Join(f.Docs.Lines, "\n  "))
-				buf.WriteString("  \n  \"\"\"\n")
+			if ty != nil {
+				for _, fv := range ty.Fields {
+					if fv.Docs != nil && fv.Name == f.Name {
+						buf.WriteString("  \"\"\"\n  ")
+						buf.WriteString(strings.Join(fv.Docs.Lines, "\n  "))
+						buf.WriteString("  \n  \"\"\"\n")
+					}
+				}
 			}
 			buf.WriteString("  ")
 			buf.WriteString(f.Name)
@@ -383,11 +403,13 @@ func writeSchema(buf *bytes.Buffer, queryFields []*FieldDefinition, mutationFiel
 	}
 }
 
-func writeField(buf *bytes.Buffer, field *FieldDefinition) {
-	if field.Docs != nil {
-		buf.WriteString("  \"\"\"\n  ")
-		buf.WriteString(strings.Join(field.Docs.Lines, "\n  "))
-		buf.WriteString("  \n  \"\"\"\n")
+func writeField(buf *bytes.Buffer, field *FieldDefinition, md *metadata.Metadata) {
+	for _, f := range md.FnExports {
+		if f.Docs != nil && f.Name == field.Name {
+			buf.WriteString("  \"\"\"\n  ")
+			buf.WriteString(strings.Join(f.Docs.Lines, "\n  "))
+			buf.WriteString("  \n  \"\"\"\n")
+		}
 	}
 	buf.WriteString("  ")
 	buf.WriteString(field.Name)
@@ -446,7 +468,7 @@ func convertResults(results []*metadata.Result, lti langsupport.LanguageTypeInfo
 		return convertType(results[0].Type, lti, typeDefs, false, false)
 	}
 
-	fields := make([]*metadata.Field, len(results))
+	fields := make([]*NameTypePair, len(results))
 	for i, r := range results {
 		name := r.Name
 		if name == "" {
@@ -458,7 +480,7 @@ func convertResults(results []*metadata.Result, lti langsupport.LanguageTypeInfo
 			return "", err
 		}
 
-		fields[i] = &metadata.Field{
+		fields[i] = &NameTypePair{
 			Name: name,
 			Type: typ,
 		}
@@ -468,7 +490,7 @@ func convertResults(results []*metadata.Result, lti langsupport.LanguageTypeInfo
 	return t, nil
 }
 
-func getTypeForFields(fields []*metadata.Field, typeDefs map[string]*TypeDefinition) string {
+func getTypeForFields(fields []*NameTypePair, typeDefs map[string]*TypeDefinition) string {
 	// see if an existing type already matches
 	for _, t := range typeDefs {
 		if len(t.Fields) != len(fields) {
@@ -500,22 +522,21 @@ func getTypeForFields(fields []*metadata.Field, typeDefs map[string]*TypeDefinit
 	return newType(name, fields, typeDefs)
 }
 
-func convertFields(fields []*metadata.Field, lti langsupport.LanguageTypeInfo, typeDefs map[string]*TypeDefinition, forInput bool) ([]*metadata.Field, error) {
+func convertFields(fields []*metadata.Field, lti langsupport.LanguageTypeInfo, typeDefs map[string]*TypeDefinition, forInput bool) ([]*NameTypePair, error) {
 	if len(fields) == 0 {
 		return nil, nil
 	}
 
-	results := make([]*metadata.Field, len(fields))
+	results := make([]*NameTypePair, len(fields))
 	for i, f := range fields {
 		t, err := convertType(f.Type, lti, typeDefs, true, forInput)
 		if err != nil {
 			return nil, err
 		}
 
-		results[i] = &metadata.Field{
+		results[i] = &NameTypePair{
 			Name: f.Name,
 			Type: t,
-			Docs: f.Docs,
 		}
 	}
 	return results, nil
@@ -660,9 +681,9 @@ func convertType(typ string, lti langsupport.LanguageTypeInfo, typeDefs map[stri
 			typeName += "Input"
 		}
 
-		newMapType(typeName, []*metadata.Field{
-			{Name: "key", Type: kt, Docs: nil},
-			{Name: "value", Type: vt, Docs: nil},
+		newMapType(typeName, []*NameTypePair{
+			{Name: "key", Type: kt},
+			{Name: "value", Type: vt},
 		}, typeDefs)
 
 		// The map is represented as a list of the pair type.
@@ -705,7 +726,7 @@ func newScalar(name string, typeDefs map[string]*TypeDefinition) string {
 	return newType(name, nil, typeDefs)
 }
 
-func newType(name string, fields []*metadata.Field, typeDefs map[string]*TypeDefinition) string {
+func newType(name string, fields []*NameTypePair, typeDefs map[string]*TypeDefinition) string {
 	if _, ok := typeDefs[name]; !ok {
 		typeDefs[name] = &TypeDefinition{
 			Name:   name,
@@ -715,7 +736,7 @@ func newType(name string, fields []*metadata.Field, typeDefs map[string]*TypeDef
 	return name
 }
 
-func newMapType(name string, fields []*metadata.Field, typeDefs map[string]*TypeDefinition) string {
+func newMapType(name string, fields []*NameTypePair, typeDefs map[string]*TypeDefinition) string {
 	if _, ok := typeDefs[name]; !ok {
 		typeDefs[name] = &TypeDefinition{
 			Name:      name,
