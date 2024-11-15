@@ -23,11 +23,8 @@ import (
 	"github.com/hypermodeinc/modus/lib/manifest"
 	"github.com/hypermodeinc/modus/runtime/app"
 	"github.com/hypermodeinc/modus/runtime/config"
-<<<<<<< HEAD
 	"github.com/hypermodeinc/modus/runtime/db"
-=======
 	"github.com/hypermodeinc/modus/runtime/explorer"
->>>>>>> main
 	"github.com/hypermodeinc/modus/runtime/graphql"
 	"github.com/hypermodeinc/modus/runtime/logger"
 	"github.com/hypermodeinc/modus/runtime/manifestdata"

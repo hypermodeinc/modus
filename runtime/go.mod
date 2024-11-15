@@ -35,6 +35,7 @@ require (
 	github.com/lestrrat-go/jwx v1.2.30
 	github.com/prometheus/client_golang v1.20.5
 	github.com/prometheus/common v0.60.1
+	github.com/rs/cors v1.6.0
 	github.com/rs/xid v1.6.0
 	github.com/rs/zerolog v1.33.0
 	github.com/spf13/cast v1.7.0
