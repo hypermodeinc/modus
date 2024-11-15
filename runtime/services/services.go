@@ -32,7 +32,7 @@ import (
 )
 
 // Starts any services that need to be started when the runtime starts.
-func Start(ctx context.Context) {
+func Start(ctx context.Context) context.Context {
 
 	// Note, we cannot start a Sentry transaction here, or it will also be used for the background services, post-initiation.
 
@@ -60,6 +60,7 @@ func Start(ctx context.Context) {
 	pluginmanager.Initialize(ctx)
 	graphql.Initialize()
 
+	return ctx
 }
 
 // Stops any services that need to be stopped when the runtime stops.

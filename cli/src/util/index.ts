@@ -9,11 +9,12 @@
 
 import chalk from "chalk";
 import ora, { Ora } from "ora";
-
+import dns from "node:dns";
 import path from "node:path";
 import { Readable } from "node:stream";
 import { finished } from "node:stream/promises";
 import { createWriteStream } from "node:fs";
+import * as http from "./http.js";
 import * as fs from "./fs.js";
 
 export async function withSpinner<T>(text: string, fn: (spinner: Ora) => Promise<T>): Promise<T> {
@@ -32,7 +33,7 @@ export async function withSpinner<T>(text: string, fn: (spinner: Ora) => Promise
 }
 
 export async function downloadFile(url: string, dest: string): Promise<boolean> {
-  const res = await fetch(url);
+  const res = await http.get(url, false);
   if (!res.ok) {
     console.log(chalk.red(" ERROR ") + chalk.dim(": Could not download file."));
     console.log(chalk.dim("   url : " + url));
@@ -56,16 +57,14 @@ let online: boolean | undefined;
 export async function isOnline(): Promise<boolean> {
   // Cache this, as we only need to check once per use of any CLI command that requires it.
   if (online !== undefined) return online;
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 1000);
+
   try {
-    const response = await fetch(`https://releases.hypermode.com/modus-latest.json`, { signal: controller.signal });
-    online = response.ok;
+    await dns.promises.lookup("releases.hypermode.com");
+    online = true;
   } catch {
     online = false;
-  } finally {
-    clearTimeout(timeout);
   }
+
   return online;
 }
 

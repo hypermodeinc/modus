@@ -11,6 +11,7 @@ package httpserver
 
 import (
 	"net/http"
+	"strings"
 	"sync"
 )
 
@@ -33,9 +34,26 @@ func (dm *dynamicMux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if handler, ok := dm.routes[r.URL.Path]; ok {
 		handler.ServeHTTP(w, r)
-	} else {
-		http.Error(w, "Endpoint not found", http.StatusNotFound)
+		return
 	}
+
+	path := strings.TrimSuffix(r.URL.Path, "/")
+	if path != r.URL.Path {
+		if _, ok := dm.routes[path]; ok {
+			http.Redirect(w, r, path, http.StatusMovedPermanently)
+			return
+		}
+	}
+
+	for route, handler := range dm.routes {
+		if len(route) > 1 && strings.HasSuffix(route, "/") &&
+			(strings.HasPrefix(r.URL.Path, route) || route == r.URL.Path+"/") {
+			handler.ServeHTTP(w, r)
+			return
+		}
+	}
+
+	http.Error(w, "Not Found", http.StatusNotFound)
 }
 
 func (dm *dynamicMux) ReplaceRoutes(routes map[string]http.Handler) {

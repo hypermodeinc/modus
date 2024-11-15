@@ -1,12 +1,28 @@
 # Change Log
 
-## UNRELEASED
+## UNRELEASED - Runtime
 
-- Add API Explorer stub to CLI [#554](https://github.com/hypermodeinc/modus/pull/554) [#556](https://github.com/hypermodeinc/modus/pull/556)
-- Add `secrets: inherit` when calling release-info workflow [#555](https://github.com/hypermodeinc/modus/pull/555)
-- Fix introspection query when only mutations exist [#558](https://github.com/hypermodeinc/modus/pull/558)
-- Make `modus --version` just print modus CLI's version [#563](https://github.com/hypermodeinc/modus/pull/563)
-- Refactor metadata dependencies [#564](https://github.com/hypermodeinc/modus/pull/564)
+- feat: Reduce logger output during development [#576](https://github.com/hypermodeinc/modus/pull/576)
+- chore: Trigger internal release pipeline at the end of the release-runtime workflow  [#577](https://github.com/hypermodeinc/modus/pull/577)
+- feat: Add API explorer to runtime [#578](https://github.com/hypermodeinc/modus/pull/578)
+
+## 2024-11-08 - CLI 0.13.8
+
+- fix: Make `modus --version` just print modus CLI's version [#563](https://github.com/hypermodeinc/modus/pull/563)
+- fix: implement retry and caching for CLI downloads [#571](https://github.com/hypermodeinc/modus/pull/571) [#574](https://github.com/hypermodeinc/modus/pull/574)
+
+## 2024-11-08 - Runtime 0.13.2
+
+- fix: Introspection query should succeed when only mutations exist [#558](https://github.com/hypermodeinc/modus/pull/558)
+- ci: Add `secrets: inherit` when calling release-info workflow [#555](https://github.com/hypermodeinc/modus/pull/555)
+- chore: Refactor metadata dependencies [#564](https://github.com/hypermodeinc/modus/pull/564)
+- chore: Use Go workspace to simplify project dependencies [#565](https://github.com/hypermodeinc/modus/pull/565)
+- fix: "WASM Host not found in context" error on shutdown [#566](https://github.com/hypermodeinc/modus/pull/566)
+- fix: `__typename` should succeed on root fields [#573](https://github.com/hypermodeinc/modus/pull/573)
+
+## 2024-11-06 - AssemblyScript SDK 0.13.4
+
+- fix: Don't empty previous contents of build dir [#568](https://github.com/hypermodeinc/modus/pull/568)
 
 ## 2024-11-04 - CLI 0.13.7
 
@@ -37,7 +53,7 @@
 
 - Fix issue with git info capture [#536](https://github.com/hypermodeinc/modus/pull/536)
 
-## 2024-10-30 - Runtime Version 0.13.1
+## 2024-10-30 - Runtime 0.13.1
 
 - Add env file callback support for auth key reloading [#520](https://github.com/hypermodeinc/modus/pull/520)
 - Fix timestamp parsing bug [#527](https://github.com/hypermodeinc/modus/pull/527)
@@ -46,23 +62,23 @@
 
 - Add env file to default project templates [#530](https://github.com/hypermodeinc/modus/pull/530)
 
-## 2024-10-30 - CLI Version 0.13.5
+## 2024-10-30 - CLI 0.13.5
 
 - Use `<adj>-<noun>` for default app name. [#528](https://github.com/hypermodeinc/modus/pull/528)
 
-## 2024-10-29 - CLI Version 0.13.4
+## 2024-10-29 - CLI 0.13.4
 
 - `modus build` should install SDK if not already installed [#524](https://github.com/hypermodeinc/modus/pull/524)
 
-## 2024-10-29 - CLI Version 0.13.3
+## 2024-10-29 - CLI 0.13.3
 
 - Fix Go not found on first install [#522](https://github.com/hypermodeinc/modus/pull/522)
 
-## 2024-10-28 - CLI Version 0.13.2
+## 2024-10-28 - CLI 0.13.2
 
 - Fix CLI hang on Linux [#521](https://github.com/hypermodeinc/modus/pull/521)
 
-## 2024-10-28 - CLI Version 0.13.1
+## 2024-10-28 - CLI 0.13.1
 
 - Fix issues with interactive CLI prompts [#517](https://github.com/hypermodeinc/modus/pull/517)
 

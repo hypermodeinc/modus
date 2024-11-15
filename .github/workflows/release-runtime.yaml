@@ -38,6 +38,13 @@ jobs:
           MACOS_NOTARY_ISSUER_ID: "${{ secrets.MACOS_NOTARY_ISSUER_ID }}"
           MACOS_NOTARY_KEY_ID: "${{ secrets.MACOS_NOTARY_KEY_ID }}"
           MACOS_NOTARY_KEY: "${{ secrets.MACOS_NOTARY_KEY }}"
+      - name: Trigger event on hypermodeinc/hyp-cluster
+        uses: peter-evans/repository-dispatch@v3
+        with:
+          token: ${{ secrets.REPO_DISPATCH_TOKEN }}
+          repository: hypermodeinc/hyp-cluster
+          event-type: release
+          client-payload: '{"repo": "${{ github.repository }}", "tag": "${{ github.ref_name }}"}'
   release-info:
     needs: release
     name: Generate Release Info

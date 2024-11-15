@@ -9,6 +9,7 @@
 
 import semver from "semver";
 import path from "node:path";
+import * as http from "./http.js";
 import * as fs from "./fs.js";
 import * as globals from "../custom/globals.js";
 
@@ -27,44 +28,83 @@ export function isPrerelease(version: string): boolean {
   return !!semver.prerelease(version);
 }
 
-export async function fetchFromModusLatest(): Promise<{ [key: string]: string }> {
-  const response = await fetch(`https://releases.hypermode.com/modus-latest.json`, {});
+const versionData: {
+  latest?: { [key: string]: string };
+  preview?: { [key: string]: string };
+  all?: { [key: string]: string[] };
+  allPreview?: { [key: string]: string[] };
+} = {};
+
+export async function fetchModusLatest() {
+  if (versionData.latest) return versionData.latest;
+
+  const response = await http.get(`https://releases.hypermode.com/modus-latest.json`);
   if (!response.ok) {
-    throw new Error(`Error fetching latest SDK version: ${response.statusText}`);
+    throw new Error(`Error fetching latest SDK versions: ${response.statusText}`);
   }
 
-  return await response.json();
-}
-
-export async function fetchFromModusPreview(): Promise<{ [key: string]: string }> {
-  const response = await fetch(`https://releases.hypermode.com/modus-preview.json`, {});
-  if (!response.ok) {
-    throw new Error(`Error fetching latest SDK version: ${response.statusText}`);
+  const data = (await response.json()) as { [key: string]: string };
+  if (!data) {
+    throw new Error(`Error fetching latest SDK versions: response was empty`);
   }
 
-  return await response.json();
+  versionData.latest = data;
+  return data;
 }
 
-export async function fetchFromModusAll(): Promise<{ [key: string]: string[] }> {
-  const response = await fetch(`https://releases.hypermode.com/modus-all.json`, {});
+export async function fetchModusPreview() {
+  if (versionData.preview) return versionData.preview;
+
+  const response = await http.get(`https://releases.hypermode.com/modus-preview.json`);
+  if (!response.ok) {
+    throw new Error(`Error fetching latest preview SDK versions: ${response.statusText}`);
+  }
+
+  const data = (await response.json()) as { [key: string]: string };
+  if (!data) {
+    throw new Error(`Error fetching latest preview SDK versions: response was empty`);
+  }
+
+  versionData.preview = data;
+  return data;
+}
+
+export async function fetchModusAll() {
+  if (versionData.all) return versionData.all;
+
+  const response = await http.get(`https://releases.hypermode.com/modus-all.json`);
   if (!response.ok) {
     throw new Error(`Error fetching all SDK versions: ${response.statusText}`);
   }
 
-  return await response.json();
-}
-
-export async function fetchFromModusPreviewAll(): Promise<{ [key: string]: string[] }> {
-  const response = await fetch(`https://releases.hypermode.com/modus-preview-all.json`, {});
-  if (!response.ok) {
-    throw new Error(`Error fetching all SDK versions: ${response.statusText}`);
+  const data = (await response.json()) as { [key: string]: string[] };
+  if (!data) {
+    throw new Error(`Error fetching all SDK versions: response was empty`);
   }
 
-  return await response.json();
+  versionData.all = data;
+  return data;
+}
+
+export async function fetchModusPreviewAll() {
+  if (versionData.allPreview) return versionData.allPreview;
+
+  const response = await http.get(`https://releases.hypermode.com/modus-preview-all.json`);
+  if (!response.ok) {
+    throw new Error(`Error fetching all preview SDK versions: ${response.statusText}`);
+  }
+
+  const data = (await response.json()) as { [key: string]: string[] };
+  if (!data) {
+    throw new Error(`Error fetching all preview SDK versions: response was empty`);
+  }
+
+  versionData.allPreview = data;
+  return data;
 }
 
 export async function fetchItemVersionsFromModusAll(item: string): Promise<string[]> {
-  const data = await fetchFromModusAll();
+  const data = await fetchModusAll();
 
   if (item.endsWith("/")) {
     item = item.slice(0, -1);
@@ -79,7 +119,7 @@ export async function fetchItemVersionsFromModusAll(item: string): Promise<strin
 }
 
 export async function fetchItemVersionsFromModusPreviewAll(item: string): Promise<string[]> {
-  const data = await fetchFromModusPreviewAll();
+  const data = await fetchModusPreviewAll();
 
   if (item.endsWith("/")) {
     item = item.slice(0, -1);
@@ -94,19 +134,19 @@ export async function fetchItemVersionsFromModusPreviewAll(item: string): Promis
 }
 
 export async function getLatestSdkVersion(sdk: globals.SDK, includePrerelease: boolean): Promise<string | undefined> {
-  const data = includePrerelease ? await fetchFromModusPreview() : await fetchFromModusLatest();
+  const data = includePrerelease ? await fetchModusPreview() : await fetchModusLatest();
   const version = data["sdk/" + sdk.toLowerCase()];
   return version ? version : undefined;
 }
 
 export async function getLatestRuntimeVersion(includePrerelease: boolean): Promise<string | undefined> {
-  const data = includePrerelease ? await fetchFromModusPreview() : await fetchFromModusLatest();
+  const data = includePrerelease ? await fetchModusPreview() : await fetchModusLatest();
   const version = data["runtime"];
   return version ? version : undefined;
 }
 
 export async function getLatestCliVersion(includePrerelease: boolean): Promise<string | undefined> {
-  const data = includePrerelease ? await fetchFromModusPreview() : await fetchFromModusLatest();
+  const data = includePrerelease ? await fetchModusPreview() : await fetchModusLatest();
   const version = data["cli"];
   return version ? version : undefined;
 }

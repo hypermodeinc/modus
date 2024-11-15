@@ -23,7 +23,11 @@ import (
 	"github.com/hypermodeinc/modus/lib/manifest"
 	"github.com/hypermodeinc/modus/runtime/app"
 	"github.com/hypermodeinc/modus/runtime/config"
+<<<<<<< HEAD
 	"github.com/hypermodeinc/modus/runtime/db"
+=======
+	"github.com/hypermodeinc/modus/runtime/explorer"
+>>>>>>> main
 	"github.com/hypermodeinc/modus/runtime/graphql"
 	"github.com/hypermodeinc/modus/runtime/logger"
 	"github.com/hypermodeinc/modus/runtime/manifestdata"
@@ -182,6 +186,12 @@ func GetMainHandler(options ...func(map[string]http.Handler)) http.Handler {
 		"/health":  healthHandler,
 		"/metrics": metrics.MetricsHandler,
 	}
+
+	if config.IsDevEnvironment() {
+		defaultRoutes["/explorer/"] = explorer.ExplorerHandler
+		defaultRoutes["/"] = http.RedirectHandler("/explorer/", http.StatusSeeOther)
+	}
+
 	for _, opt := range options {
 		opt(defaultRoutes)
 	}

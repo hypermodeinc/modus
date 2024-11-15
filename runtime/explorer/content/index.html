@@ -7,14 +7,22 @@
   </head>
   <body>
     <h1>Modus API Explorer</h1>
-    <p>This is the Modus API Explorer. You can use this tool to explore the API and test the endpoints.</p>
+    <p>
+      This is the Modus API Explorer. You can use this tool to explore the API
+      and test the endpoints.
+    </p>
     <p>Note, this works, but will soon be replaced by something much nicer!</p>
 
     <h2>Available Endpoints</h2>
     <select id="endpoint"></select>
 
     <h2>GraphQL Query</h2>
-    <textarea id="query" rows="10" cols="50" placeholder="Enter your GraphQL query here..."></textarea>
+    <textarea
+      id="query"
+      rows="10"
+      cols="50"
+      placeholder="Enter your GraphQL query here..."
+    ></textarea>
 
     <button id="submit">Submit Query</button>
 
@@ -23,15 +31,15 @@
 
     <script>
       async function populateEndpoints() {
-        const response = await fetch("/api/endpoints");
+        const response = await fetch("/explorer/api/endpoints");
         const endpoints = await response.json();
         const endpointSelect = document.getElementById("endpoint");
-        for (const [name, url] of Object.entries(endpoints)) {
+        endpoints.forEach((ep) => {
           const option = document.createElement("option");
-          option.value = url;
-          option.text = `${name}: ${url}`;
+          option.value = ep.path;
+          option.text = `${ep.name}: ${ep.path}`;
           endpointSelect.appendChild(option);
-        }
+        });
       }
 
       populateEndpoints();
