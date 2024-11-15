@@ -18,46 +18,42 @@ import (
 )
 
 var mdbConfig modusdb.Config
-var e *modusdb.Engine
-var mdbExt *modusdb.DB
-var mdbInt *modusdb.DB
+var db *modusdb.DB
+var mdbNsExt *modusdb.Namespace
+var mdbNsInt *modusdb.Namespace
 var dataDir = "data"
 
 func Init(ctx context.Context) {
 	var err error
 	mdbConfig = modusdb.NewDefaultConfig(dataDir)
-	e, err = modusdb.New(mdbConfig)
+	db, err = modusdb.New(mdbConfig)
 	if err != nil {
 		logger.Fatal(ctx).Err(err).Msg("Error initializing modusdb")
 	}
-	err = e.NewNamespace(ctx, 1)
+
+	mdbNsExt, err = db.GetNamespace(0)
+	if err != nil {
+		logger.Fatal(ctx).Err(err).Msg("Error initializing modusdb")
+	}
+
+	mdbNsInt, err = db.GetNamespace(1)
 	if err != nil {
 		logger.Fatal(ctx).Err(err).Msg("Error initializing modusdb namespace")
 	}
-
-	mdbExt, err = e.GetDB(0)
-	if err != nil {
-		logger.Fatal(ctx).Err(err).Msg("Error initializing modusdb")
-	}
-
-	mdbInt, err = e.GetDB(1)
-	if err != nil {
-		logger.Fatal(ctx).Err(err).Msg("Error initializing modusdb")
-	}
-	err = mdbInt.AlterSchema(ctx, internalSchema)
+	err = mdbNsInt.AlterSchema(ctx, internalSchema)
 	if err != nil {
 		logger.Fatal(ctx).Err(err).Msg("Error initializing modusdb schema")
 	}
 }
 
 func Close(ctx context.Context) {
-	if e != nil {
-		e.Close()
+	if db != nil {
+		db.Close()
 	}
 }
 
 func DropData(ctx context.Context) (string, error) {
-	err := mdbExt.DropData(ctx)
+	err := mdbNsExt.DropData(ctx)
 	if err != nil {
 		return "", err
 	}
@@ -65,7 +61,7 @@ func DropData(ctx context.Context) (string, error) {
 }
 
 func AlterSchema(ctx context.Context, schema string) (string, error) {
-	err := mdbExt.AlterSchema(ctx, schema)
+	err := mdbNsExt.AlterSchema(ctx, schema)
 	if err != nil {
 		return "", err
 	}
@@ -95,11 +91,11 @@ func ExtMutate(ctx context.Context, mutationReq MutationRequest) (map[string]uin
 
 		mus = append(mus, mu)
 	}
-	return mdbExt.Mutate(ctx, mus)
+	return mdbNsExt.Mutate(ctx, mus)
 }
 
 func ExtQuery(ctx context.Context, query string) (*Response, error) {
-	resp, err := mdbExt.Query(ctx, query)
+	resp, err := mdbNsExt.Query(ctx, query)
 	if err != nil {
 		return nil, err
 	}
@@ -156,11 +152,11 @@ func IntMutate(ctx context.Context, mutationReq MutationRequest) (map[string]uin
 
 		mus = append(mus, mu)
 	}
-	return mdbInt.Mutate(ctx, mus)
+	return mdbNsInt.Mutate(ctx, mus)
 }
 
 func IntQuery(ctx context.Context, query string) (*Response, error) {
-	resp, err := mdbInt.Query(ctx, query)
+	resp, err := mdbNsInt.Query(ctx, query)
 	if err != nil {
 		return nil, err
 	}

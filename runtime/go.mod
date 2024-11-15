@@ -8,15 +8,11 @@ require github.com/hypermodeinc/modus/lib/metadata v0.0.0
 
 require github.com/hypermodeinc/modus/lib/wasmextractor v0.0.0 // indirect
 
-require github.com/hypermodeinc/modusdb v0.0.0
-
 replace github.com/hypermodeinc/modus/lib/manifest => ../lib/manifest
 
 replace github.com/hypermodeinc/modus/lib/metadata => ../lib/metadata
 
 replace github.com/hypermodeinc/modus/lib/wasmextractor => ../lib/wasmextractor
-
-replace github.com/hypermodeinc/modusdb => ../../modusdb
 
 require (
 	github.com/OneOfOne/xxhash v1.2.8
@@ -38,6 +34,7 @@ require (
 	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/google/renameio v1.0.1
 	github.com/google/uuid v1.6.0
+	github.com/hypermodeinc/modusdb v0.0.0-20241115155527-f1869512f063
 	github.com/jackc/pgx/v5 v5.7.1
 	github.com/jensneuse/abstractlogger v0.0.4
 	github.com/joho/godotenv v1.5.1
@@ -96,7 +93,7 @@ require (
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.3.0 // indirect
 	github.com/dgraph-io/badger/v4 v4.3.1 // indirect
-	github.com/dgraph-io/dgraph/v24 v24.0.4-test.0.20241017132253-b6c6176683a7 // indirect
+	github.com/dgraph-io/dgraph/v24 v24.0.3-0.20241113214255-387a9c2634bc // indirect
 	github.com/dgraph-io/gqlgen v0.13.2 // indirect
 	github.com/dgraph-io/gqlparser/v2 v2.2.2 // indirect
 	github.com/dgraph-io/ristretto v1.0.0 // indirect
