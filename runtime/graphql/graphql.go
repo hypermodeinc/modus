@@ -16,6 +16,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/hypermodeinc/modus/lib/metadata"
 	"github.com/hypermodeinc/modus/runtime/config"
 	"github.com/hypermodeinc/modus/runtime/graphql/engine"
 	"github.com/hypermodeinc/modus/runtime/logger"
@@ -48,12 +49,12 @@ func Initialize() {
 			return nil
 		}
 
-		if len(plugins) > 1 {
-			// TODO: We should support multiple plugins in the future.
-			logger.Warn(ctx).Msg("Multiple plugins loaded.  Only the first plugin will be used.")
+		mds := make([]*metadata.Metadata, 0, len(plugins))
+		for _, plugin := range plugins {
+			mds = append(mds, plugin.Metadata)
 		}
 
-		return engine.Activate(ctx, plugins[0].Metadata)
+		return engine.Activate(ctx, mds)
 	})
 }
 

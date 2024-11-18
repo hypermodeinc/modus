@@ -12,6 +12,7 @@ package pluginmanager
 import (
 	"context"
 	"fmt"
+	"sync"
 
 	"github.com/hypermodeinc/modus/lib/metadata"
 	"github.com/hypermodeinc/modus/runtime/db"
@@ -22,6 +23,54 @@ import (
 	"github.com/hypermodeinc/modus/runtime/wasmhost"
 )
 
+type WasmTracker struct {
+	mu    sync.Mutex
+	files map[string]bool
+}
+
+func NewWasmTracker() *WasmTracker {
+	return &WasmTracker{
+		files: make(map[string]bool),
+	}
+}
+
+func (wt *WasmTracker) Add(filename string) {
+	wt.mu.Lock()
+	defer wt.mu.Unlock()
+	wt.files[filename] = true
+}
+
+func (wt *WasmTracker) Remove(filename string) {
+	wt.mu.Lock()
+	defer wt.mu.Unlock()
+	delete(wt.files, filename)
+}
+
+func (wt *WasmTracker) List() []string {
+	wt.mu.Lock()
+	defer wt.mu.Unlock()
+	var list []string
+	for filename := range wt.files {
+		list = append(list, filename)
+	}
+	return list
+}
+
+func (wt *WasmTracker) GetMds() []*metadata.Metadata {
+	wt.mu.Lock()
+	defer wt.mu.Unlock()
+	var mds []*metadata.Metadata
+	for filename := range wt.files {
+		p := globalPluginRegistry.GetByFile(filename)
+		if p != nil {
+			mds = append(mds, p.Metadata)
+		}
+	}
+	return mds
+}
+
+var wasmTracker = NewWasmTracker()
+
 func monitorPlugins(ctx context.Context) {
 	loadPluginFile := func(fi storage.FileInfo) error {
 		err := loadPlugin(ctx, fi.Name)
@@ -29,6 +78,9 @@ func monitorPlugins(ctx context.Context) {
 			logger.Err(ctx, err).
 				Str("filename", fi.Name).
 				Msg("Failed to load plugin.")
+		} else {
+			wasmTracker.Add(fi.Name)
+			err = triggerPluginLoaded(ctx, wasmTracker.GetMds())
 		}
 		return err
 	}
@@ -42,6 +94,9 @@ func monitorPlugins(ctx context.Context) {
 			logger.Err(ctx, err).
 				Str("filename", fi.Name).
 				Msg("Failed to unload plugin.")
+		} else {
+			wasmTracker.Remove(fi.Name)
+			err = triggerPluginLoaded(ctx, wasmTracker.GetMds())
 		}
 		return err
 	}
@@ -60,6 +115,7 @@ func loadPlugin(ctx context.Context, filename string) error {
 	defer span.Finish()
 
 	// Load the binary content of the plugin.
+
 	bytes, err := storage.GetFileContents(ctx, filename)
 	if err != nil {
 		return err
@@ -97,9 +153,6 @@ func loadPlugin(ctx context.Context, filename string) error {
 
 	// Log the details of the loaded plugin.
 	logPluginLoaded(ctx, plugin)
-
-	// Trigger the plugin loaded event.
-	err = triggerPluginLoaded(ctx, md)
 
 	return err
 }

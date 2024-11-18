@@ -169,7 +169,7 @@ func Test_GetGraphQLSchema_AssemblyScript(t *testing.T) {
 		WithField("name", "~lib/string/String").
 		WithField("values", "~lib/array/Array<~lib/string/String>")
 
-	result, err := GetGraphQLSchema(context.Background(), md)
+	result, err := GetGraphQLSchema(context.Background(), []*metadata.Metadata{md})
 
 	t.Log(result.Schema)
 

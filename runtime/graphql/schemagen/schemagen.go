@@ -30,49 +30,88 @@ type GraphQLSchema struct {
 	MapTypes          []string
 }
 
-func GetGraphQLSchema(ctx context.Context, md *metadata.Metadata) (*GraphQLSchema, error) {
+func GetGraphQLSchema(ctx context.Context, mds []*metadata.Metadata) (*GraphQLSchema, error) {
 	span, _ := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
 
-	lang, err := languages.GetLanguageForSDK(md.SDK)
-	if err != nil {
-		return nil, err
-	}
+	var allQueryFields []*FieldDefinition
+	var allMutationFields []*FieldDefinition
+	var allScalarTypes []string
+	var allInputTypes []*TypeDefinition
+	var allResultTypes []*TypeDefinition
+	var allMapTypes []string
 
-	lti := lang.TypeInfo()
-	inputTypeDefs, errors := transformTypes(md.Types, lti, true)
-	resultTypeDefs, errs := transformTypes(md.Types, lti, false)
-	errors = append(errors, errs...)
-	fieldsToFunctions, queryFields, mutationFields, errs := transformFunctions(md.FnExports, inputTypeDefs, resultTypeDefs, lti)
-	errors = append(errors, errs...)
+	var allFieldsToFunctions map[string]string
 
-	if len(errors) > 0 {
-		return nil, fmt.Errorf("failed to generate schema: %+v", errors)
-	}
+	var buf bytes.Buffer
 
-	queryFields = filterFields(queryFields)
-	mutationFields = filterFields(mutationFields)
-	allFields := append(queryFields, mutationFields...)
+	for _, md := range mds {
 
-	scalarTypes := extractCustomScalarTypes(inputTypeDefs, resultTypeDefs)
-	inputTypes := filterTypes(utils.MapValues(inputTypeDefs), allFields, true)
-	resultTypes := filterTypes(utils.MapValues(resultTypeDefs), allFields, false)
-
-	buf := bytes.Buffer{}
-	writeSchema(&buf, queryFields, mutationFields, scalarTypes, inputTypes, resultTypes)
-
-	mapTypes := make([]string, 0, len(resultTypeDefs))
-	for _, t := range resultTypeDefs {
-		if t.IsMapType {
-			mapTypes = append(mapTypes, t.Name)
+		lang, err := languages.GetLanguageForSDK(md.SDK)
+		if err != nil {
+			return nil, err
 		}
+
+		lti := lang.TypeInfo()
+		inputTypeDefs, errors := transformTypes(md.Types, lti, true)
+		resultTypeDefs, errs := transformTypes(md.Types, lti, false)
+		errors = append(errors, errs...)
+		fieldsToFunctions, queryFields, mutationFields, errs := transformFunctions(md.FnExports, inputTypeDefs, resultTypeDefs, lti)
+		errors = append(errors, errs...)
+
+		if len(errors) > 0 {
+			return nil, fmt.Errorf("failed to generate schema: %+v", errors)
+		}
+
+		queryFields = filterFields(queryFields)
+		mutationFields = filterFields(mutationFields)
+		allFields := append(queryFields, mutationFields...)
+
+		scalarTypes := extractCustomScalarTypes(inputTypeDefs, resultTypeDefs)
+		inputTypes := filterTypes(utils.MapValues(inputTypeDefs), allFields, true)
+		resultTypes := filterTypes(utils.MapValues(resultTypeDefs), allFields, false)
+
+		mapTypes := make([]string, 0, len(resultTypeDefs))
+		for _, t := range resultTypeDefs {
+			if t.IsMapType {
+				mapTypes = append(mapTypes, t.Name)
+			}
+		}
+
+		allQueryFields = append(allQueryFields, queryFields...)
+		allMutationFields = append(allMutationFields, mutationFields...)
+		allScalarTypes = mergeMapTypes(allScalarTypes, scalarTypes)
+		allInputTypes = append(allInputTypes, inputTypes...)
+		allResultTypes = append(allResultTypes, resultTypes...)
+		allMapTypes = mergeMapTypes(allMapTypes, mapTypes)
+
+		allFieldsToFunctions = mergeFieldsToFunctions(allFieldsToFunctions, fieldsToFunctions)
 	}
+
+	writeSchema(&buf, allQueryFields, allMutationFields, allScalarTypes, allInputTypes, allResultTypes)
 
 	return &GraphQLSchema{
 		Schema:            buf.String(),
-		FieldsToFunctions: fieldsToFunctions,
-		MapTypes:          mapTypes,
+		FieldsToFunctions: allFieldsToFunctions,
+		MapTypes:          allMapTypes,
 	}, nil
+}
+
+func mergeFieldsToFunctions(fields1, fields2 map[string]string) map[string]string {
+	combinedFields := make(map[string]string)
+	for k, v := range fields1 {
+		combinedFields[k] = v
+	}
+	for k, v := range fields2 {
+		combinedFields[k] = v
+	}
+	return combinedFields
+}
+
+func mergeMapTypes(mapTypes1, mapTypes2 []string) []string {
+	combinedMapTypes := append(mapTypes1, mapTypes2...)
+	// return utils.RemoveDuplicates(combinedMapTypes)
+	return combinedMapTypes
 }
 
 type TransformError struct {
