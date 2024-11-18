@@ -202,7 +202,7 @@ func GetMainHandler(options ...func(map[string]http.Handler)) http.Handler {
 				urlColor.Fprintln(os.Stderr, ep.url)
 
 				explorerURL := fmt.Sprintf("http://localhost:%d/explorer", config.Port)
-				titleColor.Fprintf(os.Stderr, "\nView your endpoint at: ")
+				titleColor.Fprintf(os.Stderr, "\nView endpoint: ")
 				urlColor.Fprintln(os.Stderr, explorerURL)
 
 			default:

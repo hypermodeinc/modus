@@ -44,7 +44,6 @@ function App() {
 
         const origin = window.location.origin;
         const ep = data.map((endpoint: { path: string }) => {
-          // If the path is relative (starts with /), prepend the origin
           return endpoint.path.startsWith("/")
             ? `${origin}${endpoint.path}`
             : endpoint.path;

@@ -9,8 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@hypermode/react-api-explorer": "1.0.0-alpha.1",
-    "graphiql": "^3.7.2",
+    "@hypermode/react-api-explorer": "1.0.0-alpha.4",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },
