@@ -62,7 +62,6 @@
     "gojs",
     "gomod",
     "goreleaser",
-    "graphiql",
     "graphqlclient",
     "graphqlerrors",
     "greq",
