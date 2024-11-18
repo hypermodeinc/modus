@@ -20,6 +20,7 @@ updates:
       - /runtime/languages/golang/testdata
       - /sdk/go
       - /sdk/go/examples/*
+      - /sdk/go/templates/*
       - /sdk/go/tools/modus-go-build
     schedule:
       interval: weekly
@@ -37,6 +38,7 @@ updates:
     directories:
       - /sdk/assemblyscript/src
       - /sdk/assemblyscript/examples/*
+      - /sdk/assemblyscript/templates/*
       - /runtime/languages/assemblyscript/testdata
     schedule:
       interval: weekly
