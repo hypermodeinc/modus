@@ -48,11 +48,15 @@ func setEngine(engine *engine.ExecutionEngine) {
 	instance = engine
 }
 
-func Activate(ctx context.Context, md *metadata.Metadata) error {
+func Activate(ctx context.Context, mds []*metadata.Metadata) error {
 	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
 
-	schema, cfg, err := generateSchema(ctx, md)
+	if len(mds) == 0 {
+		return fmt.Errorf("no metadata provided")
+	}
+
+	schema, cfg, err := generateSchema(ctx, mds)
 	if err != nil {
 		return err
 	}
@@ -71,11 +75,11 @@ func Activate(ctx context.Context, md *metadata.Metadata) error {
 	return nil
 }
 
-func generateSchema(ctx context.Context, md *metadata.Metadata) (*gql.Schema, *datasource.HypDSConfig, error) {
+func generateSchema(ctx context.Context, mds []*metadata.Metadata) (*gql.Schema, *datasource.HypDSConfig, error) {
 	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
 
-	generated, err := schemagen.GetGraphQLSchema(ctx, md)
+	generated, err := schemagen.GetGraphQLSchema(ctx, mds)
 	if err != nil {
 		return nil, nil, err
 	}
