@@ -6,9 +6,10 @@
 - chore: Trigger internal release pipeline at the end of the release-runtime workflow  [#577](https://github.com/hypermodeinc/modus/pull/577)
 - feat: Add API explorer to runtime [#578](https://github.com/hypermodeinc/modus/pull/578)
 
-## UNRELEASED - AssemblyScript SDK 0.13.5
+## 2024-11-18 - AssemblyScript SDK 0.13.5
 
 - Update json-as to `0.9.26` to fix stack overflow error [#586](https://github.com/hypermodeinc/modus/pull/586)
+- Updated various other dependencies
 
 ## 2024-11-08 - CLI 0.13.8
 
