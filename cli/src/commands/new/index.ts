@@ -15,6 +15,7 @@ import path from "node:path";
 
 import * as fs from "../../util/fs.js";
 import * as vi from "../../util/versioninfo.js";
+import * as http from "../../util/http.js";
 import { execFile, exec } from "../../util/cp.js";
 import { isOnline } from "../../util/index.js";
 import { MinGoVersion, MinNodeVersion, MinTinyGoVersion, SDK, parseSDK } from "../../custom/globals.js";
@@ -29,6 +30,9 @@ import { BaseCommand } from "../../baseCommand.js";
 import { isErrorWithName } from "../../util/errors.js";
 
 const MODUS_DEFAULT_TEMPLATE_NAME = "default";
+
+const SCARF_ENDPOINT = "";
+const SCARF_FILE_PACKAGE_NAME = "";
 
 export default class NewCommand extends BaseCommand {
   static description = "Create a new Modus app";
@@ -148,6 +152,7 @@ export default class NewCommand extends BaseCommand {
       }
 
       this.log();
+
       await this.createApp(name, dir, sdk, MODUS_DEFAULT_TEMPLATE_NAME, flags["no-prompt"], flags.prerelease, createGitRepo);
     } catch (err) {
       if (isErrorWithName(err) && err.name === "ExitPromptError") {
@@ -155,6 +160,22 @@ export default class NewCommand extends BaseCommand {
       } else {
         throw err;
       }
+    }
+  }
+
+  private async collectInstallInfo(sdkVersion: string) {
+    try {
+      // Skip metrics collection if environment variables are set
+      if (process.env.SCARF_NO_ANALYTICS !== "true" && process.env.DO_NOT_TRACK !== "true") {
+        const version = this.config.version;
+        const platform = os.platform();
+        const arch = os.arch();
+        const nodeVersion = process.version;
+
+        await http.get(`https://${SCARF_ENDPOINT}.scarf.sh/${SCARF_FILE_PACKAGE_NAME}?version=${version}&platform=${platform}&node=${nodeVersion}&arch=${arch}&sdk=${sdkVersion}`);
+      }
+    } catch (error) {
+      // Fail silently if an error occurs during the analytics call
     }
   }
 
@@ -287,6 +308,8 @@ export default class NewCommand extends BaseCommand {
 
     // Create the app
     this.log(chalk.dim(`Using ${sdkText} ${sdkVersion}`));
+
+    await this.collectInstallInfo(sdkVersion);
     await withSpinner(`Creating a new Modus ${sdk} app.`, async () => {
       if (!(await fs.exists(dir))) {
         await fs.mkdir(dir, { recursive: true });
