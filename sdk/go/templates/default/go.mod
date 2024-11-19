@@ -1,3 +1,3 @@
-module <% MODUS_APP_NAME %>
+module __MODUS_APP_NAME__
 
 go 1.23.0

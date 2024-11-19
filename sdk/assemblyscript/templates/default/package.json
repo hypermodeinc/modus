@@ -1,5 +1,5 @@
 {
-  "name": "<% MODUS_APP_NAME %>",
+  "name": "__MODUS_APP_NAME__",
   "private": true,
   "type": "module",
   "scripts": {

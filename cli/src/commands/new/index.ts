@@ -297,10 +297,10 @@ export default class NewCommand extends BaseCommand {
       // Replace placeholders in the template
       switch (sdk) {
         case SDK.AssemblyScript:
-          await replacePlaceHolder("MODUS_APP_NAME", path.join(dir, "package.json"), name);
+          await replacePlaceHolder("__MODUS_APP_NAME__", path.join(dir, "package.json"), name);
           break;
         case SDK.Go:
-          await replacePlaceHolder("MODUS_APP_NAME", path.join(dir, "go.mod"), name);
+          await replacePlaceHolder("__MODUS_APP_NAME__", path.join(dir, "go.mod"), name);
           break;
       }
 
@@ -345,7 +345,7 @@ export default class NewCommand extends BaseCommand {
 async function replacePlaceHolder(placeholder: string, filePath: string, content: string): Promise<void> {
   try {
     let fileContent = await fs.readFile(filePath, "utf8");
-    const regex = new RegExp(`<% ${placeholder} %>`, "g");
+    const regex = new RegExp(`${placeholder}`, "g");
     fileContent = fileContent.replace(regex, content);
     await fs.writeFile(filePath, fileContent, "utf8");
   } catch (error) {
