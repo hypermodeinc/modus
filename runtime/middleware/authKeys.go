@@ -88,8 +88,6 @@ func (ak *AuthKeys) worker(ctx context.Context) {
 			// refresh JWKS keys
 			keysStr := os.Getenv("MODUS_JWKS_ENDPOINTS")
 			if keysStr != "" {
-				timer.Reset(time.Duration(getJwksRefreshMinutes(ctx)) * time.Minute)
-			} else {
 				keys, err := jwksEndpointsJsonToKeys(ctx, keysStr)
 				if err != nil {
 					logger.Error(ctx).Err(err).Msg("Auth JWKS public keys deserializing error")
@@ -97,6 +95,7 @@ func (ak *AuthKeys) worker(ctx context.Context) {
 					ak.setJwksPublicKeys(keys)
 				}
 			}
+			timer.Reset(time.Duration(getJwksRefreshMinutes(ctx)) * time.Minute)
 		case <-ak.quit:
 			return
 		}
