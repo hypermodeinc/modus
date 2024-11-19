@@ -294,16 +294,6 @@ export default class NewCommand extends BaseCommand {
 
       await extract(templatesArchive, dir, "--strip-components=2", `templates/${template}`);
 
-      // Replace placeholders in the template
-      switch (sdk) {
-        case SDK.AssemblyScript:
-          await replacePlaceHolder("__MODUS_APP_NAME__", path.join(dir, "package.json"), name);
-          break;
-        case SDK.Go:
-          await replacePlaceHolder("__MODUS_APP_NAME__", path.join(dir, "go.mod"), name);
-          break;
-      }
-
       // Apply SDK-specific modifications
       const execOpts = { env: process.env, cwd: dir, shell: true };
       switch (sdk) {
@@ -312,6 +302,7 @@ export default class NewCommand extends BaseCommand {
           await execFile("npm", ["install"], execOpts);
           break;
         case SDK.Go:
+          await execFile("go", ["mod", "edit", "-module", name], execOpts);
           await execFile("go", ["mod", "download"], execOpts);
           break;
       }
@@ -339,18 +330,6 @@ export default class NewCommand extends BaseCommand {
   private abort() {
     this.log(chalk.dim("Aborted"));
     this.exit(1);
-  }
-}
-
-async function replacePlaceHolder(placeholder: string, filePath: string, content: string): Promise<void> {
-  try {
-    let fileContent = await fs.readFile(filePath, "utf8");
-    const regex = new RegExp(`${placeholder}`, "g");
-    fileContent = fileContent.replace(regex, content);
-    await fs.writeFile(filePath, fileContent, "utf8");
-  } catch (error) {
-    console.error(`Error replacing ${placeholder} in file ${filePath}:`, error);
-    throw error;
   }
 }
 
