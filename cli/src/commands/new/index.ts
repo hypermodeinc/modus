@@ -31,8 +31,7 @@ import { isErrorWithName } from "../../util/errors.js";
 
 const MODUS_DEFAULT_TEMPLATE_NAME = "default";
 
-const SCARF_ENDPOINT = "";
-const SCARF_FILE_PACKAGE_NAME = "";
+const SCARF_ENDPOINT = "hypermode.gateway";
 
 export default class NewCommand extends BaseCommand {
   static description = "Create a new Modus app";
@@ -163,16 +162,16 @@ export default class NewCommand extends BaseCommand {
     }
   }
 
-  private async collectInstallInfo(sdkVersion: string) {
+  private async collectInstallInfo(sdk: string) {
     try {
       // Skip metrics collection if environment variables are set
       if (process.env.SCARF_NO_ANALYTICS !== "true" && process.env.DO_NOT_TRACK !== "true") {
-        const version = this.config.version;
         const platform = os.platform();
         const arch = os.arch();
-        const nodeVersion = process.version;
+        // const version = this.config.version;
+        // const nodeVersion = process.version;
 
-        await http.get(`https://${SCARF_ENDPOINT}.scarf.sh/${SCARF_FILE_PACKAGE_NAME}?version=${version}&platform=${platform}&node=${nodeVersion}&arch=${arch}&sdk=${sdkVersion}`);
+        await http.get(`https://${SCARF_ENDPOINT}.scarf.sh/${platform}.${arch}.${sdk}`);
       }
     } catch (error) {
       // Fail silently if an error occurs during the analytics call
@@ -309,7 +308,7 @@ export default class NewCommand extends BaseCommand {
     // Create the app
     this.log(chalk.dim(`Using ${sdkText} ${sdkVersion}`));
 
-    await this.collectInstallInfo(sdkVersion);
+    await this.collectInstallInfo(sdk);
     await withSpinner(`Creating a new Modus ${sdk} app.`, async () => {
       if (!(await fs.exists(dir))) {
         await fs.mkdir(dir, { recursive: true });
