@@ -3,8 +3,9 @@
 ## UNRELEASED - Runtime
 
 - feat: Reduce logger output during development [#576](https://github.com/hypermodeinc/modus/pull/576)
-- chore: Trigger internal release pipeline at the end of the release-runtime workflow  [#577](https://github.com/hypermodeinc/modus/pull/577)
+- chore: Trigger internal release pipeline at the end of the release-runtime workflow [#577](https://github.com/hypermodeinc/modus/pull/577)
 - feat: Add API explorer to runtime [#578](https://github.com/hypermodeinc/modus/pull/578)
+- feat: Add API explorer component to runtime [#584](https://github.com/hypermodeinc/modus/pull/584)
 
 ## 2024-11-18 - AssemblyScript SDK 0.13.5
 
@@ -33,7 +34,7 @@
 
 - Automatically generate and push releases info to R2 bucket on every release [#526](https://github.com/hypermodeinc/modus/pull/526)
 - Consistent help + print enum options + validate SDK prereq [#542](https://github.com/hypermodeinc/modus/pull/542)
-  - Consistent padding in the help section 
+  - Consistent padding in the help section
   - `modus new`: Enum options need to print possible options
   - Validate SDK prereq immediately after choosing SDK
   - `modus sdk remove`: Use select prompt to allow selection

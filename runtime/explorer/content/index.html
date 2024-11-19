@@ -5,65 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Modus API Explorer</title>
   </head>
-  <body>
-    <h1>Modus API Explorer</h1>
-    <p>
-      This is the Modus API Explorer. You can use this tool to explore the API
-      and test the endpoints.
-    </p>
-    <p>Note, this works, but will soon be replaced by something much nicer!</p>
 
-    <h2>Available Endpoints</h2>
-    <select id="endpoint"></select>
-
-    <h2>GraphQL Query</h2>
-    <textarea
-      id="query"
-      rows="10"
-      cols="50"
-      placeholder="Enter your GraphQL query here..."
-    ></textarea>
-
-    <button id="submit">Submit Query</button>
-
-    <h2>Response</h2>
-    <textarea id="response" rows="10" cols="50" readonly></textarea>
-
-    <script>
-      async function populateEndpoints() {
-        const response = await fetch("/explorer/api/endpoints");
-        const endpoints = await response.json();
-        const endpointSelect = document.getElementById("endpoint");
-        endpoints.forEach((ep) => {
-          const option = document.createElement("option");
-          option.value = ep.path;
-          option.text = `${ep.name}: ${ep.path}`;
-          endpointSelect.appendChild(option);
-        });
-      }
-
-      populateEndpoints();
-
-      document.getElementById("submit").addEventListener("click", async () => {
-        const endpoint = document.getElementById("endpoint").value;
-        const query = document.getElementById("query").value;
-        const responseTextarea = document.getElementById("response");
-
-        try {
-          const response = await fetch(endpoint, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ query }),
-          });
-
-          const result = await response.json();
-          responseTextarea.value = JSON.stringify(result, null, 2);
-        } catch (error) {
-          responseTextarea.value = `Error: ${error.message}`;
-        }
-      });
-    </script>
+  <body id="root">
+    <script type="module" src="./main.tsx"></script>
   </body>
 </html>

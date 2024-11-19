@@ -21,7 +21,7 @@ import (
 
 //go:embed content
 var content embed.FS
-var contentRoot, _ = fs.Sub(content, "content")
+var contentRoot, _ = fs.Sub(content, "content/dist")
 
 var ExplorerHandler = http.HandlerFunc(explorerHandler)
 
