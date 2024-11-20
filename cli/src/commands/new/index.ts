@@ -302,6 +302,7 @@ export default class NewCommand extends BaseCommand {
           await execFile("npm", ["install"], execOpts);
           break;
         case SDK.Go:
+          await execFile("go", ["mod", "edit", "-module", name], execOpts);
           await execFile("go", ["mod", "download"], execOpts);
           break;
       }

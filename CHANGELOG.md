@@ -7,6 +7,7 @@
 - feat: Add API explorer to runtime [#578](https://github.com/hypermodeinc/modus/pull/578)
 - feat: Add API explorer component to runtime [#584](https://github.com/hypermodeinc/modus/pull/584)
 - fix: logic for jwks endpoint unmarshalling was incorrect [#594](https://github.com/hypermodeinc/modus/pull/594)
+- feat: use user provided name for package.json and go.mod [#595](https://github.com/hypermodeinc/modus/pull/595)
 
 ## 2024-11-18 - AssemblyScript SDK 0.13.5
 
