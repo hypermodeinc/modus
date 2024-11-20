@@ -162,18 +162,18 @@ export default class NewCommand extends BaseCommand {
     }
   }
 
-  private async collectInstallInfo(sdk: string) {
+  private async collectInstallInfo(sdk: string, sdkVersion: string) {
     try {
       // Skip metrics collection if environment variables are set
       if (process.env.SCARF_NO_ANALYTICS !== "true" && process.env.DO_NOT_TRACK !== "true") {
+        const version = this.config.version;
         const platform = os.platform();
         const arch = os.arch();
-        // const version = this.config.version;
-        // const nodeVersion = process.version;
+        const nodeVersion = process.version;
 
-        await http.get(`https://${SCARF_ENDPOINT}.scarf.sh/${platform}.${arch}.${sdk}`);
+        await http.get(`https://${SCARF_ENDPOINT}.scarf.sh/${version}/${platform}/${arch}/${nodeVersion}/${sdk}/${sdkVersion}`);
       }
-    } catch (error) {
+    } catch (_error) {
       // Fail silently if an error occurs during the analytics call
     }
   }
@@ -245,7 +245,7 @@ export default class NewCommand extends BaseCommand {
     }
   }
 
-  private async createApp(name: string, dir: string, sdk: SDK, template: string, force: boolean, prerelease: boolean, createGitRepo: boolean) {
+  private async createApp(name: string, dir: string, sdk: SDK, template: string, _force: boolean, prerelease: boolean, createGitRepo: boolean) {
     const sdkText = `Modus ${sdk} SDK`;
 
     // Verify and/or install the Modus SDK
@@ -308,7 +308,7 @@ export default class NewCommand extends BaseCommand {
     // Create the app
     this.log(chalk.dim(`Using ${sdkText} ${sdkVersion}`));
 
-    await this.collectInstallInfo(sdk);
+    await this.collectInstallInfo(sdk, sdkVersion);
     await withSpinner(`Creating a new Modus ${sdk} app.`, async () => {
       if (!(await fs.exists(dir))) {
         await fs.mkdir(dir, { recursive: true });
