@@ -7,7 +7,11 @@
 - feat: Add API explorer to runtime [#578](https://github.com/hypermodeinc/modus/pull/578)
 - feat: Add API explorer component to runtime [#584](https://github.com/hypermodeinc/modus/pull/584)
 - fix: logic for jwks endpoint unmarshalling was incorrect [#594](https://github.com/hypermodeinc/modus/pull/594)
+
+## 2024-11-20 - CLI 0.13.9
+
 - feat: use user provided name for package.json and go.mod [#595](https://github.com/hypermodeinc/modus/pull/595)
+- feat: Add scarf to track installs and modus new [#596](https://github.com/hypermodeinc/modus/pull/596)
 
 ## 2024-11-18 - AssemblyScript SDK 0.13.5
 
