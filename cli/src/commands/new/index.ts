@@ -152,7 +152,7 @@ export default class NewCommand extends BaseCommand {
 
       this.log();
 
-      await this.createApp(name, dir, sdk, MODUS_DEFAULT_TEMPLATE_NAME, flags["no-prompt"], flags.prerelease, createGitRepo);
+      await this.createApp(name, dir, sdk, MODUS_DEFAULT_TEMPLATE_NAME, flags.prerelease, createGitRepo);
     } catch (err) {
       if (isErrorWithName(err) && err.name === "ExitPromptError") {
         this.abort();
@@ -245,7 +245,7 @@ export default class NewCommand extends BaseCommand {
     }
   }
 
-  private async createApp(name: string, dir: string, sdk: SDK, template: string, _force: boolean, prerelease: boolean, createGitRepo: boolean) {
+  private async createApp(name: string, dir: string, sdk: SDK, template: string, prerelease: boolean, createGitRepo: boolean) {
     const sdkText = `Modus ${sdk} SDK`;
 
     // Verify and/or install the Modus SDK
