@@ -3,8 +3,20 @@
 ## UNRELEASED - Runtime
 
 - feat: Reduce logger output during development [#576](https://github.com/hypermodeinc/modus/pull/576)
-- chore: Trigger internal release pipeline at the end of the release-runtime workflow  [#577](https://github.com/hypermodeinc/modus/pull/577)
+- chore: Trigger internal release pipeline at the end of the release-runtime workflow [#577](https://github.com/hypermodeinc/modus/pull/577)
 - feat: Add API explorer to runtime [#578](https://github.com/hypermodeinc/modus/pull/578)
+- feat: Add API explorer component to runtime [#584](https://github.com/hypermodeinc/modus/pull/584)
+- fix: logic for jwks endpoint unmarshalling was incorrect [#594](https://github.com/hypermodeinc/modus/pull/594)
+
+## 2024-11-20 - CLI 0.13.9
+
+- feat: use user provided name for package.json and go.mod [#595](https://github.com/hypermodeinc/modus/pull/595)
+- feat: Add scarf to track installs and modus new [#596](https://github.com/hypermodeinc/modus/pull/596)
+
+## 2024-11-18 - AssemblyScript SDK 0.13.5
+
+- Update json-as to `0.9.26` to fix stack overflow error [#586](https://github.com/hypermodeinc/modus/pull/586)
+- Updated various other dependencies
 
 ## 2024-11-08 - CLI 0.13.8
 
@@ -28,7 +40,7 @@
 
 - Automatically generate and push releases info to R2 bucket on every release [#526](https://github.com/hypermodeinc/modus/pull/526)
 - Consistent help + print enum options + validate SDK prereq [#542](https://github.com/hypermodeinc/modus/pull/542)
-  - Consistent padding in the help section 
+  - Consistent padding in the help section
   - `modus new`: Enum options need to print possible options
   - Validate SDK prereq immediately after choosing SDK
   - `modus sdk remove`: Use select prompt to allow selection

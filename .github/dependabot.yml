@@ -15,12 +15,12 @@ updates:
 
   - package-ecosystem: gomod
     directories:
-      - /
+      - /lib/*
       - /runtime
       - /runtime/languages/golang/testdata
       - /sdk/go
       - /sdk/go/examples/*
-      - /sdk/go/tools/modus-go-build
+      - /sdk/go/templates/*
     schedule:
       interval: weekly
       day: wednesday
@@ -35,9 +35,13 @@ updates:
   - package-ecosystem: npm
     versioning-strategy: increase
     directories:
+      - /cli
+      - /runtime/explorer/content
+      - /runtime/languages/assemblyscript/testdata
       - /sdk/assemblyscript/src
       - /sdk/assemblyscript/examples/*
-      - /runtime/languages/assemblyscript/testdata
+      - /sdk/assemblyscript/templates/*
+      - /tools/release-info
     schedule:
       interval: weekly
       day: wednesday
