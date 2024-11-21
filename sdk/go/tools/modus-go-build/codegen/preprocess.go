@@ -260,7 +260,10 @@ func writeFuncWrappers(b *bytes.Buffer, pkg *packages.Package, imports map[strin
 		if fn.Doc != nil {
 			var docStrings []string
 			for _, comment := range fn.Doc.List {
-				docStrings = append(docStrings, comment.Text)
+				txt := comment.Text
+				if strings.HasPrefix(txt, "// ") {
+					docStrings = append(docStrings, txt)
+				}
 			}
 			b.WriteString(strings.Join(docStrings, "\n"))
 			b.WriteString("\n")
