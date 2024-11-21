@@ -84,5 +84,8 @@
     "additionalVersionFlags": [
       "-v"
     ]
+  },
+  "scarfSettings": {
+    "allowTopLevel": true
   }
 }
