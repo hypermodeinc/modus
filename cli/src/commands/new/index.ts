@@ -171,7 +171,9 @@ export default class NewCommand extends BaseCommand {
         const arch = os.arch();
         const nodeVersion = process.version;
 
-        await http.get(`https://${SCARF_ENDPOINT}.scarf.sh/${version}/${platform}/${arch}/${nodeVersion}/${sdk}/${sdkVersion}`);
+        const variables: string[] = [version.toLowerCase(), platform.toLowerCase(), arch.toLowerCase(), nodeVersion.toLowerCase(), sdk.toLowerCase(), sdkVersion.toLowerCase()];
+
+        await http.get(`https://${SCARF_ENDPOINT}.scarf.sh/${variables.join("/")}`);
       }
     } catch (_error) {
       // Fail silently if an error occurs during the analytics call
