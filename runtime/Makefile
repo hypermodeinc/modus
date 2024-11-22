@@ -17,12 +17,16 @@ tidy:
 	go mod tidy -v
 	go fmt ./...
 
+.PHONY: build-explorer
+build-explorer:
+	cd explorer/content && npm install && npm run build
+
 .PHONY: build
-build:
+build: build-explorer
 	go build -o $(EXECUTABLE) -ldflags "-s -w -X github.com/hypermodeinc/modus/runtime/config.version=$(VERSION)" .
 
 .PHONY: run
-run:
+run: build-explorer
 	@ARGS="$(filter-out $@,$(MAKECMDGOALS))" && \
 	MODUS_ENV=dev go run . $$ARGS
 

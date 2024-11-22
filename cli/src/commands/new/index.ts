@@ -15,6 +15,7 @@ import path from "node:path";
 
 import * as fs from "../../util/fs.js";
 import * as vi from "../../util/versioninfo.js";
+import * as http from "../../util/http.js";
 import { execFile, exec } from "../../util/cp.js";
 import { isOnline } from "../../util/index.js";
 import { MinGoVersion, MinNodeVersion, MinTinyGoVersion, SDK, parseSDK } from "../../custom/globals.js";
@@ -29,6 +30,8 @@ import { BaseCommand } from "../../baseCommand.js";
 import { isErrorWithName } from "../../util/errors.js";
 
 const MODUS_DEFAULT_TEMPLATE_NAME = "default";
+
+const SCARF_ENDPOINT = "hypermode.gateway";
 
 export default class NewCommand extends BaseCommand {
   static description = "Create a new Modus app";
@@ -148,13 +151,32 @@ export default class NewCommand extends BaseCommand {
       }
 
       this.log();
-      await this.createApp(name, dir, sdk, MODUS_DEFAULT_TEMPLATE_NAME, flags["no-prompt"], flags.prerelease, createGitRepo);
+
+      await this.createApp(name, dir, sdk, MODUS_DEFAULT_TEMPLATE_NAME, flags.prerelease, createGitRepo);
     } catch (err) {
       if (isErrorWithName(err) && err.name === "ExitPromptError") {
         this.abort();
       } else {
         throw err;
       }
+    }
+  }
+
+  private async collectInstallInfo(sdk: string, sdkVersion: string) {
+    try {
+      // Skip metrics collection if environment variables are set
+      if (process.env.SCARF_NO_ANALYTICS !== "true" && process.env.DO_NOT_TRACK !== "true") {
+        const version = this.config.version;
+        const platform = os.platform();
+        const arch = os.arch();
+        const nodeVersion = process.version;
+
+        const variables: string[] = [version.toLowerCase(), platform.toLowerCase(), arch.toLowerCase(), nodeVersion.toLowerCase(), sdk.toLowerCase(), sdkVersion.toLowerCase()];
+
+        await http.get(`https://${SCARF_ENDPOINT}.scarf.sh/${variables.join("/")}`);
+      }
+    } catch (_error) {
+      // Fail silently if an error occurs during the analytics call
     }
   }
 
@@ -225,7 +247,7 @@ export default class NewCommand extends BaseCommand {
     }
   }
 
-  private async createApp(name: string, dir: string, sdk: SDK, template: string, force: boolean, prerelease: boolean, createGitRepo: boolean) {
+  private async createApp(name: string, dir: string, sdk: SDK, template: string, prerelease: boolean, createGitRepo: boolean) {
     const sdkText = `Modus ${sdk} SDK`;
 
     // Verify and/or install the Modus SDK
@@ -287,6 +309,8 @@ export default class NewCommand extends BaseCommand {
 
     // Create the app
     this.log(chalk.dim(`Using ${sdkText} ${sdkVersion}`));
+
+    await this.collectInstallInfo(sdk, sdkVersion);
     await withSpinner(`Creating a new Modus ${sdk} app.`, async () => {
       if (!(await fs.exists(dir))) {
         await fs.mkdir(dir, { recursive: true });
@@ -302,6 +326,7 @@ export default class NewCommand extends BaseCommand {
           await execFile("npm", ["install"], execOpts);
           break;
         case SDK.Go:
+          await execFile("go", ["mod", "edit", "-module", name], execOpts);
           await execFile("go", ["mod", "download"], execOpts);
           break;
       }

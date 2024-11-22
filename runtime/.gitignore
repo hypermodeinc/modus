@@ -2,3 +2,5 @@ modus_runtime
 runtime
 data
 internal_data
+node_modules
+dist

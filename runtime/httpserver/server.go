@@ -250,12 +250,21 @@ func GetMainHandler(options ...func(map[string]http.Handler)) http.Handler {
 				titleColor.Fprintln(os.Stderr, "Your local endpoint is ready!")
 				itemColor.Fprintf(os.Stderr, "• %s (%s): ", ep.apiType, ep.name)
 				urlColor.Fprintln(os.Stderr, ep.url)
+
+				explorerURL := fmt.Sprintf("http://localhost:%d/explorer", config.Port)
+				titleColor.Fprintf(os.Stderr, "\nView endpoint: ")
+				urlColor.Fprintln(os.Stderr, explorerURL)
+
 			default:
 				titleColor.Fprintln(os.Stderr, "Your local endpoints are ready!")
 				for _, ep := range endpoints {
 					itemColor.Fprintf(os.Stderr, "• %s (%s): ", ep.apiType, ep.name)
 					urlColor.Fprintln(os.Stderr, ep.url)
 				}
+
+				explorerURL := fmt.Sprintf("http://localhost:%d/explorer", config.Port)
+				titleColor.Fprintf(os.Stderr, "\nView your endpoints at: ")
+				urlColor.Fprintln(os.Stderr, explorerURL)
 			}
 
 			fmt.Fprintln(os.Stderr)

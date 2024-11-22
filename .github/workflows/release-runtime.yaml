@@ -20,6 +20,16 @@ jobs:
         with:
           fetch-depth: 0
           ref: "${{ github.ref_name }}"
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ">=22"
+      - name: Install API Explorer dependencies
+        working-directory: runtime/explorer/content
+        run: npm ci
+      - name: Build API Explorer
+        working-directory: runtime/explorer/content
+        run: npm run build
       - uses: actions/setup-go@v5
         with:
           go-version: 1.23
