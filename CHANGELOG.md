@@ -7,6 +7,7 @@
 - feat: Add API explorer to runtime [#578](https://github.com/hypermodeinc/modus/pull/578)
 - feat: Add API explorer component to runtime [#584](https://github.com/hypermodeinc/modus/pull/584)
 - fix: logic for jwks endpoint unmarshalling was incorrect [#594](https://github.com/hypermodeinc/modus/pull/594)
+- fix: API explorer inputs [#604](https://github.com/hypermodeinc/modus/pull/604)
 
 ## 2024-11-20 - CLI 0.13.9
 
