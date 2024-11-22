@@ -43,23 +43,20 @@ func GetGraphQLSchema(ctx context.Context, md *metadata.Metadata) (*GraphQLSchem
 	inputTypeDefs, errors := transformTypes(md.Types, lti, true)
 	resultTypeDefs, errs := transformTypes(md.Types, lti, false)
 	errors = append(errors, errs...)
-	fieldsToFunctions, queryFields, mutationFields, errs := transformFunctions(md.FnExports, inputTypeDefs, resultTypeDefs, lti)
+	root, errs := transformFunctions(md.FnExports, inputTypeDefs, resultTypeDefs, lti)
 	errors = append(errors, errs...)
 
 	if len(errors) > 0 {
 		return nil, fmt.Errorf("failed to generate schema: %+v", errors)
 	}
 
-	queryFields = filterFields(queryFields)
-	mutationFields = filterFields(mutationFields)
-	allFields := append(queryFields, mutationFields...)
-
+	allFields := root.AllFields()
 	scalarTypes := extractCustomScalarTypes(inputTypeDefs, resultTypeDefs)
 	inputTypes := filterTypes(utils.MapValues(inputTypeDefs), allFields, true)
 	resultTypes := filterTypes(utils.MapValues(resultTypeDefs), allFields, false)
 
 	buf := bytes.Buffer{}
-	writeSchema(&buf, queryFields, mutationFields, scalarTypes, inputTypes, resultTypes)
+	writeSchema(&buf, root, scalarTypes, inputTypes, resultTypes)
 
 	mapTypes := make([]string, 0, len(resultTypeDefs))
 	for _, t := range resultTypeDefs {
@@ -70,7 +67,7 @@ func GetGraphQLSchema(ctx context.Context, md *metadata.Metadata) (*GraphQLSchem
 
 	return &GraphQLSchema{
 		Schema:            buf.String(),
-		FieldsToFunctions: fieldsToFunctions,
+		FieldsToFunctions: root.FieldsToFunctions,
 		MapTypes:          mapTypes,
 	}, nil
 }
@@ -142,13 +139,22 @@ type ArgumentDefinition struct {
 	Default *any
 }
 
-// TODO: refactor for readability
+type RootObjects struct {
+	QueryFields       []*FieldDefinition
+	MutationFields    []*FieldDefinition
+	FieldsToFunctions map[string]string
+}
 
-func transformFunctions(functions metadata.FunctionMap, inputTypeDefs, resultTypeDefs map[string]*TypeDefinition, lti langsupport.LanguageTypeInfo) (map[string]string, []*FieldDefinition, []*FieldDefinition, []*TransformError) {
+func (r *RootObjects) AllFields() []*FieldDefinition {
+	return append(r.QueryFields, r.MutationFields...)
+}
+
+func transformFunctions(functions metadata.FunctionMap, inputTypeDefs, resultTypeDefs map[string]*TypeDefinition, lti langsupport.LanguageTypeInfo) (*RootObjects, []*TransformError) {
 	fieldsToFunctions := make(map[string]string, len(functions))
 	queryFields := make([]*FieldDefinition, 0, len(functions))
 	mutationFields := make([]*FieldDefinition, 0, len(functions))
 	errors := make([]*TransformError, 0)
+	filter := getFieldFilter()
 
 	fnNames := utils.MapKeys(functions)
 	sort.Strings(fnNames)
@@ -176,26 +182,22 @@ func transformFunctions(functions metadata.FunctionMap, inputTypeDefs, resultTyp
 			Type:      returnType,
 		}
 
-		if isMutation(fn.Name) {
-			mutationFields = append(mutationFields, field)
-		} else {
-			queryFields = append(queryFields, field)
+		if filter(field) {
+			if isMutation(fn.Name) {
+				mutationFields = append(mutationFields, field)
+			} else {
+				queryFields = append(queryFields, field)
+			}
 		}
 	}
 
-	return fieldsToFunctions, queryFields, mutationFields, errors
-}
-
-func filterFields(fields []*FieldDefinition) []*FieldDefinition {
-	filter := getFieldFilter()
-	results := make([]*FieldDefinition, 0, len(fields))
-	for _, f := range fields {
-		if filter(f) {
-			results = append(results, f)
-		}
+	results := &RootObjects{
+		QueryFields:       queryFields,
+		MutationFields:    mutationFields,
+		FieldsToFunctions: fieldsToFunctions,
 	}
 
-	return results
+	return results, errors
 }
 
 func filterTypes(types []*TypeDefinition, fields []*FieldDefinition, forInput bool) []*TypeDefinition {
@@ -273,16 +275,16 @@ func getBaseType(name string) string {
 	return name
 }
 
-func writeSchema(buf *bytes.Buffer, queryFields []*FieldDefinition, mutationFields []*FieldDefinition, scalarTypes []string, inputTypeDefs, resultTypeDefs []*TypeDefinition) {
+func writeSchema(buf *bytes.Buffer, root *RootObjects, scalarTypes []string, inputTypeDefs, resultTypeDefs []*TypeDefinition) {
 
 	// write header
 	buf.WriteString("# Modus GraphQL Schema (auto-generated)\n")
 
 	// sort everything
-	slices.SortFunc(queryFields, func(a, b *FieldDefinition) int {
+	slices.SortFunc(root.QueryFields, func(a, b *FieldDefinition) int {
 		return cmp.Compare(strings.ToLower(a.Name), strings.ToLower(b.Name))
 	})
-	slices.SortFunc(mutationFields, func(a, b *FieldDefinition) int {
+	slices.SortFunc(root.MutationFields, func(a, b *FieldDefinition) int {
 		return cmp.Compare(strings.ToLower(a.Name), strings.ToLower(b.Name))
 	})
 	slices.SortFunc(scalarTypes, func(a, b string) int {
@@ -296,20 +298,20 @@ func writeSchema(buf *bytes.Buffer, queryFields []*FieldDefinition, mutationFiel
 	})
 
 	// write query object
-	if len(queryFields) > 0 {
+	if len(root.QueryFields) > 0 {
 		buf.WriteByte('\n')
 		buf.WriteString("type Query {\n")
-		for _, field := range queryFields {
+		for _, field := range root.QueryFields {
 			writeField(buf, field)
 		}
 		buf.WriteString("}\n")
 	}
 
 	// write mutation object
-	if len(mutationFields) > 0 {
+	if len(root.MutationFields) > 0 {
 		buf.WriteByte('\n')
 		buf.WriteString("type Mutation {\n")
-		for _, field := range mutationFields {
+		for _, field := range root.MutationFields {
 			writeField(buf, field)
 		}
 		buf.WriteString("}\n")
