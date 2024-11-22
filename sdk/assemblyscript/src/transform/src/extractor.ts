@@ -14,6 +14,7 @@ import {
   ClassDeclaration,
   CommentKind,
   CommentNode,
+  CommonFlags,
   ElementKind,
   Expression,
   FieldDeclaration,
@@ -27,6 +28,7 @@ import {
   Program,
   Property,
   Range,
+  SourceKind,
   StringLiteralExpression,
 } from "assemblyscript/dist/assemblyscript.js";
 import {
@@ -40,7 +42,6 @@ import {
   typeMap,
 } from "./types.js";
 import ModusTransform from "./index.js";
-import { Visitor } from "./visitor.js";
 
 export class Extractor {
   binaryen: typeof binaryen;
@@ -241,29 +242,27 @@ export class Extractor {
     return signature;
   }
   private getDocsFromFunction(signature: FunctionSignature) {
-    const visitor = new Visitor();
     let docs: Docs | null = null;
 
-    visitor.visitFunctionDeclaration = (node: FunctionDeclaration) => {
-      const source = node.range.source;
-      // Exported/Imported name may differ from real defined name
-      // TODO: Track renaming and aliasing of function identifiers
+    for (const source of this.program.sources.filter(v => v.sourceKind == SourceKind.UserEntry)) {
+      for (const node of source.statements.filter(v => v.kind == NodeKind.FunctionDeclaration && (<FunctionDeclaration>v).flags >= CommonFlags.Export) as FunctionDeclaration[]) {
+        const source = node.range.source;
+        if (node.flags <= CommonFlags.Import) continue;
+        if (node.name.text == signature.name) {
+          const nodeIndex = source.statements.indexOf(node);
+          const prevNode = source.statements[Math.max(nodeIndex - 1, 0)];
 
-      if (node.name.text == signature.name) {
-        const nodeIndex = source.statements.indexOf(node);
-        const prevNode = source.statements[Math.max(nodeIndex - 1, 0)];
+          const start = nodeIndex > 0 ? prevNode.range.end : 0;
+          const end = node.range.start;
 
-        const start = nodeIndex > 0 ? prevNode.range.end : 0;
-        const end = node.range.start;
-
-        const newRange = new Range(start, end);
-        newRange.source = source;
-        const commentNodes = this.parseComments(newRange);
-        if (!commentNodes.length) return;
-        docs = Docs.from(commentNodes);
+          const newRange = new Range(start, end);
+          newRange.source = source;
+          const commentNodes = this.parseComments(newRange);
+          if (!commentNodes.length) return;
+          docs = Docs.from(commentNodes);
+        }
       }
-    };
-    visitor.visit(this.program.sources);
+    }
     return docs;
   }
   private getTypeDocs(type: TypeDefinition): TypeDefinition {
