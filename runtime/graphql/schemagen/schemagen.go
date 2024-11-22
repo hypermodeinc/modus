@@ -65,9 +65,14 @@ func GetGraphQLSchema(ctx context.Context, md *metadata.Metadata) (*GraphQLSchem
 		}
 	}
 
+	fieldsToFunctions := make(map[string]string, len(allFields))
+	for _, f := range allFields {
+		fieldsToFunctions[f.Name] = f.Function
+	}
+
 	return &GraphQLSchema{
 		Schema:            buf.String(),
-		FieldsToFunctions: root.FieldsToFunctions,
+		FieldsToFunctions: fieldsToFunctions,
 		MapTypes:          mapTypes,
 	}, nil
 }
@@ -125,6 +130,7 @@ type FieldDefinition struct {
 	Name      string
 	Type      string
 	Arguments []*ArgumentDefinition
+	Function  string
 }
 
 type TypeDefinition struct {
@@ -140,9 +146,8 @@ type ArgumentDefinition struct {
 }
 
 type RootObjects struct {
-	QueryFields       []*FieldDefinition
-	MutationFields    []*FieldDefinition
-	FieldsToFunctions map[string]string
+	QueryFields    []*FieldDefinition
+	MutationFields []*FieldDefinition
 }
 
 func (r *RootObjects) AllFields() []*FieldDefinition {
@@ -150,7 +155,6 @@ func (r *RootObjects) AllFields() []*FieldDefinition {
 }
 
 func transformFunctions(functions metadata.FunctionMap, inputTypeDefs, resultTypeDefs map[string]*TypeDefinition, lti langsupport.LanguageTypeInfo) (*RootObjects, []*TransformError) {
-	fieldsToFunctions := make(map[string]string, len(functions))
 	queryFields := make([]*FieldDefinition, 0, len(functions))
 	mutationFields := make([]*FieldDefinition, 0, len(functions))
 	errors := make([]*TransformError, 0)
@@ -174,12 +178,12 @@ func transformFunctions(functions metadata.FunctionMap, inputTypeDefs, resultTyp
 		}
 
 		fieldName := getFieldName(fn.Name)
-		fieldsToFunctions[fieldName] = fn.Name
 
 		field := &FieldDefinition{
 			Name:      fieldName,
 			Arguments: args,
 			Type:      returnType,
+			Function:  fn.Name,
 		}
 
 		if filter(field) {
@@ -192,9 +196,8 @@ func transformFunctions(functions metadata.FunctionMap, inputTypeDefs, resultTyp
 	}
 
 	results := &RootObjects{
-		QueryFields:       queryFields,
-		MutationFields:    mutationFields,
-		FieldsToFunctions: fieldsToFunctions,
+		QueryFields:    queryFields,
+		MutationFields: mutationFields,
 	}
 
 	return results, errors
