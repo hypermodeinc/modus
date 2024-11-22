@@ -360,10 +360,10 @@ func Test_ConvertType_AssemblyScript(t *testing.T) {
 			}},
 			[]*TypeDefinition{{
 				Name: "User",
-				Fields: []*NameTypePair{
-					{"firstName", "String!"},
-					{"lastName", "String!"},
-					{"age", "Int!"},
+				Fields: []*FieldDefinition{
+					{Name: "firstName", Type: "String!"},
+					{Name: "lastName", Type: "String!"},
+					{Name: "age", Type: "Int!"},
 				},
 			}}},
 		{"assembly/test/User", true, "UserInput!",
@@ -377,10 +377,10 @@ func Test_ConvertType_AssemblyScript(t *testing.T) {
 			}},
 			[]*TypeDefinition{{
 				Name: "UserInput",
-				Fields: []*NameTypePair{
-					{"firstName", "String!"},
-					{"lastName", "String!"},
-					{"age", "Int!"},
+				Fields: []*FieldDefinition{
+					{Name: "firstName", Type: "String!"},
+					{Name: "lastName", Type: "String!"},
+					{Name: "age", Type: "Int!"},
 				},
 			}}},
 
@@ -398,66 +398,66 @@ func Test_ConvertType_AssemblyScript(t *testing.T) {
 		// Map types
 		{"~lib/map/Map<~lib/string/String,~lib/string/String>", false, "[StringStringPair!]!", nil, []*TypeDefinition{{
 			Name: "StringStringPair",
-			Fields: []*NameTypePair{
-				{"key", "String!"},
-				{"value", "String!"},
+			Fields: []*FieldDefinition{
+				{Name: "key", Type: "String!"},
+				{Name: "value", Type: "String!"},
 			},
 			IsMapType: true,
 		}}},
 		{"~lib/map/Map<~lib/string/String,~lib/string/String>", true, "[StringStringPairInput!]!", nil, []*TypeDefinition{{
 			Name: "StringStringPairInput",
-			Fields: []*NameTypePair{
-				{"key", "String!"},
-				{"value", "String!"},
+			Fields: []*FieldDefinition{
+				{Name: "key", Type: "String!"},
+				{Name: "value", Type: "String!"},
 			},
 			IsMapType: true,
 		}}},
 		{"~lib/map/Map<~lib/string/String,~lib/string/String|null>", false, "[StringNullableStringPair!]!", nil, []*TypeDefinition{{
 			Name: "StringNullableStringPair",
-			Fields: []*NameTypePair{
-				{"key", "String!"},
-				{"value", "String"},
+			Fields: []*FieldDefinition{
+				{Name: "key", Type: "String!"},
+				{Name: "value", Type: "String"},
 			},
 			IsMapType: true,
 		}}},
 		{"~lib/map/Map<~lib/string/String,~lib/string/String|null>", true, "[StringNullableStringPairInput!]!", nil, []*TypeDefinition{{
 			Name: "StringNullableStringPairInput",
-			Fields: []*NameTypePair{
-				{"key", "String!"},
-				{"value", "String"},
+			Fields: []*FieldDefinition{
+				{Name: "key", Type: "String!"},
+				{Name: "value", Type: "String"},
 			},
 			IsMapType: true,
 		}}},
 		{"~lib/map/Map<i32,~lib/string/String>", false, "[IntStringPair!]!", nil, []*TypeDefinition{{
 			Name: "IntStringPair",
-			Fields: []*NameTypePair{
-				{"key", "Int!"},
-				{"value", "String!"},
+			Fields: []*FieldDefinition{
+				{Name: "key", Type: "Int!"},
+				{Name: "value", Type: "String!"},
 			},
 			IsMapType: true,
 		}}},
 		{"~lib/map/Map<i32,~lib/string/String>", true, "[IntStringPairInput!]!", nil, []*TypeDefinition{{
 			Name: "IntStringPairInput",
-			Fields: []*NameTypePair{
-				{"key", "Int!"},
-				{"value", "String!"},
+			Fields: []*FieldDefinition{
+				{Name: "key", Type: "Int!"},
+				{Name: "value", Type: "String!"},
 			},
 			IsMapType: true,
 		}}},
 		{"~lib/map/Map<~lib/string/String,~lib/map/Map<~lib/string/String,f32>>", false, "[StringStringFloatPairListPair!]!", nil, []*TypeDefinition{
 			{
 				Name: "StringStringFloatPairListPair",
-				Fields: []*NameTypePair{
-					{"key", "String!"},
-					{"value", "[StringFloatPair!]!"},
+				Fields: []*FieldDefinition{
+					{Name: "key", Type: "String!"},
+					{Name: "value", Type: "[StringFloatPair!]!"},
 				},
 				IsMapType: true,
 			},
 			{
 				Name: "StringFloatPair",
-				Fields: []*NameTypePair{
-					{"key", "String!"},
-					{"value", "Float!"},
+				Fields: []*FieldDefinition{
+					{Name: "key", Type: "String!"},
+					{Name: "value", Type: "Float!"},
 				},
 				IsMapType: true,
 			},
@@ -465,17 +465,17 @@ func Test_ConvertType_AssemblyScript(t *testing.T) {
 		{"~lib/map/Map<~lib/string/String,~lib/map/Map<~lib/string/String,f32>>", true, "[StringStringFloatPairListPairInput!]!", nil, []*TypeDefinition{
 			{
 				Name: "StringStringFloatPairListPairInput",
-				Fields: []*NameTypePair{
-					{"key", "String!"},
-					{"value", "[StringFloatPairInput!]!"},
+				Fields: []*FieldDefinition{
+					{Name: "key", Type: "String!"},
+					{Name: "value", Type: "[StringFloatPairInput!]!"},
 				},
 				IsMapType: true,
 			},
 			{
 				Name: "StringFloatPairInput",
-				Fields: []*NameTypePair{
-					{"key", "String!"},
-					{"value", "Float!"},
+				Fields: []*FieldDefinition{
+					{Name: "key", Type: "String!"},
+					{Name: "value", Type: "Float!"},
 				},
 				IsMapType: true,
 			},
