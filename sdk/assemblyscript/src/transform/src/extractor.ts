@@ -244,8 +244,14 @@ export class Extractor {
   private getDocsFromFunction(signature: FunctionSignature) {
     let docs: Docs | null = null;
 
-    for (const source of this.program.sources.filter(v => v.sourceKind == SourceKind.UserEntry)) {
-      for (const node of source.statements.filter(v => v.kind == NodeKind.FunctionDeclaration && (<FunctionDeclaration>v).flags >= CommonFlags.Export) as FunctionDeclaration[]) {
+    for (const source of this.program.sources.filter(
+      (v) => v.sourceKind == SourceKind.UserEntry,
+    )) {
+      for (const node of source.statements.filter(
+        (v) =>
+          v.kind == NodeKind.FunctionDeclaration &&
+          (<FunctionDeclaration>v).flags >= CommonFlags.Export,
+      ) as FunctionDeclaration[]) {
         const source = node.range.source;
         if (node.flags <= CommonFlags.Import) continue;
         if (node.name.text == signature.name) {
