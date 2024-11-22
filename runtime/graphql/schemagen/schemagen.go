@@ -118,10 +118,16 @@ func transformTypes(types metadata.TypeMap, lti langsupport.LanguageTypeInfo, fo
 			continue
 		}
 
-		typeDefs[name] = &TypeDefinition{
+		typeDef := &TypeDefinition{
 			Name:   name,
 			Fields: fields,
 		}
+
+		if t.Docs != nil {
+			typeDef.DocLines = t.Docs.Lines
+		}
+
+		typeDefs[name] = typeDef
 	}
 	return typeDefs, errors
 }
@@ -131,12 +137,14 @@ type FieldDefinition struct {
 	Type      string
 	Arguments []*ArgumentDefinition
 	Function  string
+	DocLines  []string
 }
 
 type TypeDefinition struct {
 	Name      string
 	Fields    []*FieldDefinition
 	IsMapType bool
+	DocLines  []string
 }
 
 type ArgumentDefinition struct {
@@ -184,6 +192,10 @@ func transformFunctions(functions metadata.FunctionMap, inputTypeDefs, resultTyp
 			Arguments: args,
 			Type:      returnType,
 			Function:  fn.Name,
+		}
+
+		if fn.Docs != nil {
+			field.DocLines = fn.Docs.Lines
 		}
 
 		if filter(field) {
@@ -331,32 +343,32 @@ func writeSchema(buf *bytes.Buffer, root *RootObjects, scalarTypes []string, inp
 	}
 	// write input types
 	for _, t := range inputTypeDefs {
-		var ty *metadata.TypeDefinition
 		buf.WriteByte('\n')
-		for key, tt := range md.Types {
-			if strings.HasSuffix(key, strings.TrimSuffix(t.Name, "Input")) {
-				if tt.Docs != nil {
-					buf.WriteString("\"\"\"\n")
-					buf.WriteString(strings.Join(tt.Docs.Lines, "\n"))
-					buf.WriteString("\n\"\"\"\n")
-				}
-				ty = tt
-				break
+
+		if len(t.DocLines) > 0 {
+			buf.WriteString("\"\"\"\n")
+			for _, line := range t.DocLines {
+				buf.WriteString(line)
+				buf.WriteByte('\n')
 			}
+			buf.WriteString("\"\"\"\n")
 		}
+
 		buf.WriteString("input ")
 		buf.WriteString(t.Name)
 		buf.WriteString(" {\n")
 		for _, f := range t.Fields {
-			if ty != nil {
-				for _, ff := range ty.Fields {
-					if ff.Docs != nil && ff.Name == f.Name {
-						buf.WriteString("  \"\"\"\n  ")
-						buf.WriteString(strings.Join(ff.Docs.Lines, "\n  "))
-						buf.WriteString("  \n  \"\"\"\n")
-					}
+
+			if len(f.DocLines) > 0 {
+				buf.WriteString("  \"\"\"\n")
+				for _, line := range f.DocLines {
+					buf.WriteString("  ")
+					buf.WriteString(line)
+					buf.WriteByte('\n')
 				}
+				buf.WriteString("  \"\"\"\n")
 			}
+
 			buf.WriteString("  ")
 			buf.WriteString(f.Name)
 			buf.WriteString(": ")
@@ -368,32 +380,32 @@ func writeSchema(buf *bytes.Buffer, root *RootObjects, scalarTypes []string, inp
 
 	// write result types
 	for _, t := range resultTypeDefs {
-		var ty *metadata.TypeDefinition
 		buf.WriteByte('\n')
-		for key, tt := range md.Types {
-			if strings.HasSuffix(key, strings.TrimSuffix(t.Name, "Input")) {
-				if tt.Docs != nil {
-					buf.WriteString("\"\"\"\n")
-					buf.WriteString(strings.Join(tt.Docs.Lines, "\n"))
-					buf.WriteString("\n\"\"\"\n")
-				}
-				ty = tt
-				break
+
+		if len(t.DocLines) > 0 {
+			buf.WriteString("\"\"\"\n")
+			for _, line := range t.DocLines {
+				buf.WriteString(line)
+				buf.WriteByte('\n')
 			}
+			buf.WriteString("\"\"\"\n")
 		}
+
 		buf.WriteString("type ")
 		buf.WriteString(t.Name)
 		buf.WriteString(" {\n")
 		for _, f := range t.Fields {
-			if ty != nil {
-				for _, fv := range ty.Fields {
-					if fv.Docs != nil && fv.Name == f.Name {
-						buf.WriteString("  \"\"\"\n  ")
-						buf.WriteString(strings.Join(fv.Docs.Lines, "\n  "))
-						buf.WriteString("  \n  \"\"\"\n")
-					}
+
+			if len(f.DocLines) > 0 {
+				buf.WriteString("  \"\"\"\n")
+				for _, line := range f.DocLines {
+					buf.WriteString("  ")
+					buf.WriteString(line)
+					buf.WriteByte('\n')
 				}
+				buf.WriteString("  \"\"\"\n")
 			}
+
 			buf.WriteString("  ")
 			buf.WriteString(f.Name)
 			buf.WriteString(": ")
@@ -404,14 +416,18 @@ func writeSchema(buf *bytes.Buffer, root *RootObjects, scalarTypes []string, inp
 	}
 }
 
-func writeField(buf *bytes.Buffer, field *FieldDefinition, md *metadata.Metadata) {
-	for _, f := range md.FnExports {
-		if f.Docs != nil && f.Name == field.Name {
-			buf.WriteString("  \"\"\"\n  ")
-			buf.WriteString(strings.Join(f.Docs.Lines, "\n  "))
-			buf.WriteString("  \n  \"\"\"\n")
+func writeField(buf *bytes.Buffer, field *FieldDefinition) {
+
+	if len(field.DocLines) > 0 {
+		buf.WriteString("  \"\"\"\n")
+		for _, line := range field.DocLines {
+			buf.WriteString("  ")
+			buf.WriteString(line)
+			buf.WriteByte('\n')
 		}
+		buf.WriteString("  \"\"\"\n")
 	}
+
 	buf.WriteString("  ")
 	buf.WriteString(field.Name)
 	if len(field.Arguments) > 0 {
@@ -534,10 +550,17 @@ func convertFields(fields []*metadata.Field, lti langsupport.LanguageTypeInfo, t
 		if err != nil {
 			return nil, err
 		}
-		results[i] = &FieldDefinition{
+
+		fieldDef := &FieldDefinition{
 			Name: f.Name,
 			Type: t,
 		}
+
+		if f.Docs != nil {
+			fieldDef.DocLines = f.Docs.Lines
+		}
+
+		results[i] = fieldDef
 	}
 	return results, nil
 }
