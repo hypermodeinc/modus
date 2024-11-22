@@ -61,9 +61,14 @@ func transformFunc(name string, f *types.Func, pkgs map[string]*packages.Package
 	params := sig.Params()
 	results := sig.Results()
 
+	funcDecl := getFuncDeclaration(f, pkgs)
+	if funcDecl == nil {
+		return nil
+	}
+
 	ret := metadata.Function{
 		Name: name,
-		Docs: getFuncDocumentation(pkgs, f),
+		Docs: getDocs(funcDecl.Doc),
 	}
 
 	if params != nil {
