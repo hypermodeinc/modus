@@ -25,82 +25,30 @@ func transformStruct(name string, s *types.Struct, pkgs map[string]*packages.Pac
 		return nil
 	}
 
-	var structComments []string
+	structDecl, structType := getStructDeclarationAndType(name, pkgs)
+	if structDecl == nil || structType == nil {
+		return nil
+	}
 
-	name = name[strings.Index(name, ".")+1:]
+	structDocs := getDocs(structDecl.Doc)
+
 	fields := make([]*metadata.Field, s.NumFields())
-
 	for i := 0; i < s.NumFields(); i++ {
 		f := s.Field(i)
 
-		var fieldComments []string
+		fieldDocs := getDocs(structType.Fields.List[i].Doc)
 
-		for _, pkg := range pkgs {
-			for _, file := range pkg.Syntax {
-				for _, decl := range file.Decls {
-					if genDecl, ok := decl.(*ast.GenDecl); ok && genDecl.Tok == token.TYPE {
-						for _, spec := range genDecl.Specs {
-							if typeSpec, ok := spec.(*ast.TypeSpec); ok {
-								if typeSpec.Name.Name == name {
-									if structType, ok := typeSpec.Type.(*ast.StructType); ok {
-										if typeSpec.Doc != nil {
-											for _, comment := range typeSpec.Doc.List {
-												txt := comment.Text
-												if strings.HasPrefix(txt, "// ") {
-													structComments = append(structComments, strings.TrimPrefix(txt, "// "))
-												}
-											}
-										}
-										for _, field := range structType.Fields.List {
-											if field.Names != nil && field.Names[0].Name == f.Name() {
-												if field.Doc != nil {
-													for _, comment := range field.Doc.List {
-														txt := comment.Text
-														if strings.HasPrefix(txt, "// ") {
-															fieldComments = append(fieldComments, strings.TrimPrefix(txt, "// "))
-														}
-													}
-												}
-											}
-										}
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-
-		if len(fieldComments) == 0 {
-			fields[i] = &metadata.Field{
-				Name: utils.CamelCase(f.Name()),
-				Type: f.Type().String(),
-			}
-		} else {
-			fields[i] = &metadata.Field{
-				Name: utils.CamelCase(f.Name()),
-				Type: f.Type().String(),
-				Docs: &metadata.Docs{
-					Lines: fieldComments,
-				},
-			}
+		fields[i] = &metadata.Field{
+			Name: utils.CamelCase(f.Name()),
+			Type: f.Type().String(),
+			Docs: fieldDocs,
 		}
 	}
 
-	if len(structComments) == 0 {
-		return &metadata.TypeDefinition{
-			Name:   name,
-			Fields: fields,
-		}
-	} else {
-		return &metadata.TypeDefinition{
-			Name:   name,
-			Fields: fields,
-			Docs: &metadata.Docs{
-				Lines: structComments,
-			},
-		}
+	return &metadata.TypeDefinition{
+		Name:   name,
+		Fields: fields,
+		Docs:   structDocs,
 	}
 }
 
@@ -141,4 +89,57 @@ func transformFunc(name string, f *types.Func, pkgs map[string]*packages.Package
 	}
 
 	return &ret
+}
+
+func getStructDeclarationAndType(name string, pkgs map[string]*packages.Package) (*ast.GenDecl, *ast.StructType) {
+	objName := name[strings.LastIndex(name, ".")+1:]
+	pkgName := utils.GetPackageNamesForType(name)[0]
+	pkg := pkgs[pkgName]
+
+	for _, file := range pkg.Syntax {
+		for _, decl := range file.Decls {
+			if genDecl, ok := decl.(*ast.GenDecl); ok && genDecl.Tok == token.TYPE {
+				for _, spec := range genDecl.Specs {
+					if typeSpec, ok := spec.(*ast.TypeSpec); ok {
+						if typeSpec.Name.Name == objName {
+							if structType, ok := typeSpec.Type.(*ast.StructType); ok {
+								return genDecl, structType
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return nil, nil
+}
+
+func getDocs(comments *ast.CommentGroup) *metadata.Docs {
+	if comments == nil {
+		return nil
+	}
+
+	var lines []string
+	for _, comment := range comments.List {
+		txt := comment.Text
+		if strings.HasPrefix(txt, "// ") {
+			txt = strings.TrimPrefix(txt, "// ")
+			txt = strings.TrimSpace(txt)
+			lines = append(lines, txt)
+		} else if strings.HasPrefix(txt, "/*") {
+			txt = strings.TrimPrefix(txt, "/*")
+			txt = strings.TrimSuffix(txt, "*/")
+			txt = strings.TrimSpace(txt)
+			lines = append(lines, strings.Split(txt, "\n")...)
+		}
+	}
+
+	if len(lines) == 0 {
+		return nil
+	}
+
+	return &metadata.Docs{
+		Lines: lines,
+	}
 }
