@@ -1,6 +1,6 @@
 # Change Log
 
-## UNRELEASED - Runtime
+## 2024-11-23 - Runtime 0.14.0
 
 - feat: Apply in-code documentation to generated GraphQL [#519](https://github.com/hypermodeinc/modus/pull/519)
 - feat: Reduce logger output during development [#576](https://github.com/hypermodeinc/modus/pull/576)
@@ -9,6 +9,14 @@
 - feat: Add API explorer component to runtime [#584](https://github.com/hypermodeinc/modus/pull/584)
 - fix: logic for jwks endpoint unmarshalling was incorrect [#594](https://github.com/hypermodeinc/modus/pull/594)
 - chore: Refactoring schema generation [#605](https://github.com/hypermodeinc/modus/pull/605)
+
+## 2024-11-23 - AssemblyScript SDK 0.14.0
+
+- Capture jsdoc comments [#519](https://github.com/hypermodeinc/modus/pull/519
+
+## 2024-11-23 - Go SDK 0.14.0
+
+- Capture Go doc comments [#519](https://github.com/hypermodeinc/modus/pull/519
 
 ## 2024-11-20 - CLI 0.13.9
 
