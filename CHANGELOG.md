@@ -2,6 +2,7 @@
 
 ## UNRELEASED - Runtime
 
+- feat: Apply in-code documentation to generated GraphQL [#519](https://github.com/hypermodeinc/modus/pull/519)
 - feat: Reduce logger output during development [#576](https://github.com/hypermodeinc/modus/pull/576)
 - chore: Trigger internal release pipeline at the end of the release-runtime workflow [#577](https://github.com/hypermodeinc/modus/pull/577)
 - feat: Add API explorer to runtime [#578](https://github.com/hypermodeinc/modus/pull/578)
