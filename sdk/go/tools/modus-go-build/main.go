@@ -11,8 +11,10 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/hypermodeinc/modus/lib/manifest"
 	"github.com/hypermodeinc/modus/sdk/go/tools/modus-go-build/codegen"
@@ -20,17 +22,33 @@ import (
 	"github.com/hypermodeinc/modus/sdk/go/tools/modus-go-build/config"
 	"github.com/hypermodeinc/modus/sdk/go/tools/modus-go-build/metagen"
 	"github.com/hypermodeinc/modus/sdk/go/tools/modus-go-build/modinfo"
+	"github.com/hypermodeinc/modus/sdk/go/tools/modus-go-build/utils"
 	"github.com/hypermodeinc/modus/sdk/go/tools/modus-go-build/wasm"
 )
 
 func main() {
+
+	start := time.Now()
+	trace := utils.IsTraceModeEnabled()
+	if trace {
+		log.Println("Starting build process...")
+	}
+
 	config, err := config.GetConfig()
 	if err != nil {
 		exitWithError("Error", err)
 	}
 
+	if trace {
+		log.Println("Configuration loaded.")
+	}
+
 	if err := compiler.Validate(config); err != nil {
 		exitWithError("Error", err)
+	}
+
+	if trace {
+		log.Println("Configuration validated.")
 	}
 
 	mod, err := modinfo.CollectModuleInfo(config)
@@ -38,12 +56,24 @@ func main() {
 		exitWithError("Error", err)
 	}
 
+	if trace {
+		log.Println("Module info collected.")
+	}
+
 	if err := codegen.PreProcess(config); err != nil {
 		exitWithError("Error while pre-processing source files", err)
 	}
 
+	if trace {
+		log.Println("Pre-processing done.")
+	}
+
 	if err := compiler.Compile(config, false); err != nil {
 		exitWithError("Error building wasm", err)
+	}
+
+	if trace {
+		log.Println("Wasm compiled (first pass).")
 	}
 
 	meta, err := metagen.GenerateMetadata(config, mod)
@@ -51,20 +81,44 @@ func main() {
 		exitWithError("Error generating metadata", err)
 	}
 
+	if trace {
+		log.Println("Metadata generated.")
+	}
+
 	if err := codegen.PostProcess(config, meta); err != nil {
 		exitWithError("Error while post-processing source files", err)
+	}
+
+	if trace {
+		log.Println("Post-processing done.")
 	}
 
 	if err := compiler.Compile(config, true); err != nil {
 		exitWithError("Error building wasm", err)
 	}
 
+	if trace {
+		log.Println("Wasm compiled (second pass).")
+	}
+
 	if err := wasm.WriteMetadata(config, meta); err != nil {
 		exitWithError("Error writing metadata", err)
 	}
 
+	if trace {
+		log.Println("Metadata written.")
+	}
+
 	if err := validateAndCopyManifestToOutput(config); err != nil {
 		exitWithError("Manifest error", err)
+	}
+
+	if trace {
+		log.Println("Manifest copied.")
+	}
+
+	if trace {
+		log.Printf("Build completed in %.2f seconds.\n\n", time.Since(start).Seconds())
 	}
 
 	metagen.LogToConsole(meta)
