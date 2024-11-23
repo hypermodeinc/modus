@@ -10,6 +10,14 @@
 - fix: logic for jwks endpoint unmarshalling was incorrect [#594](https://github.com/hypermodeinc/modus/pull/594)
 - chore: Refactoring schema generation [#605](https://github.com/hypermodeinc/modus/pull/605)
 
+## 2024-11-23 - AssemblyScript SDK 0.14.1
+
+- Update sdk/runtime compatibility file [#610](https://github.com/hypermodeinc/modus/pull/610)
+
+## 2024-11-23 - Go SDK 0.14.1
+
+- Update sdk/runtime compatibility file [#610](https://github.com/hypermodeinc/modus/pull/610)
+
 ## 2024-11-23 - AssemblyScript SDK 0.14.0
 
 - Capture jsdoc comments [#519](https://github.com/hypermodeinc/modus/pull/519)
