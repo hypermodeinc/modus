@@ -12,11 +12,11 @@
 
 ## 2024-11-23 - AssemblyScript SDK 0.14.0
 
-- Capture jsdoc comments [#519](https://github.com/hypermodeinc/modus/pull/519
+- Capture jsdoc comments [#519](https://github.com/hypermodeinc/modus/pull/519)
 
 ## 2024-11-23 - Go SDK 0.14.0
 
-- Capture Go doc comments [#519](https://github.com/hypermodeinc/modus/pull/519
+- Capture Go doc comments [#519](https://github.com/hypermodeinc/modus/pull/519)
 
 ## 2024-11-20 - CLI 0.13.9
 
