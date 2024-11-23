@@ -7,9 +7,24 @@
 // This class is used in the examples.
 // It is separated just to demonstrated how to use multiple files.
 // Note, this is just one way to define a class in AssemblyScript.
+
+/**
+ * A simple object representing a person.
+ */
 export class Person {
+  /**
+   * The first name of the person.
+   */
   firstName: string;
+
+  /**
+   * The last name of the person.
+   */
   lastName: string;
+
+  /**
+   * The full name of the person.
+   */
   fullName: string;
 
   constructor(firstName: string, lastName: string) {
