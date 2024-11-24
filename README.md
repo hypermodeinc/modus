@@ -1,7 +1,7 @@
 <!-- markdownlint-disable first-line-heading -->
 <div align="center">
 
-  [![modus](https://github.com/user-attachments/assets/a0652fa6-6836-49f6-9c8c-c007cafab000)](https://github.com/hypermodeinc/modus)
+  [![modus](https://github.com/user-attachments/assets/1a6020bd-d041-4dd0-b4a9-ce01dc015b65)](https://github.com/hypermodeinc/modus)
 
   [![GitHub License](https://img.shields.io/github/license/hypermodeinc/modus)](https://github.com/hypermodeinc/modus?tab=Apache-2.0-1-ov-file#readme)
   [![chat](https://img.shields.io/discord/1267579648657850441)](https://discord.gg/NJQ4bJpffF)
