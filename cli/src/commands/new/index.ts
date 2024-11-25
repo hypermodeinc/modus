@@ -332,14 +332,7 @@ export default class NewCommand extends BaseCommand {
       }
 
       if (createGitRepo) {
-        await execFile("git", ["init"], execOpts);
-
-        // If branch name is not `main`, rename it to `main`
-        const { stdout: currentBranch } = await execFile("git", ["symbolic-ref", "--short", "HEAD"], execOpts);
-        if (currentBranch.trim() !== "main") {
-          await execFile("git", ["branch", "-m", "main"], execOpts);
-        }
-
+        await execFile("git", ["init", "-b", "main"], execOpts);
         await execFile("git", ["add", "."], execOpts);
         await execFile("git", ["commit", "-m", `"Initial Commit"`], execOpts);
       }
