@@ -1,5 +1,9 @@
 # Change Log
 
+## Unreleased
+
+- fix: use git commit with double quotes for Windows [#612](https://github.com/hypermodeinc/modus/pull/612)
+
 ## 2024-11-23 - Runtime 0.14.0
 
 - feat: Apply in-code documentation to generated GraphQL [#519](https://github.com/hypermodeinc/modus/pull/519)
