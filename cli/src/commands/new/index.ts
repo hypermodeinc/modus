@@ -341,7 +341,7 @@ export default class NewCommand extends BaseCommand {
         }
 
         await execFile("git", ["add", "."], execOpts);
-        await execFile("git", ["commit", "-m", "'Initial Commit'"], execOpts);
+        await execFile("git", ["commit", "-m", `"Initial Commit"`], execOpts);
       }
     });
 
