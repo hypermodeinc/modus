@@ -102,7 +102,13 @@ func Test_GetGraphQLSchema_Go(t *testing.T) {
 		WithParameter("c", "*[]int32").
 		WithParameter("d", "[]*testdata.Person").
 		WithParameter("e", "*[]testdata.Person").
-		WithResult("*testdata.Person")
+		WithResult("*testdata.Person").
+		WithDocs(metadata.Docs{
+			Lines: []string{
+				"This function tests that pointers are working correctly",
+			},
+		})
+
 	md.Types.AddType("*int32")
 	md.Types.AddType("[]*int32")
 	md.Types.AddType("*[]int32")
@@ -119,6 +125,7 @@ func Test_GetGraphQLSchema_Go(t *testing.T) {
 	md.FnExports.AddFunction("testObj1").
 		WithParameter("obj", "testdata.Obj1").
 		WithResult("testdata.Obj1")
+		
 	md.Types.AddType("testdata.Obj1").
 		WithField("id", "int32").
 		WithField("name", "string")
@@ -181,12 +188,27 @@ func Test_GetGraphQLSchema_Go(t *testing.T) {
 		WithField("addresses", "[]testdata.Address")
 
 	md.Types.AddType("testdata.Address").
-		WithField("street", "string").
+		WithField("street", "string", &metadata.Docs{
+			Lines: []string{
+				"Street that the user lives on",
+			},
+		}).
 		WithField("city", "string").
 		WithField("state", "string").
-		WithField("country", "string").
+		WithField("country", "string", &metadata.Docs{
+			Lines: []string{
+				"Country that the user is from",
+			},
+		}).
 		WithField("postalCode", "string").
-		WithField("location", "testdata.Coordinates")
+		WithField("location", "testdata.Coordinates").
+		WithDocs(metadata.Docs{
+			Lines: []string{
+				"Address represents a physical address.",
+				"Each field corresponds to a specific part of the address.",
+				"The location field stores geospatial coordinates.",
+			},
+		})
 
 	md.Types.AddType("testdata.Coordinates").
 		WithField("lat", "float64").
@@ -220,6 +242,9 @@ type Query {
   testObj4(obj: Obj4Input!): Void
   testObj5: [Obj5]
   testObj6: [Obj6!]
+  """
+  This function tests that pointers are working correctly
+  """
   testPointers(a: Int, b: [Int], c: [Int!], d: [PersonInput], e: [PersonInput!]): Person
   transform(items: [StringStringPairInput!]): [StringStringPair!]
 }
@@ -232,6 +257,11 @@ type Mutation {
 scalar Timestamp
 scalar Void
 
+"""
+Address represents a physical address.
+Each field corresponds to a specific part of the address.
+The location field stores geospatial coordinates.
+"""
 input AddressInput {
   street: String!
   city: String!
@@ -274,6 +304,11 @@ input StringStringPairInput {
   value: String!
 }
 
+"""
+Address represents a physical address.
+Each field corresponds to a specific part of the address.
+The location field stores geospatial coordinates.
+"""
 type Address {
   street: String!
   city: String!

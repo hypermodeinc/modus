@@ -62,6 +62,11 @@ func (f *Function) WithResult(typ string) *Function {
 	return f
 }
 
+func (f *Function) WithDocs(docs Docs) *Function {
+	f.Docs = &docs
+	return f
+}
+
 func (f *Function) WithNamedResult(name string, typ string) *Function {
 	r := &Result{
 		Name: name,
@@ -76,9 +81,17 @@ func (t *TypeDefinition) WithId(id uint32) *TypeDefinition {
 	return t
 }
 
-func (t *TypeDefinition) WithField(name string, typ string) *TypeDefinition {
+func (t *TypeDefinition) WithField(name string, typ string, docs ...*Docs) *TypeDefinition {
 	f := &Field{Name: name, Type: typ}
 	t.Fields = append(t.Fields, f)
+	if len(docs) > 0 && docs[0] != nil {
+		t.Docs = docs[0]
+	}
+	return t
+}
+
+func (t *TypeDefinition) WithDocs(docs Docs) *TypeDefinition {
+	t.Docs = &docs
 	return t
 }
 
