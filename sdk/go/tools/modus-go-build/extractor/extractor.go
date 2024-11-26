@@ -16,10 +16,9 @@ import (
 	"github.com/hypermodeinc/modus/sdk/go/tools/modus-go-build/config"
 	"github.com/hypermodeinc/modus/sdk/go/tools/modus-go-build/metadata"
 	"github.com/hypermodeinc/modus/sdk/go/tools/modus-go-build/utils"
-	"github.com/hypermodeinc/modus/sdk/go/tools/modus-go-build/wasm"
 )
 
-func CollectProgramInfo(config *config.Config, meta *metadata.Metadata, wasmFunctions *wasm.WasmFunctions) error {
+func CollectProgramInfo(config *config.Config, meta *metadata.Metadata) error {
 	pkgs, err := loadPackages(config.SourceDir)
 	if err != nil {
 		return err
@@ -28,17 +27,13 @@ func CollectProgramInfo(config *config.Config, meta *metadata.Metadata, wasmFunc
 	requiredTypes := make(map[string]types.Type)
 
 	for name, f := range getExportedFunctions(pkgs) {
-		if _, ok := wasmFunctions.Exports[name]; ok {
-			meta.FnExports[name] = transformFunc(name, f, pkgs)
-			findRequiredTypes(f, requiredTypes)
-		}
+		meta.FnExports[name] = transformFunc(name, f, pkgs)
+		findRequiredTypes(f, requiredTypes)
 	}
 
 	for name, f := range getImportedFunctions(pkgs) {
-		if _, ok := wasmFunctions.Imports[name]; ok {
-			meta.FnImports[name] = transformFunc(name, f, pkgs)
-			findRequiredTypes(f, requiredTypes)
-		}
+		meta.FnImports[name] = transformFunc(name, f, pkgs)
+		findRequiredTypes(f, requiredTypes)
 	}
 
 	// proxy imports overwrite regular imports

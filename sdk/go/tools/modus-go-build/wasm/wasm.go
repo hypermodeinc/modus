@@ -15,9 +15,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 
-	"github.com/hypermodeinc/modus/lib/wasmextractor"
 	"github.com/hypermodeinc/modus/sdk/go/tools/modus-go-build/config"
 	"github.com/hypermodeinc/modus/sdk/go/tools/modus-go-build/metadata"
 	"github.com/hypermodeinc/modus/sdk/go/tools/modus-go-build/utils"
@@ -117,49 +115,4 @@ func getWasmBytes(wasmFilePath string) ([]byte, error) {
 	}
 
 	return wasmBytes, nil
-}
-
-type WasmFunctions struct {
-	Exports map[string]any
-	Imports map[string]any
-}
-
-func GetWasmFunctions(wasmFilePath string) (*WasmFunctions, error) {
-	wasmBytes, err := getWasmBytes(wasmFilePath)
-	if err != nil {
-		return nil, err
-	}
-
-	info, err := wasmextractor.ExtractWasmInfo(wasmBytes)
-	if err != nil {
-		return nil, err
-	}
-
-	result := WasmFunctions{}
-
-	shouldIgnore := func(name string) bool {
-		ignorePrefixes := []string{"wasi", "env", "runtime", "syscall", "gojs"}
-		for _, prefix := range ignorePrefixes {
-			if strings.HasPrefix(name, prefix) {
-				return true
-			}
-		}
-		return false
-	}
-
-	result.Imports = make(map[string]any, len(info.Imports))
-	for _, item := range info.Imports {
-		if item.Kind == wasmextractor.WasmFunction && !shouldIgnore(item.Name) {
-			result.Imports[item.Name] = nil
-		}
-	}
-
-	result.Exports = make(map[string]any, len(info.Exports))
-	for _, item := range info.Exports {
-		if item.Kind == wasmextractor.WasmFunction && !shouldIgnore(item.Name) {
-			result.Exports[item.Name] = nil
-		}
-	}
-
-	return &result, nil
 }

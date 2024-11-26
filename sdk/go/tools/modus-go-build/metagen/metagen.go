@@ -12,7 +12,6 @@ package metagen
 import (
 	"fmt"
 	"path"
-	"path/filepath"
 
 	"os"
 
@@ -21,7 +20,6 @@ import (
 	"github.com/hypermodeinc/modus/sdk/go/tools/modus-go-build/gitinfo"
 	"github.com/hypermodeinc/modus/sdk/go/tools/modus-go-build/metadata"
 	"github.com/hypermodeinc/modus/sdk/go/tools/modus-go-build/modinfo"
-	"github.com/hypermodeinc/modus/sdk/go/tools/modus-go-build/wasm"
 )
 
 const sdkName = "modus-sdk-go"
@@ -40,13 +38,7 @@ func GenerateMetadata(config *config.Config, mod *modinfo.ModuleInfo) (*metadata
 		meta.SDK += "@" + mod.ModusSDKVersion.String()
 	}
 
-	wasmFilePath := filepath.Join(config.OutputDir, config.WasmFileName)
-	wasmFunctions, err := wasm.GetWasmFunctions(wasmFilePath)
-	if err != nil {
-		return nil, fmt.Errorf("error reading wasm functions: %w", err)
-	}
-
-	if err := extractor.CollectProgramInfo(config, meta, wasmFunctions); err != nil {
+	if err := extractor.CollectProgramInfo(config, meta); err != nil {
 		return nil, fmt.Errorf("error collecting program info: %w", err)
 	}
 
