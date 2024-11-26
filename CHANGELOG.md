@@ -1,5 +1,9 @@
 # Change Log
 
+## 2024-11-23 - Go SDK 0.14.2
+
+- fix: Reduce Go build times [#615](https://github.com/hypermodeinc/modus/pull/615)
+
 ## 2024-11-25 - CLI 0.13.10
 
 - fix: modus new rename branch to main if not [#613](https://github.com/hypermodeinc/modus/pull/613)
