@@ -1,6 +1,6 @@
 # Change Log
 
-## 2024-11-23 - Go SDK 0.14.2
+## 2024-11-25 - Go SDK 0.14.2
 
 - fix: Reduce Go build times [#615](https://github.com/hypermodeinc/modus/pull/615)
 
