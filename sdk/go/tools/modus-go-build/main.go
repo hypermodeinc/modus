@@ -68,14 +68,6 @@ func main() {
 		log.Println("Pre-processing done.")
 	}
 
-	if err := compiler.Compile(config, false); err != nil {
-		exitWithError("Error building wasm", err)
-	}
-
-	if trace {
-		log.Println("Wasm compiled (first pass).")
-	}
-
 	meta, err := metagen.GenerateMetadata(config, mod)
 	if err != nil {
 		exitWithError("Error generating metadata", err)
@@ -93,7 +85,7 @@ func main() {
 		log.Println("Post-processing done.")
 	}
 
-	if err := compiler.Compile(config, true); err != nil {
+	if err := compiler.Compile(config); err != nil {
 		exitWithError("Error building wasm", err)
 	}
 
