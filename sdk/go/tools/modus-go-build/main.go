@@ -90,7 +90,7 @@ func main() {
 	}
 
 	if trace {
-		log.Println("Wasm compiled (second pass).")
+		log.Println("Wasm compiled.")
 	}
 
 	if err := wasm.WriteMetadata(config, meta); err != nil {
