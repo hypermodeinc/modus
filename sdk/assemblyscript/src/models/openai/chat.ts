@@ -594,7 +594,7 @@ export class TopLogprobsContent {
  * A message object that can be sent to the chat model.
  */
 @json
-abstract class Message {
+export abstract class Message {
   /**
    * Creates a new message object.
    *
