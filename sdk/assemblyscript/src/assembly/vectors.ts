@@ -373,5 +373,5 @@ export function euclidianDistance<T extends number>(a: T[], b: T[]): f64 {
   for (let i = 0; i < a.length; i++) {
     sum += (a[i] - b[i]) ** 2;
   }
-  return sqrt<f64>(sum) as T;
+  return sqrt<f64>(sum);
 }

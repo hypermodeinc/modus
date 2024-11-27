@@ -208,13 +208,13 @@ func AbsInPlace[T constraints.Integer | constraints.Float](a []T) {
 }
 
 // EuclidianDistance computes the Euclidian distance between two vectors.
-func EuclidianDistance[T constraints.Integer | constraints.Float](a, b []T) T {
+func EuclidianDistance[T constraints.Integer | constraints.Float](a, b []T) float64 {
 	assertEqualLength(a, b)
 	var result float64 = 0
 	for i := 0; i < len(a); i++ {
 		result += math.Pow(float64(a[i]-b[i]), 2)
 	}
-	return T(math.Sqrt(result))
+	return math.Sqrt(result)
 }
 
 func assertEqualLength[T constraints.Integer | constraints.Float](a, b []T) {
