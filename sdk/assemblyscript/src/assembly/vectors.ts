@@ -239,7 +239,7 @@ export function dot<T extends number>(a: T[], b: T[]): T {
  */
 export function magnitude<T extends number>(a: T[]): T {
   checkValidArray(a);
-  return sqrt<T>(dot(a, a));
+  return sqrt<f64>(dot(a, a)) as T;
 }
 
 /**
@@ -371,7 +371,7 @@ export function euclidianDistance<T extends number>(a: T[], b: T[]): f64 {
   checkValidArray(a);
   let sum: number = 0;
   for (let i = 0; i < a.length; i++) {
-    sum += ((a[i] - b[i]) ** 2) as T;
+    sum += (a[i] - b[i]) ** 2;
   }
-  return sqrt<T>(sum as T);
+  return sqrt<f64>(sum) as T;
 }
