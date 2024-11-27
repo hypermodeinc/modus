@@ -61,14 +61,19 @@ function App() {
   }, []);
 
   return (
-    <div className="bg-black pb-2 px-2 h-screen flex flex-col">
-      <div className="w-full flex items-center justify-center p-2 text-sm text-white/60 tracking-wide">
-        <p>Powered by Modus</p>
-        <ModusIcon className="w-8 h-8 mt-1 -ml-1" />
-      </div>
-      <div className="grow rounded-lg">
-        <ApiExplorer endpoints={endpoints} theme={modusTheme} />
-      </div>
+    <div className="bg-black p-2 h-dvh flex flex-col">
+      <ApiExplorer
+        endpoints={endpoints}
+        theme={modusTheme}
+        title={
+          <div className="flex items-center">
+            <p className="text-white/80 tracking-wide text-lg">
+              Modus API Explorer
+            </p>
+            <ModusIcon className="w-10 -ml-1" />
+          </div>
+        }
+      />
     </div>
   );
 }
