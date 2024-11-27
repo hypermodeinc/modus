@@ -3,6 +3,7 @@
 ## UNRELEASED - CLI 0.14.0
 
 - fix: Lookup of 'latest' SDK when no Modus SDK is referenced [#625](https://github.com/hypermodeinc/modus/pull/625)
+- fix: visual fix for the api explorer selected type
 
 ## UNRELEASED - AssemblyScript SDK 0.14.2
 
