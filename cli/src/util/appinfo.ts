@@ -12,6 +12,7 @@ import semver from "semver";
 import * as fs from "./fs.js";
 import * as vi from "./versioninfo.js";
 import { SDK } from "../custom/globals.js";
+import { isOnline } from "./index.js";
 
 export type ModusAppInfo = {
   name: string;
@@ -20,6 +21,22 @@ export type ModusAppInfo = {
 };
 
 export async function getAppInfo(appPath: string): Promise<ModusAppInfo> {
+  const appInfo = await getInfoFromApp(appPath);
+
+  if (appInfo.sdkVersion == "latest") {
+    const online = await isOnline();
+    const version = online ? await vi.getLatestSdkVersion(appInfo.sdk, false) : await vi.getLatestInstalledSdkVersion(appInfo.sdk, false);
+    if (version) {
+      appInfo.sdkVersion = version;
+    } else {
+      throw new Error(`Could not determine the latest version of the ${appInfo.sdk} SDK`);
+    }
+  }
+
+  return appInfo;
+}
+
+async function getInfoFromApp(appPath: string): Promise<ModusAppInfo> {
   if (await fs.exists(path.join(appPath, "package.json"))) {
     return await getAssemblyScriptAppInfo(appPath);
   }
