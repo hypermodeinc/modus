@@ -332,9 +332,9 @@ export default class NewCommand extends BaseCommand {
       }
 
       if (createGitRepo) {
-        await execFile("git", ["init"], execOpts);
+        await execFile("git", ["init", "-b", "main"], execOpts);
         await execFile("git", ["add", "."], execOpts);
-        await execFile("git", ["commit", "-m", "'Initial Commit'"], execOpts);
+        await execFile("git", ["commit", "-m", `"Initial Commit"`], execOpts);
       }
     });
 

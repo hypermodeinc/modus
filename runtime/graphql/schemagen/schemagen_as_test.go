@@ -84,7 +84,12 @@ func Test_GetGraphQLSchema_AssemblyScript(t *testing.T) {
 		WithParameter("g", "~lib/array/Array<i32> | null", []int32{1, 2, 3})
 
 	md.FnExports.AddFunction("getPerson").
-		WithResult("assembly/test/Person")
+		WithResult("assembly/test/Person").
+		WithDocs(metadata.Docs{
+			Lines: []string{
+				"This is a Person object",
+			},
+		})
 
 	md.FnExports.AddFunction("listPeople").
 		WithResult("~lib/array/Array<assembly/test/Person>")
@@ -153,13 +158,27 @@ func Test_GetGraphQLSchema_AssemblyScript(t *testing.T) {
 		WithField("addresses", "~lib/array/Array<assembly/test/Address>")
 
 	md.Types.AddType("assembly/test/Address").
-		WithField("street", "~lib/string/String").
+		WithField("street", "~lib/string/String", &metadata.Docs{
+			Lines: []string{
+				"Street that the user lives on",
+			},
+		}).
 		WithField("city", "~lib/string/String").
 		WithField("state", "~lib/string/String").
-		WithField("country", "~lib/string/String").
+		WithField("country", "~lib/string/String", &metadata.Docs{
+			Lines: []string{
+				"Country that the user is from",
+			},
+		}).
 		WithField("postalCode", "~lib/string/String").
-		WithField("location", "assembly/test/Coordinates")
-
+		WithField("location", "assembly/test/Coordinates").
+		WithDocs(metadata.Docs{
+			Lines: []string{
+				"Address represents a physical address.",
+				"Each field corresponds to a specific part of the address.",
+				"The location field stores geospatial coordinates.",
+			},
+		})
 	md.Types.AddType("assembly/test/Coordinates").
 		WithField("lat", "f64").
 		WithField("lon", "f64")
@@ -180,6 +199,9 @@ type Query {
   currentTime: Timestamp!
   doNothing: Void
   people: [Person!]!
+  """
+  This is a Person object
+  """
   person: Person!
   productMap: [StringProductPair!]!
   sayHello(name: String!): String!
@@ -201,6 +223,11 @@ type Mutation {
 scalar Timestamp
 scalar Void
 
+"""
+Address represents a physical address.
+Each field corresponds to a specific part of the address.
+The location field stores geospatial coordinates.
+"""
 input AddressInput {
   street: String!
   city: String!
@@ -243,6 +270,11 @@ input StringStringPairInput {
   value: String!
 }
 
+"""
+Address represents a physical address.
+Each field corresponds to a specific part of the address.
+The location field stores geospatial coordinates.
+"""
 type Address {
   street: String!
   city: String!
@@ -360,10 +392,10 @@ func Test_ConvertType_AssemblyScript(t *testing.T) {
 			}},
 			[]*TypeDefinition{{
 				Name: "User",
-				Fields: []*NameTypePair{
-					{"firstName", "String!"},
-					{"lastName", "String!"},
-					{"age", "Int!"},
+				Fields: []*FieldDefinition{
+					{Name: "firstName", Type: "String!"},
+					{Name: "lastName", Type: "String!"},
+					{Name: "age", Type: "Int!"},
 				},
 			}}},
 		{"assembly/test/User", true, "UserInput!",
@@ -377,10 +409,10 @@ func Test_ConvertType_AssemblyScript(t *testing.T) {
 			}},
 			[]*TypeDefinition{{
 				Name: "UserInput",
-				Fields: []*NameTypePair{
-					{"firstName", "String!"},
-					{"lastName", "String!"},
-					{"age", "Int!"},
+				Fields: []*FieldDefinition{
+					{Name: "firstName", Type: "String!"},
+					{Name: "lastName", Type: "String!"},
+					{Name: "age", Type: "Int!"},
 				},
 			}}},
 
@@ -398,66 +430,66 @@ func Test_ConvertType_AssemblyScript(t *testing.T) {
 		// Map types
 		{"~lib/map/Map<~lib/string/String,~lib/string/String>", false, "[StringStringPair!]!", nil, []*TypeDefinition{{
 			Name: "StringStringPair",
-			Fields: []*NameTypePair{
-				{"key", "String!"},
-				{"value", "String!"},
+			Fields: []*FieldDefinition{
+				{Name: "key", Type: "String!"},
+				{Name: "value", Type: "String!"},
 			},
 			IsMapType: true,
 		}}},
 		{"~lib/map/Map<~lib/string/String,~lib/string/String>", true, "[StringStringPairInput!]!", nil, []*TypeDefinition{{
 			Name: "StringStringPairInput",
-			Fields: []*NameTypePair{
-				{"key", "String!"},
-				{"value", "String!"},
+			Fields: []*FieldDefinition{
+				{Name: "key", Type: "String!"},
+				{Name: "value", Type: "String!"},
 			},
 			IsMapType: true,
 		}}},
 		{"~lib/map/Map<~lib/string/String,~lib/string/String|null>", false, "[StringNullableStringPair!]!", nil, []*TypeDefinition{{
 			Name: "StringNullableStringPair",
-			Fields: []*NameTypePair{
-				{"key", "String!"},
-				{"value", "String"},
+			Fields: []*FieldDefinition{
+				{Name: "key", Type: "String!"},
+				{Name: "value", Type: "String"},
 			},
 			IsMapType: true,
 		}}},
 		{"~lib/map/Map<~lib/string/String,~lib/string/String|null>", true, "[StringNullableStringPairInput!]!", nil, []*TypeDefinition{{
 			Name: "StringNullableStringPairInput",
-			Fields: []*NameTypePair{
-				{"key", "String!"},
-				{"value", "String"},
+			Fields: []*FieldDefinition{
+				{Name: "key", Type: "String!"},
+				{Name: "value", Type: "String"},
 			},
 			IsMapType: true,
 		}}},
 		{"~lib/map/Map<i32,~lib/string/String>", false, "[IntStringPair!]!", nil, []*TypeDefinition{{
 			Name: "IntStringPair",
-			Fields: []*NameTypePair{
-				{"key", "Int!"},
-				{"value", "String!"},
+			Fields: []*FieldDefinition{
+				{Name: "key", Type: "Int!"},
+				{Name: "value", Type: "String!"},
 			},
 			IsMapType: true,
 		}}},
 		{"~lib/map/Map<i32,~lib/string/String>", true, "[IntStringPairInput!]!", nil, []*TypeDefinition{{
 			Name: "IntStringPairInput",
-			Fields: []*NameTypePair{
-				{"key", "Int!"},
-				{"value", "String!"},
+			Fields: []*FieldDefinition{
+				{Name: "key", Type: "Int!"},
+				{Name: "value", Type: "String!"},
 			},
 			IsMapType: true,
 		}}},
 		{"~lib/map/Map<~lib/string/String,~lib/map/Map<~lib/string/String,f32>>", false, "[StringStringFloatPairListPair!]!", nil, []*TypeDefinition{
 			{
 				Name: "StringStringFloatPairListPair",
-				Fields: []*NameTypePair{
-					{"key", "String!"},
-					{"value", "[StringFloatPair!]!"},
+				Fields: []*FieldDefinition{
+					{Name: "key", Type: "String!"},
+					{Name: "value", Type: "[StringFloatPair!]!"},
 				},
 				IsMapType: true,
 			},
 			{
 				Name: "StringFloatPair",
-				Fields: []*NameTypePair{
-					{"key", "String!"},
-					{"value", "Float!"},
+				Fields: []*FieldDefinition{
+					{Name: "key", Type: "String!"},
+					{Name: "value", Type: "Float!"},
 				},
 				IsMapType: true,
 			},
@@ -465,17 +497,17 @@ func Test_ConvertType_AssemblyScript(t *testing.T) {
 		{"~lib/map/Map<~lib/string/String,~lib/map/Map<~lib/string/String,f32>>", true, "[StringStringFloatPairListPairInput!]!", nil, []*TypeDefinition{
 			{
 				Name: "StringStringFloatPairListPairInput",
-				Fields: []*NameTypePair{
-					{"key", "String!"},
-					{"value", "[StringFloatPairInput!]!"},
+				Fields: []*FieldDefinition{
+					{Name: "key", Type: "String!"},
+					{Name: "value", Type: "[StringFloatPairInput!]!"},
 				},
 				IsMapType: true,
 			},
 			{
 				Name: "StringFloatPairInput",
-				Fields: []*NameTypePair{
-					{"key", "String!"},
-					{"value", "Float!"},
+				Fields: []*FieldDefinition{
+					{Name: "key", Type: "String!"},
+					{Name: "value", Type: "Float!"},
 				},
 				IsMapType: true,
 			},

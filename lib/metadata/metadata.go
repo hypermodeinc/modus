@@ -34,16 +34,22 @@ type Metadata struct {
 	Types     TypeMap     `json:"types,omitempty"`
 }
 
+type Docs struct {
+	Lines []string `json:"lines"`
+}
+
 type Function struct {
 	Name       string       `json:"-"`
 	Parameters []*Parameter `json:"parameters,omitempty"`
 	Results    []*Result    `json:"results,omitempty"`
+	Docs       *Docs        `json:"docs,omitempty"`
 }
 
 type TypeDefinition struct {
 	Name   string   `json:"-"`
 	Id     uint32   `json:"id,omitempty"`
 	Fields []*Field `json:"fields,omitempty"`
+	Docs   *Docs    `json:"docs,omitempty"`
 }
 
 type Parameter struct {
@@ -60,6 +66,7 @@ type Result struct {
 type Field struct {
 	Name string `json:"name"`
 	Type string `json:"type"`
+	Docs *Docs  `json:"docs,omitempty"`
 }
 
 func (p *Parameter) UnmarshalJSON(data []byte) error {
@@ -118,9 +125,9 @@ func (m *Metadata) SdkVersion() string {
 func (m *Metadata) GetTypeDefinition(typ string) (*TypeDefinition, error) {
 	switch typ {
 	case "[]byte":
-		return &TypeDefinition{typ, 1, nil}, nil
+		return &TypeDefinition{typ, 1, nil, nil}, nil
 	case "string":
-		return &TypeDefinition{typ, 2, nil}, nil
+		return &TypeDefinition{typ, 2, nil, nil}, nil
 	}
 
 	def, ok := m.Types[typ]

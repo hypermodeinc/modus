@@ -102,7 +102,13 @@ func Test_GetGraphQLSchema_Go(t *testing.T) {
 		WithParameter("c", "*[]int32").
 		WithParameter("d", "[]*testdata.Person").
 		WithParameter("e", "*[]testdata.Person").
-		WithResult("*testdata.Person")
+		WithResult("*testdata.Person").
+		WithDocs(metadata.Docs{
+			Lines: []string{
+				"This function tests that pointers are working correctly",
+			},
+		})
+
 	md.Types.AddType("*int32")
 	md.Types.AddType("[]*int32")
 	md.Types.AddType("*[]int32")
@@ -119,6 +125,7 @@ func Test_GetGraphQLSchema_Go(t *testing.T) {
 	md.FnExports.AddFunction("testObj1").
 		WithParameter("obj", "testdata.Obj1").
 		WithResult("testdata.Obj1")
+		
 	md.Types.AddType("testdata.Obj1").
 		WithField("id", "int32").
 		WithField("name", "string")
@@ -181,12 +188,27 @@ func Test_GetGraphQLSchema_Go(t *testing.T) {
 		WithField("addresses", "[]testdata.Address")
 
 	md.Types.AddType("testdata.Address").
-		WithField("street", "string").
+		WithField("street", "string", &metadata.Docs{
+			Lines: []string{
+				"Street that the user lives on",
+			},
+		}).
 		WithField("city", "string").
 		WithField("state", "string").
-		WithField("country", "string").
+		WithField("country", "string", &metadata.Docs{
+			Lines: []string{
+				"Country that the user is from",
+			},
+		}).
 		WithField("postalCode", "string").
-		WithField("location", "testdata.Coordinates")
+		WithField("location", "testdata.Coordinates").
+		WithDocs(metadata.Docs{
+			Lines: []string{
+				"Address represents a physical address.",
+				"Each field corresponds to a specific part of the address.",
+				"The location field stores geospatial coordinates.",
+			},
+		})
 
 	md.Types.AddType("testdata.Coordinates").
 		WithField("lat", "float64").
@@ -220,6 +242,9 @@ type Query {
   testObj4(obj: Obj4Input!): Void
   testObj5: [Obj5]
   testObj6: [Obj6!]
+  """
+  This function tests that pointers are working correctly
+  """
   testPointers(a: Int, b: [Int], c: [Int!], d: [PersonInput], e: [PersonInput!]): Person
   transform(items: [StringStringPairInput!]): [StringStringPair!]
 }
@@ -232,6 +257,11 @@ type Mutation {
 scalar Timestamp
 scalar Void
 
+"""
+Address represents a physical address.
+Each field corresponds to a specific part of the address.
+The location field stores geospatial coordinates.
+"""
 input AddressInput {
   street: String!
   city: String!
@@ -274,6 +304,11 @@ input StringStringPairInput {
   value: String!
 }
 
+"""
+Address represents a physical address.
+Each field corresponds to a specific part of the address.
+The location field stores geospatial coordinates.
+"""
 type Address {
   street: String!
   city: String!
@@ -399,10 +434,10 @@ func Test_ConvertType_Go(t *testing.T) {
 			}},
 			[]*TypeDefinition{{
 				Name: "User",
-				Fields: []*NameTypePair{
-					{"firstName", "String!"},
-					{"lastName", "String!"},
-					{"age", "Int!"},
+				Fields: []*FieldDefinition{
+					{Name: "firstName", Type: "String!"},
+					{Name: "lastName", Type: "String!"},
+					{Name: "age", Type: "Int!"},
 				},
 			}}},
 		{"testdata.User", true, "UserInput!",
@@ -416,10 +451,10 @@ func Test_ConvertType_Go(t *testing.T) {
 			}},
 			[]*TypeDefinition{{
 				Name: "UserInput",
-				Fields: []*NameTypePair{
-					{"firstName", "String!"},
-					{"lastName", "String!"},
-					{"age", "Int!"},
+				Fields: []*FieldDefinition{
+					{Name: "firstName", Type: "String!"},
+					{Name: "lastName", Type: "String!"},
+					{Name: "age", Type: "Int!"},
 				},
 			}}},
 
@@ -441,66 +476,66 @@ func Test_ConvertType_Go(t *testing.T) {
 		// Map types
 		{"map[string]string", false, "[StringStringPair!]", nil, []*TypeDefinition{{
 			Name: "StringStringPair",
-			Fields: []*NameTypePair{
-				{"key", "String!"},
-				{"value", "String!"},
+			Fields: []*FieldDefinition{
+				{Name: "key", Type: "String!"},
+				{Name: "value", Type: "String!"},
 			},
 			IsMapType: true,
 		}}},
 		{"map[string]string", true, "[StringStringPairInput!]", nil, []*TypeDefinition{{
 			Name: "StringStringPairInput",
-			Fields: []*NameTypePair{
-				{"key", "String!"},
-				{"value", "String!"},
+			Fields: []*FieldDefinition{
+				{Name: "key", Type: "String!"},
+				{Name: "value", Type: "String!"},
 			},
 			IsMapType: true,
 		}}},
 		{"map[string]*string", false, "[StringNullableStringPair!]", nil, []*TypeDefinition{{
 			Name: "StringNullableStringPair",
-			Fields: []*NameTypePair{
-				{"key", "String!"},
-				{"value", "String"},
+			Fields: []*FieldDefinition{
+				{Name: "key", Type: "String!"},
+				{Name: "value", Type: "String"},
 			},
 			IsMapType: true,
 		}}},
 		{"map[string]*string", true, "[StringNullableStringPairInput!]", nil, []*TypeDefinition{{
 			Name: "StringNullableStringPairInput",
-			Fields: []*NameTypePair{
-				{"key", "String!"},
-				{"value", "String"},
+			Fields: []*FieldDefinition{
+				{Name: "key", Type: "String!"},
+				{Name: "value", Type: "String"},
 			},
 			IsMapType: true,
 		}}},
 		{"map[int32]string", false, "[IntStringPair!]", nil, []*TypeDefinition{{
 			Name: "IntStringPair",
-			Fields: []*NameTypePair{
-				{"key", "Int!"},
-				{"value", "String!"},
+			Fields: []*FieldDefinition{
+				{Name: "key", Type: "Int!"},
+				{Name: "value", Type: "String!"},
 			},
 			IsMapType: true,
 		}}},
 		{"map[int32]string", true, "[IntStringPairInput!]", nil, []*TypeDefinition{{
 			Name: "IntStringPairInput",
-			Fields: []*NameTypePair{
-				{"key", "Int!"},
-				{"value", "String!"},
+			Fields: []*FieldDefinition{
+				{Name: "key", Type: "Int!"},
+				{Name: "value", Type: "String!"},
 			},
 			IsMapType: true,
 		}}},
 		{"map[string]map[string]float32", false, "[StringNullableStringFloatPairListPair!]", nil, []*TypeDefinition{
 			{
 				Name: "StringNullableStringFloatPairListPair",
-				Fields: []*NameTypePair{
-					{"key", "String!"},
-					{"value", "[StringFloatPair!]"},
+				Fields: []*FieldDefinition{
+					{Name: "key", Type: "String!"},
+					{Name: "value", Type: "[StringFloatPair!]"},
 				},
 				IsMapType: true,
 			},
 			{
 				Name: "StringFloatPair",
-				Fields: []*NameTypePair{
-					{"key", "String!"},
-					{"value", "Float!"},
+				Fields: []*FieldDefinition{
+					{Name: "key", Type: "String!"},
+					{Name: "value", Type: "Float!"},
 				},
 				IsMapType: true,
 			},
@@ -508,17 +543,17 @@ func Test_ConvertType_Go(t *testing.T) {
 		{"map[string]map[string]float32", true, "[StringNullableStringFloatPairListPairInput!]", nil, []*TypeDefinition{
 			{
 				Name: "StringNullableStringFloatPairListPairInput",
-				Fields: []*NameTypePair{
-					{"key", "String!"},
-					{"value", "[StringFloatPairInput!]"},
+				Fields: []*FieldDefinition{
+					{Name: "key", Type: "String!"},
+					{Name: "value", Type: "[StringFloatPairInput!]"},
 				},
 				IsMapType: true,
 			},
 			{
 				Name: "StringFloatPairInput",
-				Fields: []*NameTypePair{
-					{"key", "String!"},
-					{"value", "Float!"},
+				Fields: []*FieldDefinition{
+					{Name: "key", Type: "String!"},
+					{Name: "value", Type: "Float!"},
 				},
 				IsMapType: true,
 			},

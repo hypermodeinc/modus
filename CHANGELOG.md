@@ -1,12 +1,47 @@
 # Change Log
 
-## UNRELEASED - Runtime
+## UNRELEASED - AssemblyScript SDK 0.14.2
 
+- chore: Export base Message class in OpenAI chat SDK [#616](https://github.com/hypermodeinc/modus/pull/616)
+
+## UNRELEASED - Go SDK 0.14.3
+
+- chore: Export base Message class in OpenAI chat SDK [#616](https://github.com/hypermodeinc/modus/pull/616)
+
+## 2024-11-25 - Go SDK 0.14.2
+
+- fix: Reduce Go build times [#615](https://github.com/hypermodeinc/modus/pull/615)
+
+## 2024-11-25 - CLI 0.13.10
+
+- fix: modus new rename branch to main if not [#613](https://github.com/hypermodeinc/modus/pull/613)
+- fix: use git commit with double quotes for Windows [#612](https://github.com/hypermodeinc/modus/pull/612)
+
+## 2024-11-23 - Runtime 0.14.0
+
+- feat: Apply in-code documentation to generated GraphQL [#519](https://github.com/hypermodeinc/modus/pull/519)
 - feat: Reduce logger output during development [#576](https://github.com/hypermodeinc/modus/pull/576)
 - chore: Trigger internal release pipeline at the end of the release-runtime workflow [#577](https://github.com/hypermodeinc/modus/pull/577)
 - feat: Add API explorer to runtime [#578](https://github.com/hypermodeinc/modus/pull/578)
 - feat: Add API explorer component to runtime [#584](https://github.com/hypermodeinc/modus/pull/584)
 - fix: logic for jwks endpoint unmarshalling was incorrect [#594](https://github.com/hypermodeinc/modus/pull/594)
+- chore: Refactoring schema generation [#605](https://github.com/hypermodeinc/modus/pull/605)
+
+## 2024-11-23 - AssemblyScript SDK 0.14.1
+
+- Update sdk/runtime compatibility file [#610](https://github.com/hypermodeinc/modus/pull/610)
+
+## 2024-11-23 - Go SDK 0.14.1
+
+- Update sdk/runtime compatibility file [#610](https://github.com/hypermodeinc/modus/pull/610)
+
+## 2024-11-23 - AssemblyScript SDK 0.14.0
+
+- Capture jsdoc comments [#519](https://github.com/hypermodeinc/modus/pull/519)
+
+## 2024-11-23 - Go SDK 0.14.0
+
+- Capture Go doc comments [#519](https://github.com/hypermodeinc/modus/pull/519)
 
 ## 2024-11-20 - CLI 0.13.9
 

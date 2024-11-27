@@ -4,7 +4,7 @@ go 1.23.0
 
 require (
 	github.com/hypermodeinc/modus/lib/manifest v0.13.0
-	github.com/hypermodeinc/modus/lib/metadata v0.13.0
+	github.com/hypermodeinc/modus/lib/metadata v0.14.0
 	github.com/hypermodeinc/modus/lib/wasmextractor v0.13.0 // indirect
 )
 
@@ -13,7 +13,7 @@ require (
 	github.com/archdx/zerolog-sentry v1.8.5
 	github.com/aws/aws-sdk-go-v2 v1.32.5
 	github.com/aws/aws-sdk-go-v2/config v1.28.5
-	github.com/aws/aws-sdk-go-v2/service/s3 v1.67.1
+	github.com/aws/aws-sdk-go-v2/service/s3 v1.68.0
 	github.com/aws/aws-sdk-go-v2/service/sts v1.33.1
 	github.com/buger/jsonparser v1.1.1
 	github.com/chewxy/math32 v1.11.1
@@ -39,7 +39,7 @@ require (
 	github.com/rs/xid v1.6.0
 	github.com/rs/zerolog v1.33.0
 	github.com/spf13/cast v1.7.0
-	github.com/stretchr/testify v1.9.0
+	github.com/stretchr/testify v1.10.0
 	github.com/tetratelabs/wazero v1.8.1
 	github.com/tidwall/gjson v1.18.0
 	github.com/tidwall/sjson v1.2.5
@@ -122,7 +122,7 @@ require (
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/codesearch v1.2.0 // indirect
 	github.com/google/flatbuffers v24.3.25+incompatible // indirect
-	github.com/google/pprof v0.0.0-20241101162523-b92577c0c142 // indirect
+	github.com/google/pprof v0.0.0-20241122213907-cbe949e5a41b // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
@@ -199,8 +199,8 @@ require (
 	github.com/uber/jaeger-client-go v2.28.0+incompatible // indirect
 	github.com/viterin/partial v1.1.0 // indirect
 	github.com/wundergraph/astjson v0.0.0-20241108124845-44485579ffa5 // indirect
-	github.com/wundergraph/cosmo/composition-go v0.0.0-20241118212850-4e6bf7ad0b78 // indirect
-	github.com/wundergraph/cosmo/router v0.0.0-20241118212850-4e6bf7ad0b78 // indirect
+	github.com/wundergraph/cosmo/composition-go v0.0.0-20241122111447-43fee4d6f40d // indirect
+	github.com/wundergraph/cosmo/router v0.0.0-20241122111447-43fee4d6f40d // indirect
 	github.com/xdg/scram v1.0.5 // indirect
 	github.com/xdg/stringprep v1.0.3 // indirect
 	go.etcd.io/etcd/raft/v3 v3.5.16 // indirect
@@ -220,8 +220,8 @@ require (
 	golang.org/x/text v0.20.0 // indirect
 	golang.org/x/time v0.6.0 // indirect
 	google.golang.org/api v0.196.0 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20241113202542-65e8d215514f // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20241113202542-65e8d215514f // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20241118233622-e639e219e697 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20241118233622-e639e219e697 // indirect
 	google.golang.org/protobuf v1.35.2 // indirect
 	gopkg.in/DataDog/dd-trace-go.v1 v1.67.1 // indirect
 	gopkg.in/cenkalti/backoff.v1 v1.1.0 // indirect
