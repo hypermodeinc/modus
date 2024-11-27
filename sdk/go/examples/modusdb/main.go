@@ -42,7 +42,6 @@ func QueryPeople() ([]*Person, error) {
 		uid
 		firstName
 		lastName
-		dgraph.type
 	  }
 	}
 	`
@@ -60,78 +59,6 @@ func QueryPeople() ([]*Person, error) {
 	return peopleData.People, nil
 }
 
-func QueryPlugins() ([]Plugin, error) {
-	query := `
-	{
-	  plugins(func: type(Plugin)) {
-		uid
-		id
-		name
-		version
-		language
-		sdk_version
-		build_id
-		build_time
-		git_repo
-		git_commit
-		dgraph.type
-		inferences: ~plugin {
-			uid
-			dgraph.type
-			expand(_all_)
-		}
-	  }
-	}
-	`
-
-	response, err := modusdb.Query(&query)
-	if err != nil {
-		return nil, err
-	}
-
-	var pluginData PluginData
-	if err := json.Unmarshal([]byte(response.Json), &pluginData); err != nil {
-		return nil, err
-	}
-
-	return pluginData.Plugins, nil
-}
-
-func QueryInferences() ([]Inference, error) {
-	query := `
-	{
-	  inferences(func: type(Inference)) {
-		uid
-		id
-		model_hash
-		input
-		output
-		started_at
-		duration_ms
-		plugin {
-			uid
-			dgraph.type
-			expand(_all_)
-		}
-		function
-		dgraph.type
-	  }
-	}
-	`
-
-	response, err := modusdb.Query(&query)
-	if err != nil {
-		return nil, err
-	}
-
-	var inferenceData InferenceData
-	if err := json.Unmarshal([]byte(response.Json), &inferenceData); err != nil {
-		return nil, err
-	}
-
-	return inferenceData.Inferences, nil
-}
-
 func QuerySpecificPerson(firstName, lastName string) (*Person, error) {
 	query := fmt.Sprintf(`
 	query queryPerson {
@@ -139,7 +66,6 @@ func QuerySpecificPerson(firstName, lastName string) (*Person, error) {
 		  uid
 		  firstName
 		  lastName
-		  dgraph.type
 	  }
   }
 	`, firstName, lastName)
@@ -165,7 +91,6 @@ func AddPersonAsRDF(firstName, lastName string) (*map[string]uint64, error) {
 	mutation := fmt.Sprintf(`
   _:user1 <firstName> "%s" .
   _:user1 <lastName> "%s" .
-  _:user1 <dgraph.type> "Person" .
   `, firstName, lastName)
 
 	response, err := modusdb.Mutate(&modusdb.MutationRequest{
@@ -187,7 +112,7 @@ func AddPersonAsJSON(firstName, lastName string) (*map[string]uint64, error) {
 		Uid:       "_:user1",
 		FirstName: firstName,
 		LastName:  lastName,
-		DType:     []string{"Person"},
+		// DType:     []string{"Person"},
 	}
 
 	data, err := json.Marshal(person)
