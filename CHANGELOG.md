@@ -1,12 +1,22 @@
 # Change Log
 
-## UNRELEASED - AssemblyScript SDK 0.14.2
+## 2024-11-27 - CLI 0.14.0
+
+- fix: Lookup of 'latest' SDK when no Modus SDK is referenced [#625](https://github.com/hypermodeinc/modus/pull/625)
+
+## 2024-11-27 - Runtime 0.14.1
+
+- feat: updates to API explorer [#617](https://github.com/hypermodeinc/modus/pull/617) [#626](https://github.com/hypermodeinc/modus/pull/626)
+- various dependency updates
+
+## 2024-11-27 - AssemblyScript SDK 0.14.2
 
 - chore: Export base Message class in OpenAI chat SDK [#616](https://github.com/hypermodeinc/modus/pull/616)
 
-## UNRELEASED - Go SDK 0.14.3
+## 2024-11-27 - Go SDK 0.14.3
 
 - chore: Export base Message class in OpenAI chat SDK [#616](https://github.com/hypermodeinc/modus/pull/616)
+- fix: Filter imports to modus host functions [#623](https://github.com/hypermodeinc/modus/pull/623)
 
 ## 2024-11-25 - Go SDK 0.14.2
 
