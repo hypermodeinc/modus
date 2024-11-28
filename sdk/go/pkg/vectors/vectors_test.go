@@ -243,7 +243,7 @@ func TestProduct(t *testing.T) {
 
 func TestMean(t *testing.T) {
 	a := []uint8{1, 2, 3}
-	expected := 2.0 // (1 + 2 + 3) / 3
+	expected := uint8(2) // (1 + 2 + 3) / 3
 
 	result := Mean(a)
 

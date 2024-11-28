@@ -1,5 +1,9 @@
 # Change Log
 
+## UNRELEASED
+
+- fix: vector package should return generic type in computations [#628](https://github.com/hypermodeinc/modus/pull/628)
+
 ## 2024-11-27 - CLI 0.14.0
 
 - fix: Lookup of 'latest' SDK when no Modus SDK is referenced [#625](https://github.com/hypermodeinc/modus/pull/625)
