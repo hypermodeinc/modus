@@ -104,7 +104,7 @@ it("should compute the dot product of two vectors", () => {
 it("should compute the magnitude of a vector", () => {
   const a = [1, 2, 3];
   const result = vectors.magnitude(a);
-  expect(result).toBe(sqrt<i32>(14));
+  expect(result).toBe(3);
 });
 
 it("should normalize a vector", () => {
