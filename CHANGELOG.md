@@ -1,6 +1,14 @@
 # Change Log
 
-## UNRELEASED
+## UNRELEASED - Runtime
+
+- fix: doc comments from object fields should be present in generated GraphQL schema [#630](https://github.com/hypermodeinc/modus/pull/630)
+
+## UNRELEASED - Go SDK
+
+- fix: vector package should return generic type in computations [#628](https://github.com/hypermodeinc/modus/pull/628)
+
+## UNRELEASED - AssemblyScript SDK
 
 - fix: vector package should return generic type in computations [#628](https://github.com/hypermodeinc/modus/pull/628)
 

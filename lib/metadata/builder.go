@@ -83,10 +83,10 @@ func (t *TypeDefinition) WithId(id uint32) *TypeDefinition {
 
 func (t *TypeDefinition) WithField(name string, typ string, docs ...*Docs) *TypeDefinition {
 	f := &Field{Name: name, Type: typ}
-	t.Fields = append(t.Fields, f)
 	if len(docs) > 0 && docs[0] != nil {
-		t.Docs = docs[0]
+		f.Docs = docs[0]
 	}
+	t.Fields = append(t.Fields, f)
 	return t
 }
 

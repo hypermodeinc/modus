@@ -229,9 +229,15 @@ Each field corresponds to a specific part of the address.
 The location field stores geospatial coordinates.
 """
 input AddressInput {
+  """
+  Street that the user lives on
+  """
   street: String!
   city: String!
   state: String!
+  """
+  Country that the user is from
+  """
   country: String!
   postalCode: String!
   location: CoordinatesInput!
@@ -276,9 +282,15 @@ Each field corresponds to a specific part of the address.
 The location field stores geospatial coordinates.
 """
 type Address {
+  """
+  Street that the user lives on
+  """
   street: String!
   city: String!
   state: String!
+  """
+  Country that the user is from
+  """
   country: String!
   postalCode: String!
   location: Coordinates!
