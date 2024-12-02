@@ -2,10 +2,7 @@ module github.com/hypermodeinc/modus/sdk/go
 
 go 1.23.0
 
-require (
-	github.com/hypermodeinc/modus/lib/manifest v0.13.0
-	github.com/hypermodeinc/modus/lib/wasmextractor v0.13.0
-)
+require github.com/hypermodeinc/modus/lib/manifest v0.13.0
 
 require (
 	github.com/fatih/color v1.18.0
