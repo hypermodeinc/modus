@@ -1,5 +1,9 @@
 # Change Log
 
+## UNRELEASED - Runtime 0.14.1
+
+- fix: doc comments from object fields should be present in generated GraphQL schema [#630](https://github.com/hypermodeinc/modus/pull/630)
+
 ## 2024-11-25 - CLI 0.13.10
 
 - fix: modus new rename branch to main if not [#613](https://github.com/hypermodeinc/modus/pull/613)
