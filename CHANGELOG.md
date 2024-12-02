@@ -11,6 +11,7 @@
 ## UNRELEASED - AssemblyScript SDK
 
 - fix: vector package should return generic type in computations [#628](https://github.com/hypermodeinc/modus/pull/628)
+- chore: Delete extraneous copy of Anthropic model interface [#631](https://github.com/hypermodeinc/modus/pull/631)
 
 ## 2024-11-27 - CLI 0.14.0
 
