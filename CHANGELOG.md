@@ -1,11 +1,163 @@
 # Change Log
 
-## UNRELEASED (work in progress)
+## UNRELEASED - Runtime
+
+- fix: doc comments from object fields should be present in generated GraphQL schema [#630](https://github.com/hypermodeinc/modus/pull/630)
+
+## UNRELEASED - Go SDK
+
+- fix: vector package should return generic type in computations [#628](https://github.com/hypermodeinc/modus/pull/628)
+
+## UNRELEASED - AssemblyScript SDK
+
+- fix: vector package should return generic type in computations [#628](https://github.com/hypermodeinc/modus/pull/628)
+
+## 2024-11-27 - CLI 0.14.0
+
+- fix: Lookup of 'latest' SDK when no Modus SDK is referenced [#625](https://github.com/hypermodeinc/modus/pull/625)
+
+## 2024-11-27 - Runtime 0.14.1
+
+- feat: updates to API explorer [#617](https://github.com/hypermodeinc/modus/pull/617) [#626](https://github.com/hypermodeinc/modus/pull/626)
+- various dependency updates
+
+## 2024-11-27 - AssemblyScript SDK 0.14.2
+
+- chore: Export base Message class in OpenAI chat SDK [#616](https://github.com/hypermodeinc/modus/pull/616)
+
+## 2024-11-27 - Go SDK 0.14.3
+
+- chore: Export base Message class in OpenAI chat SDK [#616](https://github.com/hypermodeinc/modus/pull/616)
+- fix: Filter imports to modus host functions [#623](https://github.com/hypermodeinc/modus/pull/623)
+
+## 2024-11-25 - Go SDK 0.14.2
+
+- fix: Reduce Go build times [#615](https://github.com/hypermodeinc/modus/pull/615)
+
+## 2024-11-25 - CLI 0.13.10
+
+- fix: modus new rename branch to main if not [#613](https://github.com/hypermodeinc/modus/pull/613)
+- fix: use git commit with double quotes for Windows [#612](https://github.com/hypermodeinc/modus/pull/612)
+
+## 2024-11-23 - Runtime 0.14.0
+
+- feat: Apply in-code documentation to generated GraphQL [#519](https://github.com/hypermodeinc/modus/pull/519)
+- feat: Reduce logger output during development [#576](https://github.com/hypermodeinc/modus/pull/576)
+- chore: Trigger internal release pipeline at the end of the release-runtime workflow [#577](https://github.com/hypermodeinc/modus/pull/577)
+- feat: Add API explorer to runtime [#578](https://github.com/hypermodeinc/modus/pull/578)
+- feat: Add API explorer component to runtime [#584](https://github.com/hypermodeinc/modus/pull/584)
+- fix: logic for jwks endpoint unmarshalling was incorrect [#594](https://github.com/hypermodeinc/modus/pull/594)
+- chore: Refactoring schema generation [#605](https://github.com/hypermodeinc/modus/pull/605)
+
+## 2024-11-23 - AssemblyScript SDK 0.14.1
+
+- Update sdk/runtime compatibility file [#610](https://github.com/hypermodeinc/modus/pull/610)
+
+## 2024-11-23 - Go SDK 0.14.1
+
+- Update sdk/runtime compatibility file [#610](https://github.com/hypermodeinc/modus/pull/610)
+
+## 2024-11-23 - AssemblyScript SDK 0.14.0
+
+- Capture jsdoc comments [#519](https://github.com/hypermodeinc/modus/pull/519)
+
+## 2024-11-23 - Go SDK 0.14.0
+
+- Capture Go doc comments [#519](https://github.com/hypermodeinc/modus/pull/519)
+
+## 2024-11-20 - CLI 0.13.9
+
+- feat: use user provided name for package.json and go.mod [#595](https://github.com/hypermodeinc/modus/pull/595)
+- feat: Add scarf to track installs and modus new [#596](https://github.com/hypermodeinc/modus/pull/596)
+
+## 2024-11-18 - AssemblyScript SDK 0.13.5
+
+- Update json-as to `0.9.26` to fix stack overflow error [#586](https://github.com/hypermodeinc/modus/pull/586)
+- Updated various other dependencies
+
+## 2024-11-08 - CLI 0.13.8
+
+- fix: Make `modus --version` just print modus CLI's version [#563](https://github.com/hypermodeinc/modus/pull/563)
+- fix: implement retry and caching for CLI downloads [#571](https://github.com/hypermodeinc/modus/pull/571) [#574](https://github.com/hypermodeinc/modus/pull/574)
+
+## 2024-11-08 - Runtime 0.13.2
+
+- fix: Introspection query should succeed when only mutations exist [#558](https://github.com/hypermodeinc/modus/pull/558)
+- ci: Add `secrets: inherit` when calling release-info workflow [#555](https://github.com/hypermodeinc/modus/pull/555)
+- chore: Refactor metadata dependencies [#564](https://github.com/hypermodeinc/modus/pull/564)
+- chore: Use Go workspace to simplify project dependencies [#565](https://github.com/hypermodeinc/modus/pull/565)
+- fix: "WASM Host not found in context" error on shutdown [#566](https://github.com/hypermodeinc/modus/pull/566)
+- fix: `__typename` should succeed on root fields [#573](https://github.com/hypermodeinc/modus/pull/573)
+
+## 2024-11-06 - AssemblyScript SDK 0.13.4
+
+- fix: Don't empty previous contents of build dir [#568](https://github.com/hypermodeinc/modus/pull/568)
+
+## 2024-11-04 - CLI 0.13.7
+
+- Automatically generate and push releases info to R2 bucket on every release [#526](https://github.com/hypermodeinc/modus/pull/526)
+- Consistent help + print enum options + validate SDK prereq [#542](https://github.com/hypermodeinc/modus/pull/542)
+  - Consistent padding in the help section
+  - `modus new`: Enum options need to print possible options
+  - Validate SDK prereq immediately after choosing SDK
+  - `modus sdk remove`: Use select prompt to allow selection
+- For CLI to track non-prereleases, pull from releases json to remove rate limiting issues from github releases [#543](https://github.com/hypermodeinc/modus/pull/543)
+- Modify isOnline in CLI to query releases.json [#544](https://github.com/hypermodeinc/modus/pull/544)
+- remove all github api call references, add prerelease support to CLI [#545](https://github.com/hypermodeinc/modus/pull/545)
+- Add CLI build CI [#547](https://github.com/hypermodeinc/modus/pull/547)
+- Add CLI Lint CI [#550](https://github.com/hypermodeinc/modus/pull/550)
+- Update installer script [#551](https://github.com/hypermodeinc/modus/pull/551)
+
+## 2024-10-30 - CLI 0.13.6
+
+- `modus new`: Initialize git repo on interactive flow [#538](https://github.com/hypermodeinc/modus/pull/538)
+- `modus new`: Skip confirmation if all required params are provided [#539](https://github.com/hypermodeinc/modus/pull/539)
+- `modus new`: Fix issues with Go/TinyGo version detection [#540](https://github.com/hypermodeinc/modus/pull/540)
+
+## 2024-10-30 - AssemblyScript SDK 0.13.3
+
+- Actually fix issue with git info capture [#537](https://github.com/hypermodeinc/modus/pull/537)
+
+## 2024-10-30 - AssemblyScript SDK 0.13.2
+
+- Fix issue with git info capture [#536](https://github.com/hypermodeinc/modus/pull/536)
+
+## 2024-10-30 - Runtime 0.13.1
+
+- Add env file callback support for auth key reloading [#520](https://github.com/hypermodeinc/modus/pull/520)
+- Fix timestamp parsing bug [#527](https://github.com/hypermodeinc/modus/pull/527)
+
+## 2024-10-30 - Go/AS SDKs 0.13.1
+
+- Add env file to default project templates [#530](https://github.com/hypermodeinc/modus/pull/530)
+
+## 2024-10-30 - CLI 0.13.5
+
+- Use `<adj>-<noun>` for default app name. [#528](https://github.com/hypermodeinc/modus/pull/528)
+
+## 2024-10-29 - CLI 0.13.4
+
+- `modus build` should install SDK if not already installed [#524](https://github.com/hypermodeinc/modus/pull/524)
+
+## 2024-10-29 - CLI 0.13.3
+
+- Fix Go not found on first install [#522](https://github.com/hypermodeinc/modus/pull/522)
+
+## 2024-10-28 - CLI 0.13.2
+
+- Fix CLI hang on Linux [#521](https://github.com/hypermodeinc/modus/pull/521)
+
+## 2024-10-28 - CLI 0.13.1
+
+- Fix issues with interactive CLI prompts [#517](https://github.com/hypermodeinc/modus/pull/517)
+
+## 2024-10-25 - Version 0.13.0 (all components)
 
 _NOTE: This is the first fully open-source release, using the name "Modus" for the framework.
 "Hypermode" still refers to the company and the commercial hosting platform - but not the framework.
 In previous releases, the name "Hypermode" was used for all three._
 
+- Add Modus CLI [#389](https://github.com/hypermodeinc/modus/pull/389) [#483](https://github.com/hypermodeinc/modus/pull/483) [#484](https://github.com/hypermodeinc/modus/pull/484) [#485](https://github.com/hypermodeinc/modus/pull/485)
 - Support user defined jwt auth and sdk functions [#405](https://github.com/hypermodeinc/modus/pull/405)
 - Migrate from Hypermode to Modus [#412](https://github.com/hypermodeinc/modus/pull/412)
 - Import WasmExtractor code [#415](https://github.com/hypermodeinc/modus/pull/415)
@@ -41,6 +193,25 @@ In previous releases, the name "Hypermode" was used for all three._
 - Publish SDKs and templates via release workflows [#465](https://github.com/hypermodeinc/modus/pull/465)
 - Fix AssemblyScript build failure when no Git repo is present [#475](https://github.com/hypermodeinc/modus/pull/475)
 - Disable AWS Bedrock support temporarily [#479](https://github.com/hypermodeinc/modus/pull/479)
+- Update SDK releases [#480](https://github.com/hypermodeinc/modus/pull/480)
+- Add metadata shared library [#482](https://github.com/hypermodeinc/modus/pull/482)
+- Add `.gitignore` files to default templates [#486](https://github.com/hypermodeinc/modus/pull/486)
+- Fix CLI warnings about Go/TinyGo installation [#487](https://github.com/hypermodeinc/modus/pull/487)
+- Remove deprecated model fields [#488](https://github.com/hypermodeinc/modus/pull/488)
+- Improve dev first use log messages [#489](https://github.com/hypermodeinc/modus/pull/489)
+- Highlight endpoints when running in dev [#490](https://github.com/hypermodeinc/modus/pull/490)
+- Fix data race in logging adapter [#491](https://github.com/hypermodeinc/modus/pull/491)
+- Add Anthropic model interface to the Go SDK [#493](https://github.com/hypermodeinc/modus/pull/493)
+- Simplify and polish `modus new` experience [#494](https://github.com/hypermodeinc/modus/pull/494)
+- Move hyp settings for local model invocation to env variables [#495](https://github.com/hypermodeinc/modus/pull/495) [#504](https://github.com/hypermodeinc/modus/pull/504)
+- Change GraphQL SDK examples to use a generic public GraphQL API [#501](https://github.com/hypermodeinc/modus/pull/501)
+- Improve file watching and fix Windows issues [#505](https://github.com/hypermodeinc/modus/pull/505)
+- Improve help messages, add `modus info` and show SDK version in `modus new` [#506](https://github.com/hypermodeinc/modus/pull/506)
+- Fix runtime shutdown issues with `modus dev` [#508](https://github.com/hypermodeinc/modus/pull/508)
+- Monitored manifest and env files for changes [#509](https://github.com/hypermodeinc/modus/pull/509)
+- Log bad GraphQL requests in dev [#510](https://github.com/hypermodeinc/modus/pull/510)
+- Add JWKS endpoint key support to auth [#511](https://github.com/hypermodeinc/modus/pull/511)
+- Use conventions to support GraphQL mutations and adjust query names [#513](https://github.com/hypermodeinc/modus/pull/513)
 
 ## 2024-10-02 - Version 0.12.7
 

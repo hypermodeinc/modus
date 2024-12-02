@@ -19,22 +19,29 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 
 	"github.com/hypermodeinc/modus/lib/manifest"
+	"github.com/hypermodeinc/modus/runtime/app"
 	"github.com/hypermodeinc/modus/runtime/config"
+	"github.com/hypermodeinc/modus/runtime/explorer"
 	"github.com/hypermodeinc/modus/runtime/graphql"
 	"github.com/hypermodeinc/modus/runtime/logger"
 	"github.com/hypermodeinc/modus/runtime/manifestdata"
 	"github.com/hypermodeinc/modus/runtime/metrics"
 	"github.com/hypermodeinc/modus/runtime/middleware"
+
+	"github.com/fatih/color"
 	"github.com/rs/cors"
 )
 
-// shutdownTimeout is the time to wait for the server to shutdown gracefully.
-const shutdownTimeout = 5 * time.Second
+var titleColor = color.New(color.FgHiGreen, color.Bold)
+var itemColor = color.New(color.FgHiBlue)
+var urlColor = color.New(color.FgHiCyan)
+var noticeColor = color.New(color.FgGreen, color.Italic)
+var warningColor = color.New(color.FgYellow)
 
 func Start(ctx context.Context, local bool) {
+
 	if local {
 		// If we are running locally, only listen on localhost.
 		// This prevents getting nagged for firewall permissions each launch.
@@ -53,8 +60,14 @@ func Start(ctx context.Context, local bool) {
 
 func startHttpServer(ctx context.Context, addresses ...string) {
 
-	// Setup a server for each address.
+	// Get the main handler for the server.
+	// Note: This must be done first, because it registers for callback events.
 	mux := GetMainHandler()
+
+	// Initialize our middleware before starting the server.
+	middleware.Init(ctx)
+
+	// Setup a server for each address.
 	servers := make([]*http.Server, len(addresses))
 	for i, addr := range addresses {
 		servers[i] = &http.Server{Handler: mux, Addr: addr}
@@ -64,7 +77,9 @@ func startHttpServer(ctx context.Context, addresses ...string) {
 	shutdownChan := make(chan bool, len(addresses))
 	for _, server := range servers {
 		go func() {
-			if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			err := server.ListenAndServe()
+			app.SetShuttingDown()
+			if err != nil && !errors.Is(err, http.ErrServerClosed) {
 				logger.Fatal(ctx).Err(err).Msg("HTTP server error.  Exiting.")
 			}
 			shutdownChan <- true
@@ -90,7 +105,7 @@ func startHttpServer(ctx context.Context, addresses ...string) {
 
 	// Shutdown all servers gracefully.
 	for _, server := range servers {
-		shutdownCtx, shutdownRelease := context.WithTimeout(ctx, shutdownTimeout)
+		shutdownCtx, shutdownRelease := context.WithTimeout(ctx, app.ShutdownTimeout)
 		defer shutdownRelease()
 		if err := server.Shutdown(shutdownCtx); err != nil {
 			logger.Fatal(ctx).Err(err).Msg("HTTP server shutdown error.")
@@ -118,6 +133,12 @@ func GetMainHandler(options ...func(map[string]http.Handler)) http.Handler {
 		"/health":  healthHandler,
 		"/metrics": metrics.MetricsHandler,
 	}
+
+	if config.IsDevEnvironment() {
+		defaultRoutes["/explorer/"] = explorer.ExplorerHandler
+		defaultRoutes["/"] = http.RedirectHandler("/explorer/", http.StatusSeeOther)
+	}
+
 	for _, opt := range options {
 		opt(defaultRoutes)
 	}
@@ -128,6 +149,14 @@ func GetMainHandler(options ...func(map[string]http.Handler)) http.Handler {
 	// Dynamically add routes as they are loaded from the manifest.
 	manifestdata.RegisterManifestLoadedCallback(func(ctx context.Context) error {
 		routes := maps.Clone(defaultRoutes)
+
+		type endpoint struct {
+			apiType string
+			name    string
+			url     string
+		}
+
+		var endpoints []endpoint
 
 		m := manifestdata.GetManifest()
 		for name, ep := range m.Endpoints {
@@ -148,9 +177,9 @@ func GetMainHandler(options ...func(map[string]http.Handler)) http.Handler {
 
 				routes[info.Path] = metrics.InstrumentHandler(handler, name)
 
-				logger.Info(ctx).
-					Str("url", fmt.Sprintf("http://localhost:%d%s", config.Port, info.Path)).
-					Msg("Registered GraphQL endpoint.")
+				url := fmt.Sprintf("http://localhost:%d%s", config.Port, info.Path)
+				logger.Info(ctx).Str("url", url).Msg("Registered GraphQL endpoint.")
+				endpoints = append(endpoints, endpoint{"GraphQL", name, url})
 
 			default:
 				logger.Warn(ctx).Str("endpoint", name).Msg("Unsupported endpoint type.")
@@ -158,6 +187,41 @@ func GetMainHandler(options ...func(map[string]http.Handler)) http.Handler {
 		}
 
 		mux.ReplaceRoutes(routes)
+
+		if config.IsDevEnvironment() {
+			fmt.Fprintln(os.Stderr)
+
+			switch len(endpoints) {
+			case 0:
+				warningColor.Fprintln(os.Stderr, "No local endpoints are configured.")
+				warningColor.Fprintln(os.Stderr, "Please add one or more endpoints to your modus.json file.")
+			case 1:
+				ep := endpoints[0]
+				titleColor.Fprintln(os.Stderr, "Your local endpoint is ready!")
+				itemColor.Fprintf(os.Stderr, "• %s (%s): ", ep.apiType, ep.name)
+				urlColor.Fprintln(os.Stderr, ep.url)
+
+				explorerURL := fmt.Sprintf("http://localhost:%d/explorer", config.Port)
+				titleColor.Fprintf(os.Stderr, "\nView endpoint: ")
+				urlColor.Fprintln(os.Stderr, explorerURL)
+
+			default:
+				titleColor.Fprintln(os.Stderr, "Your local endpoints are ready!")
+				for _, ep := range endpoints {
+					itemColor.Fprintf(os.Stderr, "• %s (%s): ", ep.apiType, ep.name)
+					urlColor.Fprintln(os.Stderr, ep.url)
+				}
+
+				explorerURL := fmt.Sprintf("http://localhost:%d/explorer", config.Port)
+				titleColor.Fprintf(os.Stderr, "\nView your endpoints at: ")
+				urlColor.Fprintln(os.Stderr, explorerURL)
+			}
+
+			fmt.Fprintln(os.Stderr)
+			noticeColor.Fprintln(os.Stderr, "Changes will automatically be applied when you save your files.")
+			noticeColor.Fprintln(os.Stderr, "Press Ctrl+C at any time to stop the server.")
+			fmt.Fprintln(os.Stderr)
+		}
 
 		return nil
 	})

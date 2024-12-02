@@ -1,4 +1,5 @@
 name: ci-runtime-integration-tests
+
 on:
   pull_request:
     types:
@@ -7,7 +8,12 @@ on:
       - reopened
       - ready_for_review
     paths:
-      - 'runtime/**'
+      - runtime/**
+
+permissions:
+  contents: read
+  actions: write
+
 jobs:
   runtime-integration-tests:
     name: test (runtime)
@@ -27,4 +33,4 @@ jobs:
         if: always()
         uses: test-summary/action@v2
         with:
-          paths: "runtime/report.xml"
+          paths: runtime/report.xml

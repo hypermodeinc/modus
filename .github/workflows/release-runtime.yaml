@@ -1,21 +1,35 @@
-name: "Release Runtime"
+name: Release Runtime
+
 on:
   push:
     tags:
-      - "runtime/v*"
+      - runtime/v*
+
 permissions:
-  contents: "write"
+  contents: write
+
 jobs:
   release:
+    name: Release
     runs-on: warp-ubuntu-latest-x64-4x
     steps:
-      - name: "Validate version"
+      - name: Validate version
         if: ${{ !startsWith(github.ref_name, 'runtime/v') }}
-        run: 'echo "Modus Runtime version must start with `runtime/v` && exit 1'
+        run: echo "Modus Runtime version must start with 'runtime/v'" && exit 1
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
           ref: "${{ github.ref_name }}"
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ">=22"
+      - name: Install API Explorer dependencies
+        working-directory: runtime/explorer/content
+        run: npm ci
+      - name: Build API Explorer
+        working-directory: runtime/explorer/content
+        run: npm run build
       - uses: actions/setup-go@v5
         with:
           go-version: 1.23
@@ -24,7 +38,7 @@ jobs:
       - uses: goreleaser/goreleaser-action@v6
         with:
           distribution: goreleaser-pro
-          version: "2.3.2"
+          version: 2.3.2
           args: release --clean -f ./runtime/.goreleaser.yaml
         env:
           GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
@@ -34,3 +48,15 @@ jobs:
           MACOS_NOTARY_ISSUER_ID: "${{ secrets.MACOS_NOTARY_ISSUER_ID }}"
           MACOS_NOTARY_KEY_ID: "${{ secrets.MACOS_NOTARY_KEY_ID }}"
           MACOS_NOTARY_KEY: "${{ secrets.MACOS_NOTARY_KEY }}"
+      - name: Trigger event on hypermodeinc/hyp-cluster
+        uses: peter-evans/repository-dispatch@v3
+        with:
+          token: ${{ secrets.REPO_DISPATCH_TOKEN }}
+          repository: hypermodeinc/hyp-cluster
+          event-type: release
+          client-payload: '{"repo": "${{ github.repository }}", "tag": "${{ github.ref_name }}"}'
+  release-info:
+    needs: release
+    name: Generate Release Info
+    uses: ./.github/workflows/release-info.yaml
+    secrets: inherit

@@ -1,19 +1,23 @@
-name: "Release AssemblyScript SDK"
+name: Release AssemblyScript SDK
+
 on:
   push:
     tags:
-      - "sdk/assemblyscript/v*"
+      - sdk/assemblyscript/v*
+
 permissions:
-  contents: "write"
+  contents: write
   id-token: write
+
 jobs:
   release:
+    name: Release
     # note: must use GitHub-hosted runner for publishing to NPM with --provenance flag
     runs-on: ubuntu-latest
     steps:
-      - name: "Validate version"
+      - name: Validate version
         if: ${{ !startsWith(github.ref_name, 'sdk/assemblyscript/v') }}
-        run: 'echo "Modus AssemblyScript SDK version must start with `sdk/assemblyscript/v` && exit 1'
+        run: echo "Modus AssemblyScript SDK version must start with `sdk/assemblyscript/v`" && exit 1
       - uses: actions/checkout@v4
         with:
           ref: "${{ github.ref_name }}"
@@ -27,12 +31,9 @@ jobs:
         with:
           node-version: ">=22"
           registry-url: "https://registry.npmjs.org"
-      - name: Prepare Templates
+      - name: Prepare Release
         working-directory: sdk/assemblyscript
-        run: ./scripts/prepare-templates.sh ${{ steps.parse_sdk_version.outputs.sdk_version }}
-      - name: Set Package Version
-        working-directory: sdk/assemblyscript/src
-        run: npm version ${{ steps.parse_sdk_version.outputs.sdk_version }} --no-git-tag-version
+        run: ./scripts/prepare-release.sh ${{ steps.parse_sdk_version.outputs.sdk_version }}
       - name: Install Dependencies
         working-directory: sdk/assemblyscript/src
         run: npm ci
@@ -44,6 +45,13 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          files: templates_assemblyscript_${{ steps.parse_sdk_version.outputs.sdk_version }}.tar.gz
+          files: |
+            sdk/assemblyscript/sdk.json
+            sdk/assemblyscript/templates_assemblyscript_${{ steps.parse_sdk_version.outputs.sdk_version }}.tar.gz
           prerelease: ${{ contains(steps.parse_sdk_version.outputs.sdk_version, '-') }}
           make_latest: false
+  release-info:
+    needs: release
+    name: Generate Release Info
+    uses: ./.github/workflows/release-info.yaml
+    secrets: inherit

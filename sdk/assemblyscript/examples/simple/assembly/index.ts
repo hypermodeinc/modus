@@ -6,17 +6,23 @@
 
 import { Person } from "./person";
 
-// This function adds two 32-bit signed integers together, and returns the result.
+/**
+ * Adds two integers together, and returns the result.
+ */
 export function add(a: i32, b: i32): i32 {
   return a + b;
 }
 
-// This function takes a first name and a last name, and concatenates them to returns a full name.
+/**
+ * Combines the first and last name of a person, and returns the full name.
+ */
 export function getFullName(firstName: string, lastName: string): string {
   return `${firstName} ${lastName}`;
 }
 
-// This function makes a list of people, and returns it.
+/**
+ * Gets a list of people.
+ */
 export function getPeople(): Person[] {
   return [
     new Person("Bob", "Smith"),
@@ -25,7 +31,9 @@ export function getPeople(): Person[] {
   ];
 }
 
-// This function returns a random person from the list of people.
+/**
+ * Gets a random person from the list of people.
+ */
 export function getRandomPerson(): Person {
   const people = getPeople();
   const index = <i32>Math.floor(Math.random() * people.length);
@@ -33,7 +41,9 @@ export function getRandomPerson(): Person {
   return person;
 }
 
-// This function demonstrates various ways to log messages and errors.
+/**
+ * Demonstrates logging error messages at different levels.
+ */
 export function testErrors(): void {
   // This is a simple log message. It has no level.
   console.log("This is a simple log message.");

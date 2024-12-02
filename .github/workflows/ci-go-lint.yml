@@ -1,5 +1,6 @@
 # This workflow will lint all Go projects in the repository
 name: ci-go-lint
+
 on:
   pull_request:
     types:
@@ -10,6 +11,10 @@ on:
     paths:
       - '**/*.go'
       - '**/go.mod'
+
+permissions:
+  contents: read
+
 jobs:
   get-dirs:
     if: github.event_name == 'pull_request'

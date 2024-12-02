@@ -112,8 +112,11 @@ func TestMain(m *testing.M) {
 	config.RefreshInterval = refreshPluginInterval
 	config.Port = httpListenPort
 
+	// Create the main background context
+	ctx := context.Background()
+
 	// setup runtime services
-	ctx := services.Start()
+	services.Start(ctx)
 	defer services.Stop(ctx)
 
 	// start HTTP server
@@ -154,7 +157,7 @@ func TestPostgresqlNoConnection(t *testing.T) {
 	// wait here to make sure the plugin is loaded
 	time.Sleep(waitRefreshPluginInterval)
 
-	query := "{ getAllPeople { id name age } }"
+	query := "{ allPeople { id name age } }"
 	response, err := runGraphqlQuery(graphQLRequest{Query: query})
 	assert.Nil(t, response)
 	assert.NotNil(t, err)
@@ -185,7 +188,7 @@ func TestPostgresqlNoHost(t *testing.T) {
 	time.Sleep(waitRefreshPluginInterval)
 
 	// when host name does not exist
-	query := "{ getAllPeople { id name age } }"
+	query := "{ allPeople { id name age } }"
 	response, err := runGraphqlQuery(graphQLRequest{Query: query})
 	assert.Nil(t, response)
 	assert.NotNil(t, err)
@@ -216,7 +219,7 @@ func TestPostgresqlNoPostgresqlHost(t *testing.T) {
 	time.Sleep(waitRefreshPluginInterval)
 
 	// when host name has the wrong host type
-	query := "{ getAllPeople { id name age } }"
+	query := "{ allPeople { id name age } }"
 	response, err := runGraphqlQuery(graphQLRequest{Query: query})
 	assert.Nil(t, response)
 	assert.NotNil(t, err)
@@ -247,7 +250,7 @@ func TestPostgresqlWrongConnString(t *testing.T) {
 	time.Sleep(waitRefreshPluginInterval)
 
 	// when connection string is wrong
-	query := "{ getAllPeople { id name age } }"
+	query := "{ allPeople { id name age } }"
 	response, err := runGraphqlQuery(graphQLRequest{Query: query})
 	assert.Nil(t, response)
 	assert.NotNil(t, err)
@@ -277,7 +280,7 @@ func TestPostgresqlNoConnString(t *testing.T) {
 	time.Sleep(waitRefreshPluginInterval)
 
 	// when host name has no connection string
-	query := "{ getAllPeople { id name age } }"
+	query := "{ allPeople { id name age } }"
 	response, err := runGraphqlQuery(graphQLRequest{Query: query})
 	assert.Nil(t, response)
 	assert.NotNil(t, err)
@@ -400,7 +403,7 @@ func (ps *postgresqlSuite) TearDownSuite() {
 
 func (ps *postgresqlSuite) TestPostgresqlBasicOps() {
 	query := `
-query AddPerson {
+mutation AddPerson {
     addPerson(name: "test", age: 21) {
         id
         name
@@ -414,7 +417,7 @@ query AddPerson {
 func (ps *postgresqlSuite) TestPostgresqlWrongTypeInsert() {
 	// try inserting data with wrong type, column: age
 	query := `
-query AddPerson {
+mutation AddPerson {
     addPerson(name: "test", age: "abc") {
         id
         name

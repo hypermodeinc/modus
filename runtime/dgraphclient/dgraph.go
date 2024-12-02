@@ -15,8 +15,8 @@ import (
 
 	"github.com/hypermodeinc/modus/runtime/logger"
 
-	"github.com/dgraph-io/dgo/v230"
-	"github.com/dgraph-io/dgo/v230/protos/api"
+	"github.com/dgraph-io/dgo/v240"
+	"github.com/dgraph-io/dgo/v240/protos/api"
 	"google.golang.org/grpc"
 )
 

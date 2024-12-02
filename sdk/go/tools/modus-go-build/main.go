@@ -11,6 +11,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"time"
@@ -21,20 +22,33 @@ import (
 	"github.com/hypermodeinc/modus/sdk/go/tools/modus-go-build/config"
 	"github.com/hypermodeinc/modus/sdk/go/tools/modus-go-build/metagen"
 	"github.com/hypermodeinc/modus/sdk/go/tools/modus-go-build/modinfo"
+	"github.com/hypermodeinc/modus/sdk/go/tools/modus-go-build/utils"
 	"github.com/hypermodeinc/modus/sdk/go/tools/modus-go-build/wasm"
-
-	"github.com/fatih/color"
-	"github.com/mattn/go-isatty"
 )
 
 func main() {
+
+	start := time.Now()
+	trace := utils.IsTraceModeEnabled()
+	if trace {
+		log.Println("Starting build process...")
+	}
+
 	config, err := config.GetConfig()
 	if err != nil {
 		exitWithError("Error", err)
 	}
 
+	if trace {
+		log.Println("Configuration loaded.")
+	}
+
 	if err := compiler.Validate(config); err != nil {
 		exitWithError("Error", err)
+	}
+
+	if trace {
+		log.Println("Configuration validated.")
 	}
 
 	mod, err := modinfo.CollectModuleInfo(config)
@@ -42,19 +56,16 @@ func main() {
 		exitWithError("Error", err)
 	}
 
-	color.NoColor = !isatty.IsTerminal(os.Stdout.Fd())
-
-	metagen.WriteLogo()
+	if trace {
+		log.Println("Module info collected.")
+	}
 
 	if err := codegen.PreProcess(config); err != nil {
 		exitWithError("Error while pre-processing source files", err)
 	}
 
-	msg := fmt.Sprintf("\nBuilding %s ...", config.WasmFileName)
-	fmt.Printf("%s\n\n", msg)
-
-	if err := compiler.Compile(config, false); err != nil {
-		exitWithError("Error building wasm", err)
+	if trace {
+		log.Println("Pre-processing done.")
 	}
 
 	meta, err := metagen.GenerateMetadata(config, mod)
@@ -62,26 +73,44 @@ func main() {
 		exitWithError("Error generating metadata", err)
 	}
 
+	if trace {
+		log.Println("Metadata generated.")
+	}
+
 	if err := codegen.PostProcess(config, meta); err != nil {
 		exitWithError("Error while post-processing source files", err)
 	}
 
-	if err := compiler.Compile(config, true); err != nil {
+	if trace {
+		log.Println("Post-processing done.")
+	}
+
+	if err := compiler.Compile(config); err != nil {
 		exitWithError("Error building wasm", err)
+	}
+
+	if trace {
+		log.Println("Wasm compiled.")
 	}
 
 	if err := wasm.WriteMetadata(config, meta); err != nil {
 		exitWithError("Error writing metadata", err)
 	}
 
+	if trace {
+		log.Println("Metadata written.")
+	}
+
 	if err := validateAndCopyManifestToOutput(config); err != nil {
 		exitWithError("Manifest error", err)
 	}
 
-	// for dramatic effect
-	if isatty.IsTerminal(os.Stdout.Fd()) {
-		fmt.Printf("\033[2A\033[%dC\U0001F389\n\n", len(msg))
-		time.Sleep(250 * time.Millisecond)
+	if trace {
+		log.Println("Manifest copied.")
+	}
+
+	if trace {
+		log.Printf("Build completed in %.2f seconds.\n\n", time.Since(start).Seconds())
 	}
 
 	metagen.LogToConsole(meta)

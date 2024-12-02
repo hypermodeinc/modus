@@ -26,6 +26,23 @@ var wellKnownTypes = map[string]bool{
 	"time.Duration": true,
 }
 
+func getFuncDeclaration(fn *types.Func, pkgs map[string]*packages.Package) *ast.FuncDecl {
+	fnName := strings.TrimPrefix(fn.Name(), "__modus_")
+	pkg := pkgs[fn.Pkg().Path()]
+
+	for _, file := range pkg.Syntax {
+		for _, decl := range file.Decls {
+			if fd, ok := decl.(*ast.FuncDecl); ok {
+				if fd.Name.Name == fnName {
+					return fd
+				}
+			}
+		}
+	}
+
+	return nil
+}
+
 func getExportedFunctions(pkgs map[string]*packages.Package) map[string]*types.Func {
 	results := make(map[string]*types.Func)
 	for _, pkg := range pkgs {
@@ -70,7 +87,10 @@ func getImportedFunctions(pkgs map[string]*packages.Package) map[string]*types.F
 				if fd, ok := decl.(*ast.FuncDecl); ok {
 					if name := getImportedFuncName(fd); name != "" {
 						if f, ok := pkg.TypesInfo.Defs[fd.Name].(*types.Func); ok {
-							results[name] = f
+							// we only care about imported modus host functions
+							if strings.HasPrefix(name, "modus_") {
+								results[name] = f
+							}
 						}
 					}
 				}

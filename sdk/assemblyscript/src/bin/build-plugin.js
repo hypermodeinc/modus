@@ -10,7 +10,7 @@
  */
 
 import { execFileSync } from "child_process";
-import { copyFile, readFile, readdir, mkdir, unlink } from "fs/promises";
+import { copyFile, readFile, mkdir } from "fs/promises";
 import { existsSync } from "fs";
 import process from "process";
 import console from "console";
@@ -40,11 +40,6 @@ await validateAsJson();
 
 if (!existsSync("build")) {
   await mkdir("build");
-} else {
-  const files = await readdir("build");
-  for (const file of files) {
-    await unlink(`build/${file}`);
-  }
 }
 
 const manifestFile = "modus.json";
@@ -52,7 +47,6 @@ if (existsSync(manifestFile)) {
   await copyFile(manifestFile, `build/${manifestFile}`);
 }
 
-console.log(`Building ${pkg}.wasm ...`);
 const cmdArgs = [
   npmPath,
   "exec",

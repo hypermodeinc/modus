@@ -23,6 +23,11 @@ func IsDebugModeEnabled() bool {
 	return b
 }
 
+func IsTraceModeEnabled() bool {
+	b, _ := strconv.ParseBool(os.Getenv("MODUS_TRACE"))
+	return b
+}
+
 func JsonSerialize(v any, ident bool) ([]byte, error) {
 	buf := new(bytes.Buffer)
 	enc := json.NewEncoder(buf)

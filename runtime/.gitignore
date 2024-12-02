@@ -1,2 +1,5 @@
 modus_runtime
 runtime
+
+node_modules
+dist

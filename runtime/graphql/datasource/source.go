@@ -28,8 +28,9 @@ import (
 const DataSourceName = "ModusDataSource"
 
 type callInfo struct {
-	Function   fieldInfo      `json:"fn"`
-	Parameters map[string]any `json:"data"`
+	FieldInfo    fieldInfo      `json:"field"`
+	FunctionName string         `json:"function"`
+	Parameters   map[string]any `json:"data"`
 }
 
 type ModusDataSource struct {
@@ -64,8 +65,13 @@ func (*ModusDataSource) LoadWithFiles(ctx context.Context, input []byte, files [
 
 func (ds *ModusDataSource) callFunction(ctx context.Context, callInfo *callInfo) (any, []resolve.GraphQLError, error) {
 
+	// Handle special case for __typename on root Query or Mutation
+	if callInfo.FieldInfo.Name == "__typename" {
+		return callInfo.FieldInfo.ParentType, nil, nil
+	}
+
 	// Get the function info
-	fnInfo, err := ds.WasmHost.GetFunctionInfo(callInfo.Function.Name)
+	fnInfo, err := ds.WasmHost.GetFunctionInfo(callInfo.FunctionName)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -79,7 +85,7 @@ func (ds *ModusDataSource) callFunction(ctx context.Context, callInfo *callInfo)
 
 	// Store the execution info into the function output map.
 	outputMap := ctx.Value(utils.FunctionOutputContextKey).(map[string]wasmhost.ExecutionInfo)
-	outputMap[callInfo.Function.AliasOrName()] = execInfo
+	outputMap[callInfo.FieldInfo.AliasOrName()] = execInfo
 
 	// Transform messages (and error lines in the output buffers) to GraphQL errors.
 	messages := append(execInfo.Messages(), utils.TransformConsoleOutput(execInfo.Buffers())...)
@@ -107,7 +113,7 @@ func (ds *ModusDataSource) callFunction(ctx context.Context, callInfo *callInfo)
 
 func writeGraphQLResponse(ctx context.Context, out *bytes.Buffer, result any, gqlErrors []resolve.GraphQLError, fnErr error, ci *callInfo) error {
 
-	fieldName := ci.Function.AliasOrName()
+	fieldName := ci.FieldInfo.AliasOrName()
 
 	// Include the function error
 	if fnErr != nil {
@@ -139,7 +145,7 @@ func writeGraphQLResponse(ctx context.Context, out *bytes.Buffer, result any, gq
 				msg := fmt.Sprintf("Function completed successfully, but the result contains a %v value that cannot be serialized to JSON.", err.Value)
 				logger.Warn(ctx).
 					Bool("user_visible", true).
-					Str("function", ci.Function.Name).
+					Str("function", ci.FunctionName).
 					Str("result", fmt.Sprintf("%+v", result)).
 					Msg(msg)
 				fmt.Fprintf(out, `{"errors":[{"message":"%s","path":["%s"],"extensions":{"level":"error"}}]}`, msg, fieldName)
@@ -149,7 +155,7 @@ func writeGraphQLResponse(ctx context.Context, out *bytes.Buffer, result any, gq
 		}
 
 		// Transform the data
-		if r, err := transformValue(jsonResult, &ci.Function); err != nil {
+		if r, err := transformValue(jsonResult, &ci.FieldInfo); err != nil {
 			return err
 		} else {
 			jsonData = r
@@ -395,7 +401,7 @@ func transformErrors(messages []utils.LogMessage, ci *callInfo) []resolve.GraphQ
 		if msg.IsError() {
 			errors = append(errors, resolve.GraphQLError{
 				Message: msg.Message,
-				Path:    []any{ci.Function.AliasOrName()},
+				Path:    []any{ci.FieldInfo.AliasOrName()},
 				Extensions: map[string]interface{}{
 					"level": msg.Level,
 				},

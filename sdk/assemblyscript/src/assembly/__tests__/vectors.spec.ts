@@ -1,9 +1,9 @@
 /*
- * Copyright 2024 Hypermode, Inc.
+ * Copyright 2024 Hypermode Inc.
  * Licensed under the terms of the Apache License, Version 2.0
  * See the LICENSE file that accompanied this code for further details.
  *
- * SPDX-FileCopyrightText: 2024 Hypermode, Inc. <hello@hypermode.com>
+ * SPDX-FileCopyrightText: 2024 Hypermode Inc. <hello@hypermode.com>
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -104,7 +104,7 @@ it("should compute the dot product of two vectors", () => {
 it("should compute the magnitude of a vector", () => {
   const a = [1, 2, 3];
   const result = vectors.magnitude(a);
-  expect(result).toBe(sqrt<f64>(14));
+  expect(result).toBe(3);
 });
 
 it("should normalize a vector", () => {

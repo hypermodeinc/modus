@@ -16,12 +16,20 @@ import (
 	"github.com/hypermodeinc/modus/runtime/utils"
 )
 
-var testTime, _ = time.Parse(time.RFC3339, "2024-12-31T23:59:59.999999999Z")
+var testTimeStr = "2024-12-31T23:59:59.999999999Z"
+var testTime, _ = time.Parse(time.RFC3339, testTimeStr)
 var testDuration = time.Duration(5 * time.Second)
 
 func TestTimeInput(t *testing.T) {
 	fnName := "testTimeInput"
 	if _, err := fixture.CallFunction(t, fnName, testTime); err != nil {
+		t.Error(err)
+	}
+}
+
+func TestTimeStrInput(t *testing.T) {
+	fnName := "testTimeInput"
+	if _, err := fixture.CallFunction(t, fnName, testTimeStr); err != nil {
 		t.Error(err)
 	}
 }
@@ -32,6 +40,16 @@ func TestTimePtrInput(t *testing.T) {
 		t.Error(err)
 	}
 	if _, err := fixture.CallFunction(t, fnName, &testTime); err != nil {
+		t.Error(err)
+	}
+}
+
+func TestTimeStrPtrInput(t *testing.T) {
+	fnName := "testTimePtrInput"
+	if _, err := fixture.CallFunction(t, fnName, testTimeStr); err != nil {
+		t.Error(err)
+	}
+	if _, err := fixture.CallFunction(t, fnName, &testTimeStr); err != nil {
 		t.Error(err)
 	}
 }

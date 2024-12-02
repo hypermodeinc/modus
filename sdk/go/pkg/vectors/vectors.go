@@ -1,9 +1,9 @@
 /*
- * Copyright 2024 Hypermode, Inc.
+ * Copyright 2024 Hypermode Inc.
  * Licensed under the terms of the Apache License, Version 2.0
  * See the LICENSE file that accompanied this code for further details.
  *
- * SPDX-FileCopyrightText: 2024 Hypermode, Inc. <hello@hypermode.com>
+ * SPDX-FileCopyrightText: 2024 Hypermode Inc. <hello@hypermode.com>
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -128,14 +128,14 @@ func Dot[T constraints.Integer | constraints.Float](a, b []T) T {
 }
 
 // Magnitude computes the magnitude of a vector.
-func Magnitude[T constraints.Integer | constraints.Float](a []T) float64 {
-	return math.Sqrt(float64(Dot(a, a)))
+func Magnitude[T constraints.Integer | constraints.Float](a []T) T {
+	return T(math.Sqrt(float64(Dot(a, a))))
 }
 
 // Normalize normalizes a vector to have a magnitude of 1.
-func Normalize[T constraints.Integer | constraints.Float](a []T) []float64 {
+func Normalize[T constraints.Integer | constraints.Float](a []T) []T {
 	mag := Magnitude(a)
-	return DivideNumber(convertToFloat64Slice(a), mag)
+	return DivideNumber(a, mag)
 }
 
 // Sum computes the sum of all elements in a vector.
@@ -157,9 +157,9 @@ func Product[T constraints.Integer | constraints.Float](a []T) T {
 }
 
 // func Mean computes the mean of a vector.
-func Mean[T constraints.Integer | constraints.Float](a []T) float64 {
+func Mean[T constraints.Integer | constraints.Float](a []T) T {
 	assertNonEmpty(a)
-	return float64(Sum(a)) / float64(len(a))
+	return T(float64(Sum(a)) / float64(len(a)))
 }
 
 // Min computes the minimum element in a vector.
@@ -221,15 +221,6 @@ func assertEqualLength[T constraints.Integer | constraints.Float](a, b []T) {
 	if len(a) != len(b) {
 		panic("vectors must be the same length")
 	}
-}
-
-// convertToFloat64Slice converts a slice of type []T to type []float64.
-func convertToFloat64Slice[T constraints.Integer | constraints.Float](a []T) []float64 {
-	result := make([]float64, len(a))
-	for i := range a {
-		result[i] = float64(a[i])
-	}
-	return result
 }
 
 func assertNonEmpty[T constraints.Integer | constraints.Float](a []T) {

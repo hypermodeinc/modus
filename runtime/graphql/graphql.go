@@ -14,7 +14,9 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 
+	"github.com/hypermodeinc/modus/runtime/config"
 	"github.com/hypermodeinc/modus/runtime/graphql/engine"
 	"github.com/hypermodeinc/modus/runtime/logger"
 	"github.com/hypermodeinc/modus/runtime/manifestdata"
@@ -22,6 +24,7 @@ import (
 	"github.com/hypermodeinc/modus/runtime/utils"
 	"github.com/hypermodeinc/modus/runtime/wasmhost"
 
+	"github.com/tidwall/gjson"
 	"github.com/tidwall/sjson"
 	eng "github.com/wundergraph/graphql-go-tools/execution/engine"
 	gql "github.com/wundergraph/graphql-go-tools/execution/graphql"
@@ -55,16 +58,28 @@ func Initialize() {
 }
 
 func handleGraphQLRequest(w http.ResponseWriter, r *http.Request) {
+
+	// In dev, redirect non-GraphQL requests to the explorer
+	if config.IsDevEnvironment() &&
+		r.Method == http.MethodGet &&
+		!strings.Contains(r.Header.Get("Accept"), "application/json") {
+		http.Redirect(w, r, "/explorer", http.StatusTemporaryRedirect)
+		return
+	}
+
 	ctx := r.Context()
 
 	// Read the incoming GraphQL request
 	var gqlRequest gql.Request
-	err := gql.UnmarshalHttpRequest(r, &gqlRequest)
-	if err != nil {
-		// NOTE: we intentionally don't log this, to avoid a bad actor spamming the logs
-		// TODO: we should capture metrics here though
+	if err := gql.UnmarshalHttpRequest(r, &gqlRequest); err != nil {
+		// TODO: we should capture metrics here
 		msg := "Failed to parse GraphQL request."
 		http.Error(w, msg, http.StatusBadRequest)
+
+		// NOTE: We only log these in dev, to avoid a bad actor spamming the logs in prod.
+		if config.IsDevEnvironment() {
+			logger.Warn(ctx).Err(err).Msg(msg)
+		}
 		return
 	}
 
@@ -95,46 +110,62 @@ func handleGraphQLRequest(w http.ResponseWriter, r *http.Request) {
 		options = append(options, eng.WithRequestTraceOptions(traceOpts))
 	}
 
-	// Execute the GraphQL query
+	// Execute the GraphQL operation
 	resultWriter := gql.NewEngineResultWriter()
-	err = engine.Execute(ctx, &gqlRequest, &resultWriter, options...)
-	if err != nil {
+	if err := engine.Execute(ctx, &gqlRequest, &resultWriter, options...); err != nil {
 
 		if report, ok := err.(operationreport.Report); ok {
 			if len(report.InternalErrors) > 0 {
 				// Log internal errors, but don't return them to the client
-				msg := "Failed to execute GraphQL query."
+				msg := "Failed to execute GraphQL operation."
 				logger.Err(ctx, err).Msg(msg)
 				http.Error(w, msg, http.StatusInternalServerError)
 				return
 			}
 		}
 
-		requestErrors := graphqlerrors.RequestErrorsFromError(err)
-		if len(requestErrors) > 0 {
-			// NOTE: we intentionally don't log this, to avoid a bad actor spamming the logs
-			// TODO: we should capture metrics here though
+		if requestErrors := graphqlerrors.RequestErrorsFromError(err); len(requestErrors) > 0 {
+			// TODO: we should capture metrics here
 			utils.WriteJsonContentHeader(w)
 			_, _ = requestErrors.WriteResponse(w)
+
+			// NOTE: We only log these in dev, to avoid a bad actor spamming the logs in prod.
+			if config.IsDevEnvironment() {
+				// cleanup empty arrays from error message before logging
+				errMsg := strings.Replace(err.Error(), ", locations: []", "", 1)
+				errMsg = strings.Replace(errMsg, ", path: []", "", 1)
+				logger.Warn(ctx).Str("error", errMsg).Msg("Failed to execute GraphQL operation.")
+			}
 		} else {
-			msg := "Failed to execute GraphQL query."
+			msg := "Failed to execute GraphQL operation."
 			logger.Err(ctx, err).Msg(msg)
 			http.Error(w, fmt.Sprintf("%s\n%v", msg, err), http.StatusInternalServerError)
 		}
 		return
 	}
 
-	response := resultWriter.Bytes()
-	response, err = addOutputToResponse(response, output)
-	if err != nil {
+	if response, err := addOutputToResponse(resultWriter.Bytes(), output); err != nil {
 		msg := "Failed to add function output to response."
 		logger.Err(ctx, err).Msg(msg)
 		http.Error(w, fmt.Sprintf("%s\n%v", msg, err), http.StatusInternalServerError)
-	}
+	} else {
+		utils.WriteJsonContentHeader(w)
 
-	// Return the response
-	utils.WriteJsonContentHeader(w)
-	_, _ = w.Write(response)
+		// An introspection query will always return a Query type, but if only mutations were defined,
+		// the fields of the Query type will be null.  That will fail the introspection query, so we need
+		// to replace the null with an empty array.
+		if ok, _ := gqlRequest.IsIntrospectionQuery(); ok {
+			if q := gjson.GetBytes(response, `data.__schema.types.#(name="Query")`); q.Exists() {
+				if f := q.Get("fields"); f.Type == gjson.Null {
+					response[f.Index] = '['
+					response[f.Index+1] = ']'
+					response = append(response[:f.Index+2], response[f.Index+4:]...)
+				}
+			}
+		}
+
+		_, _ = w.Write(response)
+	}
 }
 
 func addOutputToResponse(response []byte, output map[string]wasmhost.ExecutionInfo) ([]byte, error) {

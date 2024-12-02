@@ -1,53 +1,57 @@
 version: 2
 updates:
-  - package-ecosystem: "github-actions"
-    directory: "/"
+  - package-ecosystem: github-actions
+    directory: /
     schedule:
-      interval: "weekly"
-      day: "wednesday"
+      interval: weekly
+      day: wednesday
       time: "16:00"
     groups:
       actions:
         update-types:
-          - "patch"
-          - "minor"
-          - "major"
+          - patch
+          - minor
+          - major
 
-  - package-ecosystem: "gomod"
+  - package-ecosystem: gomod
     directories:
-      - "/"
-      - "/runtime"
-      - "/runtime/languages/golang/testdata"
-      - "/sdk/go"
-      - "/sdk/go/examples/*"
-      - "/sdk/go/tools/modus-go-build"
+      - /lib/*
+      - /runtime
+      - /runtime/languages/golang/testdata
+      - /sdk/go
+      - /sdk/go/examples/*
+      - /sdk/go/templates/*
     schedule:
-      interval: "weekly"
-      day: "wednesday"
+      interval: weekly
+      day: wednesday
       time: "16:00"
     groups:
       minor-and-patch:
         applies-to: version-updates
         update-types:
-          - "minor"
-          - "patch"
+          - minor
+          - patch
 
-  - package-ecosystem: "npm"
+  - package-ecosystem: npm
     versioning-strategy: increase
     directories:
-      - "/sdk/assemblyscript/src"
-      - "/sdk/assemblyscript/examples/*"
-      - "/runtime/languages/assemblyscript/testdata"
+      - /cli
+      - /runtime/explorer/content
+      - /runtime/languages/assemblyscript/testdata
+      - /sdk/assemblyscript/src
+      - /sdk/assemblyscript/examples/*
+      - /sdk/assemblyscript/templates/*
+      - /tools/release-info
     schedule:
-      interval: "weekly"
-      day: "wednesday"
+      interval: weekly
+      day: wednesday
       time: "16:00"
     groups:
       minor-and-patch:
         applies-to: version-updates
         update-types:
-          - "minor"
-          - "patch"
+          - minor
+          - patch
     ignore:
       # We target Node.js 22
       - dependency-name: "@types/node"

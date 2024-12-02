@@ -10,34 +10,49 @@
 package extractor
 
 import (
+	"go/ast"
+	"go/token"
 	"go/types"
+	"strings"
 
 	"github.com/hypermodeinc/modus/sdk/go/tools/modus-go-build/metadata"
 	"github.com/hypermodeinc/modus/sdk/go/tools/modus-go-build/utils"
+	"golang.org/x/tools/go/packages"
 )
 
-func transformStruct(name string, s *types.Struct) *metadata.TypeDefinition {
+func transformStruct(name string, s *types.Struct, pkgs map[string]*packages.Package) *metadata.TypeDefinition {
 	if s == nil {
 		return nil
 	}
 
-	fields := make([]*metadata.Field, s.NumFields())
+	structDecl, structType := getStructDeclarationAndType(name, pkgs)
+	if structDecl == nil || structType == nil {
+		return nil
+	}
 
+	structDocs := getDocs(structDecl.Doc)
+
+	fields := make([]*metadata.Field, s.NumFields())
 	for i := 0; i < s.NumFields(); i++ {
 		f := s.Field(i)
+
+		fieldDocs := getDocs(structType.Fields.List[i].Doc)
+
 		fields[i] = &metadata.Field{
 			Name: utils.CamelCase(f.Name()),
 			Type: f.Type().String(),
+			Docs: fieldDocs,
 		}
 	}
 
 	return &metadata.TypeDefinition{
 		Name:   name,
 		Fields: fields,
+		Docs:   structDocs,
 	}
 }
 
-func transformFunc(name string, f *types.Func) *metadata.Function {
+func transformFunc(name string, f *types.Func, pkgs map[string]*packages.Package) *metadata.Function {
 	if f == nil {
 		return nil
 	}
@@ -46,8 +61,14 @@ func transformFunc(name string, f *types.Func) *metadata.Function {
 	params := sig.Params()
 	results := sig.Results()
 
+	funcDecl := getFuncDeclaration(f, pkgs)
+	if funcDecl == nil {
+		return nil
+	}
+
 	ret := metadata.Function{
 		Name: name,
+		Docs: getDocs(funcDecl.Doc),
 	}
 
 	if params != nil {
@@ -73,4 +94,57 @@ func transformFunc(name string, f *types.Func) *metadata.Function {
 	}
 
 	return &ret
+}
+
+func getStructDeclarationAndType(name string, pkgs map[string]*packages.Package) (*ast.GenDecl, *ast.StructType) {
+	objName := name[strings.LastIndex(name, ".")+1:]
+	pkgName := utils.GetPackageNamesForType(name)[0]
+	pkg := pkgs[pkgName]
+
+	for _, file := range pkg.Syntax {
+		for _, decl := range file.Decls {
+			if genDecl, ok := decl.(*ast.GenDecl); ok && genDecl.Tok == token.TYPE {
+				for _, spec := range genDecl.Specs {
+					if typeSpec, ok := spec.(*ast.TypeSpec); ok {
+						if typeSpec.Name.Name == objName {
+							if structType, ok := typeSpec.Type.(*ast.StructType); ok {
+								return genDecl, structType
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return nil, nil
+}
+
+func getDocs(comments *ast.CommentGroup) *metadata.Docs {
+	if comments == nil {
+		return nil
+	}
+
+	var lines []string
+	for _, comment := range comments.List {
+		txt := comment.Text
+		if strings.HasPrefix(txt, "// ") {
+			txt = strings.TrimPrefix(txt, "// ")
+			txt = strings.TrimSpace(txt)
+			lines = append(lines, txt)
+		} else if strings.HasPrefix(txt, "/*") {
+			txt = strings.TrimPrefix(txt, "/*")
+			txt = strings.TrimSuffix(txt, "*/")
+			txt = strings.TrimSpace(txt)
+			lines = append(lines, strings.Split(txt, "\n")...)
+		}
+	}
+
+	if len(lines) == 0 {
+		return nil
+	}
+
+	return &metadata.Docs{
+		Lines: lines,
+	}
 }
