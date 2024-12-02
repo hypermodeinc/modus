@@ -7,6 +7,7 @@
 ## UNRELEASED - Go SDK
 
 - fix: vector package should return generic type in computations [#628](https://github.com/hypermodeinc/modus/pull/628)
+- chore: Remove unused go package reference [#632](https://github.com/hypermodeinc/modus/pull/632)
 
 ## UNRELEASED - AssemblyScript SDK
 
