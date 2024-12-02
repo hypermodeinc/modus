@@ -32,7 +32,7 @@ export class OpenAIChatModel extends Model<OpenAIChatInput, OpenAIChatOutput> {
  * The input object for the OpenAI Chat API.
  */
 @json
-export class OpenAIChatInput {
+export class OpenAIInput {
   /**
    * The name of the model to use for the chat.
    * Must be the exact string expected by the model provider.
@@ -43,11 +43,6 @@ export class OpenAIChatInput {
    * It does not need to be set manually.
    */
   model!: string;
-
-  /**
-   * An array of messages to send to the chat model.
-   */
-  messages!: Message[];
 
   /**
    * Number between `-2.0` and `2.0`.
@@ -223,6 +218,17 @@ export class OpenAIChatInput {
    */
   @omitnull()
   user: string | null = null;
+}
+
+/**
+ * The input object for the OpenAI Chat API.
+ */
+@json
+export class OpenAIChatInput extends OpenAIInput {
+  /**
+   * An array of messages to send to the chat model.
+   */
+  messages!: Message[];
 }
 
 /**
@@ -743,4 +749,125 @@ export class CompletionMessage extends Message {
    */
   @alias("tool_calls")
   toolCalls: ToolCall[] = [];
+}
+
+/**
+ * Provides input and output types that conform to the OpenAI Chat API using COntent Part for Vision
+ *
+ * Reference: https://platform.openai.com/docs/api-reference/chat
+ */
+export class OpenAIVisionModel extends Model<
+  OpenAIVisionInput,
+  OpenAIChatOutput
+> {
+  /**
+   * Creates an input object for the OpenAI Chat API.
+   *
+   * @param messages: An array of messages to send to the chat model.
+   * @returns An input object that can be passed to the `invoke` method.
+   */
+  createInput(messages: ContentPartMessage[]): OpenAIVisionInput {
+    const model = this.info.fullName;
+    return <OpenAIVisionInput>{ model, messages };
+  }
+}
+
+/**
+ * The input object for the OpenAI Chat API.
+ */
+@json
+export class OpenAIVisionInput extends OpenAIInput {
+  /**
+   * An array of messages to send to the chat model.
+   */
+  messages!: ContentPartMessage[];
+}
+/**
+ * ImageContent object that can be sent to the chat model as content part.
+ */
+
+@json
+export class ImageContent {
+  url!: string;
+
+
+  @omitnull()
+  details: string | null = null;
+}
+
+
+@json
+export class ContentPart {
+  /**
+   * The type of content.
+   */
+  type!: string;
+  constructor(type: string) {
+    this.type = type;
+  }
+
+  /**
+   * The text for type `text`.
+   */
+  @omitnull()
+  text: string | null = null;
+
+
+  @omitnull()
+  image_url: ImageContent | null = null;
+}
+
+
+@json
+export class TextContentPart extends ContentPart {
+  constructor(text: string) {
+    super("text");
+    this.text = text;
+  }
+}
+
+
+@json
+export class ImageContentPart extends ContentPart {
+  constructor(image_url: string, details: string | null = null) {
+    super("image_url");
+
+    this.image_url = <ImageContent>{
+      url: image_url,
+      details: details,
+    };
+  }
+}
+
+/**
+ * A message object that can be sent to the chat model.
+ */
+@json
+export class ContentPartMessage {
+  /**
+   * Creates a new message object.
+   *
+   * @param role The role of the author of this message.
+   * @param content The contents of the message.
+   */
+  constructor(role: string, content: ContentPart[]) {
+    this._role = role;
+    this.content = content;
+  }
+
+
+  @alias("role")
+  protected _role: string;
+
+  /**
+   * The role of the author of this message.
+   */
+  get role(): string {
+    return this._role;
+  }
+
+  /**
+   * The contents of the message.
+   */
+  content: ContentPart[];
 }
