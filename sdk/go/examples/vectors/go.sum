@@ -1,4 +1,4 @@
-github.com/hypermodeinc/modus/sdk/go v0.13.1 h1:i12jiBwAAhq/c9HwEvwA0ugXOCvg/wlP9kGtTsg7w9U=
-github.com/hypermodeinc/modus/sdk/go v0.13.1/go.mod h1:0TaYvERi5P95n35uLCm7I+Dq7qjnoc95Bu2Yjqr+GIo=
-golang.org/x/exp v0.0.0-20241009180824-f66d83c29e7c h1:7dEasQXItcW1xKJ2+gg5VOiBnqWrJc+rq0DPKyvvdbY=
-golang.org/x/exp v0.0.0-20241009180824-f66d83c29e7c/go.mod h1:NQtJDoLvd6faHhE7m4T/1IY708gDefGGjR/iUW8yQQ8=
+github.com/hypermodeinc/modus/sdk/go v0.14.2 h1:u8apLIaxQlE9sGVmhWNwWQCuvFIctZyse83nJiGB1/A=
+github.com/hypermodeinc/modus/sdk/go v0.14.2/go.mod h1:VDL2kAYHQtNEr7lxPynbchZ6HizLSSQ9cG4LrDnq3Vg=
+golang.org/x/exp v0.0.0-20241108190413-2d47ceb2692f h1:XdNn9LlyWAhLVp6P/i8QYBW+hlyhrhei9uErw2B5GJo=
+golang.org/x/exp v0.0.0-20241108190413-2d47ceb2692f/go.mod h1:D5SMRVC3C2/4+F/DB1wZsLRnSNimn2Sp/NPsCrsv8ak=

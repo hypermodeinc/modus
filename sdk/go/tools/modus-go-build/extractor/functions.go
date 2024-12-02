@@ -87,7 +87,10 @@ func getImportedFunctions(pkgs map[string]*packages.Package) map[string]*types.F
 				if fd, ok := decl.(*ast.FuncDecl); ok {
 					if name := getImportedFuncName(fd); name != "" {
 						if f, ok := pkg.TypesInfo.Defs[fd.Name].(*types.Func); ok {
-							results[name] = f
+							// we only care about imported modus host functions
+							if strings.HasPrefix(name, "modus_") {
+								results[name] = f
+							}
 						}
 					}
 				}

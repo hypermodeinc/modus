@@ -1,6 +1,10 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+
+	_ "github.com/hypermodeinc/modus/sdk/go"
+)
 
 func SayHello(name *string) string {
 

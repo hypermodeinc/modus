@@ -1,8 +1,38 @@
 # Change Log
 
-## UNRELEASED - Runtime 0.14.1
+## UNRELEASED - Runtime
 
 - fix: doc comments from object fields should be present in generated GraphQL schema [#630](https://github.com/hypermodeinc/modus/pull/630)
+
+## UNRELEASED - Go SDK
+
+- fix: vector package should return generic type in computations [#628](https://github.com/hypermodeinc/modus/pull/628)
+
+## UNRELEASED - AssemblyScript SDK
+
+- fix: vector package should return generic type in computations [#628](https://github.com/hypermodeinc/modus/pull/628)
+
+## 2024-11-27 - CLI 0.14.0
+
+- fix: Lookup of 'latest' SDK when no Modus SDK is referenced [#625](https://github.com/hypermodeinc/modus/pull/625)
+
+## 2024-11-27 - Runtime 0.14.1
+
+- feat: updates to API explorer [#617](https://github.com/hypermodeinc/modus/pull/617) [#626](https://github.com/hypermodeinc/modus/pull/626)
+- various dependency updates
+
+## 2024-11-27 - AssemblyScript SDK 0.14.2
+
+- chore: Export base Message class in OpenAI chat SDK [#616](https://github.com/hypermodeinc/modus/pull/616)
+
+## 2024-11-27 - Go SDK 0.14.3
+
+- chore: Export base Message class in OpenAI chat SDK [#616](https://github.com/hypermodeinc/modus/pull/616)
+- fix: Filter imports to modus host functions [#623](https://github.com/hypermodeinc/modus/pull/623)
+
+## 2024-11-25 - Go SDK 0.14.2
+
+- fix: Reduce Go build times [#615](https://github.com/hypermodeinc/modus/pull/615)
 
 ## 2024-11-25 - CLI 0.13.10
 

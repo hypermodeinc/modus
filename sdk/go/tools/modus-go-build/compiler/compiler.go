@@ -23,19 +23,13 @@ import (
 
 const minTinyGoVersion = "0.33.0"
 
-func Compile(config *config.Config, final bool) error {
+func Compile(config *config.Config) error {
 	args := []string{"build"}
 	args = append(args, "-target", "wasip1")
 	args = append(args, "-o", filepath.Join(config.OutputDir, config.WasmFileName))
 
 	// disable the asyncify scheduler until we better understand how to use it
 	args = append(args, "-scheduler", "none")
-
-	if !final {
-		// We need a fast compile for the first pass. Optimizations aren't necessary.
-		// Note that -opt=0 would be ok, but it emits a warning and isn't all that much faster than -opt=1
-		args = append(args, "-opt", "1")
-	}
 
 	args = append(args, config.CompilerOptions...)
 	args = append(args, ".")
