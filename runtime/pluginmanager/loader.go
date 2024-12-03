@@ -90,7 +90,10 @@ func loadPlugin(ctx context.Context, filename string) error {
 
 	// Write the plugin info to the database.
 	// Note, this may update the ID if a plugin with the same BuildID is in the db already.
-	db.WritePluginInfo(ctx, plugin)
+	err = db.WritePluginInfo(ctx, plugin)
+	if err != nil {
+		return err
+	}
 
 	// Register the plugin.
 	globalPluginRegistry.AddOrUpdate(plugin)

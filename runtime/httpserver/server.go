@@ -23,6 +23,7 @@ import (
 	"github.com/hypermodeinc/modus/lib/manifest"
 	"github.com/hypermodeinc/modus/runtime/app"
 	"github.com/hypermodeinc/modus/runtime/config"
+	"github.com/hypermodeinc/modus/runtime/db"
 	"github.com/hypermodeinc/modus/runtime/explorer"
 	"github.com/hypermodeinc/modus/runtime/graphql"
 	"github.com/hypermodeinc/modus/runtime/logger"
@@ -85,6 +86,55 @@ func startHttpServer(ctx context.Context, addresses ...string) {
 			shutdownChan <- true
 		}()
 	}
+
+	// i want to make a new server that just serves a string
+	inferenceHistoryHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		resp, err := db.QueryInferences(ctx)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		fmt.Fprint(w, resp)
+	})
+
+	pluginHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		resp, err := db.QueryPlugins(ctx)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		fmt.Fprint(w, resp)
+	})
+
+	// Create a new server for the inference history endpoint.
+	inferenceHistoryMux := http.NewServeMux()
+	inferenceHistoryMux.Handle("/inferences.json", inferenceHistoryHandler)
+	inferenceHistoryServer := &http.Server{Handler: inferenceHistoryMux, Addr: ":5054"}
+
+	// Create a new server for the plugin endpoint.
+	pluginMux := http.NewServeMux()
+	pluginMux.Handle("/plugins.json", pluginHandler)
+	pluginServer := &http.Server{Handler: pluginMux, Addr: ":5055"}
+
+	// Start the inference history server.
+	go func() {
+		err := inferenceHistoryServer.ListenAndServe()
+		app.SetShuttingDown()
+		if err != nil && !errors.Is(err, http.ErrServerClosed) {
+			logger.Fatal(ctx).Err(err).Msg("Inference history server error.  Exiting.")
+		}
+		shutdownChan <- true
+	}()
+
+	// Start the plugin server.
+	go func() {
+		err := pluginServer.ListenAndServe()
+		app.SetShuttingDown()
+		if err != nil && !errors.Is(err, http.ErrServerClosed) {
+			logger.Fatal(ctx).Err(err).Msg("Plugin server error.  Exiting.")
+		}
+		shutdownChan <- true
+	}()
 
 	// Wait for a signal to shutdown the servers.
 	sigChan := make(chan os.Signal, 1)
