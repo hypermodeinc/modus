@@ -19,10 +19,10 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/hypermodeinc/modus/lib/manifest"
 	"github.com/hypermodeinc/modus/runtime/app"
-	"github.com/hypermodeinc/modus/runtime/config"
 	"github.com/hypermodeinc/modus/runtime/explorer"
 	"github.com/hypermodeinc/modus/runtime/graphql"
 	"github.com/hypermodeinc/modus/runtime/logger"
@@ -40,20 +40,25 @@ var urlColor = color.New(color.FgHiCyan)
 var noticeColor = color.New(color.FgGreen, color.Italic)
 var warningColor = color.New(color.FgYellow)
 
+// ShutdownTimeout is the time to wait for the server to shutdown gracefully.
+const shutdownTimeout = 5 * time.Second
+
 func Start(ctx context.Context, local bool) {
+
+	port := app.Config().Port()
 
 	if local {
 		// If we are running locally, only listen on localhost.
 		// This prevents getting nagged for firewall permissions each launch.
 		// Listen on IPv4, and also on IPv6 if available.
-		addresses := []string{fmt.Sprintf("127.0.0.1:%d", config.Port)}
+		addresses := []string{fmt.Sprintf("127.0.0.1:%d", port)}
 		if isIPv6Available() {
-			addresses = append(addresses, fmt.Sprintf("[::1]:%d", config.Port))
+			addresses = append(addresses, fmt.Sprintf("[::1]:%d", port))
 		}
 		startHttpServer(ctx, addresses...)
 	} else {
 		// Otherwise, listen on all interfaces.
-		addr := fmt.Sprintf(":%d", config.Port)
+		addr := fmt.Sprintf(":%d", port)
 		startHttpServer(ctx, addr)
 	}
 }
@@ -105,7 +110,7 @@ func startHttpServer(ctx context.Context, addresses ...string) {
 
 	// Shutdown all servers gracefully.
 	for _, server := range servers {
-		shutdownCtx, shutdownRelease := context.WithTimeout(ctx, app.ShutdownTimeout)
+		shutdownCtx, shutdownRelease := context.WithTimeout(ctx, shutdownTimeout)
 		defer shutdownRelease()
 		if err := server.Shutdown(shutdownCtx); err != nil {
 			logger.Fatal(ctx).Err(err).Msg("HTTP server shutdown error.")
@@ -134,10 +139,12 @@ func GetMainHandler(options ...func(map[string]http.Handler)) http.Handler {
 		"/metrics": metrics.MetricsHandler,
 	}
 
-	if config.IsDevEnvironment() {
+	cfg := app.Config()
+	if cfg.IsDevEnvironment() {
 		defaultRoutes["/explorer/"] = explorer.ExplorerHandler
 		defaultRoutes["/"] = http.RedirectHandler("/explorer/", http.StatusSeeOther)
 	}
+	port := cfg.Port()
 
 	for _, opt := range options {
 		opt(defaultRoutes)
@@ -177,7 +184,7 @@ func GetMainHandler(options ...func(map[string]http.Handler)) http.Handler {
 
 				routes[info.Path] = metrics.InstrumentHandler(handler, name)
 
-				url := fmt.Sprintf("http://localhost:%d%s", config.Port, info.Path)
+				url := fmt.Sprintf("http://localhost:%d%s", port, info.Path)
 				logger.Info(ctx).Str("url", url).Msg("Registered GraphQL endpoint.")
 				endpoints = append(endpoints, endpoint{"GraphQL", name, url})
 
@@ -188,7 +195,7 @@ func GetMainHandler(options ...func(map[string]http.Handler)) http.Handler {
 
 		mux.ReplaceRoutes(routes)
 
-		if config.IsDevEnvironment() {
+		if app.Config().IsDevEnvironment() {
 			fmt.Fprintln(os.Stderr)
 
 			switch len(endpoints) {
@@ -201,7 +208,7 @@ func GetMainHandler(options ...func(map[string]http.Handler)) http.Handler {
 				itemColor.Fprintf(os.Stderr, "• %s (%s): ", ep.apiType, ep.name)
 				urlColor.Fprintln(os.Stderr, ep.url)
 
-				explorerURL := fmt.Sprintf("http://localhost:%d/explorer", config.Port)
+				explorerURL := fmt.Sprintf("http://localhost:%d/explorer", port)
 				titleColor.Fprintf(os.Stderr, "\nView endpoint: ")
 				urlColor.Fprintln(os.Stderr, explorerURL)
 
@@ -212,7 +219,7 @@ func GetMainHandler(options ...func(map[string]http.Handler)) http.Handler {
 					urlColor.Fprintln(os.Stderr, ep.url)
 				}
 
-				explorerURL := fmt.Sprintf("http://localhost:%d/explorer", config.Port)
+				explorerURL := fmt.Sprintf("http://localhost:%d/explorer", port)
 				titleColor.Fprintf(os.Stderr, "\nView your endpoints at: ")
 				urlColor.Fprintln(os.Stderr, explorerURL)
 			}

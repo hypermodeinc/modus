@@ -19,7 +19,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/hypermodeinc/modus/runtime/config"
+	"github.com/hypermodeinc/modus/runtime/app"
 	"github.com/hypermodeinc/modus/runtime/envfiles"
 	"github.com/hypermodeinc/modus/runtime/logger"
 	"github.com/hypermodeinc/modus/runtime/utils"
@@ -49,7 +49,7 @@ func initKeys(ctx context.Context) {
 	if publicPemKeysJson != "" {
 		keys, err := publicPemKeysJsonToKeys(publicPemKeysJson)
 		if err != nil {
-			if config.IsDevEnvironment() {
+			if app.Config().IsDevEnvironment() {
 				logger.Fatal(ctx).Err(err).Msg("Auth PEM public keys deserializing error")
 			}
 			logger.Error(ctx).Err(err).Msg("Auth PEM public keys deserializing error")
@@ -60,7 +60,7 @@ func initKeys(ctx context.Context) {
 	if jwksEndpointsJson != "" {
 		keys, err := jwksEndpointsJsonToKeys(ctx, jwksEndpointsJson)
 		if err != nil {
-			if config.IsDevEnvironment() {
+			if app.Config().IsDevEnvironment() {
 				logger.Fatal(ctx).Err(err).Msg("Auth JWKS public keys deserializing error")
 			}
 			logger.Error(ctx).Err(err).Msg("Auth JWKS public keys deserializing error")
@@ -91,7 +91,7 @@ func HandleJWT(next http.Handler) http.Handler {
 		}
 
 		if len(globalAuthKeys.getPemPublicKeys()) == 0 && len(globalAuthKeys.getJwksPublicKeys()) == 0 {
-			if config.IsDevEnvironment() {
+			if app.Config().IsDevEnvironment() {
 				if tokenStr == "" {
 					next.ServeHTTP(w, r)
 					return

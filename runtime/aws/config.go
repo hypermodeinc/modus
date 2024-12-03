@@ -13,7 +13,7 @@ import (
 	"context"
 	"fmt"
 
-	hmConfig "github.com/hypermodeinc/modus/runtime/config"
+	"github.com/hypermodeinc/modus/runtime/app"
 	"github.com/hypermodeinc/modus/runtime/logger"
 	"github.com/hypermodeinc/modus/runtime/utils"
 
@@ -22,14 +22,14 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/sts"
 )
 
-var awsConfig aws.Config
+var awsConfig *aws.Config
 
-func GetAwsConfig() aws.Config {
+func GetAwsConfig() *aws.Config {
 	return awsConfig
 }
 
 func Initialize(ctx context.Context) {
-	if !(hmConfig.UseAwsStorage) {
+	if !(app.Config().UseAwsStorage()) {
 		return
 	}
 
@@ -54,7 +54,7 @@ func initialize(ctx context.Context) error {
 		return fmt.Errorf("error getting AWS caller identity: %w", err)
 	}
 
-	awsConfig = cfg
+	awsConfig = &cfg
 
 	logger.Info(ctx).
 		Str("region", awsConfig.Region).

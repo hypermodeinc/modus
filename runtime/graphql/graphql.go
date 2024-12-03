@@ -16,7 +16,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/hypermodeinc/modus/runtime/config"
+	"github.com/hypermodeinc/modus/runtime/app"
 	"github.com/hypermodeinc/modus/runtime/graphql/engine"
 	"github.com/hypermodeinc/modus/runtime/logger"
 	"github.com/hypermodeinc/modus/runtime/manifestdata"
@@ -60,7 +60,7 @@ func Initialize() {
 func handleGraphQLRequest(w http.ResponseWriter, r *http.Request) {
 
 	// In dev, redirect non-GraphQL requests to the explorer
-	if config.IsDevEnvironment() &&
+	if app.Config().IsDevEnvironment() &&
 		r.Method == http.MethodGet &&
 		!strings.Contains(r.Header.Get("Accept"), "application/json") {
 		http.Redirect(w, r, "/explorer", http.StatusTemporaryRedirect)
@@ -77,7 +77,7 @@ func handleGraphQLRequest(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, msg, http.StatusBadRequest)
 
 		// NOTE: We only log these in dev, to avoid a bad actor spamming the logs in prod.
-		if config.IsDevEnvironment() {
+		if app.Config().IsDevEnvironment() {
 			logger.Warn(ctx).Err(err).Msg(msg)
 		}
 		return
@@ -130,7 +130,7 @@ func handleGraphQLRequest(w http.ResponseWriter, r *http.Request) {
 			_, _ = requestErrors.WriteResponse(w)
 
 			// NOTE: We only log these in dev, to avoid a bad actor spamming the logs in prod.
-			if config.IsDevEnvironment() {
+			if app.Config().IsDevEnvironment() {
 				// cleanup empty arrays from error message before logging
 				errMsg := strings.Replace(err.Error(), ", locations: []", "", 1)
 				errMsg = strings.Replace(errMsg, ", path: []", "", 1)

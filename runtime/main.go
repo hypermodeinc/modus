@@ -13,7 +13,6 @@ import (
 	"context"
 
 	"github.com/hypermodeinc/modus/runtime/app"
-	"github.com/hypermodeinc/modus/runtime/config"
 	"github.com/hypermodeinc/modus/runtime/envfiles"
 	"github.com/hypermodeinc/modus/runtime/httpserver"
 	"github.com/hypermodeinc/modus/runtime/logger"
@@ -23,17 +22,14 @@ import (
 
 func main() {
 
-	// Initialize the configuration
-	config.Initialize()
-
 	// Create the main background context
 	ctx := context.Background()
 
 	// Initialize the logger
 	log := logger.Initialize()
 	log.Info().
-		Str("version", config.GetVersionNumber()).
-		Str("environment", config.GetEnvironmentName()).
+		Str("version", app.VersionNumber()).
+		Str("environment", app.Config().Environment()).
 		Msg("Starting Modus Runtime.")
 
 	err := envfiles.LoadEnvFiles(ctx)
@@ -42,8 +38,7 @@ func main() {
 	}
 
 	// Initialize Sentry (if enabled)
-	rootSourcePath := app.GetRootSourcePath()
-	utils.InitSentry(rootSourcePath)
+	utils.InitSentry()
 	defer utils.FlushSentryEvents()
 
 	// Start the background services
@@ -51,7 +46,7 @@ func main() {
 	defer services.Stop(ctx)
 
 	// Set local mode in development
-	local := config.IsDevEnvironment()
+	local := app.Config().IsDevEnvironment()
 
 	// Start the HTTP server to listen for requests.
 	// Note, this function blocks, and handles shutdown gracefully.

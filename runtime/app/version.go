@@ -7,7 +7,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-package config
+package app
 
 import (
 	"os/exec"
@@ -17,6 +17,10 @@ import (
 var version string
 
 func init() {
+	adjustVersion()
+}
+
+func adjustVersion() {
 	// The "version" variable is set by the makefile using -ldflags when using "make build" or goreleaser.
 	// If it is not set, then we are running in development mode with "go run" or "go build" without the makefile,
 	// so we will describe the version from git at run time.
@@ -27,12 +31,12 @@ func init() {
 	}
 }
 
-func GetVersionNumber() string {
+func VersionNumber() string {
 	return version
 }
 
-func GetProductVersion() string {
-	return "Modus Runtime " + GetVersionNumber()
+func ProductVersion() string {
+	return "Modus Runtime " + VersionNumber()
 }
 
 func describeVersion() string {

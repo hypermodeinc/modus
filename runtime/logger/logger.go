@@ -16,7 +16,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/hypermodeinc/modus/runtime/config"
+	"github.com/hypermodeinc/modus/runtime/app"
 	"github.com/hypermodeinc/modus/runtime/utils"
 
 	zls "github.com/archdx/zerolog-sentry"
@@ -29,7 +29,7 @@ var zlsCloser io.Closer
 
 func Initialize() *zerolog.Logger {
 	var writer io.Writer
-	if config.UseJsonLogging {
+	if app.Config().UseJsonLogging() {
 		// In JSON mode, we'll log UTC with millisecond precision.
 		// Note that Go uses this specific value for its formatting exemplars.
 		zerolog.TimeFieldFormat = utils.TimeFormat
@@ -42,7 +42,7 @@ func Initialize() *zerolog.Logger {
 		// We'll still log with millisecond precision.
 		zerolog.TimeFieldFormat = zerolog.TimeFormatUnixMs
 		consoleWriter := zerolog.ConsoleWriter{Out: os.Stderr}
-		if config.IsDevEnvironment() {
+		if app.Config().IsDevEnvironment() {
 			consoleWriter.TimeFormat = "15:04:05.000"
 			consoleWriter.FieldsExclude = []string{
 				"build_id",
@@ -66,9 +66,9 @@ func Initialize() *zerolog.Logger {
 	}
 
 	// Log the runtime version to every log line, except in development.
-	if !config.IsDevEnvironment() {
+	if !app.Config().IsDevEnvironment() {
 		log.Logger = log.Logger.With().
-			Str("runtime_version", config.GetVersionNumber()).
+			Str("runtime_version", app.VersionNumber()).
 			Logger()
 	}
 

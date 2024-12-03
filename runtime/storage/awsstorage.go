@@ -15,8 +15,8 @@ import (
 	"io"
 	"path"
 
+	"github.com/hypermodeinc/modus/runtime/app"
 	"github.com/hypermodeinc/modus/runtime/aws"
-	"github.com/hypermodeinc/modus/runtime/config"
 	"github.com/hypermodeinc/modus/runtime/logger"
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
@@ -24,25 +24,33 @@ import (
 
 type awsStorageProvider struct {
 	s3Client *s3.Client
+	s3Bucket string
+	s3Path   string
 }
 
 func (stg *awsStorageProvider) initialize(ctx context.Context) {
-	if config.S3Bucket == "" {
+	appConfig := app.Config()
+	stg.s3Bucket = appConfig.S3Bucket()
+	stg.s3Path = appConfig.S3Path()
+
+	if stg.s3Bucket == "" {
 		logger.Fatal(ctx).Msg("An S3 bucket is required when using AWS storage.  Exiting.")
 	}
 
 	// Initialize the S3 service client.
 	// This is safe to hold onto for the lifetime of the application.
 	// See https://github.com/aws/aws-sdk-go-v2/discussions/2566
-	cfg := aws.GetAwsConfig()
-	stg.s3Client = s3.NewFromConfig(cfg)
+	if awsConfig := aws.GetAwsConfig(); awsConfig == nil {
+		logger.Fatal(ctx).Msg("AWS configuration is not initialized.  Exiting.")
+	} else {
+		stg.s3Client = s3.NewFromConfig(*awsConfig)
+	}
 }
 
 func (stg *awsStorageProvider) listFiles(ctx context.Context, patterns ...string) ([]FileInfo, error) {
-
 	input := &s3.ListObjectsV2Input{
-		Bucket: &config.S3Bucket,
-		Prefix: &config.S3Path,
+		Bucket: &stg.s3Bucket,
+		Prefix: &stg.s3Path,
 	}
 
 	result, err := stg.s3Client.ListObjectsV2(ctx, input)
@@ -77,9 +85,9 @@ func (stg *awsStorageProvider) listFiles(ctx context.Context, patterns ...string
 }
 
 func (stg *awsStorageProvider) getFileContents(ctx context.Context, name string) ([]byte, error) {
-	key := path.Join(config.S3Path, name)
+	key := path.Join(stg.s3Path, name)
 	input := &s3.GetObjectInput{
-		Bucket: &config.S3Bucket,
+		Bucket: &stg.s3Bucket,
 		Key:    &key,
 	}
 

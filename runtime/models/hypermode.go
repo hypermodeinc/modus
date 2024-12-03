@@ -17,7 +17,7 @@ import (
 	"strings"
 
 	"github.com/hypermodeinc/modus/lib/manifest"
-	"github.com/hypermodeinc/modus/runtime/config"
+	"github.com/hypermodeinc/modus/runtime/app"
 	"github.com/hypermodeinc/modus/runtime/secrets"
 )
 
@@ -26,7 +26,7 @@ var _hypermodeModelHost string
 func getHypermodeModelEndpointUrl(model *manifest.ModelInfo) (string, error) {
 	// In development, use the shared Hypermode model server.
 	// Note: Authentication via the Hypermode CLI is required.
-	if config.IsDevEnvironment() {
+	if app.Config().IsDevEnvironment() {
 		if _, ok := localHypermodeModels[strings.ToLower(model.SourceModel)]; !ok {
 			return "", fmt.Errorf("model %s is not available in the local dev environment", model.SourceModel)
 		}
@@ -48,7 +48,7 @@ func getHypermodeModelEndpointUrl(model *manifest.ModelInfo) (string, error) {
 
 func authenticateHypermodeModelRequest(ctx context.Context, req *http.Request, connection *manifest.HTTPConnectionInfo) error {
 	// In development, Hypermode models require authentication.
-	if config.IsDevEnvironment() {
+	if app.Config().IsDevEnvironment() {
 		return secrets.ApplyAuthToLocalHypermodeModelRequest(ctx, connection, req)
 	}
 

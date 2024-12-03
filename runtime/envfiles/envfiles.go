@@ -16,7 +16,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/hypermodeinc/modus/runtime/config"
+	"github.com/hypermodeinc/modus/runtime/app"
 	"github.com/hypermodeinc/modus/runtime/logger"
 
 	"github.com/joho/godotenv"
@@ -28,7 +28,7 @@ var originalProcessEnvironmentVariables = os.Environ()
 
 // Allow the env files to use short or long names.
 func getSupportedEnvironmentNames() []string {
-	environment := config.GetEnvironmentName()
+	environment := app.Config().Environment()
 	switch strings.ToLower(environment) {
 	case "dev", "development":
 		return []string{"dev", "development"}
@@ -70,7 +70,7 @@ func LoadEnvFiles(ctx context.Context) error {
 	files = append(files, ".env")
 
 	for _, file := range files {
-		path := filepath.Join(config.AppPath, file)
+		path := filepath.Join(app.Config().AppPath(), file)
 		if _, err := os.Stat(path); err == nil {
 			if err := godotenv.Load(path); err != nil {
 				logger.Warn(ctx).Err(err).Msgf("Failed to load %s file.", file)
