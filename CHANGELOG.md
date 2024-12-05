@@ -3,6 +3,7 @@
 ## UNRELEASED - Runtime
 
 - fix: doc comments from object fields should be present in generated GraphQL schema [#630](https://github.com/hypermodeinc/modus/pull/630)
+- feat: add neo4j support in modus [#636](https://github.com/hypermodeinc/modus/pull/636)
 
 ## UNRELEASED - Go SDK
 
