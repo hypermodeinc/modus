@@ -14,10 +14,10 @@ package neo4j
 import "unsafe"
 
 //go:noescape
-//go:wasmimport modus_dgraph_client executeQuery
+//go:wasmimport modus_neo4j_client executeQuery
 func _hostExecuteQuery(hostName, dbName, query, parametersJson *string) unsafe.Pointer
 
-//modus:import modus_dgraph_client executeQuery
+//modus:import modus_neo4j_client executeQuery
 func hostExecuteQuery(hostName, dbName, query, parametersJson *string) *EagerResult {
 	response := _hostExecuteQuery(hostName, dbName, query, parametersJson)
 	if response == nil {
@@ -27,13 +27,13 @@ func hostExecuteQuery(hostName, dbName, query, parametersJson *string) *EagerRes
 }
 
 //go:noescape
-//go:wasmimport modus_dgraph_client alterSchema
+//go:wasmimport modus_neo4j_client alterSchema
 func hostAlterSchema(hostName, schema *string) *string
 
 //go:noescape
-//go:wasmimport modus_dgraph_client dropAttribute
+//go:wasmimport modus_neo4j_client dropAttribute
 func hostDropAttribute(hostName, attr *string) *string
 
 //go:noescape
-//go:wasmimport modus_dgraph_client dropAllData
+//go:wasmimport modus_neo4j_client dropAllData
 func hostDropAllData(hostName *string) *string
