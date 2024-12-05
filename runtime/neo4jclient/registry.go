@@ -16,6 +16,7 @@ import (
 
 	"github.com/hypermodeinc/modus/lib/manifest"
 	"github.com/hypermodeinc/modus/runtime/manifestdata"
+	"github.com/hypermodeinc/modus/runtime/secrets"
 	"github.com/neo4j/neo4j-go-driver/v5/neo4j"
 )
 
@@ -41,7 +42,7 @@ func CloseDrivers(ctx context.Context) {
 	}
 }
 
-func (nr *neo4jRegistry) getDriver(n4jName string) (neo4j.DriverWithContext, error) {
+func (nr *neo4jRegistry) getDriver(ctx context.Context, n4jName string) (neo4j.DriverWithContext, error) {
 	nr.Lock()
 	defer nr.Unlock()
 
@@ -63,9 +64,24 @@ func (nr *neo4jRegistry) getDriver(n4jName string) (neo4j.DriverWithContext, err
 			return nil, err
 		}
 
+		dbUri, err := secrets.ApplySecretsToString(ctx, info, connection.DbUri)
+		if err != nil {
+			return nil, err
+		}
+
+		username, err := secrets.ApplySecretsToString(ctx, info, connection.Username)
+		if err != nil {
+			return nil, err
+		}
+
+		password, err := secrets.ApplySecretsToString(ctx, info, connection.Password)
+		if err != nil {
+			return nil, err
+		}
+
 		driver, err := neo4j.NewDriverWithContext(
-			connection.DbUri,
-			neo4j.BasicAuth(connection.Username, connection.Password, ""),
+			dbUri,
+			neo4j.BasicAuth(username, password, ""),
 		)
 		if err != nil {
 			return nil, err

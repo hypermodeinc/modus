@@ -29,7 +29,7 @@ func TestExecuteQuery(t *testing.T) {
 		"param2": "value2",
 	}
 
-	response, err := neo4j.ExecuteQuery(hostName, query, parameters, neo4j.WithNamespace(dbName))
+	response, err := neo4j.ExecuteQuery(hostName, query, parameters, neo4j.WithDbName(dbName))
 	if err != nil {
 		t.Fatalf("Expected no error, but received: %v", err)
 	}

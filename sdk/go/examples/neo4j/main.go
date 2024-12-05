@@ -57,7 +57,9 @@ func GetAliceFriendsUnder40() ([]*neo4j.Record, error) {
         `, map[string]any{
 		"name": "Alice",
 		"age":  40,
-	})
+	},
+		neo4j.WithDbName("neo4j"),
+	)
 	if err != nil {
 		return nil, err
 	}

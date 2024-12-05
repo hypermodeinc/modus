@@ -11,14 +11,14 @@ package neo4j
 
 import "github.com/hypermodeinc/modus/sdk/go/pkg/utils"
 
-type DbNameOption func(*DbNameOptions)
+type Neo4jOption func(*neo4jOptions)
 
-type DbNameOptions struct {
+type neo4jOptions struct {
 	dbName string
 }
 
-func WithNamespace(dbName string) DbNameOption {
-	return func(o *DbNameOptions) {
+func WithDbName(dbName string) Neo4jOption {
+	return func(o *neo4jOptions) {
 		o.dbName = dbName
 	}
 }
@@ -41,8 +41,8 @@ type Record struct {
  * @param query - the query to execute
  * @param parameters - the parameters to pass to the query
  */
-func ExecuteQuery(hostName, query string, parameters map[string]any, opts ...DbNameOption) (*EagerResult, error) {
-	dbOpts := &DbNameOptions{
+func ExecuteQuery(hostName, query string, parameters map[string]any, opts ...Neo4jOption) (*EagerResult, error) {
+	dbOpts := &neo4jOptions{
 		dbName: "neo4j",
 	}
 

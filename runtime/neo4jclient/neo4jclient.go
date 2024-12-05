@@ -25,7 +25,7 @@ func Initialize() {
 }
 
 func ExecuteQuery(ctx context.Context, hostName, dbName, query string, parametersJson string) (*EagerResult, error) {
-	driver, err := n4j.getDriver(hostName)
+	driver, err := n4j.getDriver(ctx, hostName)
 	if err != nil {
 		return nil, err
 	}
