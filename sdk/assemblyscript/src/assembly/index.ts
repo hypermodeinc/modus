@@ -30,3 +30,6 @@ export { vectors };
 
 import * as auth from "./auth";
 export { auth };
+
+import * as neo4j from "./neo4j";
+export { neo4j };

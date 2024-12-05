@@ -37,8 +37,15 @@ func CloseDrivers(ctx context.Context) {
 	n4j.Lock()
 	defer n4j.Unlock()
 
-	for _, driver := range n4j.neo4jDriverCache {
+	removed := make([]string, 0)
+
+	for key, driver := range n4j.neo4jDriverCache {
 		driver.Close(ctx)
+		removed = append(removed, key)
+	}
+
+	for _, key := range removed {
+		delete(n4j.neo4jDriverCache, key)
 	}
 }
 

@@ -38,7 +38,6 @@ type Record struct {
 }
 
 type Node struct {
-	Id        int               `json:"Id"`
 	ElementId string            `json:"ElementId"`
 	Labels    []string          `json:"Labels"`
 	Props     map[string]string `json:"Props"`
