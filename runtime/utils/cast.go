@@ -106,7 +106,7 @@ func Cast[T any](obj any) (T, error) {
 		if e != nil {
 			return result, e
 		}
-		result = any(v).(T)
+		result = any(uintptr(v)).(T)
 	default:
 		return result, fmt.Errorf("unsupported type: %T", obj)
 	}
