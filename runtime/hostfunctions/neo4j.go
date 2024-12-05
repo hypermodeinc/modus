@@ -19,10 +19,10 @@ func init() {
 	const module_name = "modus_neo4j_client"
 
 	registerHostFunction(module_name, "executeQuery", neo4jclient.ExecuteQuery,
-		withStartingMessage("Executing DQL operation."),
-		withCompletedMessage("Completed DQL operation."),
-		withCancelledMessage("Cancelled DQL operation."),
-		withErrorMessage("Error executing DQL operation."),
+		withStartingMessage("Executing Neo4j operation."),
+		withCompletedMessage("Completed Neo4j operation."),
+		withCancelledMessage("Cancelled Neo4j operation."),
+		withErrorMessage("Error executing Neo4j operation."),
 		withMessageDetail(func(hostName, dbName, query string) string {
 			return fmt.Sprintf("Host: %s Database: %s Query: %s", hostName, dbName, query)
 		}))
