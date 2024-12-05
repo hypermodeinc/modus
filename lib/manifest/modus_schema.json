@@ -253,7 +253,7 @@
                   "dbUri": {
                     "type": "string",
                     "minLength": 1,
-                    "pattern": "^neo4j(?:s?)://(.*?@)?([0-9a-zA-Z.-]*?)(:\\d+)?(\\/[0-9a-zA-Z.-]+)?(\\?.+)?$",
+                    "pattern": "^[a-zA-Z]+(?:s?)://(.*?@)?([0-9a-zA-Z.-]*?)(:\\d+)?(\\/[0-9a-zA-Z.-]+)?(\\?.+)?$",
                     "description": "The Neo4j connection string in URI format.",
                     "markdownDescription": "The Neo4j connection string in URI format.\n\nReference: https://docs.hypermode.com/define-connections"
                   },
