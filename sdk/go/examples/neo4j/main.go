@@ -1,0 +1,66 @@
+/*
+ * This example is part of the Modus project, licensed under the Apache License 2.0.
+ * You may modify and use this example in accordance with the license.
+ * See the LICENSE file that accompanied this code for further details.
+ */
+
+package main
+
+import (
+	"github.com/hypermodeinc/modus/sdk/go/pkg/neo4j"
+)
+
+// The name of the PostgreSQL host, as specified in the modus.json manifest
+const host = "my-database"
+
+func CreatePeopleAndRelationships() (string, error) {
+	people := []map[string]any{
+		{"name": "Alice", "age": 42, "friends": []string{"Bob", "Peter", "Anna"}},
+		{"name": "Bob", "age": 19},
+		{"name": "Peter", "age": 50},
+		{"name": "Anna", "age": 30},
+	}
+
+	for _, person := range people {
+		_, err := neo4j.ExecuteQuery(host,
+			"MERGE (p:Person {name: $person.name, age: $person.age})",
+			map[string]any{"person": person})
+		if err != nil {
+			return "", err
+		}
+	}
+
+	for _, person := range people {
+		if person["friends"] != "" {
+			_, err := neo4j.ExecuteQuery(host, `
+				MATCH (p:Person {name: $person.name})
+                UNWIND $person.friends AS friend_name
+                MATCH (friend:Person {name: friend_name})
+                MERGE (p)-[:KNOWS]->(friend)
+			`, map[string]any{
+				"person": person,
+			})
+			if err != nil {
+				return "", err
+			}
+		}
+	}
+
+	return "People and relationships created successfully", nil
+}
+
+func GetAliceFriendsUnder40() ([]*neo4j.Record, error) {
+	response, err := neo4j.ExecuteQuery(host, `
+        MATCH (p:Person {name: $name})-[:KNOWS]-(friend:Person)
+        WHERE friend.age < $age
+        RETURN friend
+        `, map[string]any{
+		"name": "Alice",
+		"age":  40,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return response.Records, nil
+}

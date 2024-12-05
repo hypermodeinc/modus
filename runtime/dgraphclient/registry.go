@@ -65,13 +65,6 @@ func ShutdownConns() {
 }
 
 func (dr *dgraphRegistry) getDgraphConnector(ctx context.Context, dgName string) (*dgraphConnector, error) {
-	dr.RLock()
-	ds, ok := dr.dgraphConnectorCache[dgName]
-	dr.RUnlock()
-	if ok {
-		return ds, nil
-	}
-
 	dr.Lock()
 	defer dr.Unlock()
 
