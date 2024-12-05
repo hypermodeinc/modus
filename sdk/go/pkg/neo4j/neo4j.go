@@ -29,7 +29,7 @@ type EagerResult struct {
 }
 
 type Record struct {
-	Values []any
+	Values []string
 	Keys   []string
 }
 

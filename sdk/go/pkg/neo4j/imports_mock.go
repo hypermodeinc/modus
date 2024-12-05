@@ -14,15 +14,12 @@ package neo4j
 import "github.com/hypermodeinc/modus/sdk/go/pkg/testutils"
 
 var DgraphQueryCallStack = testutils.NewCallStack()
-var DgraphAlterSchemaCallStack = testutils.NewCallStack()
-var DgraphDropAttrCallStack = testutils.NewCallStack()
-var DgraphDropAllCallStack = testutils.NewCallStack()
 
 func hostExecuteQuery(hostName, dbName, query, parameters *string) *EagerResult {
 	DgraphQueryCallStack.Push(hostName, dbName, query, parameters)
 
 	keys := []string{"key1", "key2"}
-	values := []any{"value1", "value2"}
+	values := []string{"value1", "value2"}
 	record := &Record{
 		Keys:   keys,
 		Values: values,

@@ -42,8 +42,16 @@ func ExecuteQuery(ctx context.Context, hostName, dbName, query string, parameter
 
 	records := make([]*Record, len(res.Records))
 	for i, record := range res.Records {
+		vals := make([]string, len(record.Values))
+		for j, val := range record.Values {
+			valBytes, err := utils.JsonSerialize(val)
+			if err != nil {
+				return nil, err
+			}
+			vals[j] = string(valBytes)
+		}
 		records[i] = &Record{
-			Values: record.Values,
+			Values: vals,
 			Keys:   record.Keys,
 		}
 	}

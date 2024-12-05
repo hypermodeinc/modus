@@ -27,7 +27,9 @@ type neo4jRegistry struct {
 }
 
 func newNeo4jRegistry() *neo4jRegistry {
-	return &neo4jRegistry{}
+	return &neo4jRegistry{
+		neo4jDriverCache: make(map[string]neo4j.DriverWithContext),
+	}
 }
 
 func CloseDrivers(ctx context.Context) {

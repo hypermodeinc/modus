@@ -25,15 +25,3 @@ func hostExecuteQuery(hostName, dbName, query, parametersJson *string) *EagerRes
 	}
 	return (*EagerResult)(response)
 }
-
-//go:noescape
-//go:wasmimport modus_neo4j_client alterSchema
-func hostAlterSchema(hostName, schema *string) *string
-
-//go:noescape
-//go:wasmimport modus_neo4j_client dropAttribute
-func hostDropAttribute(hostName, attr *string) *string
-
-//go:noescape
-//go:wasmimport modus_neo4j_client dropAllData
-func hostDropAllData(hostName *string) *string
