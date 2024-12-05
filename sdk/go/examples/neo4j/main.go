@@ -49,7 +49,7 @@ func CreatePeopleAndRelationships() (string, error) {
 	return "People and relationships created successfully", nil
 }
 
-func GetAliceFriendsUnder40() ([]*neo4j.Record, error) {
+func GetAliceFriendsUnder40() ([]neo4j.Node, error) {
 	response, err := neo4j.ExecuteQuery(host, `
         MATCH (p:Person {name: $name})-[:KNOWS]-(friend:Person)
         WHERE friend.age < $age
@@ -64,5 +64,11 @@ func GetAliceFriendsUnder40() ([]*neo4j.Record, error) {
 		return nil, err
 	}
 
-	return response.Records, nil
+	nodeRecords := make([]neo4j.Node, len(response.Records))
+
+	for i, record := range response.Records {
+		nodeRecords[i], _ = neo4j.GetRecordValue[neo4j.Node](record, "friend")
+	}
+
+	return nodeRecords, nil
 }

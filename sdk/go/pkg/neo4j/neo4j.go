@@ -9,7 +9,11 @@
 
 package neo4j
 
-import "github.com/hypermodeinc/modus/sdk/go/pkg/utils"
+import (
+	"fmt"
+
+	"github.com/hypermodeinc/modus/sdk/go/pkg/utils"
+)
 
 type Neo4jOption func(*neo4jOptions)
 
@@ -31,6 +35,13 @@ type EagerResult struct {
 type Record struct {
 	Values []string
 	Keys   []string
+}
+
+type Node struct {
+	Id        int               `json:"Id"`
+	ElementId string            `json:"ElementId"`
+	Labels    []string          `json:"Labels"`
+	Props     map[string]string `json:"Props"`
 }
 
 /**
@@ -60,4 +71,36 @@ func ExecuteQuery(hostName, query string, parameters map[string]any, opts ...Neo
 	response := hostExecuteQuery(&hostName, &dbOpts.dbName, &query, &parametersJson)
 
 	return response, nil
+}
+
+func GetRecordValue[T any](record *Record, key string) (T, error) {
+	var val T
+	for i, k := range record.Keys {
+		if k == key {
+			err := utils.JsonDeserialize([]byte(record.Values[i]), &val)
+			if err != nil {
+				return val, err
+			} else {
+				return val, nil
+			}
+		}
+	}
+	return val, fmt.Errorf("Key not found in record")
+}
+
+func (r *Record) Get(key string) (string, bool) {
+	for i, k := range r.Keys {
+		if k == key {
+			return r.Values[i], true
+		}
+	}
+	return "", false
+}
+
+func (r *Record) AsMap() map[string]string {
+	result := make(map[string]string)
+	for i, k := range r.Keys {
+		result[k] = r.Values[i]
+	}
+	return result
 }
