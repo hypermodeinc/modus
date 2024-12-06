@@ -10,7 +10,9 @@
 package neo4j
 
 import (
+	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/hypermodeinc/modus/sdk/go/pkg/utils"
 )
@@ -37,10 +39,35 @@ type Record struct {
 	Keys   []string
 }
 
+type RecordValue interface {
+	bool | int64 | float64 | string |
+		time.Time |
+		[]byte | []any | map[string]any |
+		Node | Relationship | Path
+}
+
 type Node struct {
 	ElementId string         `json:"ElementId"`
 	Labels    []string       `json:"Labels"`
 	Props     map[string]any `json:"Props"`
+}
+
+type Relationship struct {
+	ElementId      string         `json:"ElementId"`
+	StartElementId string         `json:"StartElementId"`
+	EndElementId   string         `json:"EndElementId"`
+	Type           string         `json:"Type"`
+	Props          map[string]any `json:"Props"`
+}
+
+type Path struct {
+	Nodes         []Node         `json:"Nodes"`
+	Relationships []Relationship `json:"Relationships"`
+}
+
+type PropertyValue interface {
+	bool | int64 | float64 | string |
+		time.Time | []byte | []any
 }
 
 /**
@@ -72,19 +99,20 @@ func ExecuteQuery(hostName, query string, parameters map[string]any, opts ...Neo
 	return response, nil
 }
 
-func GetRecordValue[T any](record *Record, key string) (T, error) {
+func GetRecordValue[T RecordValue](record *Record, key string) (T, error) {
 	var val T
 	for i, k := range record.Keys {
 		if k == key {
-			err := utils.JsonDeserialize([]byte(record.Values[i]), &val)
+			err := json.Unmarshal([]byte(record.Values[i]), &val)
 			if err != nil {
-				return val, err
+				return *new(T), err
 			} else {
 				return val, nil
 			}
 		}
 	}
-	return val, fmt.Errorf("Key not found in record")
+	return *new(T), fmt.Errorf("Key not found in record")
+
 }
 
 func (r *Record) Get(key string) (string, bool) {
@@ -102,4 +130,28 @@ func (r *Record) AsMap() map[string]string {
 		result[k] = r.Values[i]
 	}
 	return result
+}
+
+func GetProperty[T PropertyValue](n *Node, key string) (T, error) {
+	var val T
+	rawVal, ok := n.Props[key]
+	if !ok {
+		return *new(T), fmt.Errorf("Key not found in node")
+	}
+	switch any(val).(type) {
+	case int64:
+		float64Val, ok := rawVal.(float64)
+		if !ok {
+			return *new(T), fmt.Errorf("expected value to have type int64 but found type %T", rawVal)
+		}
+		return any(int64(float64Val)).(T), nil
+	default:
+		val, ok = rawVal.(T)
+		if !ok {
+			zeroValue := *new(T)
+			return zeroValue, fmt.Errorf("expected value to have type %T but found type %T", zeroValue, rawVal)
+		}
+		return val, nil
+	}
+
 }

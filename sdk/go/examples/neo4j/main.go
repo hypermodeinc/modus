@@ -7,7 +7,6 @@
 package main
 
 import (
-	"github.com/hypermodeinc/modus/sdk/go/pkg/console"
 	"github.com/hypermodeinc/modus/sdk/go/pkg/neo4j"
 )
 
@@ -52,7 +51,7 @@ func CreatePeopleAndRelationships() (string, error) {
 
 type Person struct {
 	Name string `json:"name"`
-	Age  string `json:"age"`
+	Age  int64  `json:"age"`
 }
 
 func GetAliceFriendsUnder40() ([]Person, error) {
@@ -60,10 +59,11 @@ func GetAliceFriendsUnder40() ([]Person, error) {
         MATCH (p:Person {name: $name})-[:KNOWS]-(friend:Person)
         WHERE friend.age < $age
         RETURN friend
-        `, map[string]any{
-		"name": "Alice",
-		"age":  40,
-	},
+        `,
+		map[string]any{
+			"name": "Alice",
+			"age":  40,
+		},
 		neo4j.WithDbName("neo4j"),
 	)
 	if err != nil {
@@ -74,13 +74,56 @@ func GetAliceFriendsUnder40() ([]Person, error) {
 
 	for i, record := range response.Records {
 		node, _ := neo4j.GetRecordValue[neo4j.Node](record, "friend")
-		console.Log(node.Props["name"].(string))
-		console.Log(node.Props["age"].(string))
+		name, err := neo4j.GetProperty[string](&node, "name")
+		if err != nil {
+			return nil, err
+		}
+		age, err := neo4j.GetProperty[int64](&node, "age")
+		if err != nil {
+			return nil, err
+		}
 		nodeRecords[i] = Person{
-			Name: node.Props["name"].(string),
-			Age:  node.Props["age"].(string),
+			Name: name,
+			Age:  age,
 		}
 	}
 
 	return nodeRecords, nil
+}
+
+func GetAliceFriendsUnder40Ages() ([]int64, error) {
+	response, err := neo4j.ExecuteQuery(host, `
+        MATCH (p:Person {name: $name})-[:KNOWS]-(friend:Person)
+        WHERE friend.age < $age
+        RETURN friend.age AS age
+        `, map[string]any{
+		"name": "Alice",
+		"age":  40,
+	},
+		neo4j.WithDbName("neo4j"),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	ageRecords := make([]int64, len(response.Records))
+
+	for i, record := range response.Records {
+		age, _ := neo4j.GetRecordValue[int64](record, "age")
+		ageRecords[i] = age
+	}
+
+	return ageRecords, nil
+}
+
+func DeleteAllNodes() (string, error) {
+	_, err := neo4j.ExecuteQuery(host, `
+		MATCH (n)
+		DETACH DELETE n
+	`, nil)
+	if err != nil {
+		return "", err
+	}
+
+	return "All nodes deleted", nil
 }

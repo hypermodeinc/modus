@@ -11,10 +11,10 @@ const hostName: string = "my-database";
 
 class Person {
   name: string;
-  age: number;
+  age: i32;
   friends: string[] | null;
 
-  constructor(name: string, age: number, friends: string[] | null = null) {
+  constructor(name: string, age: i32, friends: string[] | null = null) {
     this.name = name;
     this.age = age;
     this.friends = friends;
@@ -33,7 +33,7 @@ export function CreatePeopleAndRelationships(): string {
 
   for (let i = 0; i < people.length; i++) {
     person.set<string>("name", people[i].name);
-    person.set<number>("age", people[i].age);
+    person.set<i32>("age", people[i].age);
     if (people[i].friends) {
       person.set<string[]>("friends", people[i].friends!);
     }
@@ -76,7 +76,7 @@ export function GetAliceFriendsUnder40(): Person[] {
     const node = neo4j.getRecordValue<neo4j.Node>(record, "friend");
     const person = new Person(
       node.Props.get("name"),
-      parseInt(node.Props.get("age")),
+      parseInt(node.Props.get("age")) as i32,
     );
     personNodes.push(person);
   }
