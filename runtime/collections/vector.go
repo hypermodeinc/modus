@@ -98,7 +98,7 @@ func deleteIndexesNotInManifest(ctx context.Context, man *manifest.Manifest) {
 				Msg("Failed to find collection.")
 			continue
 		}
-		for _, collNs := range col.collectionNamespaceMap {
+		for _, collNs := range col.getCollectionNamespaceMap() {
 			vectorIndexMap := collNs.GetVectorIndexMap()
 			if vectorIndexMap == nil {
 				continue
@@ -160,7 +160,7 @@ func processManifestCollections(ctx context.Context, man *manifest.Manifest) {
 				}
 			}
 		}
-		for _, collNs := range col.collectionNamespaceMap {
+		for _, collNs := range col.getCollectionNamespaceMap() {
 			for searchMethodName, searchMethod := range collectionInfo.SearchMethods {
 				vi, err := collNs.GetVectorIndex(ctx, searchMethodName)
 

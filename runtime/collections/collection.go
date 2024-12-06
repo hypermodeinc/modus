@@ -27,7 +27,7 @@ func newCollection() *collection {
 }
 
 func (c *collection) getCollectionNamespaceMap() map[string]interfaces.CollectionNamespace {
-	m := make(map[string]interfaces.CollectionNamespace)
+	m := make(map[string]interfaces.CollectionNamespace, c.collectionNamespaceMap.Size())
 	c.collectionNamespaceMap.Range(func(key string, value interfaces.CollectionNamespace) bool {
 		m[key] = value
 		return true
