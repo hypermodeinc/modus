@@ -9,6 +9,8 @@ import { neo4j } from "@hypermode/modus-sdk-as";
 // This host name should match one defined in the modus.json manifest file.
 const hostName: string = "my-database";
 
+
+@json
 class Person {
   name: string;
   age: i32;
@@ -22,8 +24,6 @@ class Person {
 }
 
 export function CreatePeopleAndRelationships(): string {
-  const person = new neo4j.Variables();
-
   const people: Person[] = [
     new Person("Alice", 42, ["Bob", "Peter", "Anna"]),
     new Person("Bob", 19),
@@ -32,18 +32,15 @@ export function CreatePeopleAndRelationships(): string {
   ];
 
   for (let i = 0; i < people.length; i++) {
-    person.set<string>("name", people[i].name);
-    person.set<i32>("age", people[i].age);
-    if (people[i].friends) {
-      person.set<string[]>("friends", people[i].friends!);
-    }
     const createPersonQuery = `
       MATCH (p:Person {name: $person.name})
                 UNWIND $person.friends AS friend_name
                 MATCH (friend:Person {name: friend_name})
                 MERGE (p)-[:KNOWS]->(friend)
     `;
-    const result = neo4j.executeQuery(hostName, createPersonQuery, person);
+    const peopleVars = new neo4j.Variables();
+    peopleVars.set("person", people[i]);
+    const result = neo4j.executeQuery(hostName, createPersonQuery, peopleVars);
     if (!result) {
       throw new Error("Error creating person.");
     }
@@ -74,6 +71,8 @@ export function GetAliceFriendsUnder40(): Person[] {
     const record = result.Records[i];
     console.log(record.get("friend"));
     const node = neo4j.getRecordValue<neo4j.Node>(record, "friend");
+    console.log(node.Props.get("name"));
+    console.log(node.Props.get("age"));
     const person = new Person(
       node.Props.get("name"),
       parseInt(node.Props.get("age")) as i32,

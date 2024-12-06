@@ -79,15 +79,15 @@ export class Record {
 export class Node {
 
   @alias("ElementId")
-  ElementId: string = "";
+  ElementId!: string;
 
 
   @alias("Labels")
-  Labels: string[] = [];
+  Labels!: string[];
 
 
   @alias("Props")
-  Props: Map<string, string> = new Map<string, string>();
+  Props!: Map<string, JSON.Raw>;
 }
 
 export function getRecordValue<T>(record: Record, key: string): T {
@@ -97,4 +97,12 @@ export function getRecordValue<T>(record: Record, key: string): T {
     }
   }
   throw new Error("Key not found in record.");
+}
+
+export function getProperty<T>(node: Node, key: string): T {
+  const value = node.Props.get(key);
+  if (!value) {
+    throw new Error("Property not found.");
+  }
+  return JSON.parse<T>(value);
 }
