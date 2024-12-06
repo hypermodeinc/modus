@@ -94,6 +94,7 @@
     "ldflags",
     "legacymodels",
     "Lessable",
+    "lestrrat",
     "linkname",
     "logit",
     "logits",
@@ -142,6 +143,7 @@
     "prereleases",
     "promhttp",
     "ptrs",
+    "puzpuzpuz",
     "quickstart",
     "reindex",
     "renameio",
@@ -202,6 +204,7 @@
     "Weasley",
     "Weaviate",
     "wundergraph",
+    "xsync",
     "xxhash",
     "zenquotes",
     "zerolog"

@@ -16,50 +16,39 @@ import (
 	"github.com/hypermodeinc/modus/lib/manifest"
 	"github.com/hypermodeinc/modus/runtime/manifestdata"
 	"github.com/hypermodeinc/modus/runtime/secrets"
-
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 // ShutdownPGPools shuts down all the PostgreSQL connection pools.
 func ShutdownPGPools() {
-	dsr.Lock()
-	defer dsr.Unlock()
-
-	for _, ds := range dsr.pgCache {
-		ds.pool.Close()
-	}
-
-	clear(dsr.pgCache)
+	dsr.cache.Range(func(key string, _ *postgresqlDS) bool {
+		if ds, ok := dsr.cache.LoadAndDelete(key); ok {
+			ds.pool.Close()
+		}
+		return true
+	})
 }
 
-func (r *dsRegistry) getPGPool(ctx context.Context, dsName string) (*postgresqlDS, error) {
-	// fast path
-	r.RLock()
-	ds, ok := r.pgCache[dsName]
-	r.RUnlock()
-	if ok {
-		return ds, nil
+func (r *dsRegistry) getPostgresDS(ctx context.Context, dsName string) (*postgresqlDS, error) {
+	var creationErr error
+	ds, _ := r.cache.LoadOrCompute(dsName, func() *postgresqlDS {
+		ds, err := createDS(ctx, dsName)
+		if err != nil {
+			creationErr = err
+			return nil
+		}
+		return ds
+	})
+
+	if creationErr != nil {
+		r.cache.Delete(dsName)
+		return nil, creationErr
 	}
 
-	// slow path
-	r.Lock()
-	defer r.Unlock()
-
-	// we do another lookup to make sure any other goroutine didn't create it
-	if ds, ok := r.pgCache[dsName]; ok {
-		return ds, nil
-	}
-
-	dbpool, err := createPool(ctx, dsName)
-	if err != nil {
-		return nil, err
-	}
-
-	r.pgCache[dsName] = &postgresqlDS{pool: dbpool}
-	return r.pgCache[dsName], nil
+	return ds, nil
 }
 
-func createPool(ctx context.Context, dsName string) (*pgxpool.Pool, error) {
+func createDS(ctx context.Context, dsName string) (*postgresqlDS, error) {
 	man := manifestdata.GetManifest()
 	info, ok := man.Connections[dsName]
 	if !ok {
@@ -85,5 +74,5 @@ func createPool(ctx context.Context, dsName string) (*pgxpool.Pool, error) {
 		return nil, fmt.Errorf("failed to connect to postgres connection [%s]: %w", dsName, err)
 	}
 
-	return pool, nil
+	return &postgresqlDS{pool}, nil
 }
