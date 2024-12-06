@@ -50,33 +50,40 @@ func (r *dsRegistry) getPGPool(ctx context.Context, dsName string) (*postgresqlD
 		return ds, nil
 	}
 
-	for name, info := range manifestdata.GetManifest().Connections {
-		if name != dsName {
-			continue
-		}
-
-		if info.ConnectionType() != manifest.ConnectionTypePostgresql {
-			return nil, fmt.Errorf("[%s] is not a postgresql connection", dsName)
-		}
-
-		conf := info.(manifest.PostgresqlConnectionInfo)
-		if conf.ConnStr == "" {
-			return nil, fmt.Errorf("postgresql connection [%s] has empty connString", dsName)
-		}
-
-		fullConnStr, err := secrets.ApplySecretsToString(ctx, info, conf.ConnStr)
-		if err != nil {
-			return nil, fmt.Errorf("failed to apply secrets to connection string for connection [%s]: %w", dsName, err)
-		}
-
-		dbpool, err := pgxpool.New(ctx, fullConnStr)
-		if err != nil {
-			return nil, fmt.Errorf("failed to connect to postgres connection [%s]: %w", dsName, err)
-		}
-
-		r.pgCache[dsName] = &postgresqlDS{pool: dbpool}
-		return r.pgCache[dsName], nil
+	dbpool, err := createPool(ctx, dsName)
+	if err != nil {
+		return nil, err
 	}
 
-	return nil, fmt.Errorf("postgresql connection [%s] not found", dsName)
+	r.pgCache[dsName] = &postgresqlDS{pool: dbpool}
+	return r.pgCache[dsName], nil
+}
+
+func createPool(ctx context.Context, dsName string) (*pgxpool.Pool, error) {
+	man := manifestdata.GetManifest()
+	info, ok := man.Connections[dsName]
+	if !ok {
+		return nil, fmt.Errorf("postgresql connection [%s] not found", dsName)
+	}
+
+	if info.ConnectionType() != manifest.ConnectionTypePostgresql {
+		return nil, fmt.Errorf("[%s] is not a postgresql connection", dsName)
+	}
+
+	conf := info.(manifest.PostgresqlConnectionInfo)
+	if conf.ConnStr == "" {
+		return nil, fmt.Errorf("postgresql connection [%s] has empty connString", dsName)
+	}
+
+	connStr, err := secrets.ApplySecretsToString(ctx, info, conf.ConnStr)
+	if err != nil {
+		return nil, fmt.Errorf("failed to apply secrets to connection string for connection [%s]: %w", dsName, err)
+	}
+
+	pool, err := pgxpool.New(ctx, connStr)
+	if err != nil {
+		return nil, fmt.Errorf("failed to connect to postgres connection [%s]: %w", dsName, err)
+	}
+
+	return pool, nil
 }
