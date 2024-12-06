@@ -103,8 +103,8 @@ func (ims *SequentialVectorIndex) Search(ctx context.Context, query []float32, m
 
 func (ims *SequentialVectorIndex) SearchWithKey(ctx context.Context, queryKey string, maxResults int, filter index.SearchFilter) (utils.MaxTupleHeap, error) {
 	ims.mu.RLock()
+	defer ims.mu.RUnlock()
 	query := ims.VectorMap[queryKey]
-	ims.mu.RUnlock()
 	if query == nil {
 		return nil, nil
 	}
