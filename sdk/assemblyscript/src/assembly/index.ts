@@ -30,3 +30,8 @@ export { vectors };
 
 import * as auth from "./auth";
 export { auth };
+
+import * as utils from "./utils";
+export { utils };
+
+export * from "./dynamicmap";
