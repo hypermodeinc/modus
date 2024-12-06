@@ -52,7 +52,7 @@ export function CreatePeopleAndRelationships(): string {
   return "People and relationships created successfully";
 }
 
-export function GetAliceFriendsUnder40(): neo4j.Node[] {
+export function GetAliceFriendsUnder40(): Person[] {
   const vars = new neo4j.Variables();
   vars.set("name", "Alice");
   vars.set("age", 40);
@@ -68,14 +68,18 @@ export function GetAliceFriendsUnder40(): neo4j.Node[] {
     throw new Error("Error getting friends.");
   }
 
-  const nodes: neo4j.Node[] = [];
+  const personNodes: Person[] = [];
 
   for (let i = 0; i < result.Records.length; i++) {
     const record = result.Records[i];
     console.log(record.get("friend"));
     const node = neo4j.getRecordValue<neo4j.Node>(record, "friend");
-    nodes.push(node);
+    const person = new Person(
+      node.Props.get("name"),
+      parseInt(node.Props.get("age")),
+    );
+    personNodes.push(person);
   }
 
-  return nodes;
+  return personNodes;
 }

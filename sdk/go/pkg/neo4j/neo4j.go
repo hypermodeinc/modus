@@ -38,9 +38,9 @@ type Record struct {
 }
 
 type Node struct {
-	ElementId string            `json:"ElementId"`
-	Labels    []string          `json:"Labels"`
-	Props     map[string]string `json:"Props"`
+	ElementId string         `json:"ElementId"`
+	Labels    []string       `json:"Labels"`
+	Props     map[string]any `json:"Props"`
 }
 
 /**

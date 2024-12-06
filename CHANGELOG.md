@@ -9,11 +9,13 @@
 
 - fix: vector package should return generic type in computations [#628](https://github.com/hypermodeinc/modus/pull/628)
 - chore: Remove unused go package reference [#632](https://github.com/hypermodeinc/modus/pull/632)
+- feat: add neo4j support in modus [#636](https://github.com/hypermodeinc/modus/pull/636)
 
 ## UNRELEASED - AssemblyScript SDK
 
 - fix: vector package should return generic type in computations [#628](https://github.com/hypermodeinc/modus/pull/628)
 - chore: Delete extraneous copy of Anthropic model interface [#631](https://github.com/hypermodeinc/modus/pull/631)
+- feat: add neo4j support in modus [#636](https://github.com/hypermodeinc/modus/pull/636)
 
 ## 2024-11-27 - CLI 0.14.0
 

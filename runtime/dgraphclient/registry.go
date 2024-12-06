@@ -72,64 +72,61 @@ func (dr *dgraphRegistry) getDgraphConnector(ctx context.Context, dgName string)
 		return ds, nil
 	}
 
-	for name, info := range manifestdata.GetManifest().Connections {
-		if name != dgName {
-			continue
-		}
+	info, ok := manifestdata.GetManifest().Connections[dgName]
+	if !ok {
+		return nil, fmt.Errorf("dgraph connection [%s] not found", dgName)
+	}
 
-		if info.ConnectionType() != manifest.ConnectionTypeDgraph {
-			return nil, fmt.Errorf("[%s] is not a dgraph connection", dgName)
-		}
+	if info.ConnectionType() != manifest.ConnectionTypeDgraph {
+		return nil, fmt.Errorf("[%s] is not a dgraph connection", dgName)
+	}
 
-		connection := info.(manifest.DgraphConnectionInfo)
-		if connection.GrpcTarget == "" {
-			return nil, fmt.Errorf("dgraph connection [%s] has empty GrpcTarget", dgName)
-		}
+	connection := info.(manifest.DgraphConnectionInfo)
+	if connection.GrpcTarget == "" {
+		return nil, fmt.Errorf("dgraph connection [%s] has empty GrpcTarget", dgName)
+	}
 
-		var opts []grpc.DialOption
+	var opts []grpc.DialOption
 
-		if connection.Key != "" {
-			conKey, err := secrets.ApplySecretsToString(ctx, info, connection.Key)
-			if err != nil {
-				return nil, err
-			}
-
-			pool, err := x509.SystemCertPool()
-			if err != nil {
-				return nil, err
-			}
-			creds := credentials.NewClientTLSFromCert(pool, "")
-			opts = []grpc.DialOption{
-				grpc.WithTransportCredentials(creds),
-				grpc.WithPerRPCCredentials(&authCreds{conKey}),
-			}
-		} else if strings.Split(connection.GrpcTarget, ":")[0] != "localhost" {
-			pool, err := x509.SystemCertPool()
-			if err != nil {
-				return nil, err
-			}
-			creds := credentials.NewClientTLSFromCert(pool, "")
-			opts = []grpc.DialOption{
-				grpc.WithTransportCredentials(creds),
-			}
-		} else {
-			opts = []grpc.DialOption{
-				grpc.WithTransportCredentials(insecure.NewCredentials()),
-			}
-		}
-
-		conn, err := grpc.NewClient(connection.GrpcTarget, opts...)
+	if connection.Key != "" {
+		conKey, err := secrets.ApplySecretsToString(ctx, info, connection.Key)
 		if err != nil {
 			return nil, err
 		}
 
-		ds := &dgraphConnector{
-			conn:     conn,
-			dgClient: dgo.NewDgraphClient(api.NewDgraphClient(conn)),
+		pool, err := x509.SystemCertPool()
+		if err != nil {
+			return nil, err
 		}
-		dr.dgraphConnectorCache[dgName] = ds
-		return ds, nil
+		creds := credentials.NewClientTLSFromCert(pool, "")
+		opts = []grpc.DialOption{
+			grpc.WithTransportCredentials(creds),
+			grpc.WithPerRPCCredentials(&authCreds{conKey}),
+		}
+	} else if strings.Split(connection.GrpcTarget, ":")[0] != "localhost" {
+		pool, err := x509.SystemCertPool()
+		if err != nil {
+			return nil, err
+		}
+		creds := credentials.NewClientTLSFromCert(pool, "")
+		opts = []grpc.DialOption{
+			grpc.WithTransportCredentials(creds),
+		}
+	} else {
+		opts = []grpc.DialOption{
+			grpc.WithTransportCredentials(insecure.NewCredentials()),
+		}
 	}
 
-	return nil, fmt.Errorf("dgraph connection [%s] not found", dgName)
+	conn, err := grpc.NewClient(connection.GrpcTarget, opts...)
+	if err != nil {
+		return nil, err
+	}
+
+	ds := &dgraphConnector{
+		conn:     conn,
+		dgClient: dgo.NewDgraphClient(api.NewDgraphClient(conn)),
+	}
+	dr.dgraphConnectorCache[dgName] = ds
+	return ds, nil
 }

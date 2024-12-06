@@ -13,10 +13,10 @@ package neo4j
 
 import "github.com/hypermodeinc/modus/sdk/go/pkg/testutils"
 
-var DgraphQueryCallStack = testutils.NewCallStack()
+var Neo4jQueryCallStack = testutils.NewCallStack()
 
 func hostExecuteQuery(hostName, dbName, query, parameters *string) *EagerResult {
-	DgraphQueryCallStack.Push(hostName, dbName, query, parameters)
+	Neo4jQueryCallStack.Push(hostName, dbName, query, parameters)
 
 	keys := []string{"key1", "key2"}
 	values := []string{"value1", "value2"}

@@ -57,49 +57,46 @@ func (nr *neo4jRegistry) getDriver(ctx context.Context, n4jName string) (neo4j.D
 		return driver, nil
 	}
 
-	for name, info := range manifestdata.GetManifest().Connections {
-		if name != n4jName {
-			continue
-		}
-
-		if info.ConnectionType() != manifest.ConnectionTypeNeo4j {
-			return nil, fmt.Errorf("[%s] is not a Neo4j connection", name)
-		}
-
-		connection := info.(manifest.Neo4jConnectionInfo)
-		if err := validateNeo4jConnection(connection); err != nil {
-			return nil, err
-		}
-
-		dbUri, err := secrets.ApplySecretsToString(ctx, info, connection.DbUri)
-		if err != nil {
-			return nil, err
-		}
-
-		username, err := secrets.ApplySecretsToString(ctx, info, connection.Username)
-		if err != nil {
-			return nil, err
-		}
-
-		password, err := secrets.ApplySecretsToString(ctx, info, connection.Password)
-		if err != nil {
-			return nil, err
-		}
-
-		driver, err := neo4j.NewDriverWithContext(
-			dbUri,
-			neo4j.BasicAuth(username, password, ""),
-		)
-		if err != nil {
-			return nil, err
-		}
-
-		nr.neo4jDriverCache[n4jName] = driver
-
-		return driver, nil
+	info, ok := manifestdata.GetManifest().Connections[n4jName]
+	if !ok {
+		return nil, fmt.Errorf("Neo4j connection [%s] not found", n4jName)
 	}
 
-	return nil, fmt.Errorf("Neo4j connection [%s] not found", n4jName)
+	if info.ConnectionType() != manifest.ConnectionTypeNeo4j {
+		return nil, fmt.Errorf("[%s] is not a Neo4j connection", n4jName)
+	}
+
+	connection := info.(manifest.Neo4jConnectionInfo)
+	if err := validateNeo4jConnection(connection); err != nil {
+		return nil, err
+	}
+
+	dbUri, err := secrets.ApplySecretsToString(ctx, info, connection.DbUri)
+	if err != nil {
+		return nil, err
+	}
+
+	username, err := secrets.ApplySecretsToString(ctx, info, connection.Username)
+	if err != nil {
+		return nil, err
+	}
+
+	password, err := secrets.ApplySecretsToString(ctx, info, connection.Password)
+	if err != nil {
+		return nil, err
+	}
+
+	driver, err := neo4j.NewDriverWithContext(
+		dbUri,
+		neo4j.BasicAuth(username, password, ""),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	nr.neo4jDriverCache[n4jName] = driver
+
+	return driver, nil
 }
 
 func validateNeo4jConnection(connection manifest.Neo4jConnectionInfo) error {

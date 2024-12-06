@@ -7,6 +7,7 @@
 package main
 
 import (
+	"github.com/hypermodeinc/modus/sdk/go/pkg/console"
 	"github.com/hypermodeinc/modus/sdk/go/pkg/neo4j"
 )
 
@@ -49,7 +50,12 @@ func CreatePeopleAndRelationships() (string, error) {
 	return "People and relationships created successfully", nil
 }
 
-func GetAliceFriendsUnder40() ([]neo4j.Node, error) {
+type Person struct {
+	Name string `json:"name"`
+	Age  string `json:"age"`
+}
+
+func GetAliceFriendsUnder40() ([]Person, error) {
 	response, err := neo4j.ExecuteQuery(host, `
         MATCH (p:Person {name: $name})-[:KNOWS]-(friend:Person)
         WHERE friend.age < $age
@@ -64,10 +70,16 @@ func GetAliceFriendsUnder40() ([]neo4j.Node, error) {
 		return nil, err
 	}
 
-	nodeRecords := make([]neo4j.Node, len(response.Records))
+	nodeRecords := make([]Person, len(response.Records))
 
 	for i, record := range response.Records {
-		nodeRecords[i], _ = neo4j.GetRecordValue[neo4j.Node](record, "friend")
+		node, _ := neo4j.GetRecordValue[neo4j.Node](record, "friend")
+		console.Log(node.Props["name"].(string))
+		console.Log(node.Props["age"].(string))
+		nodeRecords[i] = Person{
+			Name: node.Props["name"].(string),
+			Age:  node.Props["age"].(string),
+		}
 	}
 
 	return nodeRecords, nil
