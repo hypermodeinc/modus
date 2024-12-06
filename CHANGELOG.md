@@ -3,6 +3,7 @@
 ## UNRELEASED - Runtime
 
 - fix: doc comments from object fields should be present in generated GraphQL schema [#630](https://github.com/hypermodeinc/modus/pull/630)
+- perf: improve locking code [#637](https://github.com/hypermodeinc/modus/pull/637)
 
 ## UNRELEASED - Go SDK
 
