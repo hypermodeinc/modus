@@ -50,6 +50,12 @@ func CloseDrivers(ctx context.Context) {
 }
 
 func (nr *neo4jRegistry) getDriver(ctx context.Context, n4jName string) (neo4j.DriverWithContext, error) {
+	nr.RLock()
+	ds, ok := nr.neo4jDriverCache[n4jName]
+	nr.RUnlock()
+	if ok {
+		return ds, nil
+	}
 	nr.Lock()
 	defer nr.Unlock()
 

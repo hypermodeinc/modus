@@ -65,6 +65,13 @@ func ShutdownConns() {
 }
 
 func (dr *dgraphRegistry) getDgraphConnector(ctx context.Context, dgName string) (*dgraphConnector, error) {
+	dr.RLock()
+	ds, ok := dr.dgraphConnectorCache[dgName]
+	dr.RUnlock()
+	if ok {
+		return ds, nil
+	}
+
 	dr.Lock()
 	defer dr.Unlock()
 
@@ -123,7 +130,7 @@ func (dr *dgraphRegistry) getDgraphConnector(ctx context.Context, dgName string)
 		return nil, err
 	}
 
-	ds := &dgraphConnector{
+	ds = &dgraphConnector{
 		conn:     conn,
 		dgClient: dgo.NewDgraphClient(api.NewDgraphClient(conn)),
 	}
