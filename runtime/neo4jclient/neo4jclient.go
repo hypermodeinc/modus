@@ -11,6 +11,7 @@ package neo4jclient
 
 import (
 	"context"
+	"encoding/json"
 
 	"github.com/hypermodeinc/modus/runtime/manifestdata"
 	"github.com/hypermodeinc/modus/runtime/utils"
@@ -31,7 +32,7 @@ func ExecuteQuery(ctx context.Context, hostName, dbName, query string, parameter
 	}
 
 	parameters := make(map[string]any)
-	if err := utils.JsonDeserialize([]byte(parametersJson), &parameters); err != nil {
+	if err := json.Unmarshal([]byte(parametersJson), &parameters); err != nil {
 		return nil, err
 	}
 
