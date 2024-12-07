@@ -67,14 +67,15 @@ export class Record {
   }
 
   getValue<T>(key: string): T {
-    if (isInteger<T>()) {
-      for (let i = 0; i < this.Keys.length; i++) {
-        if (this.Keys[i] == key) {
-          return JSON.parse<f64>(this.Values[i]) as T;
-        }
-      }
-      throw new Error("Key not found in record.");
-    } else if (isFloat<T>() || isBoolean<T>() || isString<T>()) {
+    if (
+      isInteger<T>() ||
+      isFloat<T>() ||
+      isBoolean<T>() ||
+      isString<T>() ||
+      idof<T>() === idof<Node>() ||
+      idof<T>() === idof<Relationship>() ||
+      idof<T>() === idof<Path>()
+    ) {
       for (let i = 0; i < this.Keys.length; i++) {
         if (this.Keys[i] == key) {
           return JSON.parse<T>(this.Values[i]);
@@ -82,20 +83,7 @@ export class Record {
       }
       throw new Error("Key not found in record.");
     }
-    switch (idof<T>()) {
-      case idof<Node>():
-      case idof<Relationship>():
-      case idof<Path>():
-        for (let i = 0; i < this.Keys.length; i++) {
-          if (this.Keys[i] == key) {
-            return JSON.parse<T>(this.Values[i]);
-          }
-        }
-        throw new Error("Key not found in record.");
-
-      default:
-        throw new Error("Unsupported type.");
-    }
+    throw new Error("Unsupported type.");
   }
 
   asMap(): Map<string, string> {
@@ -119,13 +107,10 @@ abstract class Entity {
   Props!: DynamicMap;
 
   getProperty<T>(key: string): T {
-    if (isInteger<T>()) {
-      return this.Props.get<f64>(key) as T;
-    } else if (isFloat<T>() || isBoolean<T>() || isString<T>()) {
+    if (isInteger<T>() || isFloat<T>() || isBoolean<T>() || isString<T>()) {
       return this.Props.get<T>(key);
-    } else {
-      throw new Error("Unsupported type.");
     }
+    throw new Error("Unsupported type.");
   }
 }
 
