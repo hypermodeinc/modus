@@ -46,10 +46,23 @@ type RecordValue interface {
 		Node | Relationship | Path
 }
 
+type Entity interface {
+	GetElementId() string
+	GetProperties() map[string]any
+}
+
 type Node struct {
 	ElementId string         `json:"ElementId"`
 	Labels    []string       `json:"Labels"`
 	Props     map[string]any `json:"Props"`
+}
+
+func (n *Node) GetElementId() string {
+	return n.ElementId
+}
+
+func (n *Node) GetProperties() map[string]any {
+	return n.Props
 }
 
 type Relationship struct {
@@ -58,6 +71,14 @@ type Relationship struct {
 	EndElementId   string         `json:"EndElementId"`
 	Type           string         `json:"Type"`
 	Props          map[string]any `json:"Props"`
+}
+
+func (r *Relationship) GetElementId() string {
+	return r.ElementId
+}
+
+func (r *Relationship) GetProperties() map[string]any {
+	return r.Props
 }
 
 type Path struct {
@@ -132,9 +153,9 @@ func (r *Record) AsMap() map[string]string {
 	return result
 }
 
-func GetProperty[T PropertyValue](n *Node, key string) (T, error) {
+func GetProperty[T PropertyValue](e Entity, key string) (T, error) {
 	var val T
-	rawVal, ok := n.Props[key]
+	rawVal, ok := e.GetProperties()[key]
 	if !ok {
 		return *new(T), fmt.Errorf("Key not found in node")
 	}

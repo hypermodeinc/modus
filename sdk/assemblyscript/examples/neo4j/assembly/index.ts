@@ -69,16 +69,52 @@ export function GetAliceFriendsUnder40(): Person[] {
 
   for (let i = 0; i < result.Records.length; i++) {
     const record = result.Records[i];
-    console.log(record.get("friend"));
-    const node = neo4j.getRecordValue<neo4j.Node>(record, "friend");
-    console.log(node.Props.get("name"));
-    console.log(node.Props.get("age"));
+    const node = record.getValue<neo4j.Node>("friend");
     const person = new Person(
-      node.Props.get("name"),
-      parseInt(node.Props.get("age")) as i32,
+      node.getProperty<string>("name"),
+      node.getProperty<i32>("age"),
     );
     personNodes.push(person);
   }
 
   return personNodes;
+}
+
+export function GetAliceFriendsUnder40Ages(): i32[] {
+  const vars = new neo4j.Variables();
+  vars.set("name", "Alice");
+  vars.set("age", 40);
+
+  const query = `
+    MATCH (p:Person {name: $name})-[:KNOWS]-(friend:Person)
+        WHERE friend.age < $age
+        RETURN friend.age AS age
+  `;
+
+  const result = neo4j.executeQuery(hostName, query, vars);
+  if (!result) {
+    throw new Error("Error getting friends.");
+  }
+
+  const ages: i32[] = [];
+
+  for (let i = 0; i < result.Records.length; i++) {
+    const record = result.Records[i];
+    const age = record.getValue<i32>("age");
+    ages.push(age);
+  }
+
+  return ages;
+}
+
+export function DeleteAllNodes(): string {
+  const query = `
+  MATCH (n)
+  DETACH DELETE n`;
+  const result = neo4j.executeQuery(hostName, query);
+  if (!result) {
+    throw new Error("Error deleting nodes.");
+  }
+
+  return "All nodes deleted successfully";
 }

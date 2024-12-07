@@ -9,6 +9,7 @@
 
 import { JSON } from "json-as";
 import { NamedParams as Variables } from "./database";
+import { DynamicMap } from "./dynamicmap";
 export { Variables };
 
 // @ts-expect-error: decorator
@@ -65,6 +66,38 @@ export class Record {
     throw new Error("Key not found in record.");
   }
 
+  getValue<T>(key: string): T {
+    if (isInteger<T>()) {
+      for (let i = 0; i < this.Keys.length; i++) {
+        if (this.Keys[i] == key) {
+          return JSON.parse<f64>(this.Values[i]) as T;
+        }
+      }
+      throw new Error("Key not found in record.");
+    } else if (isFloat<T>() || isBoolean<T>() || isString<T>()) {
+      for (let i = 0; i < this.Keys.length; i++) {
+        if (this.Keys[i] == key) {
+          return JSON.parse<T>(this.Values[i]);
+        }
+      }
+      throw new Error("Key not found in record.");
+    }
+    switch (idof<T>()) {
+      case idof<Node>():
+      case idof<Relationship>():
+      case idof<Path>():
+        for (let i = 0; i < this.Keys.length; i++) {
+          if (this.Keys[i] == key) {
+            return JSON.parse<T>(this.Values[i]);
+          }
+        }
+        throw new Error("Key not found in record.");
+
+      default:
+        throw new Error("Unsupported type.");
+    }
+  }
+
   asMap(): Map<string, string> {
     const map = new Map<string, string>();
     for (let i = 0; i < this.Keys.length; i++) {
@@ -76,33 +109,58 @@ export class Record {
 
 
 @json
-export class Node {
+abstract class Entity {
 
   @alias("ElementId")
   ElementId!: string;
 
 
-  @alias("Labels")
-  Labels!: string[];
-
-
   @alias("Props")
-  Props!: Map<string, JSON.Raw>;
-}
+  Props!: DynamicMap;
 
-export function getRecordValue<T>(record: Record, key: string): T {
-  for (let i = 0; i < record.Keys.length; i++) {
-    if (record.Keys[i] == key) {
-      return JSON.parse<T>(record.Values[i]);
+  getProperty<T>(key: string): T {
+    if (isInteger<T>()) {
+      return this.Props.get<f64>(key) as T;
+    } else if (isFloat<T>() || isBoolean<T>() || isString<T>()) {
+      return this.Props.get<T>(key);
+    } else {
+      throw new Error("Unsupported type.");
     }
   }
-  throw new Error("Key not found in record.");
 }
 
-export function getProperty<T>(node: Node, key: string): T {
-  const value = node.Props.get(key);
-  if (!value) {
-    throw new Error("Property not found.");
-  }
-  return JSON.parse<T>(value);
+
+@json
+export class Node extends Entity {
+
+  @alias("Labels")
+  Labels!: string[];
+}
+
+
+@json
+export class Relationship extends Entity {
+
+  @alias("StartElementId")
+  StartElementId!: string;
+
+
+  @alias("EndElementId")
+  EndElementId!: string;
+
+
+  @alias("Type")
+  Type!: string;
+}
+
+
+@json
+export class Path {
+
+  @alias("Nodes")
+  Nodes!: Node[];
+
+
+  @alias("Relationships")
+  Relationships!: Relationship[];
 }
