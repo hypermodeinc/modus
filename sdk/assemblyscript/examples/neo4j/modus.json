@@ -1,0 +1,24 @@
+{
+  "$schema": "https://schema.hypermode.com/modus.json",
+  "endpoints": {
+    "default": {
+      "type": "graphql",
+      "path": "/graphql",
+      "auth": "bearer-token"
+    }
+  },
+  "connections": {
+    // This example shows how you can set a host that references a Neo4j database.
+    // The connection string can be anything that is allowed by the Neo4j driver.
+    //
+    // Where secrets are required, {{SECRET_NAME}} templates are replaced with the secret's value at run time.
+    // Do not include actual secret values in this file.
+
+    "my-database": {
+      "type": "neo4j",
+      "dbUri": "neo4j+s://9fdf1513.databases.neo4j.io",
+      "username": "{{USERNAME}}",
+      "password": "{{PASSWORD}}"
+    }
+  }
+}

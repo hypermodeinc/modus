@@ -1,0 +1,32 @@
+{
+  "name": "neo4j-example",
+  "private": true,
+  "description": "Modus AssemblyScript Neo4j Example",
+  "author": "Hypermode Inc.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "scripts": {
+    "build": "modus-as-build",
+    "lint": "eslint .",
+    "pretty": "prettier --write .",
+    "pretty:check": "prettier --check ."
+  },
+  "dependencies": {
+    "@hypermode/modus-sdk-as": "../../src",
+    "json-as": "^0.9.26"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.15.0",
+    "@types/eslint__js": "^8.42.3",
+    "assemblyscript": "^0.27.31",
+    "assemblyscript-prettier": "^3.0.1",
+    "eslint": "^9.15.0",
+    "prettier": "^3.3.3",
+    "typescript": "^5.6.3",
+    "typescript-eslint": "^8.15.0",
+    "visitor-as": "^0.11.4"
+  },
+  "overrides": {
+    "assemblyscript": "$assemblyscript"
+  }
+}
