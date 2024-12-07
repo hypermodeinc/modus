@@ -116,6 +116,7 @@
     "mydgraph",
     "nanos",
     "Nanotime",
+    "neo4jclient",
     "nobuild",
     "noescape",
     "nolint",

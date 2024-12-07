@@ -109,6 +109,13 @@ func TestReadManifest(t *testing.T) {
 				GrpcTarget: "localhost:9080",
 				Key:        "",
 			},
+			"my-neo4j": manifest.Neo4jConnectionInfo{
+				Name:     "my-neo4j",
+				Type:     manifest.ConnectionTypeNeo4j,
+				DbUri:    "bolt://localhost:7687",
+				Username: "{{NEO4J_USERNAME}}",
+				Password: "{{NEO4J_PASSWORD}}",
+			},
 		},
 		Collections: map[string]manifest.CollectionInfo{
 			"collection1": {
@@ -228,6 +235,21 @@ func TestDgraphLocalConnectionInfo_Hash(t *testing.T) {
 	}
 }
 
+func TestNeo4jConnectionInfo_Hash(t *testing.T) {
+	connection := manifest.Neo4jConnectionInfo{
+		Name:     "my-neo4j",
+		DbUri:    "bolt://localhost:7687",
+		Username: "{{NEO4J_USERNAME}}",
+		Password: "{{NEO4J_PASSWORD}}",
+	}
+
+	expectedHash := "51a373d6c2e32442d84fae02a0c87ddb24ec08f05260e49dad14718eca057b29"
+	actualHash := connection.Hash()
+	if actualHash != expectedHash {
+		t.Errorf("Expected hash: %s, but got: %s", expectedHash, actualHash)
+	}
+}
+
 func TestGetVariablesFromManifest(t *testing.T) {
 	// This should match the connection variables that are present in valid_modus.json
 	expectedVars := map[string][]string{
@@ -238,6 +260,7 @@ func TestGetVariablesFromManifest(t *testing.T) {
 		"another-rest-api":         {"USERNAME", "PASSWORD"},
 		"neon":                     {"POSTGRESQL_USERNAME", "POSTGRESQL_PASSWORD"},
 		"my-dgraph-cloud":          {"DGRAPH_KEY"},
+		"my-neo4j":                 {"NEO4J_USERNAME", "NEO4J_PASSWORD"},
 	}
 
 	m, err := manifest.ReadManifest(validManifest)

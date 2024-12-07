@@ -167,6 +167,13 @@ func parseManifestJson(data []byte, manifest *Manifest) error {
 			}
 			info.Name = name
 			manifest.Connections[name] = info
+		case ConnectionTypeNeo4j:
+			var info Neo4jConnectionInfo
+			if err := json.Unmarshal(rawCon, &info); err != nil {
+				return fmt.Errorf("failed to parse neo4j connection [%s]: %w", name, err)
+			}
+			info.Name = name
+			manifest.Connections[name] = info
 		default:
 			return fmt.Errorf("unknown type [%s] for connection [%s]", conType, name)
 		}

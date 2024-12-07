@@ -22,6 +22,7 @@ import (
 	"github.com/hypermodeinc/modus/runtime/logger"
 	"github.com/hypermodeinc/modus/runtime/manifestdata"
 	"github.com/hypermodeinc/modus/runtime/middleware"
+	"github.com/hypermodeinc/modus/runtime/neo4jclient"
 	"github.com/hypermodeinc/modus/runtime/pluginmanager"
 	"github.com/hypermodeinc/modus/runtime/secrets"
 	"github.com/hypermodeinc/modus/runtime/sqlclient"
@@ -48,6 +49,7 @@ func Start(ctx context.Context) context.Context {
 
 	sqlclient.Initialize()
 	dgraphclient.Initialize()
+	neo4jclient.Initialize()
 	aws.Initialize(ctx)
 	secrets.Initialize(ctx)
 	storage.Initialize(ctx)
@@ -76,6 +78,7 @@ func Stop(ctx context.Context) {
 	middleware.Shutdown()
 	sqlclient.ShutdownPGPools()
 	dgraphclient.ShutdownConns()
+	neo4jclient.CloseDrivers(ctx)
 	logger.Close()
 	db.Stop(ctx)
 }
