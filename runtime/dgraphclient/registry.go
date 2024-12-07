@@ -14,7 +14,6 @@ import (
 	"crypto/x509"
 	"fmt"
 	"strings"
-	"sync"
 
 	"github.com/hypermodeinc/modus/lib/manifest"
 	"github.com/hypermodeinc/modus/runtime/manifestdata"
@@ -26,13 +25,13 @@ import (
 
 	"github.com/dgraph-io/dgo/v240"
 	"github.com/dgraph-io/dgo/v240/protos/api"
+	"github.com/puzpuzpuz/xsync/v3"
 )
 
 var dgr = newDgraphRegistry()
 
 type dgraphRegistry struct {
-	sync.RWMutex
-	dgraphConnectorCache map[string]*dgraphConnector
+	cache *xsync.MapOf[string, *dgraphConnector]
 }
 
 type authCreds struct {
@@ -51,35 +50,41 @@ func (a *authCreds) RequireTransportSecurity() bool {
 
 func newDgraphRegistry() *dgraphRegistry {
 	return &dgraphRegistry{
-		dgraphConnectorCache: make(map[string]*dgraphConnector),
+		cache: xsync.NewMapOf[string, *dgraphConnector](),
 	}
 }
 
 func ShutdownConns() {
-	dgr.Lock()
-	defer dgr.Unlock()
-	for _, ds := range dgr.dgraphConnectorCache {
-		ds.conn.Close()
-	}
-	clear(dgr.dgraphConnectorCache)
+	dgr.cache.Range(func(key string, _ *dgraphConnector) bool {
+		if connector, ok := dgr.cache.LoadAndDelete(key); ok {
+			connector.conn.Close()
+		}
+		return true
+	})
 }
 
 func (dr *dgraphRegistry) getDgraphConnector(ctx context.Context, dgName string) (*dgraphConnector, error) {
-	dr.RLock()
-	ds, ok := dr.dgraphConnectorCache[dgName]
-	dr.RUnlock()
-	if ok {
-		return ds, nil
+	var creationErr error
+	ds, _ := dr.cache.LoadOrCompute(dgName, func() *dgraphConnector {
+		conn, err := createConnector(ctx, dgName)
+		if err != nil {
+			creationErr = err
+			return nil
+		}
+		return conn
+	})
+
+	if creationErr != nil {
+		dr.cache.Delete(dgName)
+		return nil, creationErr
 	}
 
-	dr.Lock()
-	defer dr.Unlock()
+	return ds, nil
+}
 
-	if ds, ok := dr.dgraphConnectorCache[dgName]; ok {
-		return ds, nil
-	}
-
-	info, ok := manifestdata.GetManifest().Connections[dgName]
+func createConnector(ctx context.Context, dgName string) (*dgraphConnector, error) {
+	man := manifestdata.GetManifest()
+	info, ok := man.Connections[dgName]
 	if !ok {
 		return nil, fmt.Errorf("dgraph connection [%s] not found", dgName)
 	}
@@ -130,10 +135,10 @@ func (dr *dgraphRegistry) getDgraphConnector(ctx context.Context, dgName string)
 		return nil, err
 	}
 
-	ds = &dgraphConnector{
+	ds := &dgraphConnector{
 		conn:     conn,
 		dgClient: dgo.NewDgraphClient(api.NewDgraphClient(conn)),
 	}
-	dr.dgraphConnectorCache[dgName] = ds
+
 	return ds, nil
 }

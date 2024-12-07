@@ -9,19 +9,16 @@
 
 package sqlclient
 
-import (
-	"sync"
-)
+import "github.com/puzpuzpuz/xsync/v3"
 
 var dsr = newDSRegistry()
 
 type dsRegistry struct {
-	sync.RWMutex
-	pgCache map[string]*postgresqlDS
+	cache *xsync.MapOf[string, *postgresqlDS]
 }
 
 func newDSRegistry() *dsRegistry {
 	return &dsRegistry{
-		pgCache: make(map[string]*postgresqlDS),
+		cache: xsync.NewMapOf[string, *postgresqlDS](),
 	}
 }
