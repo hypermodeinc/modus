@@ -56,8 +56,8 @@ func newDgraphRegistry() *dgraphRegistry {
 
 func ShutdownConns() {
 	dgr.cache.Range(func(key string, _ *dgraphConnector) bool {
-		if ds, ok := dgr.cache.LoadAndDelete(key); ok {
-			ds.conn.Close()
+		if connector, ok := dgr.cache.LoadAndDelete(key); ok {
+			connector.conn.Close()
 		}
 		return true
 	})

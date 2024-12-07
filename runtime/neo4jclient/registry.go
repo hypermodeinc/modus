@@ -12,58 +12,58 @@ package neo4jclient
 import (
 	"context"
 	"fmt"
-	"sync"
 
 	"github.com/hypermodeinc/modus/lib/manifest"
 	"github.com/hypermodeinc/modus/runtime/manifestdata"
 	"github.com/hypermodeinc/modus/runtime/secrets"
+
 	"github.com/neo4j/neo4j-go-driver/v5/neo4j"
+	"github.com/puzpuzpuz/xsync/v3"
 )
 
 var n4j = newNeo4jRegistry()
 
 type neo4jRegistry struct {
-	sync.RWMutex
-	neo4jDriverCache map[string]neo4j.DriverWithContext
+	cache *xsync.MapOf[string, neo4j.DriverWithContext]
 }
 
 func newNeo4jRegistry() *neo4jRegistry {
 	return &neo4jRegistry{
-		neo4jDriverCache: make(map[string]neo4j.DriverWithContext),
+		cache: xsync.NewMapOf[string, neo4j.DriverWithContext](),
 	}
 }
 
 func CloseDrivers(ctx context.Context) {
-	n4j.Lock()
-	defer n4j.Unlock()
-
-	removed := make([]string, 0)
-
-	for key, driver := range n4j.neo4jDriverCache {
-		driver.Close(ctx)
-		removed = append(removed, key)
-	}
-
-	for _, key := range removed {
-		delete(n4j.neo4jDriverCache, key)
-	}
+	n4j.cache.Range(func(key string, _ neo4j.DriverWithContext) bool {
+		if driver, ok := n4j.cache.LoadAndDelete(key); ok {
+			driver.Close(ctx)
+		}
+		return true
+	})
 }
 
 func (nr *neo4jRegistry) getDriver(ctx context.Context, n4jName string) (neo4j.DriverWithContext, error) {
-	nr.RLock()
-	ds, ok := nr.neo4jDriverCache[n4jName]
-	nr.RUnlock()
-	if ok {
-		return ds, nil
-	}
-	nr.Lock()
-	defer nr.Unlock()
+	var creationErr error
+	driver, _ := n4j.cache.LoadOrCompute(n4jName, func() neo4j.DriverWithContext {
+		driver, err := createDriver(ctx, n4jName)
+		if err != nil {
+			creationErr = err
+			return nil
+		}
+		return driver
+	})
 
-	if driver, ok := nr.neo4jDriverCache[n4jName]; ok {
-		return driver, nil
+	if creationErr != nil {
+		n4j.cache.Delete(n4jName)
+		return nil, creationErr
 	}
 
-	info, ok := manifestdata.GetManifest().Connections[n4jName]
+	return driver, nil
+}
+
+func createDriver(ctx context.Context, n4jName string) (neo4j.DriverWithContext, error) {
+	man := manifestdata.GetManifest()
+	info, ok := man.Connections[n4jName]
 	if !ok {
 		return nil, fmt.Errorf("Neo4j connection [%s] not found", n4jName)
 	}
@@ -99,8 +99,6 @@ func (nr *neo4jRegistry) getDriver(ctx context.Context, n4jName string) (neo4j.D
 	if err != nil {
 		return nil, err
 	}
-
-	nr.neo4jDriverCache[n4jName] = driver
 
 	return driver, nil
 }
