@@ -78,7 +78,6 @@ func (w *runtimePostgresWriter) GetPool(ctx context.Context) (*pgxpool.Pool, err
 			// TODO: remove this after the transition is complete
 			connStr, err = secrets.GetSecretValue("HYPERMODE_METADATA_DB")
 		} else {
-			initErr = errDbNotConfigured
 			return
 		}
 
@@ -94,11 +93,13 @@ func (w *runtimePostgresWriter) GetPool(ctx context.Context) (*pgxpool.Pool, err
 		}
 	})
 
-	if initErr != nil {
+	if w.dbpool != nil {
+		return w.dbpool, nil
+	} else if initErr != nil {
 		return nil, initErr
+	} else {
+		return nil, errDbNotConfigured
 	}
-
-	return w.dbpool, nil
 }
 
 func (w *runtimePostgresWriter) Write(data inferenceHistory) {
