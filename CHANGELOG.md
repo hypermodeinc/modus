@@ -1,5 +1,9 @@
 # Change Log
 
+## UNRELEASED - CLI
+
+- feat: Support `MODUS_HOME` environment variable [#639](https://github.com/hypermodeinc/modus/pull/639)
+
 ## UNRELEASED - Runtime
 
 - fix: doc comments from object fields should be present in generated GraphQL schema [#630](https://github.com/hypermodeinc/modus/pull/630)

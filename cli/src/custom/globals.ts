@@ -9,8 +9,9 @@
 
 import path from "node:path";
 import os from "node:os";
+import process from "node:process";
 
-export const ModusHomeDir = path.join(os.homedir(), ".modus");
+export const ModusHomeDir = process.env.MODUS_HOME || path.join(os.homedir(), ".modus");
 
 export const MinNodeVersion = "22.0.0";
 export const MinGoVersion = "1.23.0";
