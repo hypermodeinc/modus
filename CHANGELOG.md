@@ -10,6 +10,7 @@
 - feat: add neo4j support in modus [#636](https://github.com/hypermodeinc/modus/pull/636)
 - perf: improve locking code [#637](https://github.com/hypermodeinc/modus/pull/637)
 - fix: make jwk conversion warn to remove sentry overflow [#641](https://github.com/hypermodeinc/modus/pull/641)
+- chore: update dockerfile [#642](https://github.com/hypermodeinc/modus/pull/642)
 
 ## UNRELEASED - Go SDK
 
