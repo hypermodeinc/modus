@@ -3,13 +3,13 @@
 ## UNRELEASED - CLI
 
 - feat: Support `MODUS_HOME` environment variable [#639](https://github.com/hypermodeinc/modus/pull/639)
-- fix: make jwk conversion warn to remove sentry overflow [#641](https://github.com/hypermodeinc/modus/pull/641)
 
 ## UNRELEASED - Runtime
 
 - fix: doc comments from object fields should be present in generated GraphQL schema [#630](https://github.com/hypermodeinc/modus/pull/630)
 - feat: add neo4j support in modus [#636](https://github.com/hypermodeinc/modus/pull/636)
 - perf: improve locking code [#637](https://github.com/hypermodeinc/modus/pull/637)
+- fix: make jwk conversion warn to remove sentry overflow [#641](https://github.com/hypermodeinc/modus/pull/641)
 
 ## UNRELEASED - Go SDK
 
