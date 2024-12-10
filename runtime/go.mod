@@ -3,7 +3,7 @@ module github.com/hypermodeinc/modus/runtime
 go 1.23.0
 
 require (
-	github.com/hypermodeinc/modus/lib/manifest v0.13.0
+	github.com/hypermodeinc/modus/lib/manifest v0.15.0-alpha.1
 	github.com/hypermodeinc/modus/lib/metadata v0.14.0
 	github.com/hypermodeinc/modus/lib/wasmextractor v0.13.0 // indirect
 )
