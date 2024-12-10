@@ -3,6 +3,7 @@
 ## UNRELEASED - CLI
 
 - feat: Support `MODUS_HOME` environment variable [#639](https://github.com/hypermodeinc/modus/pull/639)
+- fix: make jwk conversion warn to remove sentry overflow [#641](https://github.com/hypermodeinc/modus/pull/641)
 
 ## UNRELEASED - Runtime
 
