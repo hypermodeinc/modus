@@ -74,7 +74,20 @@ export class Record {
       isString<T>() ||
       idof<T>() === idof<Node>() ||
       idof<T>() === idof<Relationship>() ||
-      idof<T>() === idof<Path>()
+      idof<T>() === idof<Path>() ||
+      idof<T>() === idof<DynamicMap>() ||
+      idof<T>() === idof<string[]>() ||
+      idof<T>() === idof<i8[]>() ||
+      idof<T>() === idof<i16[]>() ||
+      idof<T>() === idof<i32[]>() ||
+      idof<T>() === idof<i64[]>() ||
+      idof<T>() === idof<u8[]>() ||
+      idof<T>() === idof<u16[]>() ||
+      idof<T>() === idof<u32[]>() ||
+      idof<T>() === idof<u64[]>() ||
+      idof<T>() === idof<f32[]>() ||
+      idof<T>() === idof<f64[]>() ||
+      idof<T>() === idof<Date>()
     ) {
       for (let i = 0; i < this.Keys.length; i++) {
         if (this.Keys[i] == key) {
