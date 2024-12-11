@@ -119,6 +119,7 @@ export function upsertPerson(
   const query = `
   query {
     person as var(func: eq(firstName, "${nameToChangeFrom}"))
+  }
   `;
   const mutation = `
     uid(person) <firstName> "${nameToChangeTo}" .`;
@@ -139,7 +140,9 @@ export function upsertPerson(
 export function deletePerson(uid: string): Map<string, string> | null {
   const mutation = `<${uid}> * * .`;
 
-  const mutations: dgraph.Mutation[] = [new dgraph.Mutation("", "", mutation)];
+  const mutations: dgraph.Mutation[] = [
+    new dgraph.Mutation("", "", "", mutation),
+  ];
 
   return dgraph.execute(hostName, new dgraph.Request(null, mutations)).Uids;
 }
