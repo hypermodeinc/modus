@@ -87,7 +87,10 @@ export class Record {
       idof<T>() === idof<u64[]>() ||
       idof<T>() === idof<f32[]>() ||
       idof<T>() === idof<f64[]>() ||
-      idof<T>() === idof<Date>()
+      idof<T>() === idof<Date>() ||
+      idof<T>() === idof<JSON.Raw>() ||
+      idof<T>() === idof<Point2D>() ||
+      idof<T>() === idof<Point3D>()
     ) {
       for (let i = 0; i < this.Keys.length; i++) {
         if (this.Keys[i] == key) {
@@ -120,7 +123,16 @@ abstract class Entity {
   Props!: DynamicMap;
 
   getProperty<T>(key: string): T {
-    if (isInteger<T>() || isFloat<T>() || isBoolean<T>() || isString<T>()) {
+    if (
+      isInteger<T>() ||
+      isFloat<T>() ||
+      isBoolean<T>() ||
+      isString<T>() ||
+      idof<T>() === idof<Date>() ||
+      idof<T>() === idof<JSON.Raw>() ||
+      idof<T>() === idof<Point2D>() ||
+      idof<T>() === idof<Point3D>()
+    ) {
       return this.Props.get<T>(key);
     }
     throw new Error("Unsupported type.");
@@ -161,4 +173,40 @@ export class Path {
 
   @alias("Relationships")
   Relationships!: Relationship[];
+}
+
+
+@json
+export class Point2D {
+
+  @alias("X")
+  X!: f64;
+
+
+  @alias("Y")
+  Y!: f64;
+
+
+  @alias("SpatialRefId")
+  SpatialRefId!: u32;
+}
+
+
+@json
+export class Point3D {
+
+  @alias("X")
+  X!: f64;
+
+
+  @alias("Y")
+  Y!: f64;
+
+
+  @alias("Z")
+  Z!: f64;
+
+
+  @alias("SpatialRefId")
+  SpatialRefId!: u32;
 }

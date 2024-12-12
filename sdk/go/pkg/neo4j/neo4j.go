@@ -43,7 +43,7 @@ type RecordValue interface {
 	bool | int64 | float64 | string |
 		time.Time |
 		[]byte | []any | map[string]any |
-		Node | Relationship | Path
+		Node | Relationship | Path | Point2D | Point3D
 }
 
 type Entity interface {
@@ -88,7 +88,32 @@ type Path struct {
 
 type PropertyValue interface {
 	bool | int64 | float64 | string |
-		time.Time | []byte | []any
+		time.Time | []byte | []any | Point2D | Point3D
+}
+
+// Point2D represents a two dimensional point in a particular coordinate reference system.
+type Point2D struct {
+	X            float64
+	Y            float64
+	SpatialRefId uint32 // Id of coordinate reference system.
+}
+
+// Point3D represents a three dimensional point in a particular coordinate reference system.
+type Point3D struct {
+	X            float64
+	Y            float64
+	Z            float64
+	SpatialRefId uint32 // Id of coordinate reference system.
+}
+
+// String returns string representation of this point.
+func (p Point2D) String() string {
+	return fmt.Sprintf("Point{SpatialRefId=%d, X=%f, Y=%f}", p.SpatialRefId, p.X, p.Y)
+}
+
+// String returns string representation of this point.
+func (p Point3D) String() string {
+	return fmt.Sprintf("Point{SpatialRefId=%d, X=%f, Y=%f, Z=%f}", p.SpatialRefId, p.X, p.Y, p.Z)
 }
 
 /**

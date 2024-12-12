@@ -34,9 +34,9 @@ export function CreatePeopleAndRelationships(): string {
   for (let i = 0; i < people.length; i++) {
     const createPersonQuery = `
       MATCH (p:Person {name: $person.name})
-                UNWIND $person.friends AS friend_name
-                MATCH (friend:Person {name: friend_name})
-                MERGE (p)-[:KNOWS]->(friend)
+      UNWIND $person.friends AS friend_name
+      MATCH (friend:Person {name: friend_name})
+      MERGE (p)-[:KNOWS]->(friend)
     `;
     const peopleVars = new neo4j.Variables();
     peopleVars.set("person", people[i]);
