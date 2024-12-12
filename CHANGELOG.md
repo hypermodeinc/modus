@@ -7,6 +7,7 @@
 - perf: improve locking code [#637](https://github.com/hypermodeinc/modus/pull/637)
 - fix: make jwk conversion warn to remove sentry overflow [#641](https://github.com/hypermodeinc/modus/pull/641)
 - chore: update dockerfile [#642](https://github.com/hypermodeinc/modus/pull/642)
+- fix: neo4j as type unmarshalling & support point types [#650](https://github.com/hypermodeinc/modus/pull/650)
 
 ## UNRELEASED - Go SDK
 
