@@ -189,6 +189,10 @@ export class Point2D {
 
   @alias("SpatialRefId")
   SpatialRefId!: u32;
+
+  String(): string {
+    return `Point{SpatialRefId=${this.SpatialRefId}, X=${this.X}, Y=${this.Y}}`;
+  }
 }
 
 
@@ -209,4 +213,8 @@ export class Point3D {
 
   @alias("SpatialRefId")
   SpatialRefId!: u32;
+
+  String(): string {
+    return `Point{SpatialRefId=${this.SpatialRefId}, X=${this.X}, Y=${this.Y}, Z=${this.Z}}`;
+  }
 }
