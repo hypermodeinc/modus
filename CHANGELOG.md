@@ -7,13 +7,14 @@
 - perf: improve locking code [#637](https://github.com/hypermodeinc/modus/pull/637)
 - fix: make jwk conversion warn to remove sentry overflow [#641](https://github.com/hypermodeinc/modus/pull/641)
 - chore: update dockerfile [#642](https://github.com/hypermodeinc/modus/pull/642)
-- fix: neo4j as type unmarshalling & support point types [#650](https://github.com/hypermodeinc/modus/pull/650)
 
 ## UNRELEASED - Go SDK
 
 - fix: vector package should return generic type in computations [#628](https://github.com/hypermodeinc/modus/pull/628)
 - chore: Remove unused go package reference [#632](https://github.com/hypermodeinc/modus/pull/632)
 - feat: add neo4j support in modus [#636](https://github.com/hypermodeinc/modus/pull/636)
+- fix: support point types [#650](https://github.com/hypermodeinc/modus/pull/650)
+
 
 ## UNRELEASED - AssemblyScript SDK
 
@@ -22,6 +23,7 @@
 - feat: add neo4j support in modus [#636](https://github.com/hypermodeinc/modus/pull/636)
 - feat: Add `DynamicMap` type [#638](https://github.com/hypermodeinc/modus/pull/638)
 - fix: Dgraph AssemblyScript example query issues [#643](https://github.com/hypermodeinc/modus/pull/643)
+- fix: neo4j as type unmarshalling & support point types [#650](https://github.com/hypermodeinc/modus/pull/650)
 
 ## 2024-12-11 - CLI 0.15.0
 
