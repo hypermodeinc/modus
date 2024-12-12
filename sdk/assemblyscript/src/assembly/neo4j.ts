@@ -89,6 +89,7 @@ export class Record {
       idof<T>() === idof<f64[]>() ||
       idof<T>() === idof<Date>() ||
       idof<T>() === idof<JSON.Raw>() ||
+      idof<T>() === idof<JSON.Raw[]>() ||
       idof<T>() === idof<Point2D>() ||
       idof<T>() === idof<Point3D>()
     ) {
