@@ -1,6 +1,6 @@
 # Change Log
 
-## UNRELEASED - Runtime
+## 2024-12-13 - Runtime 0.15.0
 
 - fix: doc comments from object fields should be present in generated GraphQL schema [#630](https://github.com/hypermodeinc/modus/pull/630)
 - feat: add neo4j support in modus [#636](https://github.com/hypermodeinc/modus/pull/636)
@@ -8,15 +8,14 @@
 - fix: make jwk conversion warn to remove sentry overflow [#641](https://github.com/hypermodeinc/modus/pull/641)
 - chore: update dockerfile [#642](https://github.com/hypermodeinc/modus/pull/642)
 
-## UNRELEASED - Go SDK
+## 2024-12-13 - Go SDK 0.15.0
 
 - fix: vector package should return generic type in computations [#628](https://github.com/hypermodeinc/modus/pull/628)
 - chore: Remove unused go package reference [#632](https://github.com/hypermodeinc/modus/pull/632)
 - feat: add neo4j support in modus [#636](https://github.com/hypermodeinc/modus/pull/636)
 - fix: support point types [#650](https://github.com/hypermodeinc/modus/pull/650)
 
-
-## UNRELEASED - AssemblyScript SDK
+## 2024-12-13 - AssemblyScript SDK 0.15.0
 
 - fix: vector package should return generic type in computations [#628](https://github.com/hypermodeinc/modus/pull/628)
 - chore: Delete extraneous copy of Anthropic model interface [#631](https://github.com/hypermodeinc/modus/pull/631)
