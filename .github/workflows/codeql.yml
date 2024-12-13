@@ -64,7 +64,8 @@ jobs:
         if: matrix.language == 'go'
         uses: actions/setup-go@v5
         with:
-          go-version-file: "runtime/go.mod"
+          go-version-file: runtime/go.mod
+          cache-dependency-path: runtime/go.sum
 
       # Initializes the CodeQL tools for scanning.
       - name: Initialize CodeQL
