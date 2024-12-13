@@ -61,6 +61,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup Go
+        if: matrix.language == 'go'
         uses: actions/setup-go@v5
         with:
           go-version-file: "runtime/go.mod"
