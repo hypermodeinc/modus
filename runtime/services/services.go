@@ -12,7 +12,6 @@ package services
 import (
 	"context"
 
-	"github.com/hypermodeinc/modus/runtime/aws"
 	"github.com/hypermodeinc/modus/runtime/collections"
 	"github.com/hypermodeinc/modus/runtime/db"
 	"github.com/hypermodeinc/modus/runtime/dgraphclient"
@@ -50,7 +49,6 @@ func Start(ctx context.Context) context.Context {
 	sqlclient.Initialize()
 	dgraphclient.Initialize()
 	neo4jclient.Initialize()
-	aws.Initialize(ctx)
 	secrets.Initialize(ctx)
 	storage.Initialize(ctx)
 	db.Initialize(ctx)
