@@ -93,6 +93,14 @@ func main() {
 		log.Println("Wasm compiled.")
 	}
 
+	if err := wasm.FilterMetadata(config, meta); err != nil {
+		exitWithError("Error filtering metadata", err)
+	}
+
+	if trace {
+		log.Println("Metadata filtered.")
+	}
+
 	if err := wasm.WriteMetadata(config, meta); err != nil {
 		exitWithError("Error writing metadata", err)
 	}

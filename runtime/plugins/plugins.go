@@ -16,6 +16,7 @@ import (
 	"github.com/hypermodeinc/modus/lib/metadata"
 	"github.com/hypermodeinc/modus/runtime/langsupport"
 	"github.com/hypermodeinc/modus/runtime/languages"
+	"github.com/hypermodeinc/modus/runtime/logger"
 	"github.com/hypermodeinc/modus/runtime/utils"
 
 	"github.com/tetratelabs/wazero"
@@ -71,7 +72,8 @@ func NewPlugin(ctx context.Context, cm wazero.CompiledModule, filename string, m
 	for importName, fnMeta := range md.FnImports {
 		fnDef, ok := importsMap[importName]
 		if !ok {
-			return nil, fmt.Errorf("no wasm function definition found for %s", importName)
+			logger.Warn(ctx).Msgf("Unused import %s in plugin metadata. Please update your Modus SDK.", importName)
+			continue
 		}
 
 		plan, err := planner.GetPlan(ctx, fnMeta, fnDef)
