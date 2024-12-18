@@ -1,3 +1,5 @@
+//go:build !wasip1
+
 /*
  * This example is part of the Modus project, licensed under the Apache License 2.0.
  * You may modify and use this example in accordance with the license.
