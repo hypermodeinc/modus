@@ -47,8 +47,8 @@ require (
 	github.com/viterin/vek v0.4.2
 	github.com/wundergraph/graphql-go-tools/execution v1.1.0
 	github.com/wundergraph/graphql-go-tools/v2 v2.0.0-rc.136
-	golang.org/x/exp v0.0.0-20241210194714-1829a127f884
-	google.golang.org/grpc v1.69.0
+	golang.org/x/exp v0.0.0-20241217172543-b2144cdd0a67
+	google.golang.org/grpc v1.69.2
 )
 
 require (
@@ -118,8 +118,8 @@ require (
 	github.com/tidwall/pretty v1.2.1 // indirect
 	github.com/viterin/partial v1.1.0 // indirect
 	github.com/wundergraph/astjson v0.0.0-20241210135722-15ca0ac078f8 // indirect
-	github.com/wundergraph/cosmo/composition-go v0.0.0-20241212134135-c31c563d3cd8 // indirect
-	github.com/wundergraph/cosmo/router v0.0.0-20241212134135-c31c563d3cd8 // indirect
+	github.com/wundergraph/cosmo/composition-go v0.0.0-20241218211344-78ff79fcef00 // indirect
+	github.com/wundergraph/cosmo/router v0.0.0-20241218211344-78ff79fcef00 // indirect
 	go.opentelemetry.io/auto/sdk v1.1.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.58.0 // indirect
 	go.opentelemetry.io/otel v1.33.0 // indirect
@@ -129,13 +129,13 @@ require (
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.27.0 // indirect
 	golang.org/x/crypto v0.31.0 // indirect
-	golang.org/x/net v0.32.0 // indirect
+	golang.org/x/net v0.33.0 // indirect
 	golang.org/x/sync v0.10.0 // indirect
 	golang.org/x/sys v0.28.0 // indirect
 	golang.org/x/text v0.21.0 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20241209162323-e6fa225c2576 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20241209162323-e6fa225c2576 // indirect
-	google.golang.org/protobuf v1.35.2 // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20241216192217-9240e9c98484 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20241216192217-9240e9c98484 // indirect
+	google.golang.org/protobuf v1.36.0 // indirect
 	gopkg.in/cenkalti/backoff.v1 v1.1.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	gotest.tools/v3 v3.5.1 // indirect
