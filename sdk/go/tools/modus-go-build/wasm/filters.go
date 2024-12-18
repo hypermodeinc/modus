@@ -15,6 +15,7 @@ import (
 	"github.com/hypermodeinc/modus/lib/wasmextractor"
 	"github.com/hypermodeinc/modus/sdk/go/tools/modus-go-build/config"
 	"github.com/hypermodeinc/modus/sdk/go/tools/modus-go-build/metadata"
+	"github.com/hypermodeinc/modus/sdk/go/tools/modus-go-build/utils"
 )
 
 func FilterMetadata(config *config.Config, meta *metadata.Metadata) error {
@@ -51,6 +52,55 @@ func FilterMetadata(config *config.Config, meta *metadata.Metadata) error {
 			delete(meta.FnExports, name)
 		}
 	}
+
+	// Remove unused types (they might not be needed now, due to removing functions)
+	var keptTypes = make(metadata.TypeMap, len(meta.Types))
+	for _, fn := range append(utils.MapValues(meta.FnImports), utils.MapValues(meta.FnExports)...) {
+		for _, param := range fn.Parameters {
+			if _, ok := meta.Types[param.Type]; ok {
+				keptTypes[param.Type] = meta.Types[param.Type]
+				delete(meta.Types, param.Type)
+			}
+		}
+		for _, result := range fn.Results {
+			if _, ok := meta.Types[result.Type]; ok {
+				keptTypes[result.Type] = meta.Types[result.Type]
+				delete(meta.Types, result.Type)
+			}
+		}
+	}
+
+	// ensure types used by kept types are also kept
+	for dirty := true; len(meta.Types) > 0 && dirty; {
+		dirty = false
+
+		keep := func(t string) {
+			if _, ok := meta.Types[t]; ok {
+				if _, ok := keptTypes[t]; !ok {
+					keptTypes[t] = meta.Types[t]
+					delete(meta.Types, t)
+					dirty = true
+				}
+			}
+		}
+
+		for _, t := range keptTypes {
+			if utils.IsPointerType(t.Name) {
+				keep(utils.GetUnderlyingType(t.Name))
+			} else if utils.IsListType(t.Name) {
+				keep(utils.GetArraySubtype(t.Name))
+			} else if utils.IsMapType(t.Name) {
+				kt, vt := utils.GetMapSubtypes(t.Name)
+				keep(kt)
+				keep(vt)
+			}
+
+			for _, field := range t.Fields {
+				keep(field.Type)
+			}
+		}
+	}
+	meta.Types = keptTypes
 
 	return nil
 }
