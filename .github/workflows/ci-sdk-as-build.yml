@@ -26,6 +26,13 @@ jobs:
       - name: Find Examples
         id: get-dirs
         run: echo "dirs=$(ls -d sdk/assemblyscript/examples/* | jq -Rsc 'split("\n")[:-1]' )" >> ${GITHUB_OUTPUT}
+
+  install:
+    needs: get-dirs
+    if: github.event_name == 'pull_request'
+    name: install
+    runs-on: ubuntu-latest
+    steps:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
@@ -35,7 +42,7 @@ jobs:
         run: npm ci
 
   sdk-as-build-examples:
-    needs: get-dirs
+    needs: install
     if: github.event_name == 'pull_request'
     name: build
     runs-on: ubuntu-latest
