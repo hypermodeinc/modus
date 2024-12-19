@@ -11,7 +11,7 @@
   },
   "scripts": {
     "test": "ast run && npm run test:transform",
-    "test:transform": "node --test",
+    "test:transform": "npm run build:transform && node --test",
     "pretest": "ast build && tsc -p ./tests",
     "build:transform": "tsc -p ./transform",
     "prepare": "npm run build:transform",
