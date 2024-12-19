@@ -26,6 +26,10 @@ jobs:
       - name: Find Examples
         id: get-dirs
         run: echo "dirs=$(ls -d sdk/assemblyscript/examples/* | jq -Rsc 'split("\n")[:-1]' )" >> ${GITHUB_OUTPUT}
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ">=22"
       - name: Install source dependencies
         working-directory: sdk/assemblyscript/src
         run: npm ci
@@ -44,10 +48,6 @@ jobs:
     steps:
       - name: Checkout Source
         uses: actions/checkout@v4
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: ">=22"
       - name: Install example dependencies
         run: npm ci
       - name: Build project
