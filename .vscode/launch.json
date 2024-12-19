@@ -149,6 +149,10 @@
           "value": "http"
         },
         {
+          "label": "Neo4j Client Example",
+          "value": "neo4j"
+        },
+        {
           "label": "PostgreSQL Client Example",
           "value": "postgresql"
         },

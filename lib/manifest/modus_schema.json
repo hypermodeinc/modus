@@ -242,6 +242,36 @@
                 },
                 "required": ["type", "grpcTarget"],
                 "additionalProperties": false
+              },
+              {
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "neo4j",
+                    "description": "Type of the connection."
+                  },
+                  "dbUri": {
+                    "type": "string",
+                    "minLength": 1,
+                    "pattern": "^(?:neo4j|neo4j\\+s|bolt)://(.*?@)?([0-9a-zA-Z.-]*?)(:\\d+)?(\\/[0-9a-zA-Z.-]+)?(\\?.+)?$",
+                    "description": "The Neo4j connection string in URI format.",
+                    "markdownDescription": "The Neo4j connection string in URI format.\n\nReference: https://docs.hypermode.com/define-connections"
+                  },
+                  "username": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Username for the Neo4j connection.",
+                    "markdownDescription": "Username for the Neo4j connection.\n\nReference: https://docs.hypermode.com/define-connections"
+                  },
+                  "password": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Password for the Neo4j connection.",
+                    "markdownDescription": "Password for the Neo4j connection.\n\nReference: https://docs.hypermode.com/define-connections"
+                  }
+                },
+                "required": ["type", "dbUri", "username", "password"],
+                "additionalProperties": false
               }
             ]
           }

@@ -19,6 +19,7 @@ import (
 	"github.com/hypermodeinc/modus/runtime/collections/index/interfaces"
 	"github.com/hypermodeinc/modus/runtime/db"
 	"github.com/hypermodeinc/modus/runtime/logger"
+	"github.com/puzpuzpuz/xsync/v3"
 )
 
 const collectionFactoryWriteInterval = 1
@@ -40,7 +41,7 @@ func newCollectionFactory() *collectionFactory {
 	return &collectionFactory{
 		collectionMap: map[string]*collection{
 			"": {
-				collectionNamespaceMap: map[string]interfaces.CollectionNamespace{},
+				collectionNamespaceMap: xsync.NewMapOf[string, interfaces.CollectionNamespace](),
 			},
 		},
 		quit: make(chan struct{}),
@@ -86,7 +87,7 @@ func (cf *collectionFactory) readFromPostgres(ctx context.Context) bool {
 	resetTimerFaster := false
 	var err error
 	for _, namespaceCollectionFactory := range cf.collectionMap {
-		for _, col := range namespaceCollectionFactory.collectionNamespaceMap {
+		for _, col := range namespaceCollectionFactory.getCollectionNamespaceMap() {
 			resetTimerFaster, err = loadTextsIntoCollection(ctx, col)
 			if err != nil {
 				logger.Err(ctx, err).

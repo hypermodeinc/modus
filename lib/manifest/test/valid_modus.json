@@ -72,6 +72,12 @@
     "local-dgraph": {
       "type": "dgraph",
       "grpcTarget": "localhost:9080"
+    },
+    "my-neo4j": {
+      "type": "neo4j",
+      "dbUri": "bolt://localhost:7687",
+      "username": "{{NEO4J_USERNAME}}",
+      "password": "{{NEO4J_PASSWORD}}"
     }
   },
   "collections": {

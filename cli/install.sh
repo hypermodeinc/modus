@@ -12,7 +12,7 @@
 # Config
 PACKAGE_ORG="@hypermode"
 PACKAGE_NAME="modus-cli"
-INSTALL_DIR="${MODUS_CLI:-"$HOME/.modus/cli"}"
+INSTALL_DIR="${MODUS_CLI:-"${MODUS_HOME:-"$HOME/.modus"}/cli"}"
 VERSION="latest"
 INSTALLER_VERSION="0.1.2"
 

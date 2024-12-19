@@ -90,7 +90,7 @@ func (ak *AuthKeys) worker(ctx context.Context) {
 			if keysStr != "" {
 				keys, err := jwksEndpointsJsonToKeys(ctx, keysStr)
 				if err != nil {
-					logger.Error(ctx).Err(err).Msg("Auth JWKS public keys deserializing error")
+					logger.Warn(ctx).Err(err).Msg("Auth JWKS public keys deserializing error")
 				} else {
 					ak.setJwksPublicKeys(keys)
 				}

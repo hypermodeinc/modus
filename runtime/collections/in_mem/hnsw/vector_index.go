@@ -102,11 +102,11 @@ func (ims *HnswVectorIndex) Search(ctx context.Context, query []float32, maxResu
 
 func (ims *HnswVectorIndex) SearchWithKey(ctx context.Context, queryKey string, maxResults int, filter index.SearchFilter) (utils.MaxTupleHeap, error) {
 	ims.mu.RLock()
+	defer ims.mu.RUnlock()
 	query, found := ims.HnswIndex.Lookup(queryKey)
 	if !found {
 		return nil, fmt.Errorf("key not found")
 	}
-	ims.mu.RUnlock()
 	if query == nil {
 		return nil, nil
 	}

@@ -1,4 +1,4 @@
-go 1.23.2
+go 1.23.4
 
 use (
 	./lib/manifest
@@ -15,6 +15,7 @@ use (
 	./sdk/go/examples/embedding
 	./sdk/go/examples/graphql
 	./sdk/go/examples/http
+	./sdk/go/examples/neo4j
 	./sdk/go/examples/postgresql
 	./sdk/go/examples/simple
 	./sdk/go/examples/textgeneration

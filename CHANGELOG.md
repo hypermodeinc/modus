@@ -1,18 +1,37 @@
 # Change Log
 
-## UNRELEASED - Runtime
+## UNRELEASED
+
+- chore: lint example test [#656](https://github.com/hypermodeinc/modus/pull/656)
+- fix: unused imports should not be included in metadata [#657](https://github.com/hypermodeinc/modus/pull/657)
+
+## 2024-12-13 - Runtime 0.15.0
 
 - fix: doc comments from object fields should be present in generated GraphQL schema [#630](https://github.com/hypermodeinc/modus/pull/630)
+- feat: add neo4j support in modus [#636](https://github.com/hypermodeinc/modus/pull/636)
+- perf: improve locking code [#637](https://github.com/hypermodeinc/modus/pull/637)
+- fix: make jwk conversion warn to remove sentry overflow [#641](https://github.com/hypermodeinc/modus/pull/641)
+- chore: update dockerfile [#642](https://github.com/hypermodeinc/modus/pull/642)
 
-## UNRELEASED - Go SDK
+## 2024-12-13 - Go SDK 0.15.0
 
 - fix: vector package should return generic type in computations [#628](https://github.com/hypermodeinc/modus/pull/628)
 - chore: Remove unused go package reference [#632](https://github.com/hypermodeinc/modus/pull/632)
+- feat: add neo4j support in modus [#636](https://github.com/hypermodeinc/modus/pull/636)
+- fix: support point types [#650](https://github.com/hypermodeinc/modus/pull/650)
 
-## UNRELEASED - AssemblyScript SDK
+## 2024-12-13 - AssemblyScript SDK 0.15.0
 
 - fix: vector package should return generic type in computations [#628](https://github.com/hypermodeinc/modus/pull/628)
 - chore: Delete extraneous copy of Anthropic model interface [#631](https://github.com/hypermodeinc/modus/pull/631)
+- feat: add neo4j support in modus [#636](https://github.com/hypermodeinc/modus/pull/636)
+- feat: Add `DynamicMap` type [#638](https://github.com/hypermodeinc/modus/pull/638)
+- fix: Dgraph AssemblyScript example query issues [#643](https://github.com/hypermodeinc/modus/pull/643)
+- fix: neo4j as type unmarshalling & support point types [#650](https://github.com/hypermodeinc/modus/pull/650)
+
+## 2024-12-11 - CLI 0.15.0
+
+- feat: Support `MODUS_HOME` environment variable [#639](https://github.com/hypermodeinc/modus/pull/639)
 
 ## 2024-11-27 - CLI 0.14.0
 

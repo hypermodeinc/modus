@@ -53,7 +53,7 @@ type runtimePostgresWriter struct {
 	buffer chan inferenceHistory
 	quit   chan struct{}
 	done   chan struct{}
-	mu     sync.RWMutex
+	once   sync.Once
 }
 
 type inferenceHistory struct {
@@ -67,36 +67,38 @@ type inferenceHistory struct {
 }
 
 func (w *runtimePostgresWriter) GetPool(ctx context.Context) (*pgxpool.Pool, error) {
-	w.mu.RLock()
+	var initErr error
+	w.once.Do(func() {
+		var connStr string
+		var err error
+		if secrets.HasSecret("MODUS_DB") {
+			connStr, err = secrets.GetSecretValue("MODUS_DB")
+		} else if secrets.HasSecret("HYPERMODE_METADATA_DB") {
+			// fallback to old secret name
+			// TODO: remove this after the transition is complete
+			connStr, err = secrets.GetSecretValue("HYPERMODE_METADATA_DB")
+		} else {
+			return
+		}
+
+		if err != nil {
+			initErr = err
+			return
+		}
+
+		if pool, err := pgxpool.New(ctx, connStr); err != nil {
+			initErr = err
+		} else {
+			w.dbpool = pool
+		}
+	})
+
 	if w.dbpool != nil {
-		defer w.mu.RUnlock()
 		return w.dbpool, nil
-	}
-	w.mu.RUnlock()
-
-	w.mu.Lock()
-	defer w.mu.Unlock()
-
-	var connStr string
-	var err error
-	if secrets.HasSecret("MODUS_DB") {
-		connStr, err = secrets.GetSecretValue("MODUS_DB")
-	} else if secrets.HasSecret("HYPERMODE_METADATA_DB") {
-		// fallback to old secret name
-		// TODO: remove this after the transition is complete
-		connStr, err = secrets.GetSecretValue("HYPERMODE_METADATA_DB")
+	} else if initErr != nil {
+		return nil, initErr
 	} else {
 		return nil, errDbNotConfigured
-	}
-	if err != nil {
-		return nil, err
-	}
-
-	if pool, err := pgxpool.New(ctx, connStr); err != nil {
-		return nil, err
-	} else {
-		w.dbpool = pool
-		return pool, nil
 	}
 }
 
