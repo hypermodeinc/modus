@@ -625,6 +625,11 @@ export abstract class Message {
 
 /**
  * A system message.
+ * System messages are used to provide setup instructions to the model.
+ *
+ * Note that system and developer messages are identical in functionality,
+ * but the "system" role was renamed to "developer" in the OpenAI Chat API.
+ * Certain models may require one or the other, so use the type that matches the model's requirements.
  */
 @json
 export class SystemMessage extends Message {
@@ -635,6 +640,33 @@ export class SystemMessage extends Message {
    */
   constructor(content: string) {
     super("system", content);
+  }
+
+  /**
+   * An optional name for the participant.
+   * Provides the model information to differentiate between participants of the same role.
+   */
+  @omitnull()
+  name: string | null = null;
+}
+
+/**
+ * A developer message.
+ * Developer messages are used to provide setup instructions to the model.
+ *
+ * Note that system and developer messages are identical in functionality,
+ * but the "system" role was renamed to "developer" in the OpenAI Chat API.
+ * Certain models may require one or the other, so use the type that matches the model's requirements.
+ */
+@json
+export class DeveloperMessage extends Message {
+  /**
+   * Creates a new developer message object.
+   *
+   * @param content The contents of the message.
+   */
+  constructor(content: string) {
+    super("developer", content);
   }
 
   /**

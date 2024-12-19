@@ -254,7 +254,12 @@ type participantMessage struct {
 	Name string `json:"name,omitempty"`
 }
 
-// A system message object.
+// A system message.
+// System messages are used to provide setup instructions to the model.
+//
+// Note that system and developer messages are identical in functionality,
+// but the "system" role was renamed to "developer" in the OpenAI Chat API.
+// Certain models may require one or the other, so use the type that matches the model's requirements.
 type SystemMessage struct {
 	participantMessage
 }
@@ -265,6 +270,28 @@ func NewSystemMessage(content string) *SystemMessage {
 		participantMessage{
 			MessageBase: MessageBase{
 				Role:    "system",
+				Content: content,
+			},
+		},
+	}
+}
+
+// A developer message.
+// Developer messages are used to provide setup instructions to the model.
+//
+// Note that system and developer messages are identical in functionality,
+// but the "system" role was renamed to "developer" in the OpenAI Chat API.
+// Certain models may require one or the other, so use the type that matches the model's requirements.
+type DeveloperMessage struct {
+	participantMessage
+}
+
+// Creates a new system message object.
+func NewDeveloperMessage(content string) *DeveloperMessage {
+	return &DeveloperMessage{
+		participantMessage{
+			MessageBase: MessageBase{
+				Role:    "developer",
 				Content: content,
 			},
 		},
