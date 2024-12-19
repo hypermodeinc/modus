@@ -299,19 +299,6 @@ type AssistantMessage struct {
 	ToolCalls []ToolCall `json:"tool_calls,omitempty"`
 }
 
-// Creates a new assistant message object.
-func NewAssistantMessage(content string, toolCalls ...ToolCall) *AssistantMessage {
-	return &AssistantMessage{
-		participantMessage{
-			MessageBase: MessageBase{
-				Role:    "assistant",
-				Content: content,
-			},
-		},
-		toolCalls,
-	}
-}
-
 // A tool message object.
 type ToolMessage struct {
 	MessageBase
@@ -342,15 +329,6 @@ type ToolCall struct {
 
 	// The function that the model called.
 	Function FunctionCall `json:"function"`
-}
-
-// Creates a new tool call object.
-func NewToolCall(id, name, arguments string) ToolCall {
-	return ToolCall{
-		Id:       id,
-		Type:     "function",
-		Function: FunctionCall{name, arguments},
-	}
 }
 
 // A function call object that the model may generate.
