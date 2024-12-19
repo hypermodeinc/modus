@@ -45,6 +45,22 @@ test("Metadata.addExportFn adds exported functions", () => {
 });
 
 test("Metadata.writeToModule adds custom sections to the WebAssembly module", () => {
+  const filePath = path.join(
+    path.dirname(fileURLToPath(import.meta.url)),
+    "..",
+    "..",
+    "package.json",
+  );
+  const exists = existsSync(filePath);
+  if (!exists)
+    writeFileSync(
+      filePath,
+      JSON.stringify({
+        name: process.env.npm_package_name,
+        version: process.env.npm_package_version,
+      }),
+    );
+
   const metadata = Metadata.generate();
   const module = new binaryen.Module();
 
@@ -63,4 +79,5 @@ test("Metadata.writeToModule adds custom sections to the WebAssembly module", ()
   };
 
   metadata.writeToModule(module);
+  if (!exists) rmSync(filePath);
 });

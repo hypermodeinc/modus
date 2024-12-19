@@ -5,10 +5,6 @@
 This change log is retained for historical reference only, and is no longer updated.
 See the [root-level change log](../../CHANGELOG.md) for current versions.
 
-## Current
-
-- Implement tests for AssemblyScript SDK Transform [#659](https://github.com/hypermodeinc/modus/pull/659)
-
 ## 2024-09-16 - Version 0.12.0
 
 - Update to v2 Hypermode metadata format [#176](https://github.com/hypermodeinc/functions-as/pull/176)

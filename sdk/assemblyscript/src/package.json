@@ -10,7 +10,8 @@
     "modus-as-build": "./bin/build-plugin.js"
   },
   "scripts": {
-    "test": "node --test",
+    "test": "ast run && npm run test:transform",
+    "test:transform": "node --test",
     "pretest": "ast build && tsc -p ./tests",
     "build:transform": "tsc -p ./transform",
     "prepare": "npm run build:transform",
