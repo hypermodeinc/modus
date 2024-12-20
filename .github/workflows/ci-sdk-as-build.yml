@@ -47,8 +47,8 @@ jobs:
           node-version: ">=22"
       - name: Install source dependencies
         working-directory: sdk/assemblyscript/src
-        run: npm i -f
+        run: npm ci
       - name: Install example dependencies
-        run: npm i -f
+        run: npm ci
       - name: Build project
         run: npm run build
