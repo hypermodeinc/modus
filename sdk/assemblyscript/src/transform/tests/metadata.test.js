@@ -1,13 +1,14 @@
 import test from "node:test";
 import binaryen from "assemblyscript/lib/binaryen.js";
 import * as assert from "node:assert";
-import { Metadata } from "../src/metadata.js";
+import { Metadata } from "../lib/metadata.js";
 import { existsSync, rmSync, writeFileSync } from "node:fs";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
-import { FunctionSignature } from "../src/types.js";
 
+// eslint-disable-next-line no-undef
 process.env.npm_package_version = process.env.npm_package_version || "v0.0.0";
+// eslint-disable-next-line no-undef
 process.env.npm_package_name = process.env.npm_package_name || "test";
 
 test("Metadata.generate creates a new Metadata instance with required fields", () => {
@@ -40,7 +41,7 @@ test("Metadata.generate creates a new Metadata instance with required fields", (
 test("Metadata.addExportFn adds exported functions", () => {
   const metadata = new Metadata();
   const functions = [{ name: "foo", parameters: [], results: [] }];
-  metadata.addExportFn(functions as FunctionSignature[]);
+  metadata.addExportFn(functions);
   assert.deepStrictEqual(metadata.fnExports["foo"], functions[0]);
 });
 

@@ -1,20 +1,18 @@
 import test from "node:test";
 import * as assert from "node:assert";
-import { Docs, FunctionSignature } from "../src/types.js";
+import { Docs, FunctionSignature } from "../lib/types.js";
 import {
   CommentKind,
-  FunctionDeclaration,
   Parser,
   Range,
 } from "assemblyscript/dist/assemblyscript.js";
-import { CommentNode } from "types:assemblyscript/src/ast";
-import ModusTransform from "../src/index.js";
-import { Extractor } from "../src/extractor.js";
+import ModusTransform from "../lib/index.js";
+import { Extractor } from "../lib/extractor.js";
 
 test("Docs.from creates Docs from comment nodes", () => {
   const nodes = [
     { commentKind: 2, text: "/**\n * This is a test\n */" },
-  ] as CommentNode[];
+  ];
   const docs = Docs.from(nodes);
   assert.ok(docs, "Docs should be created");
   assert.deepStrictEqual(docs?.lines, ["This is a test"]);
@@ -28,7 +26,7 @@ test("Docs.from only creates Docs from comment nodes", () => {
       text: "// This is a single line comment",
     },
     { commentKind: CommentKind.Block, text: "/**\n * This is a test\n */" },
-  ] as CommentNode[];
+  ];
   const docs = Docs.from(nodes);
   assert.ok(docs, "Docs should be created");
   assert.deepStrictEqual(docs?.lines.length, 1);
@@ -49,7 +47,7 @@ test("Comments at the start of a file are parsed correctly", () => {
   );
   const extractor = new Extractor(new ModusTransform());
 
-  const node = parser.currentSource.statements[0] as FunctionDeclaration;
+  const node = parser.currentSource.statements[0];
   const nodeIndex = parser.currentSource.statements.indexOf(node);
   const prevNode = parser.currentSource.statements[Math.max(nodeIndex - 1, 0)];
 
@@ -59,7 +57,7 @@ test("Comments at the start of a file are parsed correctly", () => {
   );
   range.source = parser.currentSource;
   const parsed = (
-    extractor["parseComments"] as (range: Range) => CommentNode[]
+    extractor["parseComments"]
   )(range);
 
   assert.equal(parsed.length, 1);
@@ -84,7 +82,7 @@ test("Comments in the middle of a file are parsed correctly", () => {
   );
   const extractor = new Extractor(new ModusTransform());
 
-  const node = parser.currentSource.statements[1] as FunctionDeclaration;
+  const node = parser.currentSource.statements[1];
   const nodeIndex = parser.currentSource.statements.indexOf(node);
   const prevNode = parser.currentSource.statements[Math.max(nodeIndex - 1, 0)];
 
@@ -94,7 +92,7 @@ test("Comments in the middle of a file are parsed correctly", () => {
   );
   range.source = parser.currentSource;
   const parsed = (
-    extractor["parseComments"] as (range: Range) => CommentNode[]
+    extractor["parseComments"]
   )(range);
 
   assert.equal(parsed.length, 1);

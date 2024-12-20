@@ -1,6 +1,6 @@
 import test from "node:test";
 import * as assert from "node:assert";
-import { Field, FunctionSignature, TypeDefinition } from "../src/types.js";
+import { FunctionSignature, TypeDefinition } from "../lib/types.js";
 
 test("FunctionSignature.toJSON ignores empty or default fields", () => {
   const signature = new FunctionSignature(
@@ -18,7 +18,7 @@ test("FunctionSignature.toJSON ignores empty or default fields", () => {
 
 test("TypeDefinition.toString formats type definitions correctly", () => {
   const typeDef = new TypeDefinition("MyType", 1, [
-    { name: "field1", type: "i32" } as Field,
+    { name: "field1", type: "i32" },
   ]);
   assert.strictEqual(
     typeDef.toString(),
