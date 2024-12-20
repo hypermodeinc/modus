@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 import test from "node:test";
 import binaryen from "assemblyscript/lib/binaryen.js";
 import * as assert from "node:assert";
@@ -6,9 +7,7 @@ import { existsSync, rmSync, writeFileSync } from "node:fs";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 
-// eslint-disable-next-line no-undef
 process.env.npm_package_version = process.env.npm_package_version || "v0.0.0";
-// eslint-disable-next-line no-undef
 process.env.npm_package_name = process.env.npm_package_name || "test";
 
 test("Metadata.generate creates a new Metadata instance with required fields", () => {

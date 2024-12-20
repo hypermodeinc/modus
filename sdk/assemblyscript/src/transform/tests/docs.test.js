@@ -10,9 +10,7 @@ import ModusTransform from "../lib/index.js";
 import { Extractor } from "../lib/extractor.js";
 
 test("Docs.from creates Docs from comment nodes", () => {
-  const nodes = [
-    { commentKind: 2, text: "/**\n * This is a test\n */" },
-  ];
+  const nodes = [{ commentKind: 2, text: "/**\n * This is a test\n */" }];
   const docs = Docs.from(nodes);
   assert.ok(docs, "Docs should be created");
   assert.deepStrictEqual(docs?.lines, ["This is a test"]);
@@ -56,9 +54,7 @@ test("Comments at the start of a file are parsed correctly", () => {
     node.range.start,
   );
   range.source = parser.currentSource;
-  const parsed = (
-    extractor["parseComments"]
-  )(range);
+  const parsed = extractor["parseComments"](range);
 
   assert.equal(parsed.length, 1);
   assert.equal(
@@ -91,9 +87,7 @@ test("Comments in the middle of a file are parsed correctly", () => {
     node.range.start,
   );
   range.source = parser.currentSource;
-  const parsed = (
-    extractor["parseComments"]
-  )(range);
+  const parsed = extractor["parseComments"](range);
 
   assert.equal(parsed.length, 1);
   assert.equal(
