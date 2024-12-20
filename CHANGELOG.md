@@ -2,7 +2,6 @@
 
 ## UNRELEASED
 
-- feat: add tests for AssemblyScript SDK Transform [#659](https://github.com/hypermodeinc/modus/pull/659)
 - chore: lint example test [#656](https://github.com/hypermodeinc/modus/pull/656)
 - fix: unused imports should not be included in metadata [#657](https://github.com/hypermodeinc/modus/pull/657)
 
