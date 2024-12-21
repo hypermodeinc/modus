@@ -226,6 +226,7 @@ func (host *wasmHost) newHostFunction(modName, funcName string, fn any, opts ...
 		plan, ok := plugin.ExecutionPlans[fullName]
 		if !ok {
 			logger.Error(ctx).Str("host_function", fullName).Msg("Execution plan not found.")
+			return
 		}
 
 		// Get the Wasm adapter
