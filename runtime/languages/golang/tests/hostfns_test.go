@@ -26,25 +26,25 @@ func getTestHostFunctionRegistrations() []func(wasmhost.WasmHost) error {
 			return host.RegisterHostFunction("modus_system", "logMessage", hostLog)
 		},
 		func(host wasmhost.WasmHost) error {
-			return host.RegisterHostFunction("test", "add", hostAdd)
+			return host.RegisterHostFunction("modus_test", "add", hostAdd)
 		},
 		func(host wasmhost.WasmHost) error {
-			return host.RegisterHostFunction("test", "echo1", hostEcho1)
+			return host.RegisterHostFunction("modus_test", "echo1", hostEcho1)
 		},
 		func(host wasmhost.WasmHost) error {
-			return host.RegisterHostFunction("test", "echo2", hostEcho2)
+			return host.RegisterHostFunction("modus_test", "echo2", hostEcho2)
 		},
 		func(host wasmhost.WasmHost) error {
-			return host.RegisterHostFunction("test", "echo3", hostEcho3)
+			return host.RegisterHostFunction("modus_test", "echo3", hostEcho3)
 		},
 		func(host wasmhost.WasmHost) error {
-			return host.RegisterHostFunction("test", "echo4", hostEcho4)
+			return host.RegisterHostFunction("modus_test", "echo4", hostEcho4)
 		},
 		func(host wasmhost.WasmHost) error {
-			return host.RegisterHostFunction("test", "encodeStrings1", hostEncodeStrings1)
+			return host.RegisterHostFunction("modus_test", "encodeStrings1", hostEncodeStrings1)
 		},
 		func(host wasmhost.WasmHost) error {
-			return host.RegisterHostFunction("test", "encodeStrings2", hostEncodeStrings2)
+			return host.RegisterHostFunction("modus_test", "encodeStrings2", hostEncodeStrings2)
 		},
 	}
 }

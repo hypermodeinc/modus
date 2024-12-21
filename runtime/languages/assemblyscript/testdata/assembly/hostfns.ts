@@ -8,15 +8,15 @@
  */
 
 // @ts-expect-error: decorator
-@external("test", "add")
+@external("modus_test", "add")
 declare function hostAdd(a: i32, b: i32): i32;
 
 // @ts-expect-error: decorator
-@external("test", "echo")
+@external("modus_test", "echo")
 declare function hostEcho(message: string): string;
 
 // @ts-expect-error: decorator
-@external("test", "echoObject")
+@external("modus_test", "echoObject")
 declare function hostEchoObject(obj: TestHostObject): TestHostObject;
 
 class TestHostObject {

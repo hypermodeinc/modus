@@ -26,13 +26,13 @@ func getTestHostFunctionRegistrations() []func(wasmhost.WasmHost) error {
 			return host.RegisterHostFunction("modus_system", "logMessage", hostLog)
 		},
 		func(host wasmhost.WasmHost) error {
-			return host.RegisterHostFunction("test", "add", hostAdd)
+			return host.RegisterHostFunction("modus_test", "add", hostAdd)
 		},
 		func(host wasmhost.WasmHost) error {
-			return host.RegisterHostFunction("test", "echo", hostEcho)
+			return host.RegisterHostFunction("modus_test", "echo", hostEcho)
 		},
 		func(host wasmhost.WasmHost) error {
-			return host.RegisterHostFunction("test", "echoObject", hostEchoObject)
+			return host.RegisterHostFunction("modus_test", "echoObject", hostEchoObject)
 		},
 	}
 }
