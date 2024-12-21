@@ -15,7 +15,7 @@ import "unsafe"
 
 //go:noescape
 //go:wasmimport test add
-func hostAdd(a, b int) int
+func hostAdd(a, b int32) int32
 
 //go:noescape
 //go:wasmimport test echo1

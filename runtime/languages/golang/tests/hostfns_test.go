@@ -57,7 +57,7 @@ func hostLog(ctx context.Context, level, message string) {
 	t.Logf("[%s] %s", level, message)
 }
 
-func hostAdd(a, b int) int {
+func hostAdd(a, b int32) int32 {
 	return a + b
 }
 
@@ -120,8 +120,8 @@ func TestHostFn_add(t *testing.T) {
 
 	if result == nil {
 		t.Error("expected a result")
-	} else if r, ok := result.(int); !ok {
-		t.Errorf("expected an int, got %T", result)
+	} else if r, ok := result.(int32); !ok {
+		t.Errorf("expected an int32, got %T", result)
 	} else if r != 3 {
 		t.Errorf("expected %d, got %d", 3, r)
 	}
