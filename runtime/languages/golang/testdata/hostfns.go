@@ -9,7 +9,7 @@
 
 package main
 
-func Add(a, b int) int {
+func Add(a, b int32) int32 {
 	return hostAdd(a, b)
 }
 

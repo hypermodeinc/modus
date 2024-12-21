@@ -80,6 +80,29 @@
       }
     },
     {
+      "name": "Debug Build Runtime AssemblyScript Test App",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "npm install --prefix ${workspaceFolder}/sdk/assemblyscript/src && npm install && npm run build",
+      "cwd": "${workspaceFolder}/runtime/languages/assemblyscript/testdata",
+      "env": {
+        "FORCE_COLOR": "1",
+        "MODUS_DEBUG": "true"
+      }
+    },
+    {
+      "name": "Debug Build Runtime Go Test App",
+      "type": "go",
+      "request": "launch",
+      "mode": "auto",
+      "program": "${workspaceFolder}/sdk/go/tools/modus-go-build",
+      "args": ["${workspaceFolder}/runtime/languages/golang/testdata"],
+      "env": {
+        "FORCE_COLOR": "1",
+        "MODUS_DEBUG": "true"
+      }
+    },
+    {
       "name": "Debug Modus CLI",
       "type": "node",
       "request": "launch",

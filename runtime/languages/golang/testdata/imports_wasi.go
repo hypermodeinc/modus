@@ -14,39 +14,39 @@ package main
 import "unsafe"
 
 //go:noescape
-//go:wasmimport test add
-func hostAdd(a, b int) int
+//go:wasmimport modus_test add
+func hostAdd(a, b int32) int32
 
 //go:noescape
-//go:wasmimport test echo1
+//go:wasmimport modus_test echo1
 func hostEcho1(message *string) *string
 
 //go:noescape
-//go:wasmimport test echo2
+//go:wasmimport modus_test echo2
 func hostEcho2(message *string) *string
 
 //go:noescape
-//go:wasmimport test echo3
+//go:wasmimport modus_test echo3
 func hostEcho3(message *string) *string
 
 //go:noescape
-//go:wasmimport test echo4
+//go:wasmimport modus_test echo4
 func hostEcho4(message *string) *string
 
 //go:noescape
-//go:wasmimport test encodeStrings1
+//go:wasmimport modus_test encodeStrings1
 func _hostEncodeStrings1(items unsafe.Pointer) *string
 
-//modus:import test encodeStrings1
+//modus:import modus_test encodeStrings1
 func hostEncodeStrings1(items *[]string) *string {
 	return _hostEncodeStrings1(unsafe.Pointer(items))
 }
 
 //go:noescape
-//go:wasmimport test encodeStrings2
+//go:wasmimport modus_test encodeStrings2
 func _hostEncodeStrings2(items unsafe.Pointer) *string
 
-//modus:import test encodeStrings2
+//modus:import modus_test encodeStrings2
 func hostEncodeStrings2(items *[]*string) *string {
 	return _hostEncodeStrings2(unsafe.Pointer(items))
 }

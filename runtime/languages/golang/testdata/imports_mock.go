@@ -11,7 +11,7 @@
 
 package main
 
-func hostAdd(a, b int) int {
+func hostAdd(a, b int32) int32 {
 	panic("should not be called")
 }
 
