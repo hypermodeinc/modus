@@ -93,6 +93,8 @@ func FilterMetadata(config *config.Config, meta *metadata.Metadata) error {
 				kt, vt := utils.GetMapSubtypes(t.Name)
 				keep(kt)
 				keep(vt)
+				keep("[]" + kt)
+				keep("[]" + vt)
 			}
 
 			for _, field := range t.Fields {
