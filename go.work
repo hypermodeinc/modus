@@ -19,6 +19,7 @@ use (
 	./sdk/go/examples/postgresql
 	./sdk/go/examples/simple
 	./sdk/go/examples/textgeneration
+	./sdk/go/examples/time
 	./sdk/go/examples/vectors
 	./sdk/go/templates/default
 )

@@ -111,6 +111,9 @@ func (host *wasmHost) GetModuleInstance(ctx context.Context, plugin *plugins.Plu
 	wOut := io.MultiWriter(buffers.StdOut(), wInfoLog)
 	wErr := io.MultiWriter(buffers.StdErr(), wErrorLog)
 
+	// Get the time zone to pass to the module instance.
+	tz := ctx.Value(utils.TimeZoneContextKey).(string)
+
 	// Configure the module instance.
 	// Note, we use an anonymous module name (empty string) here,
 	// for concurrency and performance reasons.
@@ -123,6 +126,7 @@ func (host *wasmHost) GetModuleInstance(ctx context.Context, plugin *plugins.Plu
 		WithSysWalltime().WithSysNanotime().
 		WithRandSource(rand.Reader).
 		WithStdout(wOut).WithStderr(wErr).
+		WithEnv("TZ", tz).
 		WithEnv("CLAIMS", jwtClaims)
 
 	// Instantiate the plugin as a module.

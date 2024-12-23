@@ -188,6 +188,10 @@
           "value": "textgeneration"
         },
         {
+          "label": "Time Example",
+          "value": "time"
+        },
+        {
           "label": "Vectors API Example",
           "value": "vectors"
         }

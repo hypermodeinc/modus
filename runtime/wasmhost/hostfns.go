@@ -256,8 +256,18 @@ func (host *wasmHost) newHostFunction(modName, funcName string, fn any, opts ...
 		if hasContextParam {
 			inputs = append(inputs, reflect.ValueOf(ctx))
 		}
-		for _, param := range params {
-			inputs = append(inputs, reflect.ValueOf(param))
+		for i, param := range params {
+			if param == nil {
+				var rt reflect.Type
+				if hasContextParam {
+					rt = rtFunc.In(i + 1)
+				} else {
+					rt = rtFunc.In(i)
+				}
+				inputs = append(inputs, reflect.New(rt).Elem())
+			} else {
+				inputs = append(inputs, reflect.ValueOf(param))
+			}
 		}
 
 		// Prepare to call the host function
@@ -371,6 +381,9 @@ func decodeParams(ctx context.Context, wa langsupport.WasmAdapter, plan langsupp
 		data, err := handler.Decode(ctx, wa, vals)
 		if err != nil {
 			return err
+		}
+		if data == nil {
+			continue
 		}
 
 		// special case for structs represented as maps
