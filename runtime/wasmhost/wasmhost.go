@@ -119,6 +119,7 @@ func (host *wasmHost) GetModuleInstance(ctx context.Context, plugin *plugins.Plu
 	jwtClaims := middleware.GetJWTClaims(ctx)
 	cfg := wazero.NewModuleConfig().
 		WithName("").
+		WithStartFunctions("_initialize", "_start").
 		WithSysWalltime().WithSysNanotime().
 		WithRandSource(rand.Reader).
 		WithStdout(wOut).WithStderr(wErr).

@@ -24,9 +24,23 @@ import (
 const minTinyGoVersion = "0.33.0"
 
 func Compile(config *config.Config) error {
+
+	tinygoVersion, err := getCompilerVersion(config)
+	if err != nil {
+		return err
+	}
+
 	args := []string{"build"}
 	args = append(args, "-target", "wasip1")
 	args = append(args, "-o", filepath.Join(config.OutputDir, config.WasmFileName))
+
+	// WASI "reactor mode" (-buildmode=c-shared) is required for TinyGo 0.35.0 and later.
+	// Otherwise, the _start function runs and immediately exits before any function can execute.
+	// This also switches the startup function to _initialize instead of _start, so the Modus runtime
+	// needs to match.
+	if tinygoVersion.GreaterThanOrEqual(version.Must(version.NewVersion("0.35.0"))) {
+		args = append(args, "-buildmode", "c-shared")
+	}
 
 	// disable the asyncify scheduler until we better understand how to use it
 	args = append(args, "-scheduler", "none")

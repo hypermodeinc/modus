@@ -22,6 +22,7 @@
     "bedrockruntime",
     "binaryen",
     "buger",
+    "buildmode",
     "cconf",
     "chewxy",
     "classid",
