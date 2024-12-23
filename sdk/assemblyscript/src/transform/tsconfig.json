@@ -7,5 +7,6 @@
     "types": ["node"],
     "outDir": "./lib",
     "sourceMap": true
-  }
+  },
+  "include": ["./src/*.ts"]
 }

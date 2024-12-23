@@ -12,7 +12,7 @@
   "scripts": {
     "test": "ast run && npm run test:transform",
     "pretest": "ast build && tsc -p ./tests",
-    "test:transform": "node --test",
+    "test:transform": "node --test --no-warnings=ExperimentalWarning --experimental-strip-types",
     "build:transform": "tsc -p ./transform",
     "prepare": "npm run build:transform",
     "lint": "eslint .",
