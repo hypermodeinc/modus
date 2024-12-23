@@ -4,7 +4,9 @@
     "module": "ES2020",
     "moduleResolution": "Node",
     "removeComments": true,
+    "types": ["node"],
     "outDir": "./lib",
     "sourceMap": true
-  }
+  },
+  "include": ["./src/*.ts"]
 }
