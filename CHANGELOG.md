@@ -2,11 +2,12 @@
 
 ## UNRELEASED
 
-- test: add tests for AssemblyScript SDK Transform [#659](https://github.com/hypermodeinc/modus/pull/659)
 - chore: lint example test [#656](https://github.com/hypermodeinc/modus/pull/656)
 - fix: unused imports should not be included in metadata [#657](https://github.com/hypermodeinc/modus/pull/657)
+- test: add tests for AssemblyScript SDK Transform [#659](https://github.com/hypermodeinc/modus/pull/659)
 - fix: improve Go version handling [#660](https://github.com/hypermodeinc/modus/pull/660)
 - fix: update runtime wasm tests [#661](https://github.com/hypermodeinc/modus/pull/661)
+- fix: support TinyGo 0.35.0 [#661](https://github.com/hypermodeinc/modus/pull/662)
 
 ## 2024-12-13 - Runtime 0.15.0
 
