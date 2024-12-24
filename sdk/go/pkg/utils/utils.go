@@ -15,16 +15,7 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
-	"time"
 )
-
-func GetLocalTime(tz string) time.Time {
-	loc, err := time.LoadLocation(tz)
-	if err != nil {
-		return time.Now()
-	}
-	return time.Now().In(loc)
-}
 
 // JsonSerialize serializes the given value to JSON.
 // Unlike json.Marshal, it does not escape HTML characters.
