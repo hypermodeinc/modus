@@ -1,5 +1,9 @@
 # Change Log
 
+## 2024-12-23 - Runtime 0.16.1
+
+- fix: resolve time zone issues [#666](https://github.com/hypermodeinc/modus/pull/666)
+
 ## 2024-12-23 - Runtime 0.16.0
 
 - fix: unused imports should not be included in metadata [#657](https://github.com/hypermodeinc/modus/pull/657)
