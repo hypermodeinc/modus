@@ -52,9 +52,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # copy runtime binary from the build phase
 COPY --from=builder /src/runtime/modus_runtime /usr/bin/modus_runtime
 
-# update certificates every build
+# update certificates and time zones every build
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
+    tzdata \
     && rm -rf /var/lib/apt/lists/*
 
 # set the default entrypoint and options
