@@ -10,7 +10,6 @@
 package timezones
 
 import (
-	"fmt"
 	"os"
 	"time"
 
@@ -29,7 +28,7 @@ func init() {
 	if tz, err := getSystemLocalTimeZone(); err == nil {
 		systemTimeZone = tz
 	} else {
-		fmt.Fprintf(os.Stderr, "failed to determine system local time zone (using UTC): %v\n", err)
+		// silently fallback to UTC
 		systemTimeZone = "UTC"
 	}
 }
