@@ -21,7 +21,7 @@
 - test: add tests for AssemblyScript SDK Transform [#659](https://github.com/hypermodeinc/modus/pull/659)
 - feat: add APIs for local time and time zones [#663](https://github.com/hypermodeinc/modus/pull/663)
 
-## 2024-12-23 - CLI SDK 0.16.0
+## 2024-12-23 - CLI 0.16.0
 
 - fix: improve Go version handling [#660](https://github.com/hypermodeinc/modus/pull/660)
 
