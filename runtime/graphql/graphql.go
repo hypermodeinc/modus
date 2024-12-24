@@ -21,6 +21,7 @@ import (
 	"github.com/hypermodeinc/modus/runtime/logger"
 	"github.com/hypermodeinc/modus/runtime/manifestdata"
 	"github.com/hypermodeinc/modus/runtime/pluginmanager"
+	"github.com/hypermodeinc/modus/runtime/timezones"
 	"github.com/hypermodeinc/modus/runtime/utils"
 	"github.com/hypermodeinc/modus/runtime/wasmhost"
 
@@ -100,6 +101,18 @@ func handleGraphQLRequest(w http.ResponseWriter, r *http.Request) {
 	// Create the output map
 	output := make(map[string]wasmhost.ExecutionInfo)
 	ctx = context.WithValue(ctx, utils.FunctionOutputContextKey, output)
+
+	// Set time zone in the context
+	var timeZone string
+	if tz := r.Header.Get("X-Time-Zone"); tz != "" {
+		// If the X-Time-Zone header is set in the request, use that time zone.
+		timeZone = tz
+	} else {
+		// Otherwise, use the host's local time zone.
+		// Note, the TZ environment variable can be set to override the actual local time zone.
+		timeZone = timezones.GetLocalTimeZone()
+	}
+	ctx = context.WithValue(ctx, utils.TimeZoneContextKey, timeZone)
 
 	// Set tracing options
 	var options = []eng.ExecutionOptions{}

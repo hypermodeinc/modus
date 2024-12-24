@@ -13,8 +13,10 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/hypermodeinc/modus/runtime/logger"
+	"github.com/hypermodeinc/modus/runtime/timezones"
 	"github.com/hypermodeinc/modus/runtime/utils"
 )
 
@@ -22,6 +24,8 @@ func init() {
 	const module_name = "modus_system"
 
 	registerHostFunction(module_name, "logMessage", LogMessage)
+	registerHostFunction(module_name, "getTimeInZone", GetTimeInZone)
+	registerHostFunction(module_name, "getTimeZoneData", GetTimeZoneData)
 }
 
 func LogMessage(ctx context.Context, level, message string) {
@@ -45,4 +49,30 @@ func LogMessage(ctx context.Context, level, message string) {
 		Str("text", message).
 		Bool("user_visible", true).
 		Msg("Message logged from function.")
+}
+
+func GetTimeInZone(ctx context.Context, tz *string) *string {
+	now := time.Now()
+
+	var loc *time.Location
+	if tz != nil && *tz != "" {
+		loc = timezones.GetLocation(*tz)
+	} else if tz, ok := ctx.Value(utils.TimeZoneContextKey).(string); ok {
+		loc = timezones.GetLocation(tz)
+	}
+
+	if loc != nil {
+		now = now.In(loc)
+	}
+
+	s := now.Format(time.RFC3339Nano)
+	return &s
+}
+
+func GetTimeZoneData(tz, format *string) []byte {
+	if tz == nil {
+		return nil
+	}
+
+	return timezones.GetTimeZoneData(*tz, *format)
 }

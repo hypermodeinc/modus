@@ -1,5 +1,6 @@
 EXECUTABLE := modus_runtime
 VERSION := $(shell git describe --tags --always --match 'runtime/*' | sed 's/^runtime\///')
+LDFLAGS := -s -w -X github.com/hypermodeinc/modus/runtime/config.version=$(VERSION)
 
 ifneq ($(OS), Windows_NT)
 	OS := $(shell uname -s)
@@ -7,6 +8,7 @@ endif
 
 ifeq ($(OS), Windows_NT)
 	EXECUTABLE := $(EXECUTABLE).exe
+	LDFLAGS := $(LDFLAGS) -checklinkname=0
 endif
 
 .PHONY: all
@@ -23,7 +25,7 @@ build-explorer:
 
 .PHONY: build
 build: build-explorer
-	go build -o $(EXECUTABLE) -ldflags "-s -w -X github.com/hypermodeinc/modus/runtime/config.version=$(VERSION)" .
+	go build -o $(EXECUTABLE) -ldflags "$(LDFLAGS)" .
 
 .PHONY: run
 run: build-explorer

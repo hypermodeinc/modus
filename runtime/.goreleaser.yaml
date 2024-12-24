@@ -23,7 +23,14 @@ builds:
       - amd64
       - arm64
     mod_timestamp: "{{ .CommitTimestamp }}"
-    ldflags: -s -w -X github.com/hypermodeinc/modus/runtime/config.version={{.Version}}
+    ldflags:
+      - -s
+      - -w
+      - -X github.com/hypermodeinc/modus/runtime/config.version={{.Version}}
+      - >-
+        {{- if eq .Os "windows"}}
+          -checklinkname=0
+        {{- end }}
 
 # temporarily disabled
 # notarize:

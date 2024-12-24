@@ -37,4 +37,7 @@ export { neo4j };
 import * as utils from "./utils";
 export { utils };
 
+import * as localtime from "./localtime";
+export { localtime };
+
 export * from "./dynamicmap";
