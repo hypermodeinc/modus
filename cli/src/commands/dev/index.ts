@@ -215,10 +215,7 @@ export default class DevCommand extends BaseCommand {
     // Whenever any of the env files change, copy to the build directory.
     // The runtime will automatically reload them when it detects a change to the copies in the build folder.
 
-    const onAddOrChange = async (sourcePath: string | Error) => {
-      if (sourcePath instanceof Error) {
-        return;
-      }
+    const onAddOrChange = async (sourcePath: string) => {
       const filename = path.basename(sourcePath);
       const outputPath = path.join(appPath, "build", filename);
       try {
@@ -248,9 +245,6 @@ export default class DevCommand extends BaseCommand {
       .on("add", onAddOrChange)
       .on("change", onAddOrChange)
       .on("unlink", async (sourcePath) => {
-        if (sourcePath instanceof Error) {
-          return;
-        }
         const filename = path.basename(sourcePath);
         const outputPath = path.join(appPath, "build", filename);
         try {
