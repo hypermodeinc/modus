@@ -95,10 +95,20 @@ export class OpenAIChatInput {
    * The maximum number of tokens to generate in the chat completion.
    *
    * @default 4096
+   * @deprecated Use the `maxCompletionTokens` parameter instead, unless the model specifically requires passing "max_tokens".
    */
   @alias("max_tokens")
   @omitif("this.maxTokens == 4096")
-  maxTokens: i32 = 4096; // TODO: make this an `i32 | null` when supported
+  maxTokens: i32 = 4096;
+
+  /**
+   * The maximum number of tokens to generate in the chat completion.
+   *
+   * @default 4096
+   */
+  @alias("max_completion_tokens")
+  @omitif("this.maxCompletionTokens == 4096")
+  maxCompletionTokens: i32 = 4096;
 
   /**
    * The number of completions to generate for each prompt.

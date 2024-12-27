@@ -65,7 +65,14 @@ type ChatModelInput struct {
 	// The maximum number of tokens to generate in the chat completion.
 	//
 	// The default (0) is equivalent to 4096.
+	//
+	// Deprecated: Use the MaxCompletionTokens parameter instead, unless the model specifically requires passing "max_tokens".
 	MaxTokens int `json:"max_tokens,omitempty"`
+
+	// The maximum number of tokens to generate in the chat completion.
+	//
+	// The default (0) is equivalent to 4096.
+	MaxCompletionTokens int `json:"max_completion_tokens,omitempty"`
 
 	// The number of completions to generate for each prompt.
 	//
