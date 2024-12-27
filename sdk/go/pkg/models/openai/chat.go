@@ -10,10 +10,13 @@
 package openai
 
 import (
+	"bytes"
 	"encoding/json"
+	"errors"
 
 	"github.com/hypermodeinc/modus/sdk/go/pkg/models"
 	"github.com/hypermodeinc/modus/sdk/go/pkg/utils"
+	"github.com/tidwall/gjson"
 	"github.com/tidwall/sjson"
 )
 
@@ -237,14 +240,10 @@ type ChatModelOutput struct {
 
 // An interface to any message object.
 type Message interface {
-	isMessage()
-}
 
-func (m *SystemMessage) isMessage()    {}
-func (m *DeveloperMessage) isMessage() {}
-func (m *UserMessage) isMessage()      {}
-func (m *AssistantMessage) isMessage() {}
-func (m *ToolMessage) isMessage()      {}
+	// The role of the author of this message.
+	Role() string
+}
 
 // A system message.
 // System messages are used to provide setup instructions to the model.
@@ -253,24 +252,57 @@ func (m *ToolMessage) isMessage()      {}
 // but the "system" role was renamed to "developer" in the OpenAI Chat API.
 // Certain models may require one or the other, so use the type that matches the model's requirements.
 type SystemMessage struct {
-
-	// The role of the author of this message.
-	Role string `json:"role"`
-
 	// The content of the message.
-	Content string `json:"content"`
+	Content string
 
 	// An optional name for the participant.
 	// Provides the model information to differentiate between participants of the same role.
-	Name string `json:"name,omitempty"`
+	Name string
 }
 
 // Creates a new system message object.
 func NewSystemMessage(content string) *SystemMessage {
 	return &SystemMessage{
-		Role:    "system",
 		Content: content,
 	}
+}
+
+// The role of the author of this message, in this case "system".
+func (m *SystemMessage) Role() string { return "system" }
+
+// Implements the json.Marshaler interface to serialize the SystemMessage object.
+func (m *SystemMessage) MarshalJSON() ([]byte, error) {
+	buf := bytes.NewBufferString(`{"role":"system","content":`)
+	buf.Write(gjson.AppendJSONString(nil, m.Content))
+
+	if m.Name != "" {
+		buf.WriteString(`,"name":`)
+		buf.Write(gjson.AppendJSONString(nil, m.Name))
+	}
+
+	buf.WriteByte('}')
+
+	return buf.Bytes(), nil
+}
+
+// Implements the json.Unmarshaler interface to deserialize the SystemMessage object.
+func (m *SystemMessage) UnmarshalJSON(data []byte) error {
+
+	if role := gjson.GetBytes(data, "role").String(); role != "system" {
+		return errors.New("system message has unexpected role '" + role + "'")
+	}
+
+	if content := gjson.GetBytes(data, "content").String(); content == "" {
+		return errors.New("system message content is required")
+	} else {
+		m.Content = content
+	}
+
+	if name := gjson.GetBytes(data, "name").String(); name != "" {
+		m.Name = name
+	}
+
+	return nil
 }
 
 // A developer message.
@@ -281,87 +313,256 @@ func NewSystemMessage(content string) *SystemMessage {
 // Certain models may require one or the other, so use the type that matches the model's requirements.
 type DeveloperMessage struct {
 
-	// The role of the author of this message.
-	Role string `json:"role"`
-
 	// The content of the message.
-	Content string `json:"content"`
+	Content string
 
 	// An optional name for the participant.
 	// Provides the model information to differentiate between participants of the same role.
-	Name string `json:"name,omitempty"`
+	Name string
 }
 
 // Creates a new system message object.
 func NewDeveloperMessage(content string) *DeveloperMessage {
 	return &DeveloperMessage{
-		Role:    "developer",
 		Content: content,
 	}
+}
+
+// The role of the author of this message, in this case "developer".
+func (m *DeveloperMessage) Role() string { return "developer" }
+
+// Implements the json.Marshaler interface to serialize the DeveloperMessage object.
+func (m *DeveloperMessage) MarshalJSON() ([]byte, error) {
+	buf := bytes.NewBufferString(`{"role":"developer","content":`)
+	buf.Write(gjson.AppendJSONString(nil, m.Content))
+
+	if m.Name != "" {
+		buf.WriteString(`,"name":`)
+		buf.Write(gjson.AppendJSONString(nil, m.Name))
+	}
+
+	buf.WriteByte('}')
+
+	return buf.Bytes(), nil
+}
+
+// Implements the json.Unmarshaler interface to deserialize the DeveloperMessage object.
+func (m *DeveloperMessage) UnmarshalJSON(data []byte) error {
+
+	if role := gjson.GetBytes(data, "role").String(); role != "developer" {
+		return errors.New("developer message has unexpected role '" + role + "'")
+	}
+
+	if content := gjson.GetBytes(data, "content").String(); content == "" {
+		return errors.New("developer message content is required")
+	} else {
+		m.Content = content
+	}
+
+	if name := gjson.GetBytes(data, "name").String(); name != "" {
+		m.Name = name
+	}
+
+	return nil
 }
 
 // A user message object.
 type UserMessage struct {
 
-	// The role of the author of this message.
-	Role string `json:"role"`
-
 	// The content of the message.
-	Content string `json:"content"`
+	Content string
 
 	// An optional name for the participant.
 	// Provides the model information to differentiate between participants of the same role.
-	Name string `json:"name,omitempty"`
+	Name string
 }
 
 // Creates a new user message object.
 func NewUserMessage(content string) *UserMessage {
 	return &UserMessage{
-		Role:    "user",
 		Content: content,
 	}
+}
+
+// The role of the author of this message, in this case "user".
+func (m *UserMessage) Role() string { return "user" }
+
+// Implements the json.Marshaler interface to serialize the UserMessage object.
+func (m *UserMessage) MarshalJSON() ([]byte, error) {
+	buf := bytes.NewBufferString(`{"role":"user","content":`)
+	buf.Write(gjson.AppendJSONString(nil, m.Content))
+
+	if m.Name != "" {
+		buf.WriteString(`,"name":`)
+		buf.Write(gjson.AppendJSONString(nil, m.Name))
+	}
+
+	buf.WriteByte('}')
+
+	return buf.Bytes(), nil
+}
+
+// Implements the json.Unmarshaler interface to deserialize the UserMessage object.
+func (m *UserMessage) UnmarshalJSON(data []byte) error {
+
+	if role := gjson.GetBytes(data, "role").String(); role != "user" {
+		return errors.New("user message has unexpected role '" + role + "'")
+	}
+
+	if content := gjson.GetBytes(data, "content").String(); content == "" {
+		return errors.New("user message content is required")
+	} else {
+		m.Content = content
+	}
+
+	if name := gjson.GetBytes(data, "name").String(); name != "" {
+		m.Name = name
+	}
+
+	return nil
 }
 
 // An assistant message object, representing a message generated by the model.
 type AssistantMessage struct {
 
-	// The role of the author of this message.
-	Role string `json:"role"`
-
 	// The content of the message.
-	Content string `json:"content"`
+	Content string
 
 	// An optional name for the participant.
 	// Provides the model information to differentiate between participants of the same role.
-	Name string `json:"name,omitempty"`
+	Name string
 
 	// The refusal message generated by the model, if any.
-	Refusal string `json:"refusal,omitempty"`
+	Refusal string
 
 	// The tool calls generated by the model, such as function calls.
-	ToolCalls []ToolCall `json:"tool_calls,omitempty"`
+	ToolCalls []ToolCall
+}
+
+// The role of the author of this message, in this case "assistant".
+func (m *AssistantMessage) Role() string { return "assistant" }
+
+// Implements the json.Marshaler interface to serialize the AssistantMessage object.
+func (m *AssistantMessage) MarshalJSON() ([]byte, error) {
+	buf := bytes.NewBufferString(`{"role":"assistant","content":`)
+	buf.Write(gjson.AppendJSONString(nil, m.Content))
+
+	if m.Name != "" {
+		buf.WriteString(`,"name":`)
+		buf.Write(gjson.AppendJSONString(nil, m.Name))
+	}
+
+	if m.Refusal != "" {
+		buf.WriteString(`,"refusal":`)
+		buf.Write(gjson.AppendJSONString(nil, m.Refusal))
+	}
+
+	if len(m.ToolCalls) > 0 {
+		buf.WriteString(`,"tool_calls":[`)
+		for i, tc := range m.ToolCalls {
+			if i > 0 {
+				buf.WriteByte(',')
+			}
+			b, err := json.Marshal(tc)
+			if err != nil {
+				return nil, err
+			}
+			buf.Write(b)
+		}
+		buf.WriteByte(']')
+	}
+
+	buf.WriteByte('}')
+
+	return buf.Bytes(), nil
+}
+
+// Implements the json.Unmarshaler interface to deserialize the AssistantMessage object.
+func (m *AssistantMessage) UnmarshalJSON(data []byte) error {
+
+	if role := gjson.GetBytes(data, "role").String(); role != "assistant" {
+		return errors.New("assistant message has unexpected role '" + role + "'")
+	}
+
+	if content := gjson.GetBytes(data, "content").String(); content == "" {
+		return errors.New("assistant message content is required")
+	} else {
+		m.Content = content
+	}
+
+	if name := gjson.GetBytes(data, "name").String(); name != "" {
+		m.Name = name
+	}
+
+	if refusal := gjson.GetBytes(data, "refusal").String(); refusal != "" {
+		m.Refusal = refusal
+	}
+
+	if toolCalls := gjson.GetBytes(data, "tool_calls").Array(); len(toolCalls) > 0 {
+		m.ToolCalls = make([]ToolCall, 0, len(toolCalls))
+		for _, tc := range toolCalls {
+			var toolCall ToolCall
+			if err := json.Unmarshal([]byte(tc.Raw), &toolCall); err != nil {
+				return err
+			}
+			m.ToolCalls = append(m.ToolCalls, toolCall)
+		}
+	}
+
+	return nil
 }
 
 // A tool message object.
 type ToolMessage struct {
 
-	// The role of the author of this message.
-	Role string `json:"role"`
-
 	// The content of the message.
-	Content string `json:"content"`
+	Content string
 
 	// The tool call that this message is responding to.
-	ToolCallId string `json:"tool_call_id"`
+	ToolCallId string
 }
 
 // Creates a new tool message object.
 func NewToolMessage(content, toolCallId string) *ToolMessage {
 	return &ToolMessage{
-		Role:       "tool",
 		Content:    content,
 		ToolCallId: toolCallId,
 	}
+}
+
+// The role of the author of this message, in this case "tool".
+func (m *ToolMessage) Role() string { return "tool" }
+
+// Implements the json.Marshaler interface to serialize the ToolMessage object.
+func (m *ToolMessage) MarshalJSON() ([]byte, error) {
+	buf := bytes.NewBufferString(`{"role":"tool","content":`)
+	buf.Write(gjson.AppendJSONString(nil, m.Content))
+	buf.WriteString(`,"tool_call_id":"` + m.ToolCallId + `"}`)
+	buf.WriteByte('}')
+
+	return buf.Bytes(), nil
+}
+
+// Implements the json.Unmarshaler interface to deserialize the ToolMessage object.
+func (m *ToolMessage) UnmarshalJSON(data []byte) error {
+
+	if role := gjson.GetBytes(data, "role").String(); role != "tool" {
+		return errors.New("tool message has unexpected role '" + role + "'")
+	}
+
+	if content := gjson.GetBytes(data, "content").String(); content == "" {
+		return errors.New("tool message content is required")
+	} else {
+		m.Content = content
+	}
+
+	if toolCallId := gjson.GetBytes(data, "tool_call_id").String(); toolCallId == "" {
+		return errors.New("tool message tool_call_id is required")
+	} else {
+		m.ToolCallId = toolCallId
+	}
+
+	return nil
 }
 
 // A tool call object that the model may generate.
