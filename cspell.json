@@ -134,6 +134,7 @@
     "omitif",
     "omitnull",
     "openai",
+    "openspeech",
     "operationreport",
     "PEMS",
     "pgconn",

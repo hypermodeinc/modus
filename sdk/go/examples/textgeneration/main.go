@@ -9,8 +9,10 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"math/rand/v2"
 	"strings"
 
+	"github.com/hypermodeinc/modus/sdk/go/pkg/http"
 	"github.com/hypermodeinc/modus/sdk/go/pkg/models"
 	"github.com/hypermodeinc/modus/sdk/go/pkg/models/openai"
 )
@@ -19,14 +21,11 @@ import (
 // See https://platform.openai.com/docs/api-reference/chat/create for more details
 // about the options available on the model, which you can set on the input object.
 
-// This model name should match the one defined in the modus.json manifest file.
-const modelName = "text-generator"
-
 // This function generates some text based on the instruction and prompt provided.
 func GenerateText(instruction, prompt string) (string, error) {
 
 	// The imported ChatModel type follows the OpenAI Chat completion model input format.
-	model, err := models.GetModel[openai.ChatModel](modelName)
+	model, err := models.GetModel[openai.ChatModel]("text-generator")
 	if err != nil {
 		return "", err
 	}
@@ -66,7 +65,7 @@ func GenerateProduct(category string) (*Product, error) {
 	prompt := fmt.Sprintf(`The category is "%s".`, category)
 
 	// Set up the input for the model, creating messages for the instruction and prompt.
-	model, err := models.GetModel[openai.ChatModel](modelName)
+	model, err := models.GetModel[openai.ChatModel]("text-generator")
 	if err != nil {
 		return nil, err
 	}
@@ -118,7 +117,7 @@ func GenerateProducts(category string, quantity int) ([]Product, error) {
 	prompt := fmt.Sprintf(`The category is "%s".`, category)
 
 	// Set up the input for the model, creating messages for the instruction and prompt.
-	model, err := models.GetModel[openai.ChatModel](modelName)
+	model, err := models.GetModel[openai.ChatModel]("text-generator")
 	if err != nil {
 		return nil, err
 	}
@@ -156,4 +155,139 @@ func GenerateProducts(category string, quantity int) ([]Product, error) {
 		return nil, fmt.Errorf("expected 'list' key in JSON object")
 	}
 	return products, nil
+}
+
+// This function generates text that describes the image at the provided url.
+func DescribeImage(url string) (string, error) {
+
+	model, err := models.GetModel[openai.ChatModel]("text-generator")
+	if err != nil {
+		return "", err
+	}
+
+	input, err := model.CreateInput(
+		openai.NewUserMessage([]openai.ContentPart{
+			openai.NewContentPartText("Describe this image."),
+			openai.NewContentPartImageFromUrl(url),
+		}),
+	)
+	if err != nil {
+		return "", err
+	}
+
+	output, err := model.Invoke(input)
+	if err != nil {
+		return "", err
+	}
+
+	return strings.TrimSpace(output.Choices[0].Message.Content), nil
+}
+
+// This type is used for image or audio data.
+type Media struct {
+
+	// The content type of the media.
+	ContentType string
+
+	// The binary data of the media.
+	Data []byte
+
+	// A text description or transcription of the media.
+	Text string
+}
+
+// This function fetches a random image, and then generates text that describes it.
+func DescribeRandomImage(width, height int) (*Media, error) {
+
+	// Fetch a random image from the Picsum API.
+	url := fmt.Sprintf("https://picsum.photos/%d/%d", width, height)
+	response, err := http.Fetch(url)
+	if err != nil {
+		return nil, err
+	}
+	data := response.Body
+	contentType := *response.Headers.Get("Content-Type")
+
+	// Describe the image using the OpenAI Chat model.
+	model, err := models.GetModel[openai.ChatModel]("text-generator")
+	if err != nil {
+		return nil, err
+	}
+
+	input, err := model.CreateInput(
+		openai.NewUserMessage([]openai.ContentPart{
+			openai.NewContentPartText("Describe this image."),
+			openai.NewContentPartImage(data, contentType),
+		}),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	output, err := model.Invoke(input)
+	if err != nil {
+		return nil, err
+	}
+
+	text := strings.TrimSpace(output.Choices[0].Message.Content)
+
+	// Return the image and its description.
+	image := &Media{
+		ContentType: contentType,
+		Data:        data,
+		Text:        text,
+	}
+
+	return image, nil
+}
+
+// This function fetches a random "Harvard Sentences" speech file from OpenSpeech, and then generates a transcript from it.
+// The sentences are from https://www.cs.columbia.edu/~hgs/audio/harvard.html
+func TranscribeRandomSpeech() (*Media, error) {
+
+	// Pick a random file number from the list of available here:
+	// https://www.voiptroubleshooter.com/open_speech/american.html
+	numbers := []int{10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 30, 31, 32, 34, 35, 36, 37, 38, 39, 40, 57, 58, 59, 60, 61}
+	num := numbers[rand.IntN(len(numbers))]
+
+	// Fetch the speech file corresponding to the number.
+	url := fmt.Sprintf("https://www.voiptroubleshooter.com/open_speech/american/OSR_us_000_%04d_8k.wav", num)
+	response, err := http.Fetch(url)
+	if err != nil {
+		return nil, err
+	}
+	data := response.Body
+
+	// Transcribe the audio using the OpenAI Chat model.
+	model, err := models.GetModel[openai.ChatModel]("audio-transcriber")
+	if err != nil {
+		return nil, err
+	}
+
+	input, err := model.CreateInput(
+		openai.NewDeveloperMessage("Do not include any newlines or surrounding quotation marks in the response. Omit any explanation beyond the request."),
+		openai.NewUserMessage([]openai.ContentPart{
+			openai.NewContentPartText("Provide an exact transcription of the contents of this audio file."),
+			openai.NewContentPartAudio(data, "wav"),
+		}),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	output, err := model.Invoke(input)
+	if err != nil {
+		return nil, err
+	}
+
+	text := strings.TrimSpace(output.Choices[0].Message.Content)
+
+	// Return the audio file and its transcript.
+	image := &Media{
+		ContentType: "audio/wav",
+		Data:        data,
+		Text:        text,
+	}
+
+	return image, nil
 }

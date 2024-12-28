@@ -8,9 +8,14 @@
     }
   },
   "models": {
-    // This defines the model that will be used for text generation.
+    // This defines the models that will be used for text generation.
     "text-generator": {
       "sourceModel": "gpt-4o-mini",
+      "connection": "openai",
+      "path": "v1/chat/completions"
+    },
+    "audio-transcriber": {
+      "sourceModel": "gpt-4o-audio-preview",
       "connection": "openai",
       "path": "v1/chat/completions"
     }
@@ -24,6 +29,14 @@
       "headers": {
         "Authorization": "Bearer {{API_KEY}}"
       }
+    },
+    "picsum": {
+      "type": "http",
+      "baseUrl": "https://picsum.photos/"
+    },
+    "openspeech": {
+      "type": "http",
+      "baseUrl": "https://www.voiptroubleshooter.com/open_speech/"
     }
   }
 }
