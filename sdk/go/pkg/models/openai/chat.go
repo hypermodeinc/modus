@@ -11,6 +11,7 @@ package openai
 
 import (
 	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 
@@ -240,9 +241,95 @@ type ChatModelOutput struct {
 
 // An interface to any message object.
 type Message interface {
+	json.Marshaler
+	json.Unmarshaler
 
 	// The role of the author of this message.
 	Role() string
+}
+
+// An interface to any valid content for a message object.
+type Content interface {
+	string | []ContentPart
+}
+
+// A content part object, representing a part of the content of a message.
+type ContentPart struct {
+
+	// The type of the content part.
+	Type string `json:"type"`
+
+	// For text content parts, the text string.
+	Text *string `json:"text,omitempty"`
+
+	// For image content parts, the image information.
+	Image *Image `json:"image_url,omitempty"`
+
+	// For audio content parts, the audio information.
+	Audio *Audio `json:"input_audio,omitempty"`
+}
+
+// An image object, used to represent an image in a content part.
+type Image struct {
+
+	// The URL of the image.
+	Url string `json:"url"`
+
+	// An optional detail string for the image.
+	// Can be set to "low", "high", or "auto".
+	// The default is "auto".
+	Detail string `json:"detail,omitempty"`
+}
+
+// An audio object, used to represent audio in a content part.
+type Audio struct {
+
+	// The raw audio data.
+	Data []byte `json:"data"`
+
+	// The format of the audio data, such as "wav" or "mp3".
+	// The format must be a valid audio format supported by the model.
+	Format string `json:"format"`
+}
+
+// Creates a new text content part.
+func NewContentPartText(text string) ContentPart {
+	return ContentPart{Type: "text", Text: &text}
+}
+
+// Creates a new image content part from a URL.
+// The model must support image input for this to work.
+// The URL will be sent directly to the model.
+// The detail parameter is optional and can be set to "low", "high", or "auto".
+func NewContentPartImageFromUrl(url string, detail ...string) ContentPart {
+	img := Image{Url: url}
+	if len(detail) > 0 {
+		img.Detail = detail[0]
+	}
+	return ContentPart{Type: "image_url", Image: &img}
+}
+
+// Creates a new image content part from raw image data.
+// The model must support image input for this to work.
+// The contentType parameter must be a valid image MIME type supported by the model, such as "image/jpeg" or "image/png".
+// The detail parameter is optional and can be set to "low", "high", or "auto".
+func NewContentPartImage(data []byte, contentType string, detail ...string) ContentPart {
+	b64 := base64.StdEncoding.EncodeToString(data)
+	url := "data:" + contentType + ";base64," + b64
+
+	img := Image{Url: url}
+	if len(detail) > 0 {
+		img.Detail = detail[0]
+	}
+	return ContentPart{Type: "image_url", Image: &img}
+}
+
+// Creates a new audio content part from raw audio data.
+// The model must support audio input for this to work.
+// The format parameter must be a valid audio format supported by the model, such as "wav" or "mp3".
+func NewContentPartAudio(data []byte, format string) ContentPart {
+	audio := Audio{Data: data, Format: format}
+	return ContentPart{Type: "input_audio", Audio: &audio}
 }
 
 // A system message.
@@ -251,9 +338,9 @@ type Message interface {
 // Note that system and developer messages are identical in functionality,
 // but the "system" role was renamed to "developer" in the OpenAI Chat API.
 // Certain models may require one or the other, so use the type that matches the model's requirements.
-type SystemMessage struct {
+type SystemMessage[T Content] struct {
 	// The content of the message.
-	Content string
+	Content T
 
 	// An optional name for the participant.
 	// Provides the model information to differentiate between participants of the same role.
@@ -261,19 +348,24 @@ type SystemMessage struct {
 }
 
 // Creates a new system message object.
-func NewSystemMessage(content string) *SystemMessage {
-	return &SystemMessage{
+func NewSystemMessage[T Content](content T) *SystemMessage[T] {
+	return &SystemMessage[T]{
 		Content: content,
 	}
 }
 
 // The role of the author of this message, in this case "system".
-func (m *SystemMessage) Role() string { return "system" }
+func (m *SystemMessage[T]) Role() string { return "system" }
 
 // Implements the json.Marshaler interface to serialize the SystemMessage object.
-func (m *SystemMessage) MarshalJSON() ([]byte, error) {
+func (m *SystemMessage[T]) MarshalJSON() ([]byte, error) {
 	buf := bytes.NewBufferString(`{"role":"system","content":`)
-	buf.Write(gjson.AppendJSONString(nil, m.Content))
+
+	if b, err := utils.JsonSerialize(m.Content); err != nil {
+		return nil, err
+	} else {
+		buf.Write(b)
+	}
 
 	if m.Name != "" {
 		buf.WriteString(`,"name":`)
@@ -286,16 +378,16 @@ func (m *SystemMessage) MarshalJSON() ([]byte, error) {
 }
 
 // Implements the json.Unmarshaler interface to deserialize the SystemMessage object.
-func (m *SystemMessage) UnmarshalJSON(data []byte) error {
+func (m *SystemMessage[T]) UnmarshalJSON(data []byte) error {
 
 	if role := gjson.GetBytes(data, "role").String(); role != "system" {
 		return errors.New("system message has unexpected role '" + role + "'")
 	}
 
-	if content := gjson.GetBytes(data, "content").String(); content == "" {
+	if content := gjson.GetBytes(data, "content"); !content.Exists() {
 		return errors.New("system message content is required")
-	} else {
-		m.Content = content
+	} else if err := json.Unmarshal([]byte(content.Raw), &m.Content); err != nil {
+		return err
 	}
 
 	if name := gjson.GetBytes(data, "name").String(); name != "" {
@@ -311,10 +403,10 @@ func (m *SystemMessage) UnmarshalJSON(data []byte) error {
 // Note that system and developer messages are identical in functionality,
 // but the "system" role was renamed to "developer" in the OpenAI Chat API.
 // Certain models may require one or the other, so use the type that matches the model's requirements.
-type DeveloperMessage struct {
+type DeveloperMessage[T Content] struct {
 
 	// The content of the message.
-	Content string
+	Content T
 
 	// An optional name for the participant.
 	// Provides the model information to differentiate between participants of the same role.
@@ -322,19 +414,24 @@ type DeveloperMessage struct {
 }
 
 // Creates a new system message object.
-func NewDeveloperMessage(content string) *DeveloperMessage {
-	return &DeveloperMessage{
+func NewDeveloperMessage[T Content](content T) *DeveloperMessage[T] {
+	return &DeveloperMessage[T]{
 		Content: content,
 	}
 }
 
 // The role of the author of this message, in this case "developer".
-func (m *DeveloperMessage) Role() string { return "developer" }
+func (m *DeveloperMessage[T]) Role() string { return "developer" }
 
 // Implements the json.Marshaler interface to serialize the DeveloperMessage object.
-func (m *DeveloperMessage) MarshalJSON() ([]byte, error) {
+func (m *DeveloperMessage[T]) MarshalJSON() ([]byte, error) {
 	buf := bytes.NewBufferString(`{"role":"developer","content":`)
-	buf.Write(gjson.AppendJSONString(nil, m.Content))
+
+	if b, err := utils.JsonSerialize(m.Content); err != nil {
+		return nil, err
+	} else {
+		buf.Write(b)
+	}
 
 	if m.Name != "" {
 		buf.WriteString(`,"name":`)
@@ -347,16 +444,16 @@ func (m *DeveloperMessage) MarshalJSON() ([]byte, error) {
 }
 
 // Implements the json.Unmarshaler interface to deserialize the DeveloperMessage object.
-func (m *DeveloperMessage) UnmarshalJSON(data []byte) error {
+func (m *DeveloperMessage[T]) UnmarshalJSON(data []byte) error {
 
 	if role := gjson.GetBytes(data, "role").String(); role != "developer" {
 		return errors.New("developer message has unexpected role '" + role + "'")
 	}
 
-	if content := gjson.GetBytes(data, "content").String(); content == "" {
+	if content := gjson.GetBytes(data, "content"); !content.Exists() {
 		return errors.New("developer message content is required")
-	} else {
-		m.Content = content
+	} else if err := json.Unmarshal([]byte(content.Raw), &m.Content); err != nil {
+		return err
 	}
 
 	if name := gjson.GetBytes(data, "name").String(); name != "" {
@@ -367,10 +464,10 @@ func (m *DeveloperMessage) UnmarshalJSON(data []byte) error {
 }
 
 // A user message object.
-type UserMessage struct {
+type UserMessage[T Content] struct {
 
 	// The content of the message.
-	Content string
+	Content T
 
 	// An optional name for the participant.
 	// Provides the model information to differentiate between participants of the same role.
@@ -378,19 +475,24 @@ type UserMessage struct {
 }
 
 // Creates a new user message object.
-func NewUserMessage(content string) *UserMessage {
-	return &UserMessage{
+func NewUserMessage[T Content](content T) *UserMessage[T] {
+	return &UserMessage[T]{
 		Content: content,
 	}
 }
 
 // The role of the author of this message, in this case "user".
-func (m *UserMessage) Role() string { return "user" }
+func (m *UserMessage[T]) Role() string { return "user" }
 
 // Implements the json.Marshaler interface to serialize the UserMessage object.
-func (m *UserMessage) MarshalJSON() ([]byte, error) {
+func (m *UserMessage[T]) MarshalJSON() ([]byte, error) {
 	buf := bytes.NewBufferString(`{"role":"user","content":`)
-	buf.Write(gjson.AppendJSONString(nil, m.Content))
+
+	if b, err := utils.JsonSerialize(m.Content); err != nil {
+		return nil, err
+	} else {
+		buf.Write(b)
+	}
 
 	if m.Name != "" {
 		buf.WriteString(`,"name":`)
@@ -403,16 +505,16 @@ func (m *UserMessage) MarshalJSON() ([]byte, error) {
 }
 
 // Implements the json.Unmarshaler interface to deserialize the UserMessage object.
-func (m *UserMessage) UnmarshalJSON(data []byte) error {
+func (m *UserMessage[T]) UnmarshalJSON(data []byte) error {
 
 	if role := gjson.GetBytes(data, "role").String(); role != "user" {
 		return errors.New("user message has unexpected role '" + role + "'")
 	}
 
-	if content := gjson.GetBytes(data, "content").String(); content == "" {
+	if content := gjson.GetBytes(data, "content"); !content.Exists() {
 		return errors.New("user message content is required")
-	} else {
-		m.Content = content
+	} else if err := json.Unmarshal([]byte(content.Raw), &m.Content); err != nil {
+		return err
 	}
 
 	if name := gjson.GetBytes(data, "name").String(); name != "" {
@@ -425,8 +527,11 @@ func (m *UserMessage) UnmarshalJSON(data []byte) error {
 // An assistant message object, representing a message generated by the model.
 type AssistantMessage struct {
 
-	// The content of the message.
+	// The content of the message, if the content is a text string.
 	Content string
+
+	// The content of the message, if the content is an array of content parts.
+	ContentParts []ContentPart
 
 	// An optional name for the participant.
 	// Provides the model information to differentiate between participants of the same role.
@@ -445,7 +550,18 @@ func (m *AssistantMessage) Role() string { return "assistant" }
 // Implements the json.Marshaler interface to serialize the AssistantMessage object.
 func (m *AssistantMessage) MarshalJSON() ([]byte, error) {
 	buf := bytes.NewBufferString(`{"role":"assistant","content":`)
-	buf.Write(gjson.AppendJSONString(nil, m.Content))
+
+	if len(m.ContentParts) > 0 {
+		if b, err := utils.JsonSerialize(m.ContentParts); err != nil {
+			return nil, err
+		} else {
+			buf.Write(b)
+		}
+	} else if b, err := utils.JsonSerialize(m.Content); err != nil {
+		return nil, err
+	} else {
+		buf.Write(b)
+	}
 
 	if m.Name != "" {
 		buf.WriteString(`,"name":`)
@@ -484,10 +600,23 @@ func (m *AssistantMessage) UnmarshalJSON(data []byte) error {
 		return errors.New("assistant message has unexpected role '" + role + "'")
 	}
 
-	if content := gjson.GetBytes(data, "content").String(); content == "" {
-		return errors.New("assistant message content is required")
-	} else {
-		m.Content = content
+	if content := gjson.GetBytes(data, "content"); content.Exists() {
+		if content.Type == gjson.String {
+			m.Content = content.String()
+		} else if content.IsArray() {
+			arr := content.Array()
+			parts := make([]ContentPart, len(arr))
+			for i, part := range arr {
+				var cp ContentPart
+				if err := json.Unmarshal([]byte(part.Raw), &cp); err != nil {
+					return err
+				}
+				parts[i] = cp
+			}
+			m.ContentParts = parts
+		} else {
+			return errors.New("assistant message content must be a string or an array of content parts")
+		}
 	}
 
 	if name := gjson.GetBytes(data, "name").String(); name != "" {
@@ -513,30 +642,36 @@ func (m *AssistantMessage) UnmarshalJSON(data []byte) error {
 }
 
 // A tool message object.
-type ToolMessage struct {
+type ToolMessage[T Content] struct {
 
 	// The content of the message.
-	Content string
+	Content T
 
 	// The tool call that this message is responding to.
 	ToolCallId string
 }
 
 // Creates a new tool message object.
-func NewToolMessage(content, toolCallId string) *ToolMessage {
-	return &ToolMessage{
+func NewToolMessage[T Content](content T, toolCallId string) *ToolMessage[T] {
+	return &ToolMessage[T]{
 		Content:    content,
 		ToolCallId: toolCallId,
 	}
 }
 
 // The role of the author of this message, in this case "tool".
-func (m *ToolMessage) Role() string { return "tool" }
+func (m *ToolMessage[T]) Role() string { return "tool" }
 
 // Implements the json.Marshaler interface to serialize the ToolMessage object.
-func (m *ToolMessage) MarshalJSON() ([]byte, error) {
+func (m *ToolMessage[T]) MarshalJSON() ([]byte, error) {
 	buf := bytes.NewBufferString(`{"role":"tool","content":`)
-	buf.Write(gjson.AppendJSONString(nil, m.Content))
+
+	if b, err := utils.JsonSerialize(m.Content); err != nil {
+		return nil, err
+	} else {
+		buf.Write(b)
+	}
+
 	buf.WriteString(`,"tool_call_id":"` + m.ToolCallId + `"}`)
 	buf.WriteByte('}')
 
@@ -544,16 +679,16 @@ func (m *ToolMessage) MarshalJSON() ([]byte, error) {
 }
 
 // Implements the json.Unmarshaler interface to deserialize the ToolMessage object.
-func (m *ToolMessage) UnmarshalJSON(data []byte) error {
+func (m *ToolMessage[T]) UnmarshalJSON(data []byte) error {
 
 	if role := gjson.GetBytes(data, "role").String(); role != "tool" {
 		return errors.New("tool message has unexpected role '" + role + "'")
 	}
 
-	if content := gjson.GetBytes(data, "content").String(); content == "" {
+	if content := gjson.GetBytes(data, "content"); !content.Exists() {
 		return errors.New("tool message content is required")
-	} else {
-		m.Content = content
+	} else if err := json.Unmarshal([]byte(content.Raw), &m.Content); err != nil {
+		return err
 	}
 
 	if toolCallId := gjson.GetBytes(data, "tool_call_id").String(); toolCallId == "" {
