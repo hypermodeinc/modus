@@ -10,7 +10,7 @@
   "models": {
     // This defines the model that will be used for text generation.
     "text-generator": {
-      "sourceModel": "gpt-3.5-turbo",
+      "sourceModel": "gpt-4o-mini",
       "connection": "openai",
       "path": "v1/chat/completions"
     }
