@@ -1,5 +1,9 @@
 # Change Log
 
+## UNRELEASED
+
+- chore: add timezone header to api explorer
+
 ## 2024-12-23 - Runtime 0.16.1
 
 - fix: resolve time zone issues [#666](https://github.com/hypermodeinc/modus/pull/666)
