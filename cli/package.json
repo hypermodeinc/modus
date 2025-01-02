@@ -48,13 +48,13 @@
     "@types/node": "^22",
     "@types/picomatch": "^3.0.1",
     "@types/semver": "^7.5.8",
-    "@typescript-eslint/eslint-plugin": "^8.18.2",
-    "@typescript-eslint/parser": "^8.18.2",
+    "@typescript-eslint/eslint-plugin": "^8.19.0",
+    "@typescript-eslint/parser": "^8.19.0",
     "eslint": "^9.17.0",
     "oclif": "^4",
     "ts-node": "^10",
     "typescript": "^5.7.2",
-    "typescript-eslint": "^8.18.2"
+    "typescript-eslint": "^8.19.0"
   },
   "files": [
     "/bin",
