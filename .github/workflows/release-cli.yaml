@@ -1,4 +1,4 @@
-name: "Release CLI"
+name: Release CLI
 
 on:
   push:
@@ -15,9 +15,9 @@ jobs:
     # note: must use GitHub-hosted runner for publishing to NPM with --provenance flag
     runs-on: ubuntu-latest
     steps:
-      - name: "Validate version"
+      - name: Validate version
         if: ${{ !startsWith(github.ref_name, 'cli/v') }}
-        run: 'echo "Modus CLI version must start with `cli/v` && exit 1'
+        run: echo "Modus CLI version must start with `cli/v` && exit 1
       - uses: actions/checkout@v4
         with:
           ref: "${{ github.ref_name }}"
@@ -30,7 +30,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ">=22"
-          registry-url: "https://registry.npmjs.org"
+          registry-url: https://registry.npmjs.org
       - name: Prepare Release
         working-directory: cli
         run: npm version ${{ steps.parse_cli_version.outputs.cli_version }} --no-git-tag-version
@@ -42,7 +42,9 @@ jobs:
         run: npm run build
       - name: Publish NPM Package
         working-directory: cli
-        run: npm publish --provenance --access public --tag ${{ steps.parse_cli_version.outputs.npm_tag }}
+        run:
+          npm publish --provenance --access public --tag ${{ steps.parse_cli_version.outputs.npm_tag
+          }}
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       - name: Create Release
@@ -60,17 +62,17 @@ jobs:
     name: Release Install Script
     runs-on: warp-ubuntu-latest-x64-2x
     steps:
-    - uses: actions/checkout@v4
-      with:
-        ref: "${{ github.ref_name }}"
-    - name: Push to R2 Bucket
-      uses: cloudflare/wrangler-action@v3
-      with:
-        accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-        apiToken: ${{ secrets.CLOUDFLARE_TOKEN }}
-        wranglerVersion: "3.83.0"
-        workingDirectory: cli
-        preCommands: |
-          cat install.sh
-        command: |
-          r2 object put install/modus.sh -f install.sh --content-type text/x-sh
+      - uses: actions/checkout@v4
+        with:
+          ref: "${{ github.ref_name }}"
+      - name: Push to R2 Bucket
+        uses: cloudflare/wrangler-action@v3
+        with:
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          apiToken: ${{ secrets.CLOUDFLARE_TOKEN }}
+          wranglerVersion: 3.83.0
+          workingDirectory: cli
+          preCommands: |
+            cat install.sh
+          command: |
+            r2 object put install/modus.sh -f install.sh --content-type text/x-sh

@@ -1,15 +1,15 @@
-import React, { useEffect, useState } from "react";
-import { createRoot } from "react-dom/client";
-import { ApiExplorer } from "@hypermode/react-api-explorer";
-import ModusIcon from "./ModusIcon";
-import "@hypermode/react-api-explorer/styles.css";
-import "./index.css";
+import React, { useEffect, useState } from "react"
+import { createRoot } from "react-dom/client"
+import { ApiExplorer } from "@hypermode/react-api-explorer"
+import ModusIcon from "./ModusIcon"
+import "@hypermode/react-api-explorer/styles.css"
+import "./index.css"
 
-const rootElement = document.getElementById("root");
+const rootElement = document.getElementById("root")
 if (!rootElement) {
-  throw new Error("Root element not found");
+  throw new Error("Root element not found")
 }
-const root = createRoot(rootElement);
+const root = createRoot(rootElement)
 
 function App() {
   const modusTheme = {
@@ -32,33 +32,29 @@ function App() {
     border: "150 35% 17%",
     input: "150 35% 17%",
     ring: "150 60% 39%",
-  };
-  const [endpoints, setEndpoints] = useState<string[]>([
-    "http://localhost:8686/graphql",
-  ]);
+  }
+  const [endpoints, setEndpoints] = useState<string[]>(["http://localhost:8686/graphql"])
 
   useEffect(() => {
     // Fetch endpoints when component mounts
     const fetchEndpoints = async () => {
       try {
-        const response = await fetch("/explorer/api/endpoints");
-        const data = await response.json();
+        const response = await fetch("/explorer/api/endpoints")
+        const data = await response.json()
 
-        const origin = window.location.origin;
+        const origin = window.location.origin
         const ep = data.map((endpoint: { path: string }) => {
-          return endpoint.path.startsWith("/")
-            ? `${origin}${endpoint.path}`
-            : endpoint.path;
-        });
+          return endpoint.path.startsWith("/") ? `${origin}${endpoint.path}` : endpoint.path
+        })
 
-        setEndpoints(ep);
+        setEndpoints(ep)
       } catch (error) {
-        console.error("Failed to fetch endpoints:", error);
+        console.error("Failed to fetch endpoints:", error)
       }
-    };
+    }
 
-    fetchEndpoints();
-  }, []);
+    fetchEndpoints()
+  }, [])
 
   return (
     <div className="bg-black p-2 h-dvh flex flex-col">
@@ -67,15 +63,13 @@ function App() {
         theme={modusTheme}
         title={
           <div className="flex items-center">
-            <p className="text-white/80 tracking-wide text-lg">
-              Modus API Explorer
-            </p>
+            <p className="text-white/80 tracking-wide text-lg">Modus API Explorer</p>
             <ModusIcon className="w-10 -ml-1" />
           </div>
         }
       />
     </div>
-  );
+  )
 }
 
-root.render(<App />);
+root.render(<App />)

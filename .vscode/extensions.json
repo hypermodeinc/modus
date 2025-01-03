@@ -1,8 +1,6 @@
 {
   "recommendations": [
-    "dbaeumer.vscode-eslint",
-    "DavidAnson.vscode-markdownlint",
-    "esbenp.prettier-vscode",
+    "trunk.io",
     "golang.go",
     "GraphQL.vscode-graphql",
     "ms-vscode.makefile-tools",

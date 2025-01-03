@@ -13,10 +13,10 @@ npm install
 
 cd ../examples
 for example in *; do
-  if [ -d "${example}" ]; then
-    cd "${example}"
-    ncu -u -t minor
-    npm install
-    cd ..
-  fi
+	if [[ -d ${example} ]]; then
+		cd "${example}"
+		ncu -u -t minor
+		npm install
+		cd ..
+	fi
 done
