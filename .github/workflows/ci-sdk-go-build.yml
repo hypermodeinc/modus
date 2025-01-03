@@ -26,10 +26,14 @@ jobs:
         uses: actions/checkout@v4
       - name: Find tools
         id: get-tools-dirs
-        run: echo "dirs=$(find ./sdk/go/tools -mindepth 1 -maxdepth 1 -type d | sed 's|^\./||' | jq -Rsc 'split("\n")[:-1]')" >> ${GITHUB_OUTPUT}
+        run:
+          echo "dirs=$(find ./sdk/go/tools -mindepth 1 -maxdepth 1 -type d | sed 's|^\./||' | jq
+          -Rsc 'split("\n")[:-1]')" >> ${GITHUB_OUTPUT}
       - name: Find examples
         id: get-examples-dirs
-        run: echo "dirs=$(find ./sdk/go/examples -mindepth 1 -maxdepth 1 -type d | sed 's|^\./||' | jq -Rsc 'split("\n")[:-1]')" >> ${GITHUB_OUTPUT}
+        run:
+          echo "dirs=$(find ./sdk/go/examples -mindepth 1 -maxdepth 1 -type d | sed 's|^\./||' | jq
+          -Rsc 'split("\n")[:-1]')" >> ${GITHUB_OUTPUT}
 
   sdk-go-build-tools:
     needs: get-dirs

@@ -125,7 +125,7 @@ func Test_GetGraphQLSchema_Go(t *testing.T) {
 	md.FnExports.AddFunction("testObj1").
 		WithParameter("obj", "testdata.Obj1").
 		WithResult("testdata.Obj1")
-		
+
 	md.Types.AddType("testdata.Obj1").
 		WithField("id", "int32").
 		WithField("name", "string")

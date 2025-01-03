@@ -11,10 +11,10 @@ go mod tidy
 
 cd examples
 for example in *; do
-  if [ -d "${example}" ]; then
-    cd "${example}"
-    echo "Tidying examples/${example}"
-    go mod tidy
-    cd ..
-  fi
+	if [[ -d ${example} ]]; then
+		cd "${example}"
+		echo "Tidying examples/${example}"
+		go mod tidy
+		cd ..
+	fi
 done

@@ -1,0 +1,6 @@
+{
+  "plugins": ["assemblyscript-prettier"],
+  "semi": false,
+  "proseWrap": "always",
+  "printWidth": 100
+}
