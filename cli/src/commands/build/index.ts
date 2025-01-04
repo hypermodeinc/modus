@@ -82,7 +82,10 @@ export default class BuildCommand extends BaseCommand {
             return;
           }
           let buildTool = path.join(vi.getSdkPath(app.sdk, version), "modus-go-build");
-          if (os.platform() === "win32") buildTool += ".exe";
+          if (os.platform() === "win32"){
+            buildTool += ".exe";
+            buildTool = '"' + buildTool + '"';
+          }
           if (!(await fs.exists(buildTool))) {
             this.logError("Modus Go Build tool is not installed");
             return;
