@@ -17,6 +17,46 @@ class Obj {
   foo: string = "";
 }
 
+it("should parse complex values", () => {
+  const input = '{"a":{"b":{"c":[{"d":"random value 1"},{"e":["value 2","value 3"]}],"f":{"g":{"h":[1,2,3],"i":{"j":"nested value"}}}},"k":"simple value"},"l":[{"m":"another value","n":{"o":"deep nested","p":[{"q":"even deeper"},"final value"]}}],"r":null}';
+  const m = JSON.parse<DynamicMap>(input);
+
+  expect(JSON.stringify(m)).toBe(input);
+});
+
+// it("should handle complex whitespace", () => {
+//   const m = JSON.parse<DynamicMap>(`{
+//   "a": {
+//     "b": {
+//       "c": [
+//         { "d": "random value 1" },
+//         { "e": ["value 2", "value 3"] }
+//       ],
+//       "f": {
+//         "g": {
+//           "h": [1, 2, 3],
+//           "i": { "j": "nested value" }
+//         }
+//       }
+//     },
+//     "k": "simple value"
+//   },
+//   "l": [
+//     {
+//       "m": "another value",
+//       "n": {
+//         "o": "deep nested",
+//         "p": [
+//           { "q": "even deeper" },
+//           "final value"
+//         ]
+//       }
+//     }
+//   ],
+//   "r": null
+// }
+// `);
+// })
 it("should set values", () => {
   const m = new DynamicMap();
   m.set("a", 42);
