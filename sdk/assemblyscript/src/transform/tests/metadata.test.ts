@@ -6,7 +6,6 @@
  * SPDX-FileCopyrightText: 2024 Hypermode Inc. <hello@hypermode.com>
  * SPDX-License-Identifier: Apache-2.0
  */
-/* eslint-disable no-undef */
 import test from "node:test";
 import binaryen from "assemblyscript/lib/binaryen.js";
 import * as assert from "node:assert";
