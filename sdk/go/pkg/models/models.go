@@ -85,7 +85,7 @@ func (m ModelBase[TIn, TOut]) Invoke(input *TIn) (*TOut, error) {
 	}
 
 	if m.Debug {
-		console.Logf("Invoking model %s with input: %s", modelName, inputJson)
+		console.Debugf("Invoking model %s with input: %s", modelName, inputJson)
 	}
 
 	sInputJson := string(inputJson)
@@ -95,7 +95,7 @@ func (m ModelBase[TIn, TOut]) Invoke(input *TIn) (*TOut, error) {
 	}
 
 	if m.Debug {
-		console.Logf("Received output for model %s: %s", modelName, *sOutputJson)
+		console.Debugf("Received output for model %s: %s", modelName, *sOutputJson)
 	}
 
 	var result TOut

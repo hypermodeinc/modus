@@ -19,7 +19,6 @@ import (
 
 // JsonSerialize serializes the given value to JSON.
 // Unlike json.Marshal, it does not escape HTML characters.
-// It also returns results without an extra newline at the end.
 func JsonSerialize(v any) ([]byte, error) {
 	buf := new(bytes.Buffer)
 	enc := json.NewEncoder(buf)
