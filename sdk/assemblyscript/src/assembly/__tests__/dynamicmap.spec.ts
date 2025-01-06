@@ -61,7 +61,7 @@ it("should handle complex whitespace", () => {
   const m = JSON.parse<DynamicMap>(input);
 
   expect(JSON.stringify(m)).toBe(
-    "{\"a\": {\n      \"b\": {\n        \"c\": [\n          { \"d\": \"random value 1\" },\n          { \"e\": [\"value 2\", \"value 3\"] }\n        ],\n        \"f\": {\n          \"g\": {\n            \"h\": [1, 2, 3],\n            \"i\": { \"j\": \"nested value\" }\n          }\n        }\n      },\n      \"k\": \"simple value\"\n    },\"l\": [\n      {\n        \"m\": \"another value\",\n        \"n\": {\n          \"o\": \"deep nested\",\n          \"p\": [\n            { \"q\": \"even deeper\" },\n            \"final value\"\n          ]\n        }\n      }\n    ],\"r\": null}",
+    '{"a": {\n      "b": {\n        "c": [\n          { "d": "random value 1" },\n          { "e": ["value 2", "value 3"] }\n        ],\n        "f": {\n          "g": {\n            "h": [1, 2, 3],\n            "i": { "j": "nested value" }\n          }\n        }\n      },\n      "k": "simple value"\n    },"l": [\n      {\n        "m": "another value",\n        "n": {\n          "o": "deep nested",\n          "p": [\n            { "q": "even deeper" },\n            "final value"\n          ]\n        }\n      }\n    ],"r": null}',
   );
 });
 
