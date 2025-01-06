@@ -8,6 +8,21 @@
  */
 
 import { JSON } from "json-as";
+import {
+  BACK_SLASH,
+  BRACE_LEFT,
+  BRACE_RIGHT,
+  BRACKET_LEFT,
+  BRACKET_RIGHT,
+  CHAR_F,
+  CHAR_N,
+  CHAR_T,
+  COLON,
+  COMMA,
+  QUOTE,
+} from "json-as/assembly/custom/chars";
+import { unsafeCharCodeAt } from "json-as/assembly/custom/util";
+import { isSpace } from "util/string";
 
 export class DynamicMap {
   private data: Map<string, JSON.Raw> = new Map<string, JSON.Raw>();
@@ -88,130 +103,263 @@ export class DynamicMap {
     // TODO: Update this to use JSON.parse once it's supported in json-as.
     // https://github.com/JairusSW/as-json/issues/98
 
-    this.data = parseJsonToRawMap(data);
+    this.data = deserializeRawMap(data);
 
     return true;
   }
 }
 
-// Everything below this line is a workaround for JSON.parse not working with JSON.Raw values.
-// (It was generated via AI and may not be optimized.)
+function deserializeRawMap(
+  src: string,
+  dst: Map<string, string> = new Map<string, string>(),
+): Map<string, string> {
+  const srcPtr = changetype<usize>(src);
+  let depth = 0;
+  let isKey = false;
+  let index = 0;
+  let lastIndex = 0;
+  let end = src.length - 1;
+  let key: string | null = null;
 
-class ParseResult {
-  constructor(
-    public result: string,
-    public nextIndex: i32,
-  ) {}
-}
+  while (index < end && isSpace(unsafeCharCodeAt(src, index))) index++;
+  while (end > index && isSpace(unsafeCharCodeAt(src, end))) end--;
 
-function parseJsonToRawMap(jsonString: string): Map<string, string> {
-  const map = new Map<string, string>();
-  let i: i32 = 0;
-  const length: i32 = jsonString.length;
+  if (end - index <= 0)
+    throw new Error(
+      "Input string had zero length or was all whitespace at position " +
+        index.toString(),
+    );
 
-  function skipWhitespace(index: i32, input: string): i32 {
-    while (
-      index < input.length &&
-      (input.charCodeAt(index) === 32 || // space
-        input.charCodeAt(index) === 9 || // tab
-        input.charCodeAt(index) === 10 || // newline
-        input.charCodeAt(index) === 13) // carriage return
-    ) {
-      index++;
-    }
-    return index;
-  }
+  if (unsafeCharCodeAt(src, index++) !== BRACE_LEFT)
+    throw new Error("Expected '{' at position " + index.toString());
 
-  function readString(index: i32, input: string): ParseResult {
-    if (input.charCodeAt(index) !== 34) {
-      throw new Error("Expected '\"' at position " + index.toString());
-    }
-    index++;
-    let result = "";
-    while (index < input.length) {
-      const charCode = input.charCodeAt(index);
-      if (charCode === 34) {
-        return new ParseResult(result, index + 1);
+  while (index < end) {
+    while (isSpace(unsafeCharCodeAt(src, index)) && index < end) index++;
+    const code = unsafeCharCodeAt(src, index);
+    if (key == null) {
+      if (code == QUOTE && unsafeCharCodeAt(src, index - 1) !== BACK_SLASH) {
+        if (isKey) {
+          if (lastIndex == index)
+            throw new Error(
+              "Found empty key '\"\"' at position " + index.toString(),
+            );
+          key = src.slice(lastIndex, index);
+          // console.log("Key: " + key);
+          while (isSpace(unsafeCharCodeAt(src, ++index))) {
+            /* empty */
+          }
+          if (unsafeCharCodeAt(src, index) !== COLON)
+            throw new Error(
+              "Expected ':' after key at position " + index.toString(),
+            );
+          isKey = false;
+        } else {
+          isKey = true;
+        }
+        lastIndex = index + 1;
       }
-      if (charCode === 92) {
+    } else {
+      if (code == BRACE_LEFT) {
+        depth++;
         index++;
-        if (index < input.length) {
-          result += String.fromCharCode(input.charCodeAt(index));
+        while (index < end) {
+          const code = unsafeCharCodeAt(src, index);
+          if (code == BRACE_RIGHT) {
+            if (--depth == 0) {
+              while (isSpace(unsafeCharCodeAt(src, ++index)) && index < end) {
+                /* empty */
+              }
+              const value = src.slice(lastIndex, index);
+              dst.set(key!, value);
+              // console.log("Value (object): " + value);
+              const last = index == end;
+              if (!last && unsafeCharCodeAt(src, index) !== COMMA)
+                throw new Error(
+                  "Expected ',' after value at position " + index.toString(),
+                );
+              if (last && unsafeCharCodeAt(src, index) !== BRACE_RIGHT)
+                throw new Error(
+                  "Expected '}' after value at position " + index.toString(),
+                );
+              key = null;
+              break;
+            }
+          } else if (code == BRACE_LEFT) depth++;
+          index++;
+        }
+      } else if (code == BRACKET_LEFT) {
+        depth++;
+        index++;
+        while (index < end) {
+          const code = unsafeCharCodeAt(src, index);
+          if (code == BRACKET_RIGHT) {
+            if (--depth == 0) {
+              while (isSpace(unsafeCharCodeAt(src, ++index)) && index < end) {
+                /* empty */
+              }
+              const value = src.slice(lastIndex, index);
+              dst.set(key!, value);
+              // console.log("Value (object): " + value);
+              const last = index == end;
+              if (!last && unsafeCharCodeAt(src, index) !== COMMA)
+                throw new Error(
+                  "Expected ',' after value at position " + index.toString(),
+                );
+              if (last && unsafeCharCodeAt(src, index) !== BRACE_RIGHT)
+                throw new Error(
+                  "Expected '}' after value at position " + index.toString(),
+                );
+              key = null;
+              break;
+            }
+          } else if (code == BRACKET_LEFT) depth++;
+          index++;
+        }
+      } else if (code == CHAR_T) {
+        if (load<u64>(srcPtr + (index << 1)) == 28429475166421108) {
+          const value = src.slice(lastIndex, (index += 4));
+          dst.set(key!, value);
+          // console.log("Value (bool): " + value);
+          while (isSpace(unsafeCharCodeAt(src, index + 1)) && index < end)
+            index++;
+          const last = index == end;
+          if (!last && unsafeCharCodeAt(src, index) !== COMMA)
+            throw new Error(
+              "Expected ',' after value at position " + index.toString(),
+            );
+          if (last && unsafeCharCodeAt(src, index) !== BRACE_RIGHT)
+            throw new Error(
+              "Expected '}' after value at position " + index.toString(),
+            );
+          key = null;
+        } else {
+          throw new Error(
+            "Expected 'true' as value but found '" +
+              key +
+              "' instead at position " +
+              index.toString(),
+          );
+        }
+      } else if (code == CHAR_F) {
+        // eslint-disable-next-line no-loss-of-precision
+        if (load<u64>(srcPtr + (index << 1), 2) == 28429466576093281) {
+          const value = src.slice(lastIndex, (index += 5));
+          dst.set(key!, value);
+          // console.log("Value (bool): " + value);
+          while (isSpace(unsafeCharCodeAt(src, index + 1)) && index < end)
+            index++;
+          const last = index == end;
+          if (!last && unsafeCharCodeAt(src, index) !== COMMA)
+            throw new Error(
+              "Expected ',' after value at position " + index.toString(),
+            );
+          if (last && unsafeCharCodeAt(src, index) !== BRACE_RIGHT)
+            throw new Error(
+              "Expected '}' after value at position " + index.toString(),
+            );
+          key = null;
+        } else {
+          throw new Error(
+            "Expected 'false' as value but found '" +
+              key +
+              "' instead at position " +
+              index.toString(),
+          );
+        }
+      } else if (code == CHAR_N) {
+        // eslint-disable-next-line no-loss-of-precision
+        if (load<u64>(srcPtr + (index << 1)) == 30399761348886638) {
+          const value = src.slice(lastIndex, (index += 4));
+          dst.set(key!, value);
+          // console.log("Value (null): " + value);
+          while (isSpace(unsafeCharCodeAt(src, index)) && index < end) index++;
+          const last = index == end;
+          if (!last && unsafeCharCodeAt(src, index) !== COMMA)
+            throw new Error(
+              "Expected ',' after value at position " + index.toString(),
+            );
+          if (last && unsafeCharCodeAt(src, index) !== BRACE_RIGHT)
+            throw new Error(
+              "Expected '}' after value at position " + index.toString(),
+            );
+          key = null;
+        } else {
+          throw new Error(
+            "Expected 'null' as value but found '" +
+              key +
+              "' instead at position " +
+              index.toString(),
+          );
+        }
+      } else if (code == QUOTE) {
+        index++;
+        while (index < end) {
+          const code = unsafeCharCodeAt(src, index);
+          if (
+            code == QUOTE &&
+            unsafeCharCodeAt(src, index - 1) !== BACK_SLASH
+          ) {
+            while (isSpace(unsafeCharCodeAt(src, ++index)) && index < end) {
+              /* empty */
+            }
+            const value = src.slice(lastIndex, index);
+            dst.set(key!, value);
+            // console.log("Value (string): " + value);
+            const last = index == end;
+            if (!last && unsafeCharCodeAt(src, index) !== COMMA)
+              throw new Error(
+                "Expected ',' after value at position " + index.toString(),
+              );
+            if (last && unsafeCharCodeAt(src, index) !== BRACE_RIGHT)
+              throw new Error(
+                "Expected '}' after value at position " + index.toString(),
+              );
+            key = null;
+            break;
+          }
+          index++;
+        }
+      } else if ((code >= 48 && code <= 57) || code == 45) {
+        lastIndex = index++;
+        while (index < end) {
+          const code = unsafeCharCodeAt(src, index);
+          if (code == COMMA || code == BRACE_RIGHT || isSpace(code)) {
+            const value = src.slice(lastIndex, index);
+            dst.set(key!, value);
+            // console.log("Value (number): " + value);
+            while (isSpace(unsafeCharCodeAt(src, index + 1)) && index < end)
+              index++;
+            const last = index == end;
+            if (!last && unsafeCharCodeAt(src, index) !== COMMA)
+              throw new Error(
+                "Expected ',' after value at position " + index.toString(),
+              );
+            if (last && unsafeCharCodeAt(src, index) !== BRACE_RIGHT)
+              throw new Error(
+                "Expected '}' after value at position " + index.toString(),
+              );
+            key = null;
+            break;
+          }
+          index++;
         }
       } else {
-        result += String.fromCharCode(charCode);
+        throw new Error(
+          "Expected valid character after key but found'" +
+            String.fromCharCode(code) +
+            "' at position " +
+            index.toString(),
+        );
       }
-      index++;
     }
-    throw new Error("Unterminated string");
+    index++;
   }
 
-  function readValue(index: i32, input: string): ParseResult {
-    const start: i32 = index;
-    let braceCount: i32 = 0;
-    let bracketCount: i32 = 0;
+  if (isKey)
+    throw new Error("Unterminated key at position " + lastIndex.toString());
 
-    while (index < input.length) {
-      const char = input.charAt(index);
-      if (
-        braceCount === 0 &&
-        bracketCount === 0 &&
-        (char === "," || char === "}")
-      ) {
-        break;
-      }
-      if (char === "{") braceCount++;
-      else if (char === "}") braceCount--;
-      else if (char === "[") bracketCount++;
-      else if (char === "]") bracketCount--;
-      index++;
-    }
+  if (unsafeCharCodeAt(src, end) !== BRACE_RIGHT)
+    throw new Error("Expected '{' at position " + end.toString());
 
-    const result = input.substring(start, index).trim();
-    return new ParseResult(result, index);
-  }
-
-  if (jsonString.charCodeAt(i) !== 123) {
-    throw new Error("Expected '{' at the beginning of JSON");
-  }
-  i++;
-
-  while (i < length) {
-    i = skipWhitespace(i, jsonString);
-
-    const keyResult = readString(i, jsonString);
-    const key = keyResult.result;
-    i = keyResult.nextIndex;
-
-    i = skipWhitespace(i, jsonString);
-    if (jsonString.charCodeAt(i) !== 58) {
-      throw new Error("Expected ':' after key at position " + i.toString());
-    }
-    i++;
-
-    i = skipWhitespace(i, jsonString);
-
-    const valueResult = readValue(i, jsonString);
-    const value = valueResult.result;
-    i = valueResult.nextIndex;
-
-    map.set(key, value);
-
-    i = skipWhitespace(i, jsonString);
-    if (jsonString.charCodeAt(i) === 44) {
-      i++;
-    } else if (jsonString.charCodeAt(i) === 125) {
-      i++;
-      break;
-    } else {
-      throw new Error(
-        "Unexpected character '" +
-          jsonString.charAt(i) +
-          "' at position " +
-          i.toString(),
-      );
-    }
-  }
-
-  return map;
+  return dst;
 }
