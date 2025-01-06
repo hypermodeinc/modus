@@ -9,6 +9,7 @@
 
 import { Model } from "../../assembly/models";
 import { JSON } from "json-as";
+import * as base64 from "as-base64/assembly";
 
 /**
  * Provides input and output types that conform to the OpenAI Chat API.
@@ -22,7 +23,7 @@ export class OpenAIChatModel extends Model<OpenAIChatInput, OpenAIChatOutput> {
    * @param messages: An array of messages to send to the chat model.
    * @returns An input object that can be passed to the `invoke` method.
    */
-  createInput(messages: Message[]): OpenAIChatInput {
+  createInput(messages: RequestMessage[]): OpenAIChatInput {
     const model = this.info.fullName;
     return <OpenAIChatInput>{ model, messages };
   }
@@ -37,17 +38,38 @@ export class OpenAIChatInput {
    * The name of the model to use for the chat.
    * Must be the exact string expected by the model provider.
    * For example, "gpt-3.5-turbo".
-   *
-   * @remarks
-   * This field is automatically set by the `createInput` method when creating this object.
-   * It does not need to be set manually.
    */
   model!: string;
 
   /**
-   * An array of messages to send to the chat model.
+   * The list of messages to send to the chat model.
    */
-  messages!: Message[];
+  messages!: RequestMessage[];
+
+  /**
+   * Output types that you want the model to generate.
+   * Text modality is implied if no modalities are specified.
+   */
+  @omitif("this.modalities.length == 0")
+  modalities: Modality[] = [];
+
+  /**
+   * Parameters for audio output.
+   * Required when audio output is requested in the `modalities` field.
+   */
+  @omitnull()
+  audio: AudioParameters | null = null;
+
+  /**
+   * Requests audio modality and sets the audio parameters for the input object.
+   * @param voice  The voice the model should use for audio output, such as "ash" or "ballad".
+   * @param format The format of the audio data, such as "wav" or "mp3".
+   * @remarks See the model's documentation for a list of all supported voices and formats.
+   */
+  requestAudioOutput(voice: string, format: string): void {
+    this.modalities = [Modality.Text, Modality.Audio];
+    this.audio = new AudioParameters(voice, format);
+  }
 
   /**
    * Number between `-2.0` and `2.0`.
@@ -95,10 +117,20 @@ export class OpenAIChatInput {
    * The maximum number of tokens to generate in the chat completion.
    *
    * @default 4096
+   * @deprecated Use the `maxCompletionTokens` parameter instead, unless the model specifically requires passing "max_tokens".
    */
   @alias("max_tokens")
   @omitif("this.maxTokens == 4096")
-  maxTokens: i32 = 4096; // TODO: make this an `i32 | null` when supported
+  maxTokens: i32 = 4096;
+
+  /**
+   * The maximum number of tokens to generate in the chat completion.
+   *
+   * @default 4096
+   */
+  @alias("max_completion_tokens")
+  @omitif("this.maxCompletionTokens == 4096")
+  maxCompletionTokens: i32 = 4096;
 
   /**
    * The number of completions to generate for each prompt.
@@ -140,10 +172,18 @@ export class OpenAIChatInput {
    * parameter to monitor changes in the backend.
    */
   @omitif("this.seed == -1")
-  seed: i32 = -1; // TODO: make this an `i32 | null` when supported
+  seed: i32 = -1;
 
   /**
    * Specifies the latency tier to use for processing the request.
+   * This is relevant for customers subscribed to the scale tier service of the model hosting platform.
+   *
+   *  - If set to 'ServiceTier.Auto', and the Project is Scale tier enabled, the system will utilize scale tier credits until they are exhausted.
+   *  - If set to 'ServiceTier.Auto', and the Project is not Scale tier enabled, the request will be processed using the default service tier with a lower uptime SLA and no latency guarantee.
+   *  - If set to 'ServiceTier.Default', the request will be processed using the default service tier with a lower uptime SLA and no latency guarantee.
+   *  - When not set, the default behavior is 'ServiceTier.Auto'.
+   *
+   * When this is set, the response `serviceTier` property will indicate the service tier utilized.
    */
   @alias("service_tier")
   @omitnull()
@@ -154,12 +194,6 @@ export class OpenAIChatInput {
    */
   @omitnull()
   stop: string[] | null = null;
-
-  // stream: bool = false;
-
-  // @omitif("this.stream == false")
-  // @alias("stream_options")
-  // streamOptions: StreamOptions | null = null;
 
   /**
    * A number between `0.0` and `2.0` that controls the sampling temperature.
@@ -196,16 +230,16 @@ export class OpenAIChatInput {
 
   /**
    * Controls which (if any) tool is called by the model.
-   * - `"none"` means the model will not call any tool and instead generates a message.
-   * - `"auto"` means the model can pick between generating a message or calling one or more tools.
-   * - `"required"` means the model must call one or more tools.
-   * - Specifying a particular tool via `{"type": "function", "function": {"name": "my_function"}}` forces the model to call that tool.
+   * - `ToolChoice.None` means the model will not call any tool and instead generates a message.
+   * - `ToolChoice.Auto` means the model can pick between generating a message or calling one or more tools.
+   * - `ToolChoice.Required` means the model must call one or more tools.
+   * - Specifying a particular tool via `ToolChoice.Function("my_function")` forces the model to call that tool.
    *
-   * `none` is the default when no tools are present. `auto` is the default if tools are present.
+   * `None` is the default when no tools are present. `Auto` is the default if tools are present.
    */
   @alias("tool_choice")
   @omitnull()
-  toolChoice: string | null = null; // TODO: Make this work with a custom tool object
+  toolChoice: ToolChoice | null = null;
 
   /**
    * Whether to enable parallel function calling during tool use.
@@ -226,6 +260,97 @@ export class OpenAIChatInput {
 }
 
 /**
+ * An object specifying which tool the model should call.
+ */
+export class ToolChoice {
+  /**
+   * Constructs a new tool choice object.
+   *
+   * @remarks
+   * Constructor is private to prevent direct instantiation.
+   * Use the static `None`, `Auto` or `Required` properties, or the static `Function` method instead.
+   */
+  private constructor(type: string, fnName: string | null = null) {
+    this.type = type;
+    if (fnName) {
+      this.function = { name: fnName };
+    }
+  }
+
+  /**
+   * The type of tool to call.
+   */
+  type: string;
+
+  /**
+   * The function to call.
+   */
+  @omitnull()
+  function: ToolChoiceFunction | null = null;
+
+  /**
+   * Directs the model to not call any tool and instead generates a message.
+   */
+  static get None(): ToolChoice {
+    return new ToolChoice("none");
+  }
+
+  /**
+   * Directs the model to pick between generating a message or calling one or more tools.
+   */
+  static get Auto(): ToolChoice {
+    return new ToolChoice("auto");
+  }
+
+  /**
+   * Directs that the model must call one or more tools.
+   */
+  static get Required(): ToolChoice {
+    return new ToolChoice("required");
+  }
+
+  /**
+   * Forces the model to call a specific tool.
+   * @param name
+   * @returns
+   */
+  static Function(name: string): ToolChoice {
+    return new ToolChoice("function", name);
+  }
+}
+
+/**
+ * An object for specifying a function to call.
+ */
+class ToolChoiceFunction {
+  /**
+   * The name of the function to call.
+   */
+  name!: string;
+}
+
+/**
+ * A type that represents the modality of the chat.
+ */
+// eslint-disable-next-line @typescript-eslint/no-namespace
+export namespace Modality {
+  /**
+   * Text modality requests the model to respond with text.
+   * This is the default if no other modality is requested.
+   */
+  export const Text = "text";
+
+  /**
+   * Audio modality requests the model to respond with spoken audio.
+   * The model and host must support audio output for this to work.
+   * Most models that support audio require both text and audio modalities to be specified,
+   * but the text will come as a transcript in the audio response.
+   */
+  export const Audio = "audio";
+}
+export type Modality = string;
+
+/**
  * The OpenAI service tier used to process the request.
  */
 // eslint-disable-next-line @typescript-eslint/no-namespace
@@ -242,6 +367,35 @@ export namespace ServiceTier {
   export const Default = "default";
 }
 export type ServiceTier = string;
+
+/**
+ * Parameters for audio output.
+ * Required when audio output is requested in the `modalities` field.
+ */
+@json
+export class AudioParameters {
+  /**
+   * Creates a new audio output parameters object.
+   * @param voice The voice the model should use for audio output, such as "ash" or "ballad".
+   * @param format The format of the audio data, such as "wav" or "mp3".
+   */
+  constructor(voice: string, format: string) {
+    this.voice = voice;
+    this.format = format;
+  }
+
+  /**
+   * The voice the model should use for audio output, such as "ash" or "ballad".
+   * See the model's documentation for a list of all supported voices.
+   */
+  voice: string;
+
+  /**
+   * The format of the audio data, such as "wav" or "mp3".
+   * See the model's documentation for a list of all supported formats.
+   */
+  format: string;
+}
 
 /**
  * The output object for the OpenAI Chat API.
@@ -265,9 +419,15 @@ export class OpenAIChatOutput {
   choices!: Choice[];
 
   /**
-   * The Unix timestamp (in seconds) of when the chat completion was created.
+   * The timestamp of when the chat completion was created.
    */
-  created!: i32;
+  get created(): Date {
+    return new Date(this._created * 1000);
+  }
+
+
+  @alias("created")
+  private _created!: i64;
 
   /**
    * The model used for the chat completion.
@@ -281,7 +441,7 @@ export class OpenAIChatOutput {
    * This field is only included if the `serviceTier` parameter is specified in the request.
    */
   @alias("service_tier")
-  serviceTier: string | null = null;
+  serviceTier: ServiceTier | null = null;
 
   /**
    * This fingerprint represents the OpenAI backend configuration that the model runs with.
@@ -351,19 +511,21 @@ export class ResponseFormat {
   static Text: ResponseFormat = { type: "text", jsonSchema: null };
 }
 
-// @json
-// export class StreamOptions {
-
-//   @omitif("this.includeUsage == false")
-//   @alias("include_usage")
-//   includeUsage: bool = false;
-// }
+class funcParam {
+  name!: string;
+  description!: string;
+  type!: string;
+}
 
 /**
  * A tool object that the model may call.
  */
 @json
 export class Tool {
+
+  @omitif("true")
+  private _funcParams: funcParam[] = [];
+
   /**
    * The type of the tool. Currently, only `"function"` is supported.
    *
@@ -375,6 +537,69 @@ export class Tool {
    * The definition of the function.
    */
   function!: FunctionDefinition;
+
+  /**
+   * Creates a new tool object for a function.
+   * @param name The name of the function to call.
+   * @param description The description of the function.
+   */
+  static forFunction(name: string, description: string): Tool {
+    const tool = new Tool();
+    tool.function = <FunctionDefinition>{ name, description };
+    return tool;
+  }
+
+  /**
+   * Adds a parameter to the function used by the tool.
+   * Note that the type must be a valid JSON Schema type, not an AssemblyScript type.
+   * For example, use "integer", not "i32".
+   * @param name The name of the parameter.
+   * @param jsonSchemaType The JSON Schema type of the parameter.
+   * @param description The description of the parameter.
+   */
+  withParameter(
+    name: string,
+    jsonSchemaType: string,
+    description: string,
+  ): Tool {
+    const param = <funcParam>{
+      name: name,
+      type: jsonSchemaType,
+      description: description,
+    };
+    this._funcParams.push(param);
+
+    let schema = `{"type":"object","properties":{`;
+    for (let i = 0; i < this._funcParams.length; i++) {
+      if (i > 0) {
+        schema += ",";
+      }
+      const p = this._funcParams[i];
+      schema += `${JSON.stringify(p.name)}:{"type":${JSON.stringify(p.type)},"description":${JSON.stringify(p.description)}}`;
+    }
+    schema += `},"required":[`;
+    for (let i = 0; i < this._funcParams.length; i++) {
+      if (i > 0) {
+        schema += ",";
+      }
+      schema += JSON.stringify(this._funcParams[i].name);
+    }
+    schema += `],"additionalProperties":false}`;
+
+    this.function.parameters = schema;
+    return this;
+  }
+
+  /**
+   * Sets the JSON Schema for the parameters of the function used by the tool.
+   * Use this for defining complex parameters. Prefer `withParameter` for adding simple parameters,
+   * which will generate the schema for you automatically.
+   * @jsonSchema A JSON Schema object as a string, describing the parameters the function accepts.
+   */
+  withParametersSchema(jsonSchema: string): Tool {
+    this.function.parameters = jsonSchema;
+    return this;
+  }
 }
 
 /**
@@ -511,7 +736,7 @@ export class Choice {
   index!: i32;
 
   /**
-   * A chat completion message generated by the model.
+   * A message generated by the model.
    */
   message!: CompletionMessage;
 
@@ -555,14 +780,14 @@ export class LogprobsContent {
    * representations must be combined to generate the correct text representation.
    * Can be null if there is no bytes representation for the token.
    */
-  bytes!: u8[] | null; // TODO: verify this works
+  bytes!: u8[] | null;
 
   /**
    * List of the most likely tokens and their log probability, at this token position.
    * In rare cases, there may be fewer than the number of requested `topLogprobs` returned.
    */
   @alias("top_logprobs")
-  topLogprobs!: TopLogprobsContent[]; // TODO: verify this works
+  topLogprobs!: TopLogprobsContent[];
 }
 
 /**
@@ -587,23 +812,21 @@ export class TopLogprobsContent {
    * representations must be combined to generate the correct text representation.
    * Can be null if there is no bytes representation for the token.
    */
-  bytes!: u8[] | null; // TODO: verify this works
+  bytes!: u8[] | null;
 }
 
 /**
- * A message object that can be sent to the chat model.
+ * A request message object that can be sent to the chat model.
  */
 @json
-export abstract class Message {
+export abstract class RequestMessage {
   /**
-   * Creates a new message object.
+   * Creates a new request message object.
    *
    * @param role The role of the author of this message.
-   * @param content The contents of the message.
    */
-  constructor(role: string, content: string) {
+  constructor(role: string) {
     this._role = role;
-    this.content = content;
   }
 
 
@@ -616,26 +839,282 @@ export abstract class Message {
   get role(): string {
     return this._role;
   }
+}
+
+/**
+ * A content part object.
+ */
+@json
+export abstract class ContentPart {
+  /**
+   * Creates a new content part.
+   */
+  constructor(type: string) {
+    this._type = type;
+  }
 
   /**
-   * The contents of the message.
+   * The type of the content part.
    */
-  content: string;
+  get type(): string {
+    return this._type;
+  }
+
+
+  @alias("type")
+  private _type: string;
+}
+
+/**
+ * A text content part.
+ */
+@json
+export class TextContentPart extends ContentPart {
+  /**
+   * Creates a new text content part.
+   */
+  constructor(text: string) {
+    super("text");
+    this.text = text;
+  }
+
+  /**
+   * The text string.
+   */
+  text: string;
+}
+
+/**
+ * An image content part.
+ */
+@json
+export class ImageContentPart extends ContentPart {
+  /**
+   * Creates a new image content part.
+   * The model must support image input for this to work.
+   * @param image The image information, created using the `Image.fromData` or `Image.fromURL` methods.
+   */
+  constructor(image: Image) {
+    super("image_url");
+    this.image = image;
+  }
+
+  /**
+   * The image information.
+   */
+  @alias("image_url")
+  image: Image;
+}
+
+/**
+ * An audio content part.
+ */
+@json
+export class AudioContentPart extends ContentPart {
+  /**
+   * Creates a new audio content part.
+   * The model must support audio input for this to work.
+   * @param audio The audio information, created using the `Audio.fromData` method.
+   */
+  constructor(audio: Audio) {
+    super("input_audio");
+    this.audio = audio;
+  }
+
+  /**
+   * The audio information.
+   */
+  @alias("input_audio")
+  audio: Audio;
+}
+
+/**
+ * A refusal content part.
+ */
+@json
+export class RefusalContentPart extends ContentPart {
+  /**
+   * Creates a new refusal content part.
+   * @param refusal The reason for the refusal.
+   */
+  constructor(refusal: string) {
+    super("refusal");
+    this.refusal = refusal;
+  }
+
+  /**
+   * The refusal message generated by the model.
+   */
+  refusal: string;
+}
+
+/**
+ * An image object, used to represent an image in a content part.
+ */
+@json
+export class Image {
+  /**
+   * Creates a new image object.
+   * @param url The URL of the image.
+   * @param detail Specifies the detail level of the image.
+   *
+   * @remarks
+   * Constructor is private to prevent direct instantiation.
+   * Use the static `fromData` or `fromURL` methods instead.
+   */
+  private constructor(url: string, detail: string | null) {
+    this.url = url;
+    this.detail = detail;
+  }
+
+  /**
+   * The URL of the image.
+   */
+  url: string;
+
+  /**
+   * Specifies the detail level of the image.
+   * Can be set to "low", "high", or "auto".
+   * The default is "auto".
+   */
+  @omitnull()
+  detail: string | null = null;
+
+  /**
+   * Creates a new image object from raw image data.
+   * @param data The raw image data.
+   * @param contentType A valid image MIME type supported by the model, such as "image/jpeg" or "image/png".
+   * @param detail Specifies the detail level of the image. Can be set to "low", "high", or "auto". The default is "auto".
+   */
+  static fromData(
+    data: Uint8Array,
+    contentType: string,
+    detail: string | null = null,
+  ): Image {
+    // Unlike audio, the url needs to contain a full mime type, not just the format.
+    // Thus, add the "image/" prefix if it's missing.
+    if (!contentType.startsWith("image/")) {
+      contentType = "image/" + contentType;
+    }
+
+    const url = `data:${contentType};base64,${base64.encode(data)}`;
+    return new Image(url, detail);
+  }
+
+  /**
+   * Creates a new image object from a URL.
+   * The URL will be sent directly to the model.
+   * @param url The URL of the image.
+   * @param detail Specifies the detail level of the image. Can be set to "low", "high", or "auto". The default is "auto".
+   */
+  static fromURL(url: string, detail: string | null = null): Image {
+    return new Image(url, detail);
+  }
+}
+
+/**
+ * An audio object, used to represent audio in a content part.
+ */
+@json
+export class Audio {
+  /**
+   * Creates a new audio object.
+   * @param data The raw audio data.
+   * @param format A valid audio format supported by the model, such as "wav" or "mp3".
+   *
+   * @remarks
+   * Constructor is private to prevent direct instantiation.
+   * Use the static `fromData` method instead.
+   */
+  private constructor(data: Uint8Array, format: string) {
+    this._data = base64.encode(data);
+    this.format = format;
+  }
+
+  /**
+   * The raw audio data.
+   */
+  get data(): Uint8Array {
+    return base64.decode(this._data);
+  }
+  set data(value: Uint8Array) {
+    this._data = base64.encode(value);
+  }
+
+
+  @alias("data")
+  private _data: string;
+
+  /**
+   * The format of the audio data, such as "wav" or "mp3".
+   * The format must be a valid audio format supported by the model.
+   */
+  format: string;
+
+  /**
+   * Creates a new audio object from raw audio data.
+   * @param data The raw audio data.
+   * @param format A valid audio format supported by the model, such as "wav" or "mp3".
+   */
+  static fromData(data: Uint8Array, format: string): Audio {
+    // Unlike images, the model expects just the format, not a mime type.
+    // Thus, strip the "audio/" prefix if present.
+    if (format.startsWith("audio/")) {
+      format = format.substring(6);
+    }
+
+    return new Audio(data, format);
+  }
 }
 
 /**
  * A system message.
+ * System messages are used to provide setup instructions to the model.
+ *
+ * @remarks
+ * Note that system and developer messages are identical in functionality,
+ * but the "system" role was renamed to "developer" in the OpenAI Chat API.
+ * Certain models may require one or the other, so use the type that matches the model's requirements.
  */
 @json
-export class SystemMessage extends Message {
+export class SystemMessage<T> extends RequestMessage {
   /**
    * Creates a new system message object.
    *
-   * @param content The contents of the message.
+   * @param content The contents of the message, as either a string or as an array of text content parts.
+   *
+   * @remarks
+   * Note that system and developer messages are identical in functionality,
+   * but the "system" role was renamed to "developer" in the OpenAI Chat API.
+   * Certain models may require one or the other, so use the type that matches the model's requirements.
    */
-  constructor(content: string) {
-    super("system", content);
+  constructor(content: T) {
+    super("system");
+
+    if (isString(content)) {
+      this.content = content;
+    } else if (isArray(content)) {
+      const arr = content as ContentPart[];
+      for (let i = 0; i < arr.length; i++) {
+        const t = arr[i].type;
+        if (t != "text") {
+          throw new Error(
+            "Invalid content part type. Content parts must be of text type.",
+          );
+        }
+      }
+      this.content = content;
+    } else {
+      throw new Error(
+        "Invalid content type. Content must be a string or an array of content parts.",
+      );
+    }
   }
+
+  /**
+   * The contents of the message.
+   */
+  content: T;
 
   /**
    * An optional name for the participant.
@@ -643,21 +1122,119 @@ export class SystemMessage extends Message {
    */
   @omitnull()
   name: string | null = null;
+
+  /**
+   * Creates a new system message object from content parts.
+   * The parts should be `TextContentPart` objects.
+   * @param parts The content parts of the message.
+   */
+  static fromParts(parts: ContentPart[]): SystemMessage<ContentPart[]> {
+    return new SystemMessage(parts);
+  }
+}
+
+/**
+ * A developer message.
+ * Developer messages are used to provide setup instructions to the model.
+ *
+ * @remarks
+ * Note that system and developer messages are identical in functionality,
+ * but the "system" role was renamed to "developer" in the OpenAI Chat API.
+ * Certain models may require one or the other, so use the type that matches the model's requirements.
+ */
+@json
+export class DeveloperMessage<T> extends RequestMessage {
+  /**
+   * Creates a new developer message object.
+   *
+   * @param content The contents of the message.
+   *
+   * @remarks
+   * Note that system and developer messages are identical in functionality,
+   * but the "system" role was renamed to "developer" in the OpenAI Chat API.
+   * Certain models may require one or the other, so use the type that matches the model's requirements.
+   */
+  constructor(content: T) {
+    super("developer");
+
+    if (isString(content)) {
+      this.content = content;
+    } else if (isArray(content)) {
+      const arr = content as ContentPart[];
+      for (let i = 0; i < arr.length; i++) {
+        const t = arr[i].type;
+        if (t != "text") {
+          throw new Error(
+            "Invalid content part type. Content parts must be of text type.",
+          );
+        }
+      }
+      this.content = content;
+    } else {
+      throw new Error(
+        "Invalid content type. Content must be a string or an array of content parts.",
+      );
+    }
+  }
+
+  /**
+   * The contents of the message.
+   */
+  content: T;
+
+  /**
+   * An optional name for the participant.
+   * Provides the model information to differentiate between participants of the same role.
+   */
+  @omitnull()
+  name: string | null = null;
+
+  /**
+   * Creates a new developer message object from content parts.
+   * The parts should be `TextContentPart` objects.
+   * @param parts The content parts of the message.
+   */
+  static fromParts(parts: ContentPart[]): DeveloperMessage<ContentPart[]> {
+    return new DeveloperMessage(parts);
+  }
 }
 
 /**
  * A user message.
  */
 @json
-export class UserMessage extends Message {
+export class UserMessage<T> extends RequestMessage {
   /**
    * Creates a new user message object.
-   *
-   * @param content The contents of the message.
+   * @param content The contents of the message, as either a string or as an array of text, image, or audio content parts.
    */
-  constructor(content: string) {
-    super("user", content);
+  constructor(content: T) {
+    super("user");
+
+    if (isString(content)) {
+      this.content = content;
+    } else if (isArray(content)) {
+      const arr = content as ContentPart[];
+      for (let i = 0; i < arr.length; i++) {
+        const t = arr[i].type;
+        if (t != "text" && t != "image_url" && t != "input_audio") {
+          throw new Error(
+            "Invalid content part type. Content parts must be of text, image, or audio type.",
+          );
+        }
+      }
+      this.content = content;
+    } else {
+      throw new Error(
+        "Invalid content type. Content must be a string or an array of content parts.",
+      );
+    }
   }
+
+  /**
+   * The contents of the message.
+   */
+  content: T;
 
   /**
    * An optional name for the participant.
@@ -665,21 +1242,54 @@ export class UserMessage extends Message {
    */
   @omitnull()
   name: string | null = null;
+
+  /**
+   * Creates a new user message object from content parts.
+   * The parts should be `TextContentPart`, `ImageContentPart`, or `AudioContentPart` objects.
+   * @param parts The content parts of the message.
+   */
+  static fromParts(parts: ContentPart[]): UserMessage<ContentPart[]> {
+    return new UserMessage(parts);
+  }
 }
 
 /**
- * An assistant message.
+ * An assistant message object, representing a message generated by the model.
  */
 @json
-export class AssistantMessage extends Message {
+export class AssistantMessage<T> extends RequestMessage {
   /**
    * Creates a new assistant message object.
    *
    * @param content The contents of the message.
    */
-  constructor(content: string) {
-    super("assistant", content);
+  constructor(content: T) {
+    super("assistant");
+
+    if (isString(content)) {
+      this.content = content;
+    } else if (isArray(content)) {
+      const arr = content as ContentPart[];
+      for (let i = 0; i < arr.length; i++) {
+        const t = arr[i].type;
+        if (t != "text" && t != "refusal") {
+          throw new Error(
+            "Invalid content part type. Content parts must be of text or refusal type.",
+          );
+        }
+      }
+      this.content = content;
+    } else {
+      throw new Error(
+        "Invalid content type. Content must be a string or an array of content parts.",
+      );
+    }
   }
+
+  /**
+   * The contents of the message.
+   */
+  content: T;
 
   /**
    * An optional name for the participant.
@@ -687,6 +1297,12 @@ export class AssistantMessage extends Message {
    */
   @omitnull()
   name: string | null = null;
+
+  /**
+   * The refusal message generated by the model, if any.
+   */
+  @omitnull()
+  refusal: string | null = null;
 
   /**
    * The tool calls generated by the model, such as function calls.
@@ -694,53 +1310,193 @@ export class AssistantMessage extends Message {
   @alias("tool_calls")
   @omitif("this.toolCalls.length == 0")
   toolCalls: ToolCall[] = [];
+
+  /**
+   * Data about a previous audio response from the model.
+   */
+  audio: AudioRef | null = null;
+
+  /**
+   * Creates a new assistant message object from content parts.
+   * The parts should be `TextContentPart` or `RefusalContentPart` objects.
+   * @param parts The content parts of the message.
+   */
+  static fromParts(parts: ContentPart[]): AssistantMessage<ContentPart[]> {
+    return new AssistantMessage(parts);
+  }
+
+  /**
+   * Creates a new assistant message object from a completion message, so it can be used in a conversation.
+   */
+  static fromCompletionMessage(
+    cm: CompletionMessage,
+  ): AssistantMessage<string> {
+    return cm.toAssistantMessage();
+  }
+}
+
+/**
+ * Represents a reference to a previous audio response from the model.
+ */
+export class AudioRef {
+  /**
+   * Creates a new audio reference object.
+   * @param id Unique identifier for a previous audio response from the model.
+   */
+  constructor(id: string) {
+    this.id = id;
+  }
+
+  /**
+   * Unique identifier for a previous audio response from the model.
+   */
+  id: string;
 }
 
 /**
  * A tool message.
  */
 @json
-export class ToolMessage extends Message {
+export class ToolMessage<T> extends RequestMessage {
   /**
    * Creates a new tool message object.
    *
    * @param content The contents of the message.
+   * @param toolCallId The tool call that this message is responding to.
    */
-  constructor(content: string, toolCallId: string) {
-    super("tool", content);
+  constructor(content: T, toolCallId: string) {
+    super("tool");
     this.toolCallId = toolCallId;
+
+    if (isString(content)) {
+      this.content = content;
+    } else if (isArray(content)) {
+      const arr = content as ContentPart[];
+      for (let i = 0; i < arr.length; i++) {
+        const t = arr[i].type;
+        if (t != "text") {
+          throw new Error(
+            "Invalid content part type. Content parts must be of text type.",
+          );
+        }
+      }
+      this.content = content;
+    } else {
+      throw new Error(
+        "Invalid content type. Content must be a string or an array of content parts.",
+      );
+    }
   }
+
+  /**
+   * The contents of the message.
+   */
+  content: T;
 
   /**
    * Tool call that this message is responding to.
    */
   @alias("tool_call_id")
-  toolCallId!: string;
+  toolCallId: string;
+
+  /**
+   * Creates a new tool message object from content parts.
+   * The parts should be `TextContentPart` objects.
+   * @param toolCallId The tool call that this message is responding to.
+   * @param parts The content parts of the message.
+   */
+  static fromParts(
+    toolCallId: string,
+    parts: ContentPart[],
+  ): ToolMessage<ContentPart[]> {
+    return new ToolMessage(parts, toolCallId);
+  }
 }
 
 /**
  * A chat completion message generated by the model.
+ *
+ * @remarks
+ * Note that a completion message is not a valid request message.
+ * To use a completion message in a chat, convert it to an assistant message with the `toAssistantMessage` method.
  */
 @json
-export class CompletionMessage extends Message {
+export class CompletionMessage {
   /**
-   * Creates a new completion message object.
-   *
-   * @param role The role of the author of this message.
-   * @param content The contents of the message.
+   * The contents of the message.
    */
-  constructor(role: string, content: string) {
-    super(role, content);
-  }
+  content!: string;
 
   /**
    * The refusal message generated by the model.
    */
+  @omitnull()
   refusal: string | null = null;
 
   /**
    * The tool calls generated by the model, such as function calls.
    */
   @alias("tool_calls")
+  @omitif("this.toolCalls.length == 0")
   toolCalls: ToolCall[] = [];
+
+  /**
+   * The audio output generated by the model, if any.
+   * Used only when audio output is requested in the `modalities` field, and when the model and host support audio output.
+   */
+  @omitnull()
+  audio: AudioOutput | null = null;
+
+  /**
+   * Converts the completion message to an assistant message, so it can be used in a conversation.
+   */
+  toAssistantMessage(): AssistantMessage<string> {
+    const am = new AssistantMessage<string>(this.content);
+    am.refusal = this.refusal;
+    am.toolCalls = this.toolCalls;
+
+    if (this.audio) {
+      am.audio = new AudioRef(this.audio!.id);
+    }
+
+    return am;
+  }
+}
+
+/**
+ * An audio output object generated by the model when using audio modality.
+ */
+@json
+export class AudioOutput {
+  /**
+   * Unique identifier for this audio response.
+   */
+  id!: string;
+
+  /**
+   * The time at which this audio content will no longer be accessible on the server for use in multi-turn conversations.
+   */
+  get expiresAt(): Date {
+    return new Date(this._expiresAt * 1000);
+  }
+
+
+  @alias("expires_at")
+  private _expiresAt!: i64;
+
+  /**
+   * The raw audio data, in the format specified in the request.
+   */
+  get data(): Uint8Array {
+    return base64.decode(this._data);
+  }
+
+
+  @alias("data")
+  private _data!: string;
+
+  /**
+   * Transcript of the audio generated by the model.
+   */
+  transcript!: string;
 }
