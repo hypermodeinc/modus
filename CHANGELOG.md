@@ -4,6 +4,14 @@
 
 - chore: add timezone header to api explorer
 
+## 2025-01-06 - CLI 0.16.2
+
+- fix: revert invalid change [#680](https://github.com/hypermodeinc/modus/pull/680)
+
+## 2025-01-04 - CLI 0.16.1
+
+- fix: attempt to fix windows issue [#677](https://github.com/hypermodeinc/modus/pull/677)
+
 ## 2024-12-23 - Runtime 0.16.1
 
 - fix: resolve time zone issues [#666](https://github.com/hypermodeinc/modus/pull/666)
