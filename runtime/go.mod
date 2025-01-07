@@ -15,7 +15,7 @@ require (
 	github.com/archdx/zerolog-sentry v1.8.5
 	github.com/aws/aws-sdk-go-v2 v1.32.7
 	github.com/aws/aws-sdk-go-v2/config v1.28.7
-	github.com/aws/aws-sdk-go-v2/service/s3 v1.71.1
+	github.com/aws/aws-sdk-go-v2/service/s3 v1.72.0
 	github.com/aws/aws-sdk-go-v2/service/sts v1.33.3
 	github.com/buger/jsonparser v1.1.1
 	github.com/chewxy/math32 v1.11.1
@@ -23,7 +23,7 @@ require (
 	github.com/docker/docker v27.4.1+incompatible
 	github.com/docker/go-connections v0.5.0
 	github.com/fatih/color v1.18.0
-	github.com/getsentry/sentry-go v0.30.0
+	github.com/getsentry/sentry-go v0.31.1
 	github.com/go-viper/mapstructure/v2 v2.2.1
 	github.com/goccy/go-json v0.10.4
 	github.com/gofrs/flock v0.12.1
@@ -50,7 +50,7 @@ require (
 	github.com/wundergraph/graphql-go-tools/execution v1.2.0
 	github.com/wundergraph/graphql-go-tools/v2 v2.0.0-rc.137
 	golang.org/x/exp v0.0.0-20241217172543-b2144cdd0a67
-	golang.org/x/sys v0.28.0
+	golang.org/x/sys v0.29.0
 	google.golang.org/grpc v1.69.2
 )
 
