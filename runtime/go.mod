@@ -5,7 +5,7 @@ go 1.23.1
 toolchain go1.23.4
 
 require (
-	github.com/hypermodeinc/modus/lib/manifest v0.15.0
+	github.com/hypermodeinc/modus/lib/manifest v0.16.0
 	github.com/hypermodeinc/modus/lib/metadata v0.15.0
 	github.com/hypermodeinc/modus/lib/wasmextractor v0.13.0 // indirect
 )
@@ -135,6 +135,7 @@ require (
 	golang.org/x/net v0.33.0 // indirect
 	golang.org/x/sync v0.10.0 // indirect
 	golang.org/x/text v0.21.0 // indirect
+	golang.org/x/time v0.9.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20241223144023-3abc09e42ca8 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20241223144023-3abc09e42ca8 // indirect
 	google.golang.org/protobuf v1.36.1 // indirect
