@@ -40,9 +40,11 @@ jobs:
         run: npm ci
       - name: Publish NPM Package
         working-directory: sdk/assemblyscript/src
-        run:
-          npm publish --provenance --access public --tag ${{ steps.parse_sdk_version.outputs.npm_tag
-          }}
+        run: >
+          npm publish
+            --provenance
+            --access public
+            --tag ${{ steps.parse_sdk_version.outputs.npm_tag }}
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       - name: Create Release

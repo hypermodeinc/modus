@@ -42,9 +42,11 @@ jobs:
         run: npm run build
       - name: Publish NPM Package
         working-directory: cli
-        run:
-          npm publish --provenance --access public --tag ${{ steps.parse_cli_version.outputs.npm_tag
-          }}
+        run: >
+          npm publish
+            --provenance
+            --access public
+            --tag ${{ steps.parse_cli_version.outputs.npm_tag }}
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       - name: Create Release
