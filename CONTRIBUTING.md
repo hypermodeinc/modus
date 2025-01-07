@@ -31,6 +31,17 @@ The **Modus CLI** drives the local development experience and is written in Type
 The fastest path to setting up a development environment for Modus is through VS Code. The repo
 includes a set of configs to set VS Code up automatically.
 
+#### Trunk
+
+We use [Trunk](https://docs.trunk.io/) for linting and formatting. Please
+[install the Trunk CLI](https://docs.trunk.io/cli/install) on your local development machine. You
+can then use commands such as `trunk check` or `trunk fmt` for linting and formatting.
+
+If you are using VS Code, you should also install the
+[Trunk VS Code Extension](https://marketplace.visualstudio.com/items?itemName=trunk.io). The
+workspace settings file included in this repo will automatically format and lint your code with
+Trunk as you save your files, reducing or removing the need to use the Trunk CLI manually.
+
 ### Clone the Modus repository
 
 To contribute code, start by forking the Modus repository. In the top-right of the
