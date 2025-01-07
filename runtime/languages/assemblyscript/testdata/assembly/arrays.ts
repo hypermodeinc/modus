@@ -100,7 +100,10 @@ export function testArrayOutput_string_2d_empty(): string[][] {
 }
 
 class TestObject1 {
-  constructor(public a: i32, public b: i32) {}
+  constructor(
+    public a: i32,
+    public b: i32,
+  ) {}
 }
 
 export function testArrayIteration(arr: TestObject1[]): void {

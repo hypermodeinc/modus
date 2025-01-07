@@ -33,9 +33,7 @@ function App() {
     input: "150 35% 17%",
     ring: "150 60% 39%",
   };
-  const [endpoints, setEndpoints] = useState<string[]>([
-    "http://localhost:8686/graphql",
-  ]);
+  const [endpoints, setEndpoints] = useState<string[]>(["http://localhost:8686/graphql"]);
 
   useEffect(() => {
     // Fetch endpoints when component mounts
@@ -46,9 +44,7 @@ function App() {
 
         const origin = window.location.origin;
         const ep = data.map((endpoint: { path: string }) => {
-          return endpoint.path.startsWith("/")
-            ? `${origin}${endpoint.path}`
-            : endpoint.path;
+          return endpoint.path.startsWith("/") ? `${origin}${endpoint.path}` : endpoint.path;
         });
 
         setEndpoints(ep);
@@ -67,9 +63,7 @@ function App() {
         theme={modusTheme}
         title={
           <div className="flex items-center">
-            <p className="text-white/80 tracking-wide text-lg">
-              Modus API Explorer
-            </p>
+            <p className="text-white/80 tracking-wide text-lg">Modus API Explorer</p>
             <ModusIcon className="w-10 -ml-1" />
           </div>
         }

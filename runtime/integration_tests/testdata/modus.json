@@ -10,7 +10,7 @@
   "connections": {
     "my-database": {
       "type": "postgresql",
-      "connString": "postgresql://postgres:password@localhost:5499/data?sslmode=disable"
+      "connString": "postgresql://postgres:password@localhost:5499/data?sslmode=disable" // checkov:skip=CKV_SECRET_4
     }
   }
 }

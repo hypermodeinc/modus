@@ -49,9 +49,7 @@ export function testMapOutput_string_string(): Map<string, string> {
   return m;
 }
 
-export function testNullableMapInput_string_string(
-  m: Map<string, string> | null
-): void {
+export function testNullableMapInput_string_string(m: Map<string, string> | null): void {
   assert(m != null, "expected non-null map");
   assert(m!.size == 3, "expected size 3");
 
@@ -65,16 +63,11 @@ export function testNullableMapInput_string_string(
   assert(m!.get("c") == "3", "expected value for key 'c' to be '3'");
 }
 
-export function testNullableMapInput_string_string_null(
-  m: Map<string, string> | null
-): void {
+export function testNullableMapInput_string_string_null(m: Map<string, string> | null): void {
   assert(m == null, "expected null map");
 }
 
-export function testNullableMapOutput_string_string(): Map<
-  string,
-  string
-> | null {
+export function testNullableMapOutput_string_string(): Map<string, string> | null {
   const m = new Map<string, string>();
   m.set("a", "1");
   m.set("b", "2");
@@ -82,10 +75,7 @@ export function testNullableMapOutput_string_string(): Map<
   return m;
 }
 
-export function testNullableMapOutput_string_string_null(): Map<
-  string,
-  string
-> | null {
+export function testNullableMapOutput_string_string_null(): Map<string, string> | null {
   return null;
 }
 
@@ -99,10 +89,7 @@ export function testIterateMap_string_string(m: Map<string, string>): void {
   }
 }
 
-export function testMapLookup_string_string(
-  m: Map<string, string>,
-  key: string
-): string | null {
+export function testMapLookup_string_string(m: Map<string, string>, key: string): string | null {
   if (m.has(key)) {
     return m.get(key);
   }
@@ -113,9 +100,7 @@ class TestClassWithMap {
   m!: Map<string, string>;
 }
 
-export function testClassContainingMapInput_string_string(
-  c: TestClassWithMap
-): void {
+export function testClassContainingMapInput_string_string(c: TestClassWithMap): void {
   assert(c != null, "expected non-null class");
   assert(c.m != null, "expected non-null map");
   assert(c.m.size == 3, "expected size 3");

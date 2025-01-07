@@ -1,6 +1,6 @@
 module github.com/hypermodeinc/modus/lib/metadata
 
-go 1.23.0
+go 1.23
 
 require github.com/hypermodeinc/modus/lib/wasmextractor v0.13.0
 

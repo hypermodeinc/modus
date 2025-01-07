@@ -1,11 +1,9 @@
 {
   "recommendations": [
-    "dbaeumer.vscode-eslint",
-    "DavidAnson.vscode-markdownlint",
-    "esbenp.prettier-vscode",
     "golang.go",
     "GraphQL.vscode-graphql",
     "ms-vscode.makefile-tools",
-    "streetsidesoftware.code-spell-checker"
+    "streetsidesoftware.code-spell-checker",
+    "trunk.io"
   ]
 }

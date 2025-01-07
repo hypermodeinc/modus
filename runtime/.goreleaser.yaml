@@ -5,7 +5,7 @@ monorepo:
   tag_prefix: runtime/
   dir: runtime
 git:
-  tag_sort: "-version:creatordate"
+  tag_sort: -version:creatordate
   prerelease_suffix: "-"
 before:
   hooks:
@@ -46,8 +46,8 @@ builds:
 
 archives:
   - files:
-      - "../README.md"
-      - "../LICENSE"
+      - ../README.md
+      - ../LICENSE
     name_template: "{{ .ProjectName }}_v{{ .Version }}_{{ .Os }}_{{ .Arch }}"
     format: tar.gz
     # use zip for windows archives
@@ -55,7 +55,7 @@ archives:
       - goos: windows
         format: zip
 checksum:
-  name_template: "checksums.txt"
+  name_template: checksums.txt
 release:
   prerelease: auto
 changelog:

@@ -1,12 +1,7 @@
 import React from "react";
 
 const ModusLogo = ({ className }: { className?: string }) => (
-  <svg
-    id="Layer_1"
-    xmlns="http://www.w3.org/2000/svg"
-    viewBox="0 0 150 150"
-    className={className}
-  >
+  <svg id="Layer_1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 150 150" className={className}>
     <defs>
       <style>
         {`
@@ -32,10 +27,7 @@ const ModusLogo = ({ className }: { className?: string }) => (
       className="cls-2"
       points="94.45 73.84 105.55 68.04 102.85 80.04 131.35 68.84 100.05 107.44 102.85 80.04 94.45 73.84"
     />
-    <polygon
-      className="cls-2"
-      points="80.95 73.84 84.25 80.74 90.95 76.64 80.95 73.84"
-    />
+    <polygon className="cls-2" points="80.95 73.84 84.25 80.74 90.95 76.64 80.95 73.84" />
   </svg>
 );
 

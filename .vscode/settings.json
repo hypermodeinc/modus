@@ -1,6 +1,9 @@
 {
   "cSpell.flagWords": ["teh", "hte"],
+  "cSpell.import": ["${workspaceRoot}/.trunk/configs/cspell.json"],
   "editor.formatOnSave": true,
+  "editor.defaultFormatter": "trunk.io",
+  "trunk.autoInit": false,
   "files.insertFinalNewline": true,
   "files.trimFinalNewlines": true,
   "files.associations": {
@@ -9,20 +12,24 @@
     "*hypermode.json": "jsonc",
     "*modus.json": "jsonc"
   },
+  "go.buildTags": "integration",
   "go.lintTool": "golangci-lint",
   "go.testEnvVars": {
     "MODUS_DEBUG": "true"
   },
+  "markdownlint.config": {
+    "extends": ".trunk/configs/.markdownlint.json"
+  },
   "[javascript]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
+    "editor.defaultFormatter": "trunk.io"
   },
   "[json]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
+    "editor.defaultFormatter": "trunk.io"
   },
   "[jsonc]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
+    "editor.defaultFormatter": "trunk.io"
   },
   "[typescript]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
+    "editor.defaultFormatter": "trunk.io"
   }
 }

@@ -9,9 +9,9 @@ on:
       - reopened
       - ready_for_review
     paths:
-      - '**/*.go'
-      - '**/go.mod'
-      - '**/testdata/**'
+      - "**/*.go"
+      - "**/go.mod"
+      - "**/testdata/**"
 
 permissions:
   contents: read
@@ -29,7 +29,12 @@ jobs:
         uses: actions/checkout@v4
       - name: Search for go.mod files
         id: get-dirs
-        run: echo "dirs=$(find . -name 'go.mod' -exec dirname {} \; | sed 's|^\./||' | jq -Rsc 'split("\n")[:-1]')" >> ${GITHUB_OUTPUT}
+        run: >
+          echo "dirs=$(
+            find . -name 'go.mod' -exec dirname {} \; |
+            sed 's|^\./||' |
+            jq -Rsc 'split("\n")[:-1]'
+          )" >> ${GITHUB_OUTPUT}
 
   go-test:
     needs: get-dirs

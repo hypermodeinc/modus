@@ -25,7 +25,11 @@ jobs:
         uses: actions/checkout@v4
       - name: Find Examples
         id: get-dirs
-        run: echo "dirs=$(ls -d sdk/assemblyscript/examples/* | jq -Rsc 'split("\n")[:-1]' )" >> ${GITHUB_OUTPUT}
+        run: >
+          echo "dirs=$(
+            ls -d sdk/assemblyscript/examples/* |
+            jq -Rsc 'split("\n")[:-1]'
+          )" >> ${GITHUB_OUTPUT}
 
   sdk-as-lint-src:
     if: github.event_name == 'pull_request'

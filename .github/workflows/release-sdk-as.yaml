@@ -17,7 +17,8 @@ jobs:
     steps:
       - name: Validate version
         if: ${{ !startsWith(github.ref_name, 'sdk/assemblyscript/v') }}
-        run: echo "Modus AssemblyScript SDK version must start with `sdk/assemblyscript/v`" && exit 1
+        run:
+          echo "Modus AssemblyScript SDK version must start with `sdk/assemblyscript/v`" && exit 1
       - uses: actions/checkout@v4
         with:
           ref: "${{ github.ref_name }}"
@@ -30,7 +31,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ">=22"
-          registry-url: "https://registry.npmjs.org"
+          registry-url: https://registry.npmjs.org
       - name: Prepare Release
         working-directory: sdk/assemblyscript
         run: ./scripts/prepare-release.sh ${{ steps.parse_sdk_version.outputs.sdk_version }}
@@ -39,7 +40,11 @@ jobs:
         run: npm ci
       - name: Publish NPM Package
         working-directory: sdk/assemblyscript/src
-        run: npm publish --provenance --access public --tag ${{ steps.parse_sdk_version.outputs.npm_tag }}
+        run: >
+          npm publish
+            --provenance
+            --access public
+            --tag ${{ steps.parse_sdk_version.outputs.npm_tag }}
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       - name: Create Release
