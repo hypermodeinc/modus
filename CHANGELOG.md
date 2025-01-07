@@ -1,12 +1,23 @@
 # Change Log
 
-## UNRELEASED
+## 2025-01-07 - CLI 0.16.3
+
+- chore: use `toolchain` to set Go version [#684](https://github.com/hypermodeinc/modus/pull/684)
+
+## 2025-01-07 - Runtime 0.16.2
+
+- chore: add timezone header to api explorer [#672](https://github.com/hypermodeinc/modus/pull/672)
+- chore: use `toolchain` to set Go version [#684](https://github.com/hypermodeinc/modus/pull/684)
+
+## 2025-01-07 - Go SDK 0.16.1
 
 - fix: update reference links in Modus schema [#670](https://github.com/hypermodeinc/modus/pull/670)
-- chore: add timezone header to api explorer [#672](https://github.com/hypermodeinc/modus/pull/672)
+- chore: use `toolchain` to set Go version [#684](https://github.com/hypermodeinc/modus/pull/684)
+
+## 2025-01-07 - AssemblyScript SDK 0.16.1
+
 - fix: reimplement DynamicMap parsing [#678](https://github.com/hypermodeinc/modus/pull/678)
   [#681](https://github.com/hypermodeinc/modus/pull/681)
-- chore: use `toolchain` to set Go version [#684](https://github.com/hypermodeinc/modus/pull/684)
 
 ## 2025-01-06 - CLI 0.16.2
 
