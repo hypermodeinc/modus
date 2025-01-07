@@ -2,7 +2,10 @@
 
 ## UNRELEASED
 
-- chore: add timezone header to api explorer
+- fix: update reference links in Modus schema [#670](https://github.com/hypermodeinc/modus/pull/670)
+- chore: add timezone header to api explorer [#672](https://github.com/hypermodeinc/modus/pull/672)
+- fix: reimplement DynamicMap parsing [#678](https://github.com/hypermodeinc/modus/pull/678)
+  [#681](https://github.com/hypermodeinc/modus/pull/681)
 
 ## 2025-01-06 - CLI 0.16.2
 
