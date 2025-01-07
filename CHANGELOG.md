@@ -1,5 +1,13 @@
 # Change Log
 
+## 2025-01-07 - CLI 0.16.4
+
+No changes. Re-released previous version to fix release issue.
+
+## 2025-01-07 - AssemblyScript SDK 0.16.2
+
+No changes. Re-released previous version to fix release issue.
+
 ## 2025-01-07 - CLI 0.16.3
 
 - chore: use `toolchain` to set Go version [#684](https://github.com/hypermodeinc/modus/pull/684)
