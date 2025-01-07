@@ -12,6 +12,7 @@
     "*hypermode.json": "jsonc",
     "*modus.json": "jsonc"
   },
+  "go.buildTags": "integration",
   "go.lintTool": "golangci-lint",
   "go.testEnvVars": {
     "MODUS_DEBUG": "true"
