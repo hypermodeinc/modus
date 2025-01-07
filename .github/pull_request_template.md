@@ -1,5 +1,3 @@
-<!-- markdownlint-disable MD041 -->
-
 ## Description
 
 Please explain the changes you made here.

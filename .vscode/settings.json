@@ -16,6 +16,9 @@
   "go.testEnvVars": {
     "MODUS_DEBUG": "true"
   },
+  "markdownlint.config": {
+    "extends": ".trunk/configs/.markdownlint.json"
+  },
   "[javascript]": {
     "editor.defaultFormatter": "trunk.io"
   },
