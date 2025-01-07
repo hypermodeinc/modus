@@ -1,4 +1,2 @@
-# Following source doesn't work in most setups
 ignored:
-  - SC1090
-  - SC1091
+  - DL3008
