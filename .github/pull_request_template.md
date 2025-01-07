@@ -1,8 +1,10 @@
-**Description**
+<!-- markdownlint-disable MD041 -->
+
+## Description
 
 Please explain the changes you made here.
 
-**Checklist**
+## Checklist
 
 - [ ] Code compiles correctly and linting passes locally
 - [ ] For all _code_ changes, an entry added to the `CHANGELOG.md` file describing and linking to
@@ -11,7 +13,7 @@ Please explain the changes you made here.
 - [ ] For public APIs, new features, etc., PR on [docs repo](https://github.com/hypermodeinc/docs)
       staged and linked here
 
-**Instructions**
+## Instructions
 
 - The PR title should follow the [Conventional Commits](https://www.conventionalcommits.org/)
   syntax, leading with `fix:`, `feat:`, `chore:`, `ci:`, etc.
