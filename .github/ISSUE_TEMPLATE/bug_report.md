@@ -29,9 +29,7 @@ If applicable, add screenshots to help explain your problem.
 
 ## Environment
 
-- OS: [e.g. macOS, Windows, Ubuntu]
-- Language [e.g. AssemblyScript, Go]
-- Version [e.g. v0.xx]
+Please run `modus info` and paste the output here.
 
 ## Additional context
 

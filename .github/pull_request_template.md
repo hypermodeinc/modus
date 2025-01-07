@@ -4,23 +4,20 @@ Please explain the changes you made here.
 
 ## Checklist
 
-- [ ] Code compiles correctly and linting passes locally
-- [ ] For all _code_ changes, an entry added to the `CHANGELOG.md` file describing and linking to
-      this PR
-- [ ] Tests added for new functionality, or regression tests for bug fixes added as applicable
-- [ ] For public APIs, new features, etc., PR on [docs repo](https://github.com/hypermodeinc/docs)
-      staged and linked here
+All PRs should check the following boxes:
 
-## Instructions
+- [ ] I have given this PR a title using the
+      [Conventional Commits](https://www.conventionalcommits.org/) syntax, leading with `fix:`,
+      `feat:`, `chore:`, `ci:`, etc.
+  - The title should also be used for the commit message when the PR is squashed and merged.
+- [ ] I have formatted and linted my code with Trunk, per the instructions in
+      [the contributing guide](https://github.com/hypermodeinc/modus/blob/main/CONTRIBUTING.md#trunk).
 
-- The PR title should follow the [Conventional Commits](https://www.conventionalcommits.org/)
-  syntax, leading with `fix:`, `feat:`, `chore:`, `ci:`, etc.
-- The description should briefly explain what the PR is about. In the case of a bugfix, describe or
-  link to the bug.
-- In the checklist section, check the boxes in that are applicable, using `[x]` syntax.
-  - If not applicable, remove the entire line. Only leave the box unchecked if you intend to come
-    back and check the box later.
-- Delete the `Instructions` line and everything below it, to indicate you have read and are
-  following these instructions. 🙂
+If the PR includes a _code change_, then also check the following boxes. _(If not, then delete the
+next section.)_
 
-Thank you for your contribution to the Modus project!
+- [ ] I have added an entry to the `CHANGELOG.md` file.
+  - Add to the "UNRELEASED" section at the top of the file, creating one if it doesn't yet exist.
+  - Be sure to include the link to this PR, and please sort the section numerically by PR number.
+- [ ] I have manually tested the new or modified code, and it appears to behave correctly.
+- [ ] I have added or updated unit tests where appropriate, if applicable.
