@@ -51,8 +51,8 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
+          go-version: 1.23.4
           cache-dependency-path: "${{ matrix.dir }}/go.sum"
-          go-version-file: "${{ matrix.dir }}/go.mod"
       - name: Run Unit Tests
         run: |
           go install github.com/jstemmer/go-junit-report/v2@latest

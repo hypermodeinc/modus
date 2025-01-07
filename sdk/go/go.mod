@@ -2,6 +2,8 @@ module github.com/hypermodeinc/modus/sdk/go
 
 go 1.23.1
 
+toolchain go1.23.4
+
 require (
 	github.com/hypermodeinc/modus/lib/manifest v0.15.0
 	github.com/hypermodeinc/modus/lib/wasmextractor v0.13.0

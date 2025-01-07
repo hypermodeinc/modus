@@ -6,6 +6,7 @@
 - chore: add timezone header to api explorer [#672](https://github.com/hypermodeinc/modus/pull/672)
 - fix: reimplement DynamicMap parsing [#678](https://github.com/hypermodeinc/modus/pull/678)
   [#681](https://github.com/hypermodeinc/modus/pull/681)
+- chore: use `toolchain` to set Go version [#684](https://github.com/hypermodeinc/modus/pull/684)
 
 ## 2025-01-06 - CLI 0.16.2
 

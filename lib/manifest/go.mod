@@ -1,6 +1,8 @@
 module github.com/hypermodeinc/modus/lib/manifest
 
-go 1.23
+go 1.23.1
+
+toolchain go1.23.4
 
 require (
 	github.com/santhosh-tekuri/jsonschema/v5 v5.3.1
