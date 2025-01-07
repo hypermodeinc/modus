@@ -41,10 +41,8 @@ jobs:
       - name: Publish NPM Package
         working-directory: sdk/assemblyscript/src
         run: >
-          npm publish
-            --provenance
-            --access public
-            --tag ${{ steps.parse_sdk_version.outputs.npm_tag }}
+          npm publish --tag ${{ steps.parse_sdk_version.outputs.npm_tag }} --access public
+          --provenance
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       - name: Create Release

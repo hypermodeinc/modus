@@ -43,10 +43,8 @@ jobs:
       - name: Publish NPM Package
         working-directory: cli
         run: >
-          npm publish
-            --provenance
-            --access public
-            --tag ${{ steps.parse_cli_version.outputs.npm_tag }}
+          npm publish --tag ${{ steps.parse_cli_version.outputs.npm_tag }} --access public
+          --provenance
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       - name: Create Release
