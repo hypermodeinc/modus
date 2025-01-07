@@ -1,4 +1,4 @@
-import React from "react"
+import React from "react";
 
 const ModusLogo = ({ className }: { className?: string }) => (
   <svg id="Layer_1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 150 150" className={className}>
@@ -29,6 +29,6 @@ const ModusLogo = ({ className }: { className?: string }) => (
     />
     <polygon className="cls-2" points="80.95 73.84 84.25 80.74 90.95 76.64 80.95 73.84" />
   </svg>
-)
+);
 
-export default ModusLogo
+export default ModusLogo;

@@ -8,44 +8,44 @@
  */
 
 // "Hello World" in Japanese
-const testString = "こんにちは、世界"
+const testString = "こんにちは、世界";
 
 export function testStringInput(s: string): void {
-  assert(s == testString)
+  assert(s == testString);
 }
 
 export function testStringOutput(): string {
-  return testString
+  return testString;
 }
 
 export function testStringInput_empty(s: string): void {
-  assert(s == "")
+  assert(s == "");
 }
 
 export function testStringOutput_empty(): string {
-  return ""
+  return "";
 }
 
 export function testNullStringInput(s: string | null): void {
-  assert(s == testString)
+  assert(s == testString);
 }
 
 export function testNullStringOutput(): string | null {
-  return testString
+  return testString;
 }
 
 export function testNullStringInput_empty(s: string | null): void {
-  assert(s == "")
+  assert(s == "");
 }
 
 export function testNullStringOutput_empty(): string | null {
-  return ""
+  return "";
 }
 
 export function testNullStringInput_null(s: string | null): void {
-  assert(s == null)
+  assert(s == null);
 }
 
 export function testNullStringOutput_null(): string | null {
-  return null
+  return null;
 }
