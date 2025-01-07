@@ -1,5 +1,6 @@
 {
   "cSpell.flagWords": ["teh", "hte"],
+  "cSpell.import": ["${workspaceRoot}/.trunk/configs/cspell.json"],
   "editor.formatOnSave": true,
   "editor.defaultFormatter": "trunk.io",
   "trunk.autoInit": false,
@@ -11,7 +12,20 @@
     "*hypermode.json": "jsonc",
     "*modus.json": "jsonc"
   },
+  "go.lintTool": "golangci-lint",
   "go.testEnvVars": {
     "MODUS_DEBUG": "true"
+  },
+  "[javascript]": {
+    "editor.defaultFormatter": "trunk.io"
+  },
+  "[json]": {
+    "editor.defaultFormatter": "trunk.io"
+  },
+  "[jsonc]": {
+    "editor.defaultFormatter": "trunk.io"
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "trunk.io"
   }
 }

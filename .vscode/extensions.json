@@ -1,9 +1,9 @@
 {
   "recommendations": [
-    "trunk.io",
     "golang.go",
     "GraphQL.vscode-graphql",
     "ms-vscode.makefile-tools",
-    "streetsidesoftware.code-spell-checker"
+    "streetsidesoftware.code-spell-checker",
+    "trunk.io"
   ]
 }
