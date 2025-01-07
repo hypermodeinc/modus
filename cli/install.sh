@@ -17,8 +17,8 @@ VERSION="latest"
 INSTALLER_VERSION="0.1.2"
 
 NODE_MIN=22
-NODE_PATH="$(which node)"
-NPM_PATH="$(which npm)"
+NODE_PATH="$(command -v node)"
+NPM_PATH="$(command -v npm)"
 
 # Properties
 ARCH="$(uname -m)"
@@ -45,10 +45,9 @@ fi
 
 get_latest_version() {
 	local url="https://releases.hypermode.com/modus-latest.json"
-	curl -sL "${url}" | grep '"cli"' | sed -E 's/.*"cli": "v([^"]+)".*/\1/'
+	(curl -sL "${url}" || true) | (grep '"cli"' || true) | sed -E 's/.*"cli": "v([^"]+)".*/\1/'
 }
 
-ARCHIVE_URL=""
 download_from_npm() {
 	local tmpdir="$1"
 	local url="$2"
@@ -57,12 +56,11 @@ download_from_npm() {
 
 	mkdir -p "${tmpdir}"
 
-	curl --progress-bar --show-error --location --fail "${url}" --output "${download_file}"
-	if [[ $? != 0 ]]; then
+	if ! curl --progress-bar --show-error --location --fail "${url}" --output "${download_file}"; then
 		return 1
 	fi
 
-	printf "${CLEAR_LINE}" >&2
+	printf %b "${CLEAR_LINE}" >&2
 	echo "${download_file}"
 }
 
@@ -126,7 +124,7 @@ build_path_str() {
 
 cli_dir_valid() {
 	if [[ -n ${MODUS_CLI-} ]] && [[ -e ${MODUS_CLI} ]] && ! [[ -d ${MODUS_CLI} ]]; then
-		printf "\$MODUS_CLI is set but is not a directory (${MODUS_CLI}).\n" >&2
+		printf "\$MODUS_CLI is set but is not a directory (%s).\n" "${MODUS_CLI}" >&2
 		printf "Please check your profile scripts and environment.\n" >&2
 		exit 1
 	fi
@@ -136,28 +134,34 @@ cli_dir_valid() {
 update_profile() {
 	local install_dir="$1"
 	if [[ ":${PATH}:" == *":${install_dir}:"* ]]; then
-		printf "[3/4] ${DIM}The Modus CLI is already in \$PATH${RESET}\n" >&2
+		printf %b "[3/4] ${DIM}The Modus CLI is already in \$PATH${RESET}\n" >&2
 		return 0
 	fi
 
-	local profile="$(detect_profile $(basename "${SHELL}") $(uname -s))"
+	local shell os profile
+	shell="$(basename "${SHELL}")"
+	os="$(uname -s)"
+	profile="$(detect_profile "${shell}" "${os}")"
 	if [[ -z ${profile} ]]; then
 		printf "No user shell profile found.\n" >&2
 		return 1
 	fi
 
 	export SHOW_RESET_PROFILE=1
-	export PROFILE="~/$(basename "${profile}")"
+
+	PROFILE="${HOME}/$(basename "${profile}")"
+	export PROFILE
 
 	if grep -q 'MODUS_CLI' "${profile}"; then
-		printf "[3/4] ${DIM}The Modus CLI has already been configured in ${PROFILE}${RESET}\n" >&2
+		printf %b "[3/4] ${DIM}The Modus CLI has already been configured in ${PROFILE}${RESET}\n" >&2
 		return 0
 	fi
 
-	local path_str="$(build_path_str "${profile}" "${install_dir}")"
+	local path_str
+	path_str="$(build_path_str "${profile}" "${install_dir}")"
 	echo "${path_str}" >>"${profile}"
 
-	printf "[3/4] ${DIM}Added the Modus CLI to the PATH in ${PROFILE}${RESET}\n" >&2
+	printf %b "[3/4] ${DIM}Added the Modus CLI to the PATH in ${PROFILE}${RESET}\n" >&2
 }
 
 install_version() {
@@ -172,14 +176,13 @@ install_version() {
 	*) ;;
 	esac
 
-	install_release
-	if [[ $? == 0 ]]; then
-		update_profile "${INSTALL_DIR}" && printf "[4/4] ${DIM}Installed Modus CLI${RESET}\n" >&2
+	if ! install_release; then
+		update_profile "${INSTALL_DIR}" && printf %b "[4/4] ${DIM}Installed Modus CLI${RESET}\n" >&2
 	fi
 }
 
 install_release() {
-	printf "[1/4] ${DIM}Downloading Modus CLI from NPM${RESET}\n"
+	printf %b "[1/4] ${DIM}Downloading Modus CLI from NPM${RESET}\n"
 
 	local url="https://registry.npmjs.org/${PACKAGE_ORG:+${PACKAGE_ORG}/}${PACKAGE_NAME}/-/${PACKAGE_NAME}-${VERSION}.tgz"
 
@@ -189,27 +192,29 @@ install_release() {
 	)"
 	exit_status="$?"
 	if [[ ${exit_status} != 0 ]]; then
-		printf "Could not download Modus version '${VERSION}' from\n${url}\n" >&2
+		printf "Could not download Modus version '%s' from\n%s\n" "${VERSION}" "${url}" >&2
 		exit 1
 	fi
 
-	printf "${CLEAR_LINE}" >&2
-	printf "[1/4] ${DIM}Downloaded latest Modus CLI v${VERSION}${RESET}\n" >&2
+	printf %b "${CLEAR_LINE}" >&2
+	printf %b "[1/4] ${DIM}Downloaded latest Modus CLI v${VERSION}${RESET}\n" >&2
 
 	install_from_file "${download_archive}"
 }
 
 download_release() {
-	local url="$1"
-	local download_dir="$(mktemp -d)"
+	local url download_dir
+	url="$1"
+	download_dir="$(mktemp -d)"
 	download_from_npm "${download_dir}" "${url}"
 }
 
 install_from_file() {
-	local archive="$1"
-	local extract_to="$(dirname "${archive}")"
+	local archive extract_to
+	archive="$1"
+	extract_to="$(dirname "${archive}")"
 
-	printf "[2/4] ${DIM}Unpacking archive${RESET}\n" >&2
+	printf %b "[2/4] ${DIM}Unpacking archive${RESET}\n" >&2
 
 	tar -xf "${archive}" -C "${extract_to}"
 
@@ -221,12 +226,12 @@ install_from_file() {
 
 	ln -s "${INSTALL_DIR}/bin/modus.js" "${INSTALL_DIR}/bin/modus"
 
-	printf "${CLEAR_LINE}" >&2
-	printf "[2/4] ${DIM}Installing dependencies${RESET}\n" >&2
+	printf %b "${CLEAR_LINE}" >&2
+	printf %b "[2/4] ${DIM}Installing dependencies${RESET}\n" >&2
 	(cd "${INSTALL_DIR}" && "${NPM_PATH}" install --omit=dev --silent && find . -type d -empty -delete)
 
-	printf "${CLEAR_LINE}" >&2
-	printf "[2/4] ${DIM}Unpacked archive${RESET}\n" >&2
+	printf %b "${CLEAR_LINE}" >&2
+	printf %b "[2/4] ${DIM}Unpacked archive${RESET}\n" >&2
 }
 
 check_platform() {
@@ -239,7 +244,7 @@ check_platform() {
 	case "${ARCH}/${OS}" in
 	x64/Linux | arm64/Linux | x64/Darwin | arm64/Darwin) return 0 ;;
 	*)
-		printf "Unsupported os ${OS} ${ARCH}\n" >&2
+		printf "Unsupported os %s %s\n" "${OS}" "${ARCH}" >&2
 		exit 1
 		;;
 	esac
@@ -247,30 +252,31 @@ check_platform() {
 
 check_node() {
 	if [[ -z ${NODE_PATH} ]]; then
-		printf "${RED}Node.js is not installed.${RESET}\n" >&2
-		printf "${RED}Please install Node.js ${NODE_WANTED} or later and try again.${RESET}\n" >&2
+		printf %b "${RED}Node.js is not installed.${RESET}\n" >&2
+		printf %b "${RED}Please install Node.js ${NODE_WANTED} or later and try again.${RESET}\n" >&2
 		exit 1
 	fi
 
 	# check node version
-	local node_version="$("${NODE_PATH}" --version)"
-	local node_major="${node_version%%.*}"
+	local node_version node_major
+	node_version="$("${NODE_PATH}" --version)"
+	node_major="${node_version%%.*}"
 	node_major="${node_major#v}"
 	if [[ ${node_major} -lt ${NODE_MIN} ]]; then
-		printf "${RED}Node.js ${NODE_MIN} or later is required. You have ${node_version}.${RESET}\n" >&2
-		printf "${RED}Please update and try again${RESET}\n" >&2
+		printf %b "${RED}Node.js ${NODE_MIN} or later is required. You have ${node_version}.${RESET}\n" >&2
+		printf %b "${RED}Please update and try again${RESET}\n" >&2
 		exit 1
 	fi
 
 	# make sure npm can be found too
 	if [[ -z ${NPM_PATH} ]]; then
-		printf "${RED}npm is not installed. Please install npm and try again.${RESET}\n" >&2
+		printf %b "${RED}npm is not installed. Please install npm and try again.${RESET}\n" >&2
 		exit 1
 	fi
 }
 
 # This is the entry point
-printf "\n${BOLD}${BLUE}Modus${RESET} Installer ${DIM}v${INSTALLER_VERSION}${RESET}\n\n" >&2
+printf %b "\n${BOLD}${BLUE}Modus${RESET} Installer ${DIM}v${INSTALLER_VERSION}${RESET}\n\n" >&2
 
 check_platform
 check_node
@@ -279,11 +285,11 @@ install_version
 printf "\nThe Modus CLI has been installed! 🎉\n" >&2
 
 if [[ -n ${SHOW_RESET_PROFILE-} ]]; then
-	printf "\n${YELLOW}Please restart your terminal or run:${RESET}\n" >&2
-	printf "  ${DIM}source ${PROFILE}${RESET}\n" >&2
-	printf "\nThen, run ${DIM}modus${RESET} to get started${RESET}\n" >&2
+	printf %b "\n${YELLOW}Please restart your terminal or run:${RESET}\n" >&2
+	printf %b "  ${DIM}source ${PROFILE}${RESET}\n" >&2
+	printf %b "\nThen, run ${DIM}modus${RESET} to get started${RESET}\n" >&2
 else
-	printf "\nRun ${DIM}modus${RESET} to get started${RESET}\n" >&2
+	printf %b "\nRun ${DIM}modus${RESET} to get started${RESET}\n" >&2
 fi
 
 printf "\n" >&2

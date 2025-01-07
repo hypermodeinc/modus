@@ -2,7 +2,7 @@
 # Runs "npm install" on all projects.
 
 set -euo pipefail
-trap "cd \"${PWD}\"" EXIT
+trap 'cd "${PWD}"' EXIT
 cd "$(dirname "$0")"
 cd ..
 

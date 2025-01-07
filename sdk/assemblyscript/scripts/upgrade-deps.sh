@@ -3,7 +3,7 @@
 # Requires npm-check-updates (https://www.npmjs.com/package/npm-check-updates).
 
 set -euo pipefail
-trap "cd \"${PWD}\"" EXIT
+trap 'cd "${PWD}"' EXIT
 cd "$(dirname "$0")"
 cd ..
 

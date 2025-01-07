@@ -2,7 +2,7 @@
 # Prepares templates for release.
 
 set -euo pipefail
-trap "cd \"${PWD}\"" EXIT
+trap 'cd "${PWD}"' EXIT
 cd "$(dirname "$0")"
 
 # get the version number from the command line argument
