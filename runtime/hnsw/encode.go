@@ -18,7 +18,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/google/renameio"
+	"github.com/google/renameio/v2"
 )
 
 // errorEncoder is a helper type to encode multiple values

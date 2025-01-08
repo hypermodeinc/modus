@@ -25,7 +25,7 @@ import (
 	"github.com/hypermodeinc/modus/runtime/utils"
 
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/lestrrat-go/jwx/jwk"
+	"github.com/lestrrat-go/jwx/v2/jwk"
 )
 
 type jwtClaimsKey string
@@ -211,7 +211,7 @@ func jwksEndpointsJsonToKeys(ctx context.Context, jwksEndpointsJson string) (map
 			return nil, err
 		}
 
-		jwkKey, exists := jwks.Get(0)
+		jwkKey, exists := jwks.Key(0)
 		if !exists {
 			return nil, errors.New("No keys found in JWKS for key: " + key)
 		}
