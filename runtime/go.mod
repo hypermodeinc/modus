@@ -34,6 +34,7 @@ require (
 	github.com/jensneuse/abstractlogger v0.0.4
 	github.com/joho/godotenv v1.5.1
 	github.com/lestrrat-go/jwx v1.2.30
+	github.com/lestrrat-go/jwx/v2 v2.1.3
 	github.com/neo4j/neo4j-go-driver/v5 v5.27.0
 	github.com/prometheus/client_golang v1.20.5
 	github.com/prometheus/common v0.61.0
