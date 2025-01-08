@@ -27,6 +27,10 @@ export { exec };
  */
 export async function execFileWithExitCode(file: string, args?: string[], options?: cp.ExecFileOptions): Promise<{ stdout: string; stderr: string; exitCode: number }> {
   return new Promise((resolve, reject) => {
+    if (options?.shell) {
+      file = `"${file}"`;
+    }
+
     cp.execFile(file, args, options, (error, stdout, stderr) => {
       if (typeof stdout !== "string") stdout = stdout.toString();
       if (typeof stderr !== "string") stderr = stderr.toString();
