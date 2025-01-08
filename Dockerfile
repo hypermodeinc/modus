@@ -39,7 +39,7 @@ ARG TARGETOS TARGETARCH RUNTIME_RELEASE_VERSION
 RUN GOOS=$TARGETOS GOARCH=$TARGETARCH go build -o modus_runtime -ldflags "-s -w -X github.com/hypermodeinc/modus/runtime/config.version=$RUNTIME_RELEASE_VERSION" .
 
 # build the container image
-FROM ubuntu:22.04
+FROM ubuntu:24.04
 LABEL maintainer="Hypermode Inc. <hello@hypermode.com>"
 
 # Create a custom group and user
