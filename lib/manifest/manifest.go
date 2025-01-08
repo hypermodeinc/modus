@@ -30,6 +30,7 @@ const currentVersion = 3
 
 //go:embed modus_schema.json
 var schemaContent string
+var schema *jsonschema.Schema
 
 type Manifest struct {
 	Version     int                       `json:"-"`
@@ -56,33 +57,36 @@ func (m *Manifest) GetVariables() map[string][]string {
 	return results
 }
 
+func init() {
+	doc, err := jsonschema.UnmarshalJSON(strings.NewReader(schemaContent))
+	if err != nil {
+		panic(fmt.Errorf("failed to parse manifest schema: %w", err))
+	}
+
+	c := jsonschema.NewCompiler()
+	if err := c.AddResource("modus.json", doc); err != nil {
+		panic(fmt.Errorf("failed to add manifest schema: %w", err))
+	}
+
+	if sch, err := c.Compile("modus.json"); err != nil {
+		panic(fmt.Errorf("failed to compile manifest schema: %w", err))
+	} else {
+		schema = sch
+	}
+}
+
 func IsCurrentVersion(version int) bool {
 	return version == currentVersion
 }
 
 func ValidateManifest(content []byte) error {
-
-	schemaDoc, err := jsonschema.UnmarshalJSON(strings.NewReader(schemaContent))
-	if err != nil {
-		return fmt.Errorf("failed to parse schema: %w", err)
-	}
-
-	c := jsonschema.NewCompiler()
-	if err := c.AddResource("modus.json", schemaDoc); err != nil {
-		return err
-	}
-
-	schema, err := c.Compile("modus.json")
-	if err != nil {
-		return err
-	}
-
-	contentDoc, err := jsonschema.UnmarshalJSON(bytes.NewReader(jsonc.ToJSON(content)))
+	r := bytes.NewReader(jsonc.ToJSON(content))
+	doc, err := jsonschema.UnmarshalJSON(r)
 	if err != nil {
 		return fmt.Errorf("failed to parse manifest: %w", err)
 	}
 
-	if err := schema.Validate(contentDoc); err != nil {
+	if err := schema.Validate(doc); err != nil {
 		return fmt.Errorf("failed to validate manifest: %w", err)
 	}
 
@@ -90,9 +94,6 @@ func ValidateManifest(content []byte) error {
 }
 
 func ReadManifest(content []byte) (*Manifest, error) {
-
-	content = jsonc.ToJSONInPlace(content)
-
 	var manifest Manifest
 	if err := parseManifestJson(content, &manifest); err != nil {
 		return nil, fmt.Errorf("failed to parse manifest: %w", err)
@@ -107,7 +108,7 @@ func parseManifestJson(data []byte, manifest *Manifest) error {
 		Connections map[string]json.RawMessage `json:"connections"`
 		Collections map[string]CollectionInfo  `json:"collections"`
 	}
-	if err := json.Unmarshal(data, &m); err != nil {
+	if err := json.Unmarshal(jsonc.ToJSON(data), &m); err != nil {
 		return fmt.Errorf("failed to parse manifest: %w", err)
 	}
 
