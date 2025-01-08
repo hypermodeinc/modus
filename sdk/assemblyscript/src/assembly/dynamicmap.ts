@@ -40,7 +40,7 @@ export class DynamicMap {
   }
 
   public set<T>(key: string, value: T): void {
-    if (value == null) {
+    if (isInteger<T>() && nameof<T>() == "usize" && value == 0) {
       this.data.set(key, "null");
     } else {
       this.data.set(key, JSON.stringify(value));
