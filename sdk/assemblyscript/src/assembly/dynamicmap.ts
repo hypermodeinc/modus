@@ -40,7 +40,7 @@ export class DynamicMap {
   }
 
   public set<T>(key: string, value: T): void {
-    if (value == null) {
+    if (isInteger<T>() && nameof<T>() == "usize" && value == 0) {
       this.data.set(key, "null");
     } else {
       this.data.set(key, JSON.stringify(value));
@@ -136,7 +136,7 @@ function deserializeRawMap(
   while (index < end) {
     while (isSpace(unsafeCharCodeAt(src, index)) && index < end) index++;
     const code = unsafeCharCodeAt(src, index);
-    if (changetype<usize>(key) == 0) {
+    if (key == null) {
       if (code == QUOTE && unsafeCharCodeAt(src, index - 1) !== BACK_SLASH) {
         if (isKey) {
           if (lastIndex == index)
@@ -170,7 +170,7 @@ function deserializeRawMap(
                 /* empty */
               }
               const value = src.slice(lastIndex, index);
-              dst.set(key as string, value);
+              dst.set(key, value);
               // console.log("Value (object): " + value);
               const last = index == end;
               if (!last && unsafeCharCodeAt(src, index) !== COMMA)
@@ -198,7 +198,7 @@ function deserializeRawMap(
                 /* empty */
               }
               const value = src.slice(lastIndex, index);
-              dst.set(key as string, value);
+              dst.set(key, value);
               // console.log("Value (object): " + value);
               const last = index == end;
               if (!last && unsafeCharCodeAt(src, index) !== COMMA)
@@ -218,7 +218,7 @@ function deserializeRawMap(
       } else if (code == CHAR_T) {
         if (load<u64>(srcPtr + (index << 1)) == 28429475166421108) {
           const value = src.slice(lastIndex, (index += 4));
-          dst.set(key as string, value);
+          dst.set(key, value);
           // console.log("Value (bool): " + value);
           while (isSpace(unsafeCharCodeAt(src, index + 1)) && index < end)
             index++;
@@ -244,7 +244,7 @@ function deserializeRawMap(
         // eslint-disable-next-line no-loss-of-precision
         if (load<u64>(srcPtr + (index << 1), 2) == 28429466576093281) {
           const value = src.slice(lastIndex, (index += 5));
-          dst.set(key as string, value);
+          dst.set(key, value);
           // console.log("Value (bool): " + value);
           while (isSpace(unsafeCharCodeAt(src, index + 1)) && index < end)
             index++;
@@ -270,7 +270,7 @@ function deserializeRawMap(
         // eslint-disable-next-line no-loss-of-precision
         if (load<u64>(srcPtr + (index << 1)) == 30399761348886638) {
           const value = src.slice(lastIndex, (index += 4));
-          dst.set(key as string, value);
+          dst.set(key, value);
           // console.log("Value (null): " + value);
           while (isSpace(unsafeCharCodeAt(src, index)) && index < end) index++;
           const last = index == end;
@@ -303,7 +303,7 @@ function deserializeRawMap(
               /* empty */
             }
             const value = src.slice(lastIndex, index);
-            dst.set(key as string, value);
+            dst.set(key, value);
             // console.log("Value (string): " + value);
             const last = index == end;
             if (!last && unsafeCharCodeAt(src, index) !== COMMA)
@@ -325,7 +325,7 @@ function deserializeRawMap(
           const code = unsafeCharCodeAt(src, index);
           if (code == COMMA || code == BRACE_RIGHT || isSpace(code)) {
             const value = src.slice(lastIndex, index);
-            dst.set(key as string, value);
+            dst.set(key, value);
             // console.log("Value (number): " + value);
             while (isSpace(unsafeCharCodeAt(src, index + 1)) && index < end)
               index++;
