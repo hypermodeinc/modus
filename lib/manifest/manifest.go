@@ -10,11 +10,13 @@
 package manifest
 
 import (
+	"bytes"
 	_ "embed"
 	"encoding/json"
 	"fmt"
+	"strings"
 
-	"github.com/santhosh-tekuri/jsonschema/v5"
+	"github.com/santhosh-tekuri/jsonschema/v6"
 	"github.com/tidwall/gjson"
 	"github.com/tidwall/jsonc"
 )
@@ -60,18 +62,27 @@ func IsCurrentVersion(version int) bool {
 
 func ValidateManifest(content []byte) error {
 
-	sch, err := jsonschema.CompileString("modus.json", schemaContent)
+	schemaDoc, err := jsonschema.UnmarshalJSON(strings.NewReader(schemaContent))
+	if err != nil {
+		return fmt.Errorf("failed to parse schema: %w", err)
+	}
+
+	c := jsonschema.NewCompiler()
+	if err := c.AddResource("modus.json", schemaDoc); err != nil {
+		return err
+	}
+
+	schema, err := c.Compile("modus.json")
 	if err != nil {
 		return err
 	}
 
-	content = jsonc.ToJSONInPlace(content)
-
-	var v interface{}
-	if err := json.Unmarshal(content, &v); err != nil {
-		return fmt.Errorf("failed to deserialize manifest: %w", err)
+	contentDoc, err := jsonschema.UnmarshalJSON(bytes.NewReader(jsonc.ToJSON(content)))
+	if err != nil {
+		return fmt.Errorf("failed to parse manifest: %w", err)
 	}
-	if err := sch.Validate(v); err != nil {
+
+	if err := schema.Validate(contentDoc); err != nil {
 		return fmt.Errorf("failed to validate manifest: %w", err)
 	}
 
