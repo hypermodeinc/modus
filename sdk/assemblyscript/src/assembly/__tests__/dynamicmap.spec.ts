@@ -17,6 +17,15 @@ class Obj {
   foo: string = "";
 }
 
+it("should handle nulls correctly", () => {
+  const m1 = JSON.parse<DynamicMap>('{"a":null}');
+  const m2 = new DynamicMap();
+  m2.set("a", null);
+
+  expect(JSON.stringify(m1)).toBe('{"a":null}');
+  expect(JSON.stringify(m2)).toBe('{"a":null}');
+});
+
 it("should parse complex values", () => {
   const input =
     '{"a":{"b":{"c":[{"d":"random value 1"},{"e":["value 2","value 3"]}],"f":{"g":{"h":[1,2,3],"i":{"j":"nested value"}}}},"k":"simple value"},"l":[{"m":"another value","n":{"o":"deep nested","p":[{"q":"even deeper"},"final value"]}}],"r":null}';
