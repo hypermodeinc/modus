@@ -1,5 +1,9 @@
 # Change Log
 
+## UNRELEASED
+
+- fix: resolve warning in `deserializeRawMap` [#692](https://github.com/hypermodeinc/modus/pull/692)
+
 ## 2025-01-07 - CLI 0.16.4
 
 No changes. Re-released previous version to fix release issue.
