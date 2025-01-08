@@ -1,5 +1,9 @@
 # Change Log
 
+## 2025-01-07 - CLI 0.16.5
+
+- fix: handle space in user profile path [#696](https://github.com/hypermodeinc/modus/pull/696)
+
 ## 2025-01-07 - CLI 0.16.4
 
 No changes. Re-released previous version to fix release issue.
