@@ -26,6 +26,9 @@
       "mode": "auto",
       "program": "${workspaceFolder}/runtime",
       "env": {
+        "HYP_EMAIL": "jai@hypermode.com",
+        "HYP_JWT": "eyJhbGciOiJSUzI1NiIsImNhdCI6ImNsX0I3ZDRQRDIyMkFBQSIsImtpZCI6Imluc18yWHJpUmJJUWhqSDc2NVV2dTE4MUs2d3VXdUkiLCJ0eXAiOiJKV1QifQ.eyJleHAiOjE3MzcwMDk5MjMsImlhdCI6MTczNjQwNTEyMywiaXNzIjoiaHR0cHM6Ly9jbGVyay5oeXBlcm1vZGUuY29tIiwianRpIjoiZGExMjlmZWU3OGNiODZiOGZlMGIiLCJuYmYiOjE3MzY0MDUxMTgsInN1YiI6InVzZXJfMmc5bVNFYnA1UjFhU0NwVThzb0p4aDVSZkFYIiwidXNlci1pZCI6InVzZXJfMmc5bVNFYnA1UjFhU0NwVThzb0p4aDVSZkFYIn0.RCLRv_tM3kFE9gfJmFrSTNzGnDiU3ty4bkVPSTTU0HDbmv8vhDe4S20J0VrmnHOu23fMQDQnQsWofiliGp32EKUqlIzCgl6FkKqD5SWCe4M_QztWDwiuckO31ArJCqz1VICWxHnndqAUy7IyYFe-KneVNeOVqygkk_BllenXHiWlNRZmjfEuw_imIOwa7U1RrDtllDS3YT-eaK2YTTzq4NWZImyZW4fpLTA0eR-xWSrQBmyW0wirff06Ak6bw0AqrcbUNcVQNFX94N5jrc9jYVbXOC3cWXrl_fnOZf1CqWwb85FidrB_ZwlyKmLuE7cmv8tIumt8hsWb1qWFw8-HdQ",
+        "HYP_ORG_ID": "org-018f1679-d9eb-7ce8-84d3-5304f97617c3",
         "FORCE_COLOR": "1",
         "MODUS_ENV": "dev",
         "MODUS_DEBUG": "true",
