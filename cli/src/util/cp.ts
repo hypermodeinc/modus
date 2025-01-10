@@ -9,6 +9,7 @@
 
 import util from "node:util";
 import cp from "node:child_process";
+import path from "node:path";
 
 /**
  * Promisified version of `child_process.execFile`.
@@ -27,7 +28,7 @@ export { exec };
  */
 export async function execFileWithExitCode(file: string, args?: string[], options?: cp.ExecFileOptions): Promise<{ stdout: string; stderr: string; exitCode: number }> {
   return new Promise((resolve, reject) => {
-    if (options?.shell) {
+    if (options?.shell && path.isAbsolute(file)) {
       file = `"${file}"`;
     }
 
