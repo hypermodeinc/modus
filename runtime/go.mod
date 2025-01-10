@@ -30,6 +30,7 @@ require (
 	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/google/renameio/v2 v2.0.0
 	github.com/google/uuid v1.6.0
+	github.com/hypermodeinc/modusdb v0.0.0-20250110005034-42b1452f7ad5
 	github.com/jackc/pgx/v5 v5.7.2
 	github.com/jensneuse/abstractlogger v0.0.4
 	github.com/joho/godotenv v1.5.1
@@ -88,7 +89,6 @@ require (
 	github.com/blevesearch/upsidedown_store_api v1.0.2 // indirect
 	github.com/cenkalti/backoff/v4 v4.3.0 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
-	github.com/containerd/log v0.1.0 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.3.0 // indirect
 	github.com/dgraph-io/badger/v4 v4.5.0 // indirect
@@ -140,7 +140,6 @@ require (
 	github.com/hashicorp/golang-lru v1.0.2 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/hashicorp/vault/api v1.15.0 // indirect
-	github.com/hypermodeinc/modusdb v0.0.0-20250105001212-7abdc7244d9b // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
@@ -170,10 +169,8 @@ require (
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/mitchellh/panicwrap v1.0.0 // indirect
 	github.com/moby/docker-image-spec v1.3.1 // indirect
-	github.com/moby/term v0.5.0 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
-	github.com/morikuni/aec v1.0.0 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.1.0 // indirect
@@ -237,6 +234,5 @@ require (
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	gotest.tools/v3 v3.5.1 // indirect
 	rogchap.com/v8go v0.9.0 // indirect
 )
