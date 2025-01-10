@@ -51,6 +51,21 @@ export function executeQuery(
 export class EagerResult {
   Keys: string[] = [];
   Records: Record[] = [];
+
+  __INITIALIZE(): this {
+    return this;
+  }
+
+  __SERIALIZE(): string {
+    return JSON.stringify(this);
+  }
+
+  __DESERIALIZE(data: string): boolean {
+    const obj = JSON.parse<EagerResult>(data);
+    this.Keys = obj.Keys;
+    this.Records = obj.Records;
+    return true;
+  }
 }
 
 export class Record {
@@ -110,6 +125,21 @@ export class Record {
     }
     return map;
   }
+
+  __INITIALIZE(): this {
+    return this;
+  }
+
+  __SERIALIZE(): string {
+    return JSON.stringify(this);
+  }
+
+  __DESERIALIZE(data: string): boolean {
+    const obj = JSON.parse<Record>(data);
+    this.Keys = obj.Keys;
+    this.Values = obj.Values;
+    return true;
+  }
 }
 
 
@@ -146,6 +176,22 @@ export class Node extends Entity {
 
   @alias("Labels")
   Labels!: string[];
+  
+  __INITIALIZE(): this {
+    return this;
+  }
+
+  __SERIALIZE(): string {
+    return JSON.stringify(this);
+  }
+
+  __DESERIALIZE(data: string): boolean {
+    const obj = JSON.parse<Node>(data);
+    this.ElementId = obj.ElementId;
+    this.Props = obj.Props;
+    this.Labels = obj.Labels;
+    return true;
+  }
 }
 
 
@@ -162,6 +208,24 @@ export class Relationship extends Entity {
 
   @alias("Type")
   Type!: string;
+
+  __INITIALIZE(): this {
+    return this;
+  }
+
+  __SERIALIZE(): string {
+    return JSON.stringify(this);
+  }
+
+  __DESERIALIZE(data: string): boolean {
+    const obj = JSON.parse<Relationship>(data);
+    this.ElementId = obj.ElementId;
+    this.Props = obj.Props;
+    this.StartElementId = obj.StartElementId;
+    this.EndElementId = obj.EndElementId;
+    this.Type = obj.Type;
+    return true;
+  }
 }
 
 
@@ -174,6 +238,21 @@ export class Path {
 
   @alias("Relationships")
   Relationships!: Relationship[];
+
+  __INITIALIZE(): this {
+    return this;
+  }
+
+  __SERIALIZE(): string {
+    return JSON.stringify(this);
+  }
+
+  __DESERIALIZE(data: string): boolean {
+    const obj = JSON.parse<Path>(data);
+    this.Nodes = obj.Nodes;
+    this.Relationships = obj.Relationships;
+    return true;
+  }
 }
 
 
@@ -193,6 +272,22 @@ export class Point2D {
 
   String(): string {
     return `Point{SpatialRefId=${this.SpatialRefId}, X=${this.X}, Y=${this.Y}}`;
+  }
+
+  __INITIALIZE(): this {
+    return this;
+  }
+
+  __SERIALIZE(): string {
+    return JSON.stringify(this);
+  }
+
+  __DESERIALIZE(data: string): boolean {
+    const obj = JSON.parse<Point2D>(data);
+    this.X = obj.X;
+    this.Y = obj.Y;
+    this.SpatialRefId = obj.SpatialRefId;
+    return true;
   }
 }
 
@@ -217,5 +312,22 @@ export class Point3D {
 
   String(): string {
     return `Point{SpatialRefId=${this.SpatialRefId}, X=${this.X}, Y=${this.Y}, Z=${this.Z}}`;
+  }
+
+  __INITIALIZE(): this {
+    return this;
+  }
+
+  __SERIALIZE(): string {
+    return JSON.stringify(this);
+  }
+
+  __DESERIALIZE(data: string): boolean {
+    const obj = JSON.parse<Point3D>(data);
+    this.X = obj.X;
+    this.Y = obj.Y;
+    this.Z = obj.Z;
+    this.SpatialRefId = obj.SpatialRefId;
+    return true;
   }
 }

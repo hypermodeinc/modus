@@ -30,13 +30,13 @@ func WithDbName(dbName string) Neo4jOption {
 }
 
 type EagerResult struct {
-	Keys    []string
-	Records []*Record
+	Keys    []string  `json:"Keys"`
+	Records []*Record `json:"Records"`
 }
 
 type Record struct {
-	Values []string
-	Keys   []string
+	Values []string `json:"Values"`
+	Keys   []string `json:"Keys"`
 }
 
 type RecordValue interface {
@@ -93,17 +93,17 @@ type PropertyValue interface {
 
 // Point2D represents a two dimensional point in a particular coordinate reference system.
 type Point2D struct {
-	X            float64
-	Y            float64
-	SpatialRefId uint32 // Id of coordinate reference system.
+	X            float64 `json:"X"`
+	Y            float64 `json:"Y"`
+	SpatialRefId uint32  `json:"SpatialRefId"` // Id of coordinate reference system.
 }
 
 // Point3D represents a three dimensional point in a particular coordinate reference system.
 type Point3D struct {
-	X            float64
-	Y            float64
-	Z            float64
-	SpatialRefId uint32 // Id of coordinate reference system.
+	X            float64 `json:"X"`
+	Y            float64 `json:"Y"`
+	Z            float64 `json:"Z"`
+	SpatialRefId uint32  `json:"SpatialRefId"` // Id of coordinate reference system.
 }
 
 // String returns string representation of this point.
