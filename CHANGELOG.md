@@ -2,6 +2,8 @@
 
 ## UNRELEASED
 
+- chore: update api-explorer to react 19 [#700](https://github.com/hypermodeinc/modus/pull/700)
+
 - fix: resolve warning in `deserializeRawMap` [#692](https://github.com/hypermodeinc/modus/pull/692)
 
 ## 2025-01-09 - CLI 0.16.6
