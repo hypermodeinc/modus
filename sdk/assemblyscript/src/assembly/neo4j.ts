@@ -223,29 +223,6 @@ export class Point2D {
   String(): string {
     return `Point{SpatialRefId=${this.SpatialRefId}, X=${this.X}, Y=${this.Y}}`;
   }
-
-  __INITIALIZE(): this {
-    return this;
-  }
-
-  __SERIALIZE(): string {
-    return JSON.stringify(this);
-  }
-
-  /* eslint-disable @typescript-eslint/no-unused-vars */
-  __DESERIALIZE(
-    data: string,
-    key_start: i32,
-    key_end: i32,
-    value_start: i32,
-    value_end: i32,
-  ): boolean {
-    const obj = JSON.parse<Point2D>(data);
-    this.X = obj.X;
-    this.Y = obj.Y;
-    this.SpatialRefId = obj.SpatialRefId;
-    return true;
-  }
 }
 
 
@@ -269,29 +246,5 @@ export class Point3D {
 
   String(): string {
     return `Point{SpatialRefId=${this.SpatialRefId}, X=${this.X}, Y=${this.Y}, Z=${this.Z}}`;
-  }
-
-  __INITIALIZE(): this {
-    return this;
-  }
-
-  __SERIALIZE(): string {
-    return JSON.stringify(this);
-  }
-
-  /* eslint-disable @typescript-eslint/no-unused-vars */
-  __DESERIALIZE(
-    data: string,
-    key_start: i32,
-    key_end: i32,
-    value_start: i32,
-    value_end: i32,
-  ): boolean {
-    const obj = JSON.parse<Point3D>(data);
-    this.X = obj.X;
-    this.Y = obj.Y;
-    this.Z = obj.Z;
-    this.SpatialRefId = obj.SpatialRefId;
-    return true;
   }
 }
