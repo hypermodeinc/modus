@@ -60,7 +60,14 @@ export class EagerResult {
     return JSON.stringify(this);
   }
 
-  __DESERIALIZE(data: string): boolean {
+  /* eslint-disable @typescript-eslint/no-unused-vars */
+  __DESERIALIZE(
+    data: string,
+    key_start: i32,
+    key_end: i32,
+    value_start: i32,
+    value_end: i32,
+  ): boolean {
     const obj = JSON.parse<EagerResult>(data);
     this.Keys = obj.Keys;
     this.Records = obj.Records;
@@ -134,7 +141,14 @@ export class Record {
     return JSON.stringify(this);
   }
 
-  __DESERIALIZE(data: string): boolean {
+  /* eslint-disable @typescript-eslint/no-unused-vars */
+  __DESERIALIZE(
+    data: string,
+    key_start: i32,
+    key_end: i32,
+    value_start: i32,
+    value_end: i32,
+  ): boolean {
     const obj = JSON.parse<Record>(data);
     this.Keys = obj.Keys;
     this.Values = obj.Values;
@@ -185,7 +199,14 @@ export class Node extends Entity {
     return JSON.stringify(this);
   }
 
-  __DESERIALIZE(data: string): boolean {
+  /* eslint-disable @typescript-eslint/no-unused-vars */
+  __DESERIALIZE(
+    data: string,
+    key_start: i32,
+    key_end: i32,
+    value_start: i32,
+    value_end: i32,
+  ): boolean {
     const obj = JSON.parse<Node>(data);
     this.ElementId = obj.ElementId;
     this.Props = obj.Props;
@@ -217,7 +238,14 @@ export class Relationship extends Entity {
     return JSON.stringify(this);
   }
 
-  __DESERIALIZE(data: string): boolean {
+  /* eslint-disable @typescript-eslint/no-unused-vars */
+  __DESERIALIZE(
+    data: string,
+    key_start: i32,
+    key_end: i32,
+    value_start: i32,
+    value_end: i32,
+  ): boolean {
     const obj = JSON.parse<Relationship>(data);
     this.ElementId = obj.ElementId;
     this.Props = obj.Props;
@@ -247,7 +275,14 @@ export class Path {
     return JSON.stringify(this);
   }
 
-  __DESERIALIZE(data: string): boolean {
+  /* eslint-disable @typescript-eslint/no-unused-vars */
+  __DESERIALIZE(
+    data: string,
+    key_start: i32,
+    key_end: i32,
+    value_start: i32,
+    value_end: i32,
+  ): boolean {
     const obj = JSON.parse<Path>(data);
     this.Nodes = obj.Nodes;
     this.Relationships = obj.Relationships;
@@ -282,7 +317,14 @@ export class Point2D {
     return JSON.stringify(this);
   }
 
-  __DESERIALIZE(data: string): boolean {
+  /* eslint-disable @typescript-eslint/no-unused-vars */
+  __DESERIALIZE(
+    data: string,
+    key_start: i32,
+    key_end: i32,
+    value_start: i32,
+    value_end: i32,
+  ): boolean {
     const obj = JSON.parse<Point2D>(data);
     this.X = obj.X;
     this.Y = obj.Y;
@@ -322,7 +364,14 @@ export class Point3D {
     return JSON.stringify(this);
   }
 
-  __DESERIALIZE(data: string): boolean {
+  /* eslint-disable @typescript-eslint/no-unused-vars */
+  __DESERIALIZE(
+    data: string,
+    key_start: i32,
+    key_end: i32,
+    value_start: i32,
+    value_end: i32,
+  ): boolean {
     const obj = JSON.parse<Point3D>(data);
     this.X = obj.X;
     this.Y = obj.Y;
