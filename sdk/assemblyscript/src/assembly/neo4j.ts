@@ -176,7 +176,7 @@ export class Node extends Entity {
 
   @alias("Labels")
   Labels!: string[];
-  
+
   __INITIALIZE(): this {
     return this;
   }
