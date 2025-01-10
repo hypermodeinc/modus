@@ -3,7 +3,8 @@
 ## UNRELEASED
 
 - fix: resolve warning in `deserializeRawMap` [#692](https://github.com/hypermodeinc/modus/pull/692)
-- fix: add json serialization support for neo4j sdk types [#699](https://github.com/hypermodeinc/modus/pull/699)
+- fix: add json serialization support for neo4j sdk types
+  [#699](https://github.com/hypermodeinc/modus/pull/699)
 
 ## 2025-01-09 - CLI 0.16.6
 
