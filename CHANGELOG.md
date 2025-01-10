@@ -4,6 +4,10 @@
 
 - fix: resolve warning in `deserializeRawMap` [#692](https://github.com/hypermodeinc/modus/pull/692)
 
+## 2025-01-09 - CLI 0.16.6
+
+- fix: assemblyscript builds failing [#698](https://github.com/hypermodeinc/modus/pull/698)
+
 ## 2025-01-07 - CLI 0.16.5
 
 - fix: handle space in user profile path [#696](https://github.com/hypermodeinc/modus/pull/696)
