@@ -178,6 +178,22 @@ func (r *Record) AsMap() map[string]string {
 	return result
 }
 
+func (r *Record) JSONMarshal() ([]byte, error) {
+	result := "{"
+	for i, k := range r.Keys {
+		keyBytes, err := utils.JsonSerialize(k)
+		if err != nil {
+			return nil, err
+		}
+		result += fmt.Sprintf("%s:%s", keyBytes, r.Values[i])
+		if i < len(r.Keys)-1 {
+			result += ","
+		}
+	}
+	result += "}"
+	return []byte(result), nil
+}
+
 func GetProperty[T PropertyValue](e Entity, key string) (T, error) {
 	var val T
 	rawVal, ok := e.GetProperties()[key]

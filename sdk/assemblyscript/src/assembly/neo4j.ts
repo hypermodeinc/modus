@@ -48,36 +48,16 @@ export function executeQuery(
   return response;
 }
 
+
+@json
 export class EagerResult {
   Keys: string[] = [];
   Records: Record[] = [];
-
-  __INITIALIZE(): this {
-    return this;
-  }
-
-  __SERIALIZE(): string {
-    return JSON.stringify(this);
-  }
-
-  /* eslint-disable @typescript-eslint/no-unused-vars */
-  __DESERIALIZE(
-    data: string,
-    key_start: i32,
-    key_end: i32,
-    value_start: i32,
-    value_end: i32,
-  ): boolean {
-    const obj = JSON.parse<EagerResult>(data);
-    this.Keys = obj.Keys;
-    this.Records = obj.Records;
-    return true;
-  }
 }
 
 export class Record {
-  Values: string[] = [];
   Keys: string[] = [];
+  Values: string[] = [];
 
   get(key: string): string {
     for (let i = 0; i < this.Keys.length; i++) {
@@ -138,7 +118,15 @@ export class Record {
   }
 
   __SERIALIZE(): string {
-    return JSON.stringify(this);
+    let result = "{";
+    for (let i = 0; i < this.Keys.length; i++) {
+      const keyJson = JSON.stringify(this.Keys[i]);
+      result += `${keyJson}:${this.Values[i]}`;
+      if (i < this.Keys.length - 1) {
+        result += ",";
+      }
+    }
+    return result + "}";
   }
 
   /* eslint-disable @typescript-eslint/no-unused-vars */
@@ -149,10 +137,7 @@ export class Record {
     value_start: i32,
     value_end: i32,
   ): boolean {
-    const obj = JSON.parse<Record>(data);
-    this.Keys = obj.Keys;
-    this.Values = obj.Values;
-    return true;
+    throw new Error("Not implemented.");
   }
 }
 
@@ -190,29 +175,6 @@ export class Node extends Entity {
 
   @alias("Labels")
   Labels!: string[];
-
-  __INITIALIZE(): this {
-    return this;
-  }
-
-  __SERIALIZE(): string {
-    return JSON.stringify(this);
-  }
-
-  /* eslint-disable @typescript-eslint/no-unused-vars */
-  __DESERIALIZE(
-    data: string,
-    key_start: i32,
-    key_end: i32,
-    value_start: i32,
-    value_end: i32,
-  ): boolean {
-    const obj = JSON.parse<Node>(data);
-    this.ElementId = obj.ElementId;
-    this.Props = obj.Props;
-    this.Labels = obj.Labels;
-    return true;
-  }
 }
 
 
@@ -229,31 +191,6 @@ export class Relationship extends Entity {
 
   @alias("Type")
   Type!: string;
-
-  __INITIALIZE(): this {
-    return this;
-  }
-
-  __SERIALIZE(): string {
-    return JSON.stringify(this);
-  }
-
-  /* eslint-disable @typescript-eslint/no-unused-vars */
-  __DESERIALIZE(
-    data: string,
-    key_start: i32,
-    key_end: i32,
-    value_start: i32,
-    value_end: i32,
-  ): boolean {
-    const obj = JSON.parse<Relationship>(data);
-    this.ElementId = obj.ElementId;
-    this.Props = obj.Props;
-    this.StartElementId = obj.StartElementId;
-    this.EndElementId = obj.EndElementId;
-    this.Type = obj.Type;
-    return true;
-  }
 }
 
 
@@ -266,28 +203,6 @@ export class Path {
 
   @alias("Relationships")
   Relationships!: Relationship[];
-
-  __INITIALIZE(): this {
-    return this;
-  }
-
-  __SERIALIZE(): string {
-    return JSON.stringify(this);
-  }
-
-  /* eslint-disable @typescript-eslint/no-unused-vars */
-  __DESERIALIZE(
-    data: string,
-    key_start: i32,
-    key_end: i32,
-    value_start: i32,
-    value_end: i32,
-  ): boolean {
-    const obj = JSON.parse<Path>(data);
-    this.Nodes = obj.Nodes;
-    this.Relationships = obj.Relationships;
-    return true;
-  }
 }
 
 
