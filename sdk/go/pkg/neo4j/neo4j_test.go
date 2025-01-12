@@ -21,6 +21,25 @@ var (
 	hostName = "myneo4j"
 )
 
+func TestRecordJSONMarshal(t *testing.T) {
+	record := neo4j.Record{
+		Keys:   []string{"name", "age", "friends"},
+		Values: []string{`"Alice"`, `"42"`, `["Bob","Peter","Anna"]`},
+	}
+
+	// Marshal the record to JSON
+	jsonBytes, err := record.JSONMarshal()
+	if err != nil {
+		t.Fatalf("Expected no error, but received: %v", err)
+	}
+
+	jsonStr := string(jsonBytes)
+	expectedJSONStr := `{"name":"Alice","age":"42","friends":["Bob","Peter","Anna"]}`
+	if jsonStr != expectedJSONStr {
+		t.Errorf("Expected JSON: %s, but received: %s", expectedJSONStr, jsonStr)
+	}
+}
+
 func TestExecuteQuery(t *testing.T) {
 	dbName := "mydb"
 	query := "query"
