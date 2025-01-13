@@ -48,14 +48,16 @@ export function executeQuery(
   return response;
 }
 
+
+@json
 export class EagerResult {
   Keys: string[] = [];
   Records: Record[] = [];
 }
 
 export class Record {
-  Values: string[] = [];
   Keys: string[] = [];
+  Values: string[] = [];
 
   get(key: string): string {
     for (let i = 0; i < this.Keys.length; i++) {
@@ -109,6 +111,33 @@ export class Record {
       map.set(this.Keys[i], this.Values[i]);
     }
     return map;
+  }
+
+  __INITIALIZE(): this {
+    return this;
+  }
+
+  __SERIALIZE(): string {
+    let result = "{";
+    for (let i = 0; i < this.Keys.length; i++) {
+      const keyJson = JSON.stringify(this.Keys[i]);
+      result += `${keyJson}:${this.Values[i]}`;
+      if (i < this.Keys.length - 1) {
+        result += ",";
+      }
+    }
+    return result + "}";
+  }
+
+  /* eslint-disable @typescript-eslint/no-unused-vars */
+  __DESERIALIZE(
+    data: string,
+    key_start: i32,
+    key_end: i32,
+    value_start: i32,
+    value_end: i32,
+  ): boolean {
+    throw new Error("Not implemented.");
   }
 }
 

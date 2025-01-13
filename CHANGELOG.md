@@ -2,7 +2,15 @@
 
 ## UNRELEASED
 
+- chore: update api-explorer to react 19 [#700](https://github.com/hypermodeinc/modus/pull/700)
+
 - fix: resolve warning in `deserializeRawMap` [#692](https://github.com/hypermodeinc/modus/pull/692)
+- fix: add json serialization support for neo4j sdk types
+  [#699](https://github.com/hypermodeinc/modus/pull/699)
+
+## 2025-01-09 - CLI 0.16.6
+
+- fix: assemblyscript builds failing [#698](https://github.com/hypermodeinc/modus/pull/698)
 
 ## 2025-01-07 - CLI 0.16.5
 
