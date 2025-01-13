@@ -30,6 +30,7 @@ import (
 	"github.com/hypermodeinc/modus/runtime/manifestdata"
 	"github.com/hypermodeinc/modus/runtime/metrics"
 	"github.com/hypermodeinc/modus/runtime/middleware"
+	"github.com/hypermodeinc/modus/runtime/utils"
 
 	"github.com/fatih/color"
 	"github.com/rs/cors"
@@ -265,12 +266,16 @@ var InferenceHistoryHandler = http.HandlerFunc(inferenceHistoryHandler)
 var PluginHandler = http.HandlerFunc(pluginHandler)
 
 func inferenceHistoryHandler(w http.ResponseWriter, r *http.Request) {
-	resp, err := db.QueryInferences()
+
+	inferences, err := db.QueryInferences()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	fmt.Fprint(w, resp)
+
+	utils.WriteJsonContentHeader(w)
+	j, _ := utils.JsonSerialize(inferences)
+	_, _ = w.Write(j)
 }
 
 func pluginHandler(w http.ResponseWriter, r *http.Request) {
