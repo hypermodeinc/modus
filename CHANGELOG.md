@@ -3,6 +3,8 @@
 ## UNRELEASED
 
 - chore: update api-explorer to react 19 [#700](https://github.com/hypermodeinc/modus/pull/700)
+- chore: add meta-llama/llama-3.2-3b-instruct to localHypermodeModels
+  [#703](https://github.com/hypermodeinc/modus/pull/703)
 
 - fix: resolve warning in `deserializeRawMap` [#692](https://github.com/hypermodeinc/modus/pull/692)
 - fix: add json serialization support for neo4j sdk types
