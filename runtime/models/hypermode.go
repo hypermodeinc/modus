@@ -61,6 +61,7 @@ func authenticateHypermodeModelRequest(ctx context.Context, req *http.Request, c
 // This list may be updated as new models are added.
 var localHypermodeModels = map[string]bool{
 	"meta-llama/meta-llama-3.1-8b-instruct":                      true,
+	"meta-llama/llama-3.2-3b-instruct":                           true,
 	"sentence-transformers/all-minilm-l6-v2":                     true,
 	"antoinemc/distilbart-mnli-github-issues":                    true,
 	"distilbert/distilbert-base-uncased-finetuned-sst-2-english": true,
