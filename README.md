@@ -152,7 +152,7 @@ to the authors and teams of our core dependencies:
 
 ## License
 
-Modus and its components are Copyright 2024 Hypermode Inc., and licensed under the terms of the
+Modus and its components are Copyright 2025 Hypermode Inc., and licensed under the terms of the
 Apache License, Version 2.0. See the [LICENSE](./LICENSE) file for a complete copy of the license.
 
 If you have any questions about Modus licensing, or need an alternate license or other arrangement,
