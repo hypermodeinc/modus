@@ -2,11 +2,11 @@
 
 ## UNRELEASED
 
-- chore: update api-explorer to react 19 [#700](https://github.com/hypermodeinc/modus/pull/700)
-
 - fix: resolve warning in `deserializeRawMap` [#692](https://github.com/hypermodeinc/modus/pull/692)
 - fix: add json serialization support for neo4j sdk types
   [#699](https://github.com/hypermodeinc/modus/pull/699)
+- chore: update api-explorer to react 19 [#700](https://github.com/hypermodeinc/modus/pull/700)
+- fix: remove fallback to default time zone [#706](https://github.com/hypermodeinc/modus/pull/706)
 
 ## 2025-01-09 - CLI 0.16.6
 
