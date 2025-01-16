@@ -130,6 +130,10 @@ func GenerateTextWithTools(prompt string) (string, error) {
 
 // This function will return the current time in a given time zone.
 func getCurrentTime(tz string) (string, error) {
+	if !localtime.IsValidTimeZone(tz) {
+		return "", errors.New("Invalid time zone.")
+	}
+
 	now, err := localtime.NowInZone(tz)
 	if err != nil {
 		return "", err
