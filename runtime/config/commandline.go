@@ -38,7 +38,7 @@ func parseCommandLineFlags() {
 	var showVersion bool
 	const versionUsage = "Show the Runtime version number and exit."
 	flag.BoolVar(&showVersion, "version", false, versionUsage)
-	flag.BoolVar(&showVersion, "v", false, versionUsage+" (shorthand)")
+	// flag.BoolVar(&showVersion, "v", false, versionUsage+" (shorthand)")
 
 	flag.Parse()
 
