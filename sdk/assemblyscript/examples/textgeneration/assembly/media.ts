@@ -112,8 +112,6 @@ export function describeRandomImage(): Media {
   // Describe the image using the OpenAI chat model.
   const model = models.getModel<OpenAIChatModel>("text-generator");
 
-  model.debug = true;
-
   const input = model.createInput([
     UserMessage.fromParts([
       new TextContentPart("Describe this image."),

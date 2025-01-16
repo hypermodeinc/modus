@@ -24,8 +24,6 @@ import {
 export function generateTextWithTools(prompt: string): string {
   const model = models.getModel<OpenAIChatModel>("text-generator");
 
-  model.debug = true;
-
   const instruction = `
 	You are a helpful assistant that understands time in various parts of the world.
 	Answer the user's question as directly as possible. If you need more information, ask for it.
