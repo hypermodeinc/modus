@@ -61,11 +61,11 @@ func GetTimeInZone(ctx context.Context, tz *string) *string {
 		loc = timezones.GetLocation(tz)
 	}
 
-	if loc != nil {
-		now = now.In(loc)
+	if loc == nil {
+		return nil
 	}
 
-	s := now.Format(time.RFC3339Nano)
+	s := now.In(loc).Format(time.RFC3339Nano)
 	return &s
 }
 

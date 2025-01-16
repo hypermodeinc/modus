@@ -17,12 +17,12 @@ import (
 )
 
 var dataDir = "data"
-var GlobalModusDb *modusdb.DB
+var GlobalModusDbEngine *modusdb.Engine
 
 func InitModusDb(ctx context.Context) {
 	// Initialize the database connection.
 	var err error
-	GlobalModusDb, err = modusdb.New(modusdb.NewDefaultConfig(dataDir))
+	GlobalModusDbEngine, err = modusdb.NewEngine(modusdb.NewDefaultConfig(dataDir))
 	if err != nil {
 		logger.Fatal(ctx).Err(err).Msg("Failed to initialize modusdb.")
 		return
@@ -30,7 +30,7 @@ func InitModusDb(ctx context.Context) {
 }
 
 func CloseModusDb(ctx context.Context) {
-	if GlobalModusDb != nil {
-		GlobalModusDb.Close()
+	if GlobalModusDbEngine != nil {
+		GlobalModusDbEngine.Close()
 	}
 }

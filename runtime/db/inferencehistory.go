@@ -33,17 +33,16 @@ var globalRuntimePostgresWriter *runtimePostgresWriter = &runtimePostgresWriter{
 }
 
 type Plugin struct {
-	Gid        uint64      `json:"gid,omitempty"`
-	Id         string      `json:"id,omitempty" db:"constraint=unique"`
-	Name       string      `json:"name,omitempty"`
-	Version    string      `json:"version,omitempty"`
-	Language   string      `json:"language,omitempty"`
-	SdkVersion string      `json:"sdk_version,omitempty"`
-	BuildId    string      `json:"build_id,omitempty"`
-	BuildTime  string      `json:"build_time,omitempty"`
-	GitRepo    string      `json:"git_repo,omitempty"`
-	GitCommit  string      `json:"git_commit,omitempty"`
-	Inferences []Inference `json:"inferences,omitempty" readFrom:"type=Inference,field=plugin"`
+	Gid        uint64 `json:"gid,omitempty"`
+	Id         string `json:"id,omitempty" db:"constraint=unique"`
+	Name       string `json:"name,omitempty"`
+	Version    string `json:"version,omitempty"`
+	Language   string `json:"language,omitempty"`
+	SdkVersion string `json:"sdk_version,omitempty"`
+	BuildId    string `json:"build_id,omitempty"`
+	BuildTime  string `json:"build_time,omitempty"`
+	GitRepo    string `json:"git_repo,omitempty"`
+	GitCommit  string `json:"git_commit,omitempty"`
 }
 
 type Inference struct {
@@ -248,7 +247,7 @@ ON CONFLICT (build_id) DO NOTHING`,
 }
 
 func writePluginInfoToModusdb(plugin *plugins.Plugin) error {
-	_, _, err := modusdb.Create[Plugin](GlobalModusDb, Plugin{
+	_, _, err := modusdb.Create[Plugin](GlobalModusDbEngine, Plugin{
 		Id:         plugin.Id,
 		Name:       plugin.Metadata.Name(),
 		Version:    plugin.Metadata.Version(),
@@ -372,7 +371,7 @@ func writeInferenceHistoryToModusDb(batch []inferenceHistory) error {
 		} else {
 			pluginId = *data.pluginId
 		}
-		_, _, err = modusdb.Create[Inference](GlobalModusDb, Inference{
+		_, _, err = modusdb.Create[Inference](GlobalModusDbEngine, Inference{
 			Id:         utils.GenerateUUIDv7(),
 			ModelHash:  data.model.Hash(),
 			Input:      string(input),
@@ -392,11 +391,11 @@ func writeInferenceHistoryToModusDb(batch []inferenceHistory) error {
 }
 
 func QueryPlugins() ([]Plugin, error) {
-	_, plugins, err := modusdb.Query[Plugin](GlobalModusDb, modusdb.QueryParams{})
+	_, plugins, err := modusdb.Query[Plugin](GlobalModusDbEngine, modusdb.QueryParams{})
 	return plugins, err
 }
 
 func QueryInferences() ([]Inference, error) {
-	_, inferences, err := modusdb.Query[Inference](GlobalModusDb, modusdb.QueryParams{})
+	_, inferences, err := modusdb.Query[Inference](GlobalModusDbEngine, modusdb.QueryParams{})
 	return inferences, err
 }
