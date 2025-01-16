@@ -7,6 +7,8 @@
   [#699](https://github.com/hypermodeinc/modus/pull/699)
 - chore: update api-explorer to react 19 [#700](https://github.com/hypermodeinc/modus/pull/700)
 - fix: remove fallback to default time zone [#706](https://github.com/hypermodeinc/modus/pull/706)
+- feat: improve OpenAI model APIs and examples to better support audio, images, and tool calling
+  [#707](https://github.com/hypermodeinc/modus/pull/707)
 
 ## 2025-01-09 - CLI 0.16.6
 

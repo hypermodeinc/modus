@@ -8,9 +8,15 @@
     }
   },
   "models": {
-    // This defines the model that will be used for text generation.
+    // This defines the models that will be used for text generation.
     "text-generator": {
-      "sourceModel": "gpt-3.5-turbo",
+      "sourceModel": "gpt-4o-mini",
+      "connection": "openai",
+      "path": "v1/chat/completions"
+    },
+    // This defines the models that will be used for audio input and output.
+    "audio-model": {
+      "sourceModel": "gpt-4o-audio-preview",
       "connection": "openai",
       "path": "v1/chat/completions"
     }
@@ -24,6 +30,17 @@
       "headers": {
         "Authorization": "Bearer {{API_KEY}}"
       }
+    },
+
+    // These are some additional hosts that we use in the examples
+    // for fetching images and audio files.
+    "picsum": {
+      "type": "http",
+      "baseUrl": "https://picsum.photos/"
+    },
+    "openspeech": {
+      "type": "http",
+      "baseUrl": "https://www.voiptroubleshooter.com/open_speech/"
     }
   }
 }

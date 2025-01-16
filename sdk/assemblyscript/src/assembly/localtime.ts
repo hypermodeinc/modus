@@ -54,3 +54,15 @@ export function NowInZone(tz: string): string {
 export function GetTimeZone(): string {
   return process.env.get("TZ");
 }
+
+/**
+ * Determines whether the specified time zone is valid.
+ * @param tz A time zone identifier, in IANA format.
+ * @returns `true` if the time zone is valid; otherwise, `false`.
+ */
+export function IsValidTimeZone(tz: string): bool {
+  if (tz === "") {
+    return false;
+  }
+  return hostGetTimeInZone(tz) !== null;
+}
