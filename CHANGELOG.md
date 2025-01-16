@@ -3,7 +3,7 @@
 ## UNRELEASED
 
 - chore: update api-explorer to react 19 [#700](https://github.com/hypermodeinc/modus/pull/700)
-- chore: add meta-llama/llama-3.2-3b-instruct to localHypermodeModels
+- chore: remove localHypermodeModels list and handle 404s properly instead in local dev
   [#703](https://github.com/hypermodeinc/modus/pull/703)
 
 - fix: resolve warning in `deserializeRawMap` [#692](https://github.com/hypermodeinc/modus/pull/692)
