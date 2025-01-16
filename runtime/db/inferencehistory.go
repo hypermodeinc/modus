@@ -384,6 +384,9 @@ func writeInferenceHistoryToModusDb(batch []inferenceHistory) error {
 				Id: pluginId,
 			},
 		})
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
