@@ -27,9 +27,6 @@ func getHypermodeModelEndpointUrl(model *manifest.ModelInfo) (string, error) {
 	// In development, use the shared Hypermode model server.
 	// Note: Authentication via the Hypermode CLI is required.
 	if config.IsDevEnvironment() {
-		if _, ok := localHypermodeModels[strings.ToLower(model.SourceModel)]; !ok {
-			return "", fmt.Errorf("model %s is not available in the local dev environment", model.SourceModel)
-		}
 		endpoint := fmt.Sprintf("https://models.hypermode.host/%s", strings.ToLower(model.SourceModel))
 		return endpoint, nil
 	}
@@ -54,14 +51,4 @@ func authenticateHypermodeModelRequest(ctx context.Context, req *http.Request, c
 
 	// In production, the Hypermode infrastructure protects the model server.
 	return nil
-}
-
-// cSpell:disable
-// These are the Hypermode models that are available in the local dev environment.
-// This list may be updated as new models are added.
-var localHypermodeModels = map[string]bool{
-	"meta-llama/meta-llama-3.1-8b-instruct":                      true,
-	"sentence-transformers/all-minilm-l6-v2":                     true,
-	"antoinemc/distilbart-mnli-github-issues":                    true,
-	"distilbert/distilbert-base-uncased-finetuned-sst-2-english": true,
 }

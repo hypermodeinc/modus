@@ -6,6 +6,8 @@
 - fix: add json serialization support for neo4j sdk types
   [#699](https://github.com/hypermodeinc/modus/pull/699)
 - chore: update api-explorer to react 19 [#700](https://github.com/hypermodeinc/modus/pull/700)
+- chore: remove localHypermodeModels list and handle 404s properly instead in local dev
+  [#703](https://github.com/hypermodeinc/modus/pull/703)
 - fix: remove fallback to default time zone [#706](https://github.com/hypermodeinc/modus/pull/706)
 
 ## 2025-01-09 - CLI 0.16.6

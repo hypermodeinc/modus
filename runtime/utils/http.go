@@ -20,6 +20,15 @@ import (
 
 var httpClient = &http.Client{}
 
+type HttpError struct {
+	StatusCode int
+	Message    string
+}
+
+func (e *HttpError) Error() string {
+	return "HTTP error: " + e.Message
+}
+
 func HttpClient() *http.Client {
 	return httpClient
 }
@@ -38,9 +47,15 @@ func sendHttp(req *http.Request) ([]byte, error) {
 
 	if response.StatusCode != http.StatusOK {
 		if len(body) == 0 {
-			return nil, fmt.Errorf("HTTP error: %s", response.Status)
+			return nil, &HttpError{
+				StatusCode: response.StatusCode,
+				Message:    response.Status,
+			}
 		} else {
-			return nil, fmt.Errorf("HTTP error: %s\n%s", response.Status, body)
+			return nil, &HttpError{
+				StatusCode: response.StatusCode,
+				Message:    fmt.Sprintf("%s\n%s", response.Status, body),
+			}
 		}
 	}
 
