@@ -144,8 +144,6 @@ github.com/blevesearch/upsidedown_store_api v1.0.2 h1:U53Q6YoWEARVLd1OYNc9kvhBMG
 github.com/blevesearch/upsidedown_store_api v1.0.2/go.mod h1:M01mh3Gpfy56Ps/UXHjEO/knbqyQ1Oamg8If49gRwrQ=
 github.com/buger/jsonparser v1.1.1 h1:2PnMjfWD7wBILjqQbt530v576A/cAbQvEW9gGIpYMUs=
 github.com/buger/jsonparser v1.1.1/go.mod h1:6RYKKt7H4d4+iWqouImQ9R2FZql3VbhNgx27UK13J/0=
-github.com/cavaliergopher/grab/v3 v3.0.1 h1:4z7TkBfmPjmLAAmkkAZNX/6QJ1nNFdv3SdIHXju0Fr4=
-github.com/cavaliergopher/grab/v3 v3.0.1/go.mod h1:1U/KNnD+Ft6JJiYoYBAimKH2XrYptb8Kl3DFGmsjpq4=
 github.com/cenkalti/backoff/v4 v4.3.0 h1:MyRJ/UdXutAwSAT+s3wNd7MfTIcy71VQueUuFK343L8=
 github.com/cenkalti/backoff/v4 v4.3.0/go.mod h1:Y3VNntkOUPxTVeUxJ/G5vcM//AlwfmyYozVcomhLiZE=
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=
@@ -452,8 +450,6 @@ github.com/hypermodeinc/modus/lib/metadata v0.15.0 h1:Qu75TZg7l43Fi61EhnjasTHZvz
 github.com/hypermodeinc/modus/lib/metadata v0.15.0/go.mod h1:vnIwX2DpQyGk93DawGgIaqC5jEdvMeA9tGtvefbwTJw=
 github.com/hypermodeinc/modus/lib/wasmextractor v0.13.0 h1:9o8qqAllL9qIPYqc5adF+Aw3XWLmLqPiBPMu0AIyiMI=
 github.com/hypermodeinc/modus/lib/wasmextractor v0.13.0/go.mod h1:YCesMU95vF5qkscLMKSYr92OloLe1KGwyiqW2i4OmnE=
-github.com/hypermodeinc/modusdb v0.0.0-20250110005034-42b1452f7ad5 h1:syxhMulbhLAjRwgNSuguSRqQeZzfPY99VttjGF0Gjt8=
-github.com/hypermodeinc/modusdb v0.0.0-20250110005034-42b1452f7ad5/go.mod h1:QvHdKMIJfHbFq5t1l2PEBNjiIj3lZnT5vt+cYvpFEog=
 github.com/hypermodeinc/modusdb v0.0.0-20250116002022-9b6934ef45e9 h1:jT174VanHlLJxTVRzio/r4b+UtfrKJeSFhZr4psrmPY=
 github.com/hypermodeinc/modusdb v0.0.0-20250116002022-9b6934ef45e9/go.mod h1:QvHdKMIJfHbFq5t1l2PEBNjiIj3lZnT5vt+cYvpFEog=
 github.com/ianlancetaylor/demangle v0.0.0-20181102032728-5e5cf60278f6/go.mod h1:aSSvb/t6k1mPoxDqO4vJh6VOCGPwU4O0C2/Eqndh1Sc=
