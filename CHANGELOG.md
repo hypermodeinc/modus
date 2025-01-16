@@ -3,6 +3,8 @@
 ## UNRELEASED
 
 - fix: resolve warning in `deserializeRawMap` [#692](https://github.com/hypermodeinc/modus/pull/692)
+- feat: add modusdb model tracing for local dev
+  [#697](https://github.com/hypermodeinc/modus/pull/697)
 - fix: add json serialization support for neo4j sdk types
   [#699](https://github.com/hypermodeinc/modus/pull/699)
 - chore: update api-explorer to react 19 [#700](https://github.com/hypermodeinc/modus/pull/700)
