@@ -80,6 +80,7 @@ require (
 	github.com/aws/smithy-go v1.22.1 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bits-and-blooms/bitset v1.17.0 // indirect
+	// trunk-ignore(osv-scanner/GHSA-9w9f-6mg8-jp7w)
 	github.com/blevesearch/bleve/v2 v2.4.3 // indirect
 	github.com/blevesearch/bleve_index_api v1.1.12 // indirect
 	github.com/blevesearch/geo v0.1.20 // indirect
