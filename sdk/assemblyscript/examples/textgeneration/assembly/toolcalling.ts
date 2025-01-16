@@ -89,20 +89,24 @@ export function generateTextWithTools(prompt: string): string {
         // or we can end the conversation by returning error directly or throwing an exception.
         //
         // NOTE: A future release of Modus may simplify this process.
+        let toolMsg: ToolMessage<string>;
         const fnName = tc.function.name;
         if (fnName === "getCurrentTime") {
           const args = JSON.parse<Map<string, string>>(tc.function.arguments);
           const result = getCurrentTime(args.get("tz"));
-          input.messages.push(new ToolMessage(result, tc.id));
+          toolMsg = new ToolMessage(result, tc.id);
         } else if (fnName === "getUserTimeZone") {
           const timeZone = getUserTimeZone();
-          input.messages.push(new ToolMessage(timeZone, tc.id));
+          toolMsg = new ToolMessage(timeZone, tc.id);
         } else if (fnName === "getCurrentTimeInUserTimeZone") {
           const result = getCurrentTimeInUserTimeZone();
-          input.messages.push(new ToolMessage(result, tc.id));
+          toolMsg = new ToolMessage(result, tc.id);
         } else {
           throw new Error(`Unknown tool call: ${tc.function.name}`);
         }
+
+        // Add the tool's response to the conversation.
+        input.messages.push(toolMsg);
       }
     } else if (msg.content != "") {
       // return the model's final response to the user.

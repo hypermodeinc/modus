@@ -89,30 +89,34 @@ func GenerateTextWithTools(prompt string) (string, error) {
 				// or we can end the conversation by returning the error directly.
 				//
 				// NOTE: A future release of Modus may simplify this process.
+				var toolMsg *openai.ToolMessage[string]
 				switch tc.Function.Name {
 
 				case "getCurrentTime":
 					tz := gjson.Get(tc.Function.Arguments, "tz").Str
 					if result, err := getCurrentTime(tz); err == nil {
-						input.Messages = append(input.Messages, openai.NewToolMessage(result, tc.Id))
+						toolMsg = openai.NewToolMessage(result, tc.Id)
 					} else {
-						input.Messages = append(input.Messages, openai.NewToolMessage(err, tc.Id))
+						toolMsg = openai.NewToolMessage(err, tc.Id)
 					}
 
 				case "getUserTimeZone":
 					timeZone := getUserTimeZone()
-					input.Messages = append(input.Messages, openai.NewToolMessage(timeZone, tc.Id))
+					toolMsg = openai.NewToolMessage(timeZone, tc.Id)
 
 				case "getCurrentTimeInUserTimeZone":
 					if result, err := getCurrentTimeInUserTimeZone(); err == nil {
-						input.Messages = append(input.Messages, openai.NewToolMessage(result, tc.Id))
+						toolMsg = openai.NewToolMessage(result, tc.Id)
 					} else {
-						input.Messages = append(input.Messages, openai.NewToolMessage(err, tc.Id))
+						toolMsg = openai.NewToolMessage(err, tc.Id)
 					}
 
 				default:
 					return "", fmt.Errorf("Unknown tool call: %s", tc.Function.Name)
 				}
+
+				// Add the tool's response to the conversation.
+				input.Messages = append(input.Messages, toolMsg)
 			}
 
 		} else if msg.Content != "" {
