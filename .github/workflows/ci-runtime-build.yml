@@ -37,4 +37,4 @@ jobs:
           cache-dependency-path: runtime/go.sum
       - name: Build Runtime
         working-directory: runtime
-        run: go build
+        run: go build ${{ matrix.os == 'windows' && '-ldflags "-checklinkname=0"' || '' }}
