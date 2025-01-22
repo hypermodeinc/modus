@@ -13,18 +13,18 @@
   },
   "dependencies": {
     "@hypermode/modus-sdk-as": "../../src",
-    "json-as": "^0.9.26"
+    "json-as": "^0.9.28"
   },
   "devDependencies": {
-    "@eslint/js": "^9.17.0",
+    "@eslint/js": "^9.18.0",
     "@types/eslint__js": "^8.42.3",
-    "@typescript-eslint/parser": "^8.19.1",
-    "assemblyscript": "^0.27.31",
+    "@typescript-eslint/parser": "^8.21.0",
+    "assemblyscript": "^0.27.32",
     "assemblyscript-prettier": "^3.0.1",
-    "eslint": "^9.17.0",
+    "eslint": "^9.18.0",
     "prettier": "^3.4.2",
-    "typescript": "^5.7.2",
-    "typescript-eslint": "^8.18.2",
+    "typescript": "^5.7.3",
+    "typescript-eslint": "^8.21.0",
     "visitor-as": "^0.11.4"
   },
   "overrides": {
