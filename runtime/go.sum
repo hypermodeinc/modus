@@ -367,6 +367,8 @@ github.com/wundergraph/graphql-go-tools/v2 v2.0.0-rc.137 h1:SKLnBI1Fjc0pqF/NJZYi
 github.com/wundergraph/graphql-go-tools/v2 v2.0.0-rc.137/go.mod h1:ykbiuySgYVDsvzMs1O4cPKuPDtN4qX8ziYP1CTtgEIA=
 github.com/wundergraph/graphql-go-tools/v2 v2.0.0-rc.139 h1:ZxdsKeD3igrOpJtpyUk+Y9jC+///mj2MN/t9mDeX/7E=
 github.com/wundergraph/graphql-go-tools/v2 v2.0.0-rc.139/go.mod h1:B7eV0Qh8Lop9QzIOQcsvKp3S0ejfC6mgyWoJnI917yQ=
+github.com/wundergraph/graphql-go-tools/v2 v2.0.0-rc.140 h1:jY7/zZFCdilHFq1muGLCt/NfEn5Sk2+plQ3DY6JVf64=
+github.com/wundergraph/graphql-go-tools/v2 v2.0.0-rc.140/go.mod h1:B7eV0Qh8Lop9QzIOQcsvKp3S0ejfC6mgyWoJnI917yQ=
 github.com/yuin/goldmark v1.1.27/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
 github.com/yuin/goldmark v1.2.1/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
 go.opentelemetry.io/auto/sdk v1.1.0 h1:cH53jehLUN6UFLY71z+NDOiNJqDdPRaXzTel0sJySYA=
