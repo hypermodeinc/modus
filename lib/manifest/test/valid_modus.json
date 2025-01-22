@@ -64,6 +64,10 @@
       "type": "postgresql",
       "connString": "postgresql://{{POSTGRESQL_USERNAME}}:{{POSTGRESQL_PASSWORD}}@1.2.3.4:5432/data?sslmode=disable"
     },
+    "my-mysql": {
+      "type": "mysql",
+      "connString": "mysql://{{MYSQL_USERNAME}}:{{MYSQL_PASSWORD}}@1.2.3.4:3306/mydb?sslmode=disable"
+    },
     "my-dgraph-cloud": {
       "type": "dgraph",
       "grpcTarget": "frozen-mango.grpc.eu-central-1.aws.cloud.dgraph.io:443",
