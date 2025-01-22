@@ -23,6 +23,7 @@ class HostQueryResponse {
   error!: string | null;
   resultJson!: string | null;
   rowsAffected!: u32;
+  lastInsertId!: u64;
 }
 
 interface Params {
@@ -66,6 +67,7 @@ export class NamedParams implements Params {
 export class Response {
   error: string | null = null;
   rowsAffected: u32 = 0;
+  lastInsertId: u64 = 0;
 }
 
 export class QueryResponse<T> extends Response {
@@ -105,6 +107,7 @@ export function execute(
   const results: Response = {
     error: response.error,
     rowsAffected: response.rowsAffected,
+    lastInsertId: response.lastInsertId,
   };
 
   return results;
@@ -136,6 +139,7 @@ export function query<T>(
     error: response.error,
     rows: response.resultJson ? JSON.parse<T[]>(response.resultJson!) : [],
     rowsAffected: response.rowsAffected,
+    lastInsertId: response.rowsAffected,
   };
 
   return results;
@@ -157,5 +161,155 @@ export function queryScalar<T>(
     error: response.error,
     value: response.rows[0].values()[0],
     rowsAffected: response.rowsAffected,
+    lastInsertId: response.rowsAffected,
   };
+}
+
+/**
+ * Represents a point in 2D space, having `x` and `y` coordinates.
+ * Correctly serializes to and from a SQL point type, in (x, y) order.
+ *
+ * Note that this class is identical to the Location class, but uses different field names.
+ */
+export class Point {
+  constructor(
+    public x: f64,
+    public y: f64,
+  ) {}
+
+  public toString(): string {
+    return `(${this.x},${this.y})`;
+  }
+
+  public static fromString(data: string): Point | null {
+    const p = parsePointString(data);
+    if (p.length == 0) {
+      return null;
+    }
+    return new Point(p[0], p[1]);
+  }
+
+  // The following methods are required for custom JSON serialization
+  // This is used in lieu of the @json decorator, so that the class can be
+  // serialized to a string in SQL format.
+
+  __INITIALIZE(): this {
+    return this;
+  }
+
+  __SERIALIZE(): string {
+    return this.toString();
+  }
+
+  /* eslint-disable @typescript-eslint/no-unused-vars */
+  __DESERIALIZE(
+    data: string,
+    key_start: i32,
+    key_end: i32,
+    value_start: i32,
+    value_end: i32,
+  ): boolean {
+    if (
+      data.length < 7 ||
+      data.charAt(0) != '"' ||
+      data.charAt(data.length - 1) != '"'
+    ) {
+      return false;
+    }
+
+    const p = parsePointString(data.substring(1, data.length - 1));
+    if (p.length == 0) {
+      return false;
+    }
+
+    this.x = p[0];
+    this.y = p[1];
+    return true;
+  }
+}
+
+/**
+ * Represents a location on Earth, having `longitude` and `latitude` coordinates.
+ * Correctly serializes to and from a SQL point type, in (longitude, latitude) order.
+ *
+ * Note that this class is identical to the `Point` class, but uses different field names.
+ */
+export class Location {
+  constructor(
+    public longitude: f64,
+    public latitude: f64,
+  ) {}
+
+  public toString(): string {
+    return `(${this.longitude},${this.latitude})`;
+  }
+
+  public static fromString(data: string): Point | null {
+    const p = parsePointString(data);
+    if (p.length == 0) {
+      return null;
+    }
+    return new Point(p[0], p[1]);
+  }
+
+  // The following methods are required for custom JSON serialization
+  // This is used in lieu of the @json decorator, so that the class can be
+  // serialized to a string in SQL format.
+
+  __INITIALIZE(): this {
+    return this;
+  }
+
+  __SERIALIZE(): string {
+    return this.toString();
+  }
+
+  /* eslint-disable @typescript-eslint/no-unused-vars */
+  __DESERIALIZE(
+    data: string,
+    key_start: i32,
+    key_end: i32,
+    value_start: i32,
+    value_end: i32,
+  ): boolean {
+    if (
+      data.length < 7 ||
+      data.charAt(0) != '"' ||
+      data.charAt(data.length - 1) != '"'
+    ) {
+      return false;
+    }
+
+    const p = parsePointString(data.substring(1, data.length - 1));
+    if (p.length == 0) {
+      return false;
+    }
+
+    this.longitude = p[0];
+    this.latitude = p[1];
+    return true;
+  }
+}
+
+function parsePointString(data: string): f64[] {
+  // Convert WKT point to Postgres format
+  // "POINT (x y)" -> "(x, y)"
+  if (data.startsWith("POINT (") && data.endsWith(")")) {
+    data = data.substring(6, data.length).replace(" ", ",");
+  }
+
+  if (!data.startsWith("(") || !data.endsWith(")")) {
+    console.error(`Invalid Point string: "${data}"`);
+    return [];
+  }
+
+  const parts = data.substring(1, data.length - 1).split(",");
+  if (parts.length != 2) {
+    console.error(`Invalid Point string: "${data}"`);
+    return [];
+  }
+
+  const x = parseFloat(parts[0].trim());
+  const y = parseFloat(parts[1].trim());
+  return [x, y];
 }

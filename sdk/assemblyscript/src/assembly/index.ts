@@ -10,6 +10,9 @@
 import * as postgresql from "./postgresql";
 export { postgresql };
 
+import * as mysql from "./mysql";
+export { mysql };
+
 import * as dgraph from "./dgraph";
 export { dgraph };
 
