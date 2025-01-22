@@ -54,6 +54,7 @@ func TestExecuteQuery(t *testing.T) {
 	}
 	if response == nil {
 		t.Fatalf("Expected a response, but received nil")
+		return
 	}
 
 	if len(response.Keys) != 2 {
