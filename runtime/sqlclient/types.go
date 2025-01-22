@@ -9,6 +9,13 @@
 
 package sqlclient
 
+import "context"
+
+type dataSource interface {
+	Shutdown()
+	query(ctx context.Context, stmt string, params []any) (*dbResponse, error)
+}
+
 type dbResponse struct {
 	Error        *string
 	Result       any

@@ -13,6 +13,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/hypermodeinc/modus/lib/manifest"
 	"github.com/hypermodeinc/modus/runtime/logger"
 
 	"github.com/jackc/pgx/v5"
@@ -21,6 +22,10 @@ import (
 
 type postgresqlDS struct {
 	pool *pgxpool.Pool
+}
+
+func (ds *postgresqlDS) Shutdown() {
+	ds.pool.Close()
 }
 
 func (ds *postgresqlDS) query(ctx context.Context, stmt string, params []any) (*dbResponse, error) {
@@ -60,4 +65,18 @@ func (ds *postgresqlDS) query(ctx context.Context, stmt string, params []any) (*
 	}
 
 	return response, nil
+}
+
+func newPostgresqlDS(ctx context.Context, dsName string) (*postgresqlDS, error) {
+	connStr, err := getConnectionString(ctx, dsName, manifest.ConnectionTypePostgresql)
+	if err != nil {
+		return nil, err
+	}
+
+	pool, err := pgxpool.New(ctx, connStr)
+	if err != nil {
+		return nil, fmt.Errorf("failed to connect to postgresql database [%s]: %w", dsName, err)
+	}
+
+	return &postgresqlDS{pool}, nil
 }

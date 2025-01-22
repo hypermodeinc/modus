@@ -9,16 +9,55 @@
 
 package sqlclient
 
-import "github.com/puzpuzpuz/xsync/v3"
+import (
+	"context"
+	"fmt"
+
+	"github.com/puzpuzpuz/xsync/v3"
+)
 
 var dsr = newDSRegistry()
 
 type dsRegistry struct {
-	cache *xsync.MapOf[string, *postgresqlDS]
+	cache *xsync.MapOf[string, dataSource]
 }
 
 func newDSRegistry() *dsRegistry {
 	return &dsRegistry{
-		cache: xsync.NewMapOf[string, *postgresqlDS](),
+		cache: xsync.NewMapOf[string, dataSource](),
 	}
+}
+
+func (r *dsRegistry) shutdown() {
+	r.cache.Range(func(key string, _ dataSource) bool {
+		if ds, ok := dsr.cache.LoadAndDelete(key); ok {
+			ds.Shutdown()
+		}
+		return true
+	})
+}
+
+func (r *dsRegistry) getDataSource(ctx context.Context, dsName, dsType string) (dataSource, error) {
+	var creationErr error
+	ds, _ := r.cache.LoadOrCompute(dsName, func() dataSource {
+		switch dsType {
+		case "postgresql":
+			if ds, err := newPostgresqlDS(ctx, dsName); err != nil {
+				creationErr = err
+				return nil
+			} else {
+				return ds
+			}
+		default:
+			creationErr = fmt.Errorf("unsupported data source type: %s", dsType)
+			return nil
+		}
+	})
+
+	if creationErr != nil {
+		r.cache.Delete(dsName)
+		return nil, creationErr
+	}
+
+	return ds, nil
 }
