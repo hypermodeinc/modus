@@ -24,6 +24,7 @@ require (
 	github.com/docker/go-connections v0.5.0
 	github.com/fatih/color v1.18.0
 	github.com/getsentry/sentry-go v0.31.1
+	github.com/go-sql-driver/mysql v1.8.1
 	github.com/go-viper/mapstructure/v2 v2.2.1
 	github.com/goccy/go-json v0.10.4
 	github.com/gofrs/flock v0.12.1
@@ -46,15 +47,18 @@ require (
 	github.com/tetratelabs/wazero v1.8.2
 	github.com/tidwall/gjson v1.18.0
 	github.com/tidwall/sjson v1.2.5
+	github.com/twpayne/go-geom v1.6.0
 	github.com/viterin/vek v0.4.2
 	github.com/wundergraph/graphql-go-tools/execution v1.2.0
 	github.com/wundergraph/graphql-go-tools/v2 v2.0.0-rc.142
+	github.com/xo/dburl v0.23.2
 	golang.org/x/exp v0.0.0-20250106191152-7588d65b2ba8
 	golang.org/x/sys v0.29.0
 	google.golang.org/grpc v1.69.4
 )
 
 require (
+	filippo.io/edwards25519 v1.1.0 // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.6.7 // indirect
 	github.com/aws/aws-sdk-go-v2/credentials v1.17.54 // indirect

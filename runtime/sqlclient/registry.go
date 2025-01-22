@@ -48,6 +48,13 @@ func (r *dsRegistry) getDataSource(ctx context.Context, dsName, dsType string) (
 			} else {
 				return ds
 			}
+		case "mysql":
+			if ds, err := newMysqlDS(ctx, dsName); err != nil {
+				creationErr = err
+				return nil
+			} else {
+				return ds
+			}
 		default:
 			creationErr = fmt.Errorf("unsupported data source type: %s", dsType)
 			return nil

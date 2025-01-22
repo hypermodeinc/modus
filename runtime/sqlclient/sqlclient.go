@@ -12,6 +12,7 @@ package sqlclient
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/hypermodeinc/modus/lib/manifest"
 	"github.com/hypermodeinc/modus/runtime/manifestdata"
@@ -31,12 +32,25 @@ func Shutdown() {
 }
 
 func ExecuteQuery(ctx context.Context, connectionName, dbType, statement, paramsJson string) (*HostQueryResponse, error) {
+
+	// Small Hack:
+	// The `paramsJson` argument might be prefixed with flags set by the SDK.
+	// Example: "flag1,flag2:[]" (where `[]` is the actual JSON string)
+	//
+	// Currently supported flags:
+	// - "exec" - No rows are expected to be returned. Just execute the provided statement.
+	//
+	// Passing the flags in this manner avoids a breaking change in the host function signature.
+	//
+	var execOnly bool
+	paramsJson, execOnly = strings.CutPrefix(paramsJson, "exec:")
+
 	var params []any
 	if err := utils.JsonDeserialize([]byte(paramsJson), &params); err != nil {
 		return nil, fmt.Errorf("error deserializing database query parameters: %w", err)
 	}
 
-	dbResponse, err := doExecuteQuery(ctx, connectionName, dbType, statement, params)
+	dbResponse, err := doExecuteQuery(ctx, connectionName, dbType, statement, params, execOnly)
 	if err != nil {
 		return nil, err
 	}
@@ -53,6 +67,7 @@ func ExecuteQuery(ctx context.Context, connectionName, dbType, statement, params
 	response := &HostQueryResponse{
 		Error:        dbResponse.Error,
 		RowsAffected: dbResponse.RowsAffected,
+		LastInsertID: dbResponse.LastInsertID,
 	}
 
 	if len(resultJson) > 0 {
@@ -63,13 +78,13 @@ func ExecuteQuery(ctx context.Context, connectionName, dbType, statement, params
 	return response, nil
 }
 
-func doExecuteQuery(ctx context.Context, dsName, dsType, stmt string, params []any) (*dbResponse, error) {
+func doExecuteQuery(ctx context.Context, dsName, dsType, stmt string, params []any, execOnly bool) (*dbResponse, error) {
 	ds, err := dsr.getDataSource(ctx, dsName, dsType)
 	if err != nil {
 		return nil, err
 	}
 
-	return ds.query(ctx, stmt, params)
+	return ds.query(ctx, stmt, params, execOnly)
 }
 
 func getConnectionString(ctx context.Context, dsName string, connType manifest.ConnectionType) (string, error) {
@@ -88,6 +103,8 @@ func getConnectionString(ctx context.Context, dsName string, connType manifest.C
 
 	var connStr string
 	switch t := info.(type) {
+	case manifest.MysqlConnectionInfo:
+		connStr = t.ConnStr
 	case manifest.PostgresqlConnectionInfo:
 		connStr = t.ConnStr
 	}

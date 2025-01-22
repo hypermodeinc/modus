@@ -82,7 +82,11 @@ export function execute(
   statement: string,
   params: Params,
 ): Response {
-  const paramsJson = params.toJSON();
+  let paramsJson = params.toJSON();
+
+  // This flag instructs the host function not to return rows, but to simply execute the statement.
+  paramsJson = "exec:" + paramsJson;
+
   const response = hostExecuteQuery(
     hostName,
     dbType,

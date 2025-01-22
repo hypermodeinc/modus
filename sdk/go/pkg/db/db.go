@@ -24,12 +24,12 @@ type HostQueryResponse struct {
 }
 
 func Execute(hostName, dbType, statement string, params ...any) (uint, error) {
-	_, affected, err := doQuery(hostName, dbType, statement, params...)
+	_, affected, err := doQuery(hostName, dbType, statement, params, true)
 	return affected, err
 }
 
 func Query[T any](hostName, dbType, statement string, params ...any) ([]T, uint, error) {
-	resultJson, affected, err := doQuery(hostName, dbType, statement, params...)
+	resultJson, affected, err := doQuery(hostName, dbType, statement, params, false)
 	if err != nil {
 		return nil, affected, err
 	}
@@ -72,7 +72,7 @@ func QueryScalar[T any](hostName, dbType, statement string, params ...any) (T, u
 	return zero, affected, errors.New("no result returned from database query")
 }
 
-func doQuery(hostName, dbType, statement string, params ...any) (*string, uint, error) {
+func doQuery(hostName, dbType, statement string, params []any, execOnly bool) (*string, uint, error) {
 	paramsJson := "[]"
 	if len(params) > 0 {
 		bytes, err := utils.JsonSerialize(params)
@@ -80,6 +80,11 @@ func doQuery(hostName, dbType, statement string, params ...any) (*string, uint, 
 			return nil, 0, fmt.Errorf("could not JSON serialize query parameters: %v", err)
 		}
 		paramsJson = string(bytes)
+	}
+
+	if execOnly {
+		// This flag instructs the host function not to return rows, but to simply execute the statement.
+		paramsJson = "exec:" + paramsJson
 	}
 
 	statement = strings.TrimSpace(statement)
