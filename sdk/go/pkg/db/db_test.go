@@ -12,6 +12,7 @@
 package db_test
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/hypermodeinc/modus/sdk/go/pkg/db"
@@ -24,30 +25,30 @@ var (
 )
 
 func TestExecute(t *testing.T) {
-	affected, err := db.Execute(testHostName, testDbType, db.MockExecuteStatement, db.MockExecuteParameters...)
+	r, err := db.Execute(testHostName, testDbType, db.MockExecuteStatement, db.MockExecuteParameters...)
 	if err != nil {
 		t.Fatalf("Expected no error, but received: %s", err)
 	}
-	if affected != 3 {
-		t.Errorf("Expected 3 rows affected, but received: %d", affected)
+	if r.RowsAffected != 3 {
+		t.Errorf("Expected 3 rows affected, but received: %d", r.RowsAffected)
 	}
 
-	testCallStack(t, db.MockExecuteStatement, db.MockExecuteParameters)
+	testCallStack(t, db.MockExecuteStatement, db.MockExecuteParameters, "exec")
 }
 
 func TestQuery(t *testing.T) {
-	rows, affected, err := db.Query[map[string]any](testHostName, testDbType, db.MockQueryStatement, db.MockQueryParameters...)
+	r, err := db.Query[map[string]any](testHostName, testDbType, db.MockQueryStatement, db.MockQueryParameters...)
 	if err != nil {
 		t.Fatalf("Expected no error, but received: %s", err)
 	}
-	if affected != 3 {
-		t.Errorf("Expected 3 rows affected, but received: %d", affected)
+	if r.RowsAffected != 3 {
+		t.Errorf("Expected 3 rows affected, but received: %d", r.RowsAffected)
 	}
-	if len(rows) != 3 {
-		t.Errorf("Expected 3 rows, but received: %d", len(rows))
+	if len(r.Rows) != 3 {
+		t.Errorf("Expected 3 rows, but received: %d", len(r.Rows))
 	}
 
-	for i, row := range rows {
+	for i, row := range r.Rows {
 		n, err := utils.ConvertInterfaceTo[int](row["id"])
 		if err != nil {
 			t.Fatalf("Expected no error, but received: %s", err)
@@ -64,22 +65,22 @@ func TestQuery(t *testing.T) {
 }
 
 func TestQueryScalar(t *testing.T) {
-	result, affected, err := db.QueryScalar[int](testHostName, testDbType, db.MockQueryScalarStatement, db.MockQueryScalarParameters...)
+	r, err := db.QueryScalar[int](testHostName, testDbType, db.MockQueryScalarStatement, db.MockQueryScalarParameters...)
 	if err != nil {
 		t.Fatalf("Expected no error, but received: %s", err)
 	}
-	if affected != 1 {
-		t.Errorf("Expected 1 rows affected, but received: %d", affected)
+	if r.RowsAffected != 1 {
+		t.Errorf("Expected 1 rows affected, but received: %d", r.RowsAffected)
 	}
 
-	if result != 3 {
-		t.Errorf("Expected result: 3, but received: %d", result)
+	if r.Value != 3 {
+		t.Errorf("Expected result: 3, but received: %d", r.Value)
 	}
 
 	testCallStack(t, db.MockQueryScalarStatement, db.MockQueryScalarParameters)
 }
 
-func testCallStack(t *testing.T, expectedStatement string, expectedParams []any) {
+func testCallStack(t *testing.T, expectedStatement string, expectedParams []any, flags ...string) {
 	values := db.DatabaseQueryCallStack.Pop()
 	if values == nil {
 		t.Error("Expected a query, but none was found.")
@@ -103,6 +104,9 @@ func testCallStack(t *testing.T, expectedStatement string, expectedParams []any)
 
 		bytes, _ := utils.JsonSerialize(expectedParams)
 		expectedParamsJson := string(bytes)
+		if len(flags) > 0 {
+			expectedParamsJson = strings.Join(flags, ",") + ":" + expectedParamsJson
+		}
 		if *receivedJson != expectedParamsJson {
 			t.Errorf("Expected paramsJson: \"%s\", but received: \"%s\"", expectedParamsJson, *receivedJson)
 		}

@@ -172,6 +172,10 @@
           "value": "http"
         },
         {
+          "label": "MySQL Client Example",
+          "value": "mysql"
+        },
+        {
           "label": "Neo4j Client Example",
           "value": "neo4j"
         },

@@ -97,6 +97,11 @@ func TestReadManifest(t *testing.T) {
 				Type:    manifest.ConnectionTypePostgresql,
 				ConnStr: "postgresql://{{POSTGRESQL_USERNAME}}:{{POSTGRESQL_PASSWORD}}@1.2.3.4:5432/data?sslmode=disable",
 			},
+			"my-mysql": manifest.MysqlConnectionInfo{
+				Name:    "my-mysql",
+				Type:    manifest.ConnectionTypeMysql,
+				ConnStr: "mysql://{{MYSQL_USERNAME}}:{{MYSQL_PASSWORD}}@1.2.3.4:3306/mydb?sslmode=disable",
+			},
 			"my-dgraph-cloud": manifest.DgraphConnectionInfo{
 				Name:       "my-dgraph-cloud",
 				Type:       manifest.ConnectionTypeDgraph,
@@ -207,6 +212,20 @@ func TestPostgresConnectionInfo_Hash(t *testing.T) {
 	}
 }
 
+func TestMysqlConnectionInfo_Hash(t *testing.T) {
+	connection := manifest.MysqlConnectionInfo{
+		Name:    "my-database",
+		ConnStr: "mysql://{{MYSQL_USERNAME}}:{{MYSQL_PASSWORD}}@1.2.3.4:3306/mydb?sslmode=disable",
+	}
+
+	expectedHash := "3b96055cec5bd4195901e1442c856fe5b5493b0af0dde8f64f1d14a4795f5272"
+
+	actualHash := connection.Hash()
+	if actualHash != expectedHash {
+		t.Errorf("Expected hash: %s, but got: %s", expectedHash, actualHash)
+	}
+}
+
 func TestDgraphCloudConnectionInfo_Hash(t *testing.T) {
 	connection := manifest.DgraphConnectionInfo{
 		Name:       "my-dgraph-cloud",
@@ -259,6 +278,7 @@ func TestGetVariablesFromManifest(t *testing.T) {
 		"my-rest-api":              {"API_TOKEN"},
 		"another-rest-api":         {"USERNAME", "PASSWORD"},
 		"neon":                     {"POSTGRESQL_USERNAME", "POSTGRESQL_PASSWORD"},
+		"my-mysql":                 {"MYSQL_USERNAME", "MYSQL_PASSWORD"},
 		"my-dgraph-cloud":          {"DGRAPH_KEY"},
 		"my-neo4j":                 {"NEO4J_USERNAME", "NEO4J_PASSWORD"},
 	}

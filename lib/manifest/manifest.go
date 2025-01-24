@@ -172,6 +172,13 @@ func parseManifestJson(data []byte, manifest *Manifest) error {
 			}
 			info.Name = name
 			manifest.Connections[name] = info
+		case ConnectionTypeMysql:
+			var info MysqlConnectionInfo
+			if err := json.Unmarshal(rawCon, &info); err != nil {
+				return fmt.Errorf("failed to parse mysql connection [%s]: %w", name, err)
+			}
+			info.Name = name
+			manifest.Connections[name] = info
 		case ConnectionTypeDgraph:
 			var info DgraphConnectionInfo
 			if err := json.Unmarshal(rawCon, &info); err != nil {

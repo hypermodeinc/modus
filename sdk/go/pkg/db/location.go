@@ -7,13 +7,24 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-package postgresql
+package db
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
+// Represents a location on Earth, having longitude and latitude coordinates.
+// Correctly serializes to and from a SQL point type, in (longitude, latitude) order.
+//
+// Note that this struct is identical to the Point struct, but uses different field names.
 type Location struct {
+
+	// The Longitude coordinate of the location.
 	Longitude float64 `json:"longitude"`
-	Latitude  float64 `json:"latitude"`
+
+	// The Latitude coordinate of the location.
+	Latitude float64 `json:"latitude"`
 }
 
 func (l *Location) String() string {
@@ -44,12 +55,19 @@ func (l *Location) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// Creates a new Location with the specified longitude and latitude coordinates.
 func NewLocation(longitude, latitude float64) *Location {
 	return &Location{longitude, latitude}
 }
 
+// Parses a location from a string in the format "(Longitude,Latitude)" or "POINT (Longitude Latitude)".
 func ParseLocation(s string) (*Location, error) {
 	var l Location
-	_, err := fmt.Sscanf(s, "(%f,%f)", &l.Longitude, &l.Latitude)
+	var err error
+	if strings.HasPrefix(s, "POINT (") {
+		_, err = fmt.Sscanf(s, "POINT (%f %f)", &l.Longitude, &l.Latitude)
+	} else {
+		_, err = fmt.Sscanf(s, "(%f,%f)", &l.Longitude, &l.Latitude)
+	}
 	return &l, err
 }

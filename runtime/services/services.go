@@ -76,7 +76,7 @@ func Stop(ctx context.Context) {
 
 	collections.Shutdown(ctx)
 	middleware.Shutdown()
-	sqlclient.ShutdownPGPools()
+	sqlclient.Shutdown()
 	dgraphclient.ShutdownConns()
 	neo4jclient.CloseDrivers(ctx)
 	logger.Close()
