@@ -49,7 +49,7 @@ archives:
       - ../README.md
       - ../LICENSE
     name_template: "{{ .ProjectName }}_v{{ .Version }}_{{ .Os }}_{{ .Arch }}"
-    format: ["tar.gz"]
+    formats: ["tar.gz"]
     # use zip for windows archives
     format_overrides:
       - goos: windows
