@@ -13,7 +13,6 @@ require (
 require (
 	github.com/OneOfOne/xxhash v1.2.8
 	github.com/archdx/zerolog-sentry v1.8.5
-	github.com/aws/aws-sdk-go-v2 v1.33.0
 	github.com/aws/aws-sdk-go-v2/config v1.29.1
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.73.2
 	github.com/aws/aws-sdk-go-v2/service/sts v1.33.9
@@ -60,6 +59,7 @@ require (
 require (
 	filippo.io/edwards25519 v1.1.0 // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
+	github.com/aws/aws-sdk-go-v2 v1.33.0 // indirect
 	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.6.7 // indirect
 	github.com/aws/aws-sdk-go-v2/credentials v1.17.54 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.16.24 // indirect

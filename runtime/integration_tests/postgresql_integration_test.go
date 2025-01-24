@@ -25,7 +25,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/hypermodeinc/modus/runtime/config"
+	"github.com/hypermodeinc/modus/runtime/app"
 	"github.com/hypermodeinc/modus/runtime/httpserver"
 	"github.com/hypermodeinc/modus/runtime/services"
 
@@ -108,9 +108,11 @@ func updateManifest(t *testing.T, jsonManifest []byte) func() {
 
 func TestMain(m *testing.M) {
 	// setup config
-	config.AppPath = testPluginsPath
-	config.RefreshInterval = refreshPluginInterval
-	config.Port = httpListenPort
+	cfg := app.NewAppConfig().
+		WithAppPath(testPluginsPath).
+		WithRefreshInterval(refreshPluginInterval).
+		WithPort(httpListenPort)
+	app.SetConfig(cfg)
 
 	// Create the main background context
 	ctx := context.Background()
