@@ -18,20 +18,17 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"runtime"
 	"syscall"
 
 	"github.com/hypermodeinc/modus/lib/manifest"
 	"github.com/hypermodeinc/modus/runtime/app"
 	"github.com/hypermodeinc/modus/runtime/config"
-	"github.com/hypermodeinc/modus/runtime/db"
 	"github.com/hypermodeinc/modus/runtime/explorer"
 	"github.com/hypermodeinc/modus/runtime/graphql"
 	"github.com/hypermodeinc/modus/runtime/logger"
 	"github.com/hypermodeinc/modus/runtime/manifestdata"
 	"github.com/hypermodeinc/modus/runtime/metrics"
 	"github.com/hypermodeinc/modus/runtime/middleware"
-	"github.com/hypermodeinc/modus/runtime/utils"
 
 	"github.com/fatih/color"
 	"github.com/rs/cors"
@@ -140,14 +137,6 @@ func GetMainHandler(options ...func(map[string]http.Handler)) http.Handler {
 	if config.IsDevEnvironment() {
 		defaultRoutes["/explorer/"] = explorer.ExplorerHandler
 		defaultRoutes["/"] = http.RedirectHandler("/explorer/", http.StatusSeeOther)
-		if runtime.GOOS == "windows" {
-			notImplementedHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				http.Error(w, "Not implemented on Windows", http.StatusNotImplemented)
-			})
-			defaultRoutes["/explorer/api/inferences"] = notImplementedHandler
-		} else {
-			defaultRoutes["/explorer/api/inferences"] = InferenceHistoryHandler
-		}
 	}
 
 	for _, opt := range options {
@@ -267,26 +256,4 @@ func isIPv6Available() bool {
 	}
 	defer conn.Close()
 	return true
-}
-
-var InferenceHistoryHandler = http.HandlerFunc(inferenceHistoryHandler)
-
-func inferenceHistoryHandler(w http.ResponseWriter, r *http.Request) {
-
-	inferences, err := db.QueryInferences()
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	utils.WriteJsonContentHeader(w)
-	j, err := utils.JsonSerialize(inferences)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	_, err = w.Write(j)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
 }
