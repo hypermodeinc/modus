@@ -11,6 +11,11 @@ if (!rootElement) {
 }
 const root = createRoot(rootElement);
 
+type InferenceError = {
+  message: string;
+  status: number;
+};
+
 function App() {
   const modusTheme = {
     background: "150 60% 3%",
@@ -35,11 +40,20 @@ function App() {
   };
   const [endpoints, setEndpoints] = useState<string[]>(["http://localhost:8686/graphql"]);
   const [inferences, setInferences] = useState<any[]>([]);
+  const [inferenceError, setInferenceError] = useState<InferenceError | undefined>();
 
   useEffect(() => {
     const fetchInferences = async () => {
       try {
         const response = await fetch("/explorer/api/inferences");
+
+        if (!response.ok) {
+          setInferenceError({
+            message: response.statusText,
+            status: response.status,
+          });
+          return;
+        }
         const data = await response.json();
 
         setInferences(JSON.parse(JSON.stringify(data || {})));
@@ -77,6 +91,7 @@ function App() {
       <ApiExplorer
         endpoints={endpoints}
         inferences={inferences}
+        inferenceError={inferenceError}
         theme={modusTheme}
         title={
           <div className="flex items-center">

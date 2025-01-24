@@ -16,7 +16,7 @@
 - feat: support type aliases and redefinitions
   [#721](https://github.com/hypermodeinc/modus/pull/721)
 - feat: support MySQL database connections [#722](https://github.com/hypermodeinc/modus/pull/722)
-- chore: disable "View Inferences" tab if windows user
+- chore: show inferences error in api explorer
   [#726](https://github.com/hypermodeinc/modus/pull/726)
 
 ## 2025-01-09 - CLI 0.16.6
