@@ -34,6 +34,22 @@ function App() {
     ring: "150 60% 39%",
   };
   const [endpoints, setEndpoints] = useState<string[]>(["http://localhost:8686/graphql"]);
+  const [inferences, setInferences] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchInferences = async () => {
+      try {
+        const response = await fetch("/explorer/api/inferences");
+        const data = await response.json();
+
+        setInferences(JSON.parse(JSON.stringify(data || {})));
+      } catch (error) {
+        console.error("Failed to fetch inferences:", error);
+      }
+    };
+
+    fetchInferences();
+  }, []);
 
   useEffect(() => {
     // Fetch endpoints when component mounts
@@ -60,6 +76,7 @@ function App() {
     <div className="bg-black p-2 h-dvh flex flex-col">
       <ApiExplorer
         endpoints={endpoints}
+        inferences={inferences}
         theme={modusTheme}
         title={
           <div className="flex items-center">

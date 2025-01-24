@@ -10,7 +10,9 @@
 package app
 
 import (
+	"os"
 	"path"
+	"path/filepath"
 	"runtime"
 	"sync"
 	"time"
@@ -41,4 +43,13 @@ func GetRootSourcePath() string {
 	}
 
 	return path.Join(path.Dir(filename), "../") + "/"
+}
+
+func ModusHomeDir() string {
+	modusHome := os.Getenv("MODUS_HOME")
+	if modusHome == "" {
+		userHome, _ := os.UserHomeDir()
+		modusHome = filepath.Join(userHome, ".modus")
+	}
+	return modusHome
 }
