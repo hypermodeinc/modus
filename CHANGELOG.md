@@ -16,6 +16,8 @@
 - feat: support type aliases and redefinitions
   [#721](https://github.com/hypermodeinc/modus/pull/721)
 - feat: support MySQL database connections [#722](https://github.com/hypermodeinc/modus/pull/722)
+- chore: refactoring / tests [#723](https://github.com/hypermodeinc/modus/pull/723)
+- feat: check for Binaryen installation [#725](https://github.com/hypermodeinc/modus/pull/725)
 - chore: show inferences error in api explorer
   [#726](https://github.com/hypermodeinc/modus/pull/726)
 

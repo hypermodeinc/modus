@@ -24,7 +24,7 @@ import { extract } from "../../util/tar.js";
 import SDKInstallCommand from "../sdk/install/index.js";
 import { getHeader } from "../../custom/header.js";
 import * as inquirer from "@inquirer/prompts";
-import { getGoVersion, getTinyGoVersion } from "../../util/systemVersions.js";
+import { getGoVersion, getTinyGoVersion, getBinaryenVersion } from "../../util/systemVersions.js";
 import { generateAppName } from "../../util/appname.js";
 import { BaseCommand } from "../../baseCommand.js";
 import { isErrorWithName } from "../../util/errors.js";
@@ -194,13 +194,15 @@ export default class NewCommand extends BaseCommand {
       case SDK.Go: {
         const goVersion = await getGoVersion();
         const tinyGoVersion = await getTinyGoVersion();
+        const binaryenVersion = await getBinaryenVersion();
 
         const foundGo = !!goVersion;
         const foundTinyGo = !!tinyGoVersion;
+        const foundBinaryen = !!binaryenVersion;
         const okGo = foundGo && semver.gte(goVersion, MinGoVersion);
         const okTinyGo = foundTinyGo && semver.gte(tinyGoVersion, MinTinyGoVersion);
 
-        if (okGo && okTinyGo) {
+        if (okGo && okTinyGo && foundBinaryen) {
           break;
         }
 
@@ -222,6 +224,12 @@ export default class NewCommand extends BaseCommand {
           this.log(chalk.dim(`• TinyGo v${MinTinyGoVersion} or newer `) + chalk.red("(not found)"));
         }
 
+        if (foundBinaryen) {
+          this.log(chalk.dim(`• Binaryen `) + chalk.green(`(found v${binaryenVersion})`));
+        } else {
+          this.log(chalk.dim(`• Binaryen `) + chalk.red("(not found)"));
+        }
+
         this.log();
 
         if (!okGo) {
@@ -232,9 +240,22 @@ export default class NewCommand extends BaseCommand {
         if (!okTinyGo) {
           this.log(chalk.yellow(`Please install TinyGo ${MinTinyGoVersion} or newer from https://tinygo.org/getting-started/install`));
           if (os.platform() === "win32") {
-            this.log(`Note that you will need to install the binaryen components for wasi support.`);
+            this.log(`Note that you will need to install the Binaryen components for WASM support.`);
+            this.log(`Please install with: scoop install tinygo binaryen`);
+          } else if (os.platform() === "darwin") {
+            this.log(`Please install with: brew install tinygo`);
           }
           this.log();
+        }
+
+        if (!foundBinaryen) {
+          if (os.platform() === "win32") {
+            this.log(chalk.yellow(`Please install Binaryen from Scoop: scoop install binaryen`));
+          } else if (os.platform() === "darwin") {
+            this.log(chalk.yellow(`Please install Binaryen from Homebrew: brew install binaryen`));
+          } else {
+            this.log(chalk.yellow(`Please install Binaryen from your package manager.`));
+          }
         }
 
         this.log(`Make sure to add Go and TinyGo to your PATH. You can check for yourself by running:`);

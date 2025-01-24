@@ -7,7 +7,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-package config
+package app
 
 import (
 	"os/exec"
@@ -17,6 +17,10 @@ import (
 var version string
 
 func init() {
+	adjustVersion()
+}
+
+func adjustVersion() {
 	// The "version" variable is set by the makefile using -ldflags when using "make build" or goreleaser.
 	// If it is not set, then we are running in development mode with "go run" or "go build" without the makefile,
 	// so we will describe the version from git at run time.
@@ -27,18 +31,31 @@ func init() {
 	}
 }
 
-func GetVersionNumber() string {
+func VersionNumber() string {
 	return version
 }
 
-func GetProductVersion() string {
-	return "Modus Runtime " + GetVersionNumber()
+func ProductVersion() string {
+	return "Modus Runtime " + VersionNumber()
 }
 
 func describeVersion() string {
-	result, err := exec.Command("git", "describe", "--tags", "--always", "--match", "runtime/*").Output()
-	if err != nil {
-		return "(unknown)"
+	if isShallowGit() {
+		result, err := exec.Command("git", "rev-parse", "--short", "HEAD").Output()
+		if err != nil {
+			return "(unknown)"
+		}
+		return "v0.0.0-?-g" + strings.TrimSpace(string(result))
+	} else {
+		result, err := exec.Command("git", "describe", "--tags", "--always", "--match", "runtime/*").Output()
+		if err != nil {
+			return "(unknown)"
+		}
+		return strings.TrimPrefix(strings.TrimSpace(string(result)), "runtime/")
 	}
-	return strings.TrimPrefix(strings.TrimSpace(string(result)), "runtime/")
+}
+
+func isShallowGit() bool {
+	result, err := exec.Command("git", "rev-parse", "--is-shallow-repository").Output()
+	return err == nil && strings.TrimSpace(string(result)) == "true"
 }

@@ -3,7 +3,7 @@ import os from "node:os";
 import * as vi from "../../util/versioninfo.js";
 import { SDK } from "../../custom/globals.js";
 import { getHeader } from "../../custom/header.js";
-import { getGoVersion, getNPMVersion, getTinyGoVersion } from "../../util/systemVersions.js";
+import { getGoVersion, getNPMVersion, getTinyGoVersion, getBinaryenVersion } from "../../util/systemVersions.js";
 import { BaseCommand } from "../../baseCommand.js";
 
 export default class InfoCommand extends BaseCommand {
@@ -38,6 +38,7 @@ export default class InfoCommand extends BaseCommand {
       "NPM Version": (await getNPMVersion()) || "Not installed",
       "Go Version": (await getGoVersion()) || "Not installed",
       "TinyGo Version": (await getTinyGoVersion()) || "Not installed",
+      "Binaryen Version": (await getBinaryenVersion()) || "Not installed",
     };
   }
 
