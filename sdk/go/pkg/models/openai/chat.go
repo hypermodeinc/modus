@@ -10,10 +10,15 @@
 package openai
 
 import (
+	"bytes"
+	"encoding/base64"
 	"encoding/json"
+	"strings"
+	"time"
 
 	"github.com/hypermodeinc/modus/sdk/go/pkg/models"
 	"github.com/hypermodeinc/modus/sdk/go/pkg/utils"
+	"github.com/tidwall/gjson"
 	"github.com/tidwall/sjson"
 )
 
@@ -37,7 +42,15 @@ type ChatModelInput struct {
 	Model string `json:"model"`
 
 	// The list of messages to send to the chat model.
-	Messages []Message `json:"messages"`
+	Messages []RequestMessage `json:"messages"`
+
+	// Output types that you want the model to generate.
+	// Text modality is implied if no modalities are specified.
+	Modalities []Modality `json:"modalities,omitempty"`
+
+	// Parameters for audio output.
+	// Required when audio output is requested in the modalities field.
+	Audio *AudioParameters `json:"audio,omitempty"`
 
 	// Number between -2.0 and 2.0.
 	//
@@ -65,7 +78,14 @@ type ChatModelInput struct {
 	// The maximum number of tokens to generate in the chat completion.
 	//
 	// The default (0) is equivalent to 4096.
+	//
+	// Deprecated: Use the MaxCompletionTokens parameter instead, unless the model specifically requires passing "max_tokens".
 	MaxTokens int `json:"max_tokens,omitempty"`
+
+	// The maximum number of tokens to generate in the chat completion.
+	//
+	// The default (0) is equivalent to 4096.
+	MaxCompletionTokens int `json:"max_completion_tokens,omitempty"`
 
 	// The number of completions to generate for each prompt.
 	//
@@ -97,11 +117,14 @@ type ChatModelInput struct {
 	Seed int `json:"seed,omitempty"`
 
 	// Specifies the latency tier to use for processing the request.
-	//  - ServiceTierAuto utilizes scale tier credits until they are exhausted.
-	//  - ServiceTierDefault processes the request using the default OpenAI service
-	//    tier with a lower uptime SLA and no latency guarantee.
+	// This is relevant for customers subscribed to the scale tier service of the model hosting platform.
 	//
-	// The default is ServiceTierAuto.
+	// - If set to 'ServiceTierAuto', and the Project is Scale tier enabled, the system will utilize scale tier credits until they are exhausted.
+	// - If set to 'ServiceTierAuto', and the Project is not Scale tier enabled, the request will be processed using the default service tier with a lower uptime SLA and no latency guarantee.
+	// - If set to 'ServiceTierDefault', the request will be processed using the default service tier with a lower uptime SLA and no latency guarantee.
+	// - When not set, the default behavior is 'ServiceTierAuto'.
+	//
+	// When this parameter is set, the response `serviceTier` property will indicate the service tier utilized.
 	ServiceTier ServiceTier `json:"service_tier,omitempty"`
 
 	// Up to 4 sequences where the API will stop generating further tokens.
@@ -153,6 +176,53 @@ type ChatModelInput struct {
 	User string `json:"user,omitempty"`
 }
 
+// A type that represents the modality of the chat.
+type Modality string
+
+const (
+	// Text modality requests the model to respond with text.
+	// This is the default if no other modality is requested.
+	ModalityText Modality = "text"
+
+	// Audio modality requests the model to respond with spoken audio.
+	// The model and host must support audio output for this to work.
+	// Most models that support audio require both text and audio modalities to be specified,
+	// but the text will come as a transcript in the audio response.
+	ModalityAudio Modality = "audio"
+)
+
+// Parameters for audio output.
+// Required when audio output is requested in the modalities field.
+type AudioParameters struct {
+
+	// The voice the model should use for audio output, such as "ash" or "ballad".
+	// See the model's documentation for a list of all supported voices.
+	Voice string `json:"voice"`
+
+	// The format of the audio data, such as "wav" or "mp3".
+	// See the model's documentation for a list of all supported formats.
+	Format string `json:"format"`
+}
+
+// Creates a new audio output parameters object.
+//   - The voice parameter is the voice the model should use for audio output, such as "ash" or "ballad".
+//   - The format parameter is the format of the audio data, such as "wav" or "mp3".
+//
+// See the model's documentation for a list of all supported voices and formats.
+func NewAudioParameters(voice, format string) *AudioParameters {
+	return &AudioParameters{Voice: voice, Format: format}
+}
+
+// Requests audio modality and sets the audio parameters for the input object.
+//   - The voice parameter is the voice the model should use for audio output, such as "ash" or "ballad".
+//   - The format parameter is the format of the audio data, such as "wav" or "mp3".
+//
+// See the model's documentation for a list of all supported voices and formats.
+func (ci *ChatModelInput) RequestAudioOutput(voice, format string) {
+	ci.Modalities = []Modality{ModalityText, ModalityAudio}
+	ci.Audio = NewAudioParameters(voice, format)
+}
+
 // An object specifying which tool the model should call.
 type ToolChoice struct {
 
@@ -184,6 +254,7 @@ var (
 	}
 )
 
+// Implements the json.Marshaler interface to serialize the ToolChoice object.
 func (tc ToolChoice) MarshalJSON() ([]byte, error) {
 	if tc.Type != "function" {
 		return json.Marshal(tc.Type)
@@ -206,8 +277,8 @@ type ChatModelOutput struct {
 	// A list of chat completion choices. Can be more than one if n is greater than 1 in the input options.
 	Choices []Choice `json:"choices"`
 
-	// The Unix timestamp (in seconds) of when the chat completion was created.
-	Created int `json:"created"`
+	// The timestamp of when the chat completion was created.
+	Created time.Time `json:"created"`
 
 	// The name of the model used to generate the chat.
 	// In most cases, this will match the requested model field in the input.
@@ -228,112 +299,643 @@ type ChatModelOutput struct {
 	Usage Usage `json:"usage"`
 }
 
-// An interface to any message object.
-type Message interface {
-	isMessage()
+// Implements the json.Unmarshaler interface to deserialize the ChatModelOutput object.
+func (o *ChatModelOutput) UnmarshalJSON(data []byte) error {
+	type alias ChatModelOutput
+	aux := &struct {
+		*alias
+		Created int64 `json:"created"`
+	}{
+		alias: (*alias)(o),
+	}
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+	o.Created = time.Unix(aux.Created, 0).UTC()
+	return nil
 }
 
-// The base implementation for all MessageBase objects.
-type MessageBase struct {
+// An interface to any request message.
+type RequestMessage interface {
+	json.Marshaler
 
 	// The role of the author of this message.
-	Role string `json:"role"`
-
-	// The content of the message.
-	Content string `json:"content"`
+	Role() string
 }
 
-func (m *MessageBase) isMessage() {}
+// An interface for a message content part.
+type ContentPart interface {
+	isContentPart()
 
-// Adds a Name for the participant to the base message.
-type participantMessage struct {
-	MessageBase
+	// The type of the content part.
+	Type() string
+}
+
+// An interface for a system message content part.
+type SystemContentPart interface {
+	ContentPart
+	isSystemMessageContentPart()
+}
+
+// An interface for a developer message content part.
+type DeveloperContentPart = SystemContentPart
+
+// An interface for a user message content part.
+type UserMessageContentPart interface {
+	ContentPart
+	isUserMessageContentPart()
+}
+
+// An interface for an assistant message content part.
+type AssistantMessageContentPart interface {
+	ContentPart
+	isAssistantMessageContentPart()
+}
+
+// An interface for a tool content part.
+type ToolMessageContentPart interface {
+	ContentPart
+	isToolMessageContentPart()
+}
+
+func (*TextContentPart) isContentPart()                 {}
+func (*TextContentPart) isSystemMessageContentPart()    {}
+func (*TextContentPart) isUserMessageContentPart()      {}
+func (*TextContentPart) isAssistantMessageContentPart() {}
+func (*TextContentPart) isToolMessageContentPart()      {}
+
+func (*ImageContentPart) isContentPart()            {}
+func (*ImageContentPart) isUserMessageContentPart() {}
+
+func (*AudioContentPart) isContentPart()            {}
+func (*AudioContentPart) isUserMessageContentPart() {}
+
+func (*RefusalContentPart) isContentPart()                 {}
+func (*RefusalContentPart) isAssistantMessageContentPart() {}
+
+// The type of this content part, in this case "text".
+func (*TextContentPart) Type() string { return "text" }
+
+// The type of this content part, in this case "image_url".
+func (*ImageContentPart) Type() string { return "image_url" }
+
+// The type of this content part, in this case "input_audio".
+func (*AudioContentPart) Type() string { return "input_audio" }
+
+// The type of this content part, in this case "refusal".
+func (*RefusalContentPart) Type() string { return "refusal" }
+
+// A text content part.
+type TextContentPart struct {
+	// The text string.
+	Text string
+}
+
+// Implements the json.Marshaler interface to serialize the TextContentPart object.
+func (m TextContentPart) MarshalJSON() ([]byte, error) {
+	buf := bytes.NewBufferString(`{"type":"text","text":`)
+	buf.Write(gjson.AppendJSONString(nil, m.Text))
+	buf.WriteByte('}')
+	return buf.Bytes(), nil
+}
+
+// An image content part.
+type ImageContentPart struct {
+	// The image information.
+	Image Image
+}
+
+// Implements the json.Marshaler interface to serialize the ImageContentPart object.
+func (m ImageContentPart) MarshalJSON() ([]byte, error) {
+	buf := bytes.NewBufferString(`{"type":"image_url","image_url":`)
+
+	if b, err := utils.JsonSerialize(m.Image); err != nil {
+		return nil, err
+	} else {
+		buf.Write(b)
+	}
+
+	buf.WriteByte('}')
+	return buf.Bytes(), nil
+}
+
+// An audio content part.
+type AudioContentPart struct {
+	// The audio information.
+	Audio Audio
+}
+
+// Implements the json.Marshaler interface to serialize the AudioContentPart object.
+func (m AudioContentPart) MarshalJSON() ([]byte, error) {
+	buf := bytes.NewBufferString(`{"type":"input_audio","input_audio":`)
+
+	if b, err := utils.JsonSerialize(m.Audio); err != nil {
+		return nil, err
+	} else {
+		buf.Write(b)
+	}
+
+	buf.WriteByte('}')
+	return buf.Bytes(), nil
+}
+
+// A refusal content part.
+type RefusalContentPart struct {
+	// The refusal message generated by the model.
+	Refusal string
+}
+
+// Implements the json.Marshaler interface to serialize the RefusalContentPart object.
+func (m RefusalContentPart) MarshalJSON() ([]byte, error) {
+	buf := bytes.NewBufferString(`{"type":"refusal","refusal":`)
+	buf.Write(gjson.AppendJSONString(nil, m.Refusal))
+	buf.WriteByte('}')
+	return buf.Bytes(), nil
+}
+
+// An image object, used to represent an image in a content part.
+type Image struct {
+
+	// The URL of the image.
+	Url string `json:"url"`
+
+	// An optional detail string for the image.
+	// Can be set to "low", "high", or "auto".
+	// The default is "auto".
+	Detail string `json:"detail,omitempty"`
+}
+
+// An audio object, used to represent audio in a content part.
+type Audio struct {
+
+	// The raw audio data.
+	Data []byte `json:"data"`
+
+	// The format of the audio data, such as "wav" or "mp3".
+	// The format must be a valid audio format supported by the model.
+	Format string `json:"format"`
+}
+
+// Creates a new text content part.
+func NewTextContentPart(text string) *TextContentPart {
+	return &TextContentPart{Text: text}
+}
+
+// Creates a new image content part from a URL.
+// The model must support image input for this to work.
+// The URL will be sent directly to the model.
+// The detail parameter is optional and can be set to "low", "high", or "auto".
+func NewImageContentPartFromUrl(url string, detail ...string) *ImageContentPart {
+	img := Image{Url: url}
+	if len(detail) > 0 {
+		img.Detail = detail[0]
+	}
+	return &ImageContentPart{Image: img}
+}
+
+// Creates a new image content part from raw image data.
+// The model must support image input for this to work.
+// The contentType parameter must be a valid image MIME type supported by the model, such as "image/jpeg" or "image/png".
+// The detail parameter is optional and can be set to "low", "high", or "auto".
+func NewImageContentPartFromData(data []byte, contentType string, detail ...string) *ImageContentPart {
+
+	// Unlike audio, the url needs to contain a full mime type, not just the format.
+	// Thus, add the "image/" prefix if it's missing.
+	if !strings.HasPrefix(contentType, "image/") {
+		contentType = "image/" + contentType
+	}
+
+	b64 := base64.StdEncoding.EncodeToString(data)
+	url := "data:" + contentType + ";base64," + b64
+
+	img := Image{Url: url}
+	if len(detail) > 0 {
+		img.Detail = detail[0]
+	}
+	return &ImageContentPart{Image: img}
+}
+
+// Creates a new audio content part from raw audio data.
+// The model must support audio input for this to work.
+// The format parameter must be a valid audio format supported by the model, such as "wav" or "mp3".
+func NewAudioContentPartFromData(data []byte, format string) *AudioContentPart {
+
+	// Unlike images, the model expects just the format, not a mime type.
+	// Thus, strip the "audio/" prefix if present.
+	format, _ = strings.CutPrefix(format, "audio/")
+
+	audio := Audio{Data: data, Format: format}
+	return &AudioContentPart{Audio: audio}
+}
+
+// Creates a new refusal content part.
+func NewRefusalContentPart(refusal string) *RefusalContentPart {
+	return &RefusalContentPart{Refusal: refusal}
+}
+
+// A system message.
+// System messages are used to provide setup instructions to the model.
+//
+// Note that system and developer messages are identical in functionality,
+// but the "system" role was renamed to "developer" in the OpenAI Chat API.
+// Certain models may require one or the other, so use the type that matches the model's requirements.
+type SystemMessage[T string | []SystemContentPart] struct {
+	// The content of the message.
+	Content T
 
 	// An optional name for the participant.
 	// Provides the model information to differentiate between participants of the same role.
-	Name string `json:"name,omitempty"`
-}
-
-// A system message object.
-type SystemMessage struct {
-	participantMessage
+	Name string
 }
 
 // Creates a new system message object.
-func NewSystemMessage(content string) *SystemMessage {
-	return &SystemMessage{
-		participantMessage{
-			MessageBase: MessageBase{
-				Role:    "system",
-				Content: content,
-			},
-		},
+//
+// Note that system and developer messages are identical in functionality,
+// but the "system" role was renamed to "developer" in the OpenAI Chat API.
+// Certain models may require one or the other, so use the type that matches the model's requirements.
+func NewSystemMessage[T string | []SystemContentPart](content T) *SystemMessage[T] {
+	return &SystemMessage[T]{
+		Content: content,
 	}
+}
+
+// Creates a new system message object from multiple content parts.
+//
+// Note that system and developer messages are identical in functionality,
+// but the "system" role was renamed to "developer" in the OpenAI Chat API.
+// Certain models may require one or the other, so use the type that matches the model's requirements.
+func NewSystemMessageFromParts(parts ...SystemContentPart) *SystemMessage[[]SystemContentPart] {
+	return NewSystemMessage(parts)
+}
+
+// The role of the author of this message, in this case "system".
+func (m *SystemMessage[T]) Role() string { return "system" }
+
+// Implements the json.Marshaler interface to serialize the SystemMessage object.
+func (m SystemMessage[T]) MarshalJSON() ([]byte, error) {
+	buf := bytes.NewBufferString(`{"role":"system","content":`)
+
+	if b, err := utils.JsonSerialize(m.Content); err != nil {
+		return nil, err
+	} else {
+		buf.Write(b)
+	}
+
+	if m.Name != "" {
+		buf.WriteString(`,"name":`)
+		buf.Write(gjson.AppendJSONString(nil, m.Name))
+	}
+
+	buf.WriteByte('}')
+
+	return buf.Bytes(), nil
+}
+
+// A developer message.
+// Developer messages are used to provide setup instructions to the model.
+//
+// Note that system and developer messages are identical in functionality,
+// but the "system" role was renamed to "developer" in the OpenAI Chat API.
+// Certain models may require one or the other, so use the type that matches the model's requirements.
+type DeveloperMessage[T string | []DeveloperContentPart] struct {
+
+	// The content of the message.
+	Content T
+
+	// An optional name for the participant.
+	// Provides the model information to differentiate between participants of the same role.
+	Name string
+}
+
+// Creates a new developer message object.
+//
+// Note that system and developer messages are identical in functionality,
+// but the "system" role was renamed to "developer" in the OpenAI Chat API.
+// Certain models may require one or the other, so use the type that matches the model's requirements.
+func NewDeveloperMessage[T string | []DeveloperContentPart](content T) *DeveloperMessage[T] {
+	return &DeveloperMessage[T]{
+		Content: content,
+	}
+}
+
+// Creates a new developer message object from multiple content parts.
+//
+// Note that system and developer messages are identical in functionality,
+// but the "system" role was renamed to "developer" in the OpenAI Chat API.
+// Certain models may require one or the other, so use the type that matches the model's requirements.
+func NewDeveloperMessageFromParts(parts ...DeveloperContentPart) *DeveloperMessage[[]DeveloperContentPart] {
+	return NewDeveloperMessage(parts)
+}
+
+// The role of the author of this message, in this case "developer".
+func (m *DeveloperMessage[T]) Role() string { return "developer" }
+
+// Implements the json.Marshaler interface to serialize the DeveloperMessage object.
+func (m DeveloperMessage[T]) MarshalJSON() ([]byte, error) {
+	buf := bytes.NewBufferString(`{"role":"developer","content":`)
+
+	if b, err := utils.JsonSerialize(m.Content); err != nil {
+		return nil, err
+	} else {
+		buf.Write(b)
+	}
+
+	if m.Name != "" {
+		buf.WriteString(`,"name":`)
+		buf.Write(gjson.AppendJSONString(nil, m.Name))
+	}
+
+	buf.WriteByte('}')
+
+	return buf.Bytes(), nil
 }
 
 // A user message object.
-type UserMessage struct {
-	participantMessage
+type UserMessage[T string | []UserMessageContentPart] struct {
+
+	// The content of the message.
+	Content T
+
+	// An optional name for the participant.
+	// Provides the model information to differentiate between participants of the same role.
+	Name string
 }
 
 // Creates a new user message object.
-func NewUserMessage(content string) *UserMessage {
-	return &UserMessage{
-		participantMessage{
-			MessageBase: MessageBase{
-				Role:    "user",
-				Content: content,
-			},
-		},
+func NewUserMessage[T string | []UserMessageContentPart](content T) *UserMessage[T] {
+	return &UserMessage[T]{
+		Content: content,
 	}
 }
 
-// An assistant message object.
-type AssistantMessage struct {
-	participantMessage
+// Creates a new user message object from multiple content parts.
+func NewUserMessageFromParts(parts ...UserMessageContentPart) *UserMessage[[]UserMessageContentPart] {
+	return NewUserMessage(parts)
+}
+
+// The role of the author of this message, in this case "user".
+func (m *UserMessage[T]) Role() string { return "user" }
+
+// Implements the json.Marshaler interface to serialize the UserMessage object.
+func (m UserMessage[T]) MarshalJSON() ([]byte, error) {
+	buf := bytes.NewBufferString(`{"role":"user","content":`)
+
+	if b, err := utils.JsonSerialize(m.Content); err != nil {
+		return nil, err
+	} else {
+		buf.Write(b)
+	}
+
+	if m.Name != "" {
+		buf.WriteString(`,"name":`)
+		buf.Write(gjson.AppendJSONString(nil, m.Name))
+	}
+
+	buf.WriteByte('}')
+
+	return buf.Bytes(), nil
+}
+
+// An assistant message object, representing a message previously generated by the model.
+type AssistantMessage[T string | []AssistantMessageContentPart] struct {
+
+	// The content of the message.
+	Content T
+
+	// An optional name for the participant.
+	// Provides the model information to differentiate between participants of the same role.
+	Name string
+
+	// The refusal message generated by the model, if any.
+	Refusal string
 
 	// The tool calls generated by the model, such as function calls.
-	ToolCalls []ToolCall `json:"tool_calls,omitempty"`
+	ToolCalls []ToolCall
+
+	// Data about a previous audio response from the model.
+	Audio *AudioRef
+}
+
+// Represents a reference to a previous audio response from the model.
+type AudioRef struct {
+
+	// Unique identifier for a previous audio response from the model.
+	Id string `json:"id"`
 }
 
 // Creates a new assistant message object.
-func NewAssistantMessage(content string, toolCalls ...ToolCall) *AssistantMessage {
-	return &AssistantMessage{
-		participantMessage{
-			MessageBase: MessageBase{
-				Role:    "assistant",
-				Content: content,
-			},
-		},
-		toolCalls,
+func NewAssistantMessage[T string | []AssistantMessageContentPart](content T) *AssistantMessage[T] {
+	return &AssistantMessage[T]{
+		Content: content,
 	}
+}
+
+// Creates a new assistant message object from multiple content parts.
+func NewAssistantMessageFromParts(parts ...AssistantMessageContentPart) *AssistantMessage[[]AssistantMessageContentPart] {
+	return NewAssistantMessage(parts)
+}
+
+// Creates a new assistant message object from a completion message, so it can be used in a conversation.
+func NewAssistantMessageFromCompletionMessage(cm *CompletionMessage) *AssistantMessage[string] {
+	return cm.ToAssistantMessage()
+}
+
+// Converts the completion message to an assistant message, so it can be used in a conversation.
+func (m *CompletionMessage) ToAssistantMessage() *AssistantMessage[string] {
+	am := &AssistantMessage[string]{
+		Content:   m.Content,
+		Refusal:   m.Refusal,
+		ToolCalls: m.ToolCalls,
+	}
+
+	if m.Audio != nil {
+		am.Audio = &AudioRef{Id: m.Audio.Id}
+	}
+
+	return am
+}
+
+// The role of the author of this message, in this case "assistant".
+func (m *CompletionMessage) Role() string { return "assistant" }
+
+// The role of the author of this message, in this case "assistant".
+func (m *AssistantMessage[T]) Role() string { return "assistant" }
+
+// Implements the json.Marshaler interface to serialize the AssistantMessage object.
+func (m AssistantMessage[T]) MarshalJSON() ([]byte, error) {
+	buf := bytes.NewBufferString(`{"role":"assistant","content":`)
+
+	if b, err := utils.JsonSerialize(m.Content); err != nil {
+		return nil, err
+	} else {
+		buf.Write(b)
+	}
+
+	if m.Name != "" {
+		buf.WriteString(`,"name":`)
+		buf.Write(gjson.AppendJSONString(nil, m.Name))
+	}
+
+	if m.Refusal != "" {
+		buf.WriteString(`,"refusal":`)
+		buf.Write(gjson.AppendJSONString(nil, m.Refusal))
+	}
+
+	if len(m.ToolCalls) > 0 {
+		buf.WriteString(`,"tool_calls":[`)
+		for i, tc := range m.ToolCalls {
+			if i > 0 {
+				buf.WriteByte(',')
+			}
+			b, err := json.Marshal(tc)
+			if err != nil {
+				return nil, err
+			}
+			buf.Write(b)
+		}
+		buf.WriteByte(']')
+	}
+
+	if m.Audio != nil {
+		buf.WriteString(`,"audio":`)
+		b, err := json.Marshal(m.Audio)
+		if err != nil {
+			return nil, err
+		}
+		buf.Write(b)
+	}
+
+	buf.WriteByte('}')
+
+	return buf.Bytes(), nil
 }
 
 // A tool message object.
-type ToolMessage struct {
-	MessageBase
+type ToolMessage[T string | []ToolMessageContentPart] struct {
+
+	// The content of the message.
+	Content T
 
 	// The tool call that this message is responding to.
-	ToolCallId string `json:"tool_call_id"`
+	ToolCallId string
 }
 
 // Creates a new tool message object.
-func NewToolMessage(content, toolCallId string) *ToolMessage {
-	return &ToolMessage{
-		MessageBase{
-			Role:    "tool",
-			Content: content,
-		},
-		toolCallId,
+// If the content is a string, it will be passed through unaltered.
+// If the content is an error object, its error message will be used as the content.
+// Otherwise, the object will be JSON serialized and sent as a JSON string.
+// This function will panic if the object cannot be serialized to JSON.
+func NewToolMessage(content any, toolCallId string) *ToolMessage[string] {
+	if content == nil {
+		return &ToolMessage[string]{
+			ToolCallId: toolCallId,
+		}
+	}
+
+	if str, ok := content.(string); ok {
+		return &ToolMessage[string]{
+			Content:    str,
+			ToolCallId: toolCallId,
+		}
+	}
+
+	if err, ok := content.(error); ok {
+		return &ToolMessage[string]{
+			Content:    err.Error(),
+			ToolCallId: toolCallId,
+		}
+	}
+
+	if b, err := utils.JsonSerialize(content); err != nil {
+		panic(err)
+	} else {
+		return &ToolMessage[string]{
+			Content:    string(b),
+			ToolCallId: toolCallId,
+		}
 	}
 }
 
-// A chat completion message generated by the model.
-type CompletionMessage struct {
-	MessageBase
+// Creates a new tool message object from multiple content parts.
+func NewToolMessageFromParts(toolCallId string, parts ...ToolMessageContentPart) *ToolMessage[[]ToolMessageContentPart] {
+	return &ToolMessage[[]ToolMessageContentPart]{
+		Content:    parts,
+		ToolCallId: toolCallId,
+	}
+}
 
-	// The refusal message generated by the model.
+// The role of the author of this message, in this case "tool".
+func (m *ToolMessage[T]) Role() string { return "tool" }
+
+// Implements the json.Marshaler interface to serialize the ToolMessage object.
+func (m ToolMessage[T]) MarshalJSON() ([]byte, error) {
+	buf := bytes.NewBufferString(`{"role":"tool","content":`)
+
+	if b, err := utils.JsonSerialize(m.Content); err != nil {
+		return nil, err
+	} else {
+		buf.Write(b)
+	}
+
+	buf.WriteString(`,"tool_call_id":"` + m.ToolCallId + `"}`)
+	return buf.Bytes(), nil
+}
+
+// A chat completion message generated by the model.
+//
+// Note that a completion message is not a valid request message.
+// To use a completion message in a chat, convert it to an assistant message with the ToAssistantMessage method.
+type CompletionMessage struct {
+
+	// The content of the message.
+	Content string `json:"content"`
+
+	// The refusal message generated by the model, if any.
 	Refusal string `json:"refusal,omitempty"`
+
+	// The tool calls generated by the model, such as function calls.
+	ToolCalls []ToolCall `json:"tool_calls,omitempty"`
+
+	// The audio output generated by the model, if any.
+	// Used only when audio output is requested in the modalities field, and when the model and host support audio output.
+	Audio *AudioOutput `json:"audio,omitempty"`
+}
+
+// An audio output object generated by the model when using audio modality.
+type AudioOutput struct {
+
+	// Unique identifier for this audio response.
+	Id string `json:"id"`
+
+	// The time at which this audio content will no longer be accessible on the server for use in multi-turn conversations.
+	ExpiresAt time.Time `json:"expires_at"`
+
+	// The raw audio data, in the format specified in the request.
+	Data []byte `json:"data"`
+
+	// Transcript of the audio generated by the model.
+	Transcript string `json:"transcript"`
+}
+
+// Implements the json.Unmarshaler interface to deserialize the AudioOutput object.
+func (a *AudioOutput) UnmarshalJSON(data []byte) error {
+	var raw struct {
+		Id         string `json:"id"`
+		ExpiresAt  int64  `json:"expires_at"`
+		Data       []byte `json:"data"`
+		Transcript string `json:"transcript"`
+	}
+
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return err
+	}
+
+	a.Id = raw.Id
+	a.ExpiresAt = time.Unix(raw.ExpiresAt, 0).UTC()
+	a.Data = raw.Data
+	a.Transcript = raw.Transcript
+
+	return nil
 }
 
 // A tool call object that the model may generate.
@@ -349,15 +951,6 @@ type ToolCall struct {
 	Function FunctionCall `json:"function"`
 }
 
-// Creates a new tool call object.
-func NewToolCall(id, name, arguments string) ToolCall {
-	return ToolCall{
-		Id:       id,
-		Type:     "function",
-		Function: FunctionCall{name, arguments},
-	}
-}
-
 // A function call object that the model may generate.
 type FunctionCall struct {
 
@@ -365,10 +958,6 @@ type FunctionCall struct {
 	Name string `json:"name"`
 
 	// The arguments to call the function with, as generated by the model in JSON format.
-	//
-	// NOTE:
-	// The model does not always generate valid JSON, and may hallucinate parameters not
-	// defined by your function schema. Validate the arguments in your code before calling your function.
 	Arguments string `json:"arguments"`
 }
 
@@ -428,7 +1017,7 @@ type Choice struct {
 	// The index of the choice in the list of choices.
 	Index int `json:"index"`
 
-	// A chat completion message generated by the model.
+	// A message generated by the model.
 	Message CompletionMessage `json:"message"`
 
 	// Log probability information for the choice.
@@ -467,8 +1056,15 @@ type LogprobsContentObject struct {
 	Bytes []byte `json:"bytes"`
 }
 
+type funcParam struct {
+	Name        string
+	Type        string
+	Description string
+}
+
 // A tool object that the model may call.
 type Tool struct {
+	funcParams []funcParam
 
 	// The type of the tool. Currently, only `"function"` is supported.
 	Type string `json:"type"`
@@ -477,14 +1073,58 @@ type Tool struct {
 	Function FunctionDefinition `json:"function"`
 }
 
-// Creates a new tool object.
-func NewTool() Tool {
-	return Tool{Type: "function"}
+// Creates a new tool object for a function.
+func NewToolForFunction(name, description string) Tool {
+	return Tool{
+		Type: "function",
+		Function: FunctionDefinition{
+			Name:        name,
+			Description: description,
+		},
+	}
+}
+
+// Adds a parameter to the function used by the tool.
+// Note that the type must be a valid JSON Schema type, not a Go type.
+// For example, use "integer", not "int32".
+func (t Tool) WithParameter(name, jsonSchemaType, description string) Tool {
+	t.funcParams = append(t.funcParams, funcParam{name, jsonSchemaType, description})
+
+	buf := bytes.NewBufferString(`{"type":"object","properties":{`)
+	for i, p := range t.funcParams {
+		if i > 0 {
+			buf.WriteByte(',')
+		}
+		buf.Write(gjson.AppendJSONString(nil, p.Name))
+		buf.WriteString(`:{"type":`)
+		buf.Write(gjson.AppendJSONString(nil, p.Type))
+		buf.WriteString(`,"description":`)
+		buf.Write(gjson.AppendJSONString(nil, p.Description))
+		buf.WriteByte('}')
+	}
+	buf.WriteString(`},"required":[`)
+	for i, p := range t.funcParams {
+		if i > 0 {
+			buf.WriteByte(',')
+		}
+		buf.Write(gjson.AppendJSONString(nil, p.Name))
+	}
+	buf.WriteString(`],"additionalProperties":false}`)
+
+	t.Function.Parameters = utils.RawJsonString(buf.String())
+	return t
+}
+
+// Sets the JSON Schema for the parameters of the function used by the tool.
+// Use this for defining complex parameters. Prefer WithParameter for adding simple parameters,
+// which will generate the schema for you automatically.
+func (t Tool) WithParametersSchema(jsonSchema string) Tool {
+	t.Function.Parameters = utils.RawJsonString(jsonSchema)
+	return t
 }
 
 // The definition of a function that can be called by the model.
 type FunctionDefinition struct {
-
 	// The name of the function to be called.
 	//
 	// Must be a-z, A-Z, 0-9, or contain underscores and dashes, with a maximum length of 64.
@@ -514,18 +1154,18 @@ type FunctionDefinition struct {
 }
 
 // Creates an input object for the OpenAI Chat API.
-func (m *ChatModel) CreateInput(messages ...Message) (*ChatModelInput, error) {
+func (m *ChatModel) CreateInput(messages ...RequestMessage) (*ChatModelInput, error) {
 	return &ChatModelInput{
 		Model:             m.Info().FullName,
 		Messages:          messages,
 		ResponseFormat:    ResponseFormatText,
-		ServiceTier:       ServiceTierAuto,
 		Temperature:       1.0,
 		TopP:              1.0,
 		ParallelToolCalls: true,
 	}, nil
 }
 
+// Implements the json.Marshaler interface to serialize the ChatModelInput object.
 func (mi *ChatModelInput) MarshalJSON() ([]byte, error) {
 
 	type alias ChatModelInput
@@ -537,14 +1177,6 @@ func (mi *ChatModelInput) MarshalJSON() ([]byte, error) {
 	// omit default response_format
 	if t := mi.ResponseFormat.Type; t == "" || t == "text" {
 		b, err = sjson.DeleteBytes(b, "response_format")
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	// omit default service_tier
-	if mi.ServiceTier == ServiceTierAuto {
-		b, err = sjson.DeleteBytes(b, "service_tier")
 		if err != nil {
 			return nil, err
 		}

@@ -10,6 +10,7 @@
 package extractor
 
 import (
+	"fmt"
 	"go/types"
 	"sort"
 
@@ -49,8 +50,27 @@ func CollectProgramInfo(config *config.Config, meta *metadata.Metadata) error {
 	sort.Strings(keys)
 	for _, name := range keys {
 		t := requiredTypes[name]
+
+		// resolve type aliases
+		for {
+			if a, ok := t.(*types.Alias); ok {
+				t = a.Rhs()
+			} else {
+				break
+			}
+		}
+
+		resolvedName := name
+		if n, ok := t.(*types.Named); ok {
+			resolvedName = n.String()
+			t = n.Underlying()
+		}
+
 		if s, ok := t.(*types.Struct); ok && !wellKnownTypes[name] {
-			t := transformStruct(name, s, pkgs)
+			t := transformStruct(resolvedName, s, pkgs)
+			if t == nil {
+				return fmt.Errorf("failed to transform struct %s", resolvedName)
+			}
 			t.Id = id
 			meta.Types[name] = t
 		} else {

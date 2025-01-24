@@ -61,3 +61,9 @@ func GetLocation(tz string) (*time.Location, error) {
 	}
 	return hostGetTimeLocation(tz)
 }
+
+// IsValidTimeZone returns true if the given time zone is valid.
+func IsValidTimeZone(tz string) bool {
+	_, err := hostGetTimeInZone(tz)
+	return err == nil
+}

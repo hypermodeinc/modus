@@ -35,6 +35,7 @@ func TestExecuteDQL(t *testing.T) {
 	}
 	if response == nil {
 		t.Fatalf("Expected a response, but received nil")
+		return
 	}
 
 	if response.Json != `{"data": {"query": "query"}}` {
