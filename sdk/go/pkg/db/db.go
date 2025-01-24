@@ -21,63 +21,123 @@ type HostQueryResponse struct {
 	Error        *string
 	ResultJson   *string
 	RowsAffected uint32
+	LastInsertId uint64
 }
 
-func Execute(hostName, dbType, statement string, params ...any) (uint, error) {
-	_, affected, err := doQuery(hostName, dbType, statement, params, true)
-	return affected, err
+// Represents the result of a database query that does not return data.
+type Response struct {
+
+	// The number of rows affected by the query.
+	RowsAffected uint32
+
+	// The ID of the last row inserted by the query, if applicable.
+	// Note that not all databases support this feature.
+	LastInsertId uint64
 }
 
-func Query[T any](hostName, dbType, statement string, params ...any) ([]T, uint, error) {
-	resultJson, affected, err := doQuery(hostName, dbType, statement, params, false)
+// Represents the result of a database query that returns rows.
+type QueryResponse[T any] struct {
+
+	// The number of rows affected by the query, which typically corresponds to the number of rows returned.
+	RowsAffected uint32
+
+	// The ID of the last row inserted by the query, if applicable.
+	// Note that not all databases support this feature.
+	LastInsertId uint64
+
+	// The rows returned by the query.
+	Rows []T
+}
+
+// Represents the result of a database query that returns a single scalar value.
+type ScalarResponse[T any] struct {
+
+	// The number of rows affected by the query, which is typically 1 unless the query failed,
+	// or had side effects that modified more than one row.
+	RowsAffected uint32
+
+	// The ID of the last row inserted by the query, if applicable.
+	// Note that not all databases support this feature.
+	LastInsertId uint64
+
+	// The scalar value returned by the query.
+	Value T
+}
+
+// Executes a database query that does not return rows.
+func Execute(hostName, dbType, statement string, params ...any) (*Response, error) {
+	r, err := doQuery(hostName, dbType, statement, params, true)
 	if err != nil {
-		return nil, affected, err
+		return nil, err
+	}
+
+	return &Response{
+		RowsAffected: r.RowsAffected,
+		LastInsertId: r.LastInsertId,
+	}, nil
+}
+
+// Executes a database query that returns rows.
+// The structure of the rows is determined by the type parameter.
+func Query[T any](hostName, dbType, statement string, params ...any) (*QueryResponse[T], error) {
+	r, err := doQuery(hostName, dbType, statement, params, false)
+	if err != nil {
+		return nil, err
 	}
 
 	var rows []T
-	if resultJson != nil {
-		if err := utils.JsonDeserialize([]byte(*resultJson), &rows); err != nil {
-			return nil, affected, fmt.Errorf("could not JSON deserialize database response: %v", err)
+	if r.ResultJson != nil {
+		if err := utils.JsonDeserialize([]byte(*r.ResultJson), &rows); err != nil {
+			return nil, fmt.Errorf("could not JSON deserialize database response: %v", err)
 		}
 	}
 
-	return rows, affected, nil
+	return &QueryResponse[T]{
+		RowsAffected: r.RowsAffected,
+		LastInsertId: r.LastInsertId,
+		Rows:         rows,
+	}, nil
 }
 
-func QueryScalar[T any](hostName, dbType, statement string, params ...any) (T, uint, error) {
-	var zero T
-
-	rows, affected, err := Query[map[string]any](hostName, dbType, statement, params...)
+// Executes a database query that returns a single scalar value.
+// The type parameter determines the type of the scalar value.
+func QueryScalar[T any](hostName, dbType, statement string, params ...any) (*ScalarResponse[T], error) {
+	r, err := Query[map[string]any](hostName, dbType, statement, params...)
 	if err != nil {
-		return zero, affected, err
+		return nil, err
 	}
 
-	if len(rows) == 1 {
-		fields := rows[0]
+	if len(r.Rows) == 1 {
+		fields := r.Rows[0]
 		if len(fields) > 1 {
-			return zero, affected, fmt.Errorf("expected a single column from a scalar database query, but received %d", len(fields))
+			return nil, fmt.Errorf("expected a single column from a scalar database query, but received %d", len(fields))
 		}
 
 		for _, value := range fields {
 			result, err := utils.ConvertInterfaceTo[T](value)
 			if err != nil {
-				return zero, affected, fmt.Errorf("could not convert database result to %T: %v", zero, err)
+				var zero T
+				return nil, fmt.Errorf("could not convert database result to %T: %v", zero, err)
 			}
-			return result, affected, nil
+			return &ScalarResponse[T]{
+				RowsAffected: r.RowsAffected,
+				LastInsertId: r.LastInsertId,
+				Value:        result,
+			}, nil
 		}
-	} else if len(rows) > 1 {
-		return zero, affected, fmt.Errorf("expected a single row from a scalar database query, but received %d", len(rows))
+	} else if len(r.Rows) > 1 {
+		return nil, fmt.Errorf("expected a single row from a scalar database query, but received %d", len(r.Rows))
 	}
 
-	return zero, affected, errors.New("no result returned from database query")
+	return nil, errors.New("no result returned from database query")
 }
 
-func doQuery(hostName, dbType, statement string, params []any, execOnly bool) (*string, uint, error) {
+func doQuery(hostName, dbType, statement string, params []any, execOnly bool) (*HostQueryResponse, error) {
 	paramsJson := "[]"
 	if len(params) > 0 {
 		bytes, err := utils.JsonSerialize(params)
 		if err != nil {
-			return nil, 0, fmt.Errorf("could not JSON serialize query parameters: %v", err)
+			return nil, fmt.Errorf("could not JSON serialize query parameters: %v", err)
 		}
 		paramsJson = string(bytes)
 	}
@@ -90,14 +150,12 @@ func doQuery(hostName, dbType, statement string, params []any, execOnly bool) (*
 	statement = strings.TrimSpace(statement)
 	response := hostExecuteQuery(&hostName, &dbType, &statement, &paramsJson)
 	if response == nil {
-		return nil, 0, errors.New("no response received from database query")
+		return nil, errors.New("no response received from database query")
 	}
-
-	affected := uint(response.RowsAffected)
 
 	if response.Error != nil {
-		return nil, affected, fmt.Errorf("database returned an error: %s", *response.Error)
+		return nil, fmt.Errorf("database returned an error: %s", *response.Error)
 	}
 
-	return response.ResultJson, affected, nil
+	return response, nil
 }

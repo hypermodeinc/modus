@@ -9,34 +9,34 @@ package main
 import (
 	"fmt"
 
-	"github.com/hypermodeinc/modus/sdk/go/pkg/postgresql"
+	"github.com/hypermodeinc/modus/sdk/go/pkg/mysql"
 )
 
-// The name of the PostgreSQL host, as specified in the modus.json manifest
+// The name of the MySQL host, as specified in the modus.json manifest
 const host = "my-database"
 
 type Person struct {
-	Id   int                  `json:"id"`
-	Name string               `json:"name"`
-	Age  int                  `json:"age"`
-	Home *postgresql.Location `json:"home"`
+	Id   int             `json:"id"`
+	Name string          `json:"name"`
+	Age  int             `json:"age"`
+	Home *mysql.Location `json:"home"`
 }
 
 func GetAllPeople() ([]Person, error) {
 	const query = "select * from people order by id"
-	response, err := postgresql.Query[Person](host, query)
+	response, err := mysql.Query[Person](host, query)
 	return response.Rows, err
 }
 
 func GetPeopleByName(name string) ([]Person, error) {
-	const query = "select * from people where name = $1"
-	response, err := postgresql.Query[Person](host, query, name)
+	const query = "select * from people where name = ?"
+	response, err := mysql.Query[Person](host, query, name)
 	return response.Rows, err
 }
 
 func GetPerson(id int) (*Person, error) {
-	const query = "select * from people where id = $1"
-	response, err := postgresql.Query[Person](host, query, id)
+	const query = "select * from people where id = ?"
+	response, err := mysql.Query[Person](host, query, id)
 	if err != nil {
 		return nil, err
 	}
@@ -49,21 +49,21 @@ func GetPerson(id int) (*Person, error) {
 }
 
 func AddPerson(name string, age int) (*Person, error) {
-	const query = "insert into people (name, age) values ($1, $2) RETURNING id"
+	const query = "insert into people (name, age) values (?, ?)"
 
-	response, err := postgresql.QueryScalar[int](host, query, name, age)
+	response, err := mysql.Execute(host, query, name, age)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to add person to database: %v", err)
 	}
 
-	p := Person{Id: response.Value, Name: name, Age: age}
+	p := Person{Id: int(response.LastInsertId), Name: name, Age: age}
 	return &p, nil
 }
 
 func UpdatePersonHome(id int, longitude, latitude float64) (*Person, error) {
-	const query = "update people set home = point($1, $2) where id = $3"
+	const query = "update people set home = point(?,?) where id = ?"
 
-	response, err := postgresql.Execute(host, query, longitude, latitude, id)
+	response, err := mysql.Execute(host, query, longitude, latitude, id)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to update person in database: %v", err)
 	}
@@ -76,9 +76,9 @@ func UpdatePersonHome(id int, longitude, latitude float64) (*Person, error) {
 }
 
 func DeletePerson(id int) (string, error) {
-	const query = "delete from people where id = $1"
+	const query = "delete from people where id = ?"
 
-	response, err := postgresql.Execute(host, query, id)
+	response, err := mysql.Execute(host, query, id)
 	if err != nil {
 		return "", fmt.Errorf("Failed to delete person from database: %v", err)
 	}
