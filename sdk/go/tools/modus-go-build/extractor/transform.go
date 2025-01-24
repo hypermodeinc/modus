@@ -109,6 +109,17 @@ func getStructDeclarationAndType(name string, pkgs map[string]*packages.Package)
 						if typeSpec.Name.Name == objName {
 							if structType, ok := typeSpec.Type.(*ast.StructType); ok {
 								return genDecl, structType
+							} else if ident, ok := typeSpec.Type.(*ast.Ident); ok {
+								typePath := pkgName + "." + ident.Name
+								return getStructDeclarationAndType(typePath, pkgs)
+							} else if selExp, ok := typeSpec.Type.(*ast.SelectorExpr); ok {
+								if pkgIdent, ok := selExp.X.(*ast.Ident); !ok {
+									return nil, nil
+								} else {
+									pkgPath := getFullImportPath(file, pkgIdent.Name)
+									typePath := pkgPath + "." + selExp.Sel.Name
+									return getStructDeclarationAndType(typePath, pkgs)
+								}
 							}
 						}
 					}
@@ -118,6 +129,24 @@ func getStructDeclarationAndType(name string, pkgs map[string]*packages.Package)
 	}
 
 	return nil, nil
+}
+
+func getFullImportPath(file *ast.File, pkgName string) string {
+	for _, imp := range file.Imports {
+		path := strings.Trim(imp.Path.Value, `"`)
+		if imp.Name == nil {
+			parts := strings.Split(path, "/")
+			if len(parts) == 0 {
+				return ""
+			}
+			if parts[len(parts)-1] == pkgName {
+				return path
+			}
+		} else if imp.Name.Name == pkgName {
+			return path
+		}
+	}
+	return ""
 }
 
 func getDocs(comments *ast.CommentGroup) *metadata.Docs {
