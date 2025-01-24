@@ -45,6 +45,16 @@ export async function getTinyGoVersion(): Promise<string | undefined> {
   }
 }
 
+export async function getBinaryenVersion(): Promise<string | undefined> {
+  try {
+    const result = await execFile("wasm-opt", ["--version"], EXEC_OPTIONS);
+    const parts = result.stdout.split(" ");
+    return parts.length > 2 ? parts[2] : undefined;
+  } catch {
+    /* empty */
+  }
+}
+
 export async function getNPMVersion(): Promise<string | undefined> {
   try {
     const result = await execFile("npm", ["--version"], EXEC_OPTIONS);
