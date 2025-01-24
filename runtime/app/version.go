@@ -10,6 +10,8 @@
 package app
 
 import (
+	"fmt"
+	"os"
 	"os/exec"
 	"strings"
 )
@@ -41,6 +43,9 @@ func ProductVersion() string {
 
 func describeVersion() string {
 	result, err := exec.Command("git", "describe", "--tags", "--always", "--match", "runtime/*").Output()
+	if os.Getenv("GITHUB_ACTION") != "" {
+		fmt.Println("*** debug: describeVersion result:", string(result))
+	}
 	if err != nil {
 		return "(unknown)"
 	}
