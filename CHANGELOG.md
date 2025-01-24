@@ -11,6 +11,8 @@
 - fix: remove fallback to default time zone [#706](https://github.com/hypermodeinc/modus/pull/706)
 - feat: improve OpenAI model APIs and examples to better support audio, images, and tool calling
   [#707](https://github.com/hypermodeinc/modus/pull/707)
+- feat: support type aliases and redefinitions
+  [#721](https://github.com/hypermodeinc/modus/pull/721)
 
 ## 2025-01-09 - CLI 0.16.6
 
