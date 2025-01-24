@@ -16,7 +16,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/hypermodeinc/modus/runtime/config"
+	"github.com/hypermodeinc/modus/runtime/app"
 	"github.com/hypermodeinc/modus/runtime/logger"
 	"github.com/hypermodeinc/modus/runtime/utils"
 
@@ -55,7 +55,7 @@ func logDbWarningOrError(ctx context.Context, err error, msg string) {
 	if _, ok := err.(*pgconn.ConnectError); ok {
 		logger.Warn(ctx).Err(err).Msgf("Database connection error. %s", msg)
 	} else if errors.Is(err, errDbNotConfigured) {
-		if !config.IsDevEnvironment() {
+		if !app.IsDevEnvironment() {
 			logger.Warn(ctx).Msgf("Database has not been configured. %s", msg)
 		}
 	} else {
@@ -393,7 +393,7 @@ func QueryCollectionVectorsFromCheckpoint(ctx context.Context, collectionName, s
 func Initialize(ctx context.Context) {
 	// this will initialize the pool and start the worker
 	_, err := globalRuntimePostgresWriter.GetPool(ctx)
-	if err != nil && !config.IsDevEnvironment() {
+	if err != nil && !app.IsDevEnvironment() {
 		logger.Warn(ctx).Err(err).Msg("Metadata database is not available.")
 	}
 	go globalRuntimePostgresWriter.worker(ctx)

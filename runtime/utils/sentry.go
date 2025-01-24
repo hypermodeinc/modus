@@ -17,15 +17,16 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hypermodeinc/modus/runtime/config"
+	"github.com/hypermodeinc/modus/runtime/app"
 
 	"github.com/getsentry/sentry-go"
 )
 
-var rootSourcePath string
 var sentryInitialized bool
 
-func InitSentry(rootPath string) {
+var rootSourcePath = app.GetRootSourcePath()
+
+func InitSentry() {
 
 	// Don't initialize Sentry when running in debug mode.
 	if DebugModeEnabled() {
@@ -42,17 +43,16 @@ func InitSentry(rootPath string) {
 	// but default to the environment name from MODUS_ENV.
 	environment := os.Getenv("SENTRY_ENVIRONMENT")
 	if environment == "" {
-		environment = config.GetEnvironmentName()
+		environment = app.Config().Environment()
 	}
 
 	// Allow the Sentry release to be overridden by the SENTRY_RELEASE environment variable,
 	// but default to the Modus version number.
 	release := os.Getenv("SENTRY_RELEASE")
 	if release == "" {
-		release = config.GetVersionNumber()
+		release = app.VersionNumber()
 	}
 
-	rootSourcePath = rootPath
 	err := sentry.Init(sentry.ClientOptions{
 		Dsn:                   dsn,
 		Environment:           environment,
@@ -155,7 +155,8 @@ func sentryAddExtras(event *sentry.Event) {
 		event.Extra = make(map[string]interface{})
 	}
 
-	ns := config.GetNamespace()
+	// Capture the k8s namespace environment variable.
+	ns := os.Getenv("NAMESPACE")
 	if ns != "" {
 		event.Extra["namespace"] = ns
 	}

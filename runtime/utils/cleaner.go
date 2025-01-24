@@ -15,6 +15,8 @@ import (
 )
 
 type Cleaner interface {
+	Len() int
+	Cap() int
 	Clean() error
 	AddCleanup(fn func() error)
 	AddCleaner(c Cleaner)
@@ -32,6 +34,14 @@ func NewCleanerN(capacity int) Cleaner {
 	return &cleaner{
 		cleanupFuncs: make([]func() error, 0, capacity),
 	}
+}
+
+func (c *cleaner) Len() int {
+	return len(c.cleanupFuncs)
+}
+
+func (c *cleaner) Cap() int {
+	return cap(c.cleanupFuncs)
 }
 
 func (c *cleaner) AddCleanup(fn func() error) {

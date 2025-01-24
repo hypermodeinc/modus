@@ -17,7 +17,7 @@ import (
 	"strings"
 
 	"github.com/hypermodeinc/modus/lib/manifest"
-	"github.com/hypermodeinc/modus/runtime/config"
+	"github.com/hypermodeinc/modus/runtime/app"
 	"github.com/hypermodeinc/modus/runtime/db"
 	"github.com/hypermodeinc/modus/runtime/httpclient"
 	"github.com/hypermodeinc/modus/runtime/manifestdata"
@@ -93,7 +93,7 @@ func PostToModelEndpoint[TResult any](ctx context.Context, model *manifest.Model
 		var empty TResult
 		var httpe *utils.HttpError
 		if errors.As(err, &httpe) {
-			if config.IsDevEnvironment() && httpe.StatusCode == http.StatusNotFound {
+			if app.IsDevEnvironment() && httpe.StatusCode == http.StatusNotFound {
 				return empty, fmt.Errorf("model %s is not available in the local dev environment", model.SourceModel)
 			}
 		}

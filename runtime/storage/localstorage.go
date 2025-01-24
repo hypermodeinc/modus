@@ -17,38 +17,41 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/hypermodeinc/modus/runtime/config"
+	"github.com/hypermodeinc/modus/runtime/app"
 	"github.com/hypermodeinc/modus/runtime/logger"
 
 	"github.com/gofrs/flock"
 )
 
 type localStorageProvider struct {
+	appPath string
 }
 
 func (stg *localStorageProvider) initialize(ctx context.Context) {
-	if config.AppPath == "" {
+
+	stg.appPath = app.Config().AppPath()
+	if stg.appPath == "" {
 		logger.Fatal(ctx).Msg("The -appPath command line argument is required.  Exiting.")
 	}
 
-	if _, err := os.Stat(config.AppPath); os.IsNotExist(err) {
+	if _, err := os.Stat(stg.appPath); os.IsNotExist(err) {
 		logger.Info(ctx).
-			Str("path", config.AppPath).
+			Str("path", stg.appPath).
 			Msg("Creating app directory.")
-		err := os.MkdirAll(config.AppPath, 0755)
+		err := os.MkdirAll(stg.appPath, 0755)
 		if err != nil {
 			logger.Fatal(ctx).Err(err).
 				Msg("Failed to create local app directory.  Exiting.")
 		}
 	} else {
 		logger.Info(ctx).
-			Str("path", config.AppPath).
+			Str("path", stg.appPath).
 			Msg("Using local app directory.")
 	}
 }
 
 func (stg *localStorageProvider) listFiles(ctx context.Context, patterns ...string) ([]FileInfo, error) {
-	entries, err := os.ReadDir(config.AppPath)
+	entries, err := os.ReadDir(stg.appPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list files in storage directory: %w", err)
 	}
@@ -86,7 +89,7 @@ func (stg *localStorageProvider) listFiles(ctx context.Context, patterns ...stri
 }
 
 func (stg *localStorageProvider) getFileContents(ctx context.Context, name string) (content []byte, err error) {
-	path := filepath.Join(config.AppPath, name)
+	path := filepath.Join(stg.appPath, name)
 
 	// Acquire a read lock on the file to prevent reading a file that is still being written to.
 	// For example, this can easily happen when using `modus dev` and the user is editing the manifest file.

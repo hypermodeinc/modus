@@ -15,7 +15,7 @@ import (
 	"time"
 
 	"github.com/hypermodeinc/modus/lib/manifest"
-	"github.com/hypermodeinc/modus/runtime/config"
+	"github.com/hypermodeinc/modus/runtime/app"
 	"github.com/hypermodeinc/modus/runtime/metrics"
 	"github.com/hypermodeinc/modus/runtime/plugins"
 	"github.com/hypermodeinc/modus/runtime/secrets"
@@ -184,7 +184,7 @@ func getInferenceDataJson(val any) ([]byte, error) {
 
 func WritePluginInfo(ctx context.Context, plugin *plugins.Plugin) {
 
-	if config.IsDevEnvironment() {
+	if app.IsDevEnvironment() {
 		err := writePluginInfoToModusdb(plugin)
 		if err != nil {
 			logDbWarningOrError(ctx, err, "Plugin info not written to ModusDB.")
@@ -306,7 +306,7 @@ func WriteInferenceHistoryToDB(ctx context.Context, batch []inferenceHistory) {
 		return
 	}
 
-	if config.IsDevEnvironment() {
+	if app.IsDevEnvironment() {
 		err := writeInferenceHistoryToModusDb(batch)
 		if err != nil {
 			logDbWarningOrError(ctx, err, "Inference history not written to ModusDB.")

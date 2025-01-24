@@ -13,8 +13,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/hypermodeinc/modus/runtime/config"
-
+	"github.com/hypermodeinc/modus/runtime/app"
 	"github.com/hypermodeinc/modus/runtime/utils"
 )
 
@@ -36,7 +35,7 @@ func Initialize(ctx context.Context) {
 	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
 
-	if config.UseAwsStorage {
+	if app.Config().UseAwsStorage() {
 		provider = &awsStorageProvider{}
 	} else {
 		provider = &localStorageProvider{}
