@@ -1,25 +1,40 @@
 # Change Log
 
-## UNRELEASED
+## 2025-01-24 - Runtime 0.17.0
 
-- fix: resolve warning in `deserializeRawMap` [#692](https://github.com/hypermodeinc/modus/pull/692)
 - feat: add modusdb model tracing for local dev
   [#697](https://github.com/hypermodeinc/modus/pull/697)
-- fix: add json serialization support for neo4j sdk types
-  [#699](https://github.com/hypermodeinc/modus/pull/699)
 - chore: update api-explorer to react 19 [#700](https://github.com/hypermodeinc/modus/pull/700)
 - chore: remove localHypermodeModels list and handle 404s properly instead in local dev
   [#703](https://github.com/hypermodeinc/modus/pull/703)
 - fix: remove fallback to default time zone [#706](https://github.com/hypermodeinc/modus/pull/706)
+- feat: support MySQL database connections [#722](https://github.com/hypermodeinc/modus/pull/722)
+- chore: refactoring / tests [#723](https://github.com/hypermodeinc/modus/pull/723)
+- chore: show inferences error in api explorer
+  [#726](https://github.com/hypermodeinc/modus/pull/726)
+
+## 2025-01-24 - AssemblyScript SDK 0.17.0
+
+- fix: resolve warning in `deserializeRawMap` [#692](https://github.com/hypermodeinc/modus/pull/692)
+- fix: add json serialization support for neo4j sdk types
+  [#699](https://github.com/hypermodeinc/modus/pull/699)
+- feat: improve OpenAI model APIs and examples to better support audio, images, and tool calling
+  [#707](https://github.com/hypermodeinc/modus/pull/707)
+- feat: support MySQL database connections [#722](https://github.com/hypermodeinc/modus/pull/722)
+
+## 2025-01-24 - Go SDK 0.17.0
+
+- fix: add json serialization support for neo4j sdk types
+  [#699](https://github.com/hypermodeinc/modus/pull/699)
 - feat: improve OpenAI model APIs and examples to better support audio, images, and tool calling
   [#707](https://github.com/hypermodeinc/modus/pull/707)
 - feat: support type aliases and redefinitions
   [#721](https://github.com/hypermodeinc/modus/pull/721)
 - feat: support MySQL database connections [#722](https://github.com/hypermodeinc/modus/pull/722)
-- chore: refactoring / tests [#723](https://github.com/hypermodeinc/modus/pull/723)
+
+## 2025-01-24 - CLI 0.17.0
+
 - feat: check for Binaryen installation [#725](https://github.com/hypermodeinc/modus/pull/725)
-- chore: show inferences error in api explorer
-  [#726](https://github.com/hypermodeinc/modus/pull/726)
 
 ## 2025-01-09 - CLI 0.16.6
 
