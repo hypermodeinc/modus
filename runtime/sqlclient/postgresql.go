@@ -13,6 +13,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/hypermodeinc/modus/lib/manifest"
 	"github.com/hypermodeinc/modus/runtime/logger"
 
 	"github.com/jackc/pgx/v5"
@@ -23,7 +24,11 @@ type postgresqlDS struct {
 	pool *pgxpool.Pool
 }
 
-func (ds *postgresqlDS) query(ctx context.Context, stmt string, params []any) (*dbResponse, error) {
+func (ds *postgresqlDS) Shutdown() {
+	ds.pool.Close()
+}
+
+func (ds *postgresqlDS) query(ctx context.Context, stmt string, params []any, execOnly bool) (*dbResponse, error) {
 
 	tx, err := ds.pool.Begin(ctx)
 	if err != nil {
@@ -37,27 +42,45 @@ func (ds *postgresqlDS) query(ctx context.Context, stmt string, params []any) (*
 	}()
 
 	// TODO: what if connection times out and we need to retry
-	rows, err := tx.Query(ctx, stmt, params...)
-	if err != nil {
-		return nil, err
-	}
 
-	data, err := pgx.CollectRows(rows, pgx.RowToMap)
-	if err != nil {
-		return nil, err
-	}
+	response := new(dbResponse)
+	if execOnly {
+		if ct, err := tx.Exec(ctx, stmt, params...); err != nil {
+			return nil, err
+		} else {
+			response.RowsAffected = uint32(ct.RowsAffected())
+		}
+	} else {
+		rows, err := tx.Query(ctx, stmt, params...)
+		if err != nil {
+			return nil, err
+		}
 
-	rowsAffected := uint32(rows.CommandTag().RowsAffected())
+		if data, err := pgx.CollectRows(rows, pgx.RowToMap); err != nil {
+			return nil, err
+		} else {
+			response.Result = data
+		}
+
+		response.RowsAffected = uint32(rows.CommandTag().RowsAffected())
+	}
 
 	if err := tx.Commit(ctx); err != nil {
 		return nil, err
 	}
+	return response, nil
+}
 
-	response := &dbResponse{
-		// Error: "",
-		Result:       data,
-		RowsAffected: rowsAffected,
+func newPostgresqlDS(ctx context.Context, dsName string) (*postgresqlDS, error) {
+	connStr, err := getConnectionString(ctx, dsName, manifest.ConnectionTypePostgresql)
+	if err != nil {
+		return nil, err
 	}
 
-	return response, nil
+	pool, err := pgxpool.New(ctx, connStr)
+	if err != nil {
+		return nil, fmt.Errorf("failed to connect to postgresql database [%s]: %w", dsName, err)
+	}
+
+	return &postgresqlDS{pool}, nil
 }

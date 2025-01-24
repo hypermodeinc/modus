@@ -7,17 +7,17 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-package postgresql_test
+package db_test
 
 import (
 	"encoding/json"
 	"testing"
 
-	"github.com/hypermodeinc/modus/sdk/go/pkg/postgresql"
+	"github.com/hypermodeinc/modus/sdk/go/pkg/db"
 )
 
 func TestPointString(t *testing.T) {
-	point := postgresql.NewPoint(12.345678901234567, -56.7890123456789)
+	point := db.NewPoint(12.345678901234567, -56.7890123456789)
 	expected := "(12.345678901234567,-56.7890123456789)"
 	result := point.String()
 
@@ -27,7 +27,7 @@ func TestPointString(t *testing.T) {
 }
 
 func TestPointMarshalJSON(t *testing.T) {
-	point := postgresql.NewPoint(12.345678901234567, -56.7890123456789)
+	point := db.NewPoint(12.345678901234567, -56.7890123456789)
 	expected := `"(12.345678901234567,-56.7890123456789)"`
 	result, err := json.Marshal(point)
 
@@ -42,8 +42,8 @@ func TestPointMarshalJSON(t *testing.T) {
 
 func TestPointUnmarshalJSON(t *testing.T) {
 	data := []byte(`"(12.345678901234567,-56.7890123456789)"`)
-	expected := postgresql.NewPoint(12.345678901234567, -56.7890123456789)
-	point := &postgresql.Point{}
+	expected := db.NewPoint(12.345678901234567, -56.7890123456789)
+	point := &db.Point{}
 
 	err := json.Unmarshal(data, point)
 
@@ -59,7 +59,7 @@ func TestPointUnmarshalJSON(t *testing.T) {
 func TestNewPoint(t *testing.T) {
 	x := 12.345678901234567
 	y := -56.7890123456789
-	point := postgresql.NewPoint(x, y)
+	point := db.NewPoint(x, y)
 
 	if point.X != x || point.Y != y {
 		t.Errorf("Expected X: %f, Y: %f, but got %+v", x, y, point)
@@ -68,8 +68,8 @@ func TestNewPoint(t *testing.T) {
 
 func TestParsePoint(t *testing.T) {
 	s := "(12.345678901234567,-56.7890123456789)"
-	expected := postgresql.NewPoint(12.345678901234567, -56.7890123456789)
-	point, err := postgresql.ParsePoint(s)
+	expected := db.NewPoint(12.345678901234567, -56.7890123456789)
+	point, err := db.ParsePoint(s)
 
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
@@ -82,7 +82,7 @@ func TestParsePoint(t *testing.T) {
 
 func TestParsePointError(t *testing.T) {
 	s := "invalid-point"
-	_, err := postgresql.ParsePoint(s)
+	_, err := db.ParsePoint(s)
 
 	if err == nil {
 		t.Error("Expected an error, but received none")

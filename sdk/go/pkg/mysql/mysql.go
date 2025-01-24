@@ -7,11 +7,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-package postgresql
+package mysql
 
 import "github.com/hypermodeinc/modus/sdk/go/pkg/db"
 
-const dbType = "postgresql"
+const dbType = "mysql"
 
 // Executes a database query that does not return rows.
 func Execute(hostName, statement string, params ...any) (*db.Response, error) {

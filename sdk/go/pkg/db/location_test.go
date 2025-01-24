@@ -7,17 +7,17 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-package postgresql_test
+package db_test
 
 import (
 	"encoding/json"
 	"testing"
 
-	"github.com/hypermodeinc/modus/sdk/go/pkg/postgresql"
+	"github.com/hypermodeinc/modus/sdk/go/pkg/db"
 )
 
 func TestLocationString(t *testing.T) {
-	location := postgresql.NewLocation(12.345678901234567, -56.7890123456789)
+	location := db.NewLocation(12.345678901234567, -56.7890123456789)
 	expected := "(12.345678901234567,-56.7890123456789)"
 	result := location.String()
 
@@ -27,7 +27,7 @@ func TestLocationString(t *testing.T) {
 }
 
 func TestLocationMarshalJSON(t *testing.T) {
-	location := postgresql.NewLocation(12.345678901234567, -56.7890123456789)
+	location := db.NewLocation(12.345678901234567, -56.7890123456789)
 	expected := `"(12.345678901234567,-56.7890123456789)"`
 	result, err := json.Marshal(location)
 
@@ -42,8 +42,8 @@ func TestLocationMarshalJSON(t *testing.T) {
 
 func TestLocationUnmarshalJSON(t *testing.T) {
 	data := []byte(`"(12.345678901234567,-56.7890123456789)"`)
-	expected := postgresql.NewLocation(12.345678901234567, -56.7890123456789)
-	location := &postgresql.Location{}
+	expected := db.NewLocation(12.345678901234567, -56.7890123456789)
+	location := &db.Location{}
 
 	err := json.Unmarshal(data, location)
 
@@ -59,7 +59,7 @@ func TestLocationUnmarshalJSON(t *testing.T) {
 func TestNewLocation(t *testing.T) {
 	longitude := 12.345678901234567
 	latitude := -56.7890123456789
-	location := postgresql.NewLocation(longitude, latitude)
+	location := db.NewLocation(longitude, latitude)
 
 	if location.Longitude != longitude || location.Latitude != latitude {
 		t.Errorf("Expected Longitude: %f, Latitude: %f, but got %+v", longitude, latitude, location)
@@ -68,8 +68,8 @@ func TestNewLocation(t *testing.T) {
 
 func TestParseLocation(t *testing.T) {
 	s := "(12.345678901234567,-56.7890123456789)"
-	expected := postgresql.NewLocation(12.345678901234567, -56.7890123456789)
-	location, err := postgresql.ParseLocation(s)
+	expected := db.NewLocation(12.345678901234567, -56.7890123456789)
+	location, err := db.ParseLocation(s)
 
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
@@ -82,7 +82,7 @@ func TestParseLocation(t *testing.T) {
 
 func TestParseLocationError(t *testing.T) {
 	s := "invalid-location"
-	_, err := postgresql.ParseLocation(s)
+	_, err := db.ParseLocation(s)
 
 	if err == nil {
 		t.Error("Expected an error, but received none")

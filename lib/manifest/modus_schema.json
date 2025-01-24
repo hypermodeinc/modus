@@ -223,6 +223,24 @@
                 "properties": {
                   "type": {
                     "type": "string",
+                    "const": "mysql",
+                    "description": "Type of the connection."
+                  },
+                  "connString": {
+                    "type": "string",
+                    "minLength": 1,
+                    "pattern": "^mysql:\\/\\/(.*?@)?([0-9a-zA-Z.-]*?)(:\\d+)?(\\/[0-9a-zA-Z.-]+)?(\\?.+)?$",
+                    "description": "The MySQL connection string in URI format.",
+                    "markdownDescription": "The MySQL connection string in URI format.\n\nReference: https://docs.hypermode.com/modus/app-manifest#mysql-connection"
+                  }
+                },
+                "required": ["type", "connString"],
+                "additionalProperties": false
+              },
+              {
+                "properties": {
+                  "type": {
+                    "type": "string",
                     "const": "dgraph",
                     "description": "Type of the connection."
                   },

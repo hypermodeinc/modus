@@ -15,6 +15,7 @@
   [#707](https://github.com/hypermodeinc/modus/pull/707)
 - feat: support type aliases and redefinitions
   [#721](https://github.com/hypermodeinc/modus/pull/721)
+- feat: support MySQL database connections [#722](https://github.com/hypermodeinc/modus/pull/722)
 
 ## 2025-01-09 - CLI 0.16.6
 
