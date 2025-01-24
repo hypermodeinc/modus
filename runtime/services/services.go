@@ -52,6 +52,7 @@ func Start(ctx context.Context) context.Context {
 	secrets.Initialize(ctx)
 	storage.Initialize(ctx)
 	db.Initialize(ctx)
+	db.InitModusDb(ctx)
 	collections.Initialize(ctx)
 	manifestdata.MonitorManifestFile(ctx)
 	envfiles.MonitorEnvFiles(ctx)
@@ -79,4 +80,5 @@ func Stop(ctx context.Context) {
 	neo4jclient.CloseDrivers(ctx)
 	logger.Close()
 	db.Stop(ctx)
+	db.CloseModusDb(ctx)
 }

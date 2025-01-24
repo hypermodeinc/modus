@@ -13,8 +13,10 @@ import (
 	"embed"
 	"io/fs"
 	"net/http"
+	"runtime"
 
 	"github.com/hypermodeinc/modus/lib/manifest"
+	"github.com/hypermodeinc/modus/runtime/db"
 	"github.com/hypermodeinc/modus/runtime/manifestdata"
 	"github.com/hypermodeinc/modus/runtime/utils"
 )
@@ -30,6 +32,14 @@ func explorerHandler(w http.ResponseWriter, r *http.Request) {
 	mux := http.NewServeMux()
 	mux.Handle("/explorer/", http.StripPrefix("/explorer/", http.FileServerFS(contentRoot)))
 	mux.HandleFunc("/explorer/api/endpoints", endpointsHandler)
+	if runtime.GOOS == "windows" {
+		notImplementedHandler := func(w http.ResponseWriter, r *http.Request) {
+			http.Error(w, "Not implemented on Windows", http.StatusNotImplemented)
+		}
+		mux.HandleFunc("/explorer/api/inferences", notImplementedHandler)
+	} else {
+		mux.HandleFunc("/explorer/api/inferences", inferenceHistoryHandler)
+	}
 
 	mux.ServeHTTP(w, r)
 }
@@ -56,4 +66,26 @@ func endpointsHandler(w http.ResponseWriter, r *http.Request) {
 	utils.WriteJsonContentHeader(w)
 	j, _ := utils.JsonSerialize(endpoints)
 	_, _ = w.Write(j)
+}
+
+var InferenceHistoryHandler = http.HandlerFunc(inferenceHistoryHandler)
+
+func inferenceHistoryHandler(w http.ResponseWriter, r *http.Request) {
+
+	inferences, err := db.QueryInferences()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	utils.WriteJsonContentHeader(w)
+	j, err := utils.JsonSerialize(inferences)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	_, err = w.Write(j)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 }
