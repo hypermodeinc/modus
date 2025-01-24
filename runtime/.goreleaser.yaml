@@ -49,11 +49,11 @@ archives:
       - ../README.md
       - ../LICENSE
     name_template: "{{ .ProjectName }}_v{{ .Version }}_{{ .Os }}_{{ .Arch }}"
-    formats: ["tar.gz"]
+    formats: [tar.gz]
     # use zip for windows archives
     format_overrides:
       - goos: windows
-        formats: ["zip"]
+        formats: [zip]
 checksum:
   name_template: checksums.txt
 release:
