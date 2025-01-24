@@ -18,6 +18,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"runtime"
 	"syscall"
 
 	"github.com/hypermodeinc/modus/lib/manifest"
@@ -139,8 +140,14 @@ func GetMainHandler(options ...func(map[string]http.Handler)) http.Handler {
 	if config.IsDevEnvironment() {
 		defaultRoutes["/explorer/"] = explorer.ExplorerHandler
 		defaultRoutes["/"] = http.RedirectHandler("/explorer/", http.StatusSeeOther)
-		defaultRoutes["/inferences.json"] = InferenceHistoryHandler
-		defaultRoutes["/plugins.json"] = PluginHandler
+		if runtime.GOOS == "windows" {
+			notImplementedHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				http.Error(w, "Not implemented on Windows", http.StatusNotImplemented)
+			})
+			defaultRoutes["/explorer/api/inferences"] = notImplementedHandler
+		} else {
+			defaultRoutes["/explorer/api/inferences"] = InferenceHistoryHandler
+		}
 	}
 
 	for _, opt := range options {
@@ -263,7 +270,6 @@ func isIPv6Available() bool {
 }
 
 var InferenceHistoryHandler = http.HandlerFunc(inferenceHistoryHandler)
-var PluginHandler = http.HandlerFunc(pluginHandler)
 
 func inferenceHistoryHandler(w http.ResponseWriter, r *http.Request) {
 
@@ -274,15 +280,13 @@ func inferenceHistoryHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	utils.WriteJsonContentHeader(w)
-	j, _ := utils.JsonSerialize(inferences)
-	_, _ = w.Write(j)
-}
-
-func pluginHandler(w http.ResponseWriter, r *http.Request) {
-	resp, err := db.QueryPlugins()
+	j, err := utils.JsonSerialize(inferences)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	fmt.Fprint(w, resp)
+	_, err = w.Write(j)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 }

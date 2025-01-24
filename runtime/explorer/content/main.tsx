@@ -39,7 +39,7 @@ function App() {
   useEffect(() => {
     const fetchInferences = async () => {
       try {
-        const response = await fetch("/inferences.json");
+        const response = await fetch("/explorer/api/inferences");
         const data = await response.json();
 
         setInferences(JSON.parse(JSON.stringify(data || {})));

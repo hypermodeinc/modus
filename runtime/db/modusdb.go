@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Hypermode Inc.
+ * Copyright 2025 Hypermode Inc.
  * Licensed under the terms of the Apache License, Version 2.0
  * See the LICENSE file that accompanied this code for further details.
  *
@@ -11,21 +11,24 @@ package db
 
 import (
 	"context"
+	"path/filepath"
 
+	"github.com/hypermodeinc/modus/runtime/app"
+	"github.com/hypermodeinc/modus/runtime/config"
 	"github.com/hypermodeinc/modus/runtime/logger"
 	"github.com/hypermodeinc/modusdb"
 )
 
-var dataDir = "data"
 var GlobalModusDbEngine *modusdb.Engine
 
 func InitModusDb(ctx context.Context) {
-	// Initialize the database connection.
-	var err error
-	GlobalModusDbEngine, err = modusdb.NewEngine(modusdb.NewDefaultConfig(dataDir))
-	if err != nil {
-		logger.Fatal(ctx).Err(err).Msg("Failed to initialize modusdb.")
-		return
+	if config.IsDevEnvironment() {
+		dataDir := filepath.Join(app.ModusHomeDir(), "data")
+		if eng, err := modusdb.NewEngine(modusdb.NewDefaultConfig(dataDir)); err != nil {
+			logger.Fatal(ctx).Err(err).Msg("Failed to initialize modusdb.")
+		} else {
+			GlobalModusDbEngine = eng
+		}
 	}
 }
 
