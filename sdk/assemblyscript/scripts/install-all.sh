@@ -9,6 +9,15 @@ cd ..
 cd src
 npm install
 
+cd ../templates
+for template in *; do
+	if [[ -d ${template} ]]; then
+		cd "${template}"
+		npm install
+		cd ..
+	fi
+done
+
 cd ../examples
 for example in *; do
 	if [[ -d ${example} ]]; then
