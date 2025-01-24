@@ -227,6 +227,11 @@ func addRequiredTypes(t types.Type, m map[string]types.Type) bool {
 			m[name] = t
 			return true
 		}
+	case *types.Alias:
+		if addRequiredTypes(t.Rhs(), m) {
+			m[name] = t
+			return true
+		}
 	case *types.Struct:
 		// TODO: handle unnamed structs
 	case *types.Slice:
