@@ -247,6 +247,9 @@ ON CONFLICT (build_id) DO NOTHING`,
 }
 
 func writePluginInfoToModusdb(plugin *plugins.Plugin) error {
+	if GlobalModusDbEngine == nil {
+		return nil
+	}
 	_, _, err := modusdb.Create[Plugin](GlobalModusDbEngine, Plugin{
 		Id:         plugin.Id,
 		Name:       plugin.Metadata.Name(),
@@ -354,6 +357,9 @@ VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 }
 
 func writeInferenceHistoryToModusDb(batch []inferenceHistory) error {
+	if GlobalModusDbEngine == nil {
+		return nil
+	}
 	for _, data := range batch {
 		input, output, err := data.getJson()
 		if err != nil {
@@ -391,11 +397,17 @@ func writeInferenceHistoryToModusDb(batch []inferenceHistory) error {
 }
 
 func QueryPlugins() ([]Plugin, error) {
+	if GlobalModusDbEngine == nil {
+		return nil, nil
+	}
 	_, plugins, err := modusdb.Query[Plugin](GlobalModusDbEngine, modusdb.QueryParams{})
 	return plugins, err
 }
 
 func QueryInferences() ([]Inference, error) {
+	if GlobalModusDbEngine == nil {
+		return nil, nil
+	}
 	_, inferences, err := modusdb.Query[Inference](GlobalModusDbEngine, modusdb.QueryParams{})
 	return inferences, err
 }
