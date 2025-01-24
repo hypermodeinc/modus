@@ -12,13 +12,13 @@ package httpserver
 import (
 	"net/http"
 
-	"github.com/hypermodeinc/modus/runtime/config"
+	"github.com/hypermodeinc/modus/runtime/app"
 	"github.com/hypermodeinc/modus/runtime/utils"
 )
 
 var healthHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-	env := config.GetEnvironmentName()
-	ver := config.GetVersionNumber()
+	env := app.Config().Environment()
+	ver := app.VersionNumber()
 	w.WriteHeader(http.StatusOK)
 	utils.WriteJsonContentHeader(w)
 	_, _ = w.Write([]byte(`{"status":"ok","environment":"` + env + `","version":"` + ver + `"}`))
