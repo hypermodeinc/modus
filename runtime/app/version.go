@@ -10,8 +10,6 @@
 package app
 
 import (
-	"fmt"
-	"os"
 	"os/exec"
 	"strings"
 )
@@ -42,12 +40,22 @@ func ProductVersion() string {
 }
 
 func describeVersion() string {
-	result, err := exec.Command("git", "describe", "--tags", "--always", "--match", "runtime/*").Output()
-	if os.Getenv("GITHUB_ACTION") != "" {
-		fmt.Println("*** debug: describeVersion result:", string(result))
+	if isShallowGit() {
+		result, err := exec.Command("git", "rev-parse", "--short", "HEAD").Output()
+		if err != nil {
+			return "(unknown)"
+		}
+		return "v0.0.0-?-g" + strings.TrimSpace(string(result))
+	} else {
+		result, err := exec.Command("git", "describe", "--tags", "--always", "--match", "runtime/*").Output()
+		if err != nil {
+			return "(unknown)"
+		}
+		return strings.TrimPrefix(strings.TrimSpace(string(result)), "runtime/")
 	}
-	if err != nil {
-		return "(unknown)"
-	}
-	return strings.TrimPrefix(strings.TrimSpace(string(result)), "runtime/")
+}
+
+func isShallowGit() bool {
+	result, err := exec.Command("git", "rev-parse", "--is-shallow-repository").Output()
+	return err == nil && strings.TrimSpace(string(result)) == "true"
 }
