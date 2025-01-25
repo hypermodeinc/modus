@@ -12,13 +12,14 @@
 *.gz
 *.zip
 
-# Ignore Go debuger and generated files
+# Ignore Go debugger and generated files
 __debug_bin*
 *_generated.go
 *.generated.go
 
-# Ignore build output directories
+# Ignore build output directories and modus databases
 build/
+.modusdb/
 
 # Ignore node_modules folders
 node_modules/
