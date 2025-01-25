@@ -1,5 +1,9 @@
 # Change Log
 
+## 2025-01-24 - Runtime 0.17.1
+
+- fix: separate modusdb instance by app [#729](https://github.com/hypermodeinc/modus/pull/729)
+
 ## 2025-01-24 - Runtime 0.17.0
 
 - feat: add modusdb model tracing for local dev
