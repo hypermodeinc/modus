@@ -2,5 +2,13 @@
   "plugins": ["assemblyscript-prettier"],
   "semi": true,
   "proseWrap": "always",
-  "printWidth": 100
+  "printWidth": 100,
+  "overrides": [
+    {
+      "files": "CHANGELOG.md",
+      "options": {
+        "proseWrap": "never"
+      }
+    }
+  ]
 }
