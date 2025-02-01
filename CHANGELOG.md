@@ -2,6 +2,10 @@
 
 # Change Log
 
+## UNRELEASED
+
+- fix: AssemblyScript ESLint import path [#737](https://github.com/hypermodeinc/modus/pull/737)
+
 ## 2025-01-24 - Runtime 0.17.1
 
 - fix: separate modusdb instance by app [#729](https://github.com/hypermodeinc/modus/pull/729)
