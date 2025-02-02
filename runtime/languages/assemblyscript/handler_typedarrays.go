@@ -11,6 +11,7 @@ package assemblyscript
 
 import (
 	"context"
+	"encoding/base64"
 	"errors"
 	"fmt"
 
@@ -100,15 +101,23 @@ func (h *typedArrayHandler[T]) Read(ctx context.Context, wa langsupport.WasmAdap
 }
 
 func (h *typedArrayHandler[T]) Write(ctx context.Context, wa langsupport.WasmAdapter, offset uint32, obj any) (utils.Cleaner, error) {
-	items, ok := utils.ConvertToSliceOf[T](obj)
-	if !ok {
-		return nil, fmt.Errorf("input is invalid for type %s", h.typeInfo.Name())
-	} else if len(items) == 0 {
-		// empty typed array
-		return nil, nil
+	var bytes []byte
+	if s, ok := obj.(string); ok {
+		if b, err := base64.StdEncoding.DecodeString(s); err != nil {
+			return nil, utils.NewUserError(fmt.Errorf("failed to decode base64 string: %w", err))
+		} else {
+			bytes = b
+		}
+	} else {
+		items, ok := utils.ConvertToSliceOf[T](obj)
+		if !ok {
+			return nil, fmt.Errorf("input is invalid for type %s", h.typeInfo.Name())
+		} else if len(items) == 0 {
+			// empty typed array
+			return nil, nil
+		}
+		bytes = h.converter.SliceToBytes(items)
 	}
-
-	bytes := h.converter.SliceToBytes(items)
 
 	// allocate memory for the buffer
 	bufferSize := uint32(len(bytes))

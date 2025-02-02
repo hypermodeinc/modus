@@ -11,6 +11,7 @@ package golang
 
 import (
 	"context"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"time"
@@ -159,12 +160,26 @@ func (h *primitiveSliceHandler[T]) doWriteSlice(ctx context.Context, wa langsupp
 		return 0, nil, nil
 	}
 
-	slice, ok := utils.ConvertToSliceOf[T](obj)
-	if !ok {
-		return 0, nil, fmt.Errorf("expected a %T, got %T", []T{}, obj)
+	var arrayLen uint32
+	var bytes []byte
+
+	if s, ok := obj.(string); ok && h.typeDef.Name == "[]byte" {
+		if b, err := base64.StdEncoding.DecodeString(s); err != nil {
+			return 0, nil, utils.NewUserError(fmt.Errorf("failed to decode base64 string: %w", err))
+		} else {
+			arrayLen = uint32(len(b))
+			bytes = b
+		}
+	} else {
+		slice, ok := utils.ConvertToSliceOf[T](obj)
+		if !ok {
+			return 0, nil, fmt.Errorf("expected a %T, got %T", []T{}, obj)
+		}
+
+		arrayLen = uint32(len(slice))
+		bytes = h.converter.SliceToBytes(slice)
 	}
 
-	arrayLen := uint32(len(slice))
 	ptr, cln, err := wa.(*wasmAdapter).makeWasmObject(ctx, h.typeDef.Id, arrayLen)
 	if err != nil {
 		return 0, cln, err
@@ -175,7 +190,6 @@ func (h *primitiveSliceHandler[T]) doWriteSlice(ctx context.Context, wa langsupp
 		return 0, cln, errors.New("failed to read data pointer from WASM memory")
 	}
 
-	bytes := h.converter.SliceToBytes(slice)
 	if ok := wa.Memory().Write(offset, bytes); !ok {
 		return 0, cln, errors.New("failed to write bytes to WASM memory")
 	}
