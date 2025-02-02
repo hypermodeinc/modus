@@ -11,6 +11,7 @@ package assemblyscript
 
 import (
 	"context"
+	"encoding/base64"
 	"errors"
 	"fmt"
 
@@ -115,7 +116,11 @@ func (h *arrayBufferHandler) doWriteBytes(ctx context.Context, wa langsupport.Wa
 	case []byte:
 		bytes = obj
 	case string:
-		bytes = []byte(obj)
+		if b, err := base64.StdEncoding.DecodeString(obj); err != nil {
+			return 0, nil, utils.NewUserError(fmt.Errorf("failed to decode base64 string: %w", err))
+		} else {
+			bytes = b
+		}
 	case []any:
 		for _, item := range obj {
 			if item == nil {
