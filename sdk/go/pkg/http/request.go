@@ -116,8 +116,6 @@ func (r *Request) Text() string {
 	return string(r.Body)
 }
 
-func (r *Request) JSON(result any) {
-	if err := json.Unmarshal(r.Body, result); err != nil {
-		panic(err)
-	}
+func (r *Request) JSON(result any) error {
+	return json.Unmarshal(r.Body, result)
 }

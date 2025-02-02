@@ -28,8 +28,6 @@ func (r *Response) Text() string {
 	return string(r.Body)
 }
 
-func (r *Response) JSON(result any) {
-	if err := json.Unmarshal(r.Body, result); err != nil {
-		panic(err)
-	}
+func (r *Response) JSON(result any) error {
+	return json.Unmarshal(r.Body, result)
 }

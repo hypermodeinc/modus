@@ -47,8 +47,6 @@ func (c *Content) Text() string {
 	return string(c.data)
 }
 
-func (c *Content) JSON(result any) {
-	if err := json.Unmarshal(c.data, result); err != nil {
-		panic(err)
-	}
+func (c *Content) JSON(result any) error {
+	return json.Unmarshal(c.data, result)
 }
