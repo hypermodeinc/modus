@@ -13,6 +13,7 @@ import (
 	"bytes"
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"strings"
 	"time"
 
@@ -493,11 +494,11 @@ func NewImageContentPartFromUrl(url string, detail ...string) *ImageContentPart 
 	return &ImageContentPart{Image: img}
 }
 
-// Creates a new image content part from raw image data.
+// Creates a new image content part from raw image data, supplied as either a byte slice or a base64-encoded string.
 // The model must support image input for this to work.
 // The contentType parameter must be a valid image MIME type supported by the model, such as "image/jpeg" or "image/png".
 // The detail parameter is optional and can be set to "low", "high", or "auto".
-func NewImageContentPartFromData(data []byte, contentType string, detail ...string) *ImageContentPart {
+func NewImageContentPartFromData[T []byte | string](data T, contentType string, detail ...string) *ImageContentPart {
 
 	// Unlike audio, the url needs to contain a full mime type, not just the format.
 	// Thus, add the "image/" prefix if it's missing.
@@ -505,8 +506,13 @@ func NewImageContentPartFromData(data []byte, contentType string, detail ...stri
 		contentType = "image/" + contentType
 	}
 
-	b64 := base64.StdEncoding.EncodeToString(data)
-	url := "data:" + contentType + ";base64," + b64
+	var str string
+	if bytes, ok := any(data).([]byte); ok {
+		str = base64.StdEncoding.EncodeToString(bytes)
+	} else {
+		str = any(data).(string)
+	}
+	url := "data:" + contentType + ";base64," + str
 
 	img := Image{Url: url}
 	if len(detail) > 0 {
@@ -515,16 +521,27 @@ func NewImageContentPartFromData(data []byte, contentType string, detail ...stri
 	return &ImageContentPart{Image: img}
 }
 
-// Creates a new audio content part from raw audio data.
+// Creates a new audio content part from raw audio data, supplied as either a byte slice or a base64-encoded string.
 // The model must support audio input for this to work.
 // The format parameter must be a valid audio format supported by the model, such as "wav" or "mp3".
-func NewAudioContentPartFromData(data []byte, format string) *AudioContentPart {
+func NewAudioContentPartFromData[T []byte | string](data T, format string) *AudioContentPart {
 
 	// Unlike images, the model expects just the format, not a mime type.
 	// Thus, strip the "audio/" prefix if present.
 	format, _ = strings.CutPrefix(format, "audio/")
 
-	audio := Audio{Data: data, Format: format}
+	var bytes []byte
+	if b64, ok := any(data).(string); ok {
+		var err error
+		bytes, err = base64.StdEncoding.DecodeString(b64)
+		if err != nil {
+			panic(fmt.Errorf("failed to decode base64 audio data: %w", err))
+		}
+	} else {
+		bytes = any(data).([]byte)
+	}
+
+	audio := Audio{Data: bytes, Format: format}
 	return &AudioContentPart{Audio: audio}
 }
 
