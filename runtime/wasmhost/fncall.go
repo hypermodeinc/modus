@@ -156,6 +156,13 @@ func (host *wasmHost) CallFunction(ctx context.Context, fnInfo functions.Functio
 			Dur("duration_ms", duration).
 			Bool("user_visible", true).
 			Msg("Function execution was canceled.")
+	} else if errors.Is(err, utils.ErrUserError) {
+		// If we specifically wrapped an error with ErrUserError, then we want to log it as a user-visible error.
+		logger.Err(ctx, err).
+			Str("function", fnName).
+			Dur("duration_ms", duration).
+			Bool("user_visible", true).
+			Msg("Error while executing function.")
 	} else {
 		// While debugging, it helps if we can see the error in the console without escaped newlines and other json formatting.
 		if utils.DebugModeEnabled() {
