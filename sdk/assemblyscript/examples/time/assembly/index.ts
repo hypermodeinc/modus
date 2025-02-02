@@ -17,21 +17,21 @@ export function getUtcTime(): Date {
  * Returns the current local time.
  */
 export function getLocalTime(): string {
-  return localtime.Now();
+  return localtime.now();
 }
 
 /**
  * Returns the current time in a specified time zone.
  */
 export function getTimeInZone(tz: string): string {
-  return localtime.NowInZone(tz);
+  return localtime.nowInZone(tz);
 }
 
 /**
  * Returns the local time zone identifier.
  */
 export function getLocalTimeZone(): string {
-  return localtime.GetTimeZone();
+  return localtime.getTimeZone();
 
   // Alternatively, you can use the following:
   // return process.env.get("TZ");
