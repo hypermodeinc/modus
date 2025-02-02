@@ -36,15 +36,7 @@ type Response struct {
 	Uids map[string]string
 }
 
-/**
- *
- * Executes a DQL query or mutation on the Dgraph database.
- *
- * @param connection - the name of the connection
- * @param query - the query to execute
- * @param mutations - the mutations to execute
- * @returns The response from the Dgraph server
- */
+// Executes a DQL query or mutation on the Dgraph database.
 func Execute(connection string, request *Request) (*Response, error) {
 	response := hostExecuteQuery(&connection, request)
 	if response == nil {
@@ -54,14 +46,7 @@ func Execute(connection string, request *Request) (*Response, error) {
 	return response, nil
 }
 
-/**
- *
- * Alters the schema of the dgraph database
- *
- * @param connection - the name of the connection
- * @param schema - the schema to alter
- * @returns The response from the Dgraph server
- */
+// Alters the schema of the dgraph database
 func AlterSchema(connection, schema string) error {
 	resp := hostAlterSchema(&connection, &schema)
 	if resp == nil {
@@ -71,14 +56,7 @@ func AlterSchema(connection, schema string) error {
 	return nil
 }
 
-/**
- *
- * Drops an attribute from the schema.
- *
- * @param connection - the name of the connection
- * @param attr - the attribute to drop
- * @returns The response from the Dgraph server
- */
+// Drops an attribute from the schema.
 func DropAttr(connection, attr string) error {
 	response := hostDropAttribute(&connection, &attr)
 	if response == nil {
@@ -88,13 +66,7 @@ func DropAttr(connection, attr string) error {
 	return nil
 }
 
-/**
- *
- * Drops all data from the database.
- *
- * @param connection - the name of the connection
- * @returns The response from the Dgraph server
- */
+// Drops all data from the database.
 func DropAll(connection string) error {
 	response := hostDropAllData(&connection)
 	if response == nil {
