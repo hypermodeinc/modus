@@ -164,7 +164,11 @@ export class Content {
 
   /**
    * Creates a new `Content` instance from the given value.
-   * @param value - The value to create the content from. Either an `ArrayBuffer`, a `string`, or a JSON-serializable object.
+   * @param value - The value to create the content from.
+   * Supported value types are:
+   *  - Binary content as a `ArrayBuffer` or `Uint8Array`
+   *  - Text content as a `string`
+   *  - A JSON-serializable object.
    * @returns A new `Content` instance.
    */
   static from<T>(value: T): Content {
