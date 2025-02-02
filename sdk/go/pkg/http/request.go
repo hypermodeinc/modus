@@ -112,6 +112,11 @@ func (r *Request) Clone(options ...*RequestOptions) *Request {
 
 	return NewRequest(r.Url, ro)
 }
+
+func (r *Request) Bytes() []byte {
+	return r.Body
+}
+
 func (r *Request) Text() string {
 	return string(r.Body)
 }

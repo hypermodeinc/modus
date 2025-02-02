@@ -56,7 +56,7 @@ func GetRandomImage(width, height int) (*Image, error) {
 
 	result := &Image{
 		ContentType: *response.Headers.Get("Content-Type"),
-		Data:        response.Body,
+		Data:        response.Bytes(),
 	}
 
 	return result, nil

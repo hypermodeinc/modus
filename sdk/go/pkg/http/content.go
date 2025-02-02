@@ -43,6 +43,10 @@ func NewContent(value any) *Content {
 	return &Content{bytes}
 }
 
+func (c *Content) Bytes() []byte {
+	return c.data
+}
+
 func (c *Content) Text() string {
 	return string(c.data)
 }

@@ -24,6 +24,10 @@ func (r *Response) Ok() bool {
 	return r.Status >= 200 && r.Status < 300
 }
 
+func (r *Response) Bytes() []byte {
+	return r.Body
+}
+
 func (r *Response) Text() string {
 	return string(r.Body)
 }
