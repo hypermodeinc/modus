@@ -13,4 +13,4 @@ package graphql
 
 //go:noescape
 //go:wasmimport modus_graphql_client executeQuery
-func hostExecuteQuery(hostName, statement, variables *string) *string
+func hostExecuteQuery(connection, statement, variables *string) *string

@@ -14,20 +14,20 @@ import "github.com/hypermodeinc/modus/sdk/go/pkg/db"
 const dbType = "postgresql"
 
 // Executes a database query that does not return rows.
-func Execute(hostName, statement string, params ...any) (*db.Response, error) {
-	return db.Execute(hostName, dbType, statement, params...)
+func Execute(connection, statement string, params ...any) (*db.Response, error) {
+	return db.Execute(connection, dbType, statement, params...)
 }
 
 // Executes a database query that returns rows.
 // The structure of the rows is determined by the type parameter.
-func Query[T any](hostName, statement string, params ...any) (*db.QueryResponse[T], error) {
-	return db.Query[T](hostName, dbType, statement, params...)
+func Query[T any](connection, statement string, params ...any) (*db.QueryResponse[T], error) {
+	return db.Query[T](connection, dbType, statement, params...)
 }
 
 // Executes a database query that returns a single scalar value.
 // The type parameter determines the type of the scalar value.
-func QueryScalar[T any](hostName, statement string, params ...any) (*db.ScalarResponse[T], error) {
-	return db.QueryScalar[T](hostName, dbType, statement, params...)
+func QueryScalar[T any](connection, statement string, params ...any) (*db.ScalarResponse[T], error) {
+	return db.QueryScalar[T](connection, dbType, statement, params...)
 }
 
 // Represents a point in 2D space, having X and Y coordinates.

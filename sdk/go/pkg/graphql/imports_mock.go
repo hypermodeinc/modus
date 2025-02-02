@@ -15,8 +15,8 @@ import "github.com/hypermodeinc/modus/sdk/go/pkg/testutils"
 
 var GraphqlQueryCallStack = testutils.NewCallStack()
 
-func hostExecuteQuery(hostName, statement, variables *string) *string {
-	GraphqlQueryCallStack.Push(hostName, statement, variables)
+func hostExecuteQuery(connection, statement, variables *string) *string {
+	GraphqlQueryCallStack.Push(connection, statement, variables)
 
 	var json string
 	if *statement == "error" {

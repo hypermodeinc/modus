@@ -13,10 +13,10 @@ import (
 	"github.com/hypermodeinc/modus/sdk/go/pkg/dgraph"
 )
 
-const hostName = "dgraph"
+const connection = "dgraph"
 
 func DropAll() string {
-	err := dgraph.DropAll(hostName)
+	err := dgraph.DropAll(connection)
 	if err != nil {
 		return err.Error()
 	}
@@ -25,7 +25,7 @@ func DropAll() string {
 }
 
 func DropAttr(attr string) string {
-	err := dgraph.DropAttr(hostName, attr)
+	err := dgraph.DropAttr(connection, attr)
 	if err != nil {
 		return err.Error()
 	}
@@ -44,7 +44,7 @@ func AlterSchema() string {
 		lastName
 	}
 	`
-	err := dgraph.AlterSchema(hostName, schema)
+	err := dgraph.AlterSchema(connection, schema)
 	if err != nil {
 		return err.Error()
 	}
@@ -64,7 +64,7 @@ func QueryPeople() ([]*Person, error) {
 	}
 	`
 
-	response, err := dgraph.Execute(hostName, &dgraph.Request{
+	response, err := dgraph.Execute(connection, &dgraph.Request{
 		Query: &dgraph.Query{
 			Query: query,
 		},
@@ -98,7 +98,7 @@ func QuerySpecificPerson(firstName, lastName string) (*Person, error) {
 		"$lastName":  lastName,
 	}
 
-	response, err := dgraph.Execute(hostName, &dgraph.Request{
+	response, err := dgraph.Execute(connection, &dgraph.Request{
 		Query: &dgraph.Query{
 			Query:     statement,
 			Variables: variables,
@@ -127,7 +127,7 @@ func AddPersonAsRDF(firstName, lastName string) (map[string]string, error) {
   _:user1 <dgraph.type> "Person" .
   `, firstName, lastName)
 
-	response, err := dgraph.Execute(hostName, &dgraph.Request{
+	response, err := dgraph.Execute(connection, &dgraph.Request{
 		Mutations: []*dgraph.Mutation{
 			{
 				SetNquads: mutation,
@@ -154,7 +154,7 @@ func AddPersonAsJSON(firstName, lastName string) (map[string]string, error) {
 		return nil, err
 	}
 
-	response, err := dgraph.Execute(hostName, &dgraph.Request{
+	response, err := dgraph.Execute(connection, &dgraph.Request{
 		Mutations: []*dgraph.Mutation{
 			{
 				SetJson: string(data),
@@ -178,7 +178,7 @@ func UpsertPerson(nameToChangeFrom, nameToChangeTo string) (map[string]string, e
 	uid(person) <firstName> "%s" .
 	`, nameToChangeTo)
 
-	response, err := dgraph.Execute(hostName, &dgraph.Request{
+	response, err := dgraph.Execute(connection, &dgraph.Request{
 		Query: &dgraph.Query{
 			Query: query,
 		},

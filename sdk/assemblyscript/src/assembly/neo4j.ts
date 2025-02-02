@@ -15,7 +15,7 @@ export { Variables };
 // @ts-expect-error: decorator
 @external("modus_neo4j_client", "executeQuery")
 declare function hostExecuteQuery(
-  hostName: string,
+  connection: string,
   dbName: string,
   query: string,
   parametersJson: string,
@@ -25,7 +25,7 @@ declare function hostExecuteQuery(
  *
  * Executes a Cypher query on the Neo4j database.
  *
- * @param hostName - the name of the host
+ * @param connection - the name of the connection
  * @param dbName - the name of the database
  * @param query - the query to execute
  * @param parameters - the parameters to pass to the query
@@ -34,13 +34,13 @@ declare function hostExecuteQuery(
  * @returns The EagerResult from the Neo4j server
  */
 export function executeQuery(
-  hostName: string,
+  connection: string,
   query: string,
   parameters: Variables = new Variables(),
   dbName: string = "neo4j",
 ): EagerResult {
   const paramsJson = parameters.toJSON();
-  const response = hostExecuteQuery(hostName, dbName, query, paramsJson);
+  const response = hostExecuteQuery(connection, dbName, query, paramsJson);
   if (!response) {
     throw new Error("Error executing Query.");
   }

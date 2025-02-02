@@ -15,11 +15,11 @@ import "unsafe"
 
 //go:noescape
 //go:wasmimport modus_neo4j_client executeQuery
-func _hostExecuteQuery(hostName, dbName, query, parametersJson *string) unsafe.Pointer
+func _hostExecuteQuery(connection, dbName, query, parametersJson *string) unsafe.Pointer
 
 //modus:import modus_neo4j_client executeQuery
-func hostExecuteQuery(hostName, dbName, query, parametersJson *string) *EagerResult {
-	response := _hostExecuteQuery(hostName, dbName, query, parametersJson)
+func hostExecuteQuery(connection, dbName, query, parametersJson *string) *EagerResult {
+	response := _hostExecuteQuery(connection, dbName, query, parametersJson)
 	if response == nil {
 		return nil
 	}

@@ -13,7 +13,7 @@ import * as utils from "./utils";
 // @ts-expect-error: decorator
 @external("modus_sql_client", "executeQuery")
 declare function hostExecuteQuery(
-  hostName: string,
+  connection: string,
   dbType: string,
   statement: string,
   paramsJson: string,
@@ -79,7 +79,7 @@ export class ScalarResponse<T> extends Response {
 }
 
 export function execute(
-  hostName: string,
+  connection: string,
   dbType: string,
   statement: string,
   params: Params,
@@ -90,7 +90,7 @@ export function execute(
   paramsJson = "exec:" + paramsJson;
 
   const response = hostExecuteQuery(
-    hostName,
+    connection,
     dbType,
     statement.trim(),
     paramsJson,
@@ -114,14 +114,14 @@ export function execute(
 }
 
 export function query<T>(
-  hostName: string,
+  connection: string,
   dbType: string,
   statement: string,
   params: Params,
 ): QueryResponse<T> {
   const paramsJson = params.toJSON();
   const response = hostExecuteQuery(
-    hostName,
+    connection,
     dbType,
     statement.trim(),
     paramsJson,
@@ -146,12 +146,12 @@ export function query<T>(
 }
 
 export function queryScalar<T>(
-  hostName: string,
+  connection: string,
   dbType: string,
   statement: string,
   params: Params,
 ): ScalarResponse<T> {
-  const response = query<Map<string, T>>(hostName, dbType, statement, params);
+  const response = query<Map<string, T>>(connection, dbType, statement, params);
 
   if (response.rows.length == 0 || response.rows[0].size == 0) {
     throw new Error("No results returned from query.");

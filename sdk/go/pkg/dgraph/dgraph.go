@@ -40,13 +40,13 @@ type Response struct {
  *
  * Executes a DQL query or mutation on the Dgraph database.
  *
- * @param hostName - the name of the host
+ * @param connection - the name of the connection
  * @param query - the query to execute
  * @param mutations - the mutations to execute
  * @returns The response from the Dgraph server
  */
-func Execute(hostName string, request *Request) (*Response, error) {
-	response := hostExecuteQuery(&hostName, request)
+func Execute(connection string, request *Request) (*Response, error) {
+	response := hostExecuteQuery(&connection, request)
 	if response == nil {
 		return nil, errors.New("Failed to execute the DQL query.")
 	}
@@ -58,12 +58,12 @@ func Execute(hostName string, request *Request) (*Response, error) {
  *
  * Alters the schema of the dgraph database
  *
- * @param hostName - the name of the host
+ * @param connection - the name of the connection
  * @param schema - the schema to alter
  * @returns The response from the Dgraph server
  */
-func AlterSchema(hostName, schema string) error {
-	resp := hostAlterSchema(&hostName, &schema)
+func AlterSchema(connection, schema string) error {
+	resp := hostAlterSchema(&connection, &schema)
 	if resp == nil {
 		return errors.New("Failed to alter the schema.")
 	}
@@ -75,12 +75,12 @@ func AlterSchema(hostName, schema string) error {
  *
  * Drops an attribute from the schema.
  *
- * @param hostName - the name of the host
+ * @param connection - the name of the connection
  * @param attr - the attribute to drop
  * @returns The response from the Dgraph server
  */
-func DropAttr(hostName, attr string) error {
-	response := hostDropAttribute(&hostName, &attr)
+func DropAttr(connection, attr string) error {
+	response := hostDropAttribute(&connection, &attr)
 	if response == nil {
 		return errors.New("Failed to drop the attribute.")
 	}
@@ -92,11 +92,11 @@ func DropAttr(hostName, attr string) error {
  *
  * Drops all data from the database.
  *
- * @param hostName - the name of the host
+ * @param connection - the name of the connection
  * @returns The response from the Dgraph server
  */
-func DropAll(hostName string) error {
-	response := hostDropAllData(&hostName)
+func DropAll(connection string) error {
+	response := hostDropAllData(&connection)
 	if response == nil {
 		return errors.New("Failed to drop all data.")
 	}

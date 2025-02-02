@@ -8,15 +8,15 @@ import { dgraph } from "@hypermode/modus-sdk-as";
 import { PeopleData, Person } from "./classes";
 import { JSON } from "json-as";
 
-// This host name should match one defined in the modus.json manifest file.
-const hostName: string = "dgraph";
+// This connection name should match one defined in the modus.json manifest file.
+const connection: string = "dgraph";
 
 export function dropAll(): string {
-  return dgraph.dropAll(hostName);
+  return dgraph.dropAll(connection);
 }
 
 export function dropAttr(attr: string): string {
-  return dgraph.dropAttr(hostName, attr);
+  return dgraph.dropAttr(connection, attr);
 }
 
 export function alterSchema(): string {
@@ -30,7 +30,7 @@ export function alterSchema(): string {
       lastName
   }
   `;
-  return dgraph.alterSchema(hostName, schema);
+  return dgraph.alterSchema(connection, schema);
 }
 
 // This function returns the results of querying for all people in the database.
@@ -46,7 +46,7 @@ export function queryPeople(): Person[] {
   `;
 
   const resp = dgraph.execute(
-    hostName,
+    connection,
     new dgraph.Request(new dgraph.Query(query)),
   );
 
@@ -73,7 +73,7 @@ export function querySpecificPerson(
   vars.set("$lastName", lastName);
 
   const resp = dgraph.execute(
-    hostName,
+    connection,
     new dgraph.Request(new dgraph.Query(statement, vars)),
   );
 
@@ -96,7 +96,7 @@ export function addPersonAsRDF(
 
   const mutations: dgraph.Mutation[] = [new dgraph.Mutation("", "", mutation)];
 
-  return dgraph.execute(hostName, new dgraph.Request(null, mutations)).Uids;
+  return dgraph.execute(connection, new dgraph.Request(null, mutations)).Uids;
 }
 
 export function addPersonAsJSON(
@@ -109,7 +109,7 @@ export function addPersonAsJSON(
 
   const mutations: dgraph.Mutation[] = [new dgraph.Mutation(mutation)];
 
-  return dgraph.execute(hostName, new dgraph.Request(null, mutations)).Uids;
+  return dgraph.execute(connection, new dgraph.Request(null, mutations)).Uids;
 }
 
 export function upsertPerson(
@@ -132,7 +132,7 @@ export function upsertPerson(
 
   const dgraphRequest = new dgraph.Request(dgraphQuery, mutationList);
 
-  const response = dgraph.execute(hostName, dgraphRequest);
+  const response = dgraph.execute(connection, dgraphRequest);
 
   return response.Uids;
 }
@@ -144,7 +144,7 @@ export function deletePerson(uid: string): Map<string, string> | null {
     new dgraph.Mutation("", "", "", mutation),
   ];
 
-  return dgraph.execute(hostName, new dgraph.Request(null, mutations)).Uids;
+  return dgraph.execute(connection, new dgraph.Request(null, mutations)).Uids;
 }
 
 // This function demonstrates what happens when a bad query is executed.
@@ -152,7 +152,7 @@ export function testBadQuery(): Person[] {
   const query = "this is a bad query";
 
   const resp = dgraph.execute(
-    hostName,
+    connection,
     new dgraph.Request(new dgraph.Query(query)),
   );
 

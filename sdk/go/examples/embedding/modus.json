@@ -22,7 +22,7 @@
     }
   },
   "connections": {
-    // This defines the OpenAI host, which is used by the OpenAI embeddings model above.
+    // This defines the OpenAI connection, which is used by the OpenAI embeddings model above.
     // The {{API_KEY}} will be replaced by the secret's value at run time.
     "openai": {
       "type": "http",

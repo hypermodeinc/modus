@@ -120,11 +120,11 @@ func (p Point3D) String() string {
  *
  * Executes a query or mutation on the Neo4j database.
  *
- * @param hostName - the name of the host
+ * @param connection - the name of the connection
  * @param query - the query to execute
  * @param parameters - the parameters to pass to the query
  */
-func ExecuteQuery(hostName, query string, parameters map[string]any, opts ...Neo4jOption) (*EagerResult, error) {
+func ExecuteQuery(connection, query string, parameters map[string]any, opts ...Neo4jOption) (*EagerResult, error) {
 	dbOpts := &neo4jOptions{
 		dbName: "neo4j",
 	}
@@ -140,7 +140,7 @@ func ExecuteQuery(hostName, query string, parameters map[string]any, opts ...Neo
 
 	parametersJson := string(bytes)
 
-	response := hostExecuteQuery(&hostName, &dbOpts.dbName, &query, &parametersJson)
+	response := hostExecuteQuery(&connection, &dbOpts.dbName, &query, &parametersJson)
 
 	return response, nil
 }

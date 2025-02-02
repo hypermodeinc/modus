@@ -6,8 +6,8 @@
 
 import { neo4j } from "@hypermode/modus-sdk-as";
 
-// This host name should match one defined in the modus.json manifest file.
-const hostName: string = "my-database";
+// This connection name should match one defined in the modus.json manifest file.
+const connection: string = "my-database";
 
 
 @json
@@ -40,7 +40,11 @@ export function CreatePeopleAndRelationships(): string {
     `;
     const peopleVars = new neo4j.Variables();
     peopleVars.set("person", people[i]);
-    const result = neo4j.executeQuery(hostName, createPersonQuery, peopleVars);
+    const result = neo4j.executeQuery(
+      connection,
+      createPersonQuery,
+      peopleVars,
+    );
     if (!result) {
       throw new Error("Error creating person.");
     }
@@ -60,7 +64,7 @@ export function GetAliceFriendsUnder40(): Person[] {
         RETURN friend
   `;
 
-  const result = neo4j.executeQuery(hostName, query, vars);
+  const result = neo4j.executeQuery(connection, query, vars);
   if (!result) {
     throw new Error("Error getting friends.");
   }
@@ -91,7 +95,7 @@ export function GetAliceFriendsUnder40Ages(): i32[] {
         RETURN friend.age AS age
   `;
 
-  const result = neo4j.executeQuery(hostName, query, vars);
+  const result = neo4j.executeQuery(connection, query, vars);
   if (!result) {
     throw new Error("Error getting friends.");
   }
@@ -111,7 +115,7 @@ export function DeleteAllNodes(): string {
   const query = `
   MATCH (n)
   DETACH DELETE n`;
-  const result = neo4j.executeQuery(hostName, query);
+  const result = neo4j.executeQuery(connection, query);
   if (!result) {
     throw new Error("Error deleting nodes.");
   }

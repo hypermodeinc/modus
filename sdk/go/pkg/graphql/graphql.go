@@ -17,7 +17,7 @@ import (
 	"github.com/hypermodeinc/modus/sdk/go/pkg/utils"
 )
 
-func Execute[T any](hostName, statement string, variables map[string]any) (*Response[T], error) {
+func Execute[T any](connection, statement string, variables map[string]any) (*Response[T], error) {
 	bytes, err := utils.JsonSerialize(variables)
 	if err != nil {
 		console.Error(err.Error())
@@ -26,7 +26,7 @@ func Execute[T any](hostName, statement string, variables map[string]any) (*Resp
 
 	varsStr := string(bytes)
 
-	response := hostExecuteQuery(&hostName, &statement, &varsStr)
+	response := hostExecuteQuery(&connection, &statement, &varsStr)
 
 	if response == nil {
 		return nil, errors.New("Failed to execute the GQL query.")

@@ -13,10 +13,10 @@ import { Country, CountriesResponse, CountryResponse } from "./classes";
  * The `graphql` module from the Modus SDK allows us to interact with the API.
  */
 
-// Define the host name of the API to be used in the requests.
+// Define the connection name of the API to be used in the requests.
 // Must match one of the http connections defined in the modus.json manifest file.
 
-const hostName: string = "countries-api";
+const connection: string = "countries-api";
 
 // Function to list all countries returned by the API
 export function countries(): Country[] | null {
@@ -29,9 +29,9 @@ export function countries(): Country[] | null {
       }
     }
   `;
-  // Execute the GraphQL query using the host name and query statement
+  // Execute the GraphQL query using the connection name and query statement
   // The API returns a response of type `CountriesResponse` containing an array of `Country` objects
-  const response = graphql.execute<CountriesResponse>(hostName, statement);
+  const response = graphql.execute<CountriesResponse>(connection, statement);
 
   // If no data is returned (i.e., the API call fails), return an empty array
   if (!response.data) return [];
@@ -56,8 +56,13 @@ export function getCountryByCode(code: string): Country | null {
   // Create a new instance of Variables to pass in the `code` parameter
   const vars = new graphql.Variables();
   vars.set("code", code);
-  // Execute the query, passing the variable along with the statement and host name
-  const response = graphql.execute<CountryResponse>(hostName, statement, vars);
+
+  // Execute the query
+  const response = graphql.execute<CountryResponse>(
+    connection,
+    statement,
+    vars,
+  );
 
   // If no data is returned (i.e., the API call fails), return null
   if (!response.data) return null;

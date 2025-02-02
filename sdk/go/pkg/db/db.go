@@ -65,8 +65,8 @@ type ScalarResponse[T any] struct {
 }
 
 // Executes a database query that does not return rows.
-func Execute(hostName, dbType, statement string, params ...any) (*Response, error) {
-	r, err := doQuery(hostName, dbType, statement, params, true)
+func Execute(connection, dbType, statement string, params ...any) (*Response, error) {
+	r, err := doQuery(connection, dbType, statement, params, true)
 	if err != nil {
 		return nil, err
 	}
@@ -79,8 +79,8 @@ func Execute(hostName, dbType, statement string, params ...any) (*Response, erro
 
 // Executes a database query that returns rows.
 // The structure of the rows is determined by the type parameter.
-func Query[T any](hostName, dbType, statement string, params ...any) (*QueryResponse[T], error) {
-	r, err := doQuery(hostName, dbType, statement, params, false)
+func Query[T any](connection, dbType, statement string, params ...any) (*QueryResponse[T], error) {
+	r, err := doQuery(connection, dbType, statement, params, false)
 	if err != nil {
 		return nil, err
 	}
@@ -101,8 +101,8 @@ func Query[T any](hostName, dbType, statement string, params ...any) (*QueryResp
 
 // Executes a database query that returns a single scalar value.
 // The type parameter determines the type of the scalar value.
-func QueryScalar[T any](hostName, dbType, statement string, params ...any) (*ScalarResponse[T], error) {
-	r, err := Query[map[string]any](hostName, dbType, statement, params...)
+func QueryScalar[T any](connection, dbType, statement string, params ...any) (*ScalarResponse[T], error) {
+	r, err := Query[map[string]any](connection, dbType, statement, params...)
 	if err != nil {
 		return nil, err
 	}
@@ -132,7 +132,7 @@ func QueryScalar[T any](hostName, dbType, statement string, params ...any) (*Sca
 	return nil, errors.New("no result returned from database query")
 }
 
-func doQuery(hostName, dbType, statement string, params []any, execOnly bool) (*HostQueryResponse, error) {
+func doQuery(connection, dbType, statement string, params []any, execOnly bool) (*HostQueryResponse, error) {
 	paramsJson := "[]"
 	if len(params) > 0 {
 		bytes, err := utils.JsonSerialize(params)
@@ -148,7 +148,7 @@ func doQuery(hostName, dbType, statement string, params []any, execOnly bool) (*
 	}
 
 	statement = strings.TrimSpace(statement)
-	response := hostExecuteQuery(&hostName, &dbType, &statement, &paramsJson)
+	response := hostExecuteQuery(&connection, &dbType, &statement, &paramsJson)
 	if response == nil {
 		return nil, errors.New("no response received from database query")
 	}
