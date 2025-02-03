@@ -285,7 +285,6 @@ export class ToolChoice {
   /**
    * The function to call.
    */
-  @omitnull()
   function: ToolChoiceFunction | null = null;
 
   /**
@@ -316,6 +315,29 @@ export class ToolChoice {
    */
   static Function(name: string): ToolChoice {
     return new ToolChoice("function", name);
+  }
+
+  __INITIALIZE(): this {
+    return this;
+  }
+
+  __SERIALIZE(): string {
+    if (this.type == "function") {
+      return `{"type":"function","function":{"name":${JSON.stringify(this.function!.name)}}}`;
+    }
+
+    return `"${this.type}"`;
+  }
+
+  /* eslint-disable @typescript-eslint/no-unused-vars */
+  __DESERIALIZE(
+    data: string,
+    key_start: i32,
+    key_end: i32,
+    value_start: i32,
+    value_end: i32,
+  ): boolean {
+    throw new Error("Not implemented.");
   }
 }
 
