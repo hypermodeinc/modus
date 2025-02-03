@@ -44,21 +44,15 @@ func CloseDrivers(ctx context.Context) {
 
 func (nr *neo4jRegistry) getDriver(ctx context.Context, n4jName string) (neo4j.DriverWithContext, error) {
 	var creationErr error
-	driver, _ := n4j.cache.LoadOrCompute(n4jName, func() neo4j.DriverWithContext {
+	driver, _ := n4j.cache.LoadOrTryCompute(n4jName, func() (neo4j.DriverWithContext, bool) {
 		driver, err := createDriver(ctx, n4jName)
 		if err != nil {
 			creationErr = err
-			return nil
+			return nil, true
 		}
-		return driver
+		return driver, false
 	})
-
-	if creationErr != nil {
-		n4j.cache.Delete(n4jName)
-		return nil, creationErr
-	}
-
-	return driver, nil
+	return driver, creationErr
 }
 
 func createDriver(ctx context.Context, n4jName string) (neo4j.DriverWithContext, error) {

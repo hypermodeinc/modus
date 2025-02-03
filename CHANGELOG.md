@@ -7,6 +7,7 @@
 - fix: AssemblyScript ESLint import path [#737](https://github.com/hypermodeinc/modus/pull/737)
 - fix: decode base64 strings to binary data types [#738](https://github.com/hypermodeinc/modus/pull/738)
 - fix: serialization of OpenAI `ToolChoice` [#739](https://github.com/hypermodeinc/modus/pull/739)
+- perf: use xsync's `LoadOrTryCompute` [#740](https://github.com/hypermodeinc/modus/pull/740)
 
 ## 2025-01-24 - Runtime 0.17.1
 
