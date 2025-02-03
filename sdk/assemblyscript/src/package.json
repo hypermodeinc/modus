@@ -48,7 +48,8 @@
   },
   "exports": {
     "./transform": "./transform/lib/index.js",
-    "./tools/assemblyscript-eslint": "./tools/assemblyscript-eslint.js"
+    "./tools/assemblyscript-eslint": "./tools/assemblyscript-eslint.js",
+    "./tools/assemblyscript-eslint-local": "./tools/assemblyscript-eslint-local.js"
   },
   "files": [
     "index.ts",

@@ -39,32 +39,26 @@ func (r *dsRegistry) shutdown() {
 
 func (r *dsRegistry) getDataSource(ctx context.Context, dsName, dsType string) (dataSource, error) {
 	var creationErr error
-	ds, _ := r.cache.LoadOrCompute(dsName, func() dataSource {
+	ds, _ := r.cache.LoadOrTryCompute(dsName, func() (dataSource, bool) {
 		switch dsType {
 		case "postgresql":
 			if ds, err := newPostgresqlDS(ctx, dsName); err != nil {
 				creationErr = err
-				return nil
+				return nil, true
 			} else {
-				return ds
+				return ds, false
 			}
 		case "mysql":
 			if ds, err := newMysqlDS(ctx, dsName); err != nil {
 				creationErr = err
-				return nil
+				return nil, true
 			} else {
-				return ds
+				return ds, false
 			}
 		default:
 			creationErr = fmt.Errorf("unsupported data source type: %s", dsType)
-			return nil
+			return nil, true
 		}
 	})
-
-	if creationErr != nil {
-		r.cache.Delete(dsName)
-		return nil, creationErr
-	}
-
-	return ds, nil
+	return ds, creationErr
 }
