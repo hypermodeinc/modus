@@ -237,8 +237,11 @@ func GetMainHandler(options ...func(map[string]http.Handler)) http.Handler {
 	handler := restrictHttpMethods(mux)
 
 	// Add CORS support to all endpoints.
+	// The default options allow all origins and methods.
+	// We also allow all headers.
+	// TODO: Consider passing non-sensitive request headers to the Modus app.
 	c := cors.New(cors.Options{
-		AllowedHeaders: []string{"Authorization", "Content-Type"},
+		AllowedHeaders: []string{"*"},
 	})
 
 	return c.Handler(handler)
