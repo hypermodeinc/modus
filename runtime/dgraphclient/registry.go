@@ -65,21 +65,15 @@ func ShutdownConns() {
 
 func (dr *dgraphRegistry) getDgraphConnector(ctx context.Context, dgName string) (*dgraphConnector, error) {
 	var creationErr error
-	ds, _ := dr.cache.LoadOrCompute(dgName, func() *dgraphConnector {
+	ds, _ := dr.cache.LoadOrTryCompute(dgName, func() (*dgraphConnector, bool) {
 		conn, err := createConnector(ctx, dgName)
 		if err != nil {
 			creationErr = err
-			return nil
+			return nil, true
 		}
-		return conn
+		return conn, false
 	})
-
-	if creationErr != nil {
-		dr.cache.Delete(dgName)
-		return nil, creationErr
-	}
-
-	return ds, nil
+	return ds, creationErr
 }
 
 func createConnector(ctx context.Context, dgName string) (*dgraphConnector, error) {
