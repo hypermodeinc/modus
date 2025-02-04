@@ -21,9 +21,7 @@ import (
 var (
 	connection = "mydgraph"
 	request    = &dgraph.Request{
-		Query: &dgraph.Query{
-			Query: "query",
-		},
+		Query: dgraph.NewQuery("query"),
 	}
 	schema = "schema"
 )
@@ -57,9 +55,7 @@ func TestExecuteDQL(t *testing.T) {
 
 	expectedConnection := &connection
 	expectedReq := &dgraph.Request{
-		Query: &dgraph.Query{
-			Query: "query",
-		},
+		Query: dgraph.NewQuery("query"),
 	}
 
 	values := dgraph.DgraphQueryCallStack.Pop()
