@@ -1,9 +1,9 @@
 /*
- * Copyright 2024 Hypermode Inc.
+ * Copyright 2025 Hypermode Inc.
  * Licensed under the terms of the Apache License, Version 2.0
  * See the LICENSE file that accompanied this code for further details.
  *
- * SPDX-FileCopyrightText: 2024 Hypermode Inc. <hello@hypermode.com>
+ * SPDX-FileCopyrightText: 2025 Hypermode Inc. <hello@hypermode.com>
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -11,7 +11,7 @@
 
 import * as ts from "typescript";
 import * as parser from "@typescript-eslint/parser";
-import utils from "../../../@typescript-eslint/typescript-estree/dist/node-utils.js";
+import utils from "../node_modules/@typescript-eslint/typescript-estree/dist/node-utils.js";
 
 // In AssemblyScript, functions and variables can be decorated
 const nodeCanBeDecorated = utils.nodeCanBeDecorated;

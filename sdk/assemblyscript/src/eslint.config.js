@@ -2,7 +2,7 @@
 
 import eslint from "@eslint/js";
 import tseslint from "typescript-eslint";
-import aseslint from "./tools/assemblyscript-eslint.js";
+import aseslint from "./tools/assemblyscript-eslint-local.js";
 
 export default tseslint.config(
   eslint.configs.recommended,

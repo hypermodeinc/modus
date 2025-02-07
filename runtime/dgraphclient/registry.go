@@ -38,10 +38,23 @@ type authCreds struct {
 	token string
 }
 
-func (a *authCreds) GetRequestMetadata(ctx context.Context, uri ...string) (
-	map[string]string, error) {
+func (a *authCreds) GetRequestMetadata(ctx context.Context, uri ...string) (map[string]string, error) {
+	if len(a.token) == 0 {
+		return nil, nil
+	}
 
-	return map[string]string{"Authorization": a.token}, nil
+	headers := make(map[string]string, 1)
+	if len(uri) > 0 && strings.Contains(strings.ToLower(uri[0]), "cloud.dgraph.io") {
+		headers["X-Auth-Token"] = a.token
+	} else {
+		token := a.token
+		if !strings.HasPrefix(token, "Bearer ") {
+			token = "Bearer " + token
+		}
+		headers["Authorization"] = token
+	}
+
+	return headers, nil
 }
 
 func (a *authCreds) RequireTransportSecurity() bool {
@@ -65,21 +78,15 @@ func ShutdownConns() {
 
 func (dr *dgraphRegistry) getDgraphConnector(ctx context.Context, dgName string) (*dgraphConnector, error) {
 	var creationErr error
-	ds, _ := dr.cache.LoadOrCompute(dgName, func() *dgraphConnector {
+	ds, _ := dr.cache.LoadOrTryCompute(dgName, func() (*dgraphConnector, bool) {
 		conn, err := createConnector(ctx, dgName)
 		if err != nil {
 			creationErr = err
-			return nil
+			return nil, true
 		}
-		return conn
+		return conn, false
 	})
-
-	if creationErr != nil {
-		dr.cache.Delete(dgName)
-		return nil, creationErr
-	}
-
-	return ds, nil
+	return ds, creationErr
 }
 
 func createConnector(ctx context.Context, dgName string) (*dgraphConnector, error) {
