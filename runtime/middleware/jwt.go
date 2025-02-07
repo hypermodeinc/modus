@@ -205,34 +205,44 @@ func jwksEndpointsJsonToKeys(ctx context.Context, jwksEndpointsJson string) (map
 		return nil, err
 	}
 	keys := make(map[string]any)
-	for key, value := range jwksEndpoints {
+	for endpointKey, value := range jwksEndpoints {
 		jwks, err := jwk.Fetch(ctx, value)
 		if err != nil {
 			return nil, err
 		}
 
-		jwkKey, exists := jwks.Key(0)
-		if !exists {
-			return nil, errors.New("No keys found in JWKS for key: " + key)
+		if jwks.Len() == 0 {
+			return nil, errors.New("No keys found in JWKS for endpoint: " + endpointKey)
 		}
 
-		var rawKey any
-		err = jwkKey.Raw(&rawKey)
-		if err != nil {
-			return nil, err
-		}
+		for it := jwks.Keys(ctx); it.Next(ctx); {
+			jwkKey := it.Pair().Value.(jwk.Key)
+			var rawKey any
+			if err := jwkKey.Raw(&rawKey); err != nil {
+				logger.Warn(ctx).Err(err).Msg("Failed to get raw key for endpoint " + endpointKey)
+				continue
+			}
 
-		// Marshal the raw key into DER-encoded PKIX format
-		derBytes, err := x509.MarshalPKIXPublicKey(rawKey)
-		if err != nil {
-			return nil, err
-		}
+			// Marshal the raw key into DER-encoded PKIX format
+			derBytes, err := x509.MarshalPKIXPublicKey(rawKey)
+			if err != nil {
+				logger.Warn(ctx).Err(err).Msg("Failed to marshal key for endpoint " + endpointKey)
+				continue
+			}
 
-		pubKey, err := x509.ParsePKIXPublicKey(derBytes)
-		if err != nil {
-			return nil, err
+			pubKey, err := x509.ParsePKIXPublicKey(derBytes)
+			if err != nil {
+				logger.Warn(ctx).Err(err).Msg("Failed to parse key for endpoint " + endpointKey)
+				continue
+			}
+
+			// Use a combination of endpoint key and key ID (if available) as the map key
+			keyID := endpointKey
+			if kid, exists := jwkKey.Get("kid"); exists {
+				keyID = endpointKey + "_" + kid.(string)
+			}
+			keys[keyID] = pubKey
 		}
-		keys[key] = pubKey
 	}
 	return keys, nil
 }
