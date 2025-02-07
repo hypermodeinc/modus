@@ -2,7 +2,7 @@
 # To learn more about the format of this file, see https://docs.trunk.io/reference/trunk-yaml
 version: 0.1
 cli:
-  version: 1.22.9
+  version: 1.22.10
 
 # Trunk provides extensibility via plugins. (https://docs.trunk.io/plugins)
 plugins:
@@ -21,9 +21,10 @@ runtimes:
 # This is the section where you manage your linters. (https://docs.trunk.io/check/configuration)
 lint:
   enabled:
-    - renovate@39.156.1
+    - trivy@0.59.1
+    - renovate@39.161.0
     - actionlint@1.7.7
-    - checkov@3.2.361
+    - checkov@3.2.365
     - git-diff-check
     - gofmt@1.20.4
     - golangci-lint@1.63.4

@@ -10,6 +10,7 @@
 - perf: use xsync's `LoadOrTryCompute` [#740](https://github.com/hypermodeinc/modus/pull/740)
 - fix: CORS: allow all request headers [#741](https://github.com/hypermodeinc/modus/pull/741)
 - fix: accept long base64 strings [#742](https://github.com/hypermodeinc/modus/pull/742)
+- fix: improve dgraph auth header passing [#752](https://github.com/hypermodeinc/modus/pull/752)
 
 ## 2025-01-24 - Runtime 0.17.1
 
