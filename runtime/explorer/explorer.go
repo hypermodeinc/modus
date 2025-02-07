@@ -72,7 +72,7 @@ var InferenceHistoryHandler = http.HandlerFunc(inferenceHistoryHandler)
 
 func inferenceHistoryHandler(w http.ResponseWriter, r *http.Request) {
 
-	inferences, err := db.QueryInferences()
+	inferences, err := db.QueryInferences(r.Context())
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
