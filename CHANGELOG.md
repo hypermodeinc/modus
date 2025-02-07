@@ -11,12 +11,11 @@
 - fix: CORS: allow all request headers [#741](https://github.com/hypermodeinc/modus/pull/741)
 - fix: accept long base64 strings [#742](https://github.com/hypermodeinc/modus/pull/742)
 - fix: improve dgraph auth header passing [#752](https://github.com/hypermodeinc/modus/pull/752)
+- fix: jwks endpoint should use key ID if available [#730](https://github.com/hypermodeinc/modus/pull/753)
 
 ## 2025-01-24 - Runtime 0.17.1
 
 - fix: separate modusdb instance by app [#729](https://github.com/hypermodeinc/modus/pull/729)
-- fix: jwks endpoint should use key ID if available
-  [#730](https://github.com/hypermodeinc/modus/pull/753)
 
 ## 2025-01-24 - Runtime 0.17.0
 
