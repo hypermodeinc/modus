@@ -91,7 +91,7 @@ function App() {
   }, []);
 
   return (
-    <div className="bg-black p-2 h-dvh flex flex-col">
+    <div className="bg-black p-2 h-dvh w-dvw flex flex-col">
       <ApiExplorer
         endpoints={endpoints}
         inferences={inferences}
