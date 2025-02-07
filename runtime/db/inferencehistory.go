@@ -185,7 +185,7 @@ func getInferenceDataJson(val any) ([]byte, error) {
 func WritePluginInfo(ctx context.Context, plugin *plugins.Plugin) {
 
 	if app.IsDevEnvironment() {
-		err := writePluginInfoToModusdb(plugin)
+		err := writePluginInfoToModusdb(ctx, plugin)
 		if err != nil {
 			logDbWarningOrError(ctx, err, "Plugin info not written to ModusDB.")
 		}
@@ -246,11 +246,11 @@ ON CONFLICT (build_id) DO NOTHING`,
 	}
 }
 
-func writePluginInfoToModusdb(plugin *plugins.Plugin) error {
+func writePluginInfoToModusdb(ctx context.Context, plugin *plugins.Plugin) error {
 	if GlobalModusDbEngine == nil {
 		return nil
 	}
-	_, _, err := modusdb.Create[Plugin](GlobalModusDbEngine, Plugin{
+	_, _, err := modusdb.Create[Plugin](ctx, GlobalModusDbEngine, Plugin{
 		Id:         plugin.Id,
 		Name:       plugin.Metadata.Name(),
 		Version:    plugin.Metadata.Version(),
@@ -307,7 +307,7 @@ func WriteInferenceHistoryToDB(ctx context.Context, batch []inferenceHistory) {
 	}
 
 	if app.IsDevEnvironment() {
-		err := writeInferenceHistoryToModusDb(batch)
+		err := writeInferenceHistoryToModusDb(ctx, batch)
 		if err != nil {
 			logDbWarningOrError(ctx, err, "Inference history not written to ModusDB.")
 		}
@@ -356,7 +356,7 @@ VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 	}
 }
 
-func writeInferenceHistoryToModusDb(batch []inferenceHistory) error {
+func writeInferenceHistoryToModusDb(ctx context.Context, batch []inferenceHistory) error {
 	if GlobalModusDbEngine == nil {
 		return nil
 	}
@@ -377,7 +377,7 @@ func writeInferenceHistoryToModusDb(batch []inferenceHistory) error {
 		} else {
 			pluginId = *data.pluginId
 		}
-		_, _, err = modusdb.Create[Inference](GlobalModusDbEngine, Inference{
+		_, _, err = modusdb.Create[Inference](ctx, GlobalModusDbEngine, Inference{
 			Id:         utils.GenerateUUIDv7(),
 			ModelHash:  data.model.Hash(),
 			Input:      string(input),
@@ -396,18 +396,18 @@ func writeInferenceHistoryToModusDb(batch []inferenceHistory) error {
 	return nil
 }
 
-func QueryPlugins() ([]Plugin, error) {
+func QueryPlugins(ctx context.Context) ([]Plugin, error) {
 	if GlobalModusDbEngine == nil {
 		return nil, nil
 	}
-	_, plugins, err := modusdb.Query[Plugin](GlobalModusDbEngine, modusdb.QueryParams{})
+	_, plugins, err := modusdb.Query[Plugin](ctx, GlobalModusDbEngine, modusdb.QueryParams{})
 	return plugins, err
 }
 
-func QueryInferences() ([]Inference, error) {
+func QueryInferences(ctx context.Context) ([]Inference, error) {
 	if GlobalModusDbEngine == nil {
 		return nil, nil
 	}
-	_, inferences, err := modusdb.Query[Inference](GlobalModusDbEngine, modusdb.QueryParams{})
+	_, inferences, err := modusdb.Query[Inference](ctx, GlobalModusDbEngine, modusdb.QueryParams{})
 	return inferences, err
 }
