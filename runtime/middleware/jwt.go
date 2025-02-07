@@ -219,21 +219,18 @@ func jwksEndpointsJsonToKeys(ctx context.Context, jwksEndpointsJson string) (map
 			jwkKey := it.Pair().Value.(jwk.Key)
 			var rawKey any
 			if err := jwkKey.Raw(&rawKey); err != nil {
-				logger.Warn(ctx).Err(err).Msg("Failed to get raw key for endpoint " + endpointKey)
-				continue
+				return nil, err
 			}
 
 			// Marshal the raw key into DER-encoded PKIX format
 			derBytes, err := x509.MarshalPKIXPublicKey(rawKey)
 			if err != nil {
-				logger.Warn(ctx).Err(err).Msg("Failed to marshal key for endpoint " + endpointKey)
-				continue
+				return nil, err
 			}
 
 			pubKey, err := x509.ParsePKIXPublicKey(derBytes)
 			if err != nil {
-				logger.Warn(ctx).Err(err).Msg("Failed to parse key for endpoint " + endpointKey)
-				continue
+				return nil, err
 			}
 
 			// Use a combination of endpoint key and key ID (if available) as the map key
