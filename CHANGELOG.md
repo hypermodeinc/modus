@@ -13,6 +13,7 @@
 - fix: improve dgraph auth header passing [#752](https://github.com/hypermodeinc/modus/pull/752)
 - fix: jwks endpoint should use key ID if available [#753](https://github.com/hypermodeinc/modus/pull/753)
 - fix: wasm filename should be last part of package name [#754](https://github.com/hypermodeinc/modus/pull/754)
+- chore: update ModusDB [#755](https://github.com/hypermodeinc/modus/pull/755)
 
 ## 2025-01-24 - Runtime 0.17.1
 
