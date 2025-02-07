@@ -17,7 +17,7 @@ import console from "console";
 import semver from "semver";
 
 const npmPath = process.env.npm_execpath;
-const pkg = process.env.npm_package_name;
+let pkg = process.env.npm_package_name;
 
 if (!npmPath) {
   console.error("This script must be run with npm.");
@@ -28,6 +28,9 @@ if (!pkg) {
   console.error("A package name must be defined in package.json.");
   process.exit(1);
 }
+
+// take only the last segment of the package name (e.g. @my-org/my-project -> my-project)
+pkg = pkg.split("/").pop();
 
 const target = process.argv[2] || "debug";
 if (target !== "debug" && target !== "release") {

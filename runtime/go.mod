@@ -30,7 +30,7 @@ require (
 	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/google/renameio/v2 v2.0.0
 	github.com/google/uuid v1.6.0
-	github.com/hypermodeinc/modusdb v0.0.0-20250124181856-b77a41ecb3c1
+	github.com/hypermodeinc/modusdb v0.0.0-20250207181521-a702ca86dda6
 	github.com/jackc/pgx/v5 v5.7.2
 	github.com/jensneuse/abstractlogger v0.0.4
 	github.com/joho/godotenv v1.5.1
