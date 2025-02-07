@@ -41,6 +41,7 @@ function App() {
   const [endpoints, setEndpoints] = useState<string[]>(["http://localhost:8686/graphql"]);
   const [inferences, setInferences] = useState<any[]>([]);
   const [inferenceError, setInferenceError] = useState<InferenceError | undefined>();
+  const [refreshInferenceHistory, setRefreshInferenceHistory] = useState(true);
 
   useEffect(() => {
     const fetchInferences = async () => {
@@ -60,10 +61,13 @@ function App() {
       } catch (error) {
         console.error("Failed to fetch inferences:", error);
       }
+      setRefreshInferenceHistory(false);
     };
 
-    fetchInferences();
-  }, []);
+    if (refreshInferenceHistory) {
+      fetchInferences();
+    }
+  }, [refreshInferenceHistory]);
 
   useEffect(() => {
     // Fetch endpoints when component mounts
@@ -91,6 +95,7 @@ function App() {
       <ApiExplorer
         endpoints={endpoints}
         inferences={inferences}
+        setRefreshInferenceHistory={setRefreshInferenceHistory}
         inferenceError={inferenceError}
         theme={modusTheme}
         title={
