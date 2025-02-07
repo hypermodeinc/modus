@@ -38,10 +38,23 @@ type authCreds struct {
 	token string
 }
 
-func (a *authCreds) GetRequestMetadata(ctx context.Context, uri ...string) (
-	map[string]string, error) {
+func (a *authCreds) GetRequestMetadata(ctx context.Context, uri ...string) (map[string]string, error) {
+	if len(a.token) == 0 {
+		return nil, nil
+	}
 
-	return map[string]string{"Authorization": a.token}, nil
+	headers := make(map[string]string, 1)
+	if len(uri) > 0 && strings.Contains(strings.ToLower(uri[0]), "cloud.dgraph.io") {
+		headers["X-Auth-Token"] = a.token
+	} else {
+		token := a.token
+		if !strings.HasPrefix(token, "Bearer ") {
+			token = "Bearer " + token
+		}
+		headers["Authorization"] = token
+	}
+
+	return headers, nil
 }
 
 func (a *authCreds) RequireTransportSecurity() bool {
