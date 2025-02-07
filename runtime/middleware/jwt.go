@@ -211,10 +211,6 @@ func jwksEndpointsJsonToKeys(ctx context.Context, jwksEndpointsJson string) (map
 			return nil, err
 		}
 
-		if jwks.Len() == 0 {
-			return nil, errors.New("No keys found in JWKS for endpoint: " + endpointKey)
-		}
-
 		for it := jwks.Keys(ctx); it.Next(ctx); {
 			jwkKey := it.Pair().Value.(jwk.Key)
 			var rawKey any
