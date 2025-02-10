@@ -106,6 +106,13 @@ export class Request {
   }
 
   /**
+   * Returns the request body as an `Uint8Array`.
+   */
+  bytes(): Uint8Array {
+    return Uint8Array.wrap(this.body);
+  }
+
+  /**
    * Returns the request body as a text string.
    */
   text(): string {
@@ -157,17 +164,30 @@ export class Content {
 
   /**
    * Creates a new `Content` instance from the given value.
-   * @param value - The value to create the content from. Either an `ArrayBuffer`, a `string`, or a JSON-serializable object.
+   * @param value - The value to create the content from.
+   * Supported value types are:
+   *  - Binary content as a `ArrayBuffer` or `Uint8Array`
+   *  - Text content as a `string`
+   *  - A JSON-serializable object.
    * @returns A new `Content` instance.
    */
   static from<T>(value: T): Content {
     if (idof<T>() == idof<ArrayBuffer>()) {
       return new Content(value as ArrayBuffer);
+    } else if (idof<T>() == idof<Uint8Array>()) {
+      return new Content((value as Uint8Array).buffer);
     } else if (isString<T>()) {
       return new Content(String.UTF8.encode(value as string));
     } else {
       return Content.from(JSON.stringify(value));
     }
+  }
+
+  /**
+   * Returns the content as an `Uint8Array`.
+   */
+  bytes(): Uint8Array {
+    return Uint8Array.wrap(this.data);
   }
 
   /**
@@ -221,6 +241,13 @@ export class Response {
    */
   get ok(): bool {
     return this.status >= 200 && this.status < 300;
+  }
+
+  /**
+   * Returns the response body as an `Uint8Array`.
+   */
+  bytes(): Uint8Array {
+    return Uint8Array.wrap(this.body);
   }
 
   /**

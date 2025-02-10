@@ -16,10 +16,10 @@ import (
  * The `graphql` module from the Modus SDK allows us to interact with the API.
  */
 
-// Define the host name of the API to be used in the requests.
+// Define the connection name of the API to be used in the requests.
 // Must match one of the http connections defined in the modus.json manifest file.
 
-const hostName = "countries-api"
+const connection = "countries-api"
 
 // Function to list all countries returned by the API
 func Countries() ([]*Country, error) {
@@ -32,9 +32,9 @@ func Countries() ([]*Country, error) {
 		}
 	  }
 	`
-	// Execute the GraphQL query using the host name and query statement
+	// Execute the GraphQL query using the connection name and query statement
 	// The API returns a response of type `CountriesResponse` containing an array of `Country` objects
-	response, err := graphql.Execute[CountriesResponse](hostName, statement, nil)
+	response, err := graphql.Execute[CountriesResponse](connection, statement, nil)
 
 	// If err is returned (i.e., the API call fails), return the error
 	if err != nil {
@@ -61,7 +61,7 @@ func GetCountryByCode(code string) (*Country, error) {
 		"code": code,
 	}
 
-	response, err := graphql.Execute[CountryResponse](hostName, statement, vars)
+	response, err := graphql.Execute[CountryResponse](connection, statement, vars)
 	if err != nil {
 		return nil, err
 	}

@@ -19,17 +19,15 @@ import (
 )
 
 var (
-	hostName = "mydgraph"
-	request  = &dgraph.Request{
-		Query: &dgraph.Query{
-			Query: "query",
-		},
+	connection = "mydgraph"
+	request    = &dgraph.Request{
+		Query: dgraph.NewQuery("query"),
 	}
 	schema = "schema"
 )
 
 func TestExecuteDQL(t *testing.T) {
-	response, err := dgraph.Execute(hostName, request)
+	response, err := dgraph.Execute(connection, request)
 	if err != nil {
 		t.Errorf("Expected no error, but received: %s", err.Error())
 	}
@@ -55,19 +53,17 @@ func TestExecuteDQL(t *testing.T) {
 		t.Errorf("Expected uid2: \"0x2\", but received: %s", response.Uids["uid2"])
 	}
 
-	expectedHostName := &hostName
+	expectedConnection := &connection
 	expectedReq := &dgraph.Request{
-		Query: &dgraph.Query{
-			Query: "query",
-		},
+		Query: dgraph.NewQuery("query"),
 	}
 
 	values := dgraph.DgraphQueryCallStack.Pop()
 	if values == nil {
 		t.Error("Expected a request, but none was found.")
 	} else {
-		if !reflect.DeepEqual(expectedHostName, values[0]) {
-			t.Errorf("Expected hostName: %s, but received: %s", *expectedHostName, values[0])
+		if !reflect.DeepEqual(expectedConnection, values[0]) {
+			t.Errorf("Expected connection: %s, but received: %s", *expectedConnection, values[0])
 		}
 		if !reflect.DeepEqual(expectedReq, values[1]) {
 			t.Errorf("Expected request: %v, but received: %v", expectedReq, values[1])
@@ -76,19 +72,19 @@ func TestExecuteDQL(t *testing.T) {
 }
 
 func TestAlterSchema(t *testing.T) {
-	err := dgraph.AlterSchema(hostName, schema)
+	err := dgraph.AlterSchema(connection, schema)
 	if err != nil {
 		t.Errorf("Expected no error, but received: %s", err.Error())
 	}
 
-	expectedHostName := &hostName
+	expectedConnection := &connection
 	expectedSchema := &schema
 	values := dgraph.DgraphAlterSchemaCallStack.Pop()
 	if values == nil {
 		t.Error("Expected a schema, but none was found.")
 	} else {
-		if !reflect.DeepEqual(expectedHostName, values[0]) {
-			t.Errorf("Expected hostName: %s, but received: %s", *expectedHostName, values[0])
+		if !reflect.DeepEqual(expectedConnection, values[0]) {
+			t.Errorf("Expected connection: %s, but received: %s", *expectedConnection, values[0])
 		}
 		if !reflect.DeepEqual(expectedSchema, values[1]) {
 			t.Errorf("Expected schema: %v, but received: %v", *expectedSchema, values[1])
@@ -99,20 +95,20 @@ func TestAlterSchema(t *testing.T) {
 
 func TestDropAttr(t *testing.T) {
 	attr := "attr"
-	err := dgraph.DropAttr(hostName, attr)
+	err := dgraph.DropAttr(connection, attr)
 	if err != nil {
 		t.Errorf("Expected no error, but received: %s", err.Error())
 	}
 
-	expectedHostName := &hostName
+	expectedConnection := &connection
 	expectedAttr := &attr
 
 	values := dgraph.DgraphDropAttrCallStack.Pop()
 	if values == nil {
 		t.Error("Expected an attribute, but none was found.")
 	} else {
-		if !reflect.DeepEqual(expectedHostName, values[0]) {
-			t.Errorf("Expected hostName: %s, but received: %s", *expectedHostName, values[0])
+		if !reflect.DeepEqual(expectedConnection, values[0]) {
+			t.Errorf("Expected connection: %s, but received: %s", *expectedConnection, values[0])
 		}
 		if !reflect.DeepEqual(expectedAttr, values[1]) {
 			t.Errorf("Expected attr: %v, but received: %v", *expectedAttr, values[1])
@@ -121,19 +117,19 @@ func TestDropAttr(t *testing.T) {
 }
 
 func TestDropAll(t *testing.T) {
-	err := dgraph.DropAll(hostName)
+	err := dgraph.DropAll(connection)
 	if err != nil {
 		t.Errorf("Expected no error, but received: %s", err.Error())
 	}
 
-	expectedHostName := &hostName
+	expectedConnection := &connection
 
 	values := dgraph.DgraphDropAllCallStack.Pop()
 	if values == nil {
-		t.Error("Expected a hostName, but none was found.")
+		t.Error("Expected a connection, but none was found.")
 	} else {
-		if !reflect.DeepEqual(expectedHostName, values[0]) {
-			t.Errorf("Expected hostName: %s, but received: %s", *expectedHostName, values[0])
+		if !reflect.DeepEqual(expectedConnection, values[0]) {
+			t.Errorf("Expected connection: %s, but received: %s", *expectedConnection, values[0])
 		}
 	}
 }

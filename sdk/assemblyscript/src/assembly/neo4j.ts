@@ -15,32 +15,28 @@ export { Variables };
 // @ts-expect-error: decorator
 @external("modus_neo4j_client", "executeQuery")
 declare function hostExecuteQuery(
-  hostName: string,
+  connection: string,
   dbName: string,
   query: string,
   parametersJson: string,
 ): EagerResult;
 
 /**
- *
  * Executes a Cypher query on the Neo4j database.
- *
- * @param hostName - the name of the host
- * @param dbName - the name of the database
+ * @param connection - the name of the connection
  * @param query - the query to execute
  * @param parameters - the parameters to pass to the query
- * @param query - the query to execute
- * @param mutations - the mutations to execute
+ * @param dbName - the name of the database
  * @returns The EagerResult from the Neo4j server
  */
 export function executeQuery(
-  hostName: string,
+  connection: string,
   query: string,
   parameters: Variables = new Variables(),
   dbName: string = "neo4j",
 ): EagerResult {
   const paramsJson = parameters.toJSON();
-  const response = hostExecuteQuery(hostName, dbName, query, paramsJson);
+  const response = hostExecuteQuery(connection, dbName, query, paramsJson);
   if (!response) {
     throw new Error("Error executing Query.");
   }
@@ -48,17 +44,59 @@ export function executeQuery(
   return response;
 }
 
-
+/**
+ * The result of a Neo4j query.
+ */
 @json
 export class EagerResult {
-  Keys: string[] = [];
-  Records: Record[] = [];
+  keys: string[] = [];
+  records: Record[] = [];
+
+  /**
+   * @deprecated use `keys` (lowercase) instead
+   */
+  get Keys(): string[] {
+    return this.keys;
+  }
+
+  /**
+   * @deprecated use `records` (lowercase) instead
+   */
+  get Records(): Record[] {
+    return this.records;
+  }
 }
 
+/**
+ * A record in a Neo4j query result.
+ */
 export class Record {
-  Keys: string[] = [];
-  Values: string[] = [];
+  keys: string[] = [];
+  values: string[] = [];
 
+  /**
+   * @deprecated use `keys` (lowercase) instead
+   */
+  get Keys(): string[] {
+    return this.keys;
+  }
+  set Keys(value: string[]) {
+    this.keys = value;
+  }
+
+  /**
+   * @deprecated use `values` (lowercase) instead
+   */
+  get Values(): string[] {
+    return this.values;
+  }
+  set Values(value: string[]) {
+    this.values = value;
+  }
+
+  /**
+  /* Get a value from a record at a given key as a JSON encoded string.
+   */
   get(key: string): string {
     for (let i = 0; i < this.Keys.length; i++) {
       if (this.Keys[i] == key) {
@@ -68,6 +106,9 @@ export class Record {
     throw new Error("Key not found in record.");
   }
 
+  /**
+   * Get a value from a record at a given key and cast or decode it to a specific type.
+   */
   getValue<T>(key: string): T {
     if (
       isInteger<T>() ||
@@ -95,8 +136,8 @@ export class Record {
       idof<T>() === idof<Point2D>() ||
       idof<T>() === idof<Point3D>()
     ) {
-      for (let i = 0; i < this.Keys.length; i++) {
-        if (this.Keys[i] == key) {
+      for (let i = 0; i < this.keys.length; i++) {
+        if (this.keys[i] == key) {
           return JSON.parse<T>(this.Values[i]);
         }
       }
@@ -107,8 +148,8 @@ export class Record {
 
   asMap(): Map<string, string> {
     const map = new Map<string, string>();
-    for (let i = 0; i < this.Keys.length; i++) {
-      map.set(this.Keys[i], this.Values[i]);
+    for (let i = 0; i < this.keys.length; i++) {
+      map.set(this.keys[i], this.values[i]);
     }
     return map;
   }
@@ -119,10 +160,10 @@ export class Record {
 
   __SERIALIZE(): string {
     let result = "{";
-    for (let i = 0; i < this.Keys.length; i++) {
-      const keyJson = JSON.stringify(this.Keys[i]);
-      result += `${keyJson}:${this.Values[i]}`;
-      if (i < this.Keys.length - 1) {
+    for (let i = 0; i < this.keys.length; i++) {
+      const keyJson = JSON.stringify(this.keys[i]);
+      result += `${keyJson}:${this.values[i]}`;
+      if (i < this.keys.length - 1) {
         result += ",";
       }
     }
@@ -146,11 +187,31 @@ export class Record {
 abstract class Entity {
 
   @alias("ElementId")
-  ElementId!: string;
+  elementId!: string;
 
 
   @alias("Props")
-  Props!: DynamicMap;
+  props!: DynamicMap;
+
+  /**
+   * @deprecated use `elementId` (lowercase) instead
+   */
+  get ElementId(): string {
+    return this.elementId;
+  }
+  set ElementId(value: string) {
+    this.elementId = value;
+  }
+
+  /**
+   * @deprecated use `props` (lowercase) instead
+   */
+  get Props(): DynamicMap {
+    return this.props;
+  }
+  set Props(value: DynamicMap) {
+    this.props = value;
+  }
 
   getProperty<T>(key: string): T {
     if (
@@ -174,7 +235,17 @@ abstract class Entity {
 export class Node extends Entity {
 
   @alias("Labels")
-  Labels!: string[];
+  labels!: string[];
+
+  /**
+   * @deprecated use `labels` (lowercase) instead
+   */
+  get Labels(): string[] {
+    return this.labels;
+  }
+  set Labels(value: string[]) {
+    this.labels = value;
+  }
 }
 
 
@@ -182,15 +253,45 @@ export class Node extends Entity {
 export class Relationship extends Entity {
 
   @alias("StartElementId")
-  StartElementId!: string;
+  startElementId!: string;
 
 
   @alias("EndElementId")
-  EndElementId!: string;
+  endElementId!: string;
 
 
   @alias("Type")
-  Type!: string;
+  type!: string;
+
+  /**
+   * @deprecated use `startElementId` (lowercase) instead
+   */
+  get StartElementId(): string {
+    return this.startElementId;
+  }
+  set StartElementId(value: string) {
+    this.startElementId = value;
+  }
+
+  /**
+   * @deprecated use `endElementId` (lowercase) instead
+   */
+  get EndElementId(): string {
+    return this.endElementId;
+  }
+  set EndElementId(value: string) {
+    this.endElementId = value;
+  }
+
+  /**
+   * @deprecated use `type` (lowercase) instead
+   */
+  get Type(): string {
+    return this.type;
+  }
+  set Type(value: string) {
+    this.type = value;
+  }
 }
 
 
@@ -198,11 +299,31 @@ export class Relationship extends Entity {
 export class Path {
 
   @alias("Nodes")
-  Nodes!: Node[];
+  nodes!: Node[];
 
 
   @alias("Relationships")
-  Relationships!: Relationship[];
+  relationships!: Relationship[];
+
+  /**
+   * @deprecated use `nodes` (lowercase) instead
+   */
+  get Nodes(): Node[] {
+    return this.nodes;
+  }
+  set Nodes(value: Node[]) {
+    this.nodes = value;
+  }
+
+  /**
+   * @deprecated use `relationships` (lowercase) instead
+   */
+  get Relationships(): Relationship[] {
+    return this.relationships;
+  }
+  set Relationships(value: Relationship[]) {
+    this.relationships = value;
+  }
 }
 
 
@@ -210,18 +331,55 @@ export class Path {
 export class Point2D {
 
   @alias("X")
-  X!: f64;
+  x!: f64;
 
 
   @alias("Y")
-  Y!: f64;
+  y!: f64;
 
 
   @alias("SpatialRefId")
-  SpatialRefId!: u32;
+  spatialRefId!: u32;
 
-  String(): string {
+  /**
+   * @deprecated use `x` (lowercase) instead
+   */
+  get X(): f64 {
+    return this.x;
+  }
+  set X(value: f64) {
+    this.x = value;
+  }
+
+  /**
+   * @deprecated use `y` (lowercase) instead
+   */
+  get Y(): f64 {
+    return this.y;
+  }
+  set Y(value: f64) {
+    this.y = value;
+  }
+
+  /**
+   * @deprecated use `spatialRefId` (lowercase) instead
+   */
+  get SpatialRefId(): u32 {
+    return this.spatialRefId;
+  }
+  set SpatialRefId(value: u32) {
+    this.spatialRefId = value;
+  }
+
+  toString(): string {
     return `Point{SpatialRefId=${this.SpatialRefId}, X=${this.X}, Y=${this.Y}}`;
+  }
+
+  /**
+   * @deprecated use `toString` instead
+   */
+  String(): string {
+    return this.toString();
   }
 }
 
@@ -230,21 +388,68 @@ export class Point2D {
 export class Point3D {
 
   @alias("X")
-  X!: f64;
+  x!: f64;
 
 
   @alias("Y")
-  Y!: f64;
+  y!: f64;
 
 
   @alias("Z")
-  Z!: f64;
+  z!: f64;
 
 
   @alias("SpatialRefId")
-  SpatialRefId!: u32;
+  spatialRefId!: u32;
 
-  String(): string {
+  /**
+   * @deprecated use `x` (lowercase) instead
+   */
+  get X(): f64 {
+    return this.x;
+  }
+  set X(value: f64) {
+    this.x = value;
+  }
+
+  /**
+   * @deprecated use `y` (lowercase) instead
+   */
+  get Y(): f64 {
+    return this.y;
+  }
+  set Y(value: f64) {
+    this.y = value;
+  }
+
+  /**
+   * @deprecated use `z` (lowercase) instead
+   */
+  get Z(): f64 {
+    return this.z;
+  }
+  set Z(value: f64) {
+    this.z = value;
+  }
+
+  /**
+   * @deprecated use `spatialRefId` (lowercase) instead
+   */
+  get SpatialRefId(): u32 {
+    return this.spatialRefId;
+  }
+  set SpatialRefId(value: u32) {
+    this.spatialRefId = value;
+  }
+
+  toString(): string {
     return `Point{SpatialRefId=${this.SpatialRefId}, X=${this.X}, Y=${this.Y}, Z=${this.Z}}`;
+  }
+
+  /**
+   * @deprecated use `toString` instead
+   */
+  String(): string {
+    return this.toString();
   }
 }

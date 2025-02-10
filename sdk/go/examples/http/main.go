@@ -37,7 +37,9 @@ func GetRandomQuote() (*Quote, error) {
 
 	// The API returns an array of quotes, but we only want the first one.
 	var quotes []Quote
-	response.JSON(&quotes)
+	if err := response.JSON(&quotes); err != nil {
+		return nil, err
+	}
 	if len(quotes) == 0 {
 		return nil, errors.New("expected at least one quote in the response, but none were found")
 	}
@@ -54,7 +56,7 @@ func GetRandomImage(width, height int) (*Image, error) {
 
 	result := &Image{
 		ContentType: *response.Headers.Get("Content-Type"),
-		Data:        response.Body,
+		Data:        response.Bytes(),
 	}
 
 	return result, nil
@@ -122,6 +124,8 @@ func CreateGithubIssue(owner, repo, title, body string) (*Issue, error) {
 
 	// The response will contain the issue data, including the URL of the issue on GitHub.
 	var issue Issue
-	response.JSON(&issue)
+	if err := response.JSON(&issue); err != nil {
+		return nil, err
+	}
 	return &issue, nil
 }

@@ -125,17 +125,17 @@ export function generateTextWithTools(prompt: string): string {
  * This function will return the current time in a given time zone.
  */
 function getCurrentTime(tz: string): string {
-  if (!localtime.IsValidTimeZone(tz)) {
+  if (!localtime.isValidTimeZone(tz)) {
     return "error: invalid time zone";
   }
-  return localtime.NowInZone(tz);
+  return localtime.nowInZone(tz);
 }
 
 /**
  * This function will return the default time zone for the user.
  */
 function getUserTimeZone(): string {
-  return localtime.GetTimeZone();
+  return localtime.getTimeZone();
 }
 
 /**
@@ -143,12 +143,12 @@ function getUserTimeZone(): string {
  * to reduce the number of tool calls required by the model.
  */
 function getCurrentTimeInUserTimeZone(): string {
-  const tz = localtime.GetTimeZone();
+  const tz = localtime.getTimeZone();
   if (tz === "") {
     return "error: cannot determine user's time zone";
   }
 
-  const time = localtime.NowInZone(tz);
+  const time = localtime.nowInZone(tz);
   const result = <TimeAndZone>{ time, zone: tz };
   return JSON.stringify(result);
 }

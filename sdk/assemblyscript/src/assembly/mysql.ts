@@ -22,25 +22,25 @@ export { Params, Response, QueryResponse, ScalarResponse, Point, Location };
 const dbType = "mysql";
 
 export function execute(
-  hostName: string,
+  connection: string,
   statement: string,
   params: Params = new Params(),
 ): Response {
-  return db.execute(hostName, dbType, statement, params);
+  return db.execute(connection, dbType, statement, params);
 }
 
 export function query<T>(
-  hostName: string,
+  connection: string,
   statement: string,
   params: Params = new Params(),
 ): QueryResponse<T> {
-  return db.query<T>(hostName, dbType, statement, params);
+  return db.query<T>(connection, dbType, statement, params);
 }
 
 export function queryScalar<T>(
-  hostName: string,
+  connection: string,
   statement: string,
   params: Params = new Params(),
 ): ScalarResponse<T> {
-  return db.queryScalar<T>(hostName, dbType, statement, params);
+  return db.queryScalar<T>(connection, dbType, statement, params);
 }

@@ -12,8 +12,8 @@ import (
 	"github.com/hypermodeinc/modus/sdk/go/pkg/mysql"
 )
 
-// The name of the MySQL host, as specified in the modus.json manifest
-const host = "my-database"
+// The name of the MySQL connection, as specified in the modus.json manifest
+const connection = "my-database"
 
 type Person struct {
 	Id   int             `json:"id"`
@@ -24,19 +24,19 @@ type Person struct {
 
 func GetAllPeople() ([]Person, error) {
 	const query = "select * from people order by id"
-	response, err := mysql.Query[Person](host, query)
+	response, err := mysql.Query[Person](connection, query)
 	return response.Rows, err
 }
 
 func GetPeopleByName(name string) ([]Person, error) {
 	const query = "select * from people where name = ?"
-	response, err := mysql.Query[Person](host, query, name)
+	response, err := mysql.Query[Person](connection, query, name)
 	return response.Rows, err
 }
 
 func GetPerson(id int) (*Person, error) {
 	const query = "select * from people where id = ?"
-	response, err := mysql.Query[Person](host, query, id)
+	response, err := mysql.Query[Person](connection, query, id)
 	if err != nil {
 		return nil, err
 	}
@@ -51,7 +51,7 @@ func GetPerson(id int) (*Person, error) {
 func AddPerson(name string, age int) (*Person, error) {
 	const query = "insert into people (name, age) values (?, ?)"
 
-	response, err := mysql.Execute(host, query, name, age)
+	response, err := mysql.Execute(connection, query, name, age)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to add person to database: %v", err)
 	}
@@ -63,7 +63,7 @@ func AddPerson(name string, age int) (*Person, error) {
 func UpdatePersonHome(id int, longitude, latitude float64) (*Person, error) {
 	const query = "update people set home = point(?,?) where id = ?"
 
-	response, err := mysql.Execute(host, query, longitude, latitude, id)
+	response, err := mysql.Execute(connection, query, longitude, latitude, id)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to update person in database: %v", err)
 	}
@@ -78,7 +78,7 @@ func UpdatePersonHome(id int, longitude, latitude float64) (*Person, error) {
 func DeletePerson(id int) (string, error) {
 	const query = "delete from people where id = ?"
 
-	response, err := mysql.Execute(host, query, id)
+	response, err := mysql.Execute(connection, query, id)
 	if err != nil {
 		return "", fmt.Errorf("Failed to delete person from database: %v", err)
 	}

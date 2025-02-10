@@ -20,12 +20,12 @@ import (
 )
 
 var (
-	testHostName = "mydb"
-	testDbType   = "somedbtype"
+	testConnection = "mydb"
+	testDbType     = "somedbtype"
 )
 
 func TestExecute(t *testing.T) {
-	r, err := db.Execute(testHostName, testDbType, db.MockExecuteStatement, db.MockExecuteParameters...)
+	r, err := db.Execute(testConnection, testDbType, db.MockExecuteStatement, db.MockExecuteParameters...)
 	if err != nil {
 		t.Fatalf("Expected no error, but received: %s", err)
 	}
@@ -37,7 +37,7 @@ func TestExecute(t *testing.T) {
 }
 
 func TestQuery(t *testing.T) {
-	r, err := db.Query[map[string]any](testHostName, testDbType, db.MockQueryStatement, db.MockQueryParameters...)
+	r, err := db.Query[map[string]any](testConnection, testDbType, db.MockQueryStatement, db.MockQueryParameters...)
 	if err != nil {
 		t.Fatalf("Expected no error, but received: %s", err)
 	}
@@ -65,7 +65,7 @@ func TestQuery(t *testing.T) {
 }
 
 func TestQueryScalar(t *testing.T) {
-	r, err := db.QueryScalar[int](testHostName, testDbType, db.MockQueryScalarStatement, db.MockQueryScalarParameters...)
+	r, err := db.QueryScalar[int](testConnection, testDbType, db.MockQueryScalarStatement, db.MockQueryScalarParameters...)
 	if err != nil {
 		t.Fatalf("Expected no error, but received: %s", err)
 	}
@@ -88,9 +88,9 @@ func testCallStack(t *testing.T, expectedStatement string, expectedParams []any,
 		if len(values) != 4 {
 			t.Errorf("Expected 4 values, but received: %d", len(values))
 		}
-		receivedHostName := values[0].(*string)
-		if *receivedHostName != testHostName {
-			t.Errorf("Expected hostName: \"%s\", but received: \"%s\"", testHostName, *receivedHostName)
+		receivedConnection := values[0].(*string)
+		if *receivedConnection != testConnection {
+			t.Errorf("Expected connection: \"%s\", but received: \"%s\"", testConnection, *receivedConnection)
 		}
 		receivedDbType := values[1].(*string)
 		if *receivedDbType != testDbType {

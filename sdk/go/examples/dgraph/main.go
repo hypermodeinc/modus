@@ -13,10 +13,10 @@ import (
 	"github.com/hypermodeinc/modus/sdk/go/pkg/dgraph"
 )
 
-const hostName = "dgraph"
+const connection = "dgraph"
 
 func DropAll() string {
-	err := dgraph.DropAll(hostName)
+	err := dgraph.DropAll(connection)
 	if err != nil {
 		return err.Error()
 	}
@@ -25,7 +25,7 @@ func DropAll() string {
 }
 
 func DropAttr(attr string) string {
-	err := dgraph.DropAttr(hostName, attr)
+	err := dgraph.DropAttr(connection, attr)
 	if err != nil {
 		return err.Error()
 	}
@@ -35,16 +35,16 @@ func DropAttr(attr string) string {
 
 func AlterSchema() string {
 	schema := `
-	firstName: string @index(term) .
-	lastName: string @index(term) .
-	dgraph.type: [string] @index(exact) .
-  
-	type Person {
-		firstName
-		lastName
-	}
-	`
-	err := dgraph.AlterSchema(hostName, schema)
+		firstName: string @index(term) .
+		lastName: string @index(term) .
+		dgraph.type: [string] @index(exact) .
+
+		type Person {
+			firstName
+			lastName
+		}
+		`
+	err := dgraph.AlterSchema(connection, schema)
 	if err != nil {
 		return err.Error()
 	}
@@ -53,22 +53,18 @@ func AlterSchema() string {
 }
 
 func QueryPeople() ([]*Person, error) {
-	query := `
-	{
-	  people(func: type(Person)) {
-		uid
-		firstName
-		lastName
-		dgraph.type
-	  }
-	}
-	`
+	query := dgraph.NewQuery(`
+		{
+			people(func: type(Person)) {
+				uid
+				firstName
+				lastName
+				dgraph.type
+			}
+		}
+		`)
 
-	response, err := dgraph.Execute(hostName, &dgraph.Request{
-		Query: &dgraph.Query{
-			Query: query,
-		},
-	})
+	response, err := dgraph.ExecuteQuery(connection, query)
 	if err != nil {
 		return nil, err
 	}
@@ -82,28 +78,20 @@ func QueryPeople() ([]*Person, error) {
 }
 
 func QuerySpecificPerson(firstName, lastName string) (*Person, error) {
-	statement := `
-	query queryPerson($firstName: string, $lastName: string) {
-	  people(func: eq(firstName, $firstName)) @filter(eq(lastName, $lastName)) {
-		  uid
-		  firstName
-		  lastName
-		  dgraph.type
-	  }
-  }
-	`
+	query := dgraph.NewQuery(`
+		query queryPerson($firstName: string, $lastName: string) {
+			people(func: eq(firstName, $firstName)) @filter(eq(lastName, $lastName)) {
+				uid
+				firstName
+				lastName
+				dgraph.type
+			}
+		}
+		`).
+		WithVariable("$firstName", firstName).
+		WithVariable("$lastName", lastName)
 
-	variables := map[string]string{
-		"$firstName": firstName,
-		"$lastName":  lastName,
-	}
-
-	response, err := dgraph.Execute(hostName, &dgraph.Request{
-		Query: &dgraph.Query{
-			Query:     statement,
-			Variables: variables,
-		},
-	})
+	response, err := dgraph.ExecuteQuery(connection, query)
 	if err != nil {
 		return nil, err
 	}
@@ -121,19 +109,13 @@ func QuerySpecificPerson(firstName, lastName string) (*Person, error) {
 }
 
 func AddPersonAsRDF(firstName, lastName string) (map[string]string, error) {
-	mutation := fmt.Sprintf(`
-  _:user1 <firstName> "%s" .
-  _:user1 <lastName> "%s" .
-  _:user1 <dgraph.type> "Person" .
-  `, firstName, lastName)
+	mutation := dgraph.NewMutation().WithSetNquads(fmt.Sprintf(`
+		_:user1 <firstName> "%s" .
+		_:user1 <lastName> "%s" .
+		_:user1 <dgraph.type> "Person" .
+		`, dgraph.EscapeRDF(firstName), dgraph.EscapeRDF(lastName)))
 
-	response, err := dgraph.Execute(hostName, &dgraph.Request{
-		Mutations: []*dgraph.Mutation{
-			{
-				SetNquads: mutation,
-			},
-		},
-	})
+	response, err := dgraph.ExecuteMutations(connection, mutation)
 	if err != nil {
 		return nil, err
 	}
@@ -149,18 +131,14 @@ func AddPersonAsJSON(firstName, lastName string) (map[string]string, error) {
 		DType:     []string{"Person"},
 	}
 
-	data, err := json.Marshal(person)
+	personJson, err := json.Marshal(person)
 	if err != nil {
 		return nil, err
 	}
 
-	response, err := dgraph.Execute(hostName, &dgraph.Request{
-		Mutations: []*dgraph.Mutation{
-			{
-				SetJson: string(data),
-			},
-		},
-	})
+	mutation := dgraph.NewMutation().WithSetJson(string(personJson))
+
+	response, err := dgraph.ExecuteMutations(connection, mutation)
 	if err != nil {
 		return nil, err
 	}
@@ -168,26 +146,18 @@ func AddPersonAsJSON(firstName, lastName string) (map[string]string, error) {
 	return response.Uids, nil
 }
 
-func UpsertPerson(nameToChangeFrom, nameToChangeTo string) (map[string]string, error) {
-	query := fmt.Sprintf(`
-	query {
-	  person as var(func: eq(firstName, "%s"))
-	`, nameToChangeFrom)
+func UpdatePerson(nameToChangeFrom, nameToChangeTo string) (map[string]string, error) {
+	query := dgraph.NewQuery(`
+		query findPerson($name: string) {
+			person as var(func: eq(firstName, $name))
+		}
+		`).WithVariable("$name", nameToChangeFrom)
 
-	mutation := fmt.Sprintf(`
-	uid(person) <firstName> "%s" .
-	`, nameToChangeTo)
+	mutation := dgraph.NewMutation().WithSetNquads(
+		fmt.Sprintf(`uid(person) <firstName> "%s" .`, dgraph.EscapeRDF(nameToChangeTo)),
+	)
 
-	response, err := dgraph.Execute(hostName, &dgraph.Request{
-		Query: &dgraph.Query{
-			Query: query,
-		},
-		Mutations: []*dgraph.Mutation{
-			{
-				SetNquads: mutation,
-			},
-		},
-	})
+	response, err := dgraph.ExecuteQuery(connection, query, mutation)
 	if err != nil {
 		return nil, err
 	}

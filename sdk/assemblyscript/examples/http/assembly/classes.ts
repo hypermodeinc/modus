@@ -19,7 +19,7 @@ export class Quote {
 
 export class Image {
   contentType!: string;
-  data!: ArrayBuffer;
+  data!: Uint8Array;
 }
 
 
