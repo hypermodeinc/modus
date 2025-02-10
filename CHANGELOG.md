@@ -2,21 +2,29 @@
 
 # Change Log
 
-## UNRELEASED
+## 2025-02-10 - AssemblyScript SDK 0.17.1
 
 - fix: AssemblyScript ESLint import path [#737](https://github.com/hypermodeinc/modus/pull/737)
-- fix: decode base64 strings to binary data types [#738](https://github.com/hypermodeinc/modus/pull/738)
 - fix: serialization of OpenAI `ToolChoice` [#739](https://github.com/hypermodeinc/modus/pull/739)
+- fix: wasm filename should be last part of package name [#754](https://github.com/hypermodeinc/modus/pull/754)
+- feat: minor API improvements [#758](https://github.com/hypermodeinc/modus/pull/758)
+
+## 2025-02-10 - Go SDK 0.17.1
+
+- chore: update Go toolchain to 1.23.6 [#757](https://github.com/hypermodeinc/modus/pull/757)
+- feat: minor API improvements [#758](https://github.com/hypermodeinc/modus/pull/758)
+
+## 2025-02-10 - Runtime 0.17.2
+
+- fix: decode base64 strings to binary data types [#738](https://github.com/hypermodeinc/modus/pull/738)
 - perf: use xsync's `LoadOrTryCompute` [#740](https://github.com/hypermodeinc/modus/pull/740)
 - fix: CORS: allow all request headers [#741](https://github.com/hypermodeinc/modus/pull/741)
 - fix: accept long base64 strings [#742](https://github.com/hypermodeinc/modus/pull/742)
 - fix: improve dgraph auth header passing [#752](https://github.com/hypermodeinc/modus/pull/752)
 - fix: jwks endpoint should use key ID if available [#753](https://github.com/hypermodeinc/modus/pull/753)
-- fix: wasm filename should be last part of package name [#754](https://github.com/hypermodeinc/modus/pull/754)
 - chore: update ModusDB [#755](https://github.com/hypermodeinc/modus/pull/755)
 - chore: bump tailwind to v4 [#756](https://github.com/hypermodeinc/modus/pull/756)
 - chore: update Go toolchain to 1.23.6 [#757](https://github.com/hypermodeinc/modus/pull/757)
-- feat: minor API improvements [#758](https://github.com/hypermodeinc/modus/pull/758)
 
 ## 2025-01-24 - Runtime 0.17.1
 
