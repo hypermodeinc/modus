@@ -8,7 +8,7 @@
     }
   },
   "connections": {
-    // This defines the dgraph host that is used by the example functions.
+    // This defines the dgraph connection that is used by the example functions.
     // The {{API_KEY}} will be replaced by the secret's value at run time.
     "dgraph": {
       "type": "dgraph",

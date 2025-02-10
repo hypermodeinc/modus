@@ -29,19 +29,21 @@ func WithDbName(dbName string) Neo4jOption {
 	}
 }
 
+// The result of a Neo4j query.
 type EagerResult struct {
-	Keys    []string  `json:"Keys"`
-	Records []*Record `json:"Records"`
+	Keys    []string
+	Records []*Record
 }
 
+// A record in a Neo4j query result.
 type Record struct {
-	Values []string `json:"Values"`
-	Keys   []string `json:"Keys"`
+	Keys   []string
+	Values []string
 }
 
+// A type constraint for retrieving values from a Neo4j record.
 type RecordValue interface {
-	bool | int64 | float64 | string |
-		time.Time |
+	bool | int64 | float64 | string | time.Time |
 		[]byte | []any | map[string]any |
 		Node | Relationship | Path | Point2D | Point3D
 }
@@ -52,9 +54,9 @@ type Entity interface {
 }
 
 type Node struct {
-	ElementId string         `json:"ElementId"`
-	Labels    []string       `json:"Labels"`
-	Props     map[string]any `json:"Props"`
+	ElementId string
+	Labels    []string
+	Props     map[string]any
 }
 
 func (n *Node) GetElementId() string {
@@ -65,12 +67,13 @@ func (n *Node) GetProperties() map[string]any {
 	return n.Props
 }
 
+// A relationship in a Neo4j query result.
 type Relationship struct {
-	ElementId      string         `json:"ElementId"`
-	StartElementId string         `json:"StartElementId"`
-	EndElementId   string         `json:"EndElementId"`
-	Type           string         `json:"Type"`
-	Props          map[string]any `json:"Props"`
+	ElementId      string
+	StartElementId string
+	EndElementId   string
+	Type           string
+	Props          map[string]any
 }
 
 func (r *Relationship) GetElementId() string {
@@ -82,28 +85,33 @@ func (r *Relationship) GetProperties() map[string]any {
 }
 
 type Path struct {
-	Nodes         []Node         `json:"Nodes"`
-	Relationships []Relationship `json:"Relationships"`
+	Nodes         []Node
+	Relationships []Relationship
 }
 
+// A type constraint for retrieving property values from a Neo4j entity.
 type PropertyValue interface {
-	bool | int64 | float64 | string |
-		time.Time | []byte | []any | Point2D | Point3D
+	bool | int64 | float64 | string | time.Time |
+		[]byte | []any | Point2D | Point3D
 }
 
 // Point2D represents a two dimensional point in a particular coordinate reference system.
 type Point2D struct {
-	X            float64 `json:"X"`
-	Y            float64 `json:"Y"`
-	SpatialRefId uint32  `json:"SpatialRefId"` // Id of coordinate reference system.
+	X float64
+	Y float64
+
+	// Id of coordinate reference system.
+	SpatialRefId uint32
 }
 
 // Point3D represents a three dimensional point in a particular coordinate reference system.
 type Point3D struct {
-	X            float64 `json:"X"`
-	Y            float64 `json:"Y"`
-	Z            float64 `json:"Z"`
-	SpatialRefId uint32  `json:"SpatialRefId"` // Id of coordinate reference system.
+	X float64
+	Y float64
+	Z float64
+
+	// Id of coordinate reference system.
+	SpatialRefId uint32
 }
 
 // String returns string representation of this point.
@@ -116,15 +124,8 @@ func (p Point3D) String() string {
 	return fmt.Sprintf("Point{SpatialRefId=%d, X=%f, Y=%f, Z=%f}", p.SpatialRefId, p.X, p.Y, p.Z)
 }
 
-/**
- *
- * Executes a query or mutation on the Neo4j database.
- *
- * @param hostName - the name of the host
- * @param query - the query to execute
- * @param parameters - the parameters to pass to the query
- */
-func ExecuteQuery(hostName, query string, parameters map[string]any, opts ...Neo4jOption) (*EagerResult, error) {
+// Executes a query or mutation on the Neo4j database.
+func ExecuteQuery(connection, query string, parameters map[string]any, opts ...Neo4jOption) (*EagerResult, error) {
 	dbOpts := &neo4jOptions{
 		dbName: "neo4j",
 	}
@@ -140,11 +141,12 @@ func ExecuteQuery(hostName, query string, parameters map[string]any, opts ...Neo
 
 	parametersJson := string(bytes)
 
-	response := hostExecuteQuery(&hostName, &dbOpts.dbName, &query, &parametersJson)
+	response := hostExecuteQuery(&connection, &dbOpts.dbName, &query, &parametersJson)
 
 	return response, nil
 }
 
+// Get a value from a record at a given key and cast or decode it to a specific type.
 func GetRecordValue[T RecordValue](record *Record, key string) (T, error) {
 	var val T
 	for i, k := range record.Keys {
@@ -194,6 +196,7 @@ func (r *Record) JSONMarshal() ([]byte, error) {
 	return []byte(result), nil
 }
 
+// Get a property from an entity at a given key and cast or decode it to a specific type.
 func GetProperty[T PropertyValue](e Entity, key string) (T, error) {
 	var val T
 	rawVal, ok := e.GetProperties()[key]

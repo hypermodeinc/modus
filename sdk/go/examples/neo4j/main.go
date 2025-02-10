@@ -10,8 +10,8 @@ import (
 	"github.com/hypermodeinc/modus/sdk/go/pkg/neo4j"
 )
 
-// The name of the PostgreSQL host, as specified in the modus.json manifest
-const host = "my-database"
+// The name of the PostgreSQL connection, as specified in the modus.json manifest
+const connection = "my-database"
 
 func CreatePeopleAndRelationships() (string, error) {
 	people := []map[string]any{
@@ -22,7 +22,7 @@ func CreatePeopleAndRelationships() (string, error) {
 	}
 
 	for _, person := range people {
-		_, err := neo4j.ExecuteQuery(host,
+		_, err := neo4j.ExecuteQuery(connection,
 			"MERGE (p:Person {name: $person.name, age: $person.age})",
 			map[string]any{"person": person})
 		if err != nil {
@@ -32,7 +32,7 @@ func CreatePeopleAndRelationships() (string, error) {
 
 	for _, person := range people {
 		if person["friends"] != "" {
-			_, err := neo4j.ExecuteQuery(host, `
+			_, err := neo4j.ExecuteQuery(connection, `
 				MATCH (p:Person {name: $person.name})
                 UNWIND $person.friends AS friend_name
                 MATCH (friend:Person {name: friend_name})
@@ -55,7 +55,7 @@ type Person struct {
 }
 
 func GetAliceFriendsUnder40() ([]Person, error) {
-	response, err := neo4j.ExecuteQuery(host, `
+	response, err := neo4j.ExecuteQuery(connection, `
         MATCH (p:Person {name: $name})-[:KNOWS]-(friend:Person)
         WHERE friend.age < $age
         RETURN friend
@@ -92,7 +92,7 @@ func GetAliceFriendsUnder40() ([]Person, error) {
 }
 
 func GetAliceFriendsUnder40Ages() ([]int64, error) {
-	response, err := neo4j.ExecuteQuery(host, `
+	response, err := neo4j.ExecuteQuery(connection, `
         MATCH (p:Person {name: $name})-[:KNOWS]-(friend:Person)
         WHERE friend.age < $age
         RETURN friend.age AS age
@@ -117,7 +117,7 @@ func GetAliceFriendsUnder40Ages() ([]int64, error) {
 }
 
 func DeleteAllNodes() (string, error) {
-	_, err := neo4j.ExecuteQuery(host, `
+	_, err := neo4j.ExecuteQuery(connection, `
 		MATCH (n)
 		DETACH DELETE n
 	`, nil)

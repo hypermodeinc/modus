@@ -20,13 +20,13 @@ import (
 )
 
 func TestExecuteGQL(t *testing.T) {
-	hostName := "test"
+	connection := "test"
 	statement := "query { test }"
 	variables := map[string]any{
 		"key":  "value",
 		"key2": 2,
 	}
-	response, err := graphql.Execute[string](hostName, statement, variables)
+	response, err := graphql.Execute[string](connection, statement, variables)
 	if err != nil {
 		t.Errorf("Expected no error, but received: %s", err.Error())
 	}
@@ -34,7 +34,7 @@ func TestExecuteGQL(t *testing.T) {
 		t.Fatalf("Expected a response, but received nil")
 	}
 
-	expectedHostName := &hostName
+	expectedConnection := &connection
 	expectedStatement := &statement
 	bytes, err := utils.JsonSerialize(variables)
 	if err != nil {
@@ -47,8 +47,8 @@ func TestExecuteGQL(t *testing.T) {
 	if values == nil {
 		t.Fatalf("Expected a call to hostExecuteGQL, but none was made")
 	} else {
-		if !reflect.DeepEqual(values[0], expectedHostName) {
-			t.Errorf("Expected hostName: %s, but received: %s", *expectedHostName, values[0])
+		if !reflect.DeepEqual(values[0], expectedConnection) {
+			t.Errorf("Expected connection: %s, but received: %s", *expectedConnection, values[0])
 		}
 		if !reflect.DeepEqual(values[1], expectedStatement) {
 			t.Errorf("Expected statement: %s, but received: %s", *expectedStatement, values[1])
@@ -60,13 +60,13 @@ func TestExecuteGQL(t *testing.T) {
 }
 
 func TestExecuteGQLWithErrors(t *testing.T) {
-	hostName := "test"
+	connection := "test"
 	statement := "error"
 	variables := map[string]any{
 		"key":  "value",
 		"key2": 2,
 	}
-	response, err := graphql.Execute[string](hostName, statement, variables)
+	response, err := graphql.Execute[string](connection, statement, variables)
 	if err != nil {
 		t.Errorf("Expected no error, but received: %s", err.Error())
 	}
@@ -74,7 +74,7 @@ func TestExecuteGQLWithErrors(t *testing.T) {
 		t.Fatalf("Expected a response, but received nil")
 	}
 
-	expectedHostName := &hostName
+	expectedConnection := &connection
 	expectedStatement := &statement
 	bytes, err := utils.JsonSerialize(variables)
 	if err != nil {
@@ -87,8 +87,8 @@ func TestExecuteGQLWithErrors(t *testing.T) {
 	if values == nil {
 		t.Fatalf("Expected a call to hostExecuteGQL, but none was made")
 	} else {
-		if !reflect.DeepEqual(values[0], expectedHostName) {
-			t.Errorf("Expected hostName: %s, but received: %s", *expectedHostName, values[0])
+		if !reflect.DeepEqual(values[0], expectedConnection) {
+			t.Errorf("Expected connection: %s, but received: %s", *expectedConnection, values[0])
 		}
 		if !reflect.DeepEqual(values[1], expectedStatement) {
 			t.Errorf("Expected statement: %s, but received: %s", *expectedStatement, values[1])

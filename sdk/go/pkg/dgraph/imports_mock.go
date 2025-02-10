@@ -18,8 +18,8 @@ var DgraphAlterSchemaCallStack = testutils.NewCallStack()
 var DgraphDropAttrCallStack = testutils.NewCallStack()
 var DgraphDropAllCallStack = testutils.NewCallStack()
 
-func hostExecuteQuery(hostName *string, request *Request) *Response {
-	DgraphQueryCallStack.Push(hostName, request)
+func hostExecuteQuery(connection *string, request *Request) *Response {
+	DgraphQueryCallStack.Push(connection, request)
 
 	json := `{"data": {"query": "query"}}`
 
@@ -34,24 +34,24 @@ func hostExecuteQuery(hostName *string, request *Request) *Response {
 	}
 }
 
-func hostAlterSchema(hostName, schema *string) *string {
-	DgraphAlterSchemaCallStack.Push(hostName, schema)
+func hostAlterSchema(connection, schema *string) *string {
+	DgraphAlterSchemaCallStack.Push(connection, schema)
 
 	success := "Success"
 
 	return &success
 }
 
-func hostDropAttribute(hostName, attr *string) *string {
-	DgraphDropAttrCallStack.Push(hostName, attr)
+func hostDropAttribute(connection, attr *string) *string {
+	DgraphDropAttrCallStack.Push(connection, attr)
 
 	success := "Success"
 
 	return &success
 }
 
-func hostDropAllData(hostName *string) *string {
-	DgraphDropAllCallStack.Push(hostName)
+func hostDropAllData(connection *string) *string {
+	DgraphDropAllCallStack.Push(connection)
 
 	success := "Success"
 

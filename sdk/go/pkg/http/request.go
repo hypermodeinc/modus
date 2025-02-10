@@ -112,12 +112,15 @@ func (r *Request) Clone(options ...*RequestOptions) *Request {
 
 	return NewRequest(r.Url, ro)
 }
+
+func (r *Request) Bytes() []byte {
+	return r.Body
+}
+
 func (r *Request) Text() string {
 	return string(r.Body)
 }
 
-func (r *Request) JSON(result any) {
-	if err := json.Unmarshal(r.Body, result); err != nil {
-		panic(err)
-	}
+func (r *Request) JSON(result any) error {
+	return json.Unmarshal(r.Body, result)
 }

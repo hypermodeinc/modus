@@ -16,6 +16,7 @@
 - chore: update ModusDB [#755](https://github.com/hypermodeinc/modus/pull/755)
 - chore: bump tailwind to v4 [#756](https://github.com/hypermodeinc/modus/pull/756)
 - chore: update Go toolchain to 1.23.6 [#757](https://github.com/hypermodeinc/modus/pull/757)
+- feat: minor API improvements [#758](https://github.com/hypermodeinc/modus/pull/758)
 
 ## 2025-01-24 - Runtime 0.17.1
 

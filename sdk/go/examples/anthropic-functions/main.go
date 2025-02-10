@@ -105,8 +105,8 @@ func callStockPriceAPI(symbol string) (string, error) {
 		return "", fmt.Errorf("HTTP request failed with status code %d", resp.Status)
 	}
 
-	data := &stockPriceAPIResponse{}
-	if err := json.Unmarshal(resp.Body, data); err != nil {
+	var data stockPriceAPIResponse
+	if err := resp.JSON(&data); err != nil {
 		return "", err
 	}
 

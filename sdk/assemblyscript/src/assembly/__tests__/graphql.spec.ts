@@ -15,7 +15,7 @@ let returnData: string = "";
 mockImport(
   "modus_graphql_client.executeQuery",
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  (hostName: string, statement: string, variables: string): string => {
+  (connection: string, statement: string, variables: string): string => {
     return returnData;
   },
 );

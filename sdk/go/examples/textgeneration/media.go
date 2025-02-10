@@ -121,7 +121,7 @@ func DescribeRandomImage() (*Media, error) {
 	if err != nil {
 		return nil, err
 	}
-	data := response.Body
+	data := response.Bytes()
 	contentType := *response.Headers.Get("Content-Type")
 
 	// Describe the image using the OpenAI chat model.
@@ -171,7 +171,7 @@ func TranscribeRandomSpeech() (*Media, error) {
 	if err != nil {
 		return nil, err
 	}
-	data := response.Body
+	data := response.Bytes()
 
 	// Transcribe the audio using an audio-enabled OpenAI chat model.
 	model, err := models.GetModel[openai.ChatModel]("audio-model")

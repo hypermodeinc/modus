@@ -1004,12 +1004,12 @@ export class Image {
 
   /**
    * Creates a new image object from raw image data.
-   * @param data The raw image data.
+   * @param data The raw image data, supplied as either a `Uint8Array` or a base64-encoded string.
    * @param contentType A valid image MIME type supported by the model, such as "image/jpeg" or "image/png".
    * @param detail Specifies the detail level of the image. Can be set to "low", "high", or "auto". The default is "auto".
    */
-  static fromData(
-    data: Uint8Array,
+  static fromData<T>(
+    data: T,
     contentType: string,
     detail: string | null = null,
   ): Image {
@@ -1019,7 +1019,18 @@ export class Image {
       contentType = "image/" + contentType;
     }
 
-    const url = `data:${contentType};base64,${base64.encode(data)}`;
+    let str: string;
+    if (idof<T>() == idof<Uint8Array>()) {
+      str = base64.encode(data as Uint8Array);
+    } else if (isString(data)) {
+      str = data as string;
+    } else {
+      throw new Error(
+        "Invalid image data type. Data must be a Uint8Array or a base64-encoded string.",
+      );
+    }
+
+    const url = `data:${contentType};base64,${str}`;
     return new Image(url, detail);
   }
 
@@ -1075,17 +1086,28 @@ export class Audio {
 
   /**
    * Creates a new audio object from raw audio data.
-   * @param data The raw audio data.
+   * @param data The raw audio data, supplied as either a `Uint8Array` or a base64-encoded string.
    * @param format A valid audio format supported by the model, such as "wav" or "mp3".
    */
-  static fromData(data: Uint8Array, format: string): Audio {
+  static fromData<T>(data: T, format: string): Audio {
     // Unlike images, the model expects just the format, not a mime type.
     // Thus, strip the "audio/" prefix if present.
     if (format.startsWith("audio/")) {
       format = format.substring(6);
     }
 
-    return new Audio(data, format);
+    let buf: Uint8Array;
+    if (idof<T>() == idof<Uint8Array>()) {
+      buf = data as Uint8Array;
+    } else if (isString(data)) {
+      buf = base64.decode(data as string);
+    } else {
+      throw new Error(
+        "Invalid audio data type. Data must be a Uint8Array or a base64-encoded string.",
+      );
+    }
+
+    return new Audio(buf, format);
   }
 }
 

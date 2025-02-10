@@ -6,8 +6,8 @@
 
 import { postgresql } from "@hypermode/modus-sdk-as";
 
-// The name of the PostgreSQL host, as specified in the modus.json manifest
-const host = "my-database";
+// The name of the PostgreSQL connection, as specified in the modus.json manifest
+const connection = "my-database";
 
 
 @json
@@ -20,7 +20,7 @@ class Person {
 
 export function getAllPeople(): Person[] {
   const query = "select * from people order by id";
-  const response = postgresql.query<Person>(host, query);
+  const response = postgresql.query<Person>(connection, query);
   return response.rows;
 }
 
@@ -30,7 +30,7 @@ export function getPeopleByName(name: string): Person[] {
   const params = new postgresql.Params();
   params.push(name);
 
-  const response = postgresql.query<Person>(host, query, params);
+  const response = postgresql.query<Person>(connection, query, params);
   return response.rows;
 }
 
@@ -40,7 +40,7 @@ export function getPerson(id: i32): Person | null {
   const params = new postgresql.Params();
   params.push(id);
 
-  const response = postgresql.query<Person>(host, query, params);
+  const response = postgresql.query<Person>(connection, query, params);
   return response.rows.length > 0 ? response.rows[0] : null;
 }
 
@@ -53,7 +53,7 @@ export function addPerson(name: string, age: i32): Person {
   params.push(name);
   params.push(age);
 
-  const response = postgresql.queryScalar<i32>(host, query, params);
+  const response = postgresql.queryScalar<i32>(connection, query, params);
 
   if (response.rowsAffected != 1) {
     throw new Error("Failed to insert person.");
@@ -75,7 +75,7 @@ export function updatePersonHome(
   params.push(latitude);
   params.push(id);
 
-  const response = postgresql.execute(host, query, params);
+  const response = postgresql.execute(connection, query, params);
 
   if (response.rowsAffected != 1) {
     console.error(
@@ -93,7 +93,7 @@ export function deletePerson(id: i32): string {
   const params = new postgresql.Params();
   params.push(id);
 
-  const response = postgresql.execute(host, query, params);
+  const response = postgresql.execute(connection, query, params);
 
   if (response.rowsAffected != 1) {
     console.error(

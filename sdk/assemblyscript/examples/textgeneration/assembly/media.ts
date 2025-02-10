@@ -106,7 +106,7 @@ export function describeRandomImage(): Media {
 
   // Fetch a random image from the Picsum API.  We'll just hardcode the size to make the demo simple to call.
   const response = http.fetch("https://picsum.photos/640/480");
-  const data = Uint8Array.wrap(response.body);
+  const data = response.bytes();
   const contentType = response.headers.get("Content-Type")!;
 
   // Describe the image using the OpenAI chat model.
@@ -150,7 +150,7 @@ export function transcribeRandomSpeech(): Media {
   // Fetch the speech file corresponding to the number.
   const url = `https://www.voiptroubleshooter.com/open_speech/american/OSR_us_000_00${num}_8k.wav`;
   const response = http.fetch(url);
-  const data = Uint8Array.wrap(response.body);
+  const data = response.bytes();
 
   // Transcribe the audio using an audio-enabled OpenAI chat model.
   const model = models.getModel<OpenAIChatModel>("audio-model");

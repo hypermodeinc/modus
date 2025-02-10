@@ -15,8 +15,8 @@ import "github.com/hypermodeinc/modus/sdk/go/pkg/testutils"
 
 var Neo4jQueryCallStack = testutils.NewCallStack()
 
-func hostExecuteQuery(hostName, dbName, query, parameters *string) *EagerResult {
-	Neo4jQueryCallStack.Push(hostName, dbName, query, parameters)
+func hostExecuteQuery(connection, dbName, query, parameters *string) *EagerResult {
+	Neo4jQueryCallStack.Push(connection, dbName, query, parameters)
 
 	keys := []string{"key1", "key2"}
 	values := []string{"value1", "value2"}

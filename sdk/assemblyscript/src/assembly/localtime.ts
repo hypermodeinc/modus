@@ -22,7 +22,7 @@ declare function hostGetTimeInZone(tz: string | null): string | null;
  * - If the TZ environment variable is set on the host, the time zone is set to the value of the variable.
  * - Otherwise, the time zone is set to the host's local time zone.
  */
-export function Now(): string {
+export function now(): string {
   const ts = hostGetTimeInZone(null);
   if (ts === null) {
     throw new Error("Failed to get the local time.");
@@ -31,11 +31,18 @@ export function Now(): string {
 }
 
 /**
+ * @deprecated Use `now` instead (lowercase).
+ */
+export function Now(): string {
+  return now();
+}
+
+/**
  * Returns the current local time, in ISO 8601 extended format.
  *
  * @param tz - A valid IANA time zone identifier, such as "America/New_York"
  */
-export function NowInZone(tz: string): string {
+export function nowInZone(tz: string): string {
   if (tz === "") {
     throw new Error("A time zone is required.");
   }
@@ -49,10 +56,24 @@ export function NowInZone(tz: string): string {
 }
 
 /**
+ * @deprecated Use `nowInZone` instead (lowercase).
+ */
+export function NowInZone(tz: string): string {
+  return nowInZone(tz);
+}
+
+/**
  * Returns the local time zone identifier, in IANA format.
  */
-export function GetTimeZone(): string {
+export function getTimeZone(): string {
   return process.env.get("TZ");
+}
+
+/**
+ * @deprecated Use `getTimeZone` instead (lowercase).
+ */
+export function GetTimeZone(): string {
+  return getTimeZone();
 }
 
 /**
@@ -60,9 +81,16 @@ export function GetTimeZone(): string {
  * @param tz A time zone identifier, in IANA format.
  * @returns `true` if the time zone is valid; otherwise, `false`.
  */
-export function IsValidTimeZone(tz: string): bool {
+export function isValidTimeZone(tz: string): bool {
   if (tz === "") {
     return false;
   }
   return hostGetTimeInZone(tz) !== null;
+}
+
+/**
+ * @deprecated Use `isValidTimeZone` instead (lowercase).
+ */
+export function IsValidTimeZone(tz: string): bool {
+  return isValidTimeZone(tz);
 }

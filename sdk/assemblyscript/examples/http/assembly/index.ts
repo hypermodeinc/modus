@@ -39,7 +39,7 @@ export function getRandomImage(width: i32, height: i32): Image {
 
   return {
     contentType,
-    data: response.body,
+    data: response.bytes(),
   };
 }
 

@@ -15,18 +15,18 @@ export { Variables };
 // @ts-expect-error: decorator
 @external("modus_graphql_client", "executeQuery")
 declare function hostExecuteQuery(
-  hostName: string,
+  connection: string,
   statement: string,
   variables: string,
 ): string;
 
 export function execute<TData>(
-  hostName: string,
+  connection: string,
   statement: string,
   variables: Variables = new Variables(),
 ): Response<TData> {
   const varsJson = variables.toJSON();
-  const response = hostExecuteQuery(hostName, statement, varsJson);
+  const response = hostExecuteQuery(connection, statement, varsJson);
   if (utils.resultIsInvalid(response)) {
     throw new Error("Error invoking GraphQL API.");
   }
