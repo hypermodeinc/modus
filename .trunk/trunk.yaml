@@ -38,6 +38,12 @@ lint:
     - shfmt@3.6.0
     - trufflehog@3.88.5
     - yamllint@1.35.1
+  definitions:
+    - name: osv-scanner
+      commands:
+        - name: scan
+          run:
+            osv-scanner --lockfile=${target} --format json --config=.trunk/configs/osv-scanner.toml
 actions:
   enabled:
     - trunk-announce

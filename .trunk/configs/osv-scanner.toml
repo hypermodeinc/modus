@@ -1,0 +1,11 @@
+[[IgnoredVulns]]
+id = "CVE-2024-45336"
+reason = "This is a false positive."
+
+[[IgnoredVulns]]
+id = "CVE-2024-45341"
+reason = "This is a false positive."
+
+[[IgnoredVulns]]
+id = "CVE-2025-22866"
+reason = "This is a false positive."
