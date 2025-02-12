@@ -243,7 +243,7 @@ export default class NewCommand extends BaseCommand {
             this.log(`Note that you will need to install the Binaryen components for WASM support.`);
             this.log(`Please install with: scoop install tinygo binaryen`);
           } else if (os.platform() === "darwin") {
-            this.log(`Please install with: brew install tinygo`);
+            this.log(`Please install with: brew tap tinygo-org/tools && brew install tinygo`);
           }
           this.log();
         }
