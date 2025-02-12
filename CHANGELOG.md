@@ -2,6 +2,10 @@
 
 # Change Log
 
+## UNRELEASED
+
+- fix: bump api explorer to account for recursive types, default required variables with falsy values [#766](https://github.com/hypermodeinc/modus/pull/766)
+
 ## 2025-02-10 - AssemblyScript SDK 0.17.1
 
 - fix: AssemblyScript ESLint import path [#737](https://github.com/hypermodeinc/modus/pull/737)
