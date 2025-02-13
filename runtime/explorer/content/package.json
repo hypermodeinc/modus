@@ -9,7 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@hypermode/react-api-explorer": "^1.0.0-alpha.31",
+    "@hypermode/react-api-explorer": "^1.0.0-alpha.32",
     "@tailwindcss/postcss": "^4.0.4",
     "@tailwindcss/vite": "^4.0.4",
     "react": "^19.0.0",
