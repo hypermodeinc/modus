@@ -50,8 +50,8 @@ require (
 	github.com/twpayne/go-geom v1.6.0
 	github.com/viterin/vek v0.4.2
 	github.com/wundergraph/graphql-go-tools/execution v1.2.0
-	github.com/wundergraph/graphql-go-tools/v2 v2.0.0-rc.148
-	github.com/xo/dburl v0.23.2
+	github.com/wundergraph/graphql-go-tools/v2 v2.0.0-rc.149
+	github.com/xo/dburl v0.23.3
 	golang.org/x/exp v0.0.0-20250207012021-f9890c6ad9f3
 	golang.org/x/sys v0.30.0
 	google.golang.org/grpc v1.70.0
