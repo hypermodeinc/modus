@@ -32,7 +32,7 @@ jobs:
         run: npm run build
       - uses: actions/setup-go@v5
         with:
-          go-version: 1.23.6
+          go-version: 1.24.0
           cache-dependency-path: runtime/go.sum
       - uses: goreleaser/goreleaser-action@v6
         with:
