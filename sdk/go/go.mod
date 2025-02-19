@@ -2,7 +2,7 @@ module github.com/hypermodeinc/modus/sdk/go
 
 go 1.23.1
 
-toolchain go1.23.6
+toolchain go1.24.0
 
 require (
 	github.com/hypermodeinc/modus/lib/manifest v0.17.0
@@ -17,7 +17,7 @@ require (
 	github.com/tidwall/sjson v1.2.5
 	golang.org/x/exp v0.0.0-20250207012021-f9890c6ad9f3
 	golang.org/x/mod v0.23.0
-	golang.org/x/tools v0.29.0
+	golang.org/x/tools v0.30.0
 )
 
 require (
@@ -27,7 +27,7 @@ require (
 	github.com/tidwall/jsonc v0.3.2 // indirect
 	github.com/tidwall/match v1.1.1 // indirect
 	github.com/tidwall/pretty v1.2.1 // indirect
-	golang.org/x/sync v0.10.0 // indirect
-	golang.org/x/sys v0.29.0 // indirect
+	golang.org/x/sync v0.11.0 // indirect
+	golang.org/x/sys v0.30.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 )

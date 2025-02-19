@@ -2,7 +2,7 @@ module github.com/hypermodeinc/modus/runtime
 
 go 1.23.1
 
-toolchain go1.23.6
+toolchain go1.24.0
 
 require (
 	github.com/hypermodeinc/modus/lib/manifest v0.17.0
@@ -14,7 +14,7 @@ require (
 	github.com/OneOfOne/xxhash v1.2.8
 	github.com/archdx/zerolog-sentry v1.8.5
 	github.com/aws/aws-sdk-go-v2/config v1.29.6
-	github.com/aws/aws-sdk-go-v2/service/s3 v1.76.0
+	github.com/aws/aws-sdk-go-v2/service/s3 v1.77.0
 	github.com/aws/aws-sdk-go-v2/service/sts v1.33.14
 	github.com/buger/jsonparser v1.1.1
 	github.com/chewxy/math32 v1.11.1
@@ -30,7 +30,7 @@ require (
 	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/google/renameio/v2 v2.0.0
 	github.com/google/uuid v1.6.0
-	github.com/hypermodeinc/modusdb v0.0.0-20250207181521-a702ca86dda6
+	github.com/hypermodeinc/modusdb v0.0.0-20250215015852-65c08cebf934
 	github.com/jackc/pgx/v5 v5.7.2
 	github.com/jensneuse/abstractlogger v0.0.4
 	github.com/joho/godotenv v1.5.1
@@ -38,7 +38,7 @@ require (
 	github.com/neo4j/neo4j-go-driver/v5 v5.27.0
 	github.com/prometheus/client_golang v1.20.5
 	github.com/prometheus/common v0.62.0
-	github.com/puzpuzpuz/xsync/v3 v3.5.0
+	github.com/puzpuzpuz/xsync/v3 v3.5.1
 	github.com/rs/cors v1.11.1
 	github.com/rs/xid v1.6.0
 	github.com/rs/zerolog v1.33.0
@@ -50,7 +50,7 @@ require (
 	github.com/twpayne/go-geom v1.6.0
 	github.com/viterin/vek v0.4.2
 	github.com/wundergraph/graphql-go-tools/execution v1.2.0
-	github.com/wundergraph/graphql-go-tools/v2 v2.0.0-rc.149
+	github.com/wundergraph/graphql-go-tools/v2 v2.0.0-rc.155
 	github.com/xo/dburl v0.23.3
 	golang.org/x/exp v0.0.0-20250207012021-f9890c6ad9f3
 	golang.org/x/sys v0.30.0
@@ -79,7 +79,7 @@ require (
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/agnivade/levenshtein v1.1.1 // indirect
 	github.com/aws/aws-sdk-go-v2 v1.36.1 // indirect
-	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.6.8 // indirect
+	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.6.9 // indirect
 	github.com/aws/aws-sdk-go-v2/credentials v1.17.59 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.16.28 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/configsources v1.3.32 // indirect
@@ -87,7 +87,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/internal/ini v1.8.2 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/v4a v1.3.32 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.12.2 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.5.6 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.6.0 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.12.13 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.18.13 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sso v1.24.15 // indirect
@@ -107,7 +107,7 @@ require (
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.3.0 // indirect
-	github.com/dgraph-io/badger/v4 v4.5.0 // indirect
+	github.com/dgraph-io/badger/v4 v4.5.1 // indirect
 	github.com/dgraph-io/gqlgen v0.13.2 // indirect
 	github.com/dgraph-io/gqlparser/v2 v2.2.2 // indirect
 	github.com/dgraph-io/ristretto/v2 v2.1.0 // indirect
@@ -141,7 +141,7 @@ require (
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/codesearch v1.2.0 // indirect
-	github.com/google/flatbuffers v24.3.25+incompatible // indirect
+	github.com/google/flatbuffers v24.12.23+incompatible // indirect
 	github.com/google/pprof v0.0.0-20241210010833-40e02aabc2ad // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
@@ -233,14 +233,14 @@ require (
 	go.uber.org/zap v1.27.0 // indirect
 	golang.org/x/crypto v0.32.0 // indirect
 	golang.org/x/net v0.34.0 // indirect
-	golang.org/x/sync v0.10.0 // indirect
+	golang.org/x/sync v0.11.0 // indirect
 	golang.org/x/term v0.28.0 // indirect
 	golang.org/x/text v0.21.0 // indirect
 	golang.org/x/time v0.9.0 // indirect
 	google.golang.org/api v0.196.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20241223144023-3abc09e42ca8 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20241223144023-3abc09e42ca8 // indirect
-	google.golang.org/protobuf v1.36.2 // indirect
+	google.golang.org/protobuf v1.36.5 // indirect
 	gopkg.in/DataDog/dd-trace-go.v1 v1.22.0 // indirect
 	gopkg.in/cenkalti/backoff.v1 v1.1.0 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
