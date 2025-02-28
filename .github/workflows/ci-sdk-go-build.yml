@@ -86,3 +86,5 @@ jobs:
           tinygo-version: 0.35.0
       - name: Build Program
         run: ./build.sh
+        env:
+          GOTOOLCHAIN: go1.23.6
