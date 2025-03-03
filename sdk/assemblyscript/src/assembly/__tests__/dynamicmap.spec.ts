@@ -167,7 +167,11 @@ it("should iterate raw values", () => {
   m.set("b", "hello");
   m.set("c", [1, 2, 3]);
   const values = m.values();
-  expect(values).toBe(["42", '"hello"', "[1,2,3]"]);
+  expect(values).toBe([
+    JSON.Raw.from("42"),
+    JSON.Raw.from('"hello"'),
+    JSON.Raw.from("[1,2,3]"),
+  ]);
 });
 
 run();
