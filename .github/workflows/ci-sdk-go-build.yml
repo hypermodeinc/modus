@@ -8,7 +8,7 @@ on:
       - reopened
       - ready_for_review
     paths:
-      - ./github/workflows/ci-sdk-go-build.yml
+      - .github/workflows/ci-sdk-go-build.yml
       - sdk/go/**
 
 permissions:
