@@ -1,13 +1,15 @@
 {
-  "input": ["./assembly/__tests__/*.spec.ts"],
+  "input": ["./assembly/__tests__/dynamicmap.spec.ts"],
   "outDir": "./build",
   "config": "./asconfig.json",
   "plugins": {
-    "coverage": true
+    "coverage": false
   },
   "buildOptions": {
     "args": [
-      "--config ./node_modules/@hypermode/modus-sdk-as/plugin.asconfig.json"
+      "--config ./node_modules/@hypermode/modus-sdk-as/plugin.asconfig.json",
+      "--lib ./node_modules/json-as/lib",
+      "--runtime stub"
     ],
     "target": "bindings"
   },

@@ -317,26 +317,18 @@ export class ToolChoice {
     return new ToolChoice("function", name);
   }
 
-  __INITIALIZE(): this {
-    return this;
-  }
-
-  __SERIALIZE(): string {
-    if (this.type == "function") {
+  @serializer
+  serialize(self: ToolChoice): string {
+    if (self.type == "function") {
       return `{"type":"function","function":{"name":${JSON.stringify(this.function!.name)}}}`;
     }
 
     return `"${this.type}"`;
   }
 
-  /* eslint-disable @typescript-eslint/no-unused-vars */
-  __DESERIALIZE(
-    data: string,
-    key_start: i32,
-    key_end: i32,
-    value_start: i32,
-    value_end: i32,
-  ): boolean {
+  @deserializer
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  deserialize(data: string): ToolChoice {
     throw new Error("Not implemented.");
   }
 }

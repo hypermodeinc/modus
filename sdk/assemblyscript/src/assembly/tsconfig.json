@@ -1,4 +1,4 @@
 {
   "extends": "assemblyscript/std/assembly.json",
-  "include": ["./**/*.ts"]
+  "include": ["./**/*.ts", "__tests__/neo4j.spec.ts"]
 }
