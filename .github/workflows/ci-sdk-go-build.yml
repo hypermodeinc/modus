@@ -8,6 +8,7 @@ on:
       - reopened
       - ready_for_review
     paths:
+      - .github/workflows/ci-sdk-go-build.yml
       - sdk/go/**
 
 permissions:
@@ -78,13 +79,11 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: 1.23.6
+          go-version: 1.24.0
           cache-dependency-path: "${{ matrix.dir }}/go.sum"
       - name: Setup TinyGo
         uses: acifani/setup-tinygo@v2
         with:
-          tinygo-version: 0.35.0
+          tinygo-version: 0.36.0
       - name: Build Program
         run: ./build.sh
-        env:
-          GOTOOLCHAIN: go1.23.6
