@@ -30,7 +30,7 @@ export class DynamicMap {
     if (isInteger<T>() && nameof<T>() == "usize" && value == 0) {
       this.data.set(key, JSON.Raw.from("null"));
     } else {
-      this.data.set(key, JSON.Raw.from(JSON.stringify(value)));
+      this.data.set(key, JSON.Raw.from(JSON.stringify<T>(value)));
     }
   }
 
@@ -52,48 +52,13 @@ export class DynamicMap {
 
   @serializer
   serialize(self: DynamicMap): string {
-    // This would be ideal, but doesn't work:
-    //   return JSON.stringify(this.data);
-    // So instead, we have to do construct the JSON manually.
-    //
-    // TODO: Update this to use JSON.stringify once it's supported in json-as.
-    // https://github.com/JairusSW/as-json/issues/98
-
-    let out = "{";
-
-    const keys = self.data.keys();
-    const values = self.data.values();
-
-    const end = self.data.size - 1;
-
-    for (let i = 0; i < end; i++) {
-      const key = unchecked(keys[i]);
-      const value = unchecked(values[i]);
-      out += JSON.stringify(key) + ":" + value.data + ",";
-    }
-    const key = unchecked(keys[end]);
-    const value = unchecked(values[end]);
-    out += JSON.stringify(key) + ":" + value.data;
-
-    return out + "}";
+    return JSON.stringify(self.data);
   }
 
-  /* eslint-disable @typescript-eslint/no-unused-vars */
-  __DESERIALIZE(
-    keyStart: usize,
-    keyEnd: usize,
-    valStart: usize,
-    valEnd: usize,
-    out: usize
-  ): void {
-    // This would be ideal, but doesn't work:
-    //   this.data = JSON.parse<Map<string, JSON.Raw>>(data);
-    // So instead, we have to parse the JSON manually.
-    //
-    // TODO: Update this to use JSON.parse once it's supported in json-as.
-    // https://github.com/JairusSW/as-json/issues/98
-    const key = ptrToStr(keyStart, keyEnd);
-    const value = ptrToStr(valStart, valEnd);
-    this.data.set(key, JSON.Raw.from(value));
+  @deserializer
+  deserialize(data: string): DynamicMap {
+    const dm = new DynamicMap();
+    dm.data = JSON.parse<Map<string, JSON.Raw>>(data);
+    return dm;
   }
 }
