@@ -59,7 +59,7 @@ it("should query people", () => {
     lastName: "Tanaka",
   };
 
-  log("Person: " + JSON.stringify(_person))
+  log("Person: " + JSON.stringify(_person));
 
   returnData = '{"data":{"people":[' + JSON.stringify(_person) + "]}}";
 

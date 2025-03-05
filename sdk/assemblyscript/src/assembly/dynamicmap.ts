@@ -8,7 +8,7 @@
  */
 
 import { JSON } from "json-as";
-import { ptrToStr } from "json-as/assembly/util/ptrToStr";
+
 
 @json
 export class DynamicMap {
@@ -50,10 +50,12 @@ export class DynamicMap {
     return this.data.values();
   }
 
+
   @serializer
   serialize(self: DynamicMap): string {
     return JSON.stringify(self.data);
   }
+
 
   @deserializer
   deserialize(data: string): DynamicMap {

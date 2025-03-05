@@ -317,6 +317,7 @@ export class ToolChoice {
     return new ToolChoice("function", name);
   }
 
+
   @serializer
   serialize(self: ToolChoice): string {
     if (self.type == "function") {
@@ -325,6 +326,7 @@ export class ToolChoice {
 
     return `"${this.type}"`;
   }
+
 
   @deserializer
   // eslint-disable-next-line @typescript-eslint/no-unused-vars

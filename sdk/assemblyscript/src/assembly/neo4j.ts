@@ -155,6 +155,7 @@ export class Record {
     return map;
   }
 
+
   @serializer
   serialize(self: Record): string {
     let out = "{";
@@ -163,12 +164,13 @@ export class Record {
       const key = JSON.stringify(self.keys[i]);
       out += key + ":" + unchecked(self.values[i]) + ",";
     }
-    
+
     const key = JSON.stringify(self.keys[end]);
     out += key + ":" + unchecked(self.values[end]);
 
     return out + "}";
   }
+
 
   @deserializer
   // eslint-disable-next-line @typescript-eslint/no-unused-vars

@@ -8,7 +8,7 @@
  */
 
 import { JSON } from "json-as";
-import { expect, it, log, run } from "as-test";
+import { expect, it, run } from "as-test";
 import { DynamicMap } from "../dynamicmap";
 
 
@@ -83,7 +83,7 @@ it("should set values", () => {
   m.set("f", 3.14);
   m.set("g", { foo: "bar" } as Obj);
 
-  const json = m.serialize(m)
+  const json = m.serialize(m);
   expect(json).toBe(
     '{"a":42,"b":"hello","c":[1,2,3],"d":true,"e":null,"f":3.14,"g":{"foo":"bar"}}',
   );
