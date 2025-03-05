@@ -30,7 +30,6 @@ it("should parse complex values", () => {
   const input =
     '{"a":{"b":{"c":[{"d":"random value 1"},{"e":["value 2","value 3"]}],"f":{"g":{"h":[1,2,3],"i":{"j":"nested value"}}}},"k":"simple value"},"l":[{"m":"another value","n":{"o":"deep nested","p":[{"q":"even deeper"},"final value"]}}],"r":null}';
   const m = JSON.parse<DynamicMap>(input);
-
   expect(JSON.stringify(m)).toBe(input);
 });
 
@@ -76,19 +75,18 @@ it("should parse complex values", () => {
 
 it("should set values", () => {
   const m = new DynamicMap();
-  m.set("a", 42);
+  m.set<i32>("a", 42);
   m.set("b", "hello");
   m.set("c", [1, 2, 3]);
   m.set("d", true);
   m.set("e", null);
   m.set("f", 3.14);
-  // m.set("g", { foo: "bar" } as Obj);
+  m.set("g", { foo: "bar" } as Obj);
 
-  // const json = m.serialize(m)
-  // log(json)
-  // expect(json).toBe(
-  //   '{"a":42,"b":"hello","c":[1,2,3],"d":true,"e":null,"f":3.14,"g":{"foo":"bar"}}',
-  // );
+  const json = m.serialize(m)
+  expect(json).toBe(
+    '{"a":42,"b":"hello","c":[1,2,3],"d":true,"e":null,"f":3.14,"g":{"foo":"bar"}}',
+  );
 });
 
 it("should get values", () => {
