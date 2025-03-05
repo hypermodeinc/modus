@@ -1,5 +1,5 @@
 {
-  "input": ["./assembly/__tests__/dynamicmap.spec.ts"],
+  "input": ["./assembly/__tests__/*.spec.ts"],
   "outDir": "./build",
   "config": "./asconfig.json",
   "plugins": {
