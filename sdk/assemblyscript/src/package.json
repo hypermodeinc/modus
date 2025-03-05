@@ -23,7 +23,7 @@
     "@assemblyscript/wasi-shim": "^0.1.0",
     "as-base64": "^0.2.0",
     "chalk": "^5.4.1",
-    "json-as": "1.0.0-beta.13",
+    "json-as": "1.0.0-beta.17",
     "semver": "^7.6.3",
     "xid-ts": "^1.1.4"
   },

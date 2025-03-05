@@ -514,7 +514,7 @@ export class ResponseFormat {
   ): ResponseFormat => {
     return {
       type: "json_schema",
-      jsonSchema: jsonSchema,
+      jsonSchema: JSON.Raw.from(jsonSchema),
     };
   };
 
@@ -602,7 +602,7 @@ export class Tool {
     }
     schema += `],"additionalProperties":false}`;
 
-    this.function.parameters = schema;
+    this.function.parameters = JSON.Raw.from(schema);
     return this;
   }
 
@@ -613,7 +613,7 @@ export class Tool {
    * @jsonSchema A JSON Schema object as a string, describing the parameters the function accepts.
    */
   withParametersSchema(jsonSchema: string): Tool {
-    this.function.parameters = jsonSchema;
+    this.function.parameters = JSON.Raw.from(jsonSchema);
     return this;
   }
 }

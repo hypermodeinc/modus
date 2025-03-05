@@ -41,7 +41,7 @@ export function getStockPrice(company: string, useTools: bool): string {
     input.tools = [
       {
         name: "stock_price",
-        inputSchema: `{"type":"object","properties":{"symbol":{"type":"string","description":"The stock symbol"}},"required":["symbol"]}`,
+        inputSchema: JSON.Raw.from(`{"type":"object","properties":{"symbol":{"type":"string","description":"The stock symbol"}},"required":["symbol"]}`),
         description: "gets the stock price of a symbol",
       },
     ];
@@ -65,7 +65,7 @@ export function getStockPrice(company: string, useTools: bool): string {
   const toolUse = output.content[0];
   const inputs = toolUse.input!;
 
-  const parsedInput = JSON.parse<StockPriceInput>(inputs);
+  const parsedInput = JSON.parse<StockPriceInput>(inputs.data);
   const symbol = parsedInput.symbol;
   const stockPrice = callStockPriceApi(symbol);
   return `The stock price of ${symbol} is $${stockPrice.GlobalQuote.price}`;
