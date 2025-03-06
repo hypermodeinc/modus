@@ -10,7 +10,6 @@
 package hnsw
 
 import (
-	"context"
 	"fmt"
 	"sync"
 	"testing"
@@ -19,7 +18,7 @@ import (
 )
 
 func TestMultipleSequentialVectorIndexes(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	// Define the base data to be inserted
 	baseTextIds := []int64{1, 2, 3}

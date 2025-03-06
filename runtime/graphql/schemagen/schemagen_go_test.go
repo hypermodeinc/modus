@@ -10,7 +10,6 @@
 package schemagen
 
 import (
-	"context"
 	"strings"
 	"testing"
 
@@ -219,7 +218,7 @@ func Test_GetGraphQLSchema_Go(t *testing.T) {
 		WithField("name", "string").
 		WithField("values", "[]string")
 
-	result, err := GetGraphQLSchema(context.Background(), md)
+	result, err := GetGraphQLSchema(t.Context(), md)
 
 	t.Log(result.Schema)
 

@@ -10,14 +10,13 @@
 package in_mem
 
 import (
-	"context"
 	"fmt"
 	"sync"
 	"testing"
 )
 
 func TestMultipleInMemCollections(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	// Create a wait group to synchronize the goroutines
 	var wg sync.WaitGroup
