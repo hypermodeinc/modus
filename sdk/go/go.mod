@@ -16,7 +16,7 @@ require (
 	github.com/tidwall/gjson v1.18.0
 	github.com/tidwall/sjson v1.2.5
 	golang.org/x/exp v0.0.0-20250218142911-aa4b98e5adaa
-	golang.org/x/mod v0.23.0
+	golang.org/x/mod v0.24.0
 	golang.org/x/tools v0.30.0
 )
 
