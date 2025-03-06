@@ -18,11 +18,9 @@
    <a href="https://discord.com/invite/MAZgkhP6C6">Discord</a>
 <p>
 
-**Modus is an open-source, serverless framework for building agentic flows powered by WebAssembly.** It
-simplifies integrating AI models, data, and business logic with sandboxed execution. And, it's
+**Modus is an open-source, serverless framework for building agentic flows powered by WebAssembly.** 
+It simplifies integrating AI models, data, and business logic with sandboxed execution. And, it's
 really fast.
-
-We built Modus to put code back at the heart of development.
 
 You write a function.
 
