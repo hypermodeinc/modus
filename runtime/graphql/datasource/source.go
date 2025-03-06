@@ -58,7 +58,7 @@ func (ds *ModusDataSource) Load(ctx context.Context, input []byte, out *bytes.Bu
 	return err
 }
 
-func (*ModusDataSource) LoadWithFiles(ctx context.Context, input []byte, files []httpclient.File, out *bytes.Buffer) (err error) {
+func (*ModusDataSource) LoadWithFiles(ctx context.Context, input []byte, files []*httpclient.FileUpload, out *bytes.Buffer) (err error) {
 	// See https://github.com/wundergraph/graphql-go-tools/pull/758
 	panic("not implemented")
 }
