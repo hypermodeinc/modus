@@ -1,8 +1,6 @@
 module github.com/hypermodeinc/modus/runtime
 
-go 1.23.1
-
-toolchain go1.24.0
+go 1.24.0
 
 require (
 	github.com/hypermodeinc/modus/lib/manifest v0.17.0
