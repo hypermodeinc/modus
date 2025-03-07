@@ -113,7 +113,7 @@ func Test_PostHttp(t *testing.T) {
 	payload := Payload{
 		Message: "Hello, World!",
 	}
-	result, err := PostHttp[Response](context.Background(), url, payload, nil)
+	result, err := PostHttp[Response](t.Context(), url, payload, nil)
 	if err != nil {
 		t.Fatalf("Failed to make HTTP request: %v", err)
 	}
@@ -144,7 +144,7 @@ func Test_PostHttp_CustomContentType(t *testing.T) {
 	}
 
 	url := server.URL
-	_, err := PostHttp[string](context.Background(), url, nil, bs)
+	_, err := PostHttp[string](t.Context(), url, nil, bs)
 	if err != nil {
 		t.Fatalf("Failed to make HTTP request: %v", err)
 	}
@@ -159,7 +159,7 @@ func Test_PostHttp_StringResult(t *testing.T) {
 	defer server.Close()
 
 	url := server.URL
-	result, err := PostHttp[string](context.Background(), url, nil, nil)
+	result, err := PostHttp[string](t.Context(), url, nil, nil)
 	if err != nil {
 		t.Fatalf("Failed to make HTTP request: %v", err)
 	}
@@ -179,7 +179,7 @@ func Test_PostHttp_BytesResult(t *testing.T) {
 	defer server.Close()
 
 	url := server.URL
-	result, err := PostHttp[[]byte](context.Background(), url, nil, nil)
+	result, err := PostHttp[[]byte](t.Context(), url, nil, nil)
 	if err != nil {
 		t.Fatalf("Failed to make HTTP request: %v", err)
 	}
