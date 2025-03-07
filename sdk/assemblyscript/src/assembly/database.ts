@@ -193,38 +193,27 @@ export class Point {
   // This is used in lieu of the @json decorator, so that the class can be
   // serialized to a string in SQL format.
 
-  __INITIALIZE(): this {
-    return this;
+  @serializer
+  serialize(self: Point): string {
+    return self.toString();
   }
 
-  __SERIALIZE(): string {
-    return this.toString();
-  }
 
-  /* eslint-disable @typescript-eslint/no-unused-vars */
-  __DESERIALIZE(
-    data: string,
-    key_start: i32,
-    key_end: i32,
-    value_start: i32,
-    value_end: i32,
-  ): boolean {
+  @deserializer
+  deserialize(data: string): Point | null {
+
     if (
       data.length < 7 ||
       data.charAt(0) != '"' ||
       data.charAt(data.length - 1) != '"'
-    ) {
-      return false;
-    }
+    ) return null;
 
     const p = parsePointString(data.substring(1, data.length - 1));
-    if (p.length == 0) {
-      return false;
-    }
+    if (p.length == 0) return null;
 
     this.x = p[0];
     this.y = p[1];
-    return true;
+    return this;
   }
 }
 
@@ -256,38 +245,25 @@ export class Location {
   // This is used in lieu of the @json decorator, so that the class can be
   // serialized to a string in SQL format.
 
-  __INITIALIZE(): this {
-    return this;
+  @serializer
+  serialize(self: Location): string {
+    return self.toString();
   }
 
-  __SERIALIZE(): string {
-    return this.toString();
-  }
-
-  /* eslint-disable @typescript-eslint/no-unused-vars */
-  __DESERIALIZE(
-    data: string,
-    key_start: i32,
-    key_end: i32,
-    value_start: i32,
-    value_end: i32,
-  ): boolean {
+  @deserializer
+  deserialize(data: string): Location | null {
     if (
       data.length < 7 ||
       data.charAt(0) != '"' ||
       data.charAt(data.length - 1) != '"'
-    ) {
-      return false;
-    }
+    ) return null;
 
     const p = parsePointString(data.substring(1, data.length - 1));
-    if (p.length == 0) {
-      return false;
-    }
+    if (p.length == 0) return null;
 
     this.longitude = p[0];
     this.latitude = p[1];
-    return true;
+    return this;
   }
 }
 
