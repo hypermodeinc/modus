@@ -18,9 +18,8 @@
    <a href="https://discord.com/invite/MAZgkhP6C6">Discord</a>
 <p>
 
-**Modus is an open-source, serverless framework for building agentic flows powered by WebAssembly.** 
-It simplifies integrating AI models, data, and business logic with sandboxed execution. And, it's
-really fast.
+**Modus is an open-source, serverless framework for building agentic systems and AI applications in Go and AssemblyScript** 
+It simplifies the integration of models, context, and data. We're continuing to add additional capabilities to better support the construction and calling of tools.
 
 You write a function.
 
@@ -87,7 +86,7 @@ modus dev
 
 ## What's it good for?
 
-We believe that agentic flows are still fundamentally applications. As such, we've designed Modus primarily as an general-purpose framework, that just happens to treat models, agents, and tools as a first-class components. With Modus you can use models, as appropriate, without additional complexity.
+We believe that agentic flows are still fundamentally applications. As such, we've designed Modus primarily as an general-purpose framework, that just happens to treat models, agents, and tools as first-class components.
 
 Modus is optimized for applications that require sub-second response times. We’ve made trade-offs to
 prioritize speed and simplicity.
@@ -100,26 +99,17 @@ language offers the full capabilities of the Modus framework.
 Currently, the supported languages you may choose from are:
 
 - [Go](https://go.dev/) - A general-purpose programming language originally designed by Google.
-  - If you are primarily used to writing back-end apps, you'll likely prefer to use Go.
+  
+- [AssemblyScript](https://www.assemblyscript.org/) - A TypeScript-like language designed for WebAssembly.
 
-- [AssemblyScript](https://www.assemblyscript.org/) - A TypeScript-like language designed for
-  WebAssembly.
-
-  - If you are primarily used to writing front-end web apps, you'll feel at home with
-    AssemblyScript.
-
-Additional programming languages may be supported in the future.
+Additional programming languages will be supported in the future.
 
 ## Hosting
 
 Modus is a free, open-source framework, you’re welcome to run your Modus apps on your own
 hardware or on any hosting platform that meets your needs.
 
-However, over at Hypermode we have build additional tooling and infrastructure to make building and deploying your agentic applications easy. Our hosting plans
-include features you might expect, such as support, telemetry, and high availability. They also
-include specialty features such as model hosting that are purposefully designed to work in tandem
-with Modus apps.
-
+However, over at [Hypermode](https://hypermode.com/) we have built additional tooling and infrastructure to make constructing and deploying your agents and AI applications easy. Hypermode includes models, observability, debugging, and function hosting. Just push your code to Github and Hypermode will automatically build and deploy it on global infrastructure. 
 
 
 ## Open Source
