@@ -7,7 +7,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { expect, it, mockImport, run } from "as-test";
+import { expect, it, log, mockFn, mockImport, run } from "as-test";
 import { graphql } from "..";
 import { JSON } from "json-as";
 
@@ -19,6 +19,10 @@ mockImport(
     return returnData;
   },
 );
+
+mockFn(console.log, (data: string): void => {
+  log(data);
+});
 
 it("should execute graphql query", () => {
   const statement = `
@@ -54,6 +58,8 @@ it("should query people", () => {
     firstName: "Jairus",
     lastName: "Tanaka",
   };
+
+  log("Person: " + JSON.stringify(_person));
 
   returnData = '{"data":{"people":[' + JSON.stringify(_person) + "]}}";
 
@@ -106,5 +112,5 @@ class Person {
 
 @json
 class PeopleData {
-  people!: Person[];
+  people: Person[] = [];
 }

@@ -4,6 +4,7 @@
 
 ## UNRELEASED
 
+- deps: update json-as to v1.0.0 and upgrade related code [#799](https://github.com/hypermodeinc/modus/pull/779)
 - fix: bump api explorer to account for recursive types, default required variables with falsy values [#766](https://github.com/hypermodeinc/modus/pull/766)
 
 ## 2025-02-10 - AssemblyScript SDK 0.17.1

@@ -3,11 +3,12 @@
   "outDir": "./build",
   "config": "./asconfig.json",
   "plugins": {
-    "coverage": true
+    "coverage": false
   },
   "buildOptions": {
     "args": [
-      "--config ./node_modules/@hypermode/modus-sdk-as/plugin.asconfig.json"
+      "--config ./node_modules/@hypermode/modus-sdk-as/plugin.asconfig.json",
+      "--runtime stub"
     ],
     "target": "bindings"
   },

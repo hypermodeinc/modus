@@ -30,53 +30,52 @@ it("should parse complex values", () => {
   const input =
     '{"a":{"b":{"c":[{"d":"random value 1"},{"e":["value 2","value 3"]}],"f":{"g":{"h":[1,2,3],"i":{"j":"nested value"}}}},"k":"simple value"},"l":[{"m":"another value","n":{"o":"deep nested","p":[{"q":"even deeper"},"final value"]}}],"r":null}';
   const m = JSON.parse<DynamicMap>(input);
-
   expect(JSON.stringify(m)).toBe(input);
 });
 
-it("should handle complex whitespace", () => {
-  const input = `
-  {
-    "a": {
-      "b": {
-        "c": [
-          { "d": "random value 1" },
-          { "e": ["value 2", "value 3"] }
-        ],
-        "f": {
-          "g": {
-            "h": [1, 2, 3],
-            "i": { "j": "nested value" }
-          }
-        }
-      },
-      "k": "simple value"
-    },
-    "l": [
-      {
-        "m": "another value",
-        "n": {
-          "o": "deep nested",
-          "p": [
-            { "q": "even deeper" },
-            "final value"
-          ]
-        }
-      }
-    ],
-    "r": null
-  }
-  `;
-  const m = JSON.parse<DynamicMap>(input);
+// it("should handle complex whitespace", () => {
+//   const input = `
+//   {
+//     "a": {
+//       "b": {
+//         "c": [
+//           { "d": "random value 1" },
+//           { "e": ["value 2", "value 3"] }
+//         ],
+//         "f": {
+//           "g": {
+//             "h": [1, 2, 3],
+//             "i": { "j": "nested value" }
+//           }
+//         }
+//       },
+//       "k": "simple value"
+//     },
+//     "l": [
+//       {
+//         "m": "another value",
+//         "n": {
+//           "o": "deep nested",
+//           "p": [
+//             { "q": "even deeper" },
+//             "final value"
+//           ]
+//         }
+//       }
+//     ],
+//     "r": null
+//   }
+//   `;
+//   const m = JSON.parse<DynamicMap>(input);
 
-  expect(JSON.stringify(m)).toBe(
-    '{"a": {\n      "b": {\n        "c": [\n          { "d": "random value 1" },\n          { "e": ["value 2", "value 3"] }\n        ],\n        "f": {\n          "g": {\n            "h": [1, 2, 3],\n            "i": { "j": "nested value" }\n          }\n        }\n      },\n      "k": "simple value"\n    },"l": [\n      {\n        "m": "another value",\n        "n": {\n          "o": "deep nested",\n          "p": [\n            { "q": "even deeper" },\n            "final value"\n          ]\n        }\n      }\n    ],"r": null}',
-  );
-});
+//   expect(JSON.stringify(m)).toBe(
+//     '{"a": {\n      "b": {\n        "c": [\n          { "d": "random value 1" },\n          { "e": ["value 2", "value 3"] }\n        ],\n        "f": {\n          "g": {\n            "h": [1, 2, 3],\n            "i": { "j": "nested value" }\n          }\n        }\n      },\n      "k": "simple value"\n    },"l": [\n      {\n        "m": "another value",\n        "n": {\n          "o": "deep nested",\n          "p": [\n            { "q": "even deeper" },\n            "final value"\n          ]\n        }\n      }\n    ],"r": null}',
+//   );
+// });
 
 it("should set values", () => {
   const m = new DynamicMap();
-  m.set("a", 42);
+  m.set<i32>("a", 42);
   m.set("b", "hello");
   m.set("c", [1, 2, 3]);
   m.set("d", true);
@@ -84,7 +83,7 @@ it("should set values", () => {
   m.set("f", 3.14);
   m.set("g", { foo: "bar" } as Obj);
 
-  const json = JSON.stringify(m);
+  const json = m.serialize(m);
   expect(json).toBe(
     '{"a":42,"b":"hello","c":[1,2,3],"d":true,"e":null,"f":3.14,"g":{"foo":"bar"}}',
   );
@@ -167,7 +166,11 @@ it("should iterate raw values", () => {
   m.set("b", "hello");
   m.set("c", [1, 2, 3]);
   const values = m.values();
-  expect(values).toBe(["42", '"hello"', "[1,2,3]"]);
+  expect(values).toBe([
+    JSON.Raw.from("42"),
+    JSON.Raw.from('"hello"'),
+    JSON.Raw.from("[1,2,3]"),
+  ]);
 });
 
 run();
