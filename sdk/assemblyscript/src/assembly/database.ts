@@ -201,12 +201,12 @@ export class Point {
 
   @deserializer
   deserialize(data: string): Point | null {
-
     if (
       data.length < 7 ||
       data.charAt(0) != '"' ||
       data.charAt(data.length - 1) != '"'
-    ) return null;
+    )
+      return null;
 
     const p = parsePointString(data.substring(1, data.length - 1));
     if (p.length == 0) return null;
@@ -250,13 +250,15 @@ export class Location {
     return self.toString();
   }
 
+
   @deserializer
   deserialize(data: string): Location | null {
     if (
       data.length < 7 ||
       data.charAt(0) != '"' ||
       data.charAt(data.length - 1) != '"'
-    ) return null;
+    )
+      return null;
 
     const p = parsePointString(data.substring(1, data.length - 1));
     if (p.length == 0) return null;
