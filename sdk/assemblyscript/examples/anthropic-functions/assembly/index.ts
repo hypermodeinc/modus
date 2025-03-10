@@ -41,7 +41,9 @@ export function getStockPrice(company: string, useTools: bool): string {
     input.tools = [
       {
         name: "stock_price",
-        inputSchema: JSON.Raw.from(`{"type":"object","properties":{"symbol":{"type":"string","description":"The stock symbol"}},"required":["symbol"]}`),
+        inputSchema: JSON.Raw.from(
+          `{"type":"object","properties":{"symbol":{"type":"string","description":"The stock symbol"}},"required":["symbol"]}`,
+        ),
         description: "gets the stock price of a symbol",
       },
     ];
