@@ -162,11 +162,13 @@ export class Record {
     const end = self.keys.length - 1;
     for (let i = 0; i < end; i++) {
       const key = JSON.stringify(self.keys[i]);
-      out += key + ":" + unchecked(self.values[i]) + ",";
+      out += key + ":" + self.values[i] + ",";
     }
 
-    const key = JSON.stringify(self.keys[end]);
-    out += key + ":" + unchecked(self.values[end]);
+    if (end >= 0) {
+      const key = JSON.stringify(self.keys[end]);
+      out += key + ":" + self.values[end];
+    }
 
     return out + "}";
   }
