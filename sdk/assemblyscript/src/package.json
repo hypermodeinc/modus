@@ -22,8 +22,9 @@
   "dependencies": {
     "@assemblyscript/wasi-shim": "^0.1.0",
     "as-base64": "^0.2.0",
+    "as-test": "^0.4.0",
     "chalk": "^5.4.1",
-    "json-as": "1.0.0-beta.17",
+    "json-as": "^1.0.0",
     "semver": "^7.6.3",
     "xid-ts": "^1.1.4"
   },
@@ -31,7 +32,6 @@
     "@eslint/js": "^9.19.0",
     "@types/eslint__js": "^8.42.3",
     "@types/node": "^22.10.10",
-    "as-test": "^0.4.0-beta.1",
     "assemblyscript": "^0.27.34",
     "assemblyscript-prettier": "^3.0.1",
     "eslint": "^9.19.0",
