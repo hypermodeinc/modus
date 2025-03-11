@@ -194,13 +194,13 @@ export class Point {
   // serialized to a string in SQL format.
 
   @serializer
-  serialize(self: Point): string {
+  private serialize(self: Point): string {
     return self.toString();
   }
 
 
   @deserializer
-  deserialize(data: string): Point | null {
+  private deserialize(data: string): Point | null {
     if (
       data.length < 7 ||
       data.charAt(0) != '"' ||
@@ -246,13 +246,13 @@ export class Location {
   // serialized to a string in SQL format.
 
   @serializer
-  serialize(self: Location): string {
+  private serialize(self: Location): string {
     return self.toString();
   }
 
 
   @deserializer
-  deserialize(data: string): Location | null {
+  private deserialize(data: string): Location | null {
     if (
       data.length < 7 ||
       data.charAt(0) != '"' ||

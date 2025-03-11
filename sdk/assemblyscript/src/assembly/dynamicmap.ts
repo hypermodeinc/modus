@@ -27,11 +27,7 @@ export class DynamicMap {
   }
 
   public set<T>(key: string, value: T): void {
-    if (isInteger<T>() && nameof<T>() == "usize" && value == 0) {
-      this.data.set(key, JSON.Raw.from("null"));
-    } else {
-      this.data.set(key, JSON.Raw.from(JSON.stringify<T>(value)));
-    }
+    this.data.set(key, JSON.Raw.from(JSON.stringify<T>(value)));
   }
 
   public delete(key: string): bool {
@@ -52,13 +48,13 @@ export class DynamicMap {
 
 
   @serializer
-  serialize(self: DynamicMap): string {
+  private serialize(self: DynamicMap): string {
     return JSON.stringify(self.data);
   }
 
 
   @deserializer
-  deserialize(data: string): DynamicMap {
+  private deserialize(data: string): DynamicMap {
     const dm = new DynamicMap();
     dm.data = JSON.parse<Map<string, JSON.Raw>>(data);
     return dm;

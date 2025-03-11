@@ -319,7 +319,7 @@ export class ToolChoice {
 
 
   @serializer
-  serialize(self: ToolChoice): string {
+  private serialize(self: ToolChoice): string {
     if (self.type == "function") {
       return `{"type":"function","function":{"name":${JSON.stringify(this.function!.name)}}}`;
     }
@@ -330,7 +330,7 @@ export class ToolChoice {
 
   @deserializer
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  deserialize(data: string): ToolChoice {
+  private deserialize(data: string): ToolChoice {
     throw new Error("Not implemented.");
   }
 }

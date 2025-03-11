@@ -157,7 +157,7 @@ export class Record {
 
 
   @serializer
-  serialize(self: Record): string {
+  private serialize(self: Record): string {
     let out = "{";
     const end = self.keys.length - 1;
     for (let i = 0; i < end; i++) {
@@ -176,7 +176,7 @@ export class Record {
 
   @deserializer
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  deserialize(data: string): Record {
+  private deserialize(data: string): Record {
     throw new Error("Not implemented.");
   }
 }
