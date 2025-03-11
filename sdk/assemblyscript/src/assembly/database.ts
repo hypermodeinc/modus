@@ -247,7 +247,7 @@ export class Location {
 
   @serializer
   private serialize(self: Location): string {
-    return self.toString();
+    return '"' + self.toString() + '"';
   }
 
 
