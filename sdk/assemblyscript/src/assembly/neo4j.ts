@@ -70,6 +70,7 @@ export class EagerResult {
 /**
  * A record in a Neo4j query result.
  */
+@json
 export class Record {
   keys: string[] = [];
   values: string[] = [];
@@ -154,30 +155,28 @@ export class Record {
     return map;
   }
 
-  __INITIALIZE(): this {
-    return this;
-  }
 
-  __SERIALIZE(): string {
-    let result = "{";
-    for (let i = 0; i < this.keys.length; i++) {
-      const keyJson = JSON.stringify(this.keys[i]);
-      result += `${keyJson}:${this.values[i]}`;
-      if (i < this.keys.length - 1) {
-        result += ",";
-      }
+  @serializer
+  private serialize(self: Record): string {
+    let out = "{";
+    const end = self.keys.length - 1;
+    for (let i = 0; i < end; i++) {
+      const key = JSON.stringify(self.keys[i]);
+      out += key + ":" + self.values[i] + ",";
     }
-    return result + "}";
+
+    if (end >= 0) {
+      const key = JSON.stringify(self.keys[end]);
+      out += key + ":" + self.values[end];
+    }
+
+    return out + "}";
   }
 
-  /* eslint-disable @typescript-eslint/no-unused-vars */
-  __DESERIALIZE(
-    data: string,
-    key_start: i32,
-    key_end: i32,
-    value_start: i32,
-    value_end: i32,
-  ): boolean {
+
+  @deserializer
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  private deserialize(data: string): Record {
     throw new Error("Not implemented.");
   }
 }
