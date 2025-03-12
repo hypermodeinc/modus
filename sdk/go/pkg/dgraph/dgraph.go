@@ -10,6 +10,7 @@
 package dgraph
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -64,13 +65,16 @@ func NewQuery(query string) *Query {
 func (q *Query) WithVariable(key string, value any) *Query {
 	switch value := value.(type) {
 	case string:
+		// strings are passed as-is, without extra encoding
 		q.Variables[key] = value
 	case int, int8, int16, int32, int64,
 		uint, uint8, uint16, uint32, uint64,
-		float32, float64, bool:
-		q.Variables[key] = fmt.Sprint(value)
+		float32, float64, bool,
+		[]float32:
+		s, _ := json.Marshal(value)
+		q.Variables[key] = string(s)
 	default:
-		panic(fmt.Errorf("unsupported DQL variable type: %T (must be string, integer, float or boolean)", value))
+		panic(fmt.Errorf("unsupported DQL variable type: %T (must be string, integer, float, bool, or []float32)", value))
 	}
 
 	return q
