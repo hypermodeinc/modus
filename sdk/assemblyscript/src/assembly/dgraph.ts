@@ -167,6 +167,9 @@ export class Query {
     } else if (isBoolean<T>()) {
       this.variables.set(name, JSON.stringify(value));
       return this;
+    } else if (isArray<T>()) {
+      this.variables.set(name, JSON.stringify(value));
+      return this;
     } else {
       throw new Error(
         "Unsupported DQL variable type. Must be string, integer, float, or boolean.",
