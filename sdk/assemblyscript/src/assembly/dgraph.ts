@@ -155,23 +155,8 @@ export class Query {
    * Adds a variable to the query.
    */
   withVariable<T>(name: string, value: T): this {
-    if (isString<T>()) {
-      this.variables.set(name, value as string);
-      return this;
-    } else if (isInteger<T>()) {
-      this.variables.set(name, JSON.stringify(value));
-      return this;
-    } else if (isFloat<T>()) {
-      this.variables.set(name, JSON.stringify(value));
-      return this;
-    } else if (isBoolean<T>()) {
-      this.variables.set(name, JSON.stringify(value));
-      return this;
-    } else {
-      throw new Error(
-        "Unsupported DQL variable type. Must be string, integer, float, or boolean.",
-      );
-    }
+    this.variables.set(name, encodeVariable(value));
+    return this;
   }
 }
 
@@ -254,28 +239,33 @@ export class Variables {
   private data: Map<string, string> = new Map<string, string>();
 
   public set<T>(name: string, value: T): void {
-    if (isString<T>()) {
-      this.data.set(name, value as string);
-      return;
-    } else if (isInteger<T>()) {
-      this.data.set(name, JSON.stringify(value));
-      return;
-    } else if (isFloat<T>()) {
-      this.data.set(name, JSON.stringify(value));
-      return;
-    } else if (isBoolean<T>()) {
-      this.data.set(name, JSON.stringify(value));
-      return;
-    } else {
-      throw new Error(
-        "Unsupported DQL variable type. Must be string, integer, float, or boolean.",
-      );
-    }
+    this.data.set(name, encodeVariable(value));
   }
 
   public toMap(): Map<string, string> {
     return this.data;
   }
+}
+
+function encodeVariable<T>(value: T): string {
+  if (isString<T>()) {
+    // strings are passed as-is, without extra encoding
+    return value as string;
+  }
+
+  if (
+    isInteger<T>() ||
+    isFloat<T>() ||
+    isBoolean<T>() ||
+    idof<T>() == idof<f32[]>()
+  ) {
+    // other supported types are JSON-encoded and passed as strings
+    return JSON.stringify(value);
+  }
+
+  throw new Error(
+    "Unsupported DQL variable type. Must be string, integer, float, boolean, or f32[].",
+  );
 }
 
 /**
