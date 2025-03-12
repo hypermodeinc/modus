@@ -2,8 +2,6 @@
 
 # Change Log
 
-## UNRELEASED
-
 ## 2025-03-11 - AssemblyScript SDK 0.17.2
 
 - deps: update json-as to v1.0.0 and upgrade related code [#799](https://github.com/hypermodeinc/modus/pull/779)
