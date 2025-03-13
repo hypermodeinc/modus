@@ -18,7 +18,7 @@
    <a href="https://discord.com/invite/MAZgkhP6C6">Discord</a>
 <p>
 
-**Modus is an open-source, serverless framework for building agentic systems and AI applications in
+**Modus is an open-source, serverless framework for building agentic systems and AI apps in
 Go and AssemblyScript**
 
 It simplifies the integration of models, context, and data. We're continuing to add additional
