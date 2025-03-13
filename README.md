@@ -89,7 +89,7 @@ modus dev
 
 ## What's it good for?
 
-We believe that agentic flows are still fundamentally applications. As such, we've designed Modus
+We believe that agentic flows are still fundamentally apps. As such, we've designed Modus
 primarily as an general-purpose framework, that just happens to treat models, agents, and tools as
 first-class components.
 
