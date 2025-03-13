@@ -2,11 +2,11 @@
 
 # Change Log
 
-## 2025-03-12 - CLI 0.17.1
+## 2025-03-13 - CLI 0.17.1
 
 - chore: cleanup unused dependencies and update remaining [#790](https://github.com/hypermodeinc/modus/pull/790)
 
-## 2025-03-12 - AssemblyScript SDK 0.17.3
+## 2025-03-13 - AssemblyScript SDK 0.17.3
 
 - chore: cleanup unused dependencies and update remaining [#790](https://github.com/hypermodeinc/modus/pull/790)
 
