@@ -115,7 +115,7 @@ Modus is a free, open-source framework, you’re welcome to run your Modus apps 
 or on any hosting platform that meets your needs.
 
 However, over at [Hypermode](https://hypermode.com/) we have built additional tooling and
-infrastructure to make constructing and deploying your agents and AI applications easy. Hypermode
+infrastructure to make constructing and deploying your agents and AI apps easy. Hypermode
 includes models, observability, debugging, and function hosting. Just push your code to Github and
 Hypermode will automatically build and deploy it on global infrastructure.
 
