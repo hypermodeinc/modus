@@ -90,7 +90,7 @@ modus dev
 ## What's it good for?
 
 We believe that agentic flows are still fundamentally apps. As such, we've designed Modus
-primarily as an general-purpose framework, that just happens to treat models, agents, and tools as
+primarily as a general-purpose framework, that just happens to treat models, agents, and tools as
 first-class components.
 
 Modus is optimized for applications that require sub-second response times. We’ve made trade-offs to
