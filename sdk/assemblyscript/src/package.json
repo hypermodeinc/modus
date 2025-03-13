@@ -23,25 +23,20 @@
     "@assemblyscript/wasi-shim": "^0.1.0",
     "as-base64": "^0.2.0",
     "chalk": "^5.4.1",
-    "json-as": "^1.0.0",
-    "semver": "^7.6.3",
+    "json-as": "^1.0.1",
+    "semver": "^7.7.1",
     "xid-ts": "^1.1.4"
   },
   "devDependencies": {
-    "@eslint/js": "^9.19.0",
-    "@types/eslint__js": "^8.42.3 || ^9.0.0",
-    "@types/node": "^22.10.10",
-    "as-test": "^0.4.0",
-    "assemblyscript": "^0.27.34",
+    "@eslint/js": "^9.22.0",
+    "@types/node": "^22.13.10",
+    "as-test": "^0.4.1",
+    "assemblyscript": "^0.27.35",
     "assemblyscript-prettier": "^3.0.1",
-    "eslint": "^9.19.0",
-    "prettier": "^3.4.2",
-    "typescript": "^5.7.3",
-    "typescript-eslint": "^8.21.0",
-    "visitor-as": "^0.11.4"
-  },
-  "overrides": {
-    "assemblyscript": "$assemblyscript"
+    "eslint": "^9.22.0",
+    "prettier": "^3.5.3",
+    "typescript": "^5.8.2",
+    "typescript-eslint": "^8.26.1"
   },
   "engines": {
     "node": ">=22"

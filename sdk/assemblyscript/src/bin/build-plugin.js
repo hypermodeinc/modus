@@ -95,18 +95,8 @@ async function validatePackageJson() {
   // Note: This is a minimal set of dependencies required for the plugin to build correctly.
   // The versions may be lower than the latest available, or the ones used by our library.
   verifyPackageInstalled(pkgJson, "assemblyscript", "0.27.34", true);
-  verifyPackageInstalled(pkgJson, "visitor-as", "0.11.4", true);
-
-  const overrides = pkgJson.overrides;
-  if (!overrides || overrides["assemblyscript"] !== "$assemblyscript") {
-    const msg = `package.json must contain the following:
-
-    "overrides": {
-      "assemblyscript": "$assemblyscript"
-    }`;
-    console.error(msg);
-    process.exit(1);
-  }
+  verifyPackageInstalled(pkgJson, "typescript", "5.8.0", true);
+  verifyPackageInstalled(pkgJson, "json-as", "1.0.0", false);
 }
 
 async function validateAsJson() {
