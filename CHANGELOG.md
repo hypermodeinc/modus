@@ -2,7 +2,7 @@
 
 # Change Log
 
-## 2025-03-13 - AssemblyScript SDK 0.17.4
+## 2025-03-19 - AssemblyScript SDK 0.17.4
 
 - fix: correct json input/output of model invocations [#795](https://github.com/hypermodeinc/modus/pull/795)
 
