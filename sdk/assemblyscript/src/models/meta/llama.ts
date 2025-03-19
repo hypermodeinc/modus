@@ -42,7 +42,7 @@ export class TextGenerationInput {
    *
    * Default: 0.6
    */
-  @omitif("this.temperature == 0.6")
+  @omitif((self: TextGenerationInput) => self.temperature == 0.6)
   temperature: f64 = 0.6;
 
   /**
@@ -51,7 +51,7 @@ export class TextGenerationInput {
    *
    * Default: 0.9
    */
-  @omitif("this.topP == 0.9")
+  @omitif((self: TextGenerationInput) => self.topP == 0.9)
   @alias("top_p")
   topP: f64 = 0.9;
 
@@ -60,7 +60,7 @@ export class TextGenerationInput {
    *
    * Default: 512
    */
-  @omitif("this.maxGenLen == 512")
+  @omitif((self: TextGenerationInput) => self.maxGenLen == 512)
   @alias("max_gen_len")
   maxGenLen: i32 = 512;
 }
