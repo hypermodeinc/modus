@@ -26,7 +26,7 @@ builds:
     ldflags:
       - -s
       - -w
-      - -X github.com/hypermodeinc/modus/runtime/config.version={{.Version}}
+      - -X github.com/hypermodeinc/modus/runtime/app.version={{.Version}}
       - >-
         {{- if eq .Os "windows"}}
           -checklinkname=0
