@@ -2,6 +2,10 @@
 
 # Change Log
 
+## Runtime 0.17.4
+
+- fix: dgraph connection should ignore key for localhost [#793](https://github.com/hypermodeinc/modus/pull/793)
+
 ## 2025-03-13 - CLI 0.17.1
 
 - chore: cleanup unused dependencies and update remaining [#790](https://github.com/hypermodeinc/modus/pull/790)
