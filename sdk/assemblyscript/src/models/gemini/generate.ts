@@ -208,7 +208,7 @@ export class GenerationConfig {
    * Different model variants may have different maximum token limits.
    * See the `outputTokenLimit` of the model variant for the exact value.
    */
-  @omitif("this.maxOutputTokens == -1")
+  @omitif((self: GenerationConfig) => self.maxOutputTokens == -1)
   maxOutputTokens: i32 = -1;
 
   /**
@@ -221,7 +221,7 @@ export class GenerationConfig {
    * different defaults as well. See the `temperature` and
    * `maxTemperature` of the model variant for the exact values.
    */
-  @omitif("this.temperature == -1.0")
+  @omitif((self: GenerationConfig) => self.temperature == -1.0)
   temperature: f64 = -1.0;
 
   /**
@@ -231,7 +231,7 @@ export class GenerationConfig {
    * Different model variants may have different defaults.
    * See the `topP` of the model variant for the exact value.
    */
-  @omitif("this.topP == -1.0")
+  @omitif((self: GenerationConfig) => self.topP == -1.0)
   topP: f64 = -1.0;
 
   /**
@@ -241,7 +241,7 @@ export class GenerationConfig {
    * Different model variants may have different defaults.
    * See the `topK` of the model variant for the exact value.
    */
-  @omitif("this.topK == -1")
+  @omitif((self: GenerationConfig) => self.topK == -1)
   topK: i32 = -1;
 
   /**
@@ -250,7 +250,7 @@ export class GenerationConfig {
    *   `text/plain`: (default) Text output.
    *   `application/json`: JSON response in the candidates.
    */
-  @omitif("this.responseMimeType == 'text/plain'")
+  @omitif((self: GenerationConfig) => self.responseMimeType == 'text/plain')
   responseMimeType: string = "text/plain";
 
   /**

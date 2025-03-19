@@ -159,7 +159,7 @@ export class AnthropicMessagesInput {
    * @default false
    */
   @alias("stream")
-  @omitif("this._stream == false")
+  @omitif((self: AnthropicMessagesInput) => self._stream == false)
   private _stream: boolean = false;
 
   /**
@@ -182,7 +182,7 @@ export class AnthropicMessagesInput {
    *
    * @default 1.0
    */
-  @omitif("this.temperature == 1.0")
+  @omitif((self: AnthropicMessagesInput) => self.temperature == 1.0)
   temperature: f64 = 1.0;
 
   /**
@@ -213,7 +213,7 @@ export class AnthropicMessagesInput {
    * `temperature`.
    */
   @alias("top_k")
-  @omitif("this.topK == -1")
+  @omitif((self: AnthropicMessagesInput) => self.topK == -1)
   topK: i64 = -1; // The default value of top_k is not specified in the API docs
 
   /**
@@ -225,7 +225,7 @@ export class AnthropicMessagesInput {
    * `temperature`.
    */
   @alias("top_p")
-  @omitif("this.topP == 0.999")
+  @omitif((self: AnthropicMessagesInput) => self.topP == 0.999)
   topP: f64 = 0.999;
 }
 

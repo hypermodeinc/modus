@@ -86,14 +86,14 @@ export class OpenAIEmbeddingsInput {
    * Currently only `EncodingFormat.Float` is supported.
    */
   @alias("encoding_format")
-  @omitif("this.encodingFormat == 'float'")
+  @omitif((self: OpenAIEmbeddingsInput) => self.encodingFormat == 'float')
   encodingFormat: string = EncodingFormat.Float;
 
   /**
    * The maximum number of dimensions for the output embeddings.
    * If not specified, the model's default number of dimensions will be used.
    */
-  @omitif("this.dimensions == -1")
+  @omitif((self: OpenAIEmbeddingsInput) => self.dimensions == -1)
   dimensions: i32 = -1; // TODO: make this an `i32 | null` when supported
 
   /**
