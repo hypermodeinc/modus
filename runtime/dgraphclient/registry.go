@@ -106,34 +106,25 @@ func createConnector(ctx context.Context, dgName string) (*dgraphConnector, erro
 	}
 
 	var opts []grpc.DialOption
-
-	if connection.Key != "" {
-		conKey, err := secrets.ApplySecretsToString(ctx, info, connection.Key)
-		if err != nil {
-			return nil, err
-		}
-
-		pool, err := x509.SystemCertPool()
-		if err != nil {
-			return nil, err
-		}
-		creds := credentials.NewClientTLSFromCert(pool, "")
-		opts = []grpc.DialOption{
-			grpc.WithTransportCredentials(creds),
-			grpc.WithPerRPCCredentials(&authCreds{conKey}),
-		}
-	} else if strings.Split(connection.GrpcTarget, ":")[0] != "localhost" {
-		pool, err := x509.SystemCertPool()
-		if err != nil {
-			return nil, err
-		}
-		creds := credentials.NewClientTLSFromCert(pool, "")
-		opts = []grpc.DialOption{
-			grpc.WithTransportCredentials(creds),
-		}
-	} else {
+	if strings.Split(connection.GrpcTarget, ":")[0] == "localhost" {
 		opts = []grpc.DialOption{
 			grpc.WithTransportCredentials(insecure.NewCredentials()),
+		}
+	} else {
+		pool, err := x509.SystemCertPool()
+		if err != nil {
+			return nil, err
+		}
+		creds := credentials.NewClientTLSFromCert(pool, "")
+		opts = []grpc.DialOption{
+			grpc.WithTransportCredentials(creds),
+		}
+		if connection.Key != "" {
+			if conKey, err := secrets.ApplySecretsToString(ctx, info, connection.Key); err != nil {
+				return nil, err
+			} else if conKey != "" {
+				opts = append(opts, grpc.WithPerRPCCredentials(&authCreds{conKey}))
+			}
 		}
 	}
 
