@@ -2,7 +2,7 @@
 
 # Change Log
 
-## Runtime 0.17.4
+## 2025-03-18 - Runtime 0.17.4
 
 - fix: dgraph connection should ignore key for localhost [#793](https://github.com/hypermodeinc/modus/pull/793)
 
