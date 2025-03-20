@@ -169,7 +169,7 @@ func handleGraphQLRequest(w http.ResponseWriter, r *http.Request) {
 		// to replace the null with an empty array.
 		if ok, _ := gqlRequest.IsIntrospectionQuery(); ok {
 			if q := gjson.GetBytes(response, `data.__schema.types.#(name="Query")`); q.Exists() {
-				if f := q.Get("fields"); f.Type == gjson.Null {
+				if f := q.Get("fields"); f.Exists() && f.Type == gjson.Null {
 					response[f.Index] = '['
 					response[f.Index+1] = ']'
 					response = append(response[:f.Index+2], response[f.Index+4:]...)
