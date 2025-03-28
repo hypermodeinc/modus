@@ -11,7 +11,6 @@ package dgraphclient
 
 import (
 	"context"
-	"crypto/x509"
 	"fmt"
 	"strings"
 
@@ -19,46 +18,16 @@ import (
 	"github.com/hypermodeinc/modus/runtime/manifestdata"
 	"github.com/hypermodeinc/modus/runtime/secrets"
 
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
-	"google.golang.org/grpc/credentials/insecure"
-
 	"github.com/dgraph-io/dgo/v240"
-	"github.com/dgraph-io/dgo/v240/protos/api"
 	"github.com/puzpuzpuz/xsync/v3"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 var dgr = newDgraphRegistry()
 
 type dgraphRegistry struct {
 	cache *xsync.MapOf[string, *dgraphConnector]
-}
-
-type authCreds struct {
-	token string
-}
-
-func (a *authCreds) GetRequestMetadata(ctx context.Context, uri ...string) (map[string]string, error) {
-	if len(a.token) == 0 {
-		return nil, nil
-	}
-
-	headers := make(map[string]string, 1)
-	if len(uri) > 0 && strings.Contains(strings.ToLower(uri[0]), "cloud.dgraph.io") {
-		headers["X-Auth-Token"] = a.token
-	} else {
-		token := a.token
-		if !strings.HasPrefix(token, "Bearer ") {
-			token = "Bearer " + token
-		}
-		headers["Authorization"] = token
-	}
-
-	return headers, nil
-}
-
-func (a *authCreds) RequireTransportSecurity() bool {
-	return true
 }
 
 func newDgraphRegistry() *dgraphRegistry {
@@ -70,7 +39,7 @@ func newDgraphRegistry() *dgraphRegistry {
 func ShutdownConns() {
 	dgr.cache.Range(func(key string, _ *dgraphConnector) bool {
 		if connector, ok := dgr.cache.LoadAndDelete(key); ok {
-			connector.conn.Close()
+			connector.dgClient.Close()
 		}
 		return true
 	})
@@ -101,42 +70,65 @@ func createConnector(ctx context.Context, dgName string) (*dgraphConnector, erro
 	}
 
 	connection := info.(manifest.DgraphConnectionInfo)
-	if connection.GrpcTarget == "" {
-		return nil, fmt.Errorf("dgraph connection [%s] has empty GrpcTarget", dgName)
-	}
-
-	var opts []grpc.DialOption
-	if strings.Split(connection.GrpcTarget, ":")[0] == "localhost" {
-		opts = []grpc.DialOption{
-			grpc.WithTransportCredentials(insecure.NewCredentials()),
+	if connection.ConnStr != "" {
+		if connection.GrpcTarget != "" {
+			return nil, fmt.Errorf("dgraph connection [%s] has both connString and grpcTarget (use one or the other)", dgName)
+		} else if connection.Key != "" {
+			return nil, fmt.Errorf("dgraph connection [%s] has both connString and key (the key should be part of the connection string)", dgName)
 		}
-	} else {
-		pool, err := x509.SystemCertPool()
+		connStr, err := secrets.ApplySecretsToString(ctx, info, connection.ConnStr)
 		if err != nil {
 			return nil, err
 		}
-		creds := credentials.NewClientTLSFromCert(pool, "")
-		opts = []grpc.DialOption{
-			grpc.WithTransportCredentials(creds),
+		return connectWithConnectionString(connStr)
+	} else if connection.GrpcTarget != "" {
+		target, err := secrets.ApplySecretsToString(ctx, info, connection.GrpcTarget)
+		if err != nil {
+			return nil, err
 		}
-		if connection.Key != "" {
-			if conKey, err := secrets.ApplySecretsToString(ctx, info, connection.Key); err != nil {
-				return nil, err
-			} else if conKey != "" {
-				opts = append(opts, grpc.WithPerRPCCredentials(&authCreds{conKey}))
-			}
+		key, err := secrets.ApplySecretsToString(ctx, info, connection.Key)
+		if err != nil {
+			return nil, err
 		}
+		return connectWithGrpcTarget(target, key)
+	} else {
+		return nil, fmt.Errorf("dgraph connection [%s] needs either a connString or a grpcTarget", dgName)
 	}
+}
 
-	conn, err := grpc.NewClient(connection.GrpcTarget, opts...)
-	if err != nil {
+func connectWithConnectionString(connStr string) (*dgraphConnector, error) {
+	if dgClient, err := dgo.Open(connStr); err != nil {
 		return nil, err
+	} else {
+		return newDgraphConnector(dgClient), nil
+	}
+}
+
+func connectWithGrpcTarget(target string, key string) (*dgraphConnector, error) {
+	var opts []dgo.ClientOption
+	if strings.Split(target, ":")[0] == "localhost" {
+		opts = []dgo.ClientOption{
+			dgo.WithGrpcOption(grpc.WithTransportCredentials(insecure.NewCredentials())),
+		}
+	} else if key == "" {
+		opts = []dgo.ClientOption{
+			dgo.WithSystemCertPool(),
+		}
+	} else if strings.Contains(strings.ToLower(target), "cloud.dgraph.io") {
+		opts = []dgo.ClientOption{
+			dgo.WithSystemCertPool(),
+			dgo.WithDgraphAPIKey(key),
+		}
+	} else {
+		opts = []dgo.ClientOption{
+			dgo.WithSystemCertPool(),
+			dgo.WithBearerToken(key),
+		}
 	}
 
-	ds := &dgraphConnector{
-		conn:     conn,
-		dgClient: dgo.NewDgraphClient(api.NewDgraphClient(conn)),
+	if dgClient, err := dgo.NewClient(target, opts...); err != nil {
+		return nil, err
+	} else {
+		return newDgraphConnector(dgClient), nil
 	}
-
-	return ds, nil
 }

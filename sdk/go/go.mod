@@ -5,7 +5,7 @@ go 1.23.1
 toolchain go1.24.1
 
 require (
-	github.com/hypermodeinc/modus/lib/manifest v0.17.0
+	github.com/hypermodeinc/modus/lib/manifest v0.17.1
 	github.com/hypermodeinc/modus/lib/wasmextractor v0.13.0
 )
 

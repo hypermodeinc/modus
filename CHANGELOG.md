@@ -2,6 +2,10 @@
 
 # Change Log
 
+## 2025-03-28 - Runtime 0.17.7
+
+- feat: support new Dgraph connection string format [#803](https://github.com/hypermodeinc/modus/pull/803)
+
 ## 2025-03-20 - Runtime 0.17.6
 
 - fix: correct json in introspection query results [#798](https://github.com/hypermodeinc/modus/pull/798)

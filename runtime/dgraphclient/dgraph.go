@@ -17,12 +17,14 @@ import (
 
 	"github.com/dgraph-io/dgo/v240"
 	"github.com/dgraph-io/dgo/v240/protos/api"
-	"google.golang.org/grpc"
 )
 
 type dgraphConnector struct {
-	conn     *grpc.ClientConn
 	dgClient *dgo.Dgraph
+}
+
+func newDgraphConnector(dgClient *dgo.Dgraph) *dgraphConnector {
+	return &dgraphConnector{dgClient}
 }
 
 func (dc *dgraphConnector) alterSchema(ctx context.Context, schema string) (string, error) {
