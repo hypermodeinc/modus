@@ -412,8 +412,8 @@ github.com/hexops/gotextdiff v1.0.3 h1:gitA9+qJrrTCsiCl7+kh75nPqQt1cx4ZkudSTLoUq
 github.com/hexops/gotextdiff v1.0.3/go.mod h1:pSWU5MAI3yDq+fZBTazCSJysOMbxWL1BSow5/V2vxeg=
 github.com/hypermodeinc/dgraph/v24 v24.0.3-0.20250123224129-a0d027dcffe0 h1:yOWDWYXrF8cfjXbB3fqabYDKcMqJWqgPKAraauinRe4=
 github.com/hypermodeinc/dgraph/v24 v24.0.3-0.20250123224129-a0d027dcffe0/go.mod h1:cxYPGOzHMDPQbv5uf9i2CI/dWKrKcyVmRLX7j/P3DxM=
-github.com/hypermodeinc/modus/lib/manifest v0.17.0 h1:IelVTN1Bj3ErdyqRLk+3CCPKJJxKnEDsIwL3Rl48TKY=
-github.com/hypermodeinc/modus/lib/manifest v0.17.0/go.mod h1:E/lB1Je+vugQhIOfbnJJShTurKzNBp9ZfgQnOrqmfQI=
+github.com/hypermodeinc/modus/lib/manifest v0.17.1 h1:EuZRni0s+CNPbN+hFcTcFGmo6n2Mr22Mq7l71Lu4YcQ=
+github.com/hypermodeinc/modus/lib/manifest v0.17.1/go.mod h1:HVrZY6o4wuZThtbOXEWInga4I7tVzdgK1gSNg1bsYX0=
 github.com/hypermodeinc/modus/lib/metadata v0.15.0 h1:Qu75TZg7l43Fi61EhnjasTHZvztrGA90vzDLnCB6ILI=
 github.com/hypermodeinc/modus/lib/metadata v0.15.0/go.mod h1:vnIwX2DpQyGk93DawGgIaqC5jEdvMeA9tGtvefbwTJw=
 github.com/hypermodeinc/modus/lib/wasmextractor v0.13.0 h1:9o8qqAllL9qIPYqc5adF+Aw3XWLmLqPiBPMu0AIyiMI=
