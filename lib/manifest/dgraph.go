@@ -14,6 +14,7 @@ const ConnectionTypeDgraph ConnectionType = "dgraph"
 type DgraphConnectionInfo struct {
 	Name       string         `json:"-"`
 	Type       ConnectionType `json:"type"`
+	ConnStr    string         `json:"connString"`
 	GrpcTarget string         `json:"grpcTarget"`
 	Key        string         `json:"key"`
 }

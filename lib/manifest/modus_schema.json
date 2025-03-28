@@ -244,6 +244,24 @@
                     "const": "dgraph",
                     "description": "Type of the connection."
                   },
+                  "connString": {
+                    "type": "string",
+                    "minLength": 1,
+                    "pattern": "^dgraph:\\/\\/(.*?@)?([0-9a-zA-Z.-]*?)(:\\d+)?(\\/[0-9a-zA-Z.-]+)?(\\?.+)?$",
+                    "description": "The Dgraph connection string in URI format.",
+                    "markdownDescription": "The Dgraph connection string in URI format.\n\nReference: https://docs.hypermode.com/modus/app-manifest#dgraph-connection"
+                  }
+                },
+                "required": ["type", "connString"],
+                "additionalProperties": false
+              },
+              {
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "dgraph",
+                    "description": "Type of the connection."
+                  },
                   "grpcTarget": {
                     "type": "string",
                     "minLength": 1,

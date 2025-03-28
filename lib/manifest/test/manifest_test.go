@@ -114,6 +114,11 @@ func TestReadManifest(t *testing.T) {
 				GrpcTarget: "localhost:9080",
 				Key:        "",
 			},
+			"dgraph-with-connstr": manifest.DgraphConnectionInfo{
+				Name:    "dgraph-with-connstr",
+				Type:    manifest.ConnectionTypeDgraph,
+				ConnStr: "dgraph://localhost:9080?sslmode=disable",
+			},
 			"my-neo4j": manifest.Neo4jConnectionInfo{
 				Name:     "my-neo4j",
 				Type:     manifest.ConnectionTypeNeo4j,

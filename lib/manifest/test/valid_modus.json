@@ -77,6 +77,10 @@
       "type": "dgraph",
       "grpcTarget": "localhost:9080"
     },
+    "dgraph-with-connstr": {
+      "type": "dgraph",
+      "connString": "dgraph://localhost:9080?sslmode=disable"
+    },
     "my-neo4j": {
       "type": "neo4j",
       "dbUri": "bolt://localhost:7687",
