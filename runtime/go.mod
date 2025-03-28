@@ -16,7 +16,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/sts v1.33.17
 	github.com/buger/jsonparser v1.1.1
 	github.com/chewxy/math32 v1.11.1
-	github.com/dgraph-io/dgo/v240 v240.1.0
+	github.com/dgraph-io/dgo/v240 v240.2.0
 	github.com/docker/docker v28.0.2+incompatible
 	github.com/docker/go-connections v0.5.0
 	github.com/fatih/color v1.18.0
