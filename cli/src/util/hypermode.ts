@@ -14,8 +14,8 @@ import chalk from "chalk";
 
 type HypSettings = {
   email?: string;
-  jwt?: string;
-  orgId?: string;
+  apiKey?: string;
+  workspaceId?: string;
 };
 
 export async function readHypermodeSettings(): Promise<HypSettings> {
@@ -28,8 +28,8 @@ export async function readHypermodeSettings(): Promise<HypSettings> {
     const settings = JSON.parse(await fs.readFile(path, "utf-8"));
     return {
       email: settings.HYP_EMAIL,
-      jwt: settings.HYP_JWT,
-      orgId: settings.HYP_ORG_ID,
+      apiKey: settings.HYP_API_KEY,
+      workspaceId: settings.HYP_WORKSPACE_ID,
     };
   } catch (e) {
     console.warn(chalk.yellow("Error reading " + path), e);
