@@ -99,7 +99,7 @@ func PostToModelEndpoint[TResult any](ctx context.Context, model *manifest.Model
 					return empty, fmt.Errorf("model %s is not available in the local dev environment", model.SourceModel)
 				}
 			case http.StatusUnauthorized:
-				return empty, fmt.Errorf("invalid or expired API key")
+				return empty, fmt.Errorf("invalid or expired API key. Please use `hyp login` to create a new API key")
 			case http.StatusForbidden:
 				return empty, fmt.Errorf("API key is disabled or usage limit exceeded")
 			case http.StatusTooManyRequests:
