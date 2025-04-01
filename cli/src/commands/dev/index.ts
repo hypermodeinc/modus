@@ -164,8 +164,8 @@ export default class DevCommand extends BaseCommand {
       ...process.env,
       MODUS_ENV: "dev",
       HYP_EMAIL: hypSettings.email,
-      HYP_JWT: hypSettings.jwt,
-      HYP_ORG_ID: hypSettings.orgId,
+      HYP_API_KEY: hypSettings.apiKey,
+      HYP_WORKSPACE_ID: hypSettings.workspaceId,
     };
 
     // Spawn the runtime child process

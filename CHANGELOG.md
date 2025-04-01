@@ -2,6 +2,14 @@
 
 # Change Log
 
+## 2025-04-01 - Runtime 0.17.8
+
+- fix: Update Hypermode api key reading for modus local dev [#805](https://github.com/hypermodeinc/modus/pull/805)
+
+## 2025-04-01 - CLI 0.17.2
+
+- fix: Update Hypermode api key reading for modus local dev [#805](https://github.com/hypermodeinc/modus/pull/805)
+
 ## 2025-03-28 - Runtime 0.17.7
 
 - feat: support new Dgraph connection string format [#803](https://github.com/hypermodeinc/modus/pull/803)

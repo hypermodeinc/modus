@@ -16,10 +16,8 @@ import (
 	"net/http"
 	"os"
 	"regexp"
-	"time"
 
 	"github.com/fatih/color"
-	"github.com/golang-jwt/jwt/v5"
 	"github.com/hypermodeinc/modus/lib/manifest"
 	"github.com/hypermodeinc/modus/runtime/logger"
 	"github.com/hypermodeinc/modus/runtime/utils"
@@ -94,55 +92,22 @@ func ApplySecretsToHttpRequest(ctx context.Context, connection *manifest.HTTPCon
 
 func ApplyAuthToLocalHypermodeModelRequest(ctx context.Context, connection manifest.ConnectionInfo, req *http.Request) error {
 
-	jwt := os.Getenv("HYP_JWT")
-	orgId := os.Getenv("HYP_ORG_ID")
+	apiKey := os.Getenv("HYP_API_KEY")
+	workspaceId := os.Getenv("HYP_WORKSPACE_ID")
 
 	warningColor := color.New(color.FgHiYellow, color.Bold)
 
-	if jwt == "" || orgId == "" {
+	if apiKey == "" || workspaceId == "" {
 		fmt.Fprintln(os.Stderr)
 		warningColor.Fprintln(os.Stderr, "Warning: Local authentication not found. Please login using `hyp login`")
 		fmt.Fprintln(os.Stderr)
 		return errLocalAuthFailed
 	}
 
-	isExpired, err := checkJWTExpiration(jwt)
-	if err != nil {
-		return err
-	}
-	if isExpired {
-		fmt.Fprintln(os.Stderr)
-		warningColor.Fprintln(os.Stderr, "Warning: Local authentication expired. Please login using `hyp login`")
-		fmt.Fprintln(os.Stderr)
-		return errLocalAuthFailed
-	}
-
-	req.Header.Set("Authorization", "Bearer "+jwt)
-	req.Header.Set("HYP-ORG-ID", orgId)
+	req.Header.Set("Authorization", "Bearer "+apiKey)
+	req.Header.Set("HYP-WORKSPACE-ID", workspaceId)
 
 	return nil
-}
-
-// checkJWTExpiration checks if the JWT has expired based on the 'exp' claim.
-func checkJWTExpiration(tokenString string) (bool, error) {
-	p := jwt.Parser{}
-	token, _, err := p.ParseUnverified(tokenString, jwt.MapClaims{})
-	if err != nil {
-		return false, fmt.Errorf("failed to parse: %w", err)
-	}
-
-	claims, ok := token.Claims.(jwt.MapClaims)
-	if !ok {
-		return false, fmt.Errorf("failed to extract claims from JWT")
-	}
-
-	exp, ok := claims["exp"].(float64)
-	if !ok {
-		return false, fmt.Errorf("exp claim is missing or not a number")
-	}
-
-	expirationTime := time.Unix(int64(exp), 0)
-	return time.Now().After(expirationTime), nil
 }
 
 // ApplySecretsToString evaluates the given string and replaces any placeholders
