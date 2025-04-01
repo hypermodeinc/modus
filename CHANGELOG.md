@@ -6,7 +6,7 @@
 
 - fix: Update Hypermode api key reading for modus local dev [#805](https://github.com/hypermodeinc/modus/pull/805)
 
-## 2025-04-01 - CLI 0.17.8
+## 2025-04-01 - CLI 0.17.2
 
 - fix: Update Hypermode api key reading for modus local dev [#805](https://github.com/hypermodeinc/modus/pull/805)
 
