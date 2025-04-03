@@ -119,7 +119,7 @@ func (m *Mutation) WithCondition(cond string) *Mutation {
 func Execute(connection string, request *Request) (*Response, error) {
 	response := hostExecuteQuery(&connection, request)
 	if response == nil {
-		return nil, errors.New("Failed to execute the DQL query.")
+		return nil, errors.New("failed to execute the DQL query")
 	}
 
 	return response, nil
@@ -148,7 +148,7 @@ func ExecuteMutations(connection string, mutations ...*Mutation) (*Response, err
 func AlterSchema(connection, schema string) error {
 	resp := hostAlterSchema(&connection, &schema)
 	if resp == nil {
-		return errors.New("Failed to alter the schema.")
+		return errors.New("failed to alter the schema")
 	}
 
 	return nil
@@ -158,7 +158,7 @@ func AlterSchema(connection, schema string) error {
 func DropAttr(connection, attr string) error {
 	response := hostDropAttribute(&connection, &attr)
 	if response == nil {
-		return errors.New("Failed to drop the attribute.")
+		return errors.New("failed to drop the attribute")
 	}
 
 	return nil
@@ -168,7 +168,7 @@ func DropAttr(connection, attr string) error {
 func DropAll(connection string) error {
 	response := hostDropAllData(&connection)
 	if response == nil {
-		return errors.New("Failed to drop all data.")
+		return errors.New("failed to drop all data")
 	}
 
 	return nil

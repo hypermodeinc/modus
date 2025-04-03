@@ -74,7 +74,7 @@ func createIndexObject(searchMethod manifest.SearchMethodInfo, searchMethodName 
 		vectorIndex.Type = sequential.SequentialVectorIndexType
 		vectorIndex.VectorIndex = sequential.NewSequentialVectorIndex(searchMethodName, searchMethod.Embedder)
 	default:
-		return nil, fmt.Errorf("Unknown index type: %s", searchMethod.Index.Type)
+		return nil, fmt.Errorf("unknown index type: %s", searchMethod.Index.Type)
 	}
 
 	return vectorIndex, nil

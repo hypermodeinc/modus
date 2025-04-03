@@ -8,6 +8,7 @@ on:
       - reopened
       - ready_for_review
     paths:
+      - .github/workflows/ci-sdk-as-lint.yml
       - sdk/assemblyscript/**
 
 permissions:

@@ -91,9 +91,9 @@ func handleGraphQLRequest(w http.ResponseWriter, r *http.Request) {
 		logger.Warn(ctx).Msg(msg)
 		utils.WriteJsonContentHeader(w)
 		if ok, _ := gqlRequest.IsIntrospectionQuery(); ok {
-			_, _ = w.Write([]byte(`{"data":{"__schema":{"types":[]}}}`))
+			fmt.Fprint(w, `{"data":{"__schema":{"types":[]}}}`)
 		} else {
-			_, _ = w.Write([]byte(fmt.Sprintf(`{"errors":[{"message":"%s"}]}`, msg)))
+			fmt.Fprintf(w, `{"errors":[{"message":"%s"}]}`, msg)
 		}
 		return
 	}

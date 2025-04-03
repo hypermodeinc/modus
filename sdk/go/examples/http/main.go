@@ -32,7 +32,7 @@ func GetRandomQuote() (*Quote, error) {
 		return nil, err
 	}
 	if !response.Ok() {
-		return nil, fmt.Errorf("Failed to fetch quote. Received: %d %s", response.Status, response.StatusText)
+		return nil, fmt.Errorf("failed to fetch quote. Received: %d %s", response.Status, response.StatusText)
 	}
 
 	// The API returns an array of quotes, but we only want the first one.
@@ -119,7 +119,7 @@ func CreateGithubIssue(owner, repo, title, body string) (*Issue, error) {
 		return nil, err
 	}
 	if !response.Ok() {
-		return nil, fmt.Errorf("Failed to create issue. Received: %d %s", response.Status, response.StatusText)
+		return nil, fmt.Errorf("failed to create issue. Received: %d %s", response.Status, response.StatusText)
 	}
 
 	// The response will contain the issue data, including the URL of the issue on GitHub.

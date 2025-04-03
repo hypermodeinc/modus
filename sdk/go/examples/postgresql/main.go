@@ -53,7 +53,7 @@ func AddPerson(name string, age int) (*Person, error) {
 
 	response, err := postgresql.QueryScalar[int](connection, query, name, age)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to add person to database: %v", err)
+		return nil, fmt.Errorf("failed to add person to database: %v", err)
 	}
 
 	p := Person{Id: response.Value, Name: name, Age: age}
@@ -65,11 +65,11 @@ func UpdatePersonHome(id int, longitude, latitude float64) (*Person, error) {
 
 	response, err := postgresql.Execute(connection, query, longitude, latitude, id)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to update person in database: %v", err)
+		return nil, fmt.Errorf("failed to update person in database: %v", err)
 	}
 
 	if response.RowsAffected != 1 {
-		return nil, fmt.Errorf("Failed to update person with id %d. The record may not exist.", id)
+		return nil, fmt.Errorf("failed to update person with id %d - the record may not exist", id)
 	}
 
 	return GetPerson(id)
@@ -80,11 +80,11 @@ func DeletePerson(id int) (string, error) {
 
 	response, err := postgresql.Execute(connection, query, id)
 	if err != nil {
-		return "", fmt.Errorf("Failed to delete person from database: %v", err)
+		return "", fmt.Errorf("failed to delete person from database: %v", err)
 	}
 
 	if response.RowsAffected != 1 {
-		return "", fmt.Errorf("Failed to delete person with id %d. The record may not exist.", id)
+		return "", fmt.Errorf("failed to delete person with id %d - the record may not exist", id)
 	}
 
 	return "success", nil

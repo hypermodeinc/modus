@@ -9,6 +9,7 @@ on:
       - reopened
       - ready_for_review
     paths:
+      - .github/workflows/ci-go-test.yml
       - "**/*.go"
       - "**/go.mod"
       - "**/testdata/**"

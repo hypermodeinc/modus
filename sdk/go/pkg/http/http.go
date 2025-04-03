@@ -29,13 +29,12 @@ func Fetch[T *Request | string](requestOrUrl T, options ...*RequestOptions) (*Re
 	}
 
 	if _, err := url.ParseRequestURI(request.Url); err != nil {
-		return nil, errors.New("Invalid URL")
+		return nil, errors.New("invalid URL")
 	}
 
 	response := hostFetch(request)
 	if response == nil {
-		msg := "HTTP fetch failed. Check the logs for more information."
-		return nil, errors.New(msg)
+		return nil, errors.New("HTTP fetch failed - check the logs for more information")
 	}
 
 	return response, nil

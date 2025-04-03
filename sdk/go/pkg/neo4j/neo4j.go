@@ -159,7 +159,7 @@ func GetRecordValue[T RecordValue](record *Record, key string) (T, error) {
 			}
 		}
 	}
-	return *new(T), fmt.Errorf("Key not found in record")
+	return *new(T), fmt.Errorf("key not found in record")
 
 }
 
@@ -201,7 +201,7 @@ func GetProperty[T PropertyValue](e Entity, key string) (T, error) {
 	var val T
 	rawVal, ok := e.GetProperties()[key]
 	if !ok {
-		return *new(T), fmt.Errorf("Key not found in node")
+		return *new(T), fmt.Errorf("key not found in node")
 	}
 	switch any(val).(type) {
 	case int64:

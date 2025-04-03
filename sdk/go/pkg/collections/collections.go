@@ -88,11 +88,11 @@ func WithNamespace(namespace string) NamespaceOption {
 
 func UpsertBatch(collection string, keys []string, texts []string, labelsArr [][]string, opts ...NamespaceOption) (*CollectionMutationResult, error) {
 	if collection == "" {
-		return nil, fmt.Errorf("Collection name is required")
+		return nil, fmt.Errorf("collection name is required")
 	}
 
 	if len(texts) == 0 {
-		return nil, fmt.Errorf("Texts is empty")
+		return nil, fmt.Errorf("texts is empty")
 	}
 
 	nsOpts := &NamespaceOptions{
@@ -114,7 +114,7 @@ func UpsertBatch(collection string, keys []string, texts []string, labelsArr [][
 	result := hostUpsert(&collection, &nsOpts.namespace, &keys, &texts, &labelsArr)
 
 	if result == nil {
-		return nil, fmt.Errorf("Failed to upsert")
+		return nil, fmt.Errorf("failed to upsert")
 	}
 
 	return result, nil
@@ -122,7 +122,7 @@ func UpsertBatch(collection string, keys []string, texts []string, labelsArr [][
 
 func Upsert(collection string, key *string, text string, labels []string, opts ...NamespaceOption) (*CollectionMutationResult, error) {
 	if collection == "" {
-		return nil, fmt.Errorf("Collection name is required")
+		return nil, fmt.Errorf("collection name is required")
 	}
 
 	keyArr := []string{}
@@ -138,7 +138,7 @@ func Upsert(collection string, key *string, text string, labels []string, opts .
 	}
 
 	if text == "" {
-		return nil, fmt.Errorf("Text is required")
+		return nil, fmt.Errorf("text is required")
 	}
 
 	nsOpts := &NamespaceOptions{
@@ -152,7 +152,7 @@ func Upsert(collection string, key *string, text string, labels []string, opts .
 	result := hostUpsert(&collection, &nsOpts.namespace, &keyArr, &[]string{text}, &labelsArr)
 
 	if result == nil {
-		return nil, fmt.Errorf("Failed to upsert")
+		return nil, fmt.Errorf("failed to upsert")
 	}
 
 	return result, nil
@@ -160,11 +160,11 @@ func Upsert(collection string, key *string, text string, labels []string, opts .
 
 func Remove(collection, key string, opts ...NamespaceOption) (*CollectionMutationResult, error) {
 	if collection == "" {
-		return nil, fmt.Errorf("Collection name is required")
+		return nil, fmt.Errorf("collection name is required")
 	}
 
 	if key == "" {
-		return nil, fmt.Errorf("Key is required")
+		return nil, fmt.Errorf("key is required")
 	}
 
 	nsOpts := &NamespaceOptions{
@@ -178,7 +178,7 @@ func Remove(collection, key string, opts ...NamespaceOption) (*CollectionMutatio
 	result := hostDelete(&collection, &nsOpts.namespace, &key)
 
 	if result == nil {
-		return nil, fmt.Errorf("Failed to delete")
+		return nil, fmt.Errorf("failed to delete")
 	}
 
 	return result, nil
@@ -212,15 +212,15 @@ func WithReturnText(returnText bool) SearchOption {
 
 func Search(collection, searchMethod, text string, opts ...SearchOption) (*CollectionSearchResult, error) {
 	if collection == "" {
-		return nil, fmt.Errorf("Collection name is required")
+		return nil, fmt.Errorf("collection name is required")
 	}
 
 	if searchMethod == "" {
-		return nil, fmt.Errorf("Search method is required")
+		return nil, fmt.Errorf("search method is required")
 	}
 
 	if text == "" {
-		return nil, fmt.Errorf("Text is required")
+		return nil, fmt.Errorf("text is required")
 	}
 
 	sOpts := &SearchOptions{
@@ -236,7 +236,7 @@ func Search(collection, searchMethod, text string, opts ...SearchOption) (*Colle
 	result := hostSearch(&collection, &sOpts.namespaces, &searchMethod, &text, int32(sOpts.limit), sOpts.returnText)
 
 	if result == nil {
-		return nil, fmt.Errorf("Failed to search")
+		return nil, fmt.Errorf("failed to search")
 	}
 
 	return result, nil
@@ -244,21 +244,21 @@ func Search(collection, searchMethod, text string, opts ...SearchOption) (*Colle
 
 func SearchByVector(collection, searchMethod string, vector []float32, opts ...SearchOption) (*CollectionSearchResult, error) {
 	if collection == "" {
-		return nil, fmt.Errorf("Collection name is required")
+		return nil, fmt.Errorf("collection name is required")
 	}
 
 	if searchMethod == "" {
-		return nil, fmt.Errorf("Search method is required")
+		return nil, fmt.Errorf("search method is required")
 	}
 
 	if len(vector) == 0 {
 		return &CollectionSearchResult{
 			Collection:   collection,
 			Status:       Error,
-			Error:        "Vector is required",
+			Error:        "vector is required",
 			SearchMethod: "",
 			Objects:      nil,
-		}, fmt.Errorf("Vector is required")
+		}, fmt.Errorf("vector is required")
 	}
 
 	sOpts := &SearchOptions{
@@ -274,7 +274,7 @@ func SearchByVector(collection, searchMethod string, vector []float32, opts ...S
 	result := hostSearchByVector(&collection, &sOpts.namespaces, &searchMethod, &vector, int32(sOpts.limit), sOpts.returnText)
 
 	if result == nil {
-		return nil, fmt.Errorf("Failed to search")
+		return nil, fmt.Errorf("failed to search")
 	}
 
 	return result, nil
@@ -282,15 +282,15 @@ func SearchByVector(collection, searchMethod string, vector []float32, opts ...S
 
 func NnClassify(collection, searchMethod, text string, opts ...NamespaceOption) (*CollectionClassificationResult, error) {
 	if collection == "" {
-		return nil, fmt.Errorf("Collection name is required")
+		return nil, fmt.Errorf("collection name is required")
 	}
 
 	if searchMethod == "" {
-		return nil, fmt.Errorf("Search method is required")
+		return nil, fmt.Errorf("search method is required")
 	}
 
 	if text == "" {
-		return nil, fmt.Errorf("Text is required")
+		return nil, fmt.Errorf("text is required")
 	}
 
 	nsOpts := &NamespaceOptions{
@@ -304,7 +304,7 @@ func NnClassify(collection, searchMethod, text string, opts ...NamespaceOption) 
 	result := hostClassifyText(&collection, &nsOpts.namespace, &searchMethod, &text)
 
 	if result == nil {
-		return nil, fmt.Errorf("Failed to classify")
+		return nil, fmt.Errorf("failed to classify")
 	}
 
 	return result, nil
@@ -312,11 +312,11 @@ func NnClassify(collection, searchMethod, text string, opts ...NamespaceOption) 
 
 func RecomputeSearchMethod(collection, searchMethod string, opts ...NamespaceOption) (*SearchMethodMutationResult, error) {
 	if collection == "" {
-		return nil, fmt.Errorf("Collection name is required")
+		return nil, fmt.Errorf("collection name is required")
 	}
 
 	if searchMethod == "" {
-		return nil, fmt.Errorf("Search method is required")
+		return nil, fmt.Errorf("search method is required")
 	}
 
 	nsOpts := &NamespaceOptions{
@@ -330,7 +330,7 @@ func RecomputeSearchMethod(collection, searchMethod string, opts ...NamespaceOpt
 	result := hostRecomputeIndex(&collection, &nsOpts.namespace, &searchMethod)
 
 	if result == nil {
-		return nil, fmt.Errorf("Failed to recompute")
+		return nil, fmt.Errorf("failed to recompute")
 	}
 
 	return result, nil
@@ -338,19 +338,19 @@ func RecomputeSearchMethod(collection, searchMethod string, opts ...NamespaceOpt
 
 func ComputeDistance(collection, searchMethod, key1, key2 string, opts ...NamespaceOption) (*CollectionSearchResultObject, error) {
 	if collection == "" {
-		return nil, fmt.Errorf("Collection name is required")
+		return nil, fmt.Errorf("collection name is required")
 	}
 
 	if searchMethod == "" {
-		return nil, fmt.Errorf("Search method is required")
+		return nil, fmt.Errorf("search method is required")
 	}
 
 	if key1 == "" {
-		return nil, fmt.Errorf("Key1 is required")
+		return nil, fmt.Errorf("key1 is required")
 	}
 
 	if key2 == "" {
-		return nil, fmt.Errorf("Key2 is required")
+		return nil, fmt.Errorf("key2 is required")
 	}
 
 	nsOpts := &NamespaceOptions{
@@ -364,7 +364,7 @@ func ComputeDistance(collection, searchMethod, key1, key2 string, opts ...Namesp
 	result := hostComputeDistance(&collection, &nsOpts.namespace, &searchMethod, &key1, &key2)
 
 	if result == nil {
-		return nil, fmt.Errorf("Failed to compute distance")
+		return nil, fmt.Errorf("failed to compute distance")
 	}
 
 	return result, nil
@@ -372,11 +372,11 @@ func ComputeDistance(collection, searchMethod, key1, key2 string, opts ...Namesp
 
 func GetText(collection, key string, opts ...NamespaceOption) (string, error) {
 	if collection == "" {
-		return "", fmt.Errorf("Collection name is required")
+		return "", fmt.Errorf("collection name is required")
 	}
 
 	if key == "" {
-		return "", fmt.Errorf("Key is required")
+		return "", fmt.Errorf("key is required")
 	}
 
 	nsOpts := &NamespaceOptions{
@@ -390,7 +390,7 @@ func GetText(collection, key string, opts ...NamespaceOption) (string, error) {
 	result := hostGetText(&collection, &nsOpts.namespace, &key)
 
 	if result == nil {
-		return "", fmt.Errorf("Failed to get text for key")
+		return "", fmt.Errorf("failed to get text for key")
 	}
 
 	return *result, nil
@@ -398,7 +398,7 @@ func GetText(collection, key string, opts ...NamespaceOption) (string, error) {
 
 func GetTexts(collection string, opts ...NamespaceOption) (map[string]string, error) {
 	if collection == "" {
-		return nil, fmt.Errorf("Collection name is required")
+		return nil, fmt.Errorf("collection name is required")
 	}
 
 	nsOpts := &NamespaceOptions{
@@ -412,7 +412,7 @@ func GetTexts(collection string, opts ...NamespaceOption) (map[string]string, er
 	result := hostDumpTexts(&collection, &nsOpts.namespace)
 
 	if result == nil {
-		return nil, fmt.Errorf("Failed to get texts")
+		return nil, fmt.Errorf("failed to get texts")
 	}
 
 	return *result, nil
@@ -420,13 +420,13 @@ func GetTexts(collection string, opts ...NamespaceOption) (map[string]string, er
 
 func GetNamespaces(collection string) ([]string, error) {
 	if collection == "" {
-		return nil, fmt.Errorf("Collection name is required")
+		return nil, fmt.Errorf("collection name is required")
 	}
 
 	result := hostGetNamespaces(&collection)
 
 	if result == nil {
-		return nil, fmt.Errorf("Failed to get namespaces")
+		return nil, fmt.Errorf("failed to get namespaces")
 	}
 
 	return *result, nil
@@ -434,15 +434,15 @@ func GetNamespaces(collection string) ([]string, error) {
 
 func GetVector(collection, searchMethod, key string, opts ...NamespaceOption) ([]float32, error) {
 	if collection == "" {
-		return nil, fmt.Errorf("Collection name is required")
+		return nil, fmt.Errorf("collection name is required")
 	}
 
 	if searchMethod == "" {
-		return nil, fmt.Errorf("Search method is required")
+		return nil, fmt.Errorf("search method is required")
 	}
 
 	if key == "" {
-		return nil, fmt.Errorf("Key is required")
+		return nil, fmt.Errorf("key is required")
 	}
 
 	nsOpts := &NamespaceOptions{
@@ -456,7 +456,7 @@ func GetVector(collection, searchMethod, key string, opts ...NamespaceOption) ([
 	result := hostGetVector(&collection, &nsOpts.namespace, &searchMethod, &key)
 
 	if result == nil {
-		return nil, fmt.Errorf("Failed to get vector for key")
+		return nil, fmt.Errorf("failed to get vector for key")
 	}
 
 	return *result, nil
@@ -464,11 +464,11 @@ func GetVector(collection, searchMethod, key string, opts ...NamespaceOption) ([
 
 func GetLabels(collection, key string, opts ...NamespaceOption) ([]string, error) {
 	if collection == "" {
-		return nil, fmt.Errorf("Collection name is required")
+		return nil, fmt.Errorf("collection name is required")
 	}
 
 	if key == "" {
-		return nil, fmt.Errorf("Key is required")
+		return nil, fmt.Errorf("key is required")
 	}
 
 	nsOpts := &NamespaceOptions{

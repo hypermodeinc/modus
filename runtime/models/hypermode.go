@@ -36,7 +36,7 @@ func getHypermodeModelEndpointUrl(model *manifest.ModelInfo) (string, error) {
 	if _hypermodeModelHost == "" {
 		_hypermodeModelHost = os.Getenv("HYPERMODE_MODEL_HOST")
 		if _hypermodeModelHost == "" {
-			return "", fmt.Errorf("Hypermode hosted models are not available in this environment")
+			return "", fmt.Errorf("hypermode hosted models are not available in this environment")
 		}
 	}
 	endpoint := fmt.Sprintf("http://%s.%s/%[1]s:predict", strings.ToLower(model.Name), _hypermodeModelHost)

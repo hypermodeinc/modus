@@ -9,6 +9,7 @@ on:
       - reopened
       - ready_for_review
     paths:
+      - .github/workflows/ci-go-lint.yml
       - "**/*.go"
       - "**/go.mod"
 
@@ -57,4 +58,4 @@ jobs:
         with:
           working-directory: ${{ matrix.dir }}
           version: latest
-          args: --timeout=10m
+          args: --timeout=10m --config=${{ github.workspace }}/.trunk/configs/.golangci.yaml

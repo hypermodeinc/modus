@@ -48,14 +48,14 @@ func GetRuntimeTypeInfo(mod wasm.Module, md *metadata.Metadata) (string, error) 
 	gbl := mod.ExportedGlobal("__rtti_base")
 	offset := uint32(gbl.Get())
 	sb.WriteString("\nRuntime type information:\n")
-	sb.WriteString(fmt.Sprintf("base: 0x%x\n", offset))
+	fmt.Fprintf(sb, "base: 0x%x\n", offset)
 
 	len, ok := mod.Memory().ReadUint32Le(offset)
 	offset += 4
 	if !ok {
 		return "", fmt.Errorf("failed to read length")
 	}
-	sb.WriteString(fmt.Sprintf("length: %v\n", len))
+	fmt.Fprintf(sb, "length: %v\n", len)
 
 	sb.WriteString("\n")
 
@@ -81,7 +81,7 @@ func GetRuntimeTypeInfo(mod wasm.Module, md *metadata.Metadata) (string, error) 
 			}
 		}
 
-		sb.WriteString(fmt.Sprintf("%v: %s\n", i, typeName))
+		fmt.Fprintf(sb, "%v: %s\n", i, typeName)
 
 		f, ok := mod.Memory().ReadUint32Le(offset)
 		offset += 4
