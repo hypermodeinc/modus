@@ -221,9 +221,9 @@ func writePreProcessHeader(b *bytes.Buffer, imports map[string]string) {
 	b.WriteString("import (\n")
 	for pkg, name := range imports {
 		if pkg == name || strings.HasSuffix(pkg, "/"+name) {
-			b.WriteString(fmt.Sprintf("\t\"%s\"\n", pkg))
+			fmt.Fprintf(b, "\t\"%s\"\n", pkg)
 		} else {
-			b.WriteString(fmt.Sprintf("\t%s \"%s\"\n", name, pkg))
+			fmt.Fprintf(b, "\t%s \"%s\"\n", name, pkg)
 		}
 	}
 	b.WriteString(")\n\n")

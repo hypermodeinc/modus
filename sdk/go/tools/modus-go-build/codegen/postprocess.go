@@ -54,9 +54,9 @@ func writePostProcessHeader(b *bytes.Buffer, meta *metadata.Metadata, imports ma
 	for pkg, name := range imports {
 		if pkg != "" && pkg != "unsafe" && pkg != meta.Module {
 			if pkg == name || strings.HasSuffix(pkg, "/"+name) {
-				b.WriteString(fmt.Sprintf("\t\"%s\"\n", pkg))
+				fmt.Fprintf(b, "\t\"%s\"\n", pkg)
 			} else {
-				b.WriteString(fmt.Sprintf("\t%s \"%s\"\n", name, pkg))
+				fmt.Fprintf(b, "\t%s \"%s\"\n", name, pkg)
 			}
 		}
 	}
@@ -97,12 +97,12 @@ func __new(id int) unsafe.Pointer {
 		ptrName := utils.GetNameForType(t.Name, imports)
 		elementName := utils.GetUnderlyingType(ptrName)
 		found = true
-		buf.WriteString(fmt.Sprintf(`	case %d:
+		fmt.Fprintf(buf, `	case %d:
 		o := new(%s)
 		p := unsafe.Pointer(o)
 		__pins[p]++
 		return p
-`, t.Id, elementName))
+`, t.Id, elementName)
 	}
 	buf.WriteString("\t}\n\n")
 	buf.WriteString("\treturn nil\n}\n")
@@ -133,12 +133,12 @@ func __make(id, size int) unsafe.Pointer {
 	for _, t := range types {
 		name := utils.GetNameForType(t.Name, imports)
 		if utils.IsSliceType(name) || utils.IsMapType(name) {
-			b.WriteString(fmt.Sprintf(`	case %d:
+			fmt.Fprintf(b, `	case %d:
 		o := make(%s, size)
 		p := unsafe.Pointer(&o)
 		__pins[p]++
 		return p
-`, t.Id, name))
+`, t.Id, name)
 		}
 	}
 
@@ -159,9 +159,9 @@ func __read_map(id int, m unsafe.Pointer) uint64 {
 		if utils.IsMapType(t.Name) {
 			found = true
 			typeName := utils.GetNameForType(t.Name, imports)
-			buf.WriteString(fmt.Sprintf(`	case %d:
+			fmt.Fprintf(buf, `	case %d:
 		return __doReadMap(*(*%s)(m))
-`, t.Id, typeName))
+`, t.Id, typeName)
 		}
 	}
 	buf.WriteString("\t}\n\n")
@@ -207,9 +207,9 @@ func __write_map(id int, m, keys, values unsafe.Pointer) {
 			kt, vt := utils.GetMapSubtypes(t.Name)
 			keyTypeName := utils.GetNameForType(kt, imports)
 			valTypeName := utils.GetNameForType(vt, imports)
-			buf.WriteString(fmt.Sprintf(`	case %d:
+			fmt.Fprintf(buf, `	case %d:
 		__doWriteMap(*(*%s)(m), *(*[]%s)(keys), *(*[]%s)(values))
-`, t.Id, typeName, keyTypeName, valTypeName))
+`, t.Id, typeName, keyTypeName, valTypeName)
 		}
 	}
 	buf.WriteString("\t}\n")

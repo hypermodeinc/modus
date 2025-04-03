@@ -95,7 +95,7 @@ func getCompilerDefaultPath() (string, error) {
 
 	path, err := exec.LookPath("tinygo")
 	if err != nil {
-		return "", fmt.Errorf("TinyGo not found in PATH.\nSee https://tinygo.org/getting-started/install for installation instructions.")
+		return "", fmt.Errorf("tinygo not found in PATH - see https://tinygo.org/getting-started/install for installation instructions")
 	}
 
 	return path, nil

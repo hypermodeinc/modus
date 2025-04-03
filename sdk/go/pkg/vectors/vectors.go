@@ -165,7 +165,7 @@ func Mean[T constraints.Integer | constraints.Float](a []T) T {
 // Min computes the minimum element in a vector.
 func Min[T constraints.Integer | constraints.Float](a []T) T {
 	assertNonEmpty(a)
-	var result T = a[0]
+	result := a[0]
 	for i := 0; i < len(a); i++ {
 		if a[i] < result {
 			result = a[i]
@@ -177,7 +177,7 @@ func Min[T constraints.Integer | constraints.Float](a []T) T {
 // Max computes the maximum element in a vector.
 func Max[T constraints.Integer | constraints.Float](a []T) T {
 	assertNonEmpty(a)
-	var result T = a[0]
+	result := a[0]
 	for i := 0; i < len(a); i++ {
 		if a[i] > result {
 			result = a[i]

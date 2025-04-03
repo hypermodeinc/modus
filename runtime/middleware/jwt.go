@@ -78,7 +78,7 @@ func Shutdown() {
 func HandleJWT(next http.Handler) http.Handler {
 	var jwtParser = jwt.NewParser()
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		var ctx context.Context = r.Context()
+		ctx := r.Context()
 		tokenStr := r.Header.Get("Authorization")
 		if tokenStr != "" {
 			if s, found := strings.CutPrefix(tokenStr, "Bearer "); found {

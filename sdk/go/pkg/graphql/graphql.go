@@ -29,7 +29,7 @@ func Execute[T any](connection, statement string, variables map[string]any) (*Re
 	response := hostExecuteQuery(&connection, &statement, &varsStr)
 
 	if response == nil {
-		return nil, errors.New("Failed to execute the GQL query.")
+		return nil, errors.New("failed to execute the GQL query")
 	}
 
 	var result Response[T]
