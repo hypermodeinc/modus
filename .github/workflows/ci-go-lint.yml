@@ -9,6 +9,7 @@ on:
       - reopened
       - ready_for_review
     paths:
+      - .github/workflows/ci-go-lint.yml
       - "**/*.go"
       - "**/go.mod"
 
