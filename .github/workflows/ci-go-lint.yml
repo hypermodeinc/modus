@@ -58,4 +58,4 @@ jobs:
         with:
           working-directory: ${{ matrix.dir }}
           version: latest
-          args: --timeout=10m
+          args: --timeout=10m --config=.trunk/configs/.golangci.yaml
