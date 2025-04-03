@@ -112,7 +112,7 @@ func GenerateTextWithTools(prompt string) (string, error) {
 					}
 
 				default:
-					return "", fmt.Errorf("Unknown tool call: %s", tc.Function.Name)
+					return "", fmt.Errorf("unknown tool call: %s", tc.Function.Name)
 				}
 
 				// Add the tool's response to the conversation.
@@ -124,7 +124,7 @@ func GenerateTextWithTools(prompt string) (string, error) {
 			return strings.TrimSpace(msg.Content), nil
 		} else {
 			// If the model didn't ask for tools, and didn't return any content, something went wrong.
-			return "", errors.New("Invalid response from model.")
+			return "", errors.New("invalid response from model")
 		}
 	}
 }
@@ -135,7 +135,7 @@ func GenerateTextWithTools(prompt string) (string, error) {
 // This function will return the current time in a given time zone.
 func getCurrentTime(tz string) (string, error) {
 	if !localtime.IsValidTimeZone(tz) {
-		return "", errors.New("Invalid time zone.")
+		return "", errors.New("invalid time zone")
 	}
 
 	now, err := localtime.NowInZone(tz)
@@ -159,7 +159,7 @@ func getUserTimeZone() string {
 func getCurrentTimeInUserTimeZone() (*struct{ Time, Zone string }, error) {
 	tz := os.Getenv("TZ")
 	if tz == "" {
-		return nil, errors.New("Cannot determine user's time zone.")
+		return nil, errors.New("cannot determine user's time zone")
 	}
 	time, err := getCurrentTime(tz)
 	if err != nil {
