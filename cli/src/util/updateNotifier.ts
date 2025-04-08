@@ -25,6 +25,7 @@ export async function checkForUpdates(currentVersion: string): Promise<void> {
     console.log();
     console.log(chalk.yellow("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"));
     console.log(chalk.yellow(`Update available! ${chalk.dim(currentVersion)} → ${chalk.greenBright(latestVersionNumber)}`));
+    console.log(chalk.yellow("Run ") + chalk.cyanBright("npm update -g @hypermode/modus-cli") + chalk.yellow(" to update."));
     console.log(chalk.yellow("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"));
     console.log();
   }
