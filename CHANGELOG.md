@@ -2,6 +2,10 @@
 
 # Change Log
 
+## 2025-04-08 - CLI 0.17.3
+
+- feat: Add update prompt on CLI usage [#811](https://github.com/hypermodeinc/modus/pull/811)
+
 ## 2025-04-01 - Runtime 0.17.8
 
 - fix: Update Hypermode api key reading for modus local dev [#805](https://github.com/hypermodeinc/modus/pull/805)
