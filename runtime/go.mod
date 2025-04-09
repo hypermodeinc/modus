@@ -49,7 +49,7 @@ require (
 	github.com/viterin/vek v0.4.2
 	github.com/wundergraph/graphql-go-tools/execution v1.2.0
 	github.com/wundergraph/graphql-go-tools/v2 v2.0.0-rc.168
-	github.com/xo/dburl v0.23.4
+	github.com/xo/dburl v0.23.6
 	golang.org/x/exp v0.0.0-20250305212735-054e65f0b394
 	golang.org/x/sys v0.32.0
 	google.golang.org/grpc v1.71.1
