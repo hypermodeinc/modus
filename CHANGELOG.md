@@ -2,10 +2,6 @@
 
 # Change Log
 
-## UNRELEASED
-
-- ci/fix: improve error handling in release-info script [#815](https://github.com/hypermodeinc/modus/pull/815)
-
 ## 2025-04-08 - Runtime 0.17.9
 
 - fix: initialize the main HTTP handler before starting background services [#812](https://github.com/hypermodeinc/modus/pull/812)
