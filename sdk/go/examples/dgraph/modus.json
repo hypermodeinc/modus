@@ -12,8 +12,7 @@
     // The {{API_KEY}} will be replaced by the secret's value at run time.
     "dgraph": {
       "type": "dgraph",
-      "grpcTarget": "frozen-mango.grpc.eu-central-1.aws.cloud.dgraph.io:443",
-      "key": "{{API_KEY}}"
+      "connString": "dgraph://example.hypermode.host:443?sslmode=verify-ca&bearertoken={{API_KEY}}"
     }
   }
 }
