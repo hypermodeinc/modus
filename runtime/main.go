@@ -41,6 +41,10 @@ func main() {
 	utils.InitSentry()
 	defer utils.FlushSentryEvents()
 
+	// Get the main handler for the HTTP server before starting the services,
+	// so it can register the endpoints as the manifest is loaded.
+	mux := httpserver.GetMainHandler()
+
 	// Start the background services
 	ctx = services.Start(ctx)
 	defer services.Stop(ctx)
@@ -50,5 +54,5 @@ func main() {
 
 	// Start the HTTP server to listen for requests.
 	// Note, this function blocks, and handles shutdown gracefully.
-	httpserver.Start(ctx, local)
+	httpserver.Start(ctx, mux, local)
 }
