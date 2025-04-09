@@ -40,7 +40,7 @@ async function getLatestVersion(owner: string, repo: string, prefix: string, inc
       return tag.slice(prefix.length);
     }
   } catch (e) {
-    console.error(e);
+    throw new Error(`Error fetching latest release tag of ${owner}/${repo}: ${e}`);
   }
 }
 
@@ -73,8 +73,7 @@ async function getAllVersions(owner: string, repo: string, prefix: string, inclu
     versions = semver.rsort(versions);
     return versions.map((v) => "v" + v);
   } catch (e) {
-    console.error(e);
-    return [];
+    throw new Error(`Error fetching release tags of ${owner}/${repo}: ${e}`);
   }
 }
 
