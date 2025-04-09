@@ -118,6 +118,7 @@ func TestMain(m *testing.M) {
 	ctx := context.Background()
 
 	// setup runtime services
+	mux := httpserver.GetMainHandler()
 	services.Start(ctx)
 	defer services.Stop(ctx)
 
@@ -125,7 +126,7 @@ func TestMain(m *testing.M) {
 	ctx, stop := context.WithCancel(ctx)
 	done := make(chan struct{})
 	go func() {
-		httpserver.Start(ctx, true)
+		httpserver.Start(ctx, mux, true)
 		close(done)
 	}()
 

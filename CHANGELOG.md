@@ -2,6 +2,10 @@
 
 # Change Log
 
+## 2025-04-08 - Runtime 0.17.9
+
+- fix: initialize the main HTTP handler before starting background services [#812](https://github.com/hypermodeinc/modus/pull/812)
+
 ## 2025-04-08 - CLI 0.17.3
 
 - feat: Add update prompt on CLI usage [#811](https://github.com/hypermodeinc/modus/pull/811)

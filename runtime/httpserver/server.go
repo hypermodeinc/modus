@@ -43,7 +43,7 @@ var warningColor = color.New(color.FgYellow)
 // ShutdownTimeout is the time to wait for the server to shutdown gracefully.
 const shutdownTimeout = 5 * time.Second
 
-func Start(ctx context.Context, local bool) {
+func Start(ctx context.Context, mux http.Handler, local bool) {
 
 	port := app.Config().Port()
 
@@ -55,19 +55,15 @@ func Start(ctx context.Context, local bool) {
 		if isIPv6Available() {
 			addresses = append(addresses, fmt.Sprintf("[::1]:%d", port))
 		}
-		startHttpServer(ctx, addresses...)
+		startHttpServer(ctx, mux, addresses...)
 	} else {
 		// Otherwise, listen on all interfaces.
 		addr := fmt.Sprintf(":%d", port)
-		startHttpServer(ctx, addr)
+		startHttpServer(ctx, mux, addr)
 	}
 }
 
-func startHttpServer(ctx context.Context, addresses ...string) {
-
-	// Get the main handler for the server.
-	// Note: This must be done first, because it registers for callback events.
-	mux := GetMainHandler()
+func startHttpServer(ctx context.Context, mux http.Handler, addresses ...string) {
 
 	// Initialize our middleware before starting the server.
 	middleware.Init(ctx)
