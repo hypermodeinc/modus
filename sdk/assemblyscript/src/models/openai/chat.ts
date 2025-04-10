@@ -24,7 +24,7 @@ export class OpenAIChatModel extends Model<OpenAIChatInput, OpenAIChatOutput> {
    * @returns An input object that can be passed to the `invoke` method.
    */
   createInput(messages: RequestMessage[]): OpenAIChatInput {
-    const model = this.info.fullName;
+    const model = this.info.fullName.toLowerCase();
     return <OpenAIChatInput>{ model, messages };
   }
 }

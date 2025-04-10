@@ -11,6 +11,7 @@ package openai
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/hypermodeinc/modus/sdk/go/pkg/models"
 )
@@ -118,7 +119,7 @@ func (m *EmbeddingsModel) CreateInput(content any) (*EmbeddingsModelInput, error
 		[][]int, [][]int8, [][]int16, [][]int32, [][]int64:
 
 		return &EmbeddingsModelInput{
-			Model: m.Info().FullName,
+			Model: strings.ToLower(m.Info().FullName),
 			Input: content,
 		}, nil
 	}

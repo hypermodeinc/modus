@@ -33,7 +33,7 @@ export class OpenAIEmbeddingsModel extends Model<
    * The input content must not exceed the maximum token limit of the model.
    */
   createInput<T>(content: T): OpenAIEmbeddingsInput {
-    const model = this.info.fullName;
+    const model = this.info.fullName.toLowerCase();
 
     switch (idof<T>()) {
       case idof<string>():
