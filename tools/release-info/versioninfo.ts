@@ -9,6 +9,7 @@
 
 import semver from "semver";
 import * as globals from "./constants.js";
+import { execSync } from "child_process";
 
 export function isPrerelease(version: string): boolean {
   if (version.startsWith("v")) {
@@ -77,70 +78,117 @@ async function getAllVersions(owner: string, repo: string, prefix: string, inclu
   }
 }
 
-const headers = {
-  Accept: "application/vnd.github.v3+json",
-  "X-GitHub-Api-Version": "2022-11-28",
-  "User-Agent": "Modus CLI",
-};
-
-async function findLatestReleaseTag(owner: string, repo: string, prefix: string, includePrerelease: boolean): Promise<string | undefined> {
-  let page = 1;
-  while (true) {
-    const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/releases?page=${page}`, { headers });
-
-    if (!response.ok) {
-      throw new Error(`Error fetching releases: ${response.statusText}`);
-    }
-
-    const releases = await response.json();
-    if (releases.length === 0) {
-      return;
-    }
-
-    for (const release of releases) {
-      if (!includePrerelease && release.prerelease) {
-        continue;
-      }
-
-      if (prefix && !release.tag_name.startsWith(prefix)) {
-        continue;
-      }
-
-      return release.tag_name;
-    }
-
-    page++;
+function execGitCommand(command: string): string {
+  try {
+    return execSync(command, {
+      encoding: "utf8",
+      timeout: 10000,
+    }).trim();
+  } catch (error) {
+    console.error(`Error executing git command: ${command}`, error);
+    throw error;
   }
 }
 
-async function getAllReleaseTags(owner: string, repo: string, prefix: string, includePrerelease: boolean): Promise<string[]> {
-  const results: string[] = [];
+async function findLatestReleaseTag(owner: string, repo: string, prefix: string, includePrerelease: boolean): Promise<string | undefined> {
+  const repoUrl = `https://github.com/${owner}/${repo}`;
+  const normalizedPrefix = prefix.endsWith("/") ? prefix : prefix;
+  const pattern = `refs/tags/${normalizedPrefix}*`;
 
-  let page = 1;
-  while (true) {
-    const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/releases?per_page=100&page=${page}`, { headers });
+  const command = `git ls-remote --refs ${repoUrl} ${pattern}`;
+  const output = execGitCommand(command);
 
-    if (!response.ok) {
-      throw new Error(`Error fetching releases: ${response.statusText}`);
-    }
-
-    const releases = await response.json();
-    if (releases.length === 0) {
-      return results;
-    }
-
-    for (const release of releases) {
-      if (!includePrerelease && release.prerelease) {
-        continue;
-      }
-
-      if (prefix && !release.tag_name.startsWith(prefix)) {
-        continue;
-      }
-
-      results.push(release.tag_name);
-    }
-
-    page++;
+  if (!output) {
+    return undefined;
   }
+
+  // Format of each line: <commit-hash>\trefs/tags/<tag-name>
+  const tags = output
+    .split("\n")
+    .map((line) => {
+      const parts = line.split("\t");
+      if (parts.length !== 2) return null;
+
+      const tagName = parts[1].replace("refs/tags/", "");
+
+      if (!tagName.startsWith(normalizedPrefix)) {
+        return null;
+      }
+
+      return tagName;
+    })
+    .filter((tag) => tag !== null) as string[];
+
+  if (tags.length === 0) {
+    return undefined;
+  }
+
+  let filteredTags = tags;
+  if (!includePrerelease) {
+    const stableVersions = tags.filter((tag) => {
+      const version = tag.slice(normalizedPrefix.length);
+      return !isPrerelease(version);
+    });
+
+    if (stableVersions.length > 0) {
+      filteredTags = stableVersions;
+    }
+  }
+
+  const versions = filteredTags.map((tag) => {
+    const version = tag.slice(normalizedPrefix.length);
+    return version.startsWith("v") ? version.slice(1) : version;
+  });
+
+  if (versions.length === 0) {
+    return undefined;
+  }
+
+  const latestVersion = semver.rsort(versions)[0];
+  return normalizedPrefix + (latestVersion.startsWith("v") ? latestVersion : "v" + latestVersion);
+}
+
+async function getAllReleaseTags(owner: string, repo: string, prefix: string, includePrerelease: boolean): Promise<string[]> {
+  const repoUrl = `https://github.com/${owner}/${repo}`;
+  const normalizedPrefix = prefix.endsWith("/") ? prefix : prefix;
+  const pattern = `refs/tags/${normalizedPrefix}*`;
+
+  const command = `git ls-remote --refs ${repoUrl} ${pattern}`;
+  const output = execGitCommand(command);
+
+  if (!output) {
+    return [];
+  }
+
+  // Format of each line: <commit-hash>\trefs/tags/<tag-name>
+  const tags = output
+    .split("\n")
+    .map((line) => {
+      const parts = line.split("\t");
+      if (parts.length !== 2) return null;
+
+      // Extract tag name from refs/tags/prefix/vX.Y.Z
+      const tagName = parts[1].replace("refs/tags/", "");
+
+      // Skip if it doesn't start with the prefix
+      if (!tagName.startsWith(normalizedPrefix)) {
+        return null;
+      }
+
+      return tagName;
+    })
+    .filter((tag) => tag !== null) as string[];
+
+  if (!includePrerelease) {
+    const stableVersions = tags.filter((tag) => {
+      const version = tag.slice(normalizedPrefix.length);
+      return !isPrerelease(version);
+    });
+
+    if (stableVersions.length > 0) {
+      return stableVersions;
+    }
+  }
+
+  return tags;
 }
