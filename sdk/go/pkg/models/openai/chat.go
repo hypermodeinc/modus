@@ -1173,7 +1173,7 @@ type FunctionDefinition struct {
 // Creates an input object for the OpenAI Chat API.
 func (m *ChatModel) CreateInput(messages ...RequestMessage) (*ChatModelInput, error) {
 	return &ChatModelInput{
-		Model:             m.Info().FullName,
+		Model:             strings.ToLower(m.Info().FullName),
 		Messages:          messages,
 		ResponseFormat:    ResponseFormatText,
 		Temperature:       1.0,
