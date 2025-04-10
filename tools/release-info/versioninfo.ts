@@ -90,20 +90,14 @@ function execGitCommand(command: string): string {
   }
 }
 
-async function findLatestReleaseTag(owner: string, repo: string, prefix: string, includePrerelease: boolean): Promise<string | undefined> {
-  const repoUrl = `https://github.com/${owner}/${repo}`;
-  const normalizedPrefix = prefix.endsWith("/") ? prefix : prefix;
-  const pattern = `refs/tags/${normalizedPrefix}*`;
-
-  const command = `git ls-remote --refs ${repoUrl} ${pattern}`;
-  const output = execGitCommand(command);
-
+// Parse git ls-remote output, where each line is of the form
+// <commit-hash>\trefs/tags/<tag-name>
+function parseGitTagsOutput(output: string, normalizedPrefix: string): string[] {
   if (!output) {
-    return undefined;
+    return [];
   }
 
-  // Format of each line: <commit-hash>\trefs/tags/<tag-name>
-  const tags = output
+  return output
     .split("\n")
     .map((line) => {
       const parts = line.split("\t");
@@ -118,7 +112,17 @@ async function findLatestReleaseTag(owner: string, repo: string, prefix: string,
       return tagName;
     })
     .filter((tag) => tag !== null) as string[];
+}
 
+async function findLatestReleaseTag(owner: string, repo: string, prefix: string, includePrerelease: boolean): Promise<string | undefined> {
+  const repoUrl = `https://github.com/${owner}/${repo}`;
+  const normalizedPrefix = prefix.endsWith("/") ? prefix : prefix;
+  const pattern = `refs/tags/${normalizedPrefix}*`;
+
+  const command = `git ls-remote --refs ${repoUrl} ${pattern}`;
+  const output = execGitCommand(command);
+
+  const tags = parseGitTagsOutput(output, normalizedPrefix);
   if (tags.length === 0) {
     return undefined;
   }
@@ -156,29 +160,7 @@ async function getAllReleaseTags(owner: string, repo: string, prefix: string, in
   const command = `git ls-remote --refs ${repoUrl} ${pattern}`;
   const output = execGitCommand(command);
 
-  if (!output) {
-    return [];
-  }
-
-  // Format of each line: <commit-hash>\trefs/tags/<tag-name>
-  const tags = output
-    .split("\n")
-    .map((line) => {
-      const parts = line.split("\t");
-      if (parts.length !== 2) return null;
-
-      // Extract tag name from refs/tags/prefix/vX.Y.Z
-      const tagName = parts[1].replace("refs/tags/", "");
-
-      // Skip if it doesn't start with the prefix
-      if (!tagName.startsWith(normalizedPrefix)) {
-        return null;
-      }
-
-      return tagName;
-    })
-    .filter((tag) => tag !== null) as string[];
-
+  const tags = parseGitTagsOutput(output, normalizedPrefix);
   if (!includePrerelease) {
     const stableVersions = tags.filter((tag) => {
       const version = tag.slice(normalizedPrefix.length);
