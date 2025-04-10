@@ -154,7 +154,7 @@ async function findLatestReleaseTag(owner: string, repo: string, prefix: string,
 
 async function getAllReleaseTags(owner: string, repo: string, prefix: string, includePrerelease: boolean): Promise<string[]> {
   const repoUrl = `https://github.com/${owner}/${repo}`;
-  const normalizedPrefix = prefix.endsWith("/") ? prefix : prefix;
+  const normalizedPrefix = normalizePrefix(prefix);
   const pattern = `refs/tags/${normalizedPrefix}*`;
 
   const command = `git ls-remote --refs ${repoUrl} ${pattern}`;
