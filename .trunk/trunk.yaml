@@ -40,11 +40,13 @@ lint:
     - trufflehog@3.88.23
     - yamllint@1.37.0
   definitions:
-    - name: osv-scanner
+    - name: golangci-lint2
       commands:
-        - name: scan
+        - name: lint
           run:
-            osv-scanner --lockfile=${target} --format json --config=.trunk/configs/osv-scanner.toml
+            golangci-lint run --output.sarif.path=${tmpfile} --timeout=10m
+            --config=${workspace}/.trunk/configs/.golangci.yaml --concurrency=1
+            --allow-parallel-runners --issues-exit-code=0 ${target}
 actions:
   enabled:
     - trunk-announce
