@@ -8,7 +8,7 @@ cli:
 plugins:
   sources:
     - id: trunk
-      ref: v1.6.7
+      ref: v1.6.8
       uri: https://github.com/trunk-io/plugins
 
 # Many linters and tools depend on runtimes - configure them here. (https://docs.trunk.io/runtimes)
@@ -23,21 +23,21 @@ lint:
   enabled:
     - taplo@0.9.3
     - trivy@0.61.0
-    - renovate@39.230.2
+    - renovate@39.238.1
     - actionlint@1.7.7
-    - checkov@3.2.396
+    - checkov@3.2.403
     - git-diff-check
     - gofmt@1.20.4
-    - golangci-lint@1.64.8
+    - golangci-lint2@2.0.2
     - hadolint@2.12.1-beta
     - markdownlint@0.44.0
-    - osv-scanner@2.0.0
+    - osv-scanner@2.0.1
     - prettier@3.5.3:
         packages:
           - assemblyscript-prettier@3.0.1
     - shellcheck@0.10.0
     - shfmt@3.6.0
-    - trufflehog@3.88.20
+    - trufflehog@3.88.23
     - yamllint@1.37.0
   definitions:
     - name: osv-scanner
