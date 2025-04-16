@@ -13,16 +13,16 @@ import (
 	"fmt"
 
 	"github.com/hypermodeinc/modus/runtime/collections/index/interfaces"
-	"github.com/puzpuzpuz/xsync/v3"
+	"github.com/puzpuzpuz/xsync/v4"
 )
 
 type collection struct {
-	collectionNamespaceMap *xsync.MapOf[string, interfaces.CollectionNamespace]
+	collectionNamespaceMap *xsync.Map[string, interfaces.CollectionNamespace]
 }
 
 func newCollection() *collection {
 	return &collection{
-		collectionNamespaceMap: xsync.NewMapOf[string, interfaces.CollectionNamespace](),
+		collectionNamespaceMap: xsync.NewMap[string, interfaces.CollectionNamespace](),
 	}
 }
 

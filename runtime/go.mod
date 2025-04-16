@@ -34,7 +34,7 @@ require (
 	github.com/neo4j/neo4j-go-driver/v5 v5.28.0
 	github.com/prometheus/client_golang v1.22.0
 	github.com/prometheus/common v0.63.0
-	github.com/puzpuzpuz/xsync/v3 v3.5.1
+	github.com/puzpuzpuz/xsync/v4 v4.0.0
 	github.com/rs/cors v1.11.1
 	github.com/rs/xid v1.6.0
 	github.com/rs/zerolog v1.34.0

@@ -13,18 +13,18 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/puzpuzpuz/xsync/v3"
+	"github.com/puzpuzpuz/xsync/v4"
 )
 
 var dsr = newDSRegistry()
 
 type dsRegistry struct {
-	cache *xsync.MapOf[string, dataSource]
+	cache *xsync.Map[string, dataSource]
 }
 
 func newDSRegistry() *dsRegistry {
 	return &dsRegistry{
-		cache: xsync.NewMapOf[string, dataSource](),
+		cache: xsync.NewMap[string, dataSource](),
 	}
 }
 
@@ -39,7 +39,7 @@ func (r *dsRegistry) shutdown() {
 
 func (r *dsRegistry) getDataSource(ctx context.Context, dsName, dsType string) (dataSource, error) {
 	var creationErr error
-	ds, _ := r.cache.LoadOrTryCompute(dsName, func() (dataSource, bool) {
+	ds, _ := r.cache.LoadOrCompute(dsName, func() (dataSource, bool) {
 		switch dsType {
 		case "postgresql":
 			if ds, err := newPostgresqlDS(ctx, dsName); err != nil {

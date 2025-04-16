@@ -19,7 +19,7 @@ import (
 	"github.com/hypermodeinc/modus/runtime/collections/index/interfaces"
 	"github.com/hypermodeinc/modus/runtime/db"
 	"github.com/hypermodeinc/modus/runtime/logger"
-	"github.com/puzpuzpuz/xsync/v3"
+	"github.com/puzpuzpuz/xsync/v4"
 )
 
 const collectionFactoryWriteInterval = 1
@@ -41,7 +41,7 @@ func newCollectionFactory() *collectionFactory {
 	return &collectionFactory{
 		collectionMap: map[string]*collection{
 			"": {
-				collectionNamespaceMap: xsync.NewMapOf[string, interfaces.CollectionNamespace](),
+				collectionNamespaceMap: xsync.NewMap[string, interfaces.CollectionNamespace](),
 			},
 		},
 		quit: make(chan struct{}),

@@ -13,7 +13,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/puzpuzpuz/xsync/v3"
+	"github.com/puzpuzpuz/xsync/v4"
 )
 
 type tzInfo struct {
@@ -22,7 +22,7 @@ type tzInfo struct {
 }
 
 var systemTimeZone string
-var tzCache = *xsync.NewMapOf[string, *tzInfo]()
+var tzCache = *xsync.NewMap[string, *tzInfo]()
 
 func init() {
 	if tz, err := getSystemLocalTimeZone(); err == nil {
