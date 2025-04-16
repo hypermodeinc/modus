@@ -24,12 +24,12 @@ import (
 var n4j = newNeo4jRegistry()
 
 type neo4jRegistry struct {
-	cache *xsync.MapOf[string, neo4j.DriverWithContext]
+	cache *xsync.Map[string, neo4j.DriverWithContext]
 }
 
 func newNeo4jRegistry() *neo4jRegistry {
 	return &neo4jRegistry{
-		cache: xsync.NewMapOf[string, neo4j.DriverWithContext](),
+		cache: xsync.NewMap[string, neo4j.DriverWithContext](),
 	}
 }
 
@@ -44,7 +44,7 @@ func CloseDrivers(ctx context.Context) {
 
 func (nr *neo4jRegistry) getDriver(ctx context.Context, n4jName string) (neo4j.DriverWithContext, error) {
 	var creationErr error
-	driver, _ := n4j.cache.LoadOrTryCompute(n4jName, func() (neo4j.DriverWithContext, bool) {
+	driver, _ := n4j.cache.LoadOrCompute(n4jName, func() (neo4j.DriverWithContext, bool) {
 		driver, err := createDriver(ctx, n4jName)
 		if err != nil {
 			creationErr = err

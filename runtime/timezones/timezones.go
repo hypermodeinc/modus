@@ -22,7 +22,7 @@ type tzInfo struct {
 }
 
 var systemTimeZone string
-var tzCache = *xsync.NewMapOf[string, *tzInfo]()
+var tzCache = *xsync.NewMap[string, *tzInfo]()
 
 func init() {
 	if tz, err := getSystemLocalTimeZone(); err == nil {

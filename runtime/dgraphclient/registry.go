@@ -27,12 +27,12 @@ import (
 var dgr = newDgraphRegistry()
 
 type dgraphRegistry struct {
-	cache *xsync.MapOf[string, *dgraphConnector]
+	cache *xsync.Map[string, *dgraphConnector]
 }
 
 func newDgraphRegistry() *dgraphRegistry {
 	return &dgraphRegistry{
-		cache: xsync.NewMapOf[string, *dgraphConnector](),
+		cache: xsync.NewMap[string, *dgraphConnector](),
 	}
 }
 
@@ -47,7 +47,7 @@ func ShutdownConns() {
 
 func (dr *dgraphRegistry) getDgraphConnector(ctx context.Context, dgName string) (*dgraphConnector, error) {
 	var creationErr error
-	ds, _ := dr.cache.LoadOrTryCompute(dgName, func() (*dgraphConnector, bool) {
+	ds, _ := dr.cache.LoadOrCompute(dgName, func() (*dgraphConnector, bool) {
 		conn, err := createConnector(ctx, dgName)
 		if err != nil {
 			creationErr = err

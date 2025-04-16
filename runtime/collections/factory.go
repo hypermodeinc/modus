@@ -41,7 +41,7 @@ func newCollectionFactory() *collectionFactory {
 	return &collectionFactory{
 		collectionMap: map[string]*collection{
 			"": {
-				collectionNamespaceMap: xsync.NewMapOf[string, interfaces.CollectionNamespace](),
+				collectionNamespaceMap: xsync.NewMap[string, interfaces.CollectionNamespace](),
 			},
 		},
 		quit: make(chan struct{}),

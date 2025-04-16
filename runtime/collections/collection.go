@@ -17,12 +17,12 @@ import (
 )
 
 type collection struct {
-	collectionNamespaceMap *xsync.MapOf[string, interfaces.CollectionNamespace]
+	collectionNamespaceMap *xsync.Map[string, interfaces.CollectionNamespace]
 }
 
 func newCollection() *collection {
 	return &collection{
-		collectionNamespaceMap: xsync.NewMapOf[string, interfaces.CollectionNamespace](),
+		collectionNamespaceMap: xsync.NewMap[string, interfaces.CollectionNamespace](),
 	}
 }
 
