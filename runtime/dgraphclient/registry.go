@@ -19,7 +19,7 @@ import (
 	"github.com/hypermodeinc/modus/runtime/secrets"
 
 	"github.com/dgraph-io/dgo/v240"
-	"github.com/puzpuzpuz/xsync/v3"
+	"github.com/puzpuzpuz/xsync/v4"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )

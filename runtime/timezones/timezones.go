@@ -13,7 +13,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/puzpuzpuz/xsync/v3"
+	"github.com/puzpuzpuz/xsync/v4"
 )
 
 type tzInfo struct {

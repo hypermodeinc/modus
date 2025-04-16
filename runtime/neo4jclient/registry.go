@@ -18,7 +18,7 @@ import (
 	"github.com/hypermodeinc/modus/runtime/secrets"
 
 	"github.com/neo4j/neo4j-go-driver/v5/neo4j"
-	"github.com/puzpuzpuz/xsync/v3"
+	"github.com/puzpuzpuz/xsync/v4"
 )
 
 var n4j = newNeo4jRegistry()

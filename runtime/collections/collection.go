@@ -13,7 +13,7 @@ import (
 	"fmt"
 
 	"github.com/hypermodeinc/modus/runtime/collections/index/interfaces"
-	"github.com/puzpuzpuz/xsync/v3"
+	"github.com/puzpuzpuz/xsync/v4"
 )
 
 type collection struct {

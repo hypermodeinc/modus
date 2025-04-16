@@ -13,7 +13,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/puzpuzpuz/xsync/v3"
+	"github.com/puzpuzpuz/xsync/v4"
 )
 
 var dsr = newDSRegistry()
