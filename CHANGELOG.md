@@ -2,7 +2,7 @@
 
 # Change Log
 
-## UNRELEASED
+## 2025-04-18 - Runtime 0.17.10
 
 - fix: return immediately after encountering JWT parse error [#826](https://github.com/hypermodeinc/modus/pull/826)
 
