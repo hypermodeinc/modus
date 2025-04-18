@@ -81,7 +81,6 @@ func HandleJWT(next http.Handler) http.Handler {
 			if s, found := strings.CutPrefix(tokenStr, "Bearer "); found {
 				tokenStr = s
 			} else {
-				logger.Error(ctx).Msg("Invalid JWT token format, Bearer required")
 				http.Error(w, "Invalid JWT token format, Bearer required", http.StatusBadRequest)
 				return
 			}
@@ -112,7 +111,6 @@ func HandleJWT(next http.Handler) http.Handler {
 		}
 
 		if tokenStr == "" {
-			logger.Error(ctx).Msg("JWT token not found")
 			http.Error(w, "Access Denied", http.StatusUnauthorized)
 			return
 		}
@@ -148,7 +146,6 @@ func HandleJWT(next http.Handler) http.Handler {
 			}
 		}
 		if !found {
-			logger.Error(ctx).Err(err).Msg("JWT parse error")
 			http.Error(w, "Access Denied", http.StatusUnauthorized)
 			return
 		}
