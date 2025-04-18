@@ -2,6 +2,10 @@
 
 # Change Log
 
+## 2025-04-18 - Runtime 0.17.10
+
+- fix: return immediately after encountering JWT parse error [#826](https://github.com/hypermodeinc/modus/pull/826)
+
 ## 2025-04-09 - AssemblyScript SDK 0.17.5
 
 - chore: convert model name to lowercase in OpenAI Models SDK [#818](https://github.com/hypermodeinc/modus/pull/818)
