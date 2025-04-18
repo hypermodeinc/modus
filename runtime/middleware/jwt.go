@@ -150,6 +150,7 @@ func HandleJWT(next http.Handler) http.Handler {
 		if !found {
 			logger.Error(ctx).Err(err).Msg("JWT parse error")
 			http.Error(w, "Access Denied", http.StatusUnauthorized)
+			return
 		}
 
 		if claims, ok := token.Claims.(jwt.MapClaims); ok {
