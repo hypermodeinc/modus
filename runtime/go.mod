@@ -13,7 +13,7 @@ require (
 	github.com/buger/jsonparser v1.1.1
 	github.com/chewxy/math32 v1.11.1
 	github.com/dgraph-io/dgo/v240 v240.2.0
-	github.com/docker/docker v28.0.4+incompatible
+	github.com/docker/docker v28.1.1+incompatible
 	github.com/docker/go-connections v0.5.0
 	github.com/fatih/color v1.18.0
 	github.com/getsentry/sentry-go v0.32.0
@@ -26,7 +26,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/hypermodeinc/modus/lib/manifest v0.17.1
 	github.com/hypermodeinc/modus/lib/metadata v0.15.0
-	github.com/hypermodeinc/modusdb v0.0.0-20250409075516-f6cdea3f9dc9
+	github.com/hypermodeinc/modusdb v0.0.0-20250416120035-6d80353c1351
 	github.com/jackc/pgx/v5 v5.7.4
 	github.com/jensneuse/abstractlogger v0.0.4
 	github.com/joho/godotenv v1.5.1
@@ -43,11 +43,11 @@ require (
 	github.com/tetratelabs/wazero v1.9.0
 	github.com/tidwall/gjson v1.18.0
 	github.com/tidwall/sjson v1.2.5
-	github.com/twpayne/go-geom v1.6.0
+	github.com/twpayne/go-geom v1.6.1
 	github.com/viterin/vek v0.4.2
 	github.com/wundergraph/graphql-go-tools/execution v1.2.0
-	github.com/wundergraph/graphql-go-tools/v2 v2.0.0-rc.169
-	github.com/xo/dburl v0.23.6
+	github.com/wundergraph/graphql-go-tools/v2 v2.0.0-rc.170
+	github.com/xo/dburl v0.23.7
 	golang.org/x/exp v0.0.0-20250408133849-7e4ce0ab07d0
 	golang.org/x/sys v0.32.0
 	google.golang.org/grpc v1.71.1
@@ -92,7 +92,7 @@ require (
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.4.0 // indirect
-	github.com/dgraph-io/badger/v4 v4.6.0 // indirect
+	github.com/dgraph-io/badger/v4 v4.7.0 // indirect
 	github.com/dgraph-io/gqlgen v0.13.2 // indirect
 	github.com/dgraph-io/gqlparser/v2 v2.2.2 // indirect
 	github.com/dgraph-io/ristretto/v2 v2.2.0 // indirect
@@ -167,6 +167,7 @@ require (
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/mitchellh/mapstructure v1.5.1-0.20231216201459-8508981c8b6c // indirect
 	github.com/moby/docker-image-spec v1.3.1 // indirect
+	github.com/moby/sys/atomicwriter v0.1.0 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
@@ -212,14 +213,14 @@ require (
 	go.opencensus.io v0.24.0 // indirect
 	go.opentelemetry.io/auto/sdk v1.1.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.59.0 // indirect
-	go.opentelemetry.io/otel v1.34.0 // indirect
-	go.opentelemetry.io/otel/metric v1.34.0 // indirect
-	go.opentelemetry.io/otel/trace v1.34.0 // indirect
+	go.opentelemetry.io/otel v1.35.0 // indirect
+	go.opentelemetry.io/otel/metric v1.35.0 // indirect
+	go.opentelemetry.io/otel/trace v1.35.0 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.27.0 // indirect
 	golang.org/x/crypto v0.36.0 // indirect
-	golang.org/x/net v0.37.0 // indirect
+	golang.org/x/net v0.38.0 // indirect
 	golang.org/x/sync v0.13.0 // indirect
 	golang.org/x/term v0.30.0 // indirect
 	golang.org/x/text v0.24.0 // indirect
