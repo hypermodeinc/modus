@@ -32,6 +32,7 @@ import (
 	"github.com/wundergraph/graphql-go-tools/v2/pkg/engine/resolve"
 	"github.com/wundergraph/graphql-go-tools/v2/pkg/graphqlerrors"
 	"github.com/wundergraph/graphql-go-tools/v2/pkg/operationreport"
+	"slices"
 )
 
 var GraphQLRequestHandler = http.HandlerFunc(handleGraphQLRequest)
@@ -172,7 +173,7 @@ func handleGraphQLRequest(w http.ResponseWriter, r *http.Request) {
 				if f := q.Get("fields"); f.Exists() && f.Type == gjson.Null {
 					response[f.Index] = '['
 					response[f.Index+1] = ']'
-					response = append(response[:f.Index+2], response[f.Index+4:]...)
+					response = slices.Delete(response, f.Index+2, f.Index+4)
 				}
 			}
 		}

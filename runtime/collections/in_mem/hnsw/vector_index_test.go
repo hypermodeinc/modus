@@ -15,6 +15,7 @@ import (
 	"testing"
 
 	"github.com/hypermodeinc/modus/runtime/collections/utils"
+	"slices"
 )
 
 func TestMultipleSequentialVectorIndexes(t *testing.T) {
@@ -36,7 +37,7 @@ func TestMultipleSequentialVectorIndexes(t *testing.T) {
 	numIndexes := 20
 
 	// Create and initialize the indexes
-	for i := 0; i < numIndexes; i++ {
+	for i := range numIndexes {
 		wg.Add(1)
 
 		go func(i int) {
@@ -52,7 +53,7 @@ func TestMultipleSequentialVectorIndexes(t *testing.T) {
 			for j := range baseTextIds {
 				textIds[j] = baseTextIds[j] + int64(i*len(baseTextIds))
 				keys[j] = baseKeys[j] + fmt.Sprint(i)
-				vecs[j] = append([]float32{}, baseVecs[j]...)
+				vecs[j] = slices.Clone(baseVecs[j])
 				for k := range vecs[j] {
 					vecs[j][k] += float32(i) / 10
 				}

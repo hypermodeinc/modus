@@ -47,7 +47,7 @@ func BytesAsFloatArray(encoded []byte, retVal *[]float32) {
 	if resultLen == 0 {
 		return
 	}
-	for i := 0; i < resultLen; i++ {
+	for range resultLen {
 		// Assume LittleEndian for encoding since this is
 		// the assumption elsewhere when reading from client.
 		// See dgraph-io/dgo/protos/api.pb.go

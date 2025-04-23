@@ -35,10 +35,7 @@ func batchInsertVectorsToMemory(ctx context.Context, vectorIndex interfaces.Vect
 		return errors.New("mismatch in vectors, keys, and textIds")
 	}
 	for i := 0; i < len(textIds); i += batchSize {
-		end := i + batchSize
-		if end > len(textIds) {
-			end = len(textIds)
-		}
+		end := min(i+batchSize, len(textIds))
 		textIdsBatch := textIds[i:end]
 		vectorIdsBatch := vectorIds[i:end]
 		keysBatch := keys[i:end]
@@ -212,10 +209,7 @@ func processTexts(ctx context.Context, col interfaces.CollectionNamespace, vecto
 		return fmt.Errorf("mismatch in keys and texts")
 	}
 	for i := 0; i < len(keys); i += batchSize {
-		end := i + batchSize
-		if end > len(keys) {
-			end = len(keys)
-		}
+		end := min(i+batchSize, len(keys))
 		keysBatch := keys[i:end]
 		textsBatch := texts[i:end]
 

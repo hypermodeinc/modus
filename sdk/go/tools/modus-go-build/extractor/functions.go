@@ -167,14 +167,14 @@ func findRequiredTypes(f *types.Func, m map[string]types.Type) {
 	sig := f.Type().(*types.Signature)
 
 	if params := sig.Params(); params != nil {
-		for i := 0; i < params.Len(); i++ {
+		for i := range params.Len() {
 			t := params.At(i).Type()
 			addRequiredTypes(t, m)
 		}
 	}
 
 	if results := sig.Results(); results != nil {
-		for i := 0; i < results.Len(); i++ {
+		for i := range results.Len() {
 			t := results.At(i).Type()
 			addRequiredTypes(t, m)
 		}
@@ -215,7 +215,7 @@ func addRequiredTypes(t types.Type, m map[string]types.Type) bool {
 		}
 
 		if s, ok := u.(*types.Struct); ok {
-			for i := 0; i < s.NumFields(); i++ {
+			for i := range s.NumFields() {
 				addRequiredTypes(s.Field(i).Type(), m)
 			}
 		}

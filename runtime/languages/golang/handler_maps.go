@@ -116,13 +116,13 @@ func (h *mapHandler) Read(ctx context.Context, wa langsupport.WasmAdapter, offse
 	if rtKey.Comparable() {
 		// return a map
 		m := reflect.MakeMapWithSize(h.typeInfo.ReflectedType(), size)
-		for i := 0; i < size; i++ {
+		for i := range size {
 			m.SetMapIndex(rvKeys.Index(i), rvVals.Index(i))
 		}
 		return m.Interface(), nil
 	} else {
 		s := reflect.MakeSlice(h.rtPseudoMapSlice, size, size)
-		for i := 0; i < size; i++ {
+		for i := range size {
 			s.Index(i).Field(0).Set(rvKeys.Index(i))
 			s.Index(i).Field(1).Set(rvVals.Index(i))
 		}

@@ -152,7 +152,7 @@ func sentryBeforeSendTransaction(event *sentry.Event, hint *sentry.EventHint) *s
 // Include any extra information that may be useful for debugging.
 func sentryAddExtras(event *sentry.Event) {
 	if event.Extra == nil {
-		event.Extra = make(map[string]interface{})
+		event.Extra = make(map[string]any)
 	}
 
 	// Capture the k8s namespace environment variable.

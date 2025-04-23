@@ -121,7 +121,7 @@ func DivideNumberInPlace[T constraints.Integer | constraints.Float](a []T, b T) 
 func Dot[T constraints.Integer | constraints.Float](a, b []T) T {
 	assertEqualLength(a, b)
 	var result T = 0
-	for i := 0; i < len(a); i++ {
+	for i := range a {
 		result += a[i] * b[i]
 	}
 	return result
@@ -150,7 +150,7 @@ func Sum[T constraints.Integer | constraints.Float](a []T) T {
 // Product computes the product of all elements in a vector.
 func Product[T constraints.Integer | constraints.Float](a []T) T {
 	var result T = 1
-	for i := 0; i < len(a); i++ {
+	for i := range a {
 		result *= a[i]
 	}
 	return result
@@ -166,7 +166,7 @@ func Mean[T constraints.Integer | constraints.Float](a []T) T {
 func Min[T constraints.Integer | constraints.Float](a []T) T {
 	assertNonEmpty(a)
 	result := a[0]
-	for i := 0; i < len(a); i++ {
+	for i := range a {
 		if a[i] < result {
 			result = a[i]
 		}
@@ -178,7 +178,7 @@ func Min[T constraints.Integer | constraints.Float](a []T) T {
 func Max[T constraints.Integer | constraints.Float](a []T) T {
 	assertNonEmpty(a)
 	result := a[0]
-	for i := 0; i < len(a); i++ {
+	for i := range a {
 		if a[i] > result {
 			result = a[i]
 		}
@@ -211,7 +211,7 @@ func AbsInPlace[T constraints.Integer | constraints.Float](a []T) {
 func EuclidianDistance[T constraints.Integer | constraints.Float](a, b []T) float64 {
 	assertEqualLength(a, b)
 	var result float64 = 0
-	for i := 0; i < len(a); i++ {
+	for i := range a {
 		result += math.Pow(float64(a[i]-b[i]), 2)
 	}
 	return math.Sqrt(result)

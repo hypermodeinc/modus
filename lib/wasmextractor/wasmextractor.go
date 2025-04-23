@@ -127,7 +127,7 @@ func readImports(data []byte) []WasmItem {
 
 	imports := make([]WasmItem, numItems)
 
-	for i := 0; i < int(numItems); i++ {
+	for i := range int(numItems) {
 		moduleLen, n := binary.Uvarint(data[offset:])
 		offset += n
 
@@ -163,7 +163,7 @@ func readExports(data []byte) []WasmItem {
 
 	exports := make([]WasmItem, numItems)
 
-	for i := 0; i < int(numItems); i++ {
+	for i := range int(numItems) {
 		fieldLen, n := binary.Uvarint(data[offset:])
 		offset += n
 

@@ -48,8 +48,8 @@ func TestCosineSimilarity(t *testing.T) {
 func BenchmarkCosineSimilarity(b *testing.B) {
 	v1 := randFloats(1536)
 	v2 := randFloats(1536)
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+
+	for b.Loop() {
 		_, err := CosineDistance(v1, v2)
 		if err != nil {
 			b.Fatal(err)

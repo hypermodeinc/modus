@@ -120,7 +120,7 @@ func writeGraphQLResponse(ctx context.Context, out *bytes.Buffer, result any, gq
 		gqlErrors = append(gqlErrors, resolve.GraphQLError{
 			Message: fnErr.Error(),
 			Path:    []any{fieldName},
-			Extensions: map[string]interface{}{
+			Extensions: map[string]any{
 				"level": "error",
 			},
 		})
@@ -402,7 +402,7 @@ func transformErrors(messages []utils.LogMessage, ci *callInfo) []resolve.GraphQ
 			errors = append(errors, resolve.GraphQLError{
 				Message: msg.Message,
 				Path:    []any{ci.FieldInfo.AliasOrName()},
-				Extensions: map[string]interface{}{
+				Extensions: map[string]any{
 					"level": msg.Level,
 				},
 			})

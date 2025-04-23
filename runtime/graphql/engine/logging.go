@@ -60,8 +60,8 @@ func (l *loggerAdapter) LevelLogger(level abstractlogger.Level) abstractlogger.L
 	}
 }
 
-func (l *loggerAdapter) fields(fields []abstractlogger.Field) map[string]interface{} {
-	out := make(map[string]interface{}, len(fields))
+func (l *loggerAdapter) fields(fields []abstractlogger.Field) map[string]any {
+	out := make(map[string]any, len(fields))
 	for _, f := range fields {
 
 		lf := *convertLoggerField(&f)
@@ -92,7 +92,7 @@ type LevelLoggerAdapter struct {
 	level abstractlogger.Level
 }
 
-func (s *LevelLoggerAdapter) Println(v ...interface{}) {
+func (s *LevelLoggerAdapter) Println(v ...any) {
 	switch s.level {
 	case abstractlogger.DebugLevel:
 		s.l.Debug().Msgf("%v", v[0])
@@ -109,7 +109,7 @@ func (s *LevelLoggerAdapter) Println(v ...interface{}) {
 	}
 }
 
-func (s *LevelLoggerAdapter) Printf(format string, v ...interface{}) {
+func (s *LevelLoggerAdapter) Printf(format string, v ...any) {
 	switch s.level {
 	case abstractlogger.DebugLevel:
 		s.l.Debug().Msgf(format, v...)
@@ -137,7 +137,7 @@ type loggerField struct {
 	stringsValue   []string
 	intValue       int64
 	byteValue      []byte
-	interfaceValue interface{}
+	interfaceValue any
 	errorValue     error
 }
 

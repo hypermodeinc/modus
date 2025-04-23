@@ -186,7 +186,7 @@ func TestStructContainingMapOutput_string_string(t *testing.T) {
 
 func makeTestMap(size int) map[string]string {
 	m := make(map[string]string, size)
-	for i := 0; i < size; i++ {
+	for i := range size {
 		key := fmt.Sprintf("key_%03d", i)
 		val := fmt.Sprintf("val_%03d", i)
 		m[key] = val

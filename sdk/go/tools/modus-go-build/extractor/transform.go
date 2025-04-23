@@ -33,7 +33,7 @@ func transformStruct(name string, s *types.Struct, pkgs map[string]*packages.Pac
 	structDocs := getDocs(structDecl.Doc)
 
 	fields := make([]*metadata.Field, s.NumFields())
-	for i := 0; i < s.NumFields(); i++ {
+	for i := range s.NumFields() {
 		f := s.Field(i)
 
 		fieldDocs := getDocs(structType.Fields.List[i].Doc)
@@ -73,7 +73,7 @@ func transformFunc(name string, f *types.Func, pkgs map[string]*packages.Package
 
 	if params != nil {
 		ret.Parameters = make([]*metadata.Parameter, params.Len())
-		for i := 0; i < params.Len(); i++ {
+		for i := range params.Len() {
 			p := params.At(i)
 			ret.Parameters[i] = &metadata.Parameter{
 				Name: p.Name(),
@@ -84,7 +84,7 @@ func transformFunc(name string, f *types.Func, pkgs map[string]*packages.Package
 
 	if results != nil {
 		ret.Results = make([]*metadata.Result, results.Len())
-		for i := 0; i < results.Len(); i++ {
+		for i := range results.Len() {
 			r := results.At(i)
 			ret.Results[i] = &metadata.Result{
 				Name: r.Name(),

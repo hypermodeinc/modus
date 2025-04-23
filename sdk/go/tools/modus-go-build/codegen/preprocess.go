@@ -306,7 +306,7 @@ func writeFuncWrappers(b *bytes.Buffer, pkg *packages.Package, imports map[strin
 					if n == 0 {
 						n = 1
 					}
-					for j := 0; j < n; j++ {
+					for j := range n {
 						b.WriteByte('r')
 						b.WriteString(strconv.Itoa(i + j))
 						b.WriteString(", ")
@@ -324,7 +324,7 @@ func writeFuncWrappers(b *bytes.Buffer, pkg *packages.Package, imports map[strin
 
 			if numResults > 0 {
 				b.WriteString("\treturn ")
-				for i := 0; i < numResults; i++ {
+				for i := range numResults {
 					if i > 0 {
 						b.WriteString(", ")
 					}

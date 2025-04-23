@@ -43,7 +43,7 @@ func TestHeap(t *testing.T) {
 	expectedIndices := []string{"three", "two", "one"}
 	initialLen := h.Len() // Store initial length of heap
 
-	for i := 0; i < initialLen; i++ {
+	for i := range initialLen {
 		popped := heap.Pop(h).(MaxHeapElement)
 		if popped.value != expectedValues[i] || popped.index != expectedIndices[i] {
 			t.Errorf("Expected pop value of %v and index '%s', got %v and '%s'", expectedValues[i], expectedIndices[i], popped.value, popped.index)

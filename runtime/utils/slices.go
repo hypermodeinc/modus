@@ -68,7 +68,7 @@ func ConvertToSlice(input any) ([]any, error) {
 	}
 
 	out := make([]any, 0, rv.Len())
-	for i := 0; i < rv.Len(); i++ {
+	for i := range rv.Len() {
 		out = append(out, rv.Index(i).Interface())
 	}
 
@@ -171,7 +171,7 @@ func ConvertToSliceOf[T any](obj any) ([]T, bool) {
 	switch rv.Kind() {
 	case reflect.Array:
 		out := make([]T, rv.Len())
-		for i := 0; i < rv.Len(); i++ {
+		for i := range rv.Len() {
 			out[i] = rv.Index(i).Interface().(T)
 		}
 		return out, true
@@ -181,7 +181,7 @@ func ConvertToSliceOf[T any](obj any) ([]T, bool) {
 			return out, true
 		}
 		out := make([]T, rv.Len())
-		for i := 0; i < rv.Len(); i++ {
+		for i := range rv.Len() {
 			out[i] = rv.Index(i).Interface().(T)
 		}
 		return out, true

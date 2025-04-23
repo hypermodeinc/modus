@@ -27,7 +27,7 @@ func (i Int) Less(j Int) bool {
 func TestHeap(t *testing.T) {
 	h := Heap[Int]{}
 
-	for i := 0; i < 20; i++ {
+	for range 20 {
 		h.Push(Int(rand.Int() % 100))
 	}
 

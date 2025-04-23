@@ -120,7 +120,7 @@ func HandleJWT(next http.Handler) http.Handler {
 		var found bool
 
 		for _, pemPublicKey := range globalAuthKeys.getPemPublicKeys() {
-			token, err = jwtParser.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
+			token, err = jwtParser.Parse(tokenStr, func(token *jwt.Token) (any, error) {
 				return pemPublicKey, nil
 			})
 			if err == nil {
@@ -133,7 +133,7 @@ func HandleJWT(next http.Handler) http.Handler {
 		}
 		if !found {
 			for _, jwksPublicKey := range globalAuthKeys.getJwksPublicKeys() {
-				token, err = jwtParser.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
+				token, err = jwtParser.Parse(tokenStr, func(token *jwt.Token) (any, error) {
 					return jwksPublicKey, nil
 				})
 				if err == nil {

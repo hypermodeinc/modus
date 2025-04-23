@@ -134,7 +134,7 @@ func sliceToBytes[T primitive](s []T, size int) []byte {
 
 func bytesToSliceFixed32[T ~int | ~uint | ~uintptr](b []byte, size int) []T {
 	x := make([]T, len(b)/size)
-	for i := 0; i < len(x); i++ {
+	for i := range x {
 		x[i] = T(*(*uint32)(unsafe.Pointer(&b[i*size])))
 	}
 	return x
@@ -142,7 +142,7 @@ func bytesToSliceFixed32[T ~int | ~uint | ~uintptr](b []byte, size int) []T {
 
 func sliceToBytesFixed32[T ~int | ~uint | ~uintptr](s []T, size int) []byte {
 	b := make([]byte, len(s)*size)
-	for i := 0; i < len(s); i++ {
+	for i := range s {
 		u := uint32(s[i])
 		bytes := *(*[4]byte)(unsafe.Pointer(&u))
 		copy(b[i*size:], bytes[:size])

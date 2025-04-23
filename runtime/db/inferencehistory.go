@@ -54,7 +54,7 @@ type Inference struct {
 	StartedAt  string `json:"started_at,omitempty"`
 	DurationMs int64  `json:"duration_ms,omitempty"`
 	Function   string `json:"function,omitempty"`
-	Plugin     Plugin `json:"plugin,omitempty"`
+	Plugin     Plugin `json:"plugin"`
 }
 
 const batchSize = 100
