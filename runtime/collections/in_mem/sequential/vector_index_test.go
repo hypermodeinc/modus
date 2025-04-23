@@ -11,11 +11,11 @@ package sequential
 
 import (
 	"fmt"
+	"slices"
 	"sync"
 	"testing"
 
 	"github.com/hypermodeinc/modus/runtime/collections/utils"
-	"slices"
 )
 
 func TestMultipleSequentialVectorIndexes(t *testing.T) {
