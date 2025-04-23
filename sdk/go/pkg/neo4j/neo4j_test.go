@@ -43,7 +43,7 @@ func TestRecordJSONMarshal(t *testing.T) {
 func TestExecuteQuery(t *testing.T) {
 	dbName := "mydb"
 	query := "query"
-	parameters := map[string]interface{}{
+	parameters := map[string]any{
 		"param1": "value1",
 		"param2": "value2",
 	}

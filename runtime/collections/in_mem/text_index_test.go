@@ -25,7 +25,7 @@ func TestMultipleInMemCollections(t *testing.T) {
 	numCollections := 10
 
 	// Create and initialize the collections
-	for i := 0; i < numCollections; i++ {
+	for i := range numCollections {
 		wg.Add(1)
 
 		go func(i int) {

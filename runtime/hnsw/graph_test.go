@@ -106,7 +106,7 @@ func newTestGraph[K cmp.Ordered]() *Graph[K] {
 func TestGraph_AddSearch(t *testing.T) {
 	g := newTestGraph[int]()
 
-	for i := 0; i < 128; i++ {
+	for i := range 128 {
 		err := g.Add(
 			Node[int]{
 				Key:   i,
@@ -151,7 +151,7 @@ func TestGraph_AddSearch(t *testing.T) {
 
 func TestGraph_AddDelete(t *testing.T) {
 	g := newTestGraph[int]()
-	for i := 0; i < 128; i++ {
+	for i := range 128 {
 		err := g.Add(Node[int]{
 			Key:   i,
 			Value: Vector{float32(i)},
@@ -197,7 +197,7 @@ func Benchmark_HNSW(b *testing.B) {
 			g := Graph[int]{}
 			g.Ml = 0.5
 			g.Distance = EuclideanDistance
-			for i := 0; i < size; i++ {
+			for i := range size {
 				err := g.Add(Node[int]{
 					Key:   i,
 					Value: Vector{float32(i)},
@@ -207,7 +207,7 @@ func Benchmark_HNSW(b *testing.B) {
 			b.ResetTimer()
 
 			b.Run("Search", func(b *testing.B) {
-				for i := 0; i < b.N; i++ {
+				for i := 0; b.Loop(); i++ {
 					_, err := g.Search(
 						[]float32{float32(i % size)},
 						4,
@@ -235,7 +235,7 @@ func Benchmark_HNSW_1536(b *testing.B) {
 	g := newTestGraph[int]()
 	const size = 1000
 	points := make([]Node[int], size)
-	for i := 0; i < size; i++ {
+	for i := range size {
 		points[i] = Node[int]{
 			Key:   i,
 			Value: Vector(randFloats(1536)),
@@ -246,7 +246,7 @@ func Benchmark_HNSW_1536(b *testing.B) {
 	b.ResetTimer()
 
 	b.Run("Search", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
+		for i := 0; b.Loop(); i++ {
 			_, err := g.Search(
 				points[i%size].Value,
 				4,

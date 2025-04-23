@@ -98,7 +98,7 @@ func (h *primitiveArrayHandler[T]) Read(ctx context.Context, wa langsupport.Wasm
 
 	// convert the slice to an array of the target type
 	array := reflect.New(h.typeInfo.ReflectedType()).Elem()
-	for i := 0; i < h.arrayLen; i++ {
+	for i := range h.arrayLen {
 		array.Index(i).Set(reflect.ValueOf(items[i]))
 	}
 	return array.Interface(), nil
@@ -131,7 +131,7 @@ func (h *primitiveArrayHandler[T]) Decode(ctx context.Context, wa langsupport.Wa
 	}
 
 	rvItems := reflect.New(h.typeInfo.ReflectedType()).Elem()
-	for i := 0; i < h.arrayLen; i++ {
+	for i := range h.arrayLen {
 		item := h.converter.Decode(vals[i])
 		ptr := rvItems.Index(i).Addr().UnsafePointer()
 		*(*T)(ptr) = item
@@ -150,7 +150,7 @@ func (h *primitiveArrayHandler[T]) Encode(ctx context.Context, wa langsupport.Wa
 	}
 
 	results := make([]uint64, h.arrayLen)
-	for i := 0; i < h.arrayLen; i++ {
+	for i := range h.arrayLen {
 		results[i] = h.converter.Encode(items[i])
 	}
 	return results, nil, nil

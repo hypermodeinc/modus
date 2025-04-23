@@ -55,8 +55,8 @@ const (
 )
 
 type graphQLRequest struct {
-	Query     string                 `json:"query"`
-	Variables map[string]interface{} `json:"variables,omitempty"`
+	Query     string         `json:"query"`
+	Variables map[string]any `json:"variables,omitempty"`
 }
 
 func runGraphqlQuery(greq graphQLRequest) ([]byte, error) {

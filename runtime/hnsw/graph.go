@@ -355,7 +355,7 @@ func (h *Graph[K]) randomLevel() (int, error) {
 		}
 	}
 
-	for level := 0; level < max; level++ {
+	for level := range max {
 		if h.Rng == nil {
 			h.Rng = defaultRand()
 		}

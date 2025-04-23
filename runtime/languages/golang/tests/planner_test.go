@@ -500,13 +500,13 @@ var rtTypeHandler = reflect.TypeFor[langsupport.TypeHandler]()
 func getInnerHandlers(handler langsupport.TypeHandler) []langsupport.TypeHandler {
 	var results []langsupport.TypeHandler
 	rvHandler := reflect.ValueOf(handler).Elem()
-	for i := 0; i < rvHandler.NumField(); i++ {
+	for i := range rvHandler.NumField() {
 		rf := rvHandler.Field(i)
 		field := reflect.NewAt(rf.Type(), unsafe.Pointer(rf.UnsafeAddr())).Elem()
 		if field.Type().Implements(rtTypeHandler) {
 			results = append(results, field.Interface().(langsupport.TypeHandler))
 		} else if field.Kind() == reflect.Slice && field.Type().Elem().Implements(rtTypeHandler) {
-			for j := 0; j < field.Len(); j++ {
+			for j := range field.Len() {
 				results = append(results, field.Index(j).Interface().(langsupport.TypeHandler))
 			}
 		}

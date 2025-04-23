@@ -47,11 +47,11 @@ func (h MaxTupleHeap) Swap(i, j int) {
 	h[i], h[j] = h[j], h[i]
 }
 
-func (h *MaxTupleHeap) Push(x interface{}) {
+func (h *MaxTupleHeap) Push(x any) {
 	*h = append(*h, x.(MaxHeapElement))
 }
 
-func (h *MaxTupleHeap) Pop() interface{} {
+func (h *MaxTupleHeap) Pop() any {
 	old := *h
 	n := len(old)
 	x := old[n-1]

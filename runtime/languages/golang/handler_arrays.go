@@ -48,7 +48,7 @@ type arrayHandler struct {
 func (h *arrayHandler) Read(ctx context.Context, wa langsupport.WasmAdapter, offset uint32) (any, error) {
 	elementSize := h.elementHandler.TypeInfo().Size()
 	items := reflect.New(h.typeInfo.ReflectedType()).Elem()
-	for i := 0; i < h.arrayLen; i++ {
+	for i := range h.arrayLen {
 		itemOffset := offset + uint32(i)*elementSize
 		item, err := h.elementHandler.Read(ctx, wa, itemOffset)
 		if err != nil {
@@ -70,7 +70,7 @@ func (h *arrayHandler) Write(ctx context.Context, wa langsupport.WasmAdapter, of
 	elementSize := h.elementHandler.TypeInfo().Size()
 
 	// write exactly the number of items that will fit in the array
-	for i := 0; i < h.arrayLen; i++ {
+	for i := range h.arrayLen {
 		if i >= len(items) {
 			break
 		}
@@ -98,7 +98,7 @@ func (h *arrayHandler) Write(ctx context.Context, wa langsupport.WasmAdapter, of
 func (h *arrayHandler) Decode(ctx context.Context, wa langsupport.WasmAdapter, vals []uint64) (any, error) {
 	array := reflect.New(h.typeInfo.ReflectedType()).Elem()
 	itemLen := int(h.elementHandler.TypeInfo().EncodingLength())
-	for i := 0; i < h.arrayLen; i++ {
+	for i := range h.arrayLen {
 		data, err := h.elementHandler.Decode(ctx, wa, vals[i*itemLen:(i+1)*itemLen])
 		if err != nil {
 			return nil, err

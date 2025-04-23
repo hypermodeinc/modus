@@ -36,11 +36,11 @@ func (h *innerHeap[T]) Swap(i, j int) {
 	h.data[i], h.data[j] = h.data[j], h.data[i]
 }
 
-func (h *innerHeap[T]) Push(x interface{}) {
+func (h *innerHeap[T]) Push(x any) {
 	h.data = append(h.data, x.(T))
 }
 
-func (h *innerHeap[T]) Pop() interface{} {
+func (h *innerHeap[T]) Pop() any {
 	n := len(h.data)
 	x := h.data[n-1]
 	h.data = h.data[:n-1]

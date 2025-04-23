@@ -128,7 +128,7 @@ func (host *wasmHost) newHostFunction(modName, funcName string, fn any, opts ...
 	// For now, we'll assume single-value, one-to-one mapping between Go and Wasm types.
 
 	paramTypes := make([]wasm.ValueType, 0, numParams)
-	for i := 0; i < numParams; i++ {
+	for i := range numParams {
 		if hasContextParam && i == 0 {
 			continue
 		}
@@ -145,7 +145,7 @@ func (host *wasmHost) newHostFunction(modName, funcName string, fn any, opts ...
 	}
 
 	resultTypes := make([]wasm.ValueType, 0, numResults)
-	for i := 0; i < numResults; i++ {
+	for i := range numResults {
 		if hasErrorResult && i == numResults-1 {
 			continue
 		}
@@ -238,7 +238,7 @@ func (host *wasmHost) newHostFunction(modName, funcName string, fn any, opts ...
 
 		// Read input parameter values
 		params := make([]any, 0, numParams)
-		for i := 0; i < numParams; i++ {
+		for i := range numParams {
 			if hasContextParam && i == 0 {
 				continue
 			}
@@ -285,7 +285,7 @@ func (host *wasmHost) newHostFunction(modName, funcName string, fn any, opts ...
 			}
 
 			// copy results to the results slice
-			for i := 0; i < numResults; i++ {
+			for i := range numResults {
 				if hasErrorResult && i == numResults-1 {
 					continue
 				} else {

@@ -158,7 +158,7 @@ func (h *mapHandler) Read(ctx context.Context, wa langsupport.WasmAdapter, offse
 	} else {
 		// return a pseudo-map
 		s := reflect.MakeSlice(h.rtPseudoMapSlice, mapSize, mapSize)
-		for i := 0; i < mapSize; i++ {
+		for i := range mapSize {
 			p := entries + uint32(i)*entrySize
 
 			k, err := h.keyHandler.Read(ctx, wa, p)

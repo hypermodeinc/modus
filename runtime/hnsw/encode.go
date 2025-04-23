@@ -25,7 +25,7 @@ import (
 
 var byteOrder = binary.LittleEndian
 
-func binaryRead(r io.Reader, data interface{}) (int, error) {
+func binaryRead(r io.Reader, data any) (int, error) {
 	switch v := data.(type) {
 	case *int:
 		br, ok := r.(io.ByteReader)
@@ -219,7 +219,7 @@ func (h *Graph[K]) Import(r io.Reader) error {
 	}
 
 	h.layers = make([]*layer[K], nLayers)
-	for i := 0; i < nLayers; i++ {
+	for i := range nLayers {
 		var nNodes int
 		_, err = binaryRead(r, &nNodes)
 		if err != nil {
@@ -227,7 +227,7 @@ func (h *Graph[K]) Import(r io.Reader) error {
 		}
 
 		nodes := make(map[K]*layerNode[K], nNodes)
-		for j := 0; j < nNodes; j++ {
+		for j := range nNodes {
 			var key K
 			var vec Vector
 			var nNeighbors int
@@ -237,7 +237,7 @@ func (h *Graph[K]) Import(r io.Reader) error {
 			}
 
 			neighbors := make([]K, nNeighbors)
-			for k := 0; k < nNeighbors; k++ {
+			for k := range nNeighbors {
 				var neighbor K
 				_, err = binaryRead(r, &neighbor)
 				if err != nil {
