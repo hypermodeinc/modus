@@ -288,6 +288,7 @@ func TestGetVariablesFromManifest(t *testing.T) {
 		"my-rest-api":              {"API_TOKEN"},
 		"another-rest-api":         {"USERNAME", "PASSWORD"},
 		"neon":                     {"POSTGRESQL_USERNAME", "POSTGRESQL_PASSWORD"},
+		"pg-host":                  {"POSTGRESQL_USERNAME", "POSTGRESQL_PASSWORD", "POSTGRESQL_HOST"},
 		"my-mysql":                 {"MYSQL_USERNAME", "MYSQL_PASSWORD"},
 		"my-dgraph-cloud":          {"DGRAPH_KEY"},
 		"my-neo4j":                 {"NEO4J_USERNAME", "NEO4J_PASSWORD"},
