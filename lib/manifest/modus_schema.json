@@ -211,7 +211,7 @@
                   "connString": {
                     "type": "string",
                     "minLength": 1,
-                    "pattern": "^postgres(?:ql)?:\\/\\/(.*?@)?([0-9a-zA-Z.-]*?)(:\\d+)?(\\/[0-9a-zA-Z.-]+)?(\\?.+)?$",
+                    "pattern": "^postgres(?:ql)?:\\/\\/(.*?@)?([0-9a-zA-Z.{}_-]*?)(:\\d+)?(\\/[0-9a-zA-Z.-]+)?(\\?.+)?$",
                     "description": "The PostgreSQL connection string in URI format.",
                     "markdownDescription": "The PostgreSQL connection string in URI format.\n\nReference: https://docs.hypermode.com/modus/app-manifest#postgresql-connection"
                   }
