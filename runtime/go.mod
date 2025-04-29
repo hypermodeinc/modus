@@ -24,7 +24,7 @@ require (
 	github.com/golang-jwt/jwt/v5 v5.2.2
 	github.com/google/renameio/v2 v2.0.0
 	github.com/google/uuid v1.6.0
-	github.com/hypermodeinc/modus/lib/manifest v0.17.1
+	github.com/hypermodeinc/modus/lib/manifest v0.17.2
 	github.com/hypermodeinc/modus/lib/metadata v0.15.0
 	github.com/hypermodeinc/modusdb v0.0.0-20250416120035-6d80353c1351
 	github.com/jackc/pgx/v5 v5.7.4
