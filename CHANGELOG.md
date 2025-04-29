@@ -2,8 +2,13 @@
 
 # Change Log
 
+## 2025-04-29 - Go SDK 0.17.4
+
+- fix: Relax postgresql connString regex to allow host to be templated [#830](https://github.com/hypermodeinc/modus/pull/830)
+
 ## 2025-04-29 - Runtime 0.17.11
 
+- fix: Relax postgresql connString regex to allow host to be templated [#830](https://github.com/hypermodeinc/modus/pull/830)
 - feat: Add support for passing in environment variables to the WASM module [#831](https://github.com/hypermodeinc/modus/pull/831)
 
 ## 2025-04-18 - Runtime 0.17.10
