@@ -14,6 +14,8 @@ import (
 	"crypto/rand"
 	"fmt"
 	"io"
+	"os"
+	"strings"
 
 	"github.com/hypermodeinc/modus/runtime/functions"
 	"github.com/hypermodeinc/modus/runtime/logger"
@@ -134,6 +136,15 @@ func (host *wasmHost) GetModuleInstance(ctx context.Context, plugin *plugins.Plu
 		WithStdout(wOut).WithStderr(wErr).
 		WithEnv("TZ", timeZone).
 		WithEnv("CLAIMS", jwtClaims)
+
+	for _, env := range os.Environ() {
+		split := strings.SplitN(env, "=", 2)
+		key, val := split[0], split[1]
+		if strings.HasPrefix(key, "MODUS_") {
+			// Remove the MODUS_ prefix
+			cfg = cfg.WithEnv(key[6:], val)
+		}
+	}
 
 	// Instantiate the plugin as a module.
 	// NOTE: This will also invoke the plugin's `_start` function,

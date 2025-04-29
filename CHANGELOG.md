@@ -2,6 +2,10 @@
 
 # Change Log
 
+## 2025-04-29 - Runtime 0.17.11
+
+- feat: Add support for passing in environment variables to the WASM module [#831](https://github.com/hypermodeinc/modus/pull/831)
+
 ## 2025-04-18 - Runtime 0.17.10
 
 - fix: return immediately after encountering JWT parse error [#826](https://github.com/hypermodeinc/modus/pull/826)
