@@ -97,6 +97,11 @@ func TestReadManifest(t *testing.T) {
 				Type:    manifest.ConnectionTypePostgresql,
 				ConnStr: "postgresql://{{POSTGRESQL_USERNAME}}:{{POSTGRESQL_PASSWORD}}@1.2.3.4:5432/data?sslmode=disable",
 			},
+			"pg-host": manifest.PostgresqlConnectionInfo{
+				Name:    "pg-host",
+				Type:    manifest.ConnectionTypePostgresql,
+				ConnStr: "postgresql://{{POSTGRESQL_USERNAME}}:{{POSTGRESQL_PASSWORD}}@{{POSTGRESQL_HOST}}/db?sslmode=require",
+			},
 			"my-mysql": manifest.MysqlConnectionInfo{
 				Name:    "my-mysql",
 				Type:    manifest.ConnectionTypeMysql,

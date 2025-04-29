@@ -64,6 +64,10 @@
       "type": "postgresql",
       "connString": "postgresql://{{POSTGRESQL_USERNAME}}:{{POSTGRESQL_PASSWORD}}@1.2.3.4:5432/data?sslmode=disable"
     },
+    "pg-host": {
+      "type": "postgresql",
+      "connString": "postgresql://{{POSTGRESQL_USERNAME}}:{{POSTGRESQL_PASSWORD}}@{{POSTGRESQL_HOST}}/db?sslmode=require"
+    },
     "my-mysql": {
       "type": "mysql",
       "connString": "mysql://{{MYSQL_USERNAME}}:{{MYSQL_PASSWORD}}@1.2.3.4:3306/mydb?sslmode=disable"
