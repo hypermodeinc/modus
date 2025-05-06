@@ -4,7 +4,7 @@
 
 ## 2025-05-06 - CLI 0.17.4
 
-- fix: fully install go sdk in dev mode [#811](https://github.com/hypermodeinc/modus/pull/811)
+- fix: fully install go sdk in dev mode [#837](https://github.com/hypermodeinc/modus/pull/837)
 
 ## 2025-04-29 - Go SDK 0.17.4
 
