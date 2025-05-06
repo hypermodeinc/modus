@@ -7,7 +7,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import chalk from "chalk";
 import semver from "semver";
+import os from "node:os";
 import path from "node:path";
 import * as http from "./http.js";
 import * as fs from "./fs.js";
@@ -179,7 +181,28 @@ export async function runtimeReleaseExists(version: string): Promise<boolean> {
 }
 
 export async function sdkVersionIsInstalled(sdk: globals.SDK, version: string): Promise<boolean> {
-  return await fs.exists(getSdkPath(sdk, version));
+  // normal check for SDK path
+  const sdkPath = getSdkPath(sdk, version);
+  const installed = await fs.exists(sdkPath);
+  if (!installed) {
+    return false;
+  }
+
+  // extra check for Go build tool, due to prior issue with it not being installed in all cases
+  if (sdk === globals.SDK.Go) {
+    const ext = os.platform() === "win32" ? ".exe" : "";
+    const buildTool = path.join(sdkPath, "modus-go-build" + ext);
+    if (await fs.exists(buildTool)) {
+      return true;
+    }
+
+    // SDK installed, but build tool not found, so delete and return false so it can be reinstalled
+    console.log(chalk.yellow(`ⓘ Detected incomplete installation of Modus Go SDK ${version}.  Reinstalling...`));
+    await fs.rm(sdkPath, { recursive: true, force: true });
+    return false;
+  }
+
+  return installed;
 }
 
 export async function runtimeVersionIsInstalled(version: string): Promise<boolean> {

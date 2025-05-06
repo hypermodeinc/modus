@@ -2,6 +2,10 @@
 
 # Change Log
 
+## 2025-05-06 - CLI 0.17.4
+
+- fix: fully install go sdk in dev mode [#811](https://github.com/hypermodeinc/modus/pull/811)
+
 ## 2025-04-29 - Go SDK 0.17.4
 
 - fix: Relax postgresql connString regex to allow host to be templated [#830](https://github.com/hypermodeinc/modus/pull/830)

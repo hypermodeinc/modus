@@ -25,6 +25,7 @@ import { getAppInfo } from "../../util/appinfo.js";
 import { isOnline, withSpinner } from "../../util/index.js";
 import { readHypermodeSettings } from "../../util/hypermode.js";
 import BuildCommand from "../build/index.js";
+import SDKInstallCommand from "../sdk/install/index.js";
 import { BaseCommand } from "../../baseCommand.js";
 
 const MANIFEST_FILE = "modus.json";
@@ -85,16 +86,7 @@ export default class DevCommand extends BaseCommand {
     }
 
     if (!(await vi.sdkVersionIsInstalled(sdk, sdkVersion))) {
-      const sdkText = `Modus ${sdk} SDK ${sdkVersion}`;
-      await withSpinner(chalk.dim("Downloading and installing " + sdkText), async (spinner) => {
-        try {
-          await installer.installSDK(sdk, sdkVersion);
-        } catch (e) {
-          spinner.fail(chalk.red(`Failed to download ${sdkText}`));
-          throw e;
-        }
-        spinner.succeed(chalk.dim(`Installed ${sdkText}`));
-      });
+      await SDKInstallCommand.run([sdk, sdkVersion, "--no-logo"]);
     }
 
     let runtimeVersion = flags.runtime;
