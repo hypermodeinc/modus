@@ -189,7 +189,7 @@ export async function sdkVersionIsInstalled(sdk: globals.SDK, version: string): 
   }
 
   // extra check for Go build tool, due to prior issue with it not being installed in all cases
-  if (sdk == globals.SDK.Go) {
+  if (sdk === globals.SDK.Go) {
     const ext = os.platform() === "win32" ? ".exe" : "";
     const buildTool = path.join(sdkPath, "modus-go-build" + ext);
     if (await fs.exists(buildTool)) {
