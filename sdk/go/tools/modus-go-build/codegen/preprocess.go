@@ -120,7 +120,7 @@ func getFunctionsNeedingWrappers(pkg *packages.Package) []*funcInfo {
 
 		for _, d := range f.Decls {
 			if fn, ok := d.(*ast.FuncDecl); ok {
-				if fn.Name.IsExported() && getExportedFuncName(fn) == "" {
+				if fn.Recv == nil && fn.Name.IsExported() && getExportedFuncName(fn) == "" {
 
 					var fields []*ast.Field
 					if fn.Type.Params != nil {

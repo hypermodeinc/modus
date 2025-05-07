@@ -33,6 +33,18 @@ func configureLogger() {
 			lc = lc.Str("execution_id", executionId)
 		}
 
+		if fnName, ok := ctx.Value(utils.FunctionNameContextKey).(string); ok {
+			lc = lc.Str("function", fnName)
+		}
+
+		if agentName, ok := ctx.Value(utils.AgentNameContextKey).(string); ok {
+			lc = lc.Str("agent", agentName)
+		}
+
+		if agentId, ok := ctx.Value(utils.AgentIdContextKey).(string); ok {
+			lc = lc.Str("agent_id", agentId)
+		}
+
 		return lc
 	})
 }

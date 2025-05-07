@@ -42,10 +42,16 @@ func LogToConsole(meta *metadata.Metadata) {
 	})
 	fmt.Fprintln(w)
 
-	if len(meta.FnExports) > 0 {
+	functions := make([]*metadata.Function, 0, len(meta.FnExports))
+	for _, k := range meta.FnExports.SortedKeys() {
+		fn := meta.FnExports[k]
+		if !strings.HasPrefix(fn.Name, "_") {
+			functions = append(functions, fn)
+		}
+	}
+	if len(functions) > 0 {
 		writeHeader(w, "Functions:")
-		for _, k := range meta.FnExports.SortedKeys() {
-			fn := meta.FnExports[k]
+		for _, fn := range functions {
 			writeItem(w, fn.String(meta))
 		}
 		fmt.Fprintln(w)

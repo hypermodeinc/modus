@@ -12,6 +12,7 @@ package services
 import (
 	"context"
 
+	"github.com/hypermodeinc/modus/runtime/actors"
 	"github.com/hypermodeinc/modus/runtime/collections"
 	"github.com/hypermodeinc/modus/runtime/db"
 	"github.com/hypermodeinc/modus/runtime/dgraphclient"
@@ -58,6 +59,7 @@ func Start(ctx context.Context) context.Context {
 	envfiles.MonitorEnvFiles(ctx)
 	pluginmanager.Initialize(ctx)
 	graphql.Initialize()
+	actors.Initialize(ctx)
 
 	return ctx
 }
@@ -65,7 +67,10 @@ func Start(ctx context.Context) context.Context {
 // Stops any services that need to be stopped when the runtime stops.
 func Stop(ctx context.Context) {
 
-	// Stop the wasm host first
+	// Actors need to be stopped first, as they may need to call wasm functions during shutdown.
+	actors.Shutdown(ctx)
+
+	// Now stop the wasm host.
 	wasmhost.GetWasmHost(ctx).Close(ctx)
 
 	// Stop the rest of the background services.

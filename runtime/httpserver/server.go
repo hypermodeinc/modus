@@ -118,7 +118,7 @@ func startHttpServer(ctx context.Context, mux http.Handler, addresses ...string)
 		<-shutdownChan
 	}
 
-	logger.Info(ctx).Msg("Shutdown complete.")
+	logger.Info(ctx).Msg("HTTP server shutdown complete.")
 }
 
 func WithDefaultGraphQLHandler() func(routes map[string]http.Handler) {

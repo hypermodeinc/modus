@@ -2,6 +2,10 @@
 
 # Change Log
 
+## UNRELEASED
+
+- feat: initial implementation of Modus Agents [#840](https://github.com/hypermodeinc/modus/pull/840)
+
 ## 2025-05-06 - CLI 0.17.4
 
 - fix: fully install go sdk in dev mode [#837](https://github.com/hypermodeinc/modus/pull/837)

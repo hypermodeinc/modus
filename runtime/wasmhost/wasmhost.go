@@ -34,6 +34,7 @@ type WasmHost interface {
 	RegisterHostFunction(modName, funcName string, fn any, opts ...HostFunctionOption) error
 	CallFunction(ctx context.Context, fnInfo functions.FunctionInfo, parameters map[string]any) (ExecutionInfo, error)
 	CallFunctionByName(ctx context.Context, fnName string, paramValues ...any) (ExecutionInfo, error)
+	CallFunctionInModule(ctx context.Context, mod wasm.Module, buffers utils.OutputBuffers, fnInfo functions.FunctionInfo, parameters map[string]any) (ExecutionInfo, error)
 	Close(ctx context.Context)
 	CompileModule(ctx context.Context, bytes []byte) (wazero.CompiledModule, error)
 	GetFunctionInfo(fnName string) (functions.FunctionInfo, error)
@@ -105,50 +106,7 @@ func (host *wasmHost) GetModuleInstance(ctx context.Context, plugin *plugins.Plu
 	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
 
-	// Get the logger and writers for the plugin's stdout and stderr.
-	log := logger.Get(ctx).With().Bool("user_visible", true).Logger()
-	wInfoLog := logger.NewLogWriter(&log, zerolog.InfoLevel)
-	wErrorLog := logger.NewLogWriter(&log, zerolog.ErrorLevel)
-
-	// Capture stdout/stderr both to logs, and to provided writers.
-	wOut := io.MultiWriter(buffers.StdOut(), wInfoLog)
-	wErr := io.MultiWriter(buffers.StdErr(), wErrorLog)
-
-	// Get the time zone to pass to the module instance.
-	var timeZone string
-	if tz, ok := ctx.Value(utils.TimeZoneContextKey).(string); ok {
-		timeZone = tz
-	} else {
-		timeZone = timezones.GetLocalTimeZone()
-	}
-
-	// Configure the module instance.
-	// Note, we use an anonymous module name (empty string) here,
-	// for concurrency and performance reasons.
-	// See https://github.com/tetratelabs/wazero/pull/2275
-	// And https://gophers.slack.com/archives/C040AKTNTE0/p1719587772724619?thread_ts=1719522663.531579&cid=C040AKTNTE0
-	jwtClaims := middleware.GetJWTClaims(ctx)
-	cfg := wazero.NewModuleConfig().
-		WithName("").
-		WithStartFunctions("_initialize", "_start").
-		WithSysWalltime().WithSysNanotime().
-		WithRandSource(rand.Reader).
-		WithStdout(wOut).WithStderr(wErr).
-		WithEnv("TZ", timeZone).
-		WithEnv("CLAIMS", jwtClaims)
-
-	for _, env := range os.Environ() {
-		split := strings.SplitN(env, "=", 2)
-		key, val := split[0], split[1]
-		if strings.HasPrefix(key, "MODUS_") {
-			// Remove the MODUS_ prefix
-			cfg = cfg.WithEnv(key[6:], val)
-		}
-	}
-
-	// Instantiate the plugin as a module.
-	// NOTE: This will also invoke the plugin's `_start` function,
-	// which will call any top-level code in the plugin.
+	cfg := getModuleConfig(ctx, buffers, true)
 	mod, err := host.runtime.InstantiateModule(ctx, plugin.Module, cfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to instantiate the plugin module: %w", err)
@@ -167,4 +125,56 @@ func (host *wasmHost) CompileModule(ctx context.Context, bytes []byte) (wazero.C
 	}
 
 	return cm, nil
+}
+
+func getModuleConfig(ctx context.Context, buffers utils.OutputBuffers, useStartFuncs bool) wazero.ModuleConfig {
+
+	// Get the logger and writers for the plugin's stdout and stderr.
+	log := logger.Get(ctx).With().Bool("user_visible", true).Logger()
+	wInfoLog := logger.NewLogWriter(&log, zerolog.InfoLevel)
+	wErrorLog := logger.NewLogWriter(&log, zerolog.ErrorLevel)
+
+	// Capture stdout/stderr both to logs, and to provided writers.
+	wOut := io.MultiWriter(buffers.StdOut(), wInfoLog)
+	wErr := io.MultiWriter(buffers.StdErr(), wErrorLog)
+
+	// Get the time zone to pass to the module instance.
+	var timeZone string
+	if tz, ok := ctx.Value(utils.TimeZoneContextKey).(string); ok {
+		timeZone = tz
+	} else {
+		timeZone = timezones.GetLocalTimeZone()
+	}
+
+	// Get the JWT claims to pass to the module instance.
+	jwtClaims := middleware.GetJWTClaims(ctx)
+
+	// Note, we use an anonymous module name (empty string) here,
+	// for concurrency and performance reasons.
+	// See https://github.com/tetratelabs/wazero/pull/2275
+	// And https://gophers.slack.com/archives/C040AKTNTE0/p1719587772724619?thread_ts=1719522663.531579&cid=C040AKTNTE0
+	cfg := wazero.NewModuleConfig().
+		WithName("").
+		WithSysWalltime().WithSysNanotime().
+		WithRandSource(rand.Reader).
+		WithStdout(wOut).WithStderr(wErr).
+		WithEnv("TZ", timeZone).
+		WithEnv("CLAIMS", jwtClaims)
+
+	for _, env := range os.Environ() {
+		split := strings.SplitN(env, "=", 2)
+		key, val := split[0], split[1]
+		if strings.HasPrefix(key, "MODUS_") {
+			// Remove the MODUS_ prefix
+			cfg = cfg.WithEnv(key[6:], val)
+		}
+	}
+
+	if useStartFuncs {
+		cfg = cfg.WithStartFunctions("_initialize", "_start")
+	} else {
+		cfg = cfg.WithStartFunctions()
+	}
+
+	return cfg
 }

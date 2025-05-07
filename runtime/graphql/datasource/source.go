@@ -19,6 +19,7 @@ import (
 	"github.com/hypermodeinc/modus/runtime/logger"
 	"github.com/hypermodeinc/modus/runtime/utils"
 	"github.com/hypermodeinc/modus/runtime/wasmhost"
+	"github.com/puzpuzpuz/xsync/v4"
 
 	"github.com/buger/jsonparser"
 	"github.com/wundergraph/graphql-go-tools/v2/pkg/engine/datasource/httpclient"
@@ -84,8 +85,8 @@ func (ds *ModusDataSource) callFunction(ctx context.Context, callInfo *callInfo)
 	}
 
 	// Store the execution info into the function output map.
-	outputMap := ctx.Value(utils.FunctionOutputContextKey).(map[string]wasmhost.ExecutionInfo)
-	outputMap[callInfo.FieldInfo.AliasOrName()] = execInfo
+	outputMap := ctx.Value(utils.FunctionOutputContextKey).(*xsync.Map[string, wasmhost.ExecutionInfo])
+	outputMap.Store(callInfo.FieldInfo.AliasOrName(), execInfo)
 
 	// Transform messages (and error lines in the output buffers) to GraphQL errors.
 	messages := append(execInfo.Messages(), utils.TransformConsoleOutput(execInfo.Buffers())...)

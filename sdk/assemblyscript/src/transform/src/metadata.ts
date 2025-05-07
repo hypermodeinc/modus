@@ -131,9 +131,14 @@ export class Metadata {
     ]);
     console.log();
 
-    writeHeader("Functions:");
-    Object.values(this.fnExports).forEach((v) => writeItem(v.toString()));
-    console.log();
+    const functions = Object.values(this.fnExports).filter(
+      (f) => !f.isHidden(),
+    );
+    if (functions.length > 0) {
+      writeHeader("Functions:");
+      functions.forEach((f) => writeItem(f.toString()));
+      console.log();
+    }
 
     const types = Object.values(this.types).filter((t) => !t.isHidden());
     if (types.length > 0) {

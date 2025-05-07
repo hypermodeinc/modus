@@ -190,7 +190,7 @@ export class Extractor {
       }
 
       const exportName = info.name;
-      if (exportName.startsWith("_")) {
+      if (exportName.startsWith("_") && !exportName.startsWith("_modus_")) {
         continue;
       }
 
