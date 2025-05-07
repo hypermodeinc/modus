@@ -12,7 +12,6 @@ package actors
 import (
 	"context"
 	"fmt"
-	"sync"
 	"time"
 
 	"github.com/hypermodeinc/modus/runtime/logger"
@@ -20,6 +19,7 @@ import (
 	"github.com/hypermodeinc/modus/runtime/plugins"
 	"github.com/hypermodeinc/modus/runtime/utils"
 	"github.com/hypermodeinc/modus/runtime/wasmhost"
+	"github.com/puzpuzpuz/xsync/v4"
 
 	wasm "github.com/tetratelabs/wazero/api"
 	goakt "github.com/tochemey/goakt/v3/actor"
@@ -46,10 +46,16 @@ func Activate(ctx context.Context, plugin *plugins.Plugin) error {
 		return fmt.Errorf("error registering agents: %w", err)
 	}
 
-	for _, agent := range agentsRegistered {
-		if err := agent.SpawnActor(ctx, plugin); err != nil {
-			return err
+	agentRegistry.Range(func(key string, agent *Agent) bool {
+		if agent.Pid == nil {
+			err = agent.spawnActor(ctx, plugin)
+		} else {
+			err = agent.reloadModule(ctx, plugin)
 		}
+		return err != nil
+	})
+	if err != nil {
+		return err
 	}
 
 	return nil
@@ -61,7 +67,7 @@ type Agent struct {
 	Name string
 }
 
-func (agent *Agent) SpawnActor(ctx context.Context, plugin *plugins.Plugin) error {
+func (agent *Agent) spawnActor(ctx context.Context, plugin *plugins.Plugin) error {
 	host := wasmhost.GetWasmHost(ctx)
 	buffers := utils.NewOutputBuffers()
 	mod, err := host.GetModuleInstance(ctx, plugin, buffers)
@@ -79,21 +85,49 @@ func (agent *Agent) SpawnActor(ctx context.Context, plugin *plugins.Plugin) erro
 	return nil
 }
 
-var agentsRegistered = make([]*Agent, 0)
-var mu sync.RWMutex
+func (agent *Agent) reloadModule(ctx context.Context, plugin *plugins.Plugin) error {
+	actor := agent.Pid.Actor().(*WasmAgentActor)
 
-func getAgent(id int32) (*Agent, error) {
-	mu.RLock()
-	defer mu.RUnlock()
+	logger.Info(ctx).Str("agent", agent.Name).Int32("agentId", agent.Id).Bool("user_visible", true).Msg("Reloading module for agent.")
 
-	if id < 1 || int(id) > len(agentsRegistered) {
-		return nil, fmt.Errorf("agent with id %d not found", id)
+	// get the current state and close the module
+	state, err := actor.getAgentState(ctx)
+	if err != nil {
+		return fmt.Errorf("error getting agent state: %w", err)
 	}
-	return agentsRegistered[id-1], nil
+	actor.module.Close(ctx)
+
+	// create a new module instance and assign it to the actor
+	host := wasmhost.GetWasmHost(ctx)
+	buffers := utils.NewOutputBuffers()
+	mod, err := host.GetModuleInstance(ctx, plugin, buffers)
+	if err != nil {
+		return err
+	}
+	actor.module = mod
+
+	// restore the state in the new module
+	if err := actor.setAgentState(ctx, *state); err != nil {
+		return fmt.Errorf("error setting agent state: %w", err)
+	}
+
+	return nil
 }
 
-func getActorForAgent(agentId int32) (*WasmAgentActor, error) {
-	agent, err := getAgent(agentId)
+var agentRegistry = xsync.NewMap[string, *Agent]()
+
+func getAgent(ctx context.Context, id int32) (*Agent, error) {
+	if key, err := getAgentKey(ctx, id); err != nil {
+		return nil, err
+	} else if agent, ok := agentRegistry.Load(key); ok {
+		return agent, nil
+	} else {
+		return nil, fmt.Errorf("agent with id %d not found", id)
+	}
+}
+
+func getActorForAgent(ctx context.Context, agentId int32) (*WasmAgentActor, error) {
+	agent, err := getAgent(ctx, agentId)
 	if err != nil {
 		return nil, err
 	}
@@ -108,19 +142,42 @@ func getActorForAgent(agentId int32) (*WasmAgentActor, error) {
 	return wasmActor, nil
 }
 
-func RegisterAgent(ctx context.Context, agentId int32, name string) error {
-	mu.Lock()
-	defer mu.Unlock()
+func getAgentKey(ctx context.Context, agentId int32) (string, error) {
+	if plugin, ok := plugins.GetPluginFromContext(ctx); !ok {
+		return "", fmt.Errorf("no plugin found in context")
+	} else {
+		return fmt.Sprintf("%s:%d", plugin.Name(), agentId), nil
+	}
+}
 
-	agentsRegistered = append(agentsRegistered, &Agent{
+func RegisterAgent(ctx context.Context, agentId int32, name string) error {
+	key, err := getAgentKey(ctx, agentId)
+	if err != nil {
+		return err
+	}
+
+	agentRegistry.LoadOrStore(key, &Agent{
 		Id:   agentId,
 		Name: name,
 	})
+
+	// actual, found := agentRegistry.LoadAndStore(key, &Agent{
+	// 	Id:   agentId,
+	// 	Name: name,
+	// })
+
+	// // If the actor already exists, we need to stop it before spawning a new one.
+	// if found {
+	// 	if err := actual.Pid.Shutdown(ctx); err != nil {
+	// 		return fmt.Errorf("error shutting down existing agent %d: %w", agentId, err)
+	// 	}
+	// }
+
 	return nil
 }
 
 func SendAgentMessage(ctx context.Context, agentId int32, msgName string, data *string, timeout int64) (*string, error) {
-	agent, err := getAgent(agentId)
+	agent, err := getAgent(ctx, agentId)
 	if err != nil {
 		return nil, err
 	}
@@ -154,7 +211,7 @@ func SendAgentMessage(ctx context.Context, agentId int32, msgName string, data *
 }
 
 func GetAgentState(ctx context.Context, agentId int32) (*string, error) {
-	actor, err := getActorForAgent(agentId)
+	actor, err := getActorForAgent(ctx, agentId)
 	if err != nil {
 		return nil, err
 	}
@@ -166,7 +223,7 @@ func GetAgentState(ctx context.Context, agentId int32) (*string, error) {
 }
 
 func SetAgentState(ctx context.Context, agentId int32, data string) error {
-	actor, err := getActorForAgent(agentId)
+	actor, err := getActorForAgent(ctx, agentId)
 	if err != nil {
 		return err
 	}

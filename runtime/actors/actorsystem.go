@@ -27,10 +27,10 @@ func Initialize(ctx context.Context) {
 
 	actorSystem, err := goakt.NewActorSystem("modus",
 		goakt.WithLogger(actorLogger),
-		goakt.WithPassivationDisabled(),
 		goakt.WithCoordinatedShutdown(beforeShutdown),
-		goakt.WithActorInitTimeout(time.Hour), // TODO: adjust this value
-		goakt.WithActorInitMaxRetries(1))      // TODO: adjust this value
+		goakt.WithPassivationDisabled(),            // TODO: enable passivation. Requires a persistence store in production for agent state.
+		goakt.WithActorInitTimeout(10*time.Second), // TODO: adjust this value, or make it configurable
+		goakt.WithActorInitMaxRetries(1))           // TODO: adjust this value, or make it configurable
 
 	if err != nil {
 		logger.Fatal(ctx).Err(err).Msg("Failed to create actor system.")

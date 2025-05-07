@@ -43,14 +43,19 @@ export class CounterAgent extends Agent {
     return null;
   }
 
-  // This part is work in progress.
   // The agent should be able to save its state and restore it later.
-  // TODO: use this in the runtime and see if we can implement this automatically in user code.
+  // This is used for persisting data across soft restarts of the agent,
+  // such as when updating the agent code, or when the agent is suspended and resumed.
 
+  // This method should return the current state of the agent as a string.
+  // Any format is fine, but it should be consistent and easy to parse.
   getState(): string | null {
     return this.count.toString();
   }
 
+  // This method should set the state of the agent from a string.
+  // The string should be in the same format as the one returned by getState().
+  // Be sure to consider data compatibility when changing the format of the state.
   setState(data: string | null): void {
     if (data == null) {
       return;
