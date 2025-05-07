@@ -27,7 +27,6 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/tetratelabs/wazero"
 	wasm "github.com/tetratelabs/wazero/api"
-	wazero_exp "github.com/tetratelabs/wazero/experimental"
 	wasi "github.com/tetratelabs/wazero/imports/wasi_snapshot_preview1"
 )
 
@@ -52,7 +51,6 @@ type wasmHost struct {
 func NewWasmHost(ctx context.Context, registrations ...func(WasmHost) error) WasmHost {
 	cfg := wazero.NewRuntimeConfig().WithCloseOnContextDone(true)
 	runtime := wazero.NewRuntimeWithConfig(ctx, cfg)
-	ctx = wazero_exp.WithSnapshotter(ctx)
 	wasi.MustInstantiate(ctx, runtime)
 
 	if err := instantiateEnvHostFunctions(ctx, runtime); err != nil {
