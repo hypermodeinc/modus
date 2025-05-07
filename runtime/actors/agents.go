@@ -188,7 +188,9 @@ func NewWasmAgentActor(agent *Agent, host wasmhost.WasmHost, mod wasm.Module, bu
 	return &WasmAgentActor{agent, host, mod, buffers}
 }
 
-func (a *WasmAgentActor) PreStart(ctx context.Context) error {
+func (a *WasmAgentActor) PreStart(ac *goakt.Context) error {
+	ctx := ac.Context()
+
 	logger.Info(ctx).Str("agent", a.agent.Name).Int32("agentId", a.agent.Id).Bool("user_visible", true).Msg("Starting agent...")
 	if err := a.startAgent(ctx); err != nil {
 		logger.Err(ctx, err).Str("agent", a.agent.Name).Int32("agentId", a.agent.Id).Bool("user_visible", true).Msg("Error starting agent.")
@@ -199,7 +201,8 @@ func (a *WasmAgentActor) PreStart(ctx context.Context) error {
 	return nil
 }
 
-func (a *WasmAgentActor) PostStop(ctx context.Context) error {
+func (a *WasmAgentActor) PostStop(ac *goakt.Context) error {
+	ctx := ac.Context()
 	defer a.module.Close(ctx)
 
 	logger.Info(ctx).Str("agent", a.agent.Name).Int32("agentId", a.agent.Id).Bool("user_visible", true).Msg("Stopping agent...")
