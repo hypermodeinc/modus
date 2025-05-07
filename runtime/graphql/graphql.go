@@ -55,7 +55,7 @@ func Initialize() {
 			logger.Warn(ctx).Msg("Multiple plugins loaded.  Only the first plugin will be used.")
 		}
 
-		return engine.Activate(ctx, plugins[0].Metadata)
+		return engine.Activate(ctx, plugins[0])
 	})
 }
 

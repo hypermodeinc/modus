@@ -44,3 +44,7 @@ import * as localtime from "./localtime";
 export { localtime };
 
 export * from "./dynamicmap";
+export * from "./enums";
+
+// export { Agent, Activity } from "./agent";
+export { Agent } from "./agent";

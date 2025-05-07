@@ -83,6 +83,10 @@ export class FunctionSignature {
 
     return output;
   }
+
+  isHidden() {
+    return this.name.startsWith("_");
+  }
 }
 
 export class TypeDefinition {

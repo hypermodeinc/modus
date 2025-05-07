@@ -1,0 +1,17 @@
+/*
+ * Copyright 2025 Hypermode Inc.
+ * Licensed under the terms of the Apache License, Version 2.0
+ * See the LICENSE file that accompanied this code for further details.
+ *
+ * SPDX-FileCopyrightText: 2025 Hypermode Inc. <hello@hypermode.com>
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+export enum Duration {
+  nanosecond = 1,
+  microsecond = 1000 * Duration.nanosecond,
+  millisecond = 1000 * Duration.microsecond,
+  second = 1000 * Duration.millisecond,
+  minute = 60 * Duration.second,
+  hour = 60 * Duration.minute,
+}

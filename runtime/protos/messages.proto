@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package messages;
+
+option go_package = "github.com/hypermodeinc/modus/runtime/messages";
+
+message AgentRequestMessage {
+    string name = 1;
+    optional string data = 2;
+    bool respond = 3;
+}
+
+message AgentResponseMessage {
+    optional string data = 1;
+}
