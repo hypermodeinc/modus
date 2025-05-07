@@ -264,3 +264,6 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	rogchap.com/v8go v0.9.0 // indirect
 )
+
+// temporary
+replace github.com/tochemey/goakt/v3 => github.com/mattjohnsonpint/goakt/v3 v3.0.0-20250507150525-6209a0af0927
