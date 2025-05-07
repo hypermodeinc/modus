@@ -27,6 +27,7 @@ export class CounterAgent extends Agent {
 
   // This method is called when the agent receives a message.
   // This is how agents update their state and share data.
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   onReceiveMessage(name: string, data: string | null): string | null {
     // A "count" message just returns the current count.
     if (name == "count") {
