@@ -4,6 +4,7 @@
 [![modus](https://github.com/user-attachments/assets/1a6020bd-d041-4dd0-b4a9-ce01dc015b65)](https://github.com/hypermodeinc/modus)
 
 [![GitHub License](https://img.shields.io/github/license/hypermodeinc/modus)](https://github.com/hypermodeinc/modus?tab=Apache-2.0-1-ov-file#readme)
+[![CodeQL](https://github.com/hypermodeinc/modus/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/hypermodeinc/modus/actions)
 [![chat](https://img.shields.io/discord/1267579648657850441)](https://discord.gg/NJQ4bJpffF)
 [![GitHub Repo stars](https://img.shields.io/github/stars/hypermodeinc/modus)](https://github.com/hypermodeinc/modus/stargazers)
 [![GitHub commit activity](https://img.shields.io/github/commit-activity/m/hypermodeinc/modus)](https://github.com/hypermodeinc/modus/commits/main/)
