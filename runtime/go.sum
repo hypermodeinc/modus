@@ -569,8 +569,6 @@ github.com/magiconair/properties v1.8.9 h1:nWcCbLq1N2v/cpNsy5WvQ37Fb+YElfq20WJ/a
 github.com/magiconair/properties v1.8.9/go.mod h1:Dhd985XPs7jluiymwWYZ0G4Z61jb3vdS329zhj2hYo0=
 github.com/mailru/easyjson v0.7.7/go.mod h1:xzfreul335JAWq5oZzymOObrkdz5UnU4kGfJJLY9Nlc=
 github.com/matryer/moq v0.0.0-20200106131100-75d0ddfc0007/go.mod h1:9ELz6aaclSIGnZBoaSLZ3NAl1VTufbOrXBPvtcy6WiQ=
-github.com/mattjohnsonpint/goakt/v3 v3.0.0-20250507150525-6209a0af0927 h1:v3Jd2GGTA5S2AwFmtyOqCZ0QUaVi9QlTTF2OzWnPoyI=
-github.com/mattjohnsonpint/goakt/v3 v3.0.0-20250507150525-6209a0af0927/go.mod h1:uFgl6okKl3hqj8weus4MORbuKQNfxSdwqgUCTu6+xsE=
 github.com/mattn/go-colorable v0.1.4/go.mod h1:U0ppj6V5qS13XJ6of8GYAs25YV2eR4EVcfRqFIhoBtE=
 github.com/mattn/go-colorable v0.1.13 h1:fFA4WZxdEF4tXPZVKMLwD8oUnCTTo08duU7wxecdEvA=
 github.com/mattn/go-colorable v0.1.13/go.mod h1:7S9/ev0klgBDR4GtXTXX8a3vIGJpMovkB8vQcUbaXHg=
@@ -817,6 +815,8 @@ github.com/tinylib/msgp v1.1.2/go.mod h1:+d+yLhGm8mzTaHzB+wgMYrodPfmZrzkirds8fDW
 github.com/tinylib/msgp v1.1.5/go.mod h1:eQsjooMTnV42mHu917E26IogZ2930nFyBQdofk10Udg=
 github.com/tinylib/msgp v1.2.5 h1:WeQg1whrXRFiZusidTQqzETkRpGjFjcIhW6uqWH09po=
 github.com/tinylib/msgp v1.2.5/go.mod h1:ykjzy2wzgrlvpDCRc4LA8UXy6D8bzMSuAF3WD57Gok0=
+github.com/tochemey/goakt/v3 v3.4.2 h1:AoXdw2Muv5Y0wOUzgtQ4Loo1BIGiU6lKPYgeGfgpv04=
+github.com/tochemey/goakt/v3 v3.4.2/go.mod h1:uFgl6okKl3hqj8weus4MORbuKQNfxSdwqgUCTu6+xsE=
 github.com/tochemey/olric v0.2.2 h1:EfzwBzWK6FBkigSb33Q1lNF+4ytPalyJFY/ozgQp8rQ=
 github.com/tochemey/olric v0.2.2/go.mod h1:+ZSc9y3FKOey3o//qMmafOaHDoPS4I3cqp8cSQP+v38=
 github.com/travisjeffery/go-dynaport v1.0.0 h1:m/qqf5AHgB96CMMSworIPyo1i7NZueRsnwdzdCJ8Ajw=
