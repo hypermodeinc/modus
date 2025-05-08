@@ -32,6 +32,9 @@ export abstract class Agent {
     agents.push(this);
   }
 
+  /**
+   * Sends a message to the agent, and waits for a response.
+   */
   sendMessage(
     name: string,
     data: string | null = null,
@@ -40,21 +43,37 @@ export abstract class Agent {
     return hostSendMessage(this.id, name, data, timeout);
   }
 
+  /**
+   * Sends a message to the agent without waiting for a response.
+   */
   sendMessageAsync(name: string, data: string | null = null): void {
     hostSendMessage(this.id, name, data, 0);
-  }
-
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  onReceiveMessage(name: string, data: string | null): string | null {
-    return null;
   }
 
   abstract get name(): string;
   abstract getState(): string | null;
   abstract setState(data: string | null): void;
 
+  /**
+   * Called when the agent is started.
+   * Override this method to perform any initialization.
+   */
   onStart(): void {}
+
+  /**
+   * Called when the agent is stopped.
+   * Override this method to perform any cleanup.
+   */
   onStop(): void {}
+
+  /**
+   * Called when the agent receives a message.
+   * Override this method to handle incoming messages.
+   */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  onReceiveMessage(name: string, data: string | null): string | null {
+    return null;
+  }
 }
 
 export function registerAgents(): void {

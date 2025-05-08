@@ -1,7 +1,9 @@
 import { Agent } from "@hypermode/modus-sdk-as";
 
 export class CounterAgent extends Agent {
-  // Agents have a name, used for debugging and logging.
+  // Agents are identified by a name.  Each agent in your project must have a unique name.
+  // The name is used to register the agent with the host, and to send messages to it.
+  // It should be a short, descriptive name that reflects the purpose of the agent.
   get name(): string {
     return "Counter";
   }
