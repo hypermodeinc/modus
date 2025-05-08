@@ -52,7 +52,7 @@ func Activate(ctx context.Context, plugin *plugins.Plugin) error {
 		} else {
 			err = agent.reloadModule(ctx, plugin)
 		}
-		return err != nil
+		return err == nil
 	})
 	if err != nil {
 		return err
@@ -68,6 +68,9 @@ type Agent struct {
 }
 
 func (agent *Agent) spawnActor(ctx context.Context, plugin *plugins.Plugin) error {
+
+	logger.Debug(ctx).Str("agent", agent.Name).Int32("agentId", agent.Id).Msg("Spawning actor for agent.")
+
 	host := wasmhost.GetWasmHost(ctx)
 	buffers := utils.NewOutputBuffers()
 	mod, err := host.GetModuleInstance(ctx, plugin, buffers)
@@ -75,22 +78,25 @@ func (agent *Agent) spawnActor(ctx context.Context, plugin *plugins.Plugin) erro
 		return err
 	}
 
+	actorName := fmt.Sprintf("agent-%s-%d", agent.Name, agent.Id)
 	actor := NewWasmAgentActor(agent, host, mod, buffers)
-	pid, err := _actorSystem.Spawn(ctx, agent.Name, actor)
+	pid, err := _actorSystem.Spawn(ctx, actorName, actor)
 	if err != nil {
 		return fmt.Errorf("error spawning actor for '%s' agent: %w", agent.Name, err)
 	}
-
 	agent.Pid = pid
+
+	logger.Debug(ctx).Str("agent", agent.Name).Int32("agentId", agent.Id).Str("Pid", agent.Pid.ID()).Msg("Actor spawned successfully.")
+
 	return nil
 }
 
 func (agent *Agent) reloadModule(ctx context.Context, plugin *plugins.Plugin) error {
-	actor := agent.Pid.Actor().(*WasmAgentActor)
 
-	logger.Info(ctx).Str("agent", agent.Name).Int32("agentId", agent.Id).Bool("user_visible", true).Msg("Reloading module for agent.")
+	logger.Debug(ctx).Str("agent", agent.Name).Int32("agentId", agent.Id).Msg("Reloading module for agent.")
 
 	// get the current state and close the module
+	actor := agent.Pid.Actor().(*WasmAgentActor)
 	state, err := actor.getAgentState(ctx)
 	if err != nil {
 		return fmt.Errorf("error getting agent state: %w", err)
@@ -110,6 +116,8 @@ func (agent *Agent) reloadModule(ctx context.Context, plugin *plugins.Plugin) er
 	if err := actor.setAgentState(ctx, *state); err != nil {
 		return fmt.Errorf("error setting agent state: %w", err)
 	}
+
+	logger.Debug(ctx).Str("agent", agent.Name).Int32("agentId", agent.Id).Str("Pid", agent.Pid.ID()).Msg("Actor reloaded successfully.")
 
 	return nil
 }
@@ -160,18 +168,6 @@ func RegisterAgent(ctx context.Context, agentId int32, name string) error {
 		Id:   agentId,
 		Name: name,
 	})
-
-	// actual, found := agentRegistry.LoadAndStore(key, &Agent{
-	// 	Id:   agentId,
-	// 	Name: name,
-	// })
-
-	// // If the actor already exists, we need to stop it before spawning a new one.
-	// if found {
-	// 	if err := actual.Pid.Shutdown(ctx); err != nil {
-	// 		return fmt.Errorf("error shutting down existing agent %d: %w", agentId, err)
-	// 	}
-	// }
 
 	return nil
 }

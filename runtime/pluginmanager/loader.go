@@ -45,13 +45,6 @@ func monitorPlugins(ctx context.Context) {
 		}
 		return err
 	}
-	// sm.Changed = func(errors []error) {
-	// 	if len(errors) == 0 {
-	// 		plugins := globalPluginRegistry.GetAll()
-	// 		registry := wasmhost.GetWasmHost(ctx).GetFunctionRegistry()
-	// 		registry.RegisterAllFunctions(ctx, plugins...)
-	// 	}
-	// }
 	sm.Start(ctx)
 }
 

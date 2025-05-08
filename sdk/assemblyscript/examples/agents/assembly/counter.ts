@@ -31,6 +31,13 @@ export class CounterAgent extends Agent {
   // This is how agents update their state and share data.
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   onReceiveMessage(name: string, data: string | null): string | null {
+    if (data == null) {
+      console.debug(`Counter agent ${this.id} received message: ${name}`);
+    } else {
+      console.debug(
+        `Counter agent ${this.id} received message: ${name} with data: ${data}`,
+      );
+    }
     // A "count" message just returns the current count.
     if (name == "count") {
       return this.count.toString();

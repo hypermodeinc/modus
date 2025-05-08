@@ -6,18 +6,35 @@
 
 import { CounterAgent } from "./counter";
 
-const ca = new CounterAgent();
+const a1 = new CounterAgent();
+const a2 = new CounterAgent();
 
-export function updateCount(): i32 {
-  const count = ca.sendMessage("increment");
+export function updateCount1(): i32 {
+  const count = a1.sendMessage("increment");
   if (count == null) {
     return 0;
   }
   return i32.parse(count);
 }
 
-export function getCount(): i32 {
-  const count = ca.sendMessage("count");
+export function updateCount2(): i32 {
+  const count = a2.sendMessage("increment");
+  if (count == null) {
+    return 0;
+  }
+  return i32.parse(count);
+}
+
+export function getCount1(): i32 {
+  const count = a1.sendMessage("count");
+  if (count == null) {
+    return 0;
+  }
+  return i32.parse(count);
+}
+
+export function getCount2(): i32 {
+  const count = a2.sendMessage("count");
   if (count == null) {
     return 0;
   }
