@@ -1,0 +1,10 @@
+version: v2
+managed:
+  enabled: true
+  override:
+    - file_option: optimize_for
+      value: CODE_SIZE
+plugins:
+  - local: protoc-gen-go
+    out: messages
+    opt: paths=source_relative

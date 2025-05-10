@@ -45,13 +45,6 @@ func monitorPlugins(ctx context.Context) {
 		}
 		return err
 	}
-	sm.Changed = func(errors []error) {
-		if len(errors) == 0 {
-			plugins := globalPluginRegistry.GetAll()
-			registry := wasmhost.GetWasmHost(ctx).GetFunctionRegistry()
-			registry.RegisterAllFunctions(ctx, plugins...)
-		}
-	}
 	sm.Start(ctx)
 }
 
@@ -66,7 +59,8 @@ func loadPlugin(ctx context.Context, filename string) error {
 	}
 
 	// Compile the plugin into a module
-	cm, err := wasmhost.GetWasmHost(ctx).CompileModule(ctx, bytes)
+	host := wasmhost.GetWasmHost(ctx)
+	cm, err := host.CompileModule(ctx, bytes)
 	if err != nil {
 		return err
 	}
@@ -98,8 +92,11 @@ func loadPlugin(ctx context.Context, filename string) error {
 	// Log the details of the loaded plugin.
 	logPluginLoaded(ctx, plugin)
 
+	// register functions in the plugin
+	host.GetFunctionRegistry().RegisterAllFunctions(ctx, plugin)
+
 	// Trigger the plugin loaded event.
-	err = triggerPluginLoaded(ctx, md)
+	err = triggerPluginLoaded(ctx, plugin)
 
 	return err
 }

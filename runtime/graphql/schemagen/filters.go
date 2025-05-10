@@ -9,12 +9,16 @@
 
 package schemagen
 
-import "github.com/hypermodeinc/modus/runtime/manifestdata"
+import (
+	"strings"
+
+	"github.com/hypermodeinc/modus/runtime/manifestdata"
+)
 
 func getFieldFilter() func(*FieldDefinition) bool {
 	embedders := getEmbedderFields()
 	return func(f *FieldDefinition) bool {
-		return !embedders[f.Name]
+		return !isIgnoredFunction(f.Name) && !embedders[f.Name]
 	}
 }
 
@@ -26,4 +30,8 @@ func getEmbedderFields() map[string]bool {
 		}
 	}
 	return embedders
+}
+
+func isIgnoredFunction(fnName string) bool {
+	return strings.HasPrefix(fnName, "_")
 }
