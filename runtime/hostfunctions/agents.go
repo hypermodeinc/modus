@@ -18,15 +18,15 @@ import (
 func init() {
 	const module_name = "modus_agents"
 
-	registerHostFunction(module_name, "registerAgent", actors.RegisterAgent,
-		withErrorMessage("Error registering agent."),
-		withMessageDetail(func(agentId int32, name string) string {
-			return fmt.Sprintf("Id: %d, Name: %s", agentId, name)
+	registerHostFunction(module_name, "spawnAgentActor", actors.SpawnAgentActor,
+		withErrorMessage("Error spawning actor for agent."),
+		withMessageDetail(func(agentName string) string {
+			return fmt.Sprintf("Name: %s", agentName)
 		}))
 
 	registerHostFunction(module_name, "sendMessage", actors.SendAgentMessage,
 		withErrorMessage("Error sending message to agent."),
-		withMessageDetail(func(agentId int32, msgName string, data *string, timeout int64) string {
-			return fmt.Sprintf("AgentId: %d, MsgName: %s", agentId, msgName)
+		withMessageDetail(func(agentId string, msgName string, data *string, timeout int64) string {
+			return fmt.Sprintf("AgentId: %s, MsgName: %s", agentId, msgName)
 		}))
 }

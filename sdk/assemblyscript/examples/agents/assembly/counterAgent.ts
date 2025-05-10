@@ -27,17 +27,19 @@ export class CounterAgent extends Agent {
     console.info("Counter agent stopped");
   }
 
+  // If the agent is reloaded, this method is automatically called.
+  // It is optional, but can be used to keep track of the agent's status.
+  onReload(): void {
+    console.info("Counter agent reloaded");
+  }
+
   // This method is called when the agent receives a message.
   // This is how agents update their state and share data.
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   onReceiveMessage(name: string, data: string | null): string | null {
-    if (data == null) {
-      console.debug(`Counter agent ${this.id} received message: ${name}`);
-    } else {
-      console.debug(
-        `Counter agent ${this.id} received message: ${name} with data: ${data}`,
-      );
-    }
+    console.info(
+      `Counter agent ${this.id} received message: ${name}${data ? " with data: " + data : ""}`,
+    );
+
     // A "count" message just returns the current count.
     if (name == "count") {
       return this.count.toString();

@@ -19,167 +19,80 @@ import (
 	"github.com/hypermodeinc/modus/runtime/plugins"
 	"github.com/hypermodeinc/modus/runtime/utils"
 	"github.com/hypermodeinc/modus/runtime/wasmhost"
-	"github.com/puzpuzpuz/xsync/v4"
+	"github.com/rs/xid"
 
 	wasm "github.com/tetratelabs/wazero/api"
 	goakt "github.com/tochemey/goakt/v3/actor"
 )
 
-func Activate(ctx context.Context, plugin *plugins.Plugin) error {
-
-	host := wasmhost.GetWasmHost(ctx)
-	fnInfo, _ := host.GetFunctionInfo("_modus_register_agents")
-	if fnInfo == nil {
-		// No agents to register
-		return nil
-	}
-
-	buffers := utils.NewOutputBuffers()
-
-	mod, err := host.GetModuleInstance(ctx, plugin, buffers)
-	if err != nil {
-		return fmt.Errorf("error getting module instance: %w", err)
-	}
-	defer mod.Close(ctx)
-
-	if _, err := host.CallFunctionInModule(ctx, mod, buffers, fnInfo, nil); err != nil {
-		return fmt.Errorf("error registering agents: %w", err)
-	}
-
-	agentRegistry.Range(func(key string, agent *Agent) bool {
-		if agent.Pid == nil {
-			err = agent.spawnActor(ctx, plugin)
-		} else {
-			err = agent.reloadModule(ctx, plugin)
-		}
-		return err == nil
-	})
-	if err != nil {
-		return err
-	}
-
-	return nil
+type AgentInfo struct {
+	Id     string
+	Name   string
+	Status AgentStatus
 }
 
-type Agent struct {
-	Id   int32
-	Pid  *goakt.PID
-	Name string
-}
+type AgentStatus = string
 
-func (agent *Agent) spawnActor(ctx context.Context, plugin *plugins.Plugin) error {
+// TODO: validate these statuses are needed and used correctly
+const (
+	AgentStatusUninitialized AgentStatus = "uninitialized"
+	AgentStatusError         AgentStatus = "error"
+	AgentStatusStarting      AgentStatus = "starting"
+	AgentStatusStarted       AgentStatus = "started"
+	AgentStatusStopping      AgentStatus = "stopping"
+	AgentStatusStopped       AgentStatus = "stopped"
+	AgentStatusSuspended     AgentStatus = "suspended"
+	AgentStatusTerminated    AgentStatus = "terminated"
+)
 
-	logger.Debug(ctx).Str("agent", agent.Name).Int32("agentId", agent.Id).Msg("Spawning actor for agent.")
-
-	host := wasmhost.GetWasmHost(ctx)
-	buffers := utils.NewOutputBuffers()
-	mod, err := host.GetModuleInstance(ctx, plugin, buffers)
-	if err != nil {
-		return err
+func SpawnAgentActor(ctx context.Context, agentName string) (*AgentInfo, error) {
+	plugin, ok := plugins.GetPluginFromContext(ctx)
+	if !ok {
+		return nil, fmt.Errorf("no plugin found in context")
 	}
 
-	actorName := fmt.Sprintf("agent-%s-%d", agent.Name, agent.Id)
-	actor := NewWasmAgentActor(agent, host, mod, buffers)
+	agentId := xid.New().String()
+	actorName := fmt.Sprintf("agent-%s", agentId)
+
+	logger.Debug(ctx).Str("agent", agentName).Str("agentId", agentId).Msg("Spawning actor for agent.")
+
+	actor := NewWasmAgentActor(agentId, agentName, plugin)
 	pid, err := _actorSystem.Spawn(ctx, actorName, actor)
 	if err != nil {
-		return fmt.Errorf("error spawning actor for '%s' agent: %w", agent.Name, err)
+		return nil, fmt.Errorf("error spawning actor for '%s' agent: %w", agentName, err)
 	}
-	agent.Pid = pid
 
-	logger.Debug(ctx).Str("agent", agent.Name).Int32("agentId", agent.Id).Str("Pid", agent.Pid.ID()).Msg("Actor spawned successfully.")
+	logger.Debug(ctx).Str("agent", agentName).Str("agentId", agentId).Str("Pid", pid.ID()).Msg("Actor spawned successfully.")
+
+	info := &AgentInfo{
+		Id:     agentId,
+		Name:   agentName,
+		Status: AgentStatusStarted, // TODO: validate this is the correct status
+	}
+
+	return info, nil
+}
+
+func reloadActors(ctx context.Context, plugin *plugins.Plugin) error {
+	for _, pid := range _actorSystem.Actors() {
+		if actor, ok := pid.Actor().(*WasmAgentActor); ok {
+			if err := actor.reloadModule(ctx, plugin); err != nil {
+				return err
+			}
+		}
+	}
 
 	return nil
 }
 
-func (agent *Agent) reloadModule(ctx context.Context, plugin *plugins.Plugin) error {
+func SendAgentMessage(ctx context.Context, agentId string, msgName string, data *string, timeout int64) (*string, error) {
 
-	logger.Debug(ctx).Str("agent", agent.Name).Int32("agentId", agent.Id).Msg("Reloading module for agent.")
-
-	// get the current state and close the module
-	actor := agent.Pid.Actor().(*WasmAgentActor)
-	state, err := actor.getAgentState(ctx)
+	addr, pid, err := _actorSystem.ActorOf(ctx, getActorName(agentId))
 	if err != nil {
-		return fmt.Errorf("error getting agent state: %w", err)
-	}
-	actor.module.Close(ctx)
-
-	// create a new module instance and assign it to the actor
-	host := wasmhost.GetWasmHost(ctx)
-	buffers := utils.NewOutputBuffers()
-	mod, err := host.GetModuleInstance(ctx, plugin, buffers)
-	if err != nil {
-		return err
-	}
-	actor.module = mod
-
-	// restore the state in the new module
-	if err := actor.setAgentState(ctx, *state); err != nil {
-		return fmt.Errorf("error setting agent state: %w", err)
+		return nil, fmt.Errorf("error getting actor for agent %s: %w", agentId, err)
 	}
 
-	logger.Debug(ctx).Str("agent", agent.Name).Int32("agentId", agent.Id).Str("Pid", agent.Pid.ID()).Msg("Actor reloaded successfully.")
-
-	return nil
-}
-
-var agentRegistry = xsync.NewMap[string, *Agent]()
-
-func getAgent(ctx context.Context, id int32) (*Agent, error) {
-	if key, err := getAgentKey(ctx, id); err != nil {
-		return nil, err
-	} else if agent, ok := agentRegistry.Load(key); ok {
-		return agent, nil
-	} else {
-		return nil, fmt.Errorf("agent with id %d not found", id)
-	}
-}
-
-func getActorForAgent(ctx context.Context, agentId int32) (*WasmAgentActor, error) {
-	agent, err := getAgent(ctx, agentId)
-	if err != nil {
-		return nil, err
-	}
-	actor := agent.Pid.Actor()
-	if actor == nil {
-		return nil, fmt.Errorf("actor for agent %d not found", agentId)
-	}
-	wasmActor, ok := actor.(*WasmAgentActor)
-	if !ok {
-		return nil, fmt.Errorf("actor for agent %d is not a WasmAgentActor", agentId)
-	}
-	return wasmActor, nil
-}
-
-func getAgentKey(ctx context.Context, agentId int32) (string, error) {
-	if plugin, ok := plugins.GetPluginFromContext(ctx); !ok {
-		return "", fmt.Errorf("no plugin found in context")
-	} else {
-		return fmt.Sprintf("%s:%d", plugin.Name(), agentId), nil
-	}
-}
-
-func RegisterAgent(ctx context.Context, agentId int32, name string) error {
-	key, err := getAgentKey(ctx, agentId)
-	if err != nil {
-		return err
-	}
-
-	agentRegistry.LoadOrStore(key, &Agent{
-		Id:   agentId,
-		Name: name,
-	})
-
-	return nil
-}
-
-func SendAgentMessage(ctx context.Context, agentId int32, msgName string, data *string, timeout int64) (*string, error) {
-	agent, err := getAgent(ctx, agentId)
-	if err != nil {
-		return nil, err
-	}
-	if agent.Pid == nil {
-		return nil, fmt.Errorf("actor for agent %d not found", agentId)
-	}
+	_ = addr // TODO: this will be used when we implement remote actors with clustering
 
 	msg := &messages.AgentRequestMessage{
 		Name:    msgName,
@@ -188,15 +101,15 @@ func SendAgentMessage(ctx context.Context, agentId int32, msgName string, data *
 	}
 
 	if timeout == 0 {
-		if err := goakt.Tell(ctx, agent.Pid, msg); err != nil {
-			return nil, fmt.Errorf("error sending message to agent %s: %w", agent.Pid.ID(), err)
+		if err := goakt.Tell(ctx, pid, msg); err != nil {
+			return nil, fmt.Errorf("error sending message to agent %s: %w", pid.ID(), err)
 		}
 		return nil, nil
 	}
 
-	res, err := goakt.Ask(ctx, agent.Pid, msg, time.Duration(timeout))
+	res, err := goakt.Ask(ctx, pid, msg, time.Duration(timeout))
 	if err != nil {
-		return nil, fmt.Errorf("error sending message to agent %s: %w", agent.Pid.ID(), err)
+		return nil, fmt.Errorf("error sending message to agent %s: %w", pid.ID(), err)
 	}
 
 	if response, ok := res.(*messages.AgentResponseMessage); ok {
@@ -206,51 +119,46 @@ func SendAgentMessage(ctx context.Context, agentId int32, msgName string, data *
 	}
 }
 
-func GetAgentState(ctx context.Context, agentId int32) (*string, error) {
-	actor, err := getActorForAgent(ctx, agentId)
-	if err != nil {
-		return nil, err
-	}
-	state, err := actor.getAgentState(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("error getting agent state: %w", err)
-	}
-	return state, nil
-}
-
-func SetAgentState(ctx context.Context, agentId int32, data string) error {
-	actor, err := getActorForAgent(ctx, agentId)
-	if err != nil {
-		return err
-	}
-
-	if err := actor.setAgentState(ctx, data); err != nil {
-		return fmt.Errorf("error setting agent state: %w", err)
-	}
-	return nil
+func getActorName(agentId string) string {
+	return "agent-" + agentId
 }
 
 type WasmAgentActor struct {
-	agent   *Agent
-	host    wasmhost.WasmHost
-	module  wasm.Module
-	buffers utils.OutputBuffers
+	agentId   string
+	agentName string
+	plugin    *plugins.Plugin
+	host      wasmhost.WasmHost
+	module    wasm.Module
+	buffers   utils.OutputBuffers
 }
 
-func NewWasmAgentActor(agent *Agent, host wasmhost.WasmHost, mod wasm.Module, buffers utils.OutputBuffers) *WasmAgentActor {
-	return &WasmAgentActor{agent, host, mod, buffers}
+func NewWasmAgentActor(agentId, agentName string, plugin *plugins.Plugin) *WasmAgentActor {
+	return &WasmAgentActor{
+		agentId:   agentId,
+		agentName: agentName,
+		plugin:    plugin,
+	}
 }
 
 func (a *WasmAgentActor) PreStart(ac *goakt.Context) error {
 	ctx := ac.Context()
 
-	logger.Info(ctx).Str("agent", a.agent.Name).Int32("agentId", a.agent.Id).Bool("user_visible", true).Msg("Starting agent...")
-	if err := a.startAgent(ctx); err != nil {
-		logger.Err(ctx, err).Str("agent", a.agent.Name).Int32("agentId", a.agent.Id).Bool("user_visible", true).Msg("Error starting agent.")
+	logger.Info(ctx).Str("agent", a.agentName).Str("agentId", a.agentId).Bool("user_visible", true).Msg("Starting agent...")
+
+	a.host = wasmhost.GetWasmHost(ctx)
+	a.buffers = utils.NewOutputBuffers()
+	if mod, err := a.host.GetModuleInstance(ctx, a.plugin, a.buffers); err != nil {
+		return err
+	} else {
+		a.module = mod
+	}
+
+	if err := a.activateAgent(ctx, false); err != nil {
+		logger.Err(ctx, err).Str("agent", a.agentName).Str("agentId", a.agentId).Bool("user_visible", true).Msg("Error starting agent.")
 		return err
 	}
 
-	logger.Info(ctx).Str("agent", a.agent.Name).Int32("agentId", a.agent.Id).Bool("user_visible", true).Msg("Agent started successfully.")
+	logger.Info(ctx).Str("agent", a.agentName).Str("agentId", a.agentId).Bool("user_visible", true).Msg("Agent started successfully.")
 	return nil
 }
 
@@ -258,13 +166,13 @@ func (a *WasmAgentActor) PostStop(ac *goakt.Context) error {
 	ctx := ac.Context()
 	defer a.module.Close(ctx)
 
-	logger.Info(ctx).Str("agent", a.agent.Name).Int32("agentId", a.agent.Id).Bool("user_visible", true).Msg("Stopping agent...")
-	if err := a.stopAgent(ctx); err != nil {
-		logger.Err(ctx, err).Str("agent", a.agent.Name).Int32("agentId", a.agent.Id).Bool("user_visible", true).Msg("Error stopping agent.")
+	logger.Info(ctx).Str("agent", a.agentName).Str("agentId", a.agentId).Bool("user_visible", true).Msg("Stopping agent...")
+	if err := a.shutdownAgent(ctx); err != nil {
+		logger.Err(ctx, err).Str("agent", a.agentName).Str("agentId", a.agentId).Bool("user_visible", true).Msg("Error stopping agent.")
 		return err
 	}
 
-	logger.Info(ctx).Str("agent", a.agent.Name).Int32("agentId", a.agent.Id).Bool("user_visible", true).Msg("Agent stopped successfully.")
+	logger.Info(ctx).Str("agent", a.agentName).Str("agentId", a.agentId).Bool("user_visible", true).Msg("Agent stopped successfully.")
 	return nil
 }
 
@@ -281,9 +189,8 @@ func (a *WasmAgentActor) Receive(rc *goakt.ReceiveContext) {
 		}
 
 		params := map[string]any{
-			"id":   a.agent.Id,
-			"name": msg.Name,
-			"data": msg.Data,
+			"msgName": msg.Name,
+			"data":    msg.Data,
 		}
 
 		execInfo, err := a.host.CallFunctionInModule(ctx, a.module, a.buffers, fnInfo, params)
@@ -311,15 +218,17 @@ func (a *WasmAgentActor) Receive(rc *goakt.ReceiveContext) {
 	}
 }
 
-func (a *WasmAgentActor) startAgent(ctx context.Context) error {
+func (a *WasmAgentActor) activateAgent(ctx context.Context, reloading bool) error {
 
-	fnInfo, err := a.host.GetFunctionInfo("_modus_start_agent")
+	fnInfo, err := a.host.GetFunctionInfo("_modus_agent_activate")
 	if err != nil {
 		return err
 	}
 
 	params := map[string]any{
-		"id": a.agent.Id,
+		"name":      a.agentName,
+		"id":        a.agentId,
+		"reloading": reloading,
 	}
 
 	execInfo, err := a.host.CallFunctionInModule(ctx, a.module, a.buffers, fnInfo, params)
@@ -328,18 +237,13 @@ func (a *WasmAgentActor) startAgent(ctx context.Context) error {
 	return err
 }
 
-func (a *WasmAgentActor) stopAgent(ctx context.Context) error {
+func (a *WasmAgentActor) shutdownAgent(ctx context.Context) error {
 
-	fnInfo, err := a.host.GetFunctionInfo("_modus_stop_agent")
+	fnInfo, err := a.host.GetFunctionInfo("_modus_agent_shutdown")
 	if err != nil {
 		return err
 	}
-
-	params := map[string]any{
-		"id": a.agent.Id,
-	}
-
-	execInfo, err := a.host.CallFunctionInModule(ctx, a.module, a.buffers, fnInfo, params)
+	execInfo, err := a.host.CallFunctionInModule(ctx, a.module, a.buffers, fnInfo, nil)
 
 	_ = execInfo // TODO
 	return err
@@ -347,16 +251,12 @@ func (a *WasmAgentActor) stopAgent(ctx context.Context) error {
 
 func (a *WasmAgentActor) getAgentState(ctx context.Context) (*string, error) {
 
-	fnInfo, err := a.host.GetFunctionInfo("_modus_get_agent_state")
+	fnInfo, err := a.host.GetFunctionInfo("_modus_agent_get_state")
 	if err != nil {
 		return nil, err
 	}
 
-	params := map[string]any{
-		"id": a.agent.Id,
-	}
-
-	execInfo, err := a.host.CallFunctionInModule(ctx, a.module, a.buffers, fnInfo, params)
+	execInfo, err := a.host.CallFunctionInModule(ctx, a.module, a.buffers, fnInfo, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -373,14 +273,13 @@ func (a *WasmAgentActor) getAgentState(ctx context.Context) (*string, error) {
 	return &state, nil
 }
 
-func (a *WasmAgentActor) setAgentState(ctx context.Context, data string) error {
-	fnInfo, err := a.host.GetFunctionInfo("_modus_set_agent_state")
+func (a *WasmAgentActor) setAgentState(ctx context.Context, data *string) error {
+	fnInfo, err := a.host.GetFunctionInfo("_modus_agent_set_state")
 	if err != nil {
 		return err
 	}
 
 	params := map[string]any{
-		"id":   a.agent.Id,
 		"data": data,
 	}
 
@@ -391,4 +290,40 @@ func (a *WasmAgentActor) setAgentState(ctx context.Context, data string) error {
 
 	_ = execInfo // TODO
 	return err
+}
+
+func (a *WasmAgentActor) reloadModule(ctx context.Context, plugin *plugins.Plugin) error {
+
+	logger.Info(ctx).Str("agent", a.agentName).Str("agentId", a.agentId).Msg("Reloading module for agent.")
+
+	// get the current state and close the module instance
+	state, err := a.getAgentState(ctx)
+	if err != nil {
+		return fmt.Errorf("error getting agent state: %w", err)
+	}
+	a.module.Close(ctx)
+
+	// create a new module instance and assign it to the actor
+	a.plugin = plugin
+	a.buffers = utils.NewOutputBuffers()
+	mod, err := a.host.GetModuleInstance(ctx, a.plugin, a.buffers)
+	if err != nil {
+		return err
+	}
+	a.module = mod
+
+	// activate the agent in the new module instance
+	if err := a.activateAgent(ctx, true); err != nil {
+		logger.Err(ctx, err).Str("agent", a.agentName).Str("agentId", a.agentId).Bool("user_visible", true).Msg("Error reloading agent.")
+		return err
+	}
+
+	// restore the state in the new module instance
+	if err := a.setAgentState(ctx, state); err != nil {
+		return fmt.Errorf("error setting agent state: %w", err)
+	}
+
+	logger.Info(ctx).Str("agent", a.agentName).Str("agentId", a.agentId).Msg("Agent reloaded module successfully.")
+
+	return nil
 }

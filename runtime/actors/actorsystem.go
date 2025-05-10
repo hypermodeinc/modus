@@ -44,7 +44,7 @@ func Initialize(ctx context.Context) {
 
 	logger.Info(ctx).Msg("Actor system started.")
 
-	pluginmanager.RegisterPluginLoadedCallback(Activate)
+	pluginmanager.RegisterPluginLoadedCallback(reloadActors)
 }
 
 func beforeShutdown(ctx context.Context) error {

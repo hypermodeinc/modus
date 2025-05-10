@@ -7,47 +7,104 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Duration } from "./enums";
+import { AgentStatus } from "./enums";
 
-const agents: Agent[] = [];
+const agents = new Map<string, Agent>();
+
+let activeAgent: Agent | null = null;
+let activeAgentId: string | null = null;
 
 // @ts-expect-error: decorator
-@external("modus_agents", "registerAgent")
-declare function hostRegisterAgent(agentId: i32, name: string): void;
+@external("modus_agents", "spawnAgentActor")
+declare function hostSpawnAgentActor(agentName: string): AgentInfo;
 
-// @ts-expect-error: decorator
-@external("modus_agents", "sendMessage")
-declare function hostSendMessage(
-  agentId: i32,
+export function registerAgent<T extends Agent>(): void {
+  const agent = instantiate<T>();
+  agents.set(agent.name, agent);
+}
+
+export function startAgent(name: string): AgentInfo {
+  if (!agents.has(name)) {
+    throw new Error(`Agent ${name} not found.`);
+  }
+
+  return hostSpawnAgentActor(name);
+}
+
+export function activateAgent(name: string, id: string, reloading: bool): void {
+  if (!agents.has(name)) {
+    throw new Error(`Agent ${name} not found.`);
+  }
+
+  if (activeAgent) {
+    throw new Error("Another agent is already active.");
+  }
+
+  activeAgent = agents.get(name);
+  activeAgentId = id;
+
+  if (reloading) {
+    activeAgent!.onReload();
+  } else {
+    activeAgent!.onStart();
+  }
+}
+
+export function shutdownAgent(): void {
+  if (!activeAgent) {
+    throw new Error("No active agent to shut down.");
+  }
+
+  activeAgent!.onStop();
+  activeAgent = null;
+  activeAgentId = null;
+}
+
+export function getAgentState(): string | null {
+  if (!activeAgent) {
+    throw new Error("No active agent to get state for.");
+  }
+  return activeAgent!.getState();
+}
+
+export function setAgentState(data: string | null): void {
+  if (!activeAgent) {
+    throw new Error("No active agent to set state for.");
+  }
+  activeAgent!.setState(data);
+}
+
+export function handleMessage(
   msgName: string,
   data: string | null,
-  timeout: i64,
-): string | null;
+): string | null {
+  if (!activeAgent) {
+    throw new Error("No active agent to handle message for.");
+  }
+  return activeAgent!.onReceiveMessage(msgName, data);
+}
+
+export class AgentInfo {
+  readonly id: string;
+  readonly name: string;
+  readonly status: AgentStatus;
+
+  constructor(
+    id: string,
+    name: string,
+    status: AgentStatus = AgentStatus.Uninitialized,
+  ) {
+    this.id = id;
+    this.name = name;
+    this.status = status;
+  }
+}
 
 export abstract class Agent {
-  readonly id: i32;
-
-  constructor() {
-    this.id = agents.length + 1;
-    agents.push(this);
-  }
-
-  /**
-   * Sends a message to the agent, and waits for a response.
-   */
-  sendMessage(
-    name: string,
-    data: string | null = null,
-    timeout: Duration = 10 * Duration.second,
-  ): string | null {
-    return hostSendMessage(this.id, name, data, timeout);
-  }
-
-  /**
-   * Sends a message to the agent without waiting for a response.
-   */
-  sendMessageAsync(name: string, data: string | null = null): void {
-    hostSendMessage(this.id, name, data, 0);
+  get id(): string {
+    // Only active agents have an ID, and only one agent can be active at a time
+    // in a single wasm module instance
+    return activeAgentId || "";
   }
 
   abstract get name(): string;
@@ -67,54 +124,18 @@ export abstract class Agent {
   onStop(): void {}
 
   /**
+   * Called when the agent is reloaded.
+   * Override this method if you want to perform any actions when the agent is reloaded.
+   * Reloading is done when the agent is updated, or when the agent is resumed after being suspended.
+   */
+  onReload(): void {}
+
+  /**
    * Called when the agent receives a message.
    * Override this method to handle incoming messages.
    */
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  onReceiveMessage(name: string, data: string | null): string | null {
+  onReceiveMessage(msgName: string, data: string | null): string | null {
     return null;
   }
-}
-
-export function registerAgents(): void {
-  for (let i = 0; i < agents.length; i++) {
-    const agent = agents[i];
-    hostRegisterAgent(agent.id, agent.name);
-  }
-}
-
-export function startAgent(id: i32): void {
-  const agent = getAgent(id);
-  agent.onStart();
-}
-
-export function stopAgent(id: i32): void {
-  const agent = getAgent(id);
-  agent.onStop();
-}
-
-export function handleMessage(
-  id: i32,
-  name: string,
-  data: string | null,
-): string | null {
-  const agent = getAgent(id);
-  return agent.onReceiveMessage(name, data);
-}
-
-export function getAgentState(id: i32): string | null {
-  const agent = getAgent(id);
-  return agent.getState();
-}
-
-export function setAgentState(id: i32, data: string | null): void {
-  const agent = getAgent(id);
-  agent.setState(data);
-}
-
-function getAgent(id: i32): Agent {
-  if (id < 1 || id > agents.length) {
-    throw new Error(`Agent ${id} not found`);
-  }
-  return agents[id - 1];
 }

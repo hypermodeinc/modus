@@ -8,6 +8,7 @@
  */
 
 export enum Duration {
+  zero = 0,
   nanosecond = 1,
   microsecond = 1000 * Duration.nanosecond,
   millisecond = 1000 * Duration.microsecond,
@@ -15,3 +16,18 @@ export enum Duration {
   minute = 60 * Duration.second,
   hour = 60 * Duration.minute,
 }
+
+// TODO: validate status values
+
+// eslint-disable-next-line @typescript-eslint/no-namespace
+export namespace AgentStatus {
+  export const Uninitialized = "uninitialized";
+  export const Error = "error";
+  export const Starting = "starting";
+  export const Started = "started";
+  export const Stopping = "stopping";
+  export const Stopped = "stopped";
+  export const Suspended = "suspended";
+  export const Terminated = "terminated";
+}
+export type AgentStatus = string;

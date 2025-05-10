@@ -11,10 +11,9 @@
 // Any function exported here will become a WASM export in the final build.
 
 export {
-  registerAgents as _modus_register_agents,
-  startAgent as _modus_start_agent,
-  stopAgent as _modus_stop_agent,
-  getAgentState as _modus_get_agent_state,
-  setAgentState as _modus_set_agent_state,
+  activateAgent as _modus_agent_activate,
+  shutdownAgent as _modus_agent_shutdown,
   handleMessage as _modus_agent_handle_message,
+  getAgentState as _modus_agent_get_state,
+  setAgentState as _modus_agent_set_state,
 } from "./agent";
