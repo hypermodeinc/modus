@@ -73,18 +73,6 @@ func SpawnAgentActor(ctx context.Context, agentName string) (*AgentInfo, error) 
 	return info, nil
 }
 
-func reloadActors(ctx context.Context, plugin *plugins.Plugin) error {
-	for _, pid := range _actorSystem.Actors() {
-		if actor, ok := pid.Actor().(*WasmAgentActor); ok {
-			if err := actor.reloadModule(ctx, plugin); err != nil {
-				return err
-			}
-		}
-	}
-
-	return nil
-}
-
 func SendAgentMessage(ctx context.Context, agentId string, msgName string, data *string, timeout int64) (*string, error) {
 
 	addr, pid, err := _actorSystem.ActorOf(ctx, getActorName(agentId))

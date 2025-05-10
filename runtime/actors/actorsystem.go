@@ -15,6 +15,7 @@ import (
 
 	"github.com/hypermodeinc/modus/runtime/logger"
 	"github.com/hypermodeinc/modus/runtime/pluginmanager"
+	"github.com/hypermodeinc/modus/runtime/plugins"
 
 	goakt "github.com/tochemey/goakt/v3/actor"
 )
@@ -44,7 +45,19 @@ func Initialize(ctx context.Context) {
 
 	logger.Info(ctx).Msg("Actor system started.")
 
-	pluginmanager.RegisterPluginLoadedCallback(reloadActors)
+	pluginmanager.RegisterPluginLoadedCallback(reloadAgentActors)
+}
+
+func reloadAgentActors(ctx context.Context, plugin *plugins.Plugin) error {
+	for _, pid := range _actorSystem.Actors() {
+		if actor, ok := pid.Actor().(*WasmAgentActor); ok {
+			if err := actor.reloadModule(ctx, plugin); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
 }
 
 func beforeShutdown(ctx context.Context) error {
