@@ -30,6 +30,13 @@ func StartCounterAgent() (agents.AgentInfo, error) {
 	return agents.Start("Counter")
 }
 
+// Terminates the specified agent by ID.
+// Once terminated, the agent cannot be restored or restarted.
+// However, a new agent with the same name can be started at any time.
+func TerminateAgent(agentId string) error {
+	return agents.Terminate(agentId)
+}
+
 // Returns the current count of the specified agent.
 func GetCount(agentId string) (int, error) {
 	count, err := agents.SendMessage(agentId, "count")

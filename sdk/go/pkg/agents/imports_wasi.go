@@ -40,3 +40,7 @@ func hostSendMessage(agentId, msgName, data *string, timeout int64) *MessageResp
 	}
 	return (*MessageResponse)(response)
 }
+
+//go:noescape
+//go:wasmimport modus_agents terminateAgent
+func hostTerminateAgent(agentId *string) bool

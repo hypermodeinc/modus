@@ -13,6 +13,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
+	"strconv"
 	"sync"
 	"time"
 
@@ -55,7 +57,7 @@ func logDbWarningOrError(ctx context.Context, err error, msg string) {
 	if _, ok := err.(*pgconn.ConnectError); ok {
 		logger.Warn(ctx).Err(err).Msgf("Database connection error. %s", msg)
 	} else if errors.Is(err, errDbNotConfigured) {
-		if !app.IsDevEnvironment() {
+		if !useModusDB() {
 			logger.Warn(ctx).Msgf("Database has not been configured. %s", msg)
 		}
 	} else {
@@ -393,7 +395,7 @@ func QueryCollectionVectorsFromCheckpoint(ctx context.Context, collectionName, s
 func Initialize(ctx context.Context) {
 	// this will initialize the pool and start the worker
 	_, err := globalRuntimePostgresWriter.GetPool(ctx)
-	if err != nil && !app.IsDevEnvironment() {
+	if err != nil && !useModusDB() {
 		logger.Warn(ctx).Err(err).Msg("Metadata database is not available.")
 	}
 	go globalRuntimePostgresWriter.worker(ctx)
@@ -428,4 +430,24 @@ func WithTx(ctx context.Context, fn func(pgx.Tx) error) error {
 	}
 
 	return tx.Commit(ctx)
+}
+
+var _useModusDBOnce sync.Once
+var _useModusDB bool
+
+func useModusDB() bool {
+	_useModusDBOnce.Do(func() {
+		// this gives us a way to force the use or disuse of ModusDB for development
+		s := os.Getenv("MODUS_DB_USE_MODUSDB")
+		if s != "" {
+			if value, err := strconv.ParseBool(s); err == nil {
+				_useModusDB = value
+				return
+			}
+		}
+
+		// otherwise, it's based on the environment
+		_useModusDB = app.IsDevEnvironment()
+	})
+	return _useModusDB
 }

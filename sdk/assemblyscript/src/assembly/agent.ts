@@ -48,23 +48,35 @@ export abstract class Agent {
   abstract setState(data: string | null): void;
 
   /**
-   * Called when the agent is started.
+   * Called when the agent is first started.
    * Override this method to perform any initialization.
    */
   onStart(): void {}
 
   /**
-   * Called when the agent is stopped.
-   * Override this method to perform any cleanup.
+   * Called when the agent is suspended.
+   * Override this method if you want to do anything special when the agent is suspended,
+   * such as sending a notification.
+   * Note that you do not need to save the internal state of the agent here,
+   * as that is handled automatically.
    */
-  onStop(): void {}
+  onSuspend(): void {}
 
   /**
-   * Called when the agent is reloaded.
-   * Override this method if you want to perform any actions when the agent is reloaded.
-   * Reloading is done when the agent is updated, or when the agent is resumed after being suspended.
+   * Called when the agent is restored.
+   * Override this method if you want to do anything special when the agent is restored,
+   * such as sending a notification.
+   * Note that you do not need to restore the internal state of the agent here,
+   * as that is handled automatically.
    */
-  onReload(): void {}
+  onRestore(): void {}
+
+  /**
+   * Called when the agent is terminated.
+   * Override this method to send or save any final data.
+   * Note that once an agent is terminated, it cannot be restored.
+   */
+  onTerminate(): void {}
 
   /**
    * Called when the agent receives a message.
@@ -89,6 +101,10 @@ export function registerAgent<T extends Agent>(): void {
 @external("modus_agents", "spawnAgentActor")
 declare function hostSpawnAgentActor(agentName: string): AgentInfo;
 
+// @ts-expect-error: decorator
+@external("modus_agents", "terminateAgent")
+declare function hostTerminateAgent(agentId: string): bool;
+
 /**
  * Starts an agent with the given name.
  * This can be called from any user code, such as function or another agent's methods.
@@ -99,6 +115,20 @@ export function startAgent(name: string): AgentInfo {
   }
 
   return hostSpawnAgentActor(name);
+}
+
+/**
+ * Terminates an agent with the given ID.
+ * Once terminated, the agent cannot be restored.
+ */
+export function terminateAgent(agentId: string): void {
+  if (agentId == "") {
+    throw new Error("Agent ID cannot be empty.");
+  }
+  const ok = hostTerminateAgent(agentId);
+  if (!ok) {
+    throw new Error(`Failed to terminate agent ${agentId}.`);
+  }
 }
 
 /**
@@ -118,7 +148,7 @@ export function activateAgent(name: string, id: string, reloading: bool): void {
   activeAgentId = id;
 
   if (reloading) {
-    activeAgent!.onReload();
+    activeAgent!.onRestore();
   } else {
     activeAgent!.onStart();
   }
@@ -128,14 +158,16 @@ export function activateAgent(name: string, id: string, reloading: bool): void {
  * The Modus Runtime will call this function to shutdown an agent.
  * It is not intended to be called from user code.
  */
-export function shutdownAgent(): void {
+export function shutdownAgent(suspending: bool): void {
   if (!activeAgent) {
     throw new Error("No active agent to shut down.");
   }
 
-  activeAgent!.onStop();
-  activeAgent = null;
-  activeAgentId = null;
+  if (suspending) {
+    activeAgent!.onSuspend();
+  } else {
+    activeAgent!.onTerminate();
+  }
 }
 
 /**
@@ -193,11 +225,7 @@ export class AgentInfo {
    */
   readonly status: AgentStatus;
 
-  constructor(
-    id: string,
-    name: string,
-    status: AgentStatus = AgentStatus.Uninitialized,
-  ) {
+  constructor(id: string, name: string, status: AgentStatus = "") {
     this.id = id;
     this.name = name;
     this.status = status;

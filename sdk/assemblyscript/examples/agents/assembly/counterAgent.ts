@@ -46,29 +46,52 @@ export class CounterAgent extends Agent {
     this.count = i32.parse(data);
   }
 
-  // When the agent is started, this method is automatically called.
-  // It is optional, but can be used to initialize state, retrieve data, etc.
+  // When the agent is first started, this method is automatically called. Implementing it is optional.
+  // If you don't need to do anything special when the agent starts, then you can omit it.
+  // It can be used to initialize state, retrieve data, etc.
   // This is a good place to set up any listeners or subscriptions.
   onStart(): void {
     console.info("Counter agent started");
   }
 
-  // When the agent is stopped, this method is automatically called.
-  // It is optional, but can be used to clean up any resources, send final data, etc.
-  // This is a good place to unsubscribe from any listeners or subscriptions.
-  onStop(): void {
-    console.info("Counter agent stopped");
+  // When the agent is suspended, this method is automatically called.  Implementing it is optional.
+  // If you don't need to do anything special when the agent is suspended, then you can omit it.
+  // The agent may be suspended for a variety of reasons, including:
+  // - The agent code has being updated.
+  // - The host is shutting down or restarting.
+  // - The agent is being suspended to save resources.
+  // - The agent is being relocated to a different host.
+  // Note that the agent may be suspended and resumed multiple times during its lifetime,
+  // but the Modus Runtime will automatically save and restore the state of the agent,
+  // so you don't need to worry about that here.
+  onSuspend(): void {
+    console.info("Counter agent suspended");
   }
 
-  // If the agent is reloaded, this method is automatically called.
-  // It is optional, but can be used to keep track of the agent's status.
-  onReload(): void {
-    console.info("Counter agent reloaded");
+  // When the agent is restored, this method is automatically called.  Implementing it is optional.
+  // If you don't need to do anything special when the agent is restored, then you can omit it.
+  onRestore(): void {
+    console.info("Counter agent restored");
+  }
+
+  // When the agent is terminated, this method is automatically called.  Implementing it is optional.
+  // It can be used to send final data somewhere, such as a database or an API.
+  // This is a good place to unsubscribe from any listeners or subscriptions.
+  // Note that resources are automatically cleaned up when the agent is terminated,
+  // so you don't need to worry about that here.
+  // Once an agent is terminated, it cannot be restored.
+  onTerminate(): void {
+    console.info("Counter agent terminated");
   }
 
   // This method is called when the agent receives a message.
   // This is how agents update their state and share data.
+  // You should implement this method to handle messages sent to this agent.
   onReceiveMessage(name: string, data: string | null): string | null {
+    // You can use the name of the message to determine what to do.
+    // You can either handle the message here, or pass it to another method or function.
+    // If you don't have any response to send back, return null.
+
     // A "count" message just returns the current count.
     if (name == "count") {
       return this.count.toString();

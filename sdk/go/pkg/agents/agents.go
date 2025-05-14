@@ -25,16 +25,14 @@ type AgentInfo struct {
 
 type AgentStatus = string
 
-// TODO: validate these statuses are needed and used correctly
 const (
-	AgentStatusUninitialized AgentStatus = "uninitialized"
-	AgentStatusError         AgentStatus = "error"
-	AgentStatusStarting      AgentStatus = "starting"
-	AgentStatusStarted       AgentStatus = "started"
-	AgentStatusStopping      AgentStatus = "stopping"
-	AgentStatusStopped       AgentStatus = "stopped"
-	AgentStatusSuspended     AgentStatus = "suspended"
-	AgentStatusTerminated    AgentStatus = "terminated"
+	AgentStatusStarting    AgentStatus = "starting"
+	AgentStatusRunning     AgentStatus = "running"
+	AgentStatusSuspending  AgentStatus = "suspending"
+	AgentStatusSuspended   AgentStatus = "suspended"
+	AgentStatusRestoring   AgentStatus = "restoring"
+	AgentStatusTerminating AgentStatus = "terminating"
+	AgentStatusTerminated  AgentStatus = "terminated"
 )
 
 var agents = make(map[string]Agent)
@@ -56,6 +54,15 @@ func Start(name string) (AgentInfo, error) {
 
 	info := hostSpawnAgentActor(&name)
 	return *info, nil
+}
+
+// Terminates an agent with the given ID.
+// Once terminated, the agent cannot be restored.
+func Terminate(agentId string) error {
+	if ok := hostTerminateAgent(&agentId); !ok {
+		return fmt.Errorf("failed to terminate agent %s", agentId)
+	}
+	return nil
 }
 
 // These functions are only invoked as wasm exports from the host.
@@ -85,7 +92,7 @@ func activateAgent(name, id string, reloading bool) {
 		activeAgentId = &id
 
 		if reloading {
-			if err := agent.OnReload(); err != nil {
+			if err := agent.OnRestore(); err != nil {
 				console.Errorf("Error reloading agent %s: %v", name, err)
 			}
 		} else {
@@ -99,17 +106,22 @@ func activateAgent(name, id string, reloading bool) {
 // The Modus Runtime will call this function to shutdown an agent.
 //
 //go:export _modus_agent_shutdown
-func shutdownAgent() {
+func shutdownAgent(suspending bool) {
 	if activeAgent == nil {
 		console.Error("No active agent to shutdown.")
 		return
 	}
 
-	if err := (*activeAgent).OnStop(); err != nil {
-		console.Errorf("Error stopping agent %s: %v", (*activeAgent).Name(), err)
+	if suspending {
+		if err := (*activeAgent).OnSuspend(); err != nil {
+			console.Errorf("Error suspending agent %s: %v", (*activeAgent).Name(), err)
+			return
+		}
 	} else {
-		activeAgent = nil
-		activeAgentId = nil
+		if err := (*activeAgent).OnTerminate(); err != nil {
+			console.Errorf("Error terminating agent %s: %v", (*activeAgent).Name(), err)
+			return
+		}
 	}
 }
 
@@ -177,14 +189,19 @@ type Agent interface {
 	// Custom agents may implement this method to perform any initialization.
 	OnStart() error
 
-	// OnStop is called when the agent is stopped.
-	// Custom agents may implement this method to perform any cleanup.
-	OnStop() error
+	// OnSuspend is called when the agent is suspended.
+	// Custom agents may implement this method if for example, to send a notification of the suspension.
+	// Note that you do not need to save the internal state of the agent here, as that is handled automatically.
+	OnSuspend() error
 
-	// OnReload is called when the agent is reloaded.
-	// Custom agents may implement this method to perform any actions when the agent is reloaded.
-	// Reloading is done when the agent is updated, or when the agent is resumed after being suspended.
-	OnReload() error
+	// OnRestore is called when the agent is restored from a suspended state.
+	// Custom agents may implement this method if for example, to send a notification of the restoration.
+	// Note that you do not need to restore the internal state of the agent here, as that is handled automatically.
+	OnRestore() error
+
+	// OnTerminate is called when the agent is terminated.
+	// Custom agents may implement this method to send or save any final data.
+	OnTerminate() error
 
 	// OnReceiveMessage is called when the agent receives a message.
 	// Custom agents may implement this method to handle incoming messages.

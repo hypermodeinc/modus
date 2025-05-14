@@ -17,6 +17,7 @@ import (
 
 var SpawnAgentActorCallStack = testutils.NewCallStack()
 var SendMessageCallStack = testutils.NewCallStack()
+var TerminateAgentCallStack = testutils.NewCallStack()
 
 func hostSpawnAgentActor(agentName *string) *AgentInfo {
 	SpawnAgentActorCallStack.Push(agentName)
@@ -38,4 +39,10 @@ func hostSendMessage(agentId, msgName, data *string, timeout int64) *MessageResp
 	}
 
 	return nil
+}
+
+func hostTerminateAgent(agentId *string) bool {
+	TerminateAgentCallStack.Push(agentId)
+
+	return agentId != nil && *agentId == "abc123"
 }
