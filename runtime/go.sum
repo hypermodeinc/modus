@@ -815,8 +815,8 @@ github.com/tinylib/msgp v1.1.2/go.mod h1:+d+yLhGm8mzTaHzB+wgMYrodPfmZrzkirds8fDW
 github.com/tinylib/msgp v1.1.5/go.mod h1:eQsjooMTnV42mHu917E26IogZ2930nFyBQdofk10Udg=
 github.com/tinylib/msgp v1.2.5 h1:WeQg1whrXRFiZusidTQqzETkRpGjFjcIhW6uqWH09po=
 github.com/tinylib/msgp v1.2.5/go.mod h1:ykjzy2wzgrlvpDCRc4LA8UXy6D8bzMSuAF3WD57Gok0=
-github.com/tochemey/goakt/v3 v3.4.2 h1:AoXdw2Muv5Y0wOUzgtQ4Loo1BIGiU6lKPYgeGfgpv04=
-github.com/tochemey/goakt/v3 v3.4.2/go.mod h1:uFgl6okKl3hqj8weus4MORbuKQNfxSdwqgUCTu6+xsE=
+github.com/tochemey/goakt/v3 v3.4.3 h1:fJSinWds3A2TR5jI9BEdyriSXSUV5nQz+Jsd6XM1RyQ=
+github.com/tochemey/goakt/v3 v3.4.3/go.mod h1:uFgl6okKl3hqj8weus4MORbuKQNfxSdwqgUCTu6+xsE=
 github.com/tochemey/olric v0.2.2 h1:EfzwBzWK6FBkigSb33Q1lNF+4ytPalyJFY/ozgQp8rQ=
 github.com/tochemey/olric v0.2.2/go.mod h1:+ZSc9y3FKOey3o//qMmafOaHDoPS4I3cqp8cSQP+v38=
 github.com/travisjeffery/go-dynaport v1.0.0 h1:m/qqf5AHgB96CMMSworIPyo1i7NZueRsnwdzdCJ8Ajw=
@@ -849,8 +849,8 @@ github.com/wundergraph/cosmo/router v0.0.0-20240729154441-b20b00e892c6 h1:oXnHjP
 github.com/wundergraph/cosmo/router v0.0.0-20240729154441-b20b00e892c6/go.mod h1:0FOIMzc1cY8c4rUczyhmI2es84HGoEJV2MIbDbiEWzg=
 github.com/wundergraph/graphql-go-tools/execution v1.2.0 h1:9PXcNSN2n231q/YZZS3kFJ2kpd67LA8QMgGlUFson84=
 github.com/wundergraph/graphql-go-tools/execution v1.2.0/go.mod h1:sv2LtqCiTCdiK0P6x3KUYLb9C1V8RW9H/9eqEdfgktY=
-github.com/wundergraph/graphql-go-tools/v2 v2.0.0-rc.176 h1:G3Khr9VLXQ77vGeCU6V7e6uK1EE8P/fUQCydqj3cH5w=
-github.com/wundergraph/graphql-go-tools/v2 v2.0.0-rc.176/go.mod h1:B7eV0Qh8Lop9QzIOQcsvKp3S0ejfC6mgyWoJnI917yQ=
+github.com/wundergraph/graphql-go-tools/v2 v2.0.0-rc.178 h1:NeZwriuQKkowZbqWo2NKuZ19epBc34JgFS5cOfSzQEg=
+github.com/wundergraph/graphql-go-tools/v2 v2.0.0-rc.178/go.mod h1:B7eV0Qh8Lop9QzIOQcsvKp3S0ejfC6mgyWoJnI917yQ=
 github.com/xdg/scram v1.0.5 h1:TuS0RFmt5Is5qm9Tm2SoD89OPqe4IRiFtyFY4iwWXsw=
 github.com/xdg/scram v1.0.5/go.mod h1:lB8K/P019DLNhemzwFU4jHLhdvlE6uDZjXFejJXr49I=
 github.com/xdg/stringprep v1.0.3 h1:cmL5Enob4W83ti/ZHuZLuKD/xqJfus4fVPwE+/BDm+4=
@@ -938,8 +938,8 @@ golang.org/x/exp v0.0.0-20191227195350-da58074b4299/go.mod h1:2RIsYlXP63K8oxa1u0
 golang.org/x/exp v0.0.0-20200119233911-0405dc783f0a/go.mod h1:2RIsYlXP63K8oxa1u096TMicItID8zy7Y6sNkU49FU4=
 golang.org/x/exp v0.0.0-20200207192155-f17229e696bd/go.mod h1:J/WKrq2StrnmMY6+EHIKF9dgMWnmCNThgcyBT1FY9mM=
 golang.org/x/exp v0.0.0-20200224162631-6cc2880d07d6/go.mod h1:3jZMyOhIsHpP37uCMkUooju7aAi5cS1Q23tOzKc+0MU=
-golang.org/x/exp v0.0.0-20250408133849-7e4ce0ab07d0 h1:R84qjqJb5nVJMxqWYb3np9L5ZsaDtB+a39EqjV0JSUM=
-golang.org/x/exp v0.0.0-20250408133849-7e4ce0ab07d0/go.mod h1:S9Xr4PYopiDyqSyp5NjCrhFrqg6A5zA2E/iPHPhqnS8=
+golang.org/x/exp v0.0.0-20250506013437-ce4c2cf36ca6 h1:y5zboxd6LQAqYIhHnB48p0ByQ/GnQx2BE33L8BOHQkI=
+golang.org/x/exp v0.0.0-20250506013437-ce4c2cf36ca6/go.mod h1:U6Lno4MTRCDY+Ba7aCcauB9T60gsv5s4ralQzP72ZoQ=
 golang.org/x/image v0.0.0-20180708004352-c73c2afc3b81/go.mod h1:ux5Hcp/YLpHSI86hEcLt0YII63i6oz57MZXIpbrjZUs=
 golang.org/x/image v0.0.0-20190227222117-0694c2d4d067/go.mod h1:kZ7UVZpmo3dzQBMxlp+ypCbDeSB+sBbTgSJuh5dn5js=
 golang.org/x/image v0.0.0-20190802002840-cff245a6509b/go.mod h1:FeLwcggjj3mMvU+oOTbSwawSJRM1uh48EjtB4UJZlP0=
@@ -1156,8 +1156,8 @@ golang.org/x/tools v0.0.0-20200825202427-b303f430e36d/go.mod h1:njjCfa9FT2d7l9Bc
 golang.org/x/tools v0.0.0-20201022035929-9cf592e881e9/go.mod h1:emZCQorbCU4vsT4fOWvOPXz4eW1wZW4PmDk9uLelYpA=
 golang.org/x/tools v0.0.0-20210106214847-113979e3529a/go.mod h1:emZCQorbCU4vsT4fOWvOPXz4eW1wZW4PmDk9uLelYpA=
 golang.org/x/tools v0.1.12/go.mod h1:hNGJHUnrk76NpqgfD5Aqm5Crs+Hm0VOH/i9J2+nxYbc=
-golang.org/x/tools v0.32.0 h1:Q7N1vhpkQv7ybVzLFtTjvQya2ewbwNDZzUgfXGqtMWU=
-golang.org/x/tools v0.32.0/go.mod h1:ZxrU41P/wAbZD8EDa6dDCa6XfpkhJ7HFMjHJXfBDu8s=
+golang.org/x/tools v0.33.0 h1:4qz2S3zmRxbGIhDIAgjxvFutSvH5EfnsYrRBj0UI0bc=
+golang.org/x/tools v0.33.0/go.mod h1:CIJMaWEY88juyUfo7UbgPqbC8rU2OqfAV1h2Qp0oMYI=
 golang.org/x/xerrors v0.0.0-20190717185122-a985d3407aa7/go.mod h1:I/5z698sn9Ka8TeJc9MKroUUfqBBauWjQqLJ2OPfmY0=
 golang.org/x/xerrors v0.0.0-20191011141410-1b5146add898/go.mod h1:I/5z698sn9Ka8TeJc9MKroUUfqBBauWjQqLJ2OPfmY0=
 golang.org/x/xerrors v0.0.0-20191204190536-9bdfabe68543/go.mod h1:I/5z698sn9Ka8TeJc9MKroUUfqBBauWjQqLJ2OPfmY0=

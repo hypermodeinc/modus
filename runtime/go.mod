@@ -43,13 +43,13 @@ require (
 	github.com/tetratelabs/wazero v1.9.0
 	github.com/tidwall/gjson v1.18.0
 	github.com/tidwall/sjson v1.2.5
-	github.com/tochemey/goakt/v3 v3.4.2
+	github.com/tochemey/goakt/v3 v3.4.3
 	github.com/twpayne/go-geom v1.6.1
 	github.com/viterin/vek v0.4.2
 	github.com/wundergraph/graphql-go-tools/execution v1.2.0
-	github.com/wundergraph/graphql-go-tools/v2 v2.0.0-rc.176
+	github.com/wundergraph/graphql-go-tools/v2 v2.0.0-rc.178
 	github.com/xo/dburl v0.23.7
-	golang.org/x/exp v0.0.0-20250408133849-7e4ce0ab07d0
+	golang.org/x/exp v0.0.0-20250506013437-ce4c2cf36ca6
 	golang.org/x/sys v0.33.0
 	google.golang.org/grpc v1.72.0
 	google.golang.org/protobuf v1.36.6
@@ -255,7 +255,7 @@ require (
 	golang.org/x/term v0.32.0 // indirect
 	golang.org/x/text v0.25.0 // indirect
 	golang.org/x/time v0.11.0 // indirect
-	golang.org/x/tools v0.32.0 // indirect
+	golang.org/x/tools v0.33.0 // indirect
 	google.golang.org/api v0.219.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250218202821-56aae31c358a // indirect
 	gopkg.in/DataDog/dd-trace-go.v1 v1.71.0 // indirect
