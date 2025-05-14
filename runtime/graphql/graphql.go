@@ -25,6 +25,7 @@ import (
 	"github.com/hypermodeinc/modus/runtime/timezones"
 	"github.com/hypermodeinc/modus/runtime/utils"
 	"github.com/hypermodeinc/modus/runtime/wasmhost"
+	"github.com/puzpuzpuz/xsync/v4"
 
 	"github.com/tidwall/gjson"
 	"github.com/tidwall/sjson"
@@ -55,7 +56,7 @@ func Initialize() {
 			logger.Warn(ctx).Msg("Multiple plugins loaded.  Only the first plugin will be used.")
 		}
 
-		return engine.Activate(ctx, plugins[0].Metadata)
+		return engine.Activate(ctx, plugins[0])
 	})
 }
 
@@ -100,7 +101,7 @@ func handleGraphQLRequest(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Create the output map
-	output := make(map[string]wasmhost.ExecutionInfo)
+	output := xsync.NewMap[string, wasmhost.ExecutionInfo]()
 	ctx = context.WithValue(ctx, utils.FunctionOutputContextKey, output)
 
 	// Set time zone in the context
@@ -158,7 +159,7 @@ func handleGraphQLRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if response, err := addOutputToResponse(resultWriter.Bytes(), output); err != nil {
+	if response, err := addOutputToResponse(resultWriter.Bytes(), xsync.ToPlainMap(output)); err != nil {
 		msg := "Failed to add function output to response."
 		logger.Err(ctx, err).Msg(msg)
 		http.Error(w, fmt.Sprintf("%s\n%v", msg, err), http.StatusInternalServerError)

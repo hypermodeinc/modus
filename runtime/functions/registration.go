@@ -12,6 +12,7 @@ package functions
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/hypermodeinc/modus/runtime/logger"
 	"github.com/hypermodeinc/modus/runtime/plugins"
@@ -68,11 +69,13 @@ func (fr *functionRegistry) RegisterExports(ctx context.Context, plugin *plugins
 			fr.functions[fnName] = info
 			names = append(names, fnName)
 
-			logger.Info(ctx).
-				Str("function", fnName).
-				Str("plugin", plugin.Name()).
-				Str("build_id", plugin.BuildId()).
-				Msg("Registered function.")
+			if !strings.HasPrefix(fnName, "_") {
+				logger.Info(ctx).
+					Str("function", fnName).
+					Str("plugin", plugin.Name()).
+					Str("build_id", plugin.BuildId()).
+					Msg("Registered function.")
+			}
 		}
 	}
 	return names

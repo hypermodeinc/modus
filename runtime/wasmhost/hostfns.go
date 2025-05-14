@@ -41,7 +41,7 @@ type hfMessages struct {
 type hostFunction struct {
 	module          string
 	name            string
-	function        wasm.GoFunction
+	function        wasm.GoModuleFunction
 	wasmParamTypes  []wasm.ValueType
 	wasmResultTypes []wasm.ValueType
 	messages        *hfMessages
@@ -201,7 +201,7 @@ func (host *wasmHost) newHostFunction(modName, funcName string, fn any, opts ...
 	}
 
 	// Make the host function wrapper
-	hf.function = wasm.GoFunc(func(ctx context.Context, stack []uint64) {
+	hf.function = wasm.GoModuleFunc(func(ctx context.Context, mod wasm.Module, stack []uint64) {
 		span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
 		defer span.Finish()
 
@@ -229,11 +229,12 @@ func (host *wasmHost) newHostFunction(modName, funcName string, fn any, opts ...
 			return
 		}
 
-		// Get the Wasm adapter
-		wa, err := langsupport.GetWasmAdapter(ctx)
-		if err != nil {
-			logger.Err(ctx, err).Msg("Error getting Wasm adapter.")
-			return
+		// Get the cached Wasm adapter, or make a new one if necessary
+		var wa langsupport.WasmAdapter
+		if x := ctx.Value(utils.WasmAdapterContextKey); x != nil {
+			wa = x.(langsupport.WasmAdapter)
+		} else {
+			wa = plugin.Language.NewWasmAdapter(mod)
 		}
 
 		// Read input parameter values
@@ -336,7 +337,7 @@ func (host *wasmHost) instantiateHostFunctions(ctx context.Context) error {
 		builder := host.runtime.NewHostModuleBuilder(module)
 		for _, hf := range modHostFns {
 			builder.NewFunctionBuilder().
-				WithGoFunction(hf.function, hf.wasmParamTypes, hf.wasmResultTypes).
+				WithGoModuleFunction(hf.function, hf.wasmParamTypes, hf.wasmResultTypes).
 				WithName(module + "." + hf.name).
 				Export(hf.name)
 		}

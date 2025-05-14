@@ -140,6 +140,10 @@
       "description": "Choose a Modus app",
       "options": [
         {
+          "label": "Agents Example",
+          "value": "agents"
+        },
+        {
           "label": "Anthropic Model Example",
           "value": "anthropic-functions"
         },

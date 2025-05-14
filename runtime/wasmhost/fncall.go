@@ -14,6 +14,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/hypermodeinc/modus/runtime/functions"
@@ -22,6 +23,7 @@ import (
 	"github.com/hypermodeinc/modus/runtime/utils"
 
 	"github.com/rs/xid"
+	wasm "github.com/tetratelabs/wazero/api"
 	"github.com/tetratelabs/wazero/sys"
 )
 
@@ -78,42 +80,48 @@ func (host *wasmHost) CallFunction(ctx context.Context, fnInfo functions.Functio
 	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
 
-	execInfo := &executionInfo{
-		executionId: xid.New().String(),
-		buffers:     utils.NewOutputBuffers(),
-		messages:    []utils.LogMessage{},
-	}
-
-	fnName := fnInfo.Name()
 	plugin := fnInfo.Plugin()
-	plan := fnInfo.ExecutionPlan()
+	buffers := utils.NewOutputBuffers()
 
-	ctx = context.WithValue(ctx, utils.ExecutionIdContextKey, execInfo.executionId)
-	ctx = context.WithValue(ctx, utils.FunctionMessagesContextKey, &execInfo.messages)
-	ctx = context.WithValue(ctx, utils.FunctionNameContextKey, fnName)
 	ctx = context.WithValue(ctx, utils.PluginContextKey, plugin)
-	ctx = context.WithValue(ctx, utils.MetadataContextKey, plugin.Metadata)
-	ctx = context.WithValue(ctx, utils.WasmHostContextKey, host)
 
-	// Each request will get its own instance of the plugin module, so that we can run
-	// multiple requests in parallel without risk of corrupting the module's memory.
-	// This also protects against security risk, as each request will have its own
-	// isolated memory space.  (One request cannot access another request's memory.)
-
-	mod, err := host.GetModuleInstance(ctx, plugin, execInfo.buffers)
+	mod, err := host.GetModuleInstance(ctx, plugin, buffers)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error getting module instance.")
 		return nil, err
 	}
 	defer mod.Close(ctx)
 
+	return host.CallFunctionInModule(ctx, mod, buffers, fnInfo, parameters)
+}
+
+func (host *wasmHost) CallFunctionInModule(ctx context.Context, mod wasm.Module, buffers utils.OutputBuffers, fnInfo functions.FunctionInfo, parameters map[string]any) (ExecutionInfo, error) {
+	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+	defer span.Finish()
+
+	executionId := xid.New().String()
+	messages := []utils.LogMessage{}
+
+	fnName := fnInfo.Name()
+	plugin := fnInfo.Plugin()
+	plan := fnInfo.ExecutionPlan()
+
+	ctx = context.WithValue(ctx, utils.ExecutionIdContextKey, executionId)
+	ctx = context.WithValue(ctx, utils.FunctionMessagesContextKey, &messages)
+	ctx = context.WithValue(ctx, utils.FunctionNameContextKey, fnName)
+	ctx = context.WithValue(ctx, utils.PluginContextKey, plugin)
+	ctx = context.WithValue(ctx, utils.MetadataContextKey, plugin.Metadata)
+	ctx = context.WithValue(ctx, utils.WasmHostContextKey, host)
+
 	wa := plugin.Language.NewWasmAdapter(mod)
 	ctx = context.WithValue(ctx, utils.WasmAdapterContextKey, wa)
 
-	logger.Info(ctx).
-		Str("function", fnName).
-		Bool("user_visible", true).
-		Msg("Calling function.")
+	if !strings.HasPrefix(fnName, "_") {
+		logger.Info(ctx).
+			Str("function", fnName).
+			Bool("user_visible", true).
+			Msg("Calling function.")
+	}
 
 	start := time.Now()
 	result, err := plan.InvokeFunction(ctx, wa, parameters)
@@ -122,11 +130,13 @@ func (host *wasmHost) CallFunction(ctx context.Context, fnInfo functions.Functio
 	exitErr := &sys.ExitError{}
 
 	if err == nil {
-		logger.Info(ctx).
-			Str("function", fnName).
-			Dur("duration_ms", duration).
-			Bool("user_visible", true).
-			Msg("Function completed successfully.")
+		if !strings.HasPrefix(fnName, "_") {
+			logger.Info(ctx).
+				Str("function", fnName).
+				Dur("duration_ms", duration).
+				Bool("user_visible", true).
+				Msg("Function completed successfully.")
+		}
 	} else if errors.As(err, &exitErr) {
 		// NOTE: This can occur if the function calls `exit` or `abort` in the WASM code, or if they throw an exception or panic.
 		// In those cases, the message of the exception or panic will have already been logged via the `log` host function.
@@ -189,6 +199,12 @@ func (host *wasmHost) CallFunction(ctx context.Context, fnInfo functions.Functio
 	metrics.FunctionExecutionDurationMilliseconds.WithLabelValues(fnName).Observe(d)
 	metrics.FunctionExecutionDurationMillisecondsSummary.WithLabelValues(fnName).Observe(d)
 
-	execInfo.result = result
+	execInfo := &executionInfo{
+		executionId: executionId,
+		buffers:     buffers,
+		messages:    messages,
+		result:      result,
+	}
+
 	return execInfo, err
 }

@@ -55,6 +55,8 @@ func Initialize() *zerolog.Logger {
 			consoleWriter.FieldsOrder = []string{
 				"detail",
 				"function",
+				"agent",
+				"agent_id",
 				"execution_id",
 				"duration_ms",
 			}

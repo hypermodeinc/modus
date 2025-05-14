@@ -31,11 +31,12 @@ func init() {
 func LogMessage(ctx context.Context, level, message string) {
 
 	// store messages in the context, so we can return them to the caller
-	messages := ctx.Value(utils.FunctionMessagesContextKey).(*[]utils.LogMessage)
-	*messages = append(*messages, utils.LogMessage{
-		Level:   level,
-		Message: message,
-	})
+	if messages, ok := ctx.Value(utils.FunctionMessagesContextKey).(*[]utils.LogMessage); ok {
+		*messages = append(*messages, utils.LogMessage{
+			Level:   level,
+			Message: message,
+		})
+	}
 
 	// If debugging, write debug messages to stderr instead of the logger
 	if level == "debug" && utils.DebugModeEnabled() {

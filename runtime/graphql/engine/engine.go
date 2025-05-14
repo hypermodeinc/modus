@@ -23,6 +23,7 @@ import (
 	"github.com/hypermodeinc/modus/runtime/graphql/datasource"
 	"github.com/hypermodeinc/modus/runtime/graphql/schemagen"
 	"github.com/hypermodeinc/modus/runtime/logger"
+	"github.com/hypermodeinc/modus/runtime/plugins"
 	"github.com/hypermodeinc/modus/runtime/utils"
 	"github.com/hypermodeinc/modus/runtime/wasmhost"
 
@@ -48,11 +49,11 @@ func setEngine(engine *engine.ExecutionEngine) {
 	instance = engine
 }
 
-func Activate(ctx context.Context, md *metadata.Metadata) error {
+func Activate(ctx context.Context, plugin *plugins.Plugin) error {
 	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
 
-	schema, cfg, err := generateSchema(ctx, md)
+	schema, cfg, err := generateSchema(ctx, plugin.Metadata)
 	if err != nil {
 		return err
 	}
