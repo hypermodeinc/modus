@@ -6,4 +6,6 @@ toolchain go1.23.8
 
 require github.com/hypermodeinc/modus/sdk/go v0.17.0
 
-require golang.org/x/exp v0.0.0-20250305212735-054e65f0b394 // indirect
+require golang.org/x/exp v0.0.0-20250506013437-ce4c2cf36ca6 // indirect
+
+replace github.com/hypermodeinc/modus/sdk/go => ../..
