@@ -108,3 +108,38 @@ func CanBeNil(rt reflect.Type) bool {
 		return false
 	}
 }
+
+func GetStructFieldValue(rs reflect.Value, fieldName string, caseInsensitive bool) (any, error) {
+	if rs.Kind() != reflect.Struct {
+		return nil, fmt.Errorf("expected a struct, got %s", rs.Kind())
+	}
+
+	rsType := rs.Type()
+
+	var field reflect.StructField
+	var found bool
+	if caseInsensitive {
+		field, found = rsType.FieldByNameFunc(func(s string) bool { return strings.EqualFold(s, fieldName) })
+	} else {
+		field, found = rsType.FieldByName(fieldName)
+	}
+
+	if !found {
+		return nil, fmt.Errorf("field %s not found in struct %s", fieldName, rs.Type().Name())
+	}
+
+	rf := rs.FieldByIndex(field.Index)
+
+	// allow retrieving values of unexported fields
+	// see https://stackoverflow.com/a/43918797
+	if !rf.CanInterface() {
+		if !rf.CanAddr() {
+			rs2 := reflect.New(rsType.Elem())
+			rs2.Set(rs)
+			rf = rs2.FieldByIndex(field.Index)
+		}
+		rf = reflect.NewAt(rf.Type(), unsafe.Pointer(rf.UnsafeAddr())).Elem()
+	}
+
+	return rf.Interface(), nil
+}

@@ -9,7 +9,11 @@
 
 import { Duration } from "./enums";
 
-export { registerAgent as register, startAgent as start } from "./agent";
+export {
+  registerAgent as register,
+  startAgent as start,
+  terminateAgent as terminate,
+} from "./agent";
 
 // @ts-expect-error: decorator
 @external("modus_agents", "sendMessage")

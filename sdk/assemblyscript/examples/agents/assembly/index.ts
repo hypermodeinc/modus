@@ -26,6 +26,15 @@ export function startCounterAgent(): AgentInfo {
 }
 
 /**
+ * Terminates the specified agent by ID.
+ * Once terminated, the agent cannot be restored or restarted.
+ * However, a new agent with the same name can be started at any time.
+ */
+export function terminateAgent(agentId: string): void {
+  agents.terminate(agentId);
+}
+
+/**
  * Returns the current count of the specified agent.
  */
 export function getCount(agentId: string): i32 {

@@ -13,9 +13,11 @@ import (
 	"context"
 	"time"
 
+	"github.com/hypermodeinc/modus/runtime/db"
 	"github.com/hypermodeinc/modus/runtime/logger"
 	"github.com/hypermodeinc/modus/runtime/pluginmanager"
 	"github.com/hypermodeinc/modus/runtime/plugins"
+	"github.com/hypermodeinc/modus/runtime/wasmhost"
 
 	goakt "github.com/tochemey/goakt/v3/actor"
 )
@@ -45,15 +47,33 @@ func Initialize(ctx context.Context) {
 
 	logger.Info(ctx).Msg("Actor system started.")
 
-	pluginmanager.RegisterPluginLoadedCallback(reloadAgentActors)
+	pluginmanager.RegisterPluginLoadedCallback(loadAgentActors)
 }
 
-func reloadAgentActors(ctx context.Context, plugin *plugins.Plugin) error {
-	for _, pid := range _actorSystem.Actors() {
-		if actor, ok := pid.Actor().(*WasmAgentActor); ok {
+func loadAgentActors(ctx context.Context, plugin *plugins.Plugin) error {
+	// reload modules for actors that are already running
+	actors := _actorSystem.Actors()
+	runningAgents := make(map[string]bool, len(actors))
+	for _, pid := range actors {
+		if actor, ok := pid.Actor().(*wasmAgentActor); ok {
+			runningAgents[actor.agentId] = true
 			if err := actor.reloadModule(ctx, plugin); err != nil {
 				return err
 			}
+		}
+	}
+
+	// spawn actors for agents with state in the database, that are not already running
+	// TODO: when we scale out with GoAkt cluster mode, we'll need to decide which node is responsible for spawning the actor
+	agents, err := db.QueryActiveAgents(ctx)
+	if err != nil {
+		logger.Err(ctx, err).Msg("Failed to query agents from database.")
+		return err
+	}
+	host := wasmhost.GetWasmHost(ctx)
+	for _, agent := range agents {
+		if !runningAgents[agent.Id] {
+			spawnActorForAgent(host, plugin, agent.Id, agent.Name, true, &agent.Data)
 		}
 	}
 

@@ -17,17 +17,14 @@ export enum Duration {
   hour = 60 * Duration.minute,
 }
 
-// TODO: validate status values
-
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace AgentStatus {
-  export const Uninitialized = "uninitialized";
-  export const Error = "error";
   export const Starting = "starting";
-  export const Started = "started";
-  export const Stopping = "stopping";
-  export const Stopped = "stopped";
+  export const Running = "running";
+  export const Suspending = "suspending";
   export const Suspended = "suspended";
+  export const Restoring = "restoring";
+  export const Terminating = "terminating";
   export const Terminated = "terminated";
 }
 export type AgentStatus = string;

@@ -61,26 +61,45 @@ func (c *CounterAgent) SetState(data *string) {
 	}
 }
 
-// When the agent is started, this method is automatically called.
-// It is optional, but can be used to initialize state, retrieve data, etc.
+// When the agent is first started, this method is automatically called. Implementing it is optional.
+// If you don't need to do anything special when the agent starts, then you can omit it.
+// It can be used to initialize state, retrieve data, etc.
 // This is a good place to set up any listeners or subscriptions.
 func (c *CounterAgent) OnStart() error {
 	fmt.Println("Counter agent started")
 	return nil
 }
 
-// When the agent is stopped, this method is automatically called.
-// It is optional, but can be used to clean up any resources, send final data, etc.
-// This is a good place to unsubscribe from any listeners or subscriptions.
-func (c *CounterAgent) OnStop() error {
-	fmt.Println("Counter agent stopped")
+// When the agent is suspended, this method is automatically called.  Implementing it is optional.
+// If you don't need to do anything special when the agent is suspended, then you can omit it.
+// The agent may be suspended for a variety of reasons, including:
+// - The agent code has being updated.
+// - The host is shutting down or restarting.
+// - The agent is being suspended to save resources.
+// - The agent is being relocated to a different host.
+// Note that the agent may be suspended and resumed multiple times during its lifetime,
+// but the Modus Runtime will automatically save and restore the state of the agent,
+// so you don't need to worry about that here.
+func (c *CounterAgent) OnSuspend() error {
+	fmt.Println("Counter agent suspended")
 	return nil
 }
 
-// If the agent is reloaded, this method is automatically called.
-// It is optional, but can be used to keep track of the agent's status.
-func (c *CounterAgent) OnReload() error {
-	fmt.Println("Counter agent reloaded")
+// When the agent is restored, this method is automatically called.  Implementing it is optional.
+// If you don't need to do anything special when the agent is restored, then you can omit it.
+func (c *CounterAgent) OnRestore() error {
+	fmt.Println("Counter agent restored")
+	return nil
+}
+
+// When the agent is terminated, this method is automatically called.  Implementing it is optional.
+// It can be used to send final data somewhere, such as a database or an API.
+// This is a good place to unsubscribe from any listeners or subscriptions.
+// Note that resources are automatically cleaned up when the agent is terminated,
+// so you don't need to worry about that here.
+// Once an agent is terminated, it cannot be restored.
+func (c *CounterAgent) OnTerminate() error {
+	fmt.Println("Counter agent terminated")
 	return nil
 }
 

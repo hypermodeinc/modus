@@ -13,7 +13,6 @@ import (
 	"context"
 	"fmt"
 	"reflect"
-	"strings"
 
 	"github.com/hypermodeinc/modus/lib/metadata"
 	"github.com/hypermodeinc/modus/runtime/langsupport"
@@ -106,13 +105,9 @@ func (h *structHandler) Write(ctx context.Context, wa langsupport.WasmAdapter, o
 	cleaner := utils.NewCleanerN(numFields)
 
 	for i, field := range h.typeDef.Fields {
-		var fieldObj any
-		if mapObj != nil {
-			// case sensitive when reading from map
-			fieldObj = mapObj[field.Name]
-		} else {
-			// case insensitive when reading from struct
-			fieldObj = rvObj.FieldByNameFunc(func(s string) bool { return strings.EqualFold(s, field.Name) }).Interface()
+		fieldObj, err := langsupport.GetFieldObject(field.Name, mapObj, rvObj)
+		if err != nil {
+			return nil, err
 		}
 
 		fieldOffset := offset + fieldOffsets[i]
@@ -161,13 +156,9 @@ func (h *structHandler) Encode(ctx context.Context, wa langsupport.WasmAdapter, 
 	cleaner := utils.NewCleanerN(numFields)
 
 	for i, field := range h.typeDef.Fields {
-		var fieldObj any
-		if mapObj != nil {
-			// case sensitive when reading from map
-			fieldObj = mapObj[field.Name]
-		} else {
-			// case insensitive when reading from struct
-			fieldObj = rvObj.FieldByNameFunc(func(s string) bool { return strings.EqualFold(s, field.Name) }).Interface()
+		fieldObj, err := langsupport.GetFieldObject(field.Name, mapObj, rvObj)
+		if err != nil {
+			return nil, cleaner, err
 		}
 
 		handler := h.fieldHandlers[i]

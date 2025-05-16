@@ -15,12 +15,12 @@ import (
 	"time"
 
 	"github.com/hypermodeinc/modus/lib/manifest"
-	"github.com/hypermodeinc/modus/runtime/app"
 	"github.com/hypermodeinc/modus/runtime/metrics"
 	"github.com/hypermodeinc/modus/runtime/plugins"
 	"github.com/hypermodeinc/modus/runtime/secrets"
 	"github.com/hypermodeinc/modus/runtime/utils"
-	"github.com/hypermodeinc/modusdb"
+
+	"github.com/hypermodeinc/modusgraph"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -184,10 +184,10 @@ func getInferenceDataJson(val any) ([]byte, error) {
 
 func WritePluginInfo(ctx context.Context, plugin *plugins.Plugin) {
 
-	if app.IsDevEnvironment() {
+	if useModusDB() {
 		err := writePluginInfoToModusdb(ctx, plugin)
 		if err != nil {
-			logDbWarningOrError(ctx, err, "Plugin info not written to ModusDB.")
+			logDbWarningOrError(ctx, err, "Plugin info not written to modusgraph.")
 		}
 		return
 	}
@@ -250,7 +250,7 @@ func writePluginInfoToModusdb(ctx context.Context, plugin *plugins.Plugin) error
 	if GlobalModusDbEngine == nil {
 		return nil
 	}
-	_, _, err := modusdb.Create[Plugin](ctx, GlobalModusDbEngine, Plugin{
+	_, _, err := modusgraph.Create[Plugin](ctx, GlobalModusDbEngine, Plugin{
 		Id:         plugin.Id,
 		Name:       plugin.Metadata.Name(),
 		Version:    plugin.Metadata.Version(),
@@ -306,10 +306,10 @@ func WriteInferenceHistoryToDB(ctx context.Context, batch []inferenceHistory) {
 		return
 	}
 
-	if app.IsDevEnvironment() {
+	if useModusDB() {
 		err := writeInferenceHistoryToModusDb(ctx, batch)
 		if err != nil {
-			logDbWarningOrError(ctx, err, "Inference history not written to ModusDB.")
+			logDbWarningOrError(ctx, err, "Inference history not written to modusgraph.")
 		}
 		return
 	}
@@ -377,7 +377,7 @@ func writeInferenceHistoryToModusDb(ctx context.Context, batch []inferenceHistor
 		} else {
 			pluginId = *data.pluginId
 		}
-		_, _, err = modusdb.Create[Inference](ctx, GlobalModusDbEngine, Inference{
+		_, _, err = modusgraph.Create[Inference](ctx, GlobalModusDbEngine, Inference{
 			Id:         utils.GenerateUUIDv7(),
 			ModelHash:  data.model.Hash(),
 			Input:      string(input),
@@ -400,7 +400,7 @@ func QueryPlugins(ctx context.Context) ([]Plugin, error) {
 	if GlobalModusDbEngine == nil {
 		return nil, nil
 	}
-	_, plugins, err := modusdb.Query[Plugin](ctx, GlobalModusDbEngine, modusdb.QueryParams{})
+	_, plugins, err := modusgraph.Query[Plugin](ctx, GlobalModusDbEngine, modusgraph.QueryParams{})
 	return plugins, err
 }
 
@@ -408,6 +408,6 @@ func QueryInferences(ctx context.Context) ([]Inference, error) {
 	if GlobalModusDbEngine == nil {
 		return nil, nil
 	}
-	_, inferences, err := modusdb.Query[Inference](ctx, GlobalModusDbEngine, modusdb.QueryParams{})
+	_, inferences, err := modusgraph.Query[Inference](ctx, GlobalModusDbEngine, modusgraph.QueryParams{})
 	return inferences, err
 }

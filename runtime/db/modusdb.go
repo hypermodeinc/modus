@@ -19,13 +19,14 @@ import (
 
 	"github.com/hypermodeinc/modus/runtime/app"
 	"github.com/hypermodeinc/modus/runtime/logger"
-	"github.com/hypermodeinc/modusdb"
+
+	"github.com/hypermodeinc/modusgraph"
 )
 
-var GlobalModusDbEngine *modusdb.Engine
+var GlobalModusDbEngine *modusgraph.Engine
 
 func InitModusDb(ctx context.Context) {
-	if !app.IsDevEnvironment() || runtime.GOOS == "windows" {
+	if !useModusDB() || runtime.GOOS == "windows" {
 		// ModusDB should only be initialized in dev environment,
 		// and currently does not work on Windows.
 		return
@@ -41,8 +42,8 @@ func InitModusDb(ctx context.Context) {
 		dataDir = filepath.Join(appPath, ".modusdb")
 	}
 
-	if eng, err := modusdb.NewEngine(modusdb.NewDefaultConfig(dataDir)); err != nil {
-		logger.Fatal(ctx).Err(err).Msg("Failed to initialize modusdb.")
+	if eng, err := modusgraph.NewEngine(modusgraph.NewDefaultConfig(dataDir)); err != nil {
+		logger.Fatal(ctx).Err(err).Msg("Failed to initialize the local modusGraph database.")
 	} else {
 		GlobalModusDbEngine = eng
 	}

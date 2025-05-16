@@ -5,6 +5,7 @@
 ## UNRELEASED
 
 - feat: initial implementation of Modus Agents [#840](https://github.com/hypermodeinc/modus/pull/840)
+- feat: persistence and lifecycle improvements for Modus Agents [#843](https://github.com/hypermodeinc/modus/pull/843)
 
 ## 2025-05-06 - CLI 0.17.4
 

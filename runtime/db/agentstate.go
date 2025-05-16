@@ -1,0 +1,139 @@
+/*
+ * Copyright 2025 Hypermode Inc.
+ * Licensed under the terms of the Apache License, Version 2.0
+ * See the LICENSE file that accompanied this code for further details.
+ *
+ * SPDX-FileCopyrightText: 2025 Hypermode Inc. <hello@hypermode.com>
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+package db
+
+import (
+	"context"
+	"fmt"
+	"time"
+
+	"github.com/hypermodeinc/modus/runtime/logger"
+	"github.com/hypermodeinc/modus/runtime/utils"
+
+	"github.com/hypermodeinc/modusgraph"
+	"github.com/jackc/pgx/v5"
+)
+
+type AgentState struct {
+	Gid       uint64 `json:"gid,omitempty"`
+	Id        string `json:"id" db:"constraint=unique"`
+	Name      string `json:"name"`
+	Status    string `json:"status"`
+	Data      string `json:"data,omitempty"`
+	UpdatedAt string `json:"updated"`
+}
+
+func WriteAgentState(ctx context.Context, state AgentState) error {
+	if useModusDB() {
+		return writeAgentStateToModusDB(ctx, state)
+	} else {
+		return writeAgentStateToPostgresDB(ctx, state)
+	}
+}
+
+func QueryActiveAgents(ctx context.Context) ([]AgentState, error) {
+	if useModusDB() {
+		return queryActiveAgentsFromModusDB(ctx)
+	} else {
+		return queryActiveAgentsFromPostgresDB(ctx)
+	}
+}
+
+func writeAgentStateToModusDB(ctx context.Context, state AgentState) error {
+	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+	defer span.Finish()
+
+	if GlobalModusDbEngine == nil {
+		logger.Warn(ctx).Msg("ModusDB engine is not available. Agent state will not be saved.")
+		return nil
+	}
+
+	gid, _, _, err := modusgraph.Upsert(ctx, GlobalModusDbEngine, state)
+	state.Gid = gid
+
+	return err
+}
+
+func queryActiveAgentsFromModusDB(ctx context.Context) ([]AgentState, error) {
+	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+	defer span.Finish()
+
+	_, results, err := modusgraph.Query[AgentState](ctx, GlobalModusDbEngine, modusgraph.QueryParams{
+		Filter: &modusgraph.Filter{
+			Not: &modusgraph.Filter{
+				Field: "status",
+				String: modusgraph.StringPredicate{
+					Equals: "terminated",
+				},
+			},
+		},
+		// TODO: Sorting gives a dgraph error. Why?
+		// Sorting: &modusgraph.Sorting{
+		// 	OrderDescField: "updated",
+		// 	OrderDescFirst: true,
+		// },
+	})
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to query agent state: %w", err)
+	}
+
+	return results, nil
+}
+
+func writeAgentStateToPostgresDB(ctx context.Context, state AgentState) error {
+	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+	defer span.Finish()
+
+	const query = "INSERT INTO agents (id, name, status, data, updated) VALUES ($1, $2, $3, $4, $5) " +
+		"ON CONFLICT (id) DO UPDATE SET name = $2, status = $3, data = $4, updated = $5"
+
+	err := WithTx(ctx, func(tx pgx.Tx) error {
+		_, err := tx.Exec(ctx, query, state.Id, state.Name, state.Status, state.Data, state.UpdatedAt)
+		if err != nil {
+			return fmt.Errorf("failed to write agent state: %w", err)
+		}
+		return nil
+	})
+
+	return err
+}
+
+func queryActiveAgentsFromPostgresDB(ctx context.Context) ([]AgentState, error) {
+	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+	defer span.Finish()
+
+	const query = "SELECT id, name, status, data, updated FROM agents " +
+		"WHERE status != 'terminated' ORDER BY updated DESC"
+
+	results := make([]AgentState, 0)
+	err := WithTx(ctx, func(tx pgx.Tx) error {
+		rows, err := tx.Query(ctx, query)
+		if err != nil {
+			return err
+		}
+		defer rows.Close()
+		for rows.Next() {
+			var a AgentState
+			var ts time.Time
+			if err := rows.Scan(&a.Id, &a.Name, &a.Status, &a.Data, &ts); err != nil {
+				return err
+			}
+			a.UpdatedAt = ts.UTC().Format(time.RFC3339)
+			results = append(results, a)
+		}
+		if err := rows.Err(); err != nil {
+			return err
+		}
+		return nil
+	})
+
+	return results, err
+}
