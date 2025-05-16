@@ -28,9 +28,9 @@ import (
 )
 
 type agentInfo struct {
-	Id     string
-	Name   string
-	Status agentStatus
+	id     string
+	name   string
+	status agentStatus
 }
 
 type agentStatus = string
@@ -56,9 +56,9 @@ func SpawnAgentActor(ctx context.Context, agentName string) (*agentInfo, error) 
 	spawnActorForAgent(host, plugin, agentId, agentName, false, nil)
 
 	info := &agentInfo{
-		Id:     agentId,
-		Name:   agentName,
-		Status: agentStatusStarting,
+		id:     agentId,
+		name:   agentName,
+		status: agentStatusStarting,
 	}
 
 	return info, nil
