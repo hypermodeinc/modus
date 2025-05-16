@@ -2,7 +2,12 @@
 
 # Change Log
 
-## UNRELEASED
+## 2025-05-16 - Runtime and all SDKs 0.18.0-alpha.1
+
+NOTE: This is a pre-release that includes a new feature we are testing called Modus Agents. See the PRs below for more details.
+
+- To install, use `modus sdk install --pre-release`
+- To make an app using this version, use `modus sdk new --prerelease`, or update an existing app's `package.json` or `go.mod` to use the pre-release SDK version.
 
 - feat: initial implementation of Modus Agents [#840](https://github.com/hypermodeinc/modus/pull/840)
 - feat: persistence and lifecycle improvements for Modus Agents [#843](https://github.com/hypermodeinc/modus/pull/843)
