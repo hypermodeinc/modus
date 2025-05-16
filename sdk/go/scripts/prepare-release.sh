@@ -25,6 +25,9 @@ for template in *; do
 	if [[ -d ${template} ]]; then
 		cd "${template}"
 
+		# remove any replace directives in the go.mod file
+		perl -i -ne 'next if /^replace /; $block=1 if /^replace \(/; $block=0, next if $block && /^\)/; next if $block; print' go.mod
+
 		# update the go.mod file to use the new version
 		go get -u github.com/hypermodeinc/modus/sdk/go@v"${version}"
 
