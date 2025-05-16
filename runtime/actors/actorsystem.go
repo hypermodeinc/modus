@@ -55,7 +55,7 @@ func loadAgentActors(ctx context.Context, plugin *plugins.Plugin) error {
 	actors := _actorSystem.Actors()
 	runningAgents := make(map[string]bool, len(actors))
 	for _, pid := range actors {
-		if actor, ok := pid.Actor().(*WasmAgentActor); ok {
+		if actor, ok := pid.Actor().(*wasmAgentActor); ok {
 			runningAgents[actor.agentId] = true
 			if err := actor.reloadModule(ctx, plugin); err != nil {
 				return err
