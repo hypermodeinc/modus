@@ -2,6 +2,10 @@
 
 # Change Log
 
+## 2025-05-16 CLI 0.18.0
+
+- fix: pass pre-release flags properly to subcommands [#847](https://github.com/hypermodeinc/modus/pull/847)
+
 ## 2025-05-16 Runtime 0.18.0-alpha.2
 
 - fix: reflection error in runtime when starting agent [#845](https://github.com/hypermodeinc/modus/pull/845)

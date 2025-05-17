@@ -311,7 +311,9 @@ export async function findLatestCompatibleRuntimeVersion(sdk: globals.SDK, sdkVe
       compatibleVersions = versions.filter((v) => semver.satisfies(v.slice(1), constraint, { includePrerelease: true }));
     }
     if (compatibleVersions.length > 0) {
-      return compatibleVersions[0];
+      // Sort in descending order and return the latest version
+      compatibleVersions = semver.rsort(compatibleVersions.map((v) => v.slice(1)));
+      return "v" + compatibleVersions[0];
     }
   }
 }

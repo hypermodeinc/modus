@@ -305,7 +305,11 @@ export default class NewCommand extends BaseCommand {
         }
       }
       if (updateSDK) {
-        await SDKInstallCommand.run([sdk, latestVersion!, "--no-logo"]);
+        const sdkInstallArgs = [sdk, latestVersion!, "--no-logo"];
+        if (prerelease) {
+          sdkInstallArgs.push("--prerelease");
+        }
+        await SDKInstallCommand.run(sdkInstallArgs);
         installedSdkVersion = latestVersion;
       }
     }
