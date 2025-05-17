@@ -80,6 +80,7 @@ export default class DevCommand extends BaseCommand {
 
     const app = await getAppInfo(appPath);
     const { sdk, sdkVersion } = app;
+    const prerelease = vi.isPrerelease(sdkVersion) || flags.prerelease;
 
     if (!flags["no-logo"]) {
       this.log(getHeader(this.config.version));
@@ -109,7 +110,7 @@ export default class DevCommand extends BaseCommand {
         }
       }
     } else if (await isOnline()) {
-      const version = await vi.findLatestCompatibleRuntimeVersion(sdk, sdkVersion, flags.prerelease);
+      const version = await vi.findLatestCompatibleRuntimeVersion(sdk, sdkVersion, prerelease);
       if (version && !(await vi.runtimeVersionIsInstalled(version))) {
         const runtimeText = `Modus Runtime ${version}`;
         await withSpinner(chalk.dim("Downloading and installing " + runtimeText), async (spinner) => {
@@ -128,7 +129,7 @@ export default class DevCommand extends BaseCommand {
       }
       runtimeVersion = version;
     } else {
-      const version = await vi.findCompatibleInstalledRuntimeVersion(sdk, sdkVersion, flags.prerelease);
+      const version = await vi.findCompatibleInstalledRuntimeVersion(sdk, sdkVersion, prerelease);
       if (!version) {
         this.logError("Could not find a compatible Modus runtime version. Please try again when you have an internet connection.");
         return;
