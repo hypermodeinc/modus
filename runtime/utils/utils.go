@@ -134,7 +134,7 @@ func GetStructFieldValue(rs reflect.Value, fieldName string, caseInsensitive boo
 	// see https://stackoverflow.com/a/43918797
 	if !rf.CanInterface() {
 		if !rf.CanAddr() {
-			rs2 := reflect.New(rsType.Elem())
+			rs2 := reflect.New(rsType).Elem()
 			rs2.Set(rs)
 			rf = rs2.FieldByIndex(field.Index)
 		}

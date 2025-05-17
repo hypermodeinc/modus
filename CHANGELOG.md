@@ -2,6 +2,10 @@
 
 # Change Log
 
+## UNRELEASED
+
+- fix: reflection error in runtime when starting agent [#845](https://github.com/hypermodeinc/modus/pull/845)
+
 ## 2025-05-16 - Runtime and all SDKs 0.18.0-alpha.1
 
 NOTE: This is a pre-release that includes a new feature we are testing called Modus Agents. See the PRs below for more details.
