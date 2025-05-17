@@ -2,9 +2,10 @@
 
 # Change Log
 
-## UNRELEASED
+## 2025-05-16 Runtime 0.18.0-alpha.2
 
 - fix: reflection error in runtime when starting agent [#845](https://github.com/hypermodeinc/modus/pull/845)
+- fix: trigger events correctly during agent reload [#846](https://github.com/hypermodeinc/modus/pull/846)
 
 ## 2025-05-16 - Runtime and all SDKs 0.18.0-alpha.1
 
