@@ -469,6 +469,12 @@ func (a *wasmAgentActor) reloadModule(ctx context.Context, plugin *plugins.Plugi
 
 	logger.Info(ctx).Msg("Reloading module for agent.")
 
+	a.status = agentStatusSuspending
+	if err := a.shutdownAgent(ctx); err != nil {
+		logger.Err(ctx, err).Msg("Error shutting down agent.")
+		return err
+	}
+
 	// get the current state and close the module instance
 	state, err := a.getAgentState(ctx)
 	if err != nil {
@@ -476,6 +482,7 @@ func (a *wasmAgentActor) reloadModule(ctx context.Context, plugin *plugins.Plugi
 		return err
 	}
 	a.module.Close(ctx)
+	a.status = agentStatusSuspended
 
 	// create a new module instance and assign it to the actor
 	a.plugin = plugin
@@ -487,6 +494,7 @@ func (a *wasmAgentActor) reloadModule(ctx context.Context, plugin *plugins.Plugi
 	a.module = mod
 
 	// activate the agent in the new module instance
+	a.status = agentStatusRestoring
 	if err := a.activateAgent(ctx); err != nil {
 		logger.Err(ctx, err).Msg("Error reloading agent.")
 		return err
@@ -498,6 +506,7 @@ func (a *wasmAgentActor) reloadModule(ctx context.Context, plugin *plugins.Plugi
 		return err
 	}
 
+	a.status = agentStatusRunning
 	logger.Info(ctx).Msg("Agent reloaded module successfully.")
 
 	return nil
