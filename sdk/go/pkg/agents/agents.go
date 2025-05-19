@@ -221,11 +221,15 @@ func (a *AgentBase) OnStart() error {
 	return nil
 }
 
-func (a *AgentBase) OnStop() error {
+func (a *AgentBase) OnSuspend() error {
 	return nil
 }
 
-func (a *AgentBase) OnReload() error {
+func (a *AgentBase) OnRestore() error {
+	return nil
+}
+
+func (a *AgentBase) OnTerminate() error {
 	return nil
 }
 
