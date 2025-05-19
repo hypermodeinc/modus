@@ -2,6 +2,10 @@
 
 # Change Log
 
+## 2025-05-19 - Go SDK 0.18.0-alpha.2
+
+- fix: correct agent base event stubs [#848](https://github.com/hypermodeinc/modus/pull/848)
+
 ## 2025-05-16 CLI 0.18.0
 
 - fix: pass pre-release flags properly to subcommands [#847](https://github.com/hypermodeinc/modus/pull/847)
