@@ -1216,7 +1216,8 @@ func (mi *ChatModelInput) MarshalJSON() ([]byte, error) {
 	}
 
 	// don't send parallel_tool_calls if tools are not present
-	if len(mi.Tools) == 0 {
+	// or if parallel_tool_calls is true (default)
+	if len(mi.Tools) == 0 || mi.ParallelToolCalls {
 		b, err = sjson.DeleteBytes(b, "parallel_tool_calls")
 		if err != nil {
 			return nil, err
