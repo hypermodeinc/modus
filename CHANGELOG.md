@@ -2,6 +2,10 @@
 
 # Change Log
 
+## UNRELEASED
+
+- fix: omit parallel_tool_calls in Go OpenAI SDK if it is set to true [#849](https://github.com/hypermodeinc/modus/pull/849)
+
 ## 2025-05-19 - Go SDK 0.18.0-alpha.2
 
 - fix: correct agent base event stubs [#848](https://github.com/hypermodeinc/modus/pull/848)
