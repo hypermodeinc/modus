@@ -1234,3 +1234,49 @@ func (mi *ChatModelInput) MarshalJSON() ([]byte, error) {
 
 	return b, nil
 }
+
+// Represents a a raw message object, which is used when reconstructing messages from JSON.
+// A raw message will round-trip all the JSON data, but does not expose the fields directly.
+// (note, this type is not exported)
+type rawMessage struct {
+	role string
+	data json.RawMessage
+}
+
+func (m *rawMessage) Role() string {
+	return m.role
+}
+
+func (m *rawMessage) MarshalJSON() ([]byte, error) {
+	if len(m.data) == 0 {
+		return nil, fmt.Errorf("missing data in message")
+	}
+	return m.data, nil
+}
+
+func (m *rawMessage) UnmarshalJSON(data []byte) error {
+	r := gjson.GetBytes(data, "role")
+	if !r.Exists() {
+		return fmt.Errorf("missing role field in message JSON")
+	}
+	m.role = r.String()
+	m.data = data
+	return nil
+}
+
+// Parses a JSON-encoded request message into a list of RequestMessage objects.
+// The resulting message objects are suitable for restoring a previous chat conversation.
+// However, the original message types are not preserved.
+func ParseMessages(data []byte) ([]RequestMessage, error) {
+	var messages []rawMessage
+	if err := json.Unmarshal([]byte(data), &messages); err != nil {
+		return nil, err
+	}
+
+	results := make([]RequestMessage, len(messages))
+	for i := range messages {
+		results[i] = &messages[i]
+	}
+
+	return results, nil
+}
