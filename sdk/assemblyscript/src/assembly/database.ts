@@ -171,6 +171,7 @@ export function queryScalar<T>(
  *
  * Note that this class is identical to the Location class, but uses different field names.
  */
+@json
 export class Point {
   constructor(
     public x: f64,
@@ -189,27 +190,27 @@ export class Point {
     return new Point(p[0], p[1]);
   }
 
-  // The following methods are required for custom JSON serialization
-  // This is used in lieu of the @json decorator, so that the class can be
-  // serialized to a string in SQL format.
 
   @serializer
   private serialize(self: Point): string {
-    return self.toString();
+    return `"${self}"`;
   }
 
 
   @deserializer
-  private deserialize(data: string): Point | null {
+  private deserialize(data: string): Point {
     if (
       data.length < 7 ||
       data.charAt(0) != '"' ||
       data.charAt(data.length - 1) != '"'
-    )
-      return null;
+    ) {
+      throw new Error("Invalid Point string");
+    }
 
     const p = parsePointString(data.substring(1, data.length - 1));
-    if (p.length == 0) return null;
+    if (p.length == 0) {
+      throw new Error("Invalid Point string");
+    }
 
     this.x = p[0];
     this.y = p[1];
@@ -223,6 +224,7 @@ export class Point {
  *
  * Note that this class is identical to the `Point` class, but uses different field names.
  */
+@json
 export class Location {
   constructor(
     public longitude: f64,
@@ -233,35 +235,35 @@ export class Location {
     return `(${this.longitude},${this.latitude})`;
   }
 
-  public static fromString(data: string): Point | null {
+  public static fromString(data: string): Location | null {
     const p = parsePointString(data);
     if (p.length == 0) {
       return null;
     }
-    return new Point(p[0], p[1]);
+    return new Location(p[0], p[1]);
   }
 
-  // The following methods are required for custom JSON serialization
-  // This is used in lieu of the @json decorator, so that the class can be
-  // serialized to a string in SQL format.
 
   @serializer
   private serialize(self: Location): string {
-    return '"' + self.toString() + '"';
+    return `"${self}"`;
   }
 
 
   @deserializer
-  private deserialize(data: string): Location | null {
+  private deserialize(data: string): Location {
     if (
       data.length < 7 ||
       data.charAt(0) != '"' ||
       data.charAt(data.length - 1) != '"'
-    )
-      return null;
+    ) {
+      throw new Error("Invalid Location string");
+    }
 
     const p = parsePointString(data.substring(1, data.length - 1));
-    if (p.length == 0) return null;
+    if (p.length == 0) {
+      throw new Error("Invalid Location string");
+    }
 
     this.longitude = p[0];
     this.latitude = p[1];
