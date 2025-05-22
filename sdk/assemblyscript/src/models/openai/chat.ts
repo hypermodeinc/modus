@@ -1545,6 +1545,7 @@ export class AudioOutput {
  * A raw message will round-trip all the JSON data, but does not expose the fields directly.
  * (note, this type is not exported)
  */
+@json
 class RawMessage extends RequestMessage {
   constructor(data: string) {
     const obj = JSON.parse<JSON.Obj>(data);
@@ -1558,6 +1559,8 @@ class RawMessage extends RequestMessage {
     this._data = data;
   }
 
+
+  @omit
   private _data: string;
 
 
@@ -1579,11 +1582,7 @@ class RawMessage extends RequestMessage {
  * However, the original message types are not preserved.
  */
 export function parseMessages(data: string): RequestMessage[] {
-  const messages = JSON.parse<JSON.Value[]>(data);
-  const results = new Array<RequestMessage>(messages.length);
-  for (let i = 0; i < messages.length; i++) {
-    const msg = messages[i].toString();
-    results[i] = new RawMessage(msg);
-  }
-  return results;
+  return JSON.parse<JSON.Obj[]>(data).map<RequestMessage>(
+    (msg) => new RawMessage(msg.toString()),
+  );
 }
