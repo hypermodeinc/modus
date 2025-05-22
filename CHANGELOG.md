@@ -2,12 +2,19 @@
 
 # Change Log
 
-## UNRELEASED
+## 2025-05-22 - Go SDK 0.18.0-alpha.3
 
 - fix: omit parallel_tool_calls in Go OpenAI SDK if it is set to true [#849](https://github.com/hypermodeinc/modus/pull/849)
-- feat: use embedded postgres on Windows [#851](https://github.com/hypermodeinc/modus/pull/851)
+- feat: add functions for parsing chat messages [#853](https://github.com/hypermodeinc/modus/pull/853)
+
+## 2025-05-22 - AssemblyScript SDK 0.18.0-alpha.2
+
 - feat: add functions for parsing chat messages [#853](https://github.com/hypermodeinc/modus/pull/853)
 - fix: fix serialization of Point and Location types [#854](https://github.com/hypermodeinc/modus/pull/854)
+
+## 2025-05-22 - Runtime 0.18.0-alpha.2
+
+- feat: use embedded postgres on Windows [#851](https://github.com/hypermodeinc/modus/pull/851)
 
 ## 2025-05-19 - Go SDK 0.18.0-alpha.2
 
