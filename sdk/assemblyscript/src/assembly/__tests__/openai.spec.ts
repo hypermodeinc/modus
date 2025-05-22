@@ -7,7 +7,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { expect, it, log, run } from "as-test";
+import { expect, it, run } from "as-test";
 import { JSON } from "json-as";
 
 import {
