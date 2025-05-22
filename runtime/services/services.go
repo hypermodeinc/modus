@@ -86,4 +86,6 @@ func Stop(ctx context.Context) {
 	logger.Close()
 	db.Stop(ctx)
 	db.CloseModusDb(ctx)
+
+	logger.Info(ctx).Msg("Shutdown complete.")
 }

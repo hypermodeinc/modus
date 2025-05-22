@@ -13,7 +13,6 @@ import (
 	"embed"
 	"io/fs"
 	"net/http"
-	"runtime"
 
 	"github.com/hypermodeinc/modus/lib/manifest"
 	"github.com/hypermodeinc/modus/runtime/db"
@@ -32,14 +31,7 @@ func explorerHandler(w http.ResponseWriter, r *http.Request) {
 	mux := http.NewServeMux()
 	mux.Handle("/explorer/", http.StripPrefix("/explorer/", http.FileServerFS(contentRoot)))
 	mux.HandleFunc("/explorer/api/endpoints", endpointsHandler)
-	if runtime.GOOS == "windows" {
-		notImplementedHandler := func(w http.ResponseWriter, r *http.Request) {
-			http.Error(w, "Not implemented on Windows", http.StatusNotImplemented)
-		}
-		mux.HandleFunc("/explorer/api/inferences", notImplementedHandler)
-	} else {
-		mux.HandleFunc("/explorer/api/inferences", inferenceHistoryHandler)
-	}
+	mux.HandleFunc("/explorer/api/inferences", inferenceHistoryHandler)
 
 	mux.ServeHTTP(w, r)
 }

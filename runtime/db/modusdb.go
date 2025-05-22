@@ -15,7 +15,6 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
-	"runtime"
 
 	"github.com/hypermodeinc/modus/runtime/app"
 	"github.com/hypermodeinc/modus/runtime/logger"
@@ -26,9 +25,7 @@ import (
 var GlobalModusDbEngine *modusgraph.Engine
 
 func InitModusDb(ctx context.Context) {
-	if !useModusDB() || runtime.GOOS == "windows" {
-		// ModusDB should only be initialized in dev environment,
-		// and currently does not work on Windows.
+	if !useModusDB() {
 		return
 	}
 
@@ -37,7 +34,7 @@ func InitModusDb(ctx context.Context) {
 	if filepath.Base(appPath) == "build" {
 		// this keeps the data directory outside of the build directory
 		dataDir = filepath.Join(appPath, "..", ".modusdb")
-		addToGitIgnore(ctx, filepath.Dir(appPath))
+		addToGitIgnore(ctx, filepath.Dir(appPath), ".modusdb/")
 	} else {
 		dataDir = filepath.Join(appPath, ".modusdb")
 	}
@@ -55,19 +52,18 @@ func CloseModusDb(ctx context.Context) {
 	}
 }
 
-func addToGitIgnore(ctx context.Context, rootPath string) {
+func addToGitIgnore(ctx context.Context, rootPath, contents string) {
 	gitIgnorePath := filepath.Join(rootPath, ".gitignore")
-	gitIgnoreContents := ".modusdb/"
 
-	// if .gitignore file does not exist, create it and add .modusdb/ to it
+	// if .gitignore file does not exist, create it and add contents to it
 	if _, err := os.Stat(gitIgnorePath); errors.Is(err, os.ErrNotExist) {
-		if err := os.WriteFile(gitIgnorePath, []byte(gitIgnoreContents+"\n"), 0644); err != nil {
+		if err := os.WriteFile(gitIgnorePath, []byte(contents+"\n"), 0644); err != nil {
 			logger.Err(ctx, err).Msg("Failed to create .gitignore file.")
 		}
 		return
 	}
 
-	// check if .modusdb/ is already in the .gitignore file
+	// check if contents are already in the .gitignore file
 	file, err := os.Open(gitIgnorePath)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Failed to open .gitignore file.")
@@ -76,20 +72,19 @@ func addToGitIgnore(ctx context.Context, rootPath string) {
 	defer file.Close()
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
-		if scanner.Text() == gitIgnoreContents {
-			// found .modusdb/ in the file
-			return
+		if scanner.Text() == contents {
+			return // found
 		}
 	}
 
-	// .modusdb/ is not in the file, so append it
+	// contents are not in the file, so append them
 	file, err = os.OpenFile(gitIgnorePath, os.O_APPEND|os.O_WRONLY, 0644)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Failed to open .gitignore file.")
 		return
 	}
 	defer file.Close()
-	if _, err := file.WriteString("\n" + gitIgnoreContents + "\n"); err != nil {
-		logger.Err(ctx, err).Msg("Failed to append .modusdb/ to .gitignore file.")
+	if _, err := file.WriteString("\n" + contents + "\n"); err != nil {
+		logger.Err(ctx, err).Msg("Failed to append " + contents + " to .gitignore file.")
 	}
 }

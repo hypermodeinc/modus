@@ -10,8 +10,7 @@
       "env": {
         "FORCE_COLOR": "1",
         "MODUS_ENV": "dev",
-        "MODUS_DEBUG": "true",
-        "MODUS_DB": "postgresql://postgres:postgres@localhost:5433/my-runtime-db?sslmode=disable" // checkov:skip=CKV_SECRET_4
+        "MODUS_DEBUG": "true"
       },
       "args": [
         "--refresh=1s",
@@ -28,8 +27,7 @@
       "env": {
         "FORCE_COLOR": "1",
         "MODUS_ENV": "dev",
-        "MODUS_DEBUG": "true",
-        "MODUS_DB": "postgresql://postgres:postgres@localhost:5433/my-runtime-db?sslmode=disable" // checkov:skip=CKV_SECRET_4
+        "MODUS_DEBUG": "true"
       },
       "args": ["--refresh=1s", "--appPath", "${input:appPath}"]
     },
@@ -46,8 +44,7 @@
         "MODUS_DEBUG": "true",
         "AWS_REGION": "${input:awsRegion}",
         "AWS_PROFILE": "${input:awsProfile}",
-        "AWS_SDK_LOAD_CONFIG": "true",
-        "MODUS_DB": "postgresql://postgres:postgres@localhost:5433/my-runtime-db?sslmode=disable" // checkov:skip=CKV_SECRET_4
+        "AWS_SDK_LOAD_CONFIG": "true"
       },
       "args": [
         "--useAwsStorage",
