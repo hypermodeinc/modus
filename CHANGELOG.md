@@ -12,7 +12,7 @@
 - feat: add functions for parsing chat messages [#853](https://github.com/hypermodeinc/modus/pull/853)
 - fix: fix serialization of Point and Location types [#854](https://github.com/hypermodeinc/modus/pull/854)
 
-## 2025-05-22 - Runtime 0.18.0-alpha.2
+## 2025-05-22 - Runtime 0.18.0-alpha.3
 
 - feat: use embedded postgres on Windows [#851](https://github.com/hypermodeinc/modus/pull/851)
 
