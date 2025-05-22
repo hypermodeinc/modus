@@ -34,10 +34,7 @@ it("should round-trip chat messages", () => {
   }
 
   const roundTrip = JSON.stringify(parsedMsgs);
-
-  log(data);
-  log(roundTrip);
-  expect(roundTrip).toBe(data); // <-----    this currently fails
+  expect(roundTrip).toBe(data);
 });
 
 run();
