@@ -51,6 +51,10 @@ func Stop(ctx context.Context) {
 	close(globalRuntimePostgresWriter.quit)
 	<-globalRuntimePostgresWriter.done
 	pool.Close()
+
+	if _embeddedPostgresDB != nil {
+		shutdownEmbeddedPostgresDB(ctx)
+	}
 }
 
 func logDbWarningOrError(ctx context.Context, err error, msg string) {
@@ -393,9 +397,20 @@ func QueryCollectionVectorsFromCheckpoint(ctx context.Context, collectionName, s
 }
 
 func Initialize(ctx context.Context) {
+	if useModusDB() {
+		return
+	}
+
+	if useEmbeddedPostgres() {
+		if err := prepareEmbeddedPostgresDB(ctx); err != nil {
+			logger.Fatal(ctx).Err(err).Msg("Failed to prepare embedded Postgres database.")
+			return
+		}
+	}
+
 	// this will initialize the pool and start the worker
 	_, err := globalRuntimePostgresWriter.GetPool(ctx)
-	if err != nil && !useModusDB() {
+	if err != nil {
 		logger.Warn(ctx).Err(err).Msg("Metadata database is not available.")
 	}
 	go globalRuntimePostgresWriter.worker(ctx)
@@ -437,7 +452,6 @@ var _useModusDB bool
 
 func useModusDB() bool {
 	_useModusDBOnce.Do(func() {
-		// this gives us a way to force the use or disuse of ModusDB for development
 		s := os.Getenv("MODUS_DB_USE_MODUSDB")
 		if s != "" {
 			if value, err := strconv.ParseBool(s); err == nil {
@@ -446,8 +460,11 @@ func useModusDB() bool {
 			}
 		}
 
-		// otherwise, it's based on the environment
-		_useModusDB = app.IsDevEnvironment()
+		if app.IsDevEnvironment() {
+			_useModusDB = !useEmbeddedPostgres()
+		} else {
+			_useModusDB = false
+		}
 	})
 	return _useModusDB
 }

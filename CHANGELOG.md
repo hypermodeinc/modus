@@ -5,6 +5,7 @@
 ## UNRELEASED
 
 - fix: omit parallel_tool_calls in Go OpenAI SDK if it is set to true [#849](https://github.com/hypermodeinc/modus/pull/849)
+- feat: use embedded postgres on Windows [#851](https://github.com/hypermodeinc/modus/pull/851)
 
 ## 2025-05-19 - Go SDK 0.18.0-alpha.2
 
