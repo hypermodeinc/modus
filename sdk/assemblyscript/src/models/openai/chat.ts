@@ -262,6 +262,7 @@ export class OpenAIChatInput {
 /**
  * An object specifying which tool the model should call.
  */
+@json
 export class ToolChoice {
   /**
    * Constructs a new tool choice object.
@@ -1545,7 +1546,7 @@ export class AudioOutput {
  * A raw message will round-trip all the JSON data, but does not expose the fields directly.
  * (note, this type is not exported)
  */
-// @json
+@json
 class RawMessage extends RequestMessage {
   constructor(data: string) {
     const obj = JSON.parse<JSON.Obj>(data);
