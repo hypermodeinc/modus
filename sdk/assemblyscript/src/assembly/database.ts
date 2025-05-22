@@ -171,7 +171,6 @@ export function queryScalar<T>(
  *
  * Note that this class is identical to the Location class, but uses different field names.
  */
-@json
 export class Point {
   constructor(
     public x: f64,
@@ -224,7 +223,6 @@ export class Point {
  *
  * Note that this class is identical to the `Point` class, but uses different field names.
  */
-@json
 export class Location {
   constructor(
     public longitude: f64,
