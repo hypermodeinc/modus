@@ -15,12 +15,12 @@ import (
 	"github.com/hypermodeinc/modus/sdk/go/pkg/testutils"
 )
 
-var SpawnAgentActorCallStack = testutils.NewCallStack()
+var StartAgentCallStack = testutils.NewCallStack()
 var SendMessageCallStack = testutils.NewCallStack()
-var TerminateAgentCallStack = testutils.NewCallStack()
+var StopAgentCallStack = testutils.NewCallStack()
 
-func hostSpawnAgentActor(agentName *string) *AgentInfo {
-	SpawnAgentActorCallStack.Push(agentName)
+func hostStartAgent(agentName *string) *AgentInfo {
+	StartAgentCallStack.Push(agentName)
 
 	return &AgentInfo{
 		Id:     "abc123",
@@ -41,8 +41,8 @@ func hostSendMessage(agentId, msgName, data *string, timeout int64) *MessageResp
 	return nil
 }
 
-func hostTerminateAgent(agentId *string) bool {
-	TerminateAgentCallStack.Push(agentId)
+func hostStopAgent(agentId *string) bool {
+	StopAgentCallStack.Push(agentId)
 
 	return agentId != nil && *agentId == "abc123"
 }

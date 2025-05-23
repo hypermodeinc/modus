@@ -45,7 +45,7 @@ const (
 	agentStatusTerminated agentStatus = "terminated"
 )
 
-func SpawnAgentActor(ctx context.Context, agentName string) (*agentInfo, error) {
+func StartAgent(ctx context.Context, agentName string) (*agentInfo, error) {
 	plugin, ok := plugins.GetPluginFromContext(ctx)
 	if !ok {
 		return nil, fmt.Errorf("no plugin found in context")
@@ -93,7 +93,7 @@ func spawnActorForAgent(host wasmhost.WasmHost, plugin *plugins.Plugin, agentId,
 	}()
 }
 
-func TerminateAgent(ctx context.Context, agentId string) bool {
+func StopAgent(ctx context.Context, agentId string) bool {
 	pid, err := getActorPid(ctx, agentId)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Error stopping agent.")

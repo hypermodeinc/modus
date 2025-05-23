@@ -98,12 +98,12 @@ export function registerAgent<T extends Agent>(): void {
 }
 
 // @ts-expect-error: decorator
-@external("modus_agents", "spawnAgentActor")
-declare function hostSpawnAgentActor(agentName: string): AgentInfo;
+@external("modus_agents", "startAgent")
+declare function hostStartAgent(agentName: string): AgentInfo;
 
 // @ts-expect-error: decorator
-@external("modus_agents", "terminateAgent")
-declare function hostTerminateAgent(agentId: string): bool;
+@external("modus_agents", "stopAgent")
+declare function hostStopAgent(agentId: string): bool;
 
 /**
  * Starts an agent with the given name.
@@ -114,18 +114,19 @@ export function startAgent(name: string): AgentInfo {
     throw new Error(`Agent ${name} not found.`);
   }
 
-  return hostSpawnAgentActor(name);
+  return hostStartAgent(name);
 }
 
 /**
- * Terminates an agent with the given ID.
- * Once terminated, the agent cannot be resumed.
+ * Stops an agent with the given ID.
+ * This will terminate the agent, and it cannot be resumed or restarted.
+ * This can be called from any user code, such as function or another agent's methods.
  */
 export function stopAgent(agentId: string): void {
   if (agentId == "") {
     throw new Error("Agent ID cannot be empty.");
   }
-  const ok = hostTerminateAgent(agentId);
+  const ok = hostStopAgent(agentId);
   if (!ok) {
     throw new Error(`Failed to stop agent ${agentId}.`);
   }

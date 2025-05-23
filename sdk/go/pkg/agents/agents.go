@@ -52,14 +52,14 @@ func Start(name string) (AgentInfo, error) {
 		return AgentInfo{}, fmt.Errorf("agent %s not found", name)
 	}
 
-	info := hostSpawnAgentActor(&name)
+	info := hostStartAgent(&name)
 	return *info, nil
 }
 
 // Stops an agent with the given ID.
 // This will terminate the agent, and it cannot be resumed or restarted.
 func Stop(agentId string) error {
-	if ok := hostTerminateAgent(&agentId); !ok {
+	if ok := hostStopAgent(&agentId); !ok {
 		return fmt.Errorf("failed to stop agent %s", agentId)
 	}
 	return nil

@@ -16,12 +16,12 @@ import (
 )
 
 //go:noescape
-//go:wasmimport modus_agents spawnAgentActor
-func _hostSpawnAgentActor(agentName *string) unsafe.Pointer
+//go:wasmimport modus_agents startAgent
+func _hostStartAgent(agentName *string) unsafe.Pointer
 
-//modus:import modus_agents spawnAgentActor
-func hostSpawnAgentActor(agentName *string) *AgentInfo {
-	info := _hostSpawnAgentActor(agentName)
+//modus:import modus_agents startAgent
+func hostStartAgent(agentName *string) *AgentInfo {
+	info := _hostStartAgent(agentName)
 	if info == nil {
 		return nil
 	}
@@ -42,5 +42,5 @@ func hostSendMessage(agentId, msgName, data *string, timeout int64) *MessageResp
 }
 
 //go:noescape
-//go:wasmimport modus_agents terminateAgent
-func hostTerminateAgent(agentId *string) bool
+//go:wasmimport modus_agents stopAgent
+func hostStopAgent(agentId *string) bool
