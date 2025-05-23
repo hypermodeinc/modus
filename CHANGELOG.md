@@ -5,7 +5,7 @@
 ## UNRELEASED
 
 - chore: update json-as and remove hack [#857](https://github.com/hypermodeinc/modus/pull/857)
-- chore: rename agent lifecycle methods and apis [#858](https://github.com/hypermodeinc/modus/pull/858)
+- chore: rename agent lifecycle methods and APIs [#858](https://github.com/hypermodeinc/modus/pull/858)
 
 ## 2025-05-22 - Go SDK 0.18.0-alpha.3
 
