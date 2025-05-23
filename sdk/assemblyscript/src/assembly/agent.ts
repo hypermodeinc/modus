@@ -121,13 +121,13 @@ export function startAgent(name: string): AgentInfo {
  * Terminates an agent with the given ID.
  * Once terminated, the agent cannot be resumed.
  */
-export function terminateAgent(agentId: string): void {
+export function stopAgent(agentId: string): void {
   if (agentId == "") {
     throw new Error("Agent ID cannot be empty.");
   }
   const ok = hostTerminateAgent(agentId);
   if (!ok) {
-    throw new Error(`Failed to terminate agent ${agentId}.`);
+    throw new Error(`Failed to stop agent ${agentId}.`);
   }
 }
 

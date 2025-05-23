@@ -56,11 +56,11 @@ func Start(name string) (AgentInfo, error) {
 	return *info, nil
 }
 
-// Terminates an agent with the given ID.
-// Once terminated, the agent cannot be resumed.
-func Terminate(agentId string) error {
+// Stops an agent with the given ID.
+// This will terminate the agent, and it cannot be resumed or restarted.
+func Stop(agentId string) error {
 	if ok := hostTerminateAgent(&agentId); !ok {
-		return fmt.Errorf("failed to terminate agent %s", agentId)
+		return fmt.Errorf("failed to stop agent %s", agentId)
 	}
 	return nil
 }
