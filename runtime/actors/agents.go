@@ -36,13 +36,13 @@ type agentInfo struct {
 type agentStatus = string
 
 const (
-	agentStatusStarting    agentStatus = "starting"
-	agentStatusRunning     agentStatus = "running"
-	agentStatusSuspending  agentStatus = "suspending"
-	agentStatusSuspended   agentStatus = "suspended"
-	agentStatusResuming    agentStatus = "resuming"
-	agentStatusTerminating agentStatus = "terminating"
-	agentStatusTerminated  agentStatus = "terminated"
+	agentStatusStarting   agentStatus = "starting"
+	agentStatusRunning    agentStatus = "running"
+	agentStatusSuspending agentStatus = "suspending"
+	agentStatusSuspended  agentStatus = "suspended"
+	agentStatusResuming   agentStatus = "resuming"
+	agentStatusStopping   agentStatus = "stopping"
+	agentStatusTerminated agentStatus = "terminated"
 )
 
 func SpawnAgentActor(ctx context.Context, agentName string) (*agentInfo, error) {
@@ -96,15 +96,15 @@ func spawnActorForAgent(host wasmhost.WasmHost, plugin *plugins.Plugin, agentId,
 func TerminateAgent(ctx context.Context, agentId string) bool {
 	pid, err := getActorPid(ctx, agentId)
 	if err != nil {
-		logger.Err(ctx, err).Msg("Error terminating agent.")
+		logger.Err(ctx, err).Msg("Error stopping agent.")
 		return false
 	}
 
 	actor := pid.Actor().(*wasmAgentActor)
-	actor.status = agentStatusTerminating
+	actor.status = agentStatusStopping
 
 	if err := pid.Shutdown(ctx); err != nil {
-		logger.Err(ctx, err).Msg("Error terminating agent.")
+		logger.Err(ctx, err).Msg("Error stopping agent.")
 		return false
 	}
 
@@ -249,8 +249,8 @@ func (a *wasmAgentActor) PostStop(ac *goakt.Context) error {
 	case agentStatusRunning, agentStatusSuspending:
 		a.status = agentStatusSuspending
 		logger.Info(ctx).Msg("Suspending agent.")
-	case agentStatusTerminating:
-		logger.Info(ctx).Msg("Terminating agent.")
+	case agentStatusStopping:
+		logger.Info(ctx).Msg("Stopping agent.")
 
 	default:
 		return fmt.Errorf("invalid agent status for actor PostStop: %s", a.status)
@@ -275,7 +275,7 @@ func (a *wasmAgentActor) PostStop(ac *goakt.Context) error {
 			return err
 		}
 		logger.Info(ctx).Msg("Agent suspended successfully.")
-	case agentStatusTerminating:
+	case agentStatusStopping:
 		a.status = agentStatusTerminated
 		if err := a.saveState(ctx); err != nil {
 			return err

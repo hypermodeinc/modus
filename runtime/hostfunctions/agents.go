@@ -25,7 +25,7 @@ func init() {
 		}))
 
 	registerHostFunction(module_name, "terminateAgent", actors.TerminateAgent,
-		withErrorMessage("Error terminating agent."),
+		withErrorMessage("Error stopping agent."),
 		withMessageDetail(func(agentId string) string {
 			return fmt.Sprintf("AgentId: %s", agentId)
 		}))

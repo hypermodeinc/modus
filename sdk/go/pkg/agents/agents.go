@@ -26,13 +26,13 @@ type AgentInfo struct {
 type AgentStatus = string
 
 const (
-	AgentStatusStarting    AgentStatus = "starting"
-	AgentStatusRunning     AgentStatus = "running"
-	AgentStatusSuspending  AgentStatus = "suspending"
-	AgentStatusSuspended   AgentStatus = "suspended"
-	AgentStatusResuming    AgentStatus = "resuming"
-	AgentStatusTerminating AgentStatus = "terminating"
-	AgentStatusTerminated  AgentStatus = "terminated"
+	AgentStatusStarting   AgentStatus = "starting"
+	AgentStatusRunning    AgentStatus = "running"
+	AgentStatusSuspending AgentStatus = "suspending"
+	AgentStatusSuspended  AgentStatus = "suspended"
+	AgentStatusResuming   AgentStatus = "resuming"
+	AgentStatusStopping   AgentStatus = "stopping"
+	AgentStatusTerminated AgentStatus = "terminated"
 )
 
 var agents = make(map[string]Agent)
@@ -119,7 +119,7 @@ func shutdownAgent(suspending bool) {
 		}
 	} else {
 		if err := (*activeAgent).OnTerminate(); err != nil {
-			console.Errorf("Error terminating agent %s: %v", (*activeAgent).Name(), err)
+			console.Errorf("Error stopping agent %s: %v", (*activeAgent).Name(), err)
 			return
 		}
 	}
