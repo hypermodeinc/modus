@@ -500,7 +500,7 @@ func (a *wasmAgentActor) reloadModule(ctx context.Context, plugin *plugins.Plugi
 		return err
 	}
 
-	// resume the state in the new module instance
+	// restore the state in the new module instance
 	if err := a.setAgentState(ctx, state); err != nil {
 		logger.Err(ctx, err).Msg("Error setting agent state.")
 		return err

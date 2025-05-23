@@ -25,7 +25,7 @@ export class CounterAgent extends Agent {
   // In this case, we are just using a simple integer field to hold the count.
   private count: i32 = 0;
 
-  // The agent should be able to save its state and resume it later.
+  // The agent should be able to save its state and restore it later.
   // This is used for persisting data across soft restarts of the agent,
   // such as when updating the agent code, or when the agent is suspended and resumed.
   // The getState and setState methods below are used for this purpose.
@@ -62,7 +62,7 @@ export class CounterAgent extends Agent {
   // - The agent is being suspended to save resources.
   // - The agent is being relocated to a different host.
   // Note that the agent may be suspended and resumed multiple times during its lifetime,
-  // but the Modus Runtime will automatically save and resume the state of the agent,
+  // but the Modus Runtime will automatically save and restore the state of the agent,
   // so you don't need to worry about that here.
   onSuspend(): void {
     console.info("Counter agent suspended");

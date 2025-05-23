@@ -37,7 +37,7 @@ func (c *CounterAgent) Name() string {
 	return "Counter"
 }
 
-// The agent should be able to save its state and resume it later.
+// The agent should be able to save its state and restore it later.
 // This is used for persisting data across soft restarts of the agent,
 // such as when updating the agent code, or when the agent is suspended and resumed.
 // The GetState and SetState methods below are used for this purpose.
