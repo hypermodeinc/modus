@@ -196,7 +196,7 @@ type Agent interface {
 
 	// OnResume is called when the agent is resumed from a suspended state.
 	// Custom agents may implement this method if for example, to send a notification.
-	// Note that you do not need to resume the internal state of the agent here, as that is handled automatically.
+	// Note that you do not need to restore the internal state of the agent here, as that is handled automatically.
 	OnResume() error
 
 	// OnTerminate is called when the agent is terminated.

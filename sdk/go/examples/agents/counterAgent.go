@@ -78,7 +78,7 @@ func (c *CounterAgent) OnInitialize() error {
 // - The agent is being suspended to save resources.
 // - The agent is being relocated to a different host.
 // Note that the agent may be suspended and resumed multiple times during its lifetime,
-// but the Modus Runtime will automatically save and resume the state of the agent,
+// but the Modus Runtime will automatically save and restore the state of the agent,
 // so you don't need to worry about that here.
 func (c *CounterAgent) OnSuspend() error {
 	fmt.Println("Counter agent suspended")
