@@ -2,6 +2,10 @@
 
 # Change Log
 
+## UNRELEASED
+
+- chore: update json-as and remove hack [#857](https://github.com/hypermodeinc/modus/pull/857)
+
 ## 2025-05-22 - Go SDK 0.18.0-alpha.3
 
 - fix: omit parallel_tool_calls in Go OpenAI SDK if it is set to true [#849](https://github.com/hypermodeinc/modus/pull/849)

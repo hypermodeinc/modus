@@ -1562,19 +1562,8 @@ class RawMessage extends RequestMessage {
 
   private _data: string;
 
-  // HACK: this is a workaround for https://github.com/JairusSW/json-as/issues/132
-  // TODO: unwind hack when issue is resolved
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  __SERIALIZE(ptr: usize): void {
-    const data = this.serialize(this);
-    const dataSize = data.length << 1;
-    // @ts-expect-error: bs is defined during the json-as-transform
-    memory.copy(bs.offset, changetype<usize>(data), dataSize);
-    // @ts-expect-error: bs is defined during the json-as-transform
-    bs.offset += dataSize;
-  }
 
-  // @serializer
+  @serializer
   serialize(self: RawMessage): string {
     return self._data;
   }
