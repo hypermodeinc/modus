@@ -36,16 +36,16 @@ type agentInfo struct {
 type agentStatus = string
 
 const (
-	agentStatusStarting    agentStatus = "starting"
-	agentStatusRunning     agentStatus = "running"
-	agentStatusSuspending  agentStatus = "suspending"
-	agentStatusSuspended   agentStatus = "suspended"
-	agentStatusRestoring   agentStatus = "restoring"
-	agentStatusTerminating agentStatus = "terminating"
-	agentStatusTerminated  agentStatus = "terminated"
+	agentStatusStarting   agentStatus = "starting"
+	agentStatusRunning    agentStatus = "running"
+	agentStatusSuspending agentStatus = "suspending"
+	agentStatusSuspended  agentStatus = "suspended"
+	agentStatusResuming   agentStatus = "resuming"
+	agentStatusStopping   agentStatus = "stopping"
+	agentStatusTerminated agentStatus = "terminated"
 )
 
-func SpawnAgentActor(ctx context.Context, agentName string) (*agentInfo, error) {
+func StartAgent(ctx context.Context, agentName string) (*agentInfo, error) {
 	plugin, ok := plugins.GetPluginFromContext(ctx)
 	if !ok {
 		return nil, fmt.Errorf("no plugin found in context")
@@ -64,7 +64,7 @@ func SpawnAgentActor(ctx context.Context, agentName string) (*agentInfo, error) 
 	return info, nil
 }
 
-func spawnActorForAgent(host wasmhost.WasmHost, plugin *plugins.Plugin, agentId, agentName string, restoring bool, initialState *string) {
+func spawnActorForAgent(host wasmhost.WasmHost, plugin *plugins.Plugin, agentId, agentName string, resuming bool, initialState *string) {
 	// The actor needs to spawn in its own context, so we don't pass one in to this function.
 	// If we did, then when the original context was cancelled or completed, the actor initialization would be cancelled too.
 
@@ -80,8 +80,8 @@ func spawnActorForAgent(host wasmhost.WasmHost, plugin *plugins.Plugin, agentId,
 		actor := newWasmAgentActor(agentId, agentName, host, plugin)
 		actorName := getActorName(agentId)
 
-		if restoring {
-			actor.status = agentStatusRestoring
+		if resuming {
+			actor.status = agentStatusResuming
 			actor.initialState = initialState
 		} else {
 			actor.status = agentStatusStarting
@@ -93,18 +93,18 @@ func spawnActorForAgent(host wasmhost.WasmHost, plugin *plugins.Plugin, agentId,
 	}()
 }
 
-func TerminateAgent(ctx context.Context, agentId string) bool {
+func StopAgent(ctx context.Context, agentId string) bool {
 	pid, err := getActorPid(ctx, agentId)
 	if err != nil {
-		logger.Err(ctx, err).Msg("Error terminating agent.")
+		logger.Err(ctx, err).Msg("Error stopping agent.")
 		return false
 	}
 
 	actor := pid.Actor().(*wasmAgentActor)
-	actor.status = agentStatusTerminating
+	actor.status = agentStatusStopping
 
 	if err := pid.Shutdown(ctx); err != nil {
-		logger.Err(ctx, err).Msg("Error terminating agent.")
+		logger.Err(ctx, err).Msg("Error stopping agent.")
 		return false
 	}
 
@@ -193,9 +193,9 @@ func (a *wasmAgentActor) PreStart(ac *goakt.Context) error {
 	switch a.status {
 	case agentStatusStarting:
 		logger.Info(ctx).Msg("Starting agent.")
-	case agentStatusRestoring, agentStatusSuspended:
-		a.status = agentStatusRestoring
-		logger.Info(ctx).Msg("Restoring agent.")
+	case agentStatusResuming, agentStatusSuspended:
+		a.status = agentStatusResuming
+		logger.Info(ctx).Msg("Resuming agent.")
 	default:
 		return fmt.Errorf("invalid agent status for actor PreStart: %s", a.status)
 	}
@@ -218,16 +218,16 @@ func (a *wasmAgentActor) PreStart(ac *goakt.Context) error {
 		return err
 	}
 
-	if a.status == agentStatusRestoring {
+	if a.status == agentStatusResuming {
 		if err := a.setAgentState(ctx, a.initialState); err != nil {
-			logger.Err(ctx, err).Msg("Error restoring agent state.")
+			logger.Err(ctx, err).Msg("Error resuming agent state.")
 		}
 		a.initialState = nil
 	}
 
 	duration := time.Since(start)
-	if a.status == agentStatusRestoring {
-		logger.Info(ctx).Msg("Agent restored successfully.")
+	if a.status == agentStatusResuming {
+		logger.Info(ctx).Msg("Agent resumed successfully.")
 	} else {
 		logger.Info(ctx).Dur("duration_ms", duration).Msg("Agent started successfully.")
 	}
@@ -249,8 +249,8 @@ func (a *wasmAgentActor) PostStop(ac *goakt.Context) error {
 	case agentStatusRunning, agentStatusSuspending:
 		a.status = agentStatusSuspending
 		logger.Info(ctx).Msg("Suspending agent.")
-	case agentStatusTerminating:
-		logger.Info(ctx).Msg("Terminating agent.")
+	case agentStatusStopping:
+		logger.Info(ctx).Msg("Stopping agent.")
 
 	default:
 		return fmt.Errorf("invalid agent status for actor PostStop: %s", a.status)
@@ -275,7 +275,7 @@ func (a *wasmAgentActor) PostStop(ac *goakt.Context) error {
 			return err
 		}
 		logger.Info(ctx).Msg("Agent suspended successfully.")
-	case agentStatusTerminating:
+	case agentStatusStopping:
 		a.status = agentStatusTerminated
 		if err := a.saveState(ctx); err != nil {
 			return err
@@ -388,7 +388,7 @@ func (a *wasmAgentActor) activateAgent(ctx context.Context) error {
 	params := map[string]any{
 		"name":      a.agentName,
 		"id":        a.agentId,
-		"reloading": a.status == agentStatusRestoring,
+		"reloading": a.status == agentStatusResuming,
 	}
 
 	execInfo, err := a.host.CallFunctionInModule(ctx, a.module, a.buffers, fnInfo, params)
@@ -494,7 +494,7 @@ func (a *wasmAgentActor) reloadModule(ctx context.Context, plugin *plugins.Plugi
 	a.module = mod
 
 	// activate the agent in the new module instance
-	a.status = agentStatusRestoring
+	a.status = agentStatusResuming
 	if err := a.activateAgent(ctx); err != nil {
 		logger.Err(ctx, err).Msg("Error reloading agent.")
 		return err

@@ -61,11 +61,11 @@ func (c *CounterAgent) SetState(data *string) {
 	}
 }
 
-// When the agent is first started, this method is automatically called. Implementing it is optional.
+// When the agent is started, this method is automatically called. Implementing it is optional.
 // If you don't need to do anything special when the agent starts, then you can omit it.
 // It can be used to initialize state, retrieve data, etc.
 // This is a good place to set up any listeners or subscriptions.
-func (c *CounterAgent) OnStart() error {
+func (c *CounterAgent) OnInitialize() error {
 	fmt.Println("Counter agent started")
 	return nil
 }
@@ -85,10 +85,10 @@ func (c *CounterAgent) OnSuspend() error {
 	return nil
 }
 
-// When the agent is restored, this method is automatically called.  Implementing it is optional.
-// If you don't need to do anything special when the agent is restored, then you can omit it.
-func (c *CounterAgent) OnRestore() error {
-	fmt.Println("Counter agent restored")
+// When the agent is resumed, this method is automatically called.  Implementing it is optional.
+// If you don't need to do anything special when the agent is resumed, then you can omit it.
+func (c *CounterAgent) OnResume() error {
+	fmt.Println("Counter agent resumed")
 	return nil
 }
 
@@ -97,7 +97,7 @@ func (c *CounterAgent) OnRestore() error {
 // This is a good place to unsubscribe from any listeners or subscriptions.
 // Note that resources are automatically cleaned up when the agent is terminated,
 // so you don't need to worry about that here.
-// Once an agent is terminated, it cannot be restored.
+// Once an agent is terminated, it cannot be resumed.
 func (c *CounterAgent) OnTerminate() error {
 	fmt.Println("Counter agent terminated")
 	return nil

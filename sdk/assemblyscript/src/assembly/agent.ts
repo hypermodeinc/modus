@@ -48,10 +48,10 @@ export abstract class Agent {
   abstract setState(data: string | null): void;
 
   /**
-   * Called when the agent is first started.
+   * Called when the agent is started.
    * Override this method to perform any initialization.
    */
-  onStart(): void {}
+  onInitialize(): void {}
 
   /**
    * Called when the agent is suspended.
@@ -63,18 +63,18 @@ export abstract class Agent {
   onSuspend(): void {}
 
   /**
-   * Called when the agent is restored.
-   * Override this method if you want to do anything special when the agent is restored,
+   * Called when the agent is resumed.
+   * Override this method if you want to do anything special when the agent is resumed,
    * such as sending a notification.
-   * Note that you do not need to restore the internal state of the agent here,
+   * Note that you do not need to resume the internal state of the agent here,
    * as that is handled automatically.
    */
-  onRestore(): void {}
+  onResume(): void {}
 
   /**
    * Called when the agent is terminated.
    * Override this method to send or save any final data.
-   * Note that once an agent is terminated, it cannot be restored.
+   * Note that once an agent is terminated, it cannot be resumed.
    */
   onTerminate(): void {}
 
@@ -98,12 +98,12 @@ export function registerAgent<T extends Agent>(): void {
 }
 
 // @ts-expect-error: decorator
-@external("modus_agents", "spawnAgentActor")
-declare function hostSpawnAgentActor(agentName: string): AgentInfo;
+@external("modus_agents", "startAgent")
+declare function hostStartAgent(agentName: string): AgentInfo;
 
 // @ts-expect-error: decorator
-@external("modus_agents", "terminateAgent")
-declare function hostTerminateAgent(agentId: string): bool;
+@external("modus_agents", "stopAgent")
+declare function hostStopAgent(agentId: string): bool;
 
 /**
  * Starts an agent with the given name.
@@ -114,20 +114,21 @@ export function startAgent(name: string): AgentInfo {
     throw new Error(`Agent ${name} not found.`);
   }
 
-  return hostSpawnAgentActor(name);
+  return hostStartAgent(name);
 }
 
 /**
- * Terminates an agent with the given ID.
- * Once terminated, the agent cannot be restored.
+ * Stops an agent with the given ID.
+ * This will terminate the agent, and it cannot be resumed or restarted.
+ * This can be called from any user code, such as function or another agent's methods.
  */
-export function terminateAgent(agentId: string): void {
+export function stopAgent(agentId: string): void {
   if (agentId == "") {
     throw new Error("Agent ID cannot be empty.");
   }
-  const ok = hostTerminateAgent(agentId);
+  const ok = hostStopAgent(agentId);
   if (!ok) {
-    throw new Error(`Failed to terminate agent ${agentId}.`);
+    throw new Error(`Failed to stop agent ${agentId}.`);
   }
 }
 
@@ -148,9 +149,9 @@ export function activateAgent(name: string, id: string, reloading: bool): void {
   activeAgentId = id;
 
   if (reloading) {
-    activeAgent!.onRestore();
+    activeAgent!.onResume();
   } else {
-    activeAgent!.onStart();
+    activeAgent!.onInitialize();
   }
 }
 

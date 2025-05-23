@@ -12,7 +12,7 @@ import { Duration } from "./enums";
 export {
   registerAgent as register,
   startAgent as start,
-  terminateAgent as terminate,
+  stopAgent as stop,
 } from "./agent";
 
 // @ts-expect-error: decorator

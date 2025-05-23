@@ -26,13 +26,13 @@ type AgentInfo struct {
 type AgentStatus = string
 
 const (
-	AgentStatusStarting    AgentStatus = "starting"
-	AgentStatusRunning     AgentStatus = "running"
-	AgentStatusSuspending  AgentStatus = "suspending"
-	AgentStatusSuspended   AgentStatus = "suspended"
-	AgentStatusRestoring   AgentStatus = "restoring"
-	AgentStatusTerminating AgentStatus = "terminating"
-	AgentStatusTerminated  AgentStatus = "terminated"
+	AgentStatusStarting   AgentStatus = "starting"
+	AgentStatusRunning    AgentStatus = "running"
+	AgentStatusSuspending AgentStatus = "suspending"
+	AgentStatusSuspended  AgentStatus = "suspended"
+	AgentStatusResuming   AgentStatus = "resuming"
+	AgentStatusStopping   AgentStatus = "stopping"
+	AgentStatusTerminated AgentStatus = "terminated"
 )
 
 var agents = make(map[string]Agent)
@@ -52,15 +52,15 @@ func Start(name string) (AgentInfo, error) {
 		return AgentInfo{}, fmt.Errorf("agent %s not found", name)
 	}
 
-	info := hostSpawnAgentActor(&name)
+	info := hostStartAgent(&name)
 	return *info, nil
 }
 
-// Terminates an agent with the given ID.
-// Once terminated, the agent cannot be restored.
-func Terminate(agentId string) error {
-	if ok := hostTerminateAgent(&agentId); !ok {
-		return fmt.Errorf("failed to terminate agent %s", agentId)
+// Stops an agent with the given ID.
+// This will terminate the agent, and it cannot be resumed or restarted.
+func Stop(agentId string) error {
+	if ok := hostStopAgent(&agentId); !ok {
+		return fmt.Errorf("failed to stop agent %s", agentId)
 	}
 	return nil
 }
@@ -92,11 +92,11 @@ func activateAgent(name, id string, reloading bool) {
 		activeAgentId = &id
 
 		if reloading {
-			if err := agent.OnRestore(); err != nil {
+			if err := agent.OnResume(); err != nil {
 				console.Errorf("Error reloading agent %s: %v", name, err)
 			}
 		} else {
-			if err := agent.OnStart(); err != nil {
+			if err := agent.OnInitialize(); err != nil {
 				console.Errorf("Error starting agent %s: %v", name, err)
 			}
 		}
@@ -119,7 +119,7 @@ func shutdownAgent(suspending bool) {
 		}
 	} else {
 		if err := (*activeAgent).OnTerminate(); err != nil {
-			console.Errorf("Error terminating agent %s: %v", (*activeAgent).Name(), err)
+			console.Errorf("Error stopping agent %s: %v", (*activeAgent).Name(), err)
 			return
 		}
 	}
@@ -185,19 +185,19 @@ type Agent interface {
 	// Custom agents must implement this method.
 	SetState(data *string)
 
-	// OnStart is called when the agent is started.
+	// OnInitialize is called when the agent is started.
 	// Custom agents may implement this method to perform any initialization.
-	OnStart() error
+	OnInitialize() error
 
 	// OnSuspend is called when the agent is suspended.
-	// Custom agents may implement this method if for example, to send a notification of the suspension.
+	// Custom agents may implement this method if for example, to send a notification.
 	// Note that you do not need to save the internal state of the agent here, as that is handled automatically.
 	OnSuspend() error
 
-	// OnRestore is called when the agent is restored from a suspended state.
-	// Custom agents may implement this method if for example, to send a notification of the restoration.
+	// OnResume is called when the agent is resumed from a suspended state.
+	// Custom agents may implement this method if for example, to send a notification.
 	// Note that you do not need to restore the internal state of the agent here, as that is handled automatically.
-	OnRestore() error
+	OnResume() error
 
 	// OnTerminate is called when the agent is terminated.
 	// Custom agents may implement this method to send or save any final data.
@@ -217,7 +217,7 @@ func (a *AgentBase) Id() string {
 	return *activeAgentId
 }
 
-func (a *AgentBase) OnStart() error {
+func (a *AgentBase) OnInitialize() error {
 	return nil
 }
 
@@ -225,7 +225,7 @@ func (a *AgentBase) OnSuspend() error {
 	return nil
 }
 
-func (a *AgentBase) OnRestore() error {
+func (a *AgentBase) OnResume() error {
 	return nil
 }
 

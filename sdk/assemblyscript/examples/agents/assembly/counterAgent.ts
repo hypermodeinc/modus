@@ -46,11 +46,11 @@ export class CounterAgent extends Agent {
     this.count = i32.parse(data);
   }
 
-  // When the agent is first started, this method is automatically called. Implementing it is optional.
+  // When the agent is started, this method is automatically called. Implementing it is optional.
   // If you don't need to do anything special when the agent starts, then you can omit it.
   // It can be used to initialize state, retrieve data, etc.
   // This is a good place to set up any listeners or subscriptions.
-  onStart(): void {
+  onInitialize(): void {
     console.info("Counter agent started");
   }
 
@@ -68,10 +68,10 @@ export class CounterAgent extends Agent {
     console.info("Counter agent suspended");
   }
 
-  // When the agent is restored, this method is automatically called.  Implementing it is optional.
-  // If you don't need to do anything special when the agent is restored, then you can omit it.
-  onRestore(): void {
-    console.info("Counter agent restored");
+  // When the agent is resumed, this method is automatically called.  Implementing it is optional.
+  // If you don't need to do anything special when the agent is resumed, then you can omit it.
+  onResume(): void {
+    console.info("Counter agent resumed");
   }
 
   // When the agent is terminated, this method is automatically called.  Implementing it is optional.
@@ -79,7 +79,7 @@ export class CounterAgent extends Agent {
   // This is a good place to unsubscribe from any listeners or subscriptions.
   // Note that resources are automatically cleaned up when the agent is terminated,
   // so you don't need to worry about that here.
-  // Once an agent is terminated, it cannot be restored.
+  // Once an agent is terminated, it cannot be resumed.
   onTerminate(): void {
     console.info("Counter agent terminated");
   }

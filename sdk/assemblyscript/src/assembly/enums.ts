@@ -23,8 +23,8 @@ export namespace AgentStatus {
   export const Running = "running";
   export const Suspending = "suspending";
   export const Suspended = "suspended";
-  export const Restoring = "restoring";
-  export const Terminating = "terminating";
+  export const Resuming = "resuming";
+  export const Stopping = "stopping";
   export const Terminated = "terminated";
 }
 export type AgentStatus = string;
