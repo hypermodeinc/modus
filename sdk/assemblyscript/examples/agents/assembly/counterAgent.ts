@@ -46,11 +46,11 @@ export class CounterAgent extends Agent {
     this.count = i32.parse(data);
   }
 
-  // When the agent is first started, this method is automatically called. Implementing it is optional.
+  // When the agent is started, this method is automatically called. Implementing it is optional.
   // If you don't need to do anything special when the agent starts, then you can omit it.
   // It can be used to initialize state, retrieve data, etc.
   // This is a good place to set up any listeners or subscriptions.
-  onStart(): void {
+  onInitialize(): void {
     console.info("Counter agent started");
   }
 

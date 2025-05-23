@@ -96,7 +96,7 @@ func activateAgent(name, id string, reloading bool) {
 				console.Errorf("Error reloading agent %s: %v", name, err)
 			}
 		} else {
-			if err := agent.OnStart(); err != nil {
+			if err := agent.OnInitialize(); err != nil {
 				console.Errorf("Error starting agent %s: %v", name, err)
 			}
 		}
@@ -185,9 +185,9 @@ type Agent interface {
 	// Custom agents must implement this method.
 	SetState(data *string)
 
-	// OnStart is called when the agent is started.
+	// OnInitialize is called when the agent is started.
 	// Custom agents may implement this method to perform any initialization.
-	OnStart() error
+	OnInitialize() error
 
 	// OnSuspend is called when the agent is suspended.
 	// Custom agents may implement this method if for example, to send a notification.
@@ -217,7 +217,7 @@ func (a *AgentBase) Id() string {
 	return *activeAgentId
 }
 
-func (a *AgentBase) OnStart() error {
+func (a *AgentBase) OnInitialize() error {
 	return nil
 }
 

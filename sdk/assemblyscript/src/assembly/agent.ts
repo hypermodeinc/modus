@@ -48,10 +48,10 @@ export abstract class Agent {
   abstract setState(data: string | null): void;
 
   /**
-   * Called when the agent is first started.
+   * Called when the agent is started.
    * Override this method to perform any initialization.
    */
-  onStart(): void {}
+  onInitialize(): void {}
 
   /**
    * Called when the agent is suspended.
@@ -150,7 +150,7 @@ export function activateAgent(name: string, id: string, reloading: bool): void {
   if (reloading) {
     activeAgent!.onResume();
   } else {
-    activeAgent!.onStart();
+    activeAgent!.onInitialize();
   }
 }
 

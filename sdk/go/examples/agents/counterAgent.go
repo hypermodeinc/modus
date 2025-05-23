@@ -61,11 +61,11 @@ func (c *CounterAgent) SetState(data *string) {
 	}
 }
 
-// When the agent is first started, this method is automatically called. Implementing it is optional.
+// When the agent is started, this method is automatically called. Implementing it is optional.
 // If you don't need to do anything special when the agent starts, then you can omit it.
 // It can be used to initialize state, retrieve data, etc.
 // This is a good place to set up any listeners or subscriptions.
-func (c *CounterAgent) OnStart() error {
+func (c *CounterAgent) OnInitialize() error {
 	fmt.Println("Counter agent started")
 	return nil
 }
