@@ -30,7 +30,7 @@ const (
 	AgentStatusRunning     AgentStatus = "running"
 	AgentStatusSuspending  AgentStatus = "suspending"
 	AgentStatusSuspended   AgentStatus = "suspended"
-	AgentStatusRestoring   AgentStatus = "restoring"
+	AgentStatusResuming    AgentStatus = "resuming"
 	AgentStatusTerminating AgentStatus = "terminating"
 	AgentStatusTerminated  AgentStatus = "terminated"
 )
@@ -57,7 +57,7 @@ func Start(name string) (AgentInfo, error) {
 }
 
 // Terminates an agent with the given ID.
-// Once terminated, the agent cannot be restored.
+// Once terminated, the agent cannot be resumed.
 func Terminate(agentId string) error {
 	if ok := hostTerminateAgent(&agentId); !ok {
 		return fmt.Errorf("failed to terminate agent %s", agentId)
@@ -92,7 +92,7 @@ func activateAgent(name, id string, reloading bool) {
 		activeAgentId = &id
 
 		if reloading {
-			if err := agent.OnRestore(); err != nil {
+			if err := agent.OnResume(); err != nil {
 				console.Errorf("Error reloading agent %s: %v", name, err)
 			}
 		} else {
@@ -190,14 +190,14 @@ type Agent interface {
 	OnStart() error
 
 	// OnSuspend is called when the agent is suspended.
-	// Custom agents may implement this method if for example, to send a notification of the suspension.
+	// Custom agents may implement this method if for example, to send a notification.
 	// Note that you do not need to save the internal state of the agent here, as that is handled automatically.
 	OnSuspend() error
 
-	// OnRestore is called when the agent is restored from a suspended state.
-	// Custom agents may implement this method if for example, to send a notification of the restoration.
-	// Note that you do not need to restore the internal state of the agent here, as that is handled automatically.
-	OnRestore() error
+	// OnResume is called when the agent is resumed from a suspended state.
+	// Custom agents may implement this method if for example, to send a notification.
+	// Note that you do not need to resume the internal state of the agent here, as that is handled automatically.
+	OnResume() error
 
 	// OnTerminate is called when the agent is terminated.
 	// Custom agents may implement this method to send or save any final data.
@@ -225,7 +225,7 @@ func (a *AgentBase) OnSuspend() error {
 	return nil
 }
 
-func (a *AgentBase) OnRestore() error {
+func (a *AgentBase) OnResume() error {
 	return nil
 }
 

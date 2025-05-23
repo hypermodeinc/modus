@@ -27,7 +27,7 @@ export function startCounterAgent(): AgentInfo {
 
 /**
  * Terminates the specified agent by ID.
- * Once terminated, the agent cannot be restored or restarted.
+ * Once terminated, the agent cannot be resumed or restarted.
  * However, a new agent with the same name can be started at any time.
  */
 export function terminateAgent(agentId: string): void {

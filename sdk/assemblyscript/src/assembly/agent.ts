@@ -63,18 +63,18 @@ export abstract class Agent {
   onSuspend(): void {}
 
   /**
-   * Called when the agent is restored.
-   * Override this method if you want to do anything special when the agent is restored,
+   * Called when the agent is resumed.
+   * Override this method if you want to do anything special when the agent is resumed,
    * such as sending a notification.
-   * Note that you do not need to restore the internal state of the agent here,
+   * Note that you do not need to resume the internal state of the agent here,
    * as that is handled automatically.
    */
-  onRestore(): void {}
+  onResume(): void {}
 
   /**
    * Called when the agent is terminated.
    * Override this method to send or save any final data.
-   * Note that once an agent is terminated, it cannot be restored.
+   * Note that once an agent is terminated, it cannot be resumed.
    */
   onTerminate(): void {}
 
@@ -119,7 +119,7 @@ export function startAgent(name: string): AgentInfo {
 
 /**
  * Terminates an agent with the given ID.
- * Once terminated, the agent cannot be restored.
+ * Once terminated, the agent cannot be resumed.
  */
 export function terminateAgent(agentId: string): void {
   if (agentId == "") {
@@ -148,7 +148,7 @@ export function activateAgent(name: string, id: string, reloading: bool): void {
   activeAgentId = id;
 
   if (reloading) {
-    activeAgent!.onRestore();
+    activeAgent!.onResume();
   } else {
     activeAgent!.onStart();
   }

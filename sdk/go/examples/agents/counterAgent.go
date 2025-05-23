@@ -37,7 +37,7 @@ func (c *CounterAgent) Name() string {
 	return "Counter"
 }
 
-// The agent should be able to save its state and restore it later.
+// The agent should be able to save its state and resume it later.
 // This is used for persisting data across soft restarts of the agent,
 // such as when updating the agent code, or when the agent is suspended and resumed.
 // The GetState and SetState methods below are used for this purpose.
@@ -78,17 +78,17 @@ func (c *CounterAgent) OnStart() error {
 // - The agent is being suspended to save resources.
 // - The agent is being relocated to a different host.
 // Note that the agent may be suspended and resumed multiple times during its lifetime,
-// but the Modus Runtime will automatically save and restore the state of the agent,
+// but the Modus Runtime will automatically save and resume the state of the agent,
 // so you don't need to worry about that here.
 func (c *CounterAgent) OnSuspend() error {
 	fmt.Println("Counter agent suspended")
 	return nil
 }
 
-// When the agent is restored, this method is automatically called.  Implementing it is optional.
-// If you don't need to do anything special when the agent is restored, then you can omit it.
-func (c *CounterAgent) OnRestore() error {
-	fmt.Println("Counter agent restored")
+// When the agent is resumed, this method is automatically called.  Implementing it is optional.
+// If you don't need to do anything special when the agent is resumed, then you can omit it.
+func (c *CounterAgent) OnResume() error {
+	fmt.Println("Counter agent resumed")
 	return nil
 }
 
@@ -97,7 +97,7 @@ func (c *CounterAgent) OnRestore() error {
 // This is a good place to unsubscribe from any listeners or subscriptions.
 // Note that resources are automatically cleaned up when the agent is terminated,
 // so you don't need to worry about that here.
-// Once an agent is terminated, it cannot be restored.
+// Once an agent is terminated, it cannot be resumed.
 func (c *CounterAgent) OnTerminate() error {
 	fmt.Println("Counter agent terminated")
 	return nil
