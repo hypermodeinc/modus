@@ -15,7 +15,7 @@
       "process=wasi_process",
       "Date=wasi_Date"
     ],
-    "exportStart": "_start",
+    "exportStart": "_initialize",
     "exportRuntime": true
   },
   "targets": {
