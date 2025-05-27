@@ -30,6 +30,7 @@ type Plugin struct {
 	FileName       string
 	Language       langsupport.Language
 	ExecutionPlans map[string]langsupport.ExecutionPlan
+	StartFunction  string
 }
 
 func NewPlugin(ctx context.Context, cm wazero.CompiledModule, filename string, md *metadata.Metadata) (*Plugin, error) {
@@ -83,6 +84,20 @@ func NewPlugin(ctx context.Context, cm wazero.CompiledModule, filename string, m
 		plans[importName] = plan
 	}
 
+	var startFunction string
+	if _, found := exports["_initialize"]; found {
+		// all modules should be reactors, but prior to v0.18, some modules were not.
+		startFunction = "_initialize"
+	} else if _, found := exports["_start"]; found {
+		// this will happen if the module was compiled using TinyGo < 0.35, or Modus AssemblyScript SDK < v0.18.0-alpha.3
+		startFunction = "_start"
+		logger.Warn(ctx).Bool("user_visible", true).
+			Msgf("%s is not correctly configured as a WASI reactor module. Please rebuild the Modus app using the latest version of the Modus SDK.", filename)
+	} else {
+		// this path would only occur if the module was not compiled using a Modus SDK
+		return nil, fmt.Errorf("no WASI startup function found in %s", filename)
+	}
+
 	plugin := &Plugin{
 		Id:             utils.GenerateUUIDv7(),
 		Module:         cm,
@@ -90,6 +105,7 @@ func NewPlugin(ctx context.Context, cm wazero.CompiledModule, filename string, m
 		FileName:       filename,
 		Language:       language,
 		ExecutionPlans: plans,
+		StartFunction:  startFunction,
 	}
 
 	return plugin, nil
