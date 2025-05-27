@@ -6,6 +6,7 @@
 
 - chore: update json-as and remove hack [#857](https://github.com/hypermodeinc/modus/pull/857)
 - chore: rename agent lifecycle methods and APIs [#858](https://github.com/hypermodeinc/modus/pull/858)
+- feat: enforce WASI reactor mode [#859](https://github.com/hypermodeinc/modus/pull/859)
 
 ## 2025-05-22 - Go SDK 0.18.0-alpha.3
 

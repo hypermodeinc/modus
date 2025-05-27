@@ -15,7 +15,7 @@ export const ModusHomeDir = process.env.MODUS_HOME || path.join(os.homedir(), ".
 
 export const MinNodeVersion = "22.0.0";
 export const MinGoVersion = "1.23.1";
-export const MinTinyGoVersion = "0.33.0";
+export const MinTinyGoVersion = "0.35.0";
 
 export const GitHubOwner = "hypermodeinc";
 export const GitHubRepo = "modus";

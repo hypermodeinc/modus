@@ -106,7 +106,7 @@ func (host *wasmHost) GetModuleInstance(ctx context.Context, plugin *plugins.Plu
 	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
 
-	cfg := getModuleConfig(ctx, buffers)
+	cfg := getModuleConfig(ctx, buffers, plugin)
 	mod, err := host.runtime.InstantiateModule(ctx, plugin.Module, cfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to instantiate the plugin module: %w", err)
@@ -127,7 +127,7 @@ func (host *wasmHost) CompileModule(ctx context.Context, bytes []byte) (wazero.C
 	return cm, nil
 }
 
-func getModuleConfig(ctx context.Context, buffers utils.OutputBuffers) wazero.ModuleConfig {
+func getModuleConfig(ctx context.Context, buffers utils.OutputBuffers, plugin *plugins.Plugin) wazero.ModuleConfig {
 
 	// Get the logger and writers for the plugin's stdout and stderr.
 	log := logger.Get(ctx).With().Bool("user_visible", true).Logger()
@@ -155,7 +155,7 @@ func getModuleConfig(ctx context.Context, buffers utils.OutputBuffers) wazero.Mo
 	// And https://gophers.slack.com/archives/C040AKTNTE0/p1719587772724619?thread_ts=1719522663.531579&cid=C040AKTNTE0
 	cfg := wazero.NewModuleConfig().
 		WithName("").
-		WithStartFunctions("_initialize", "_start").
+		WithStartFunctions(plugin.StartFunction).
 		WithSysWalltime().WithSysNanotime().
 		WithRandSource(rand.Reader).
 		WithStdout(wOut).WithStderr(wErr).
