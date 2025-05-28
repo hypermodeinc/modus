@@ -7,7 +7,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Model } from "../../assembly/models";
+import { Model, ModelError } from "../../assembly/models";
 import { JSON } from "json-as";
 import * as base64 from "as-base64/assembly";
 
@@ -24,6 +24,7 @@ export class OpenAIChatModel extends Model<OpenAIChatInput, OpenAIChatOutput> {
    * @returns An input object that can be passed to the `invoke` method.
    */
   createInput(messages: RequestMessage[]): OpenAIChatInput {
+    this.validator = validateChatModelResponse;
     const model = this.info.fullName.toLowerCase();
     return <OpenAIChatInput>{ model, messages };
   }
@@ -1586,4 +1587,53 @@ export function parseMessages(data: string): RequestMessage[] {
   return JSON.parse<JSON.Obj[]>(data).map<RequestMessage>(
     (msg) => new RawMessage(msg.toString()),
   );
+}
+
+// Validates the response from the chat model output.
+function validateChatModelResponse(data: string): ModelError | null {
+  if (data.length == 0) {
+    throw new Error("No response received from model invocation");
+  }
+
+  // hack until json-as issues are resolved
+  if (data.startsWith(`{\n  "error": {`)) {
+    return JSON.parse<ChatModelError>(data.substring(13, data.length - 2));
+  }
+
+  // const obj = JSON.parse<JSON.Obj>(data);
+  // if (obj.has("error")) {
+  //   return obj.get("error")!.get<ChatModelError>();
+  // }
+
+  return null;
+}
+
+/**
+ * Represents an error returned from the OpenAI Chat API.
+ */
+@json
+class ChatModelError extends ModelError {
+  /**
+   * The error type.
+   */
+  type: string = "";
+
+  /**
+   * A human-readable description of the error.
+   */
+  message: string = "";
+
+  /**
+   * The parameter related to the error, if any.
+   */
+  param: string | null = null;
+
+  /**
+   * The error code, if any.
+   */
+  code: string | null = null;
+
+  toString(): string {
+    return this.message;
+  }
 }
