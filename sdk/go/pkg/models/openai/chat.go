@@ -13,6 +13,7 @@ import (
 	"bytes"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -314,6 +315,47 @@ func (o *ChatModelOutput) UnmarshalJSON(data []byte) error {
 	}
 	o.Created = time.Unix(aux.Created, 0).UTC()
 	return nil
+}
+
+// Validates the response from the chat model output.
+func validateChatModelResponse(data []byte) error {
+	if len(data) == 0 {
+		return errors.New("no response received from model invocation")
+	}
+	if !json.Valid(data) {
+		return fmt.Errorf("invalid response received from model invocation: %s", string(data))
+	}
+
+	result := gjson.GetBytes(data, "error")
+	if result.Exists() {
+		var ce ChatModelError
+		if err := json.Unmarshal([]byte(result.Raw), &ce); err != nil {
+			return fmt.Errorf("error parsing chat model error response: %w", err)
+		}
+		return fmt.Errorf("the chat model returned an error: %w", &ce)
+	}
+
+	// no error
+	return nil
+}
+
+// Represents an error returned from the OpenAI Chat API.
+type ChatModelError struct {
+	// The error type.
+	Type string `json:"type"`
+
+	// A human-readable description of the error.
+	Message string `json:"message"`
+
+	// The parameter related to the error, if any.
+	Param string `json:"param,omitempty"`
+
+	// The error code, if any.
+	Code string `json:"code,omitempty"`
+}
+
+func (e *ChatModelError) Error() string {
+	return e.Message
 }
 
 // An interface to any request message.
@@ -1172,6 +1214,7 @@ type FunctionDefinition struct {
 
 // Creates an input object for the OpenAI Chat API.
 func (m *ChatModel) CreateInput(messages ...RequestMessage) (*ChatModelInput, error) {
+	m.Validator = validateChatModelResponse
 	return &ChatModelInput{
 		Model:             strings.ToLower(m.Info().FullName),
 		Messages:          messages,

@@ -156,7 +156,7 @@ func (host *wasmHost) CallFunctionInModule(ctx context.Context, mod wasm.Module,
 				Dur("duration_ms", duration).
 				Bool("user_visible", true).
 				Int32("exit_code", exitCode).
-				Msgf("Function ended prematurely with exit code %d.  This may have been intentional, or caused by an exception or panic in your code.", exitCode)
+				Msgf("Function ended with exit code %d, indicating an error.", exitCode)
 		}
 	} else if errors.Is(err, context.Canceled) {
 		// Cancellation is not an error, but we still want to log it.

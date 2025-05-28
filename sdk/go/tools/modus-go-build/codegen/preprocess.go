@@ -251,6 +251,7 @@ func writeFuncWrappers(b *bytes.Buffer, pkg *packages.Package, imports map[strin
 		}
 
 		if hasErrorReturn {
+			imports["os"] = "os"
 			imports["github.com/hypermodeinc/modus/sdk/go/pkg/console"] = "console"
 
 			// remove the error return value from the function signature
@@ -320,6 +321,7 @@ func writeFuncWrappers(b *bytes.Buffer, pkg *packages.Package, imports map[strin
 
 			b.WriteString("\tif err != nil {\n")
 			b.WriteString("\t\tconsole.Error(err.Error())\n")
+			b.WriteString("\t\tos.Exit(1)\n")
 			b.WriteString("\t}\n")
 
 			if numResults > 0 {

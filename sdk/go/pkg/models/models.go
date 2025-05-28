@@ -41,8 +41,9 @@ type modelPtr[TModel any] interface {
 
 // Provides a base implementation for all models.
 type ModelBase[TIn, TOut any] struct {
-	info  *ModelInfo
-	Debug bool
+	info      *ModelInfo
+	Debug     bool
+	Validator func(response []byte) error
 }
 
 // Gets the model information.
@@ -98,8 +99,15 @@ func (m ModelBase[TIn, TOut]) Invoke(input *TIn) (*TOut, error) {
 		console.Debugf("Received output for model %s: %s", modelName, *sOutputJson)
 	}
 
+	output := []byte(*sOutputJson)
+	if m.Validator != nil {
+		if err := m.Validator(output); err != nil {
+			return nil, err
+		}
+	}
+
 	var result TOut
-	err = utils.JsonDeserialize([]byte(*sOutputJson), &result)
+	err = utils.JsonDeserialize(output, &result)
 	if err != nil {
 		return nil, fmt.Errorf("failed to deserialize model output for %s: %w", modelName, err)
 	}

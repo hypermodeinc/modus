@@ -22,6 +22,7 @@ import (
 	"github.com/puzpuzpuz/xsync/v4"
 
 	"github.com/buger/jsonparser"
+	"github.com/tetratelabs/wazero/sys"
 	"github.com/wundergraph/graphql-go-tools/v2/pkg/engine/datasource/httpclient"
 	"github.com/wundergraph/graphql-go-tools/v2/pkg/engine/resolve"
 )
@@ -80,8 +81,18 @@ func (ds *ModusDataSource) callFunction(ctx context.Context, callInfo *callInfo)
 	// Call the function
 	execInfo, err := ds.WasmHost.CallFunction(ctx, fnInfo, callInfo.Parameters)
 	if err != nil {
-		// The full error message has already been logged.  Return a generic error to the caller, which will be included in the response.
-		return nil, nil, errors.New("error calling function")
+		exitErr := &sys.ExitError{}
+		if errors.As(err, &exitErr) {
+			if exitErr.ExitCode() == 255 {
+				// Exit code 255 is returned when an AssemblyScript function calls `abort` or throws an unhandled exception.
+				// Return a generic error to the caller, which will be included in the response.
+				return nil, nil, errors.New("error calling function")
+			}
+
+			// clear the exit error so we can show only the logged error in the response
+			err = nil
+		}
+		// Otherwise, continue so we can return the error in the response.
 	}
 
 	// Store the execution info into the function output map.
