@@ -4,6 +4,6 @@ go 1.23.1
 
 toolchain go1.24.3
 
-require github.com/hypermodeinc/modus/sdk/go v0.18.0-alpha.1
+require github.com/hypermodeinc/modus/sdk/go v0.18.0-alpha.3
 
 replace github.com/hypermodeinc/modus/sdk/go => ../..
