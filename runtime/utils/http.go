@@ -50,18 +50,6 @@ func sendHttp(req *http.Request) ([]byte, error) {
 			StatusCode: response.StatusCode,
 			Message:    response.Status,
 		}
-
-		// if len(body) == 0 {
-		// 	return nil, &HttpError{
-		// 		StatusCode: response.StatusCode,
-		// 		Message:    response.Status,
-		// 	}
-		// } else {
-		// 	return nil, &HttpError{
-		// 		StatusCode: response.StatusCode,
-		// 		Message:    fmt.Sprintf("%s\n%s", response.Status, body),
-		// 	}
-		// }
 	}
 
 	return body, nil

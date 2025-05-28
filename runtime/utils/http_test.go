@@ -56,13 +56,16 @@ func Test_SendHttp_ErrorResponse(t *testing.T) {
 		t.Fatalf("Failed to create request: %v", err)
 	}
 
-	_, err = sendHttp(req)
+	res, err := sendHttp(req)
 	if err == nil {
 		t.Error("Expected an error, but got nil")
 	}
 
-	expected := "HTTP error: 500 Internal Server Error\nSomething went wrong!\n"
-	if err.Error() != expected {
+	if expected := "Something went wrong!\n"; string(res) != expected {
+		t.Errorf("Unexpected result. Got: %s, want: %s", string(res), expected)
+	}
+
+	if expected := "HTTP error: 500 Internal Server Error"; err.Error() != expected {
 		t.Errorf("Unexpected error message. Got: %s, want: %s", err.Error(), expected)
 	}
 }
