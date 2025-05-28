@@ -27,25 +27,25 @@ import (
 	goakt "github.com/tochemey/goakt/v3/actor"
 )
 
-type agentInfo struct {
-	id     string
-	name   string
-	status agentStatus
+type AgentInfo struct {
+	Id     string      `json:"id"`
+	Name   string      `json:"name"`
+	Status AgentStatus `json:"status"`
 }
 
-type agentStatus = string
+type AgentStatus = string
 
 const (
-	agentStatusStarting   agentStatus = "starting"
-	agentStatusRunning    agentStatus = "running"
-	agentStatusSuspending agentStatus = "suspending"
-	agentStatusSuspended  agentStatus = "suspended"
-	agentStatusResuming   agentStatus = "resuming"
-	agentStatusStopping   agentStatus = "stopping"
-	agentStatusTerminated agentStatus = "terminated"
+	AgentStatusStarting   AgentStatus = "starting"
+	AgentStatusRunning    AgentStatus = "running"
+	AgentStatusSuspending AgentStatus = "suspending"
+	AgentStatusSuspended  AgentStatus = "suspended"
+	AgentStatusResuming   AgentStatus = "resuming"
+	AgentStatusStopping   AgentStatus = "stopping"
+	AgentStatusTerminated AgentStatus = "terminated"
 )
 
-func StartAgent(ctx context.Context, agentName string) (*agentInfo, error) {
+func StartAgent(ctx context.Context, agentName string) (*AgentInfo, error) {
 	plugin, ok := plugins.GetPluginFromContext(ctx)
 	if !ok {
 		return nil, fmt.Errorf("no plugin found in context")
@@ -55,10 +55,10 @@ func StartAgent(ctx context.Context, agentName string) (*agentInfo, error) {
 	host := wasmhost.GetWasmHost(ctx)
 	spawnActorForAgent(host, plugin, agentId, agentName, false, nil)
 
-	info := &agentInfo{
-		id:     agentId,
-		name:   agentName,
-		status: agentStatusStarting,
+	info := &AgentInfo{
+		Id:     agentId,
+		Name:   agentName,
+		Status: AgentStatusStarting,
 	}
 
 	return info, nil
@@ -81,10 +81,10 @@ func spawnActorForAgent(host wasmhost.WasmHost, plugin *plugins.Plugin, agentId,
 		actorName := getActorName(agentId)
 
 		if resuming {
-			actor.status = agentStatusResuming
+			actor.status = AgentStatusResuming
 			actor.initialState = initialState
 		} else {
-			actor.status = agentStatusStarting
+			actor.status = AgentStatusStarting
 		}
 
 		if _, err := _actorSystem.Spawn(ctx, actorName, actor); err != nil {
@@ -101,7 +101,7 @@ func StopAgent(ctx context.Context, agentId string) bool {
 	}
 
 	actor := pid.Actor().(*wasmAgentActor)
-	actor.status = agentStatusStopping
+	actor.status = AgentStatusStopping
 
 	if err := pid.Shutdown(ctx); err != nil {
 		logger.Err(ctx, err).Msg("Error stopping agent.")
@@ -167,10 +167,31 @@ func getActorPid(ctx context.Context, agentId string) (*goakt.PID, error) {
 	return pid, nil
 }
 
+func ListAgents() []AgentInfo {
+	if _actorSystem == nil {
+		return nil
+	}
+
+	actors := _actorSystem.Actors()
+	results := make([]AgentInfo, 0, len(actors))
+
+	for _, pid := range actors {
+		if actor, ok := pid.Actor().(*wasmAgentActor); ok {
+			results = append(results, AgentInfo{
+				Id:     actor.agentId,
+				Name:   actor.agentName,
+				Status: actor.status,
+			})
+		}
+	}
+
+	return results
+}
+
 type wasmAgentActor struct {
 	agentId      string
 	agentName    string
-	status       agentStatus
+	status       AgentStatus
 	plugin       *plugins.Plugin
 	host         wasmhost.WasmHost
 	module       wasm.Module
@@ -191,10 +212,10 @@ func (a *wasmAgentActor) PreStart(ac *goakt.Context) error {
 	ctx := a.newContext()
 
 	switch a.status {
-	case agentStatusStarting:
+	case AgentStatusStarting:
 		logger.Info(ctx).Msg("Starting agent.")
-	case agentStatusResuming, agentStatusSuspended:
-		a.status = agentStatusResuming
+	case AgentStatusResuming, AgentStatusSuspended:
+		a.status = AgentStatusResuming
 		logger.Info(ctx).Msg("Resuming agent.")
 	default:
 		return fmt.Errorf("invalid agent status for actor PreStart: %s", a.status)
@@ -218,7 +239,7 @@ func (a *wasmAgentActor) PreStart(ac *goakt.Context) error {
 		return err
 	}
 
-	if a.status == agentStatusResuming {
+	if a.status == AgentStatusResuming {
 		if err := a.setAgentState(ctx, a.initialState); err != nil {
 			logger.Err(ctx, err).Msg("Error resuming agent state.")
 		}
@@ -226,13 +247,13 @@ func (a *wasmAgentActor) PreStart(ac *goakt.Context) error {
 	}
 
 	duration := time.Since(start)
-	if a.status == agentStatusResuming {
+	if a.status == AgentStatusResuming {
 		logger.Info(ctx).Msg("Agent resumed successfully.")
 	} else {
 		logger.Info(ctx).Dur("duration_ms", duration).Msg("Agent started successfully.")
 	}
 
-	a.status = agentStatusRunning
+	a.status = AgentStatusRunning
 
 	if err := a.saveState(ctx); err != nil {
 		logger.Err(ctx, err).Msg("Error saving agent state.")
@@ -246,10 +267,10 @@ func (a *wasmAgentActor) PostStop(ac *goakt.Context) error {
 	defer a.module.Close(ctx)
 
 	switch a.status {
-	case agentStatusRunning, agentStatusSuspending:
-		a.status = agentStatusSuspending
+	case AgentStatusRunning, AgentStatusSuspending:
+		a.status = AgentStatusSuspending
 		logger.Info(ctx).Msg("Suspending agent.")
-	case agentStatusStopping:
+	case AgentStatusStopping:
 		logger.Info(ctx).Msg("Stopping agent.")
 
 	default:
@@ -269,14 +290,14 @@ func (a *wasmAgentActor) PostStop(ac *goakt.Context) error {
 
 	duration := time.Since(start)
 	switch a.status {
-	case agentStatusSuspending:
-		a.status = agentStatusSuspended
+	case AgentStatusSuspending:
+		a.status = AgentStatusSuspended
 		if err := a.saveState(ctx); err != nil {
 			return err
 		}
 		logger.Info(ctx).Msg("Agent suspended successfully.")
-	case agentStatusStopping:
-		a.status = agentStatusTerminated
+	case AgentStatusStopping:
+		a.status = AgentStatusTerminated
 		if err := a.saveState(ctx); err != nil {
 			return err
 		}
@@ -388,7 +409,7 @@ func (a *wasmAgentActor) activateAgent(ctx context.Context) error {
 	params := map[string]any{
 		"name":      a.agentName,
 		"id":        a.agentId,
-		"reloading": a.status == agentStatusResuming,
+		"reloading": a.status == AgentStatusResuming,
 	}
 
 	execInfo, err := a.host.CallFunctionInModule(ctx, a.module, a.buffers, fnInfo, params)
@@ -405,7 +426,7 @@ func (a *wasmAgentActor) shutdownAgent(ctx context.Context) error {
 	}
 
 	params := map[string]any{
-		"suspending": a.status == agentStatusSuspending,
+		"suspending": a.status == AgentStatusSuspending,
 	}
 
 	execInfo, err := a.host.CallFunctionInModule(ctx, a.module, a.buffers, fnInfo, params)
@@ -469,7 +490,7 @@ func (a *wasmAgentActor) reloadModule(ctx context.Context, plugin *plugins.Plugi
 
 	logger.Info(ctx).Msg("Reloading module for agent.")
 
-	a.status = agentStatusSuspending
+	a.status = AgentStatusSuspending
 	if err := a.shutdownAgent(ctx); err != nil {
 		logger.Err(ctx, err).Msg("Error shutting down agent.")
 		return err
@@ -482,7 +503,7 @@ func (a *wasmAgentActor) reloadModule(ctx context.Context, plugin *plugins.Plugi
 		return err
 	}
 	a.module.Close(ctx)
-	a.status = agentStatusSuspended
+	a.status = AgentStatusSuspended
 
 	// create a new module instance and assign it to the actor
 	a.plugin = plugin
@@ -494,7 +515,7 @@ func (a *wasmAgentActor) reloadModule(ctx context.Context, plugin *plugins.Plugi
 	a.module = mod
 
 	// activate the agent in the new module instance
-	a.status = agentStatusResuming
+	a.status = AgentStatusResuming
 	if err := a.activateAgent(ctx); err != nil {
 		logger.Err(ctx, err).Msg("Error reloading agent.")
 		return err
@@ -506,7 +527,7 @@ func (a *wasmAgentActor) reloadModule(ctx context.Context, plugin *plugins.Plugi
 		return err
 	}
 
-	a.status = agentStatusRunning
+	a.status = AgentStatusRunning
 	logger.Info(ctx).Msg("Agent reloaded module successfully.")
 
 	return nil
