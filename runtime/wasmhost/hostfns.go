@@ -278,19 +278,19 @@ func (host *wasmHost) newHostFunction(modName, funcName string, fn any, opts ...
 			// invoke the function
 			out := rvFunc.Call(inputs)
 
-			// check for an error
-			if hasErrorResult && len(out) > 0 {
-				if err, ok := out[len(out)-1].Interface().(error); ok && err != nil {
-					return err
-				}
-			}
-
 			// copy results to the results slice
 			for i := range numResults {
 				if hasErrorResult && i == numResults-1 {
 					continue
 				} else {
 					results = append(results, out[i].Interface())
+				}
+			}
+
+			// check for an error
+			if hasErrorResult && len(out) > 0 {
+				if err, ok := out[len(out)-1].Interface().(error); ok && err != nil {
+					return err
 				}
 			}
 
@@ -309,11 +309,11 @@ func (host *wasmHost) newHostFunction(modName, funcName string, fn any, opts ...
 		}
 
 		// Call the host function
-		if ok := callHostFunction(ctx, wrappedFn, msgs); !ok {
-			return
-		}
+		// NOTE: This will log any errors, but there still might be results that need to be returned to the guest even if the function fails
+		// For example, an HTTP request with a 4xx status code might still return a response body with details about the error.
+		callHostFunction(ctx, wrappedFn, msgs)
 
-		// Encode the results (if there are any)
+		// Encode the results (if there are any) and write them to the stack
 		if len(results) > 0 {
 			if err := encodeResults(ctx, wa, plan, stack, results); err != nil {
 				logger.Err(ctx, err).Str("host_function", fullName).Any("data", results).Msg("Error encoding results.")
@@ -489,7 +489,7 @@ func writeIndirectResults(ctx context.Context, wa langsupport.WasmAdapter, plan 
 	return nil
 }
 
-func callHostFunction(ctx context.Context, fn func() error, msgs hfMessages) bool {
+func callHostFunction(ctx context.Context, fn func() error, msgs hfMessages) {
 	if msgs.msgStarting != "" {
 		l := logger.Info(ctx).Bool("user_visible", true)
 		if msgs.msgDetail != "" {
@@ -510,7 +510,6 @@ func callHostFunction(ctx context.Context, fn func() error, msgs hfMessages) boo
 			}
 			l.Msg(msgs.msgCancelled)
 		}
-		return false
 	} else if err != nil {
 		if msgs.msgError != "" {
 			l := logger.Err(ctx, err).Bool("user_visible", true).Dur("duration_ms", duration)
@@ -519,15 +518,11 @@ func callHostFunction(ctx context.Context, fn func() error, msgs hfMessages) boo
 			}
 			l.Msg(msgs.msgError)
 		}
-		return false
-	} else {
-		if msgs.msgCompleted != "" {
-			l := logger.Info(ctx).Bool("user_visible", true).Dur("duration_ms", duration)
-			if msgs.msgDetail != "" {
-				l.Str("detail", msgs.msgDetail)
-			}
-			l.Msg(msgs.msgCompleted)
+	} else if msgs.msgCompleted != "" {
+		l := logger.Info(ctx).Bool("user_visible", true).Dur("duration_ms", duration)
+		if msgs.msgDetail != "" {
+			l.Str("detail", msgs.msgDetail)
 		}
-		return true
+		l.Msg(msgs.msgCompleted)
 	}
 }

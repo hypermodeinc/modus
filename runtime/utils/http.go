@@ -46,16 +46,9 @@ func sendHttp(req *http.Request) ([]byte, error) {
 	}
 
 	if response.StatusCode != http.StatusOK {
-		if len(body) == 0 {
-			return nil, &HttpError{
-				StatusCode: response.StatusCode,
-				Message:    response.Status,
-			}
-		} else {
-			return nil, &HttpError{
-				StatusCode: response.StatusCode,
-				Message:    fmt.Sprintf("%s\n%s", response.Status, body),
-			}
+		return body, &HttpError{
+			StatusCode: response.StatusCode,
+			Message:    response.Status,
 		}
 	}
 
@@ -111,20 +104,21 @@ func PostHttp[TResult any](ctx context.Context, url string, payload any, beforeS
 	startTime := GetTime()
 	content, err := sendHttp(req)
 	endTime := GetTime()
-	if err != nil {
-		return nil, err
-	}
+
+	// NOTE: Unlike most functions, the result and error are BOTH returned.
+	// This is because some error messages are returned in the body of the response.
 
 	var result TResult
-	switch any(result).(type) {
-	case []byte:
-		result = any(content).(TResult)
-	case string:
-		result = any(string(content)).(TResult)
-	default:
-		err = JsonDeserialize(content, &result)
-		if err != nil {
-			return nil, fmt.Errorf("error deserializing response: %w", err)
+	if content != nil {
+		switch any(result).(type) {
+		case []byte:
+			result = any(content).(TResult)
+		case string:
+			result = any(string(content)).(TResult)
+		default:
+			if err := JsonDeserialize(content, &result); err != nil {
+				return nil, fmt.Errorf("error deserializing response: %w", err)
+			}
 		}
 	}
 
@@ -132,7 +126,7 @@ func PostHttp[TResult any](ctx context.Context, url string, payload any, beforeS
 		Data:      result,
 		StartTime: startTime,
 		EndTime:   endTime,
-	}, nil
+	}, err
 }
 
 func WriteJsonContentHeader(w http.ResponseWriter) {

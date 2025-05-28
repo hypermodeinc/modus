@@ -107,12 +107,14 @@ func PostToModelEndpoint[TResult any](ctx context.Context, model *manifest.Model
 			}
 		}
 
-		return empty, err
+		if res == nil {
+			return empty, err
+		}
 	}
 
+	// NOTE: This path occurs whether or not there's an error, as long as there was some response body content.
 	db.WriteInferenceHistory(ctx, model, payload, res.Data, res.StartTime, res.EndTime)
-
-	return res.Data, nil
+	return res.Data, err
 }
 
 func getModelEndpointUrl(model *manifest.ModelInfo, connection *manifest.HTTPConnectionInfo) (string, error) {
