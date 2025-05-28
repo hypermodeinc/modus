@@ -168,6 +168,9 @@ func getActorPid(ctx context.Context, agentId string) (*goakt.PID, error) {
 }
 
 func ListAgents() []AgentInfo {
+	if _actorSystem == nil {
+		return nil
+	}
 
 	actors := _actorSystem.Actors()
 	results := make([]AgentInfo, 0, len(actors))
