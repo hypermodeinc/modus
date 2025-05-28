@@ -8,7 +8,7 @@ require (
 	github.com/OneOfOne/xxhash v1.2.8
 	github.com/archdx/zerolog-sentry v1.8.5
 	github.com/aws/aws-sdk-go-v2/config v1.29.14
-	github.com/aws/aws-sdk-go-v2/service/s3 v1.79.3
+	github.com/aws/aws-sdk-go-v2/service/s3 v1.79.4
 	github.com/aws/aws-sdk-go-v2/service/sts v1.33.19
 	github.com/buger/jsonparser v1.1.1
 	github.com/chewxy/math32 v1.11.1
@@ -28,7 +28,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/hypermodeinc/modus/lib/manifest v0.17.2
 	github.com/hypermodeinc/modus/lib/metadata v0.15.0
-	github.com/hypermodeinc/modusgraph v0.0.0-20250515173656-5f22fe4d94b5
+	github.com/hypermodeinc/modusgraph v0.1.0
 	github.com/jackc/pgx/v5 v5.7.5
 	github.com/jensneuse/abstractlogger v0.0.4
 	github.com/joho/godotenv v1.5.1
@@ -49,8 +49,8 @@ require (
 	github.com/twpayne/go-geom v1.6.1
 	github.com/viterin/vek v0.4.2
 	github.com/wundergraph/graphql-go-tools/execution v1.2.0
-	github.com/wundergraph/graphql-go-tools/v2 v2.0.0-rc.178
-	github.com/xo/dburl v0.23.7
+	github.com/wundergraph/graphql-go-tools/v2 v2.0.0-rc.181
+	github.com/xo/dburl v0.23.8
 	golang.org/x/exp v0.0.0-20250506013437-ce4c2cf36ca6
 	golang.org/x/sys v0.33.0
 	google.golang.org/grpc v1.72.1
@@ -81,7 +81,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/internal/ini v1.8.3 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/v4a v1.3.34 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.12.3 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.7.1 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.7.2 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.12.15 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.18.15 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sso v1.25.3 // indirect
@@ -96,6 +96,7 @@ require (
 	github.com/blevesearch/segment v0.9.1 // indirect
 	github.com/blevesearch/snowballstem v0.9.0 // indirect
 	github.com/blevesearch/upsidedown_store_api v1.0.2 // indirect
+	github.com/bufbuild/protocompile v0.14.1 // indirect
 	github.com/buraksezer/consistent v0.10.0 // indirect
 	github.com/cenkalti/backoff/v4 v4.3.0 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
@@ -271,4 +272,4 @@ require (
 )
 
 // temporary
-replace github.com/fergusstrange/embedded-postgres => github.com/mattjohnsonpint/embedded-postgres v0.0.0-20250520224003-29c7555eee5e
+replace github.com/fergusstrange/embedded-postgres => github.com/mattjohnsonpint/embedded-postgres v0.0.0-20250520233857-b0ca281de480
