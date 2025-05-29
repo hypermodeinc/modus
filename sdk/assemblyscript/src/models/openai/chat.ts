@@ -1595,15 +1595,12 @@ function validateChatModelResponse(data: string): ModelError | null {
     throw new Error("No response received from model invocation");
   }
 
-  // hack until json-as issues are resolved
-  if (data.startsWith(`{\n  "error": {`)) {
-    return JSON.parse<ChatModelError>(data.substring(13, data.length - 2));
+  const obj = JSON.parse<JSON.Obj>(data);
+  const error = obj.get("error");
+  if (error) {
+    return JSON.parse<ChatModelError>(error.toString());
+    // return error.get<ChatModelError>(); // todo: this should work instead of the above line, but fails as of json-as v1.1.14
   }
-
-  // const obj = JSON.parse<JSON.Obj>(data);
-  // if (obj.has("error")) {
-  //   return obj.get("error")!.get<ChatModelError>();
-  // }
 
   return null;
 }
