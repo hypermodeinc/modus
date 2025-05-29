@@ -47,6 +47,7 @@ class ModusModelFactory implements ModelFactory {
   }
 }
 
+
 @json
 export class ModelInfo {
   constructor(
@@ -59,10 +60,12 @@ export interface ModelFactory {
   getModel<T extends Model>(modelName: string): T;
 }
 
+
 @json
 export abstract class ModelError {
   abstract toString(): string;
 }
+
 
 @json
 export abstract class Model<TInput = unknown, TOutput = unknown> {
