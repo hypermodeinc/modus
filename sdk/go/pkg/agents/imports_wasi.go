@@ -43,4 +43,40 @@ func hostSendMessage(agentId, msgName, data *string, timeout int64) *MessageResp
 
 //go:noescape
 //go:wasmimport modus_agents stopAgent
-func hostStopAgent(agentId *string) bool
+func _hostStopAgent(agentId *string) unsafe.Pointer
+
+//modus:import modus_agents stopAgent
+func hostStopAgent(agentId *string) *AgentInfo {
+	info := _hostStopAgent(agentId)
+	if info == nil {
+		return nil
+	}
+	return (*AgentInfo)(info)
+}
+
+//go:noescape
+//go:wasmimport modus_agents getAgentInfo
+func _hostGetAgentInfo(agentId *string) unsafe.Pointer
+
+//modus:import modus_agents getAgentInfo
+func hostGetAgentInfo(agentId *string) *AgentInfo {
+	info := _hostGetAgentInfo(agentId)
+	if info == nil {
+		return nil
+	}
+	return (*AgentInfo)(info)
+}
+
+//go:noescape
+//go:wasmimport modus_agents listAgents
+func _hostListAgents() unsafe.Pointer
+
+//modus:import modus_agents listAgents
+func hostListAgents() *[]AgentInfo {
+	ptr := _hostListAgents()
+	if ptr == nil {
+		return nil
+	}
+
+	return (*[]AgentInfo)(ptr)
+}

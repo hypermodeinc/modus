@@ -93,22 +93,58 @@ func spawnActorForAgent(host wasmhost.WasmHost, plugin *plugins.Plugin, agentId,
 	}()
 }
 
-func StopAgent(ctx context.Context, agentId string) bool {
+func StopAgent(ctx context.Context, agentId string) (*AgentInfo, error) {
 	pid, err := getActorPid(ctx, agentId)
 	if err != nil {
-		logger.Err(ctx, err).Msg("Error stopping agent.")
-		return false
+		// see if it's in the database before erroring
+		if agent, e := db.GetAgentState(ctx, agentId); e == nil {
+			return &AgentInfo{
+				Id:     agent.Id,
+				Name:   agent.Name,
+				Status: agent.Status,
+			}, nil
+		}
+
+		return nil, fmt.Errorf("error stopping agent %s: %w", agentId, err)
 	}
 
+	// it was found, so we can stop it
 	actor := pid.Actor().(*wasmAgentActor)
 	actor.status = AgentStatusStopping
-
 	if err := pid.Shutdown(ctx); err != nil {
-		logger.Err(ctx, err).Msg("Error stopping agent.")
-		return false
+		return nil, fmt.Errorf("error stopping agent %s: %w", agentId, err)
 	}
 
-	return true
+	return &AgentInfo{
+		Id:     actor.agentId,
+		Name:   actor.agentName,
+		Status: actor.status,
+	}, nil
+}
+
+func GetAgentInfo(ctx context.Context, agentId string) (*AgentInfo, error) {
+
+	// Try the local actor system first.
+	if pid, err := getActorPid(ctx, agentId); err == nil {
+		actor := pid.Actor().(*wasmAgentActor)
+		return &AgentInfo{
+			Id:     actor.agentId,
+			Name:   actor.agentName,
+			Status: actor.status,
+		}, nil
+	}
+
+	// Check the database as a fallback.
+	// This is useful if the actor is terminated, or running on another node.
+	if agent, err := db.GetAgentState(ctx, agentId); err == nil {
+		return &AgentInfo{
+			Id:     agent.Id,
+			Name:   agent.Name,
+			Status: agent.Status,
+		}, nil
+	}
+
+	return nil, fmt.Errorf("agent %s not found", agentId)
 }
 
 type agentMessageResponse struct {
@@ -167,7 +203,25 @@ func getActorPid(ctx context.Context, agentId string) (*goakt.PID, error) {
 	return pid, nil
 }
 
-func ListAgents() []AgentInfo {
+func ListActiveAgents(ctx context.Context) ([]AgentInfo, error) {
+	agents, err := db.QueryActiveAgents(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("error listing active agents: %w", err)
+	}
+
+	results := make([]AgentInfo, 0, len(agents))
+	for _, agent := range agents {
+		results = append(results, AgentInfo{
+			Id:     agent.Id,
+			Name:   agent.Name,
+			Status: agent.Status,
+		})
+	}
+
+	return results, nil
+}
+
+func ListLocalAgents() []AgentInfo {
 	if _actorSystem == nil {
 		return nil
 	}

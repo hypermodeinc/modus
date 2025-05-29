@@ -30,11 +30,21 @@ func StartCounterAgent() (agents.AgentInfo, error) {
 	return agents.Start("Counter")
 }
 
-// Stops the specified agent by ID.
+// Stops the specified agent by ID, returning its status info.
 // This will terminate the agent, and it cannot be resumed or restarted.
 // However, a new agent with the same name can be started at any time.
-func StopAgent(agentId string) error {
+func StopAgent(agentId string) (agents.AgentInfo, error) {
 	return agents.Stop(agentId)
+}
+
+// Gets information about the specified agent.
+func GetAgentInfo(agentId string) (agents.AgentInfo, error) {
+	return agents.GetInfo(agentId)
+}
+
+// List all agents, except those that have been fully terminated.
+func ListAgents() ([]agents.AgentInfo, error) {
+	return agents.ListAll()
 }
 
 // Returns the current count of the specified agent.

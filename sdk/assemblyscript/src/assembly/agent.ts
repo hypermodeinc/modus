@@ -8,6 +8,7 @@
  */
 
 import { AgentStatus } from "./enums";
+import * as utils from "./utils";
 
 const agents = new Map<string, Agent>();
 let activeAgent: Agent | null = null;
@@ -103,7 +104,15 @@ declare function hostStartAgent(agentName: string): AgentInfo;
 
 // @ts-expect-error: decorator
 @external("modus_agents", "stopAgent")
-declare function hostStopAgent(agentId: string): bool;
+declare function hostStopAgent(agentId: string): AgentInfo;
+
+// @ts-expect-error: decorator
+@external("modus_agents", "getAgentInfo")
+declare function hostGetAgentInfo(agentId: string): AgentInfo;
+
+// @ts-expect-error: decorator
+@external("modus_agents", "listAgents")
+declare function hostListAgents(): AgentInfo[];
 
 /**
  * Starts an agent with the given name.
@@ -114,7 +123,11 @@ export function startAgent(name: string): AgentInfo {
     throw new Error(`Agent ${name} not found.`);
   }
 
-  return hostStartAgent(name);
+  const info = hostStartAgent(name);
+  if (utils.resultIsInvalid(info)) {
+    throw new Error(`Failed to start agent ${name}.`);
+  }
+  return info;
 }
 
 /**
@@ -122,14 +135,40 @@ export function startAgent(name: string): AgentInfo {
  * This will terminate the agent, and it cannot be resumed or restarted.
  * This can be called from any user code, such as function or another agent's methods.
  */
-export function stopAgent(agentId: string): void {
+export function stopAgent(agentId: string): AgentInfo {
   if (agentId == "") {
     throw new Error("Agent ID cannot be empty.");
   }
-  const ok = hostStopAgent(agentId);
-  if (!ok) {
+  const info = hostStopAgent(agentId);
+  if (utils.resultIsInvalid(info)) {
     throw new Error(`Failed to stop agent ${agentId}.`);
   }
+  return info;
+}
+
+/**
+ * Gets information about an agent with the given ID.
+ */
+export function getAgentInfo(agentId: string): AgentInfo {
+  if (agentId == "") {
+    throw new Error("Agent ID cannot be empty.");
+  }
+  const info = hostGetAgentInfo(agentId);
+  if (utils.resultIsInvalid(info)) {
+    throw new Error(`Failed to get info for agent ${agentId}.`);
+  }
+  return info;
+}
+
+/**
+ * Returns a list of all agents, except those that have been fully terminated.
+ */
+export function listAgents(): AgentInfo[] {
+  const agents = hostListAgents();
+  if (utils.resultIsInvalid(agents)) {
+    throw new Error("Failed to list agents.");
+  }
+  return agents;
 }
 
 /**
