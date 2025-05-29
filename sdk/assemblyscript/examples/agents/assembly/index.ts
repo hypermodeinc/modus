@@ -26,12 +26,26 @@ export function startCounterAgent(): AgentInfo {
 }
 
 /**
- * Stops the specified agent by ID.
+ * Stops the specified agent by ID, returning its status info.
  * This will terminate the agent, and it cannot be resumed or restarted.
  * However, a new agent with the same name can be started at any time.
  */
-export function stopAgent(agentId: string): void {
-  agents.stop(agentId);
+export function stopAgent(agentId: string): AgentInfo {
+  return agents.stop(agentId);
+}
+
+/**
+ * Gets information about the specified agent.
+ */
+export function getAgentInfo(agentId: string): AgentInfo {
+  return agents.getInfo(agentId);
+}
+
+/**
+ * List all agents, except those that have been fully terminated.
+ */
+export function ListAgents(): AgentInfo[] {
+  return agents.listAll();
 }
 
 /**

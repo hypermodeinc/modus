@@ -18,6 +18,8 @@ import (
 var StartAgentCallStack = testutils.NewCallStack()
 var SendMessageCallStack = testutils.NewCallStack()
 var StopAgentCallStack = testutils.NewCallStack()
+var GetAgentInfoCallStack = testutils.NewCallStack()
+var ListAgentsCallStack = testutils.NewCallStack()
 
 func hostStartAgent(agentName *string) *AgentInfo {
 	StartAgentCallStack.Push(agentName)
@@ -41,8 +43,38 @@ func hostSendMessage(agentId, msgName, data *string, timeout int64) *MessageResp
 	return nil
 }
 
-func hostStopAgent(agentId *string) bool {
+func hostStopAgent(agentId *string) *AgentInfo {
 	StopAgentCallStack.Push(agentId)
 
-	return agentId != nil && *agentId == "abc123"
+	if *agentId == "abc123" {
+		return &AgentInfo{
+			Id:     "abc123",
+			Name:   "Counter",
+			Status: AgentStatusStopping,
+		}
+	}
+	return nil
+}
+
+func hostGetAgentInfo(agentId *string) *AgentInfo {
+	GetAgentInfoCallStack.Push(agentId)
+
+	if *agentId == "abc123" {
+		return &AgentInfo{
+			Id:     "abc123",
+			Name:   "Counter",
+			Status: AgentStatusRunning,
+		}
+	}
+
+	return nil
+}
+
+func hostListAgents() *[]AgentInfo {
+	ListAgentsCallStack.Push()
+
+	return &[]AgentInfo{
+		{Id: "abc123", Name: "Counter", Status: AgentStatusRunning},
+		{Id: "def456", Name: "Logger", Status: AgentStatusRunning},
+	}
 }

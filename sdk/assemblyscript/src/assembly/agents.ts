@@ -13,6 +13,8 @@ export {
   registerAgent as register,
   startAgent as start,
   stopAgent as stop,
+  getAgentInfo as getInfo,
+  listAgents as listAll,
 } from "./agent";
 
 // @ts-expect-error: decorator

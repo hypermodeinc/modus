@@ -22,7 +22,7 @@ import (
 var healthHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 	env := app.Config().Environment()
 	ver := app.VersionNumber()
-	agents := actors.ListAgents()
+	agents := actors.ListLocalAgents()
 
 	// custom format the JSON response for easy readability
 

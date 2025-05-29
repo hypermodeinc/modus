@@ -38,6 +38,14 @@ func WriteAgentState(ctx context.Context, state AgentState) error {
 	}
 }
 
+func GetAgentState(ctx context.Context, id string) (*AgentState, error) {
+	if useModusDB() {
+		return getAgentStateFromModusDB(ctx, id)
+	} else {
+		return getAgentStateFromPostgresDB(ctx, id)
+	}
+}
+
 func QueryActiveAgents(ctx context.Context) ([]AgentState, error) {
 	if useModusDB() {
 		return queryActiveAgentsFromModusDB(ctx)
@@ -59,6 +67,21 @@ func writeAgentStateToModusDB(ctx context.Context, state AgentState) error {
 	state.Gid = gid
 
 	return err
+}
+
+func getAgentStateFromModusDB(ctx context.Context, id string) (*AgentState, error) {
+	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+	defer span.Finish()
+
+	_, result, err := modusgraph.Get[AgentState](ctx, GlobalModusDbEngine, modusgraph.ConstrainedField{
+		Key:   "id",
+		Value: id,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to query agent state: %w", err)
+	}
+
+	return &result, nil
 }
 
 func queryActiveAgentsFromModusDB(ctx context.Context) ([]AgentState, error) {
@@ -104,6 +127,30 @@ func writeAgentStateToPostgresDB(ctx context.Context, state AgentState) error {
 	})
 
 	return err
+}
+
+func getAgentStateFromPostgresDB(ctx context.Context, id string) (*AgentState, error) {
+	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+	defer span.Finish()
+
+	const query = "SELECT id, name, status, data, updated FROM agents WHERE id = $1"
+
+	var a AgentState
+	var ts time.Time
+	err := WithTx(ctx, func(tx pgx.Tx) error {
+		row := tx.QueryRow(ctx, query, id)
+		if err := row.Scan(&a.Id, &a.Name, &a.Status, &a.Data, &ts); err != nil {
+			return fmt.Errorf("failed to get agent state: %w", err)
+		}
+		a.UpdatedAt = ts.UTC().Format(time.RFC3339)
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &a, nil
 }
 
 func queryActiveAgentsFromPostgresDB(ctx context.Context) ([]AgentState, error) {

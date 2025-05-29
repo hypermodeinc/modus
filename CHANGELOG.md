@@ -9,6 +9,7 @@
 - feat: enforce WASI reactor mode [#859](https://github.com/hypermodeinc/modus/pull/859)
 - feat: return user and chat errors in API response [#863](https://github.com/hypermodeinc/modus/pull/863)
 - feat: list agents on health endpoint [#865](https://github.com/hypermodeinc/modus/pull/865)
+- feat: add agent management APIs [#866](https://github.com/hypermodeinc/modus/pull/866)
 
 ## 2025-05-22 - Go SDK 0.18.0-alpha.3
 

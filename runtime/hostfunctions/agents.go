@@ -30,6 +30,15 @@ func init() {
 			return fmt.Sprintf("AgentId: %s", agentId)
 		}))
 
+	registerHostFunction(module_name, "getAgentInfo", actors.GetAgentInfo,
+		withErrorMessage("Error getting agent info."),
+		withMessageDetail(func(agentId string) string {
+			return fmt.Sprintf("AgentId: %s", agentId)
+		}))
+
+	registerHostFunction(module_name, "listAgents", actors.ListActiveAgents,
+		withErrorMessage("Error listing agents."))
+
 	registerHostFunction(module_name, "sendMessage", actors.SendAgentMessage,
 		withErrorMessage("Error sending message to agent."),
 		withMessageDetail(func(agentId string, msgName string, data *string, timeout int64) string {

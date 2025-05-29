@@ -56,13 +56,36 @@ func Start(name string) (AgentInfo, error) {
 	return *info, nil
 }
 
-// Stops an agent with the given ID.
+// Stops an agent with the given ID and returns its status info.
 // This will terminate the agent, and it cannot be resumed or restarted.
-func Stop(agentId string) error {
-	if ok := hostStopAgent(&agentId); !ok {
-		return fmt.Errorf("failed to stop agent %s", agentId)
+func Stop(agentId string) (AgentInfo, error) {
+	if info := hostStopAgent(&agentId); info != nil {
+		return *info, nil
 	}
-	return nil
+	return AgentInfo{}, fmt.Errorf("failed to stop agent %s", agentId)
+}
+
+// Gets information about an agent with the given ID.
+func GetInfo(agentId string) (AgentInfo, error) {
+	if len(agentId) == 0 {
+		return AgentInfo{}, errors.New("invalid agent ID")
+	}
+
+	info := hostGetAgentInfo(&agentId)
+	if info == nil {
+		return AgentInfo{}, fmt.Errorf("agent %s not found", agentId)
+	}
+
+	return *info, nil
+}
+
+// Returns a list of all agents, except those that have been fully terminated.
+func ListAll() ([]AgentInfo, error) {
+	agents := hostListAgents()
+	if agents == nil {
+		return nil, errors.New("failed to list agents")
+	}
+	return *agents, nil
 }
 
 // These functions are only invoked as wasm exports from the host.
