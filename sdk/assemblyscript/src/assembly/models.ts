@@ -60,11 +60,16 @@ export interface ModelFactory {
 }
 
 @json
+export abstract class ModelError {
+  abstract toString(): string;
+}
+
 export abstract class Model<TInput = unknown, TOutput = unknown> {
   static invoker: ModelInvoker | null = null;
   protected constructor(public info: ModelInfo) {}
 
   debug: boolean = false;
+  validator: ((data: string) => ModelError | null) | null = null;
 
   /**
    * Invokes the model with the given input.
@@ -83,12 +88,19 @@ export abstract class Model<TInput = unknown, TOutput = unknown> {
     }
 
     const outputJson = Model.invoker(modelName, inputJson);
-    if (!outputJson) {
+    if (outputJson === null) {
       throw new Error(`Failed to invoke ${modelName} model.`);
     }
 
     if (this.debug) {
       console.debug(`Received output: ${outputJson}`);
+    }
+
+    if (this.validator) {
+      const err = this.validator(outputJson);
+      if (err !== null) {
+        utils.throwUserError(`The chat model returned an error: ${err}`);
+      }
     }
 
     return JSON.parse<TOutput>(outputJson);
