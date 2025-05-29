@@ -16,6 +16,7 @@ import * as base64 from "as-base64/assembly";
  *
  * Reference: https://platform.openai.com/docs/api-reference/chat
  */
+@json
 export class OpenAIChatModel extends Model<OpenAIChatInput, OpenAIChatOutput> {
   /**
    * Creates an input object for the OpenAI Chat API.
@@ -339,6 +340,7 @@ export class ToolChoice {
 /**
  * An object for specifying a function to call.
  */
+@json
 class ToolChoiceFunction {
   /**
    * The name of the function to call.
@@ -1378,6 +1380,7 @@ export class AssistantMessage<T> extends RequestMessage {
 /**
  * Represents a reference to a previous audio response from the model.
  */
+@json
 export class AudioRef {
   /**
    * Creates a new audio reference object.
