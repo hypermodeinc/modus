@@ -2,13 +2,27 @@
 
 # Change Log
 
-## UNRELEASED
+## 2025-05-29 - Runtime 0.18.0-alpha.4
+
+- chore: rename agent lifecycle methods and APIs [#858](https://github.com/hypermodeinc/modus/pull/858)
+- feat: enforce WASI reactor mode [#859](https://github.com/hypermodeinc/modus/pull/859)
+- feat: return user and chat errors in API response [#863](https://github.com/hypermodeinc/modus/pull/863)
+- feat: list agents on health endpoint [#865](https://github.com/hypermodeinc/modus/pull/865)
+- feat: add agent management APIs [#866](https://github.com/hypermodeinc/modus/pull/866)
+
+## 2025-05-29 - Go SDK 0.18.0-alpha.4
+
+- chore: rename agent lifecycle methods and APIs [#858](https://github.com/hypermodeinc/modus/pull/858)
+- feat: enforce WASI reactor mode [#859](https://github.com/hypermodeinc/modus/pull/859)
+- feat: return user and chat errors in API response [#863](https://github.com/hypermodeinc/modus/pull/863)
+- feat: add agent management APIs [#866](https://github.com/hypermodeinc/modus/pull/866)
+
+## 2025-05-29 - AssemblyScript SDK 0.18.0-alpha.3
 
 - chore: update json-as and remove hack [#857](https://github.com/hypermodeinc/modus/pull/857)
 - chore: rename agent lifecycle methods and APIs [#858](https://github.com/hypermodeinc/modus/pull/858)
 - feat: enforce WASI reactor mode [#859](https://github.com/hypermodeinc/modus/pull/859)
-- feat: return user and chat errors in API response [#863](https://github.com/hypermodeinc/modus/pull/863) [#864](https://github.com/hypermodeinc/modus/pull/864)
-- feat: list agents on health endpoint [#865](https://github.com/hypermodeinc/modus/pull/865)
+- feat: return user and chat errors in API response [#864](https://github.com/hypermodeinc/modus/pull/864)
 - feat: add agent management APIs [#866](https://github.com/hypermodeinc/modus/pull/866)
 
 ## 2025-05-22 - Go SDK 0.18.0-alpha.3
