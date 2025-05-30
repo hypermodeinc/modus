@@ -16,14 +16,12 @@ require (
 	github.com/docker/docker v28.1.1+incompatible
 	github.com/docker/go-connections v0.5.0
 	github.com/fatih/color v1.18.0
-	github.com/fergusstrange/embedded-postgres v1.30.0
 	github.com/getsentry/sentry-go v0.33.0
 	github.com/go-sql-driver/mysql v1.9.2
 	github.com/go-viper/mapstructure/v2 v2.2.1
 	github.com/goccy/go-json v0.10.5
 	github.com/gofrs/flock v0.12.1
 	github.com/golang-jwt/jwt/v5 v5.2.2
-	github.com/golang-migrate/migrate/v4 v4.18.3
 	github.com/google/renameio/v2 v2.0.0
 	github.com/google/uuid v1.6.0
 	github.com/hypermodeinc/modus/lib/manifest v0.17.2
@@ -179,7 +177,6 @@ require (
 	github.com/lestrrat-go/httpcc v1.0.1 // indirect
 	github.com/lestrrat-go/httprc/v3 v3.0.0-beta2 // indirect
 	github.com/lestrrat-go/option v1.0.1 // indirect
-	github.com/lib/pq v1.10.9 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/miekg/dns v1.1.66 // indirect
@@ -240,7 +237,6 @@ require (
 	github.com/wundergraph/cosmo/router v0.0.0-20240729154441-b20b00e892c6 // indirect
 	github.com/xdg/scram v1.0.5 // indirect
 	github.com/xdg/stringprep v1.0.3 // indirect
-	github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8 // indirect
 	github.com/zeebo/xxh3 v1.0.2 // indirect
 	go.akshayshah.org/connectproto v0.6.0 // indirect
 	go.etcd.io/etcd/raft/v3 v3.5.21 // indirect
@@ -270,6 +266,3 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	rogchap.com/v8go v0.9.0 // indirect
 )
-
-// temporary
-replace github.com/fergusstrange/embedded-postgres => github.com/mattjohnsonpint/embedded-postgres v0.0.0-20250520233857-b0ca281de480
