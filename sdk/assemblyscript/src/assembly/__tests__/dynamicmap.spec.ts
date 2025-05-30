@@ -177,4 +177,14 @@ it("should iterate raw values", () => {
   ]);
 });
 
+it("should serialize and deserialize", () => {
+  const m = new DynamicMap();
+  m.set("a", 42);
+  m.set("b", "hello");
+  m.set("c", [1, 2, 3]);
+  const serialized = JSON.stringify(m);
+  const deserialized = JSON.parse<DynamicMap>(serialized);
+  expect(JSON.stringify(deserialized)).toBe(JSON.stringify(m));
+});
+
 run();
