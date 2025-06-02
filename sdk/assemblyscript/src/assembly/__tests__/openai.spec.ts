@@ -37,4 +37,48 @@ it("should round-trip chat messages", () => {
   expect(roundTrip).toBe(data);
 });
 
+it("should parse oddly formatted message", () => {
+  const data = `
+{
+    "role"  :  \t\n "assistant",
+  "content" : "The capital of France is Paris."
+}`;
+
+  const p1 = JSON.parse<JSON.Obj>(data);
+  expect(p1.get("role")!.get<string>()).toBe("assistant");
+  expect(p1.get("content")!.get<string>()).toBe(
+    "The capital of France is Paris.",
+  );
+
+  const p2 = JSON.parse<AssistantMessage<string>>(data);
+  expect(p2.role).toBe("assistant");
+  expect(p2.content).toBe("The capital of France is Paris.");
+});
+
+it("should parse multiple messages of the same type", () => {
+  const json = JSON.stringify([
+    new UserMessage("First"),
+    new UserMessage("Second"),
+    new UserMessage("Third"),
+  ]);
+
+  const parsed = parseMessages(json);
+  expect(parsed.length).toBe(3);
+  for (let i = 0; i < parsed.length; i++) {
+    expect(parsed[i].role).toBe("user");
+  }
+});
+
+it("should correctly parse mixed message roles", () => {
+  const data = JSON.stringify<RequestMessage[]>([
+    new UserMessage("foo"),
+    new AssistantMessage<string>("bar"),
+    new SystemMessage("baz"),
+  ]);
+  const parsed = parseMessages(data);
+  expect(parsed[0].role).toBe("user");
+  expect(parsed[1].role).toBe("assistant");
+  expect(parsed[2].role).toBe("system");
+});
+
 run();

@@ -73,7 +73,7 @@ it("should query people", () => {
   expect(person.lastName).toBe("Tanaka");
 });
 
-it("should query people w/ variables", () => {
+it("should query people with variables", () => {
   const query = `
     query queryPeople($firstName: String!, $lastName: String!) {
       people: queryPerson(
