@@ -91,24 +91,5 @@
       "username": "{{NEO4J_USERNAME}}",
       "password": "{{NEO4J_PASSWORD}}"
     }
-  },
-  "collections": {
-    "collection1": {
-      "searchMethods": {
-        "searchMethod1": {
-          "embedder": "embedder1"
-        },
-        "searchMethod2": {
-          "embedder": "embedder1",
-          "index": {
-            "type": "hnsw",
-            "options": {
-              "efConstruction": 100,
-              "maxLevels": 3
-            }
-          }
-        }
-      }
-    }
   }
 }

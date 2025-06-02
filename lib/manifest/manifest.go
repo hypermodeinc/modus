@@ -37,7 +37,6 @@ type Manifest struct {
 	Endpoints   map[string]EndpointInfo   `json:"endpoints"`
 	Models      map[string]ModelInfo      `json:"models"`
 	Connections map[string]ConnectionInfo `json:"connections"`
-	Collections map[string]CollectionInfo `json:"collections"`
 }
 
 func (m *Manifest) IsCurrentVersion() bool {
@@ -106,7 +105,6 @@ func parseManifestJson(data []byte, manifest *Manifest) error {
 		Endpoints   map[string]json.RawMessage `json:"endpoints"`
 		Models      map[string]ModelInfo       `json:"models"`
 		Connections map[string]json.RawMessage `json:"connections"`
-		Collections map[string]CollectionInfo  `json:"collections"`
 	}
 	if err := json.Unmarshal(jsonc.ToJSON(data), &m); err != nil {
 		return fmt.Errorf("failed to parse manifest: %w", err)
@@ -114,16 +112,11 @@ func parseManifestJson(data []byte, manifest *Manifest) error {
 
 	manifest.Version = currentVersion
 	manifest.Models = m.Models
-	manifest.Collections = m.Collections
 
 	// Copy map keys to Name fields
 	for key, model := range manifest.Models {
 		model.Name = key
 		manifest.Models[key] = model
-	}
-	for key, collection := range manifest.Collections {
-		collection.Name = key
-		manifest.Collections[key] = collection
 	}
 
 	// Parse the endpoints by type

@@ -1,6 +1,0 @@
-{
-  "extends": "./node_modules/@hypermode/modus-sdk-as/plugin.asconfig.json",
-  "options": {
-    "transform": ["@hypermode/modus-sdk-as/transform", "json-as/transform"]
-  }
-}

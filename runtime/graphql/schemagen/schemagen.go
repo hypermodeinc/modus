@@ -166,7 +166,6 @@ func transformFunctions(functions metadata.FunctionMap, inputTypeDefs, resultTyp
 	queryFields := make([]*FieldDefinition, 0, len(functions))
 	mutationFields := make([]*FieldDefinition, 0, len(functions))
 	errors := make([]*TransformError, 0)
-	filter := getFieldFilter()
 
 	fnNames := utils.MapKeys(functions)
 	sort.Strings(fnNames)
@@ -198,7 +197,7 @@ func transformFunctions(functions metadata.FunctionMap, inputTypeDefs, resultTyp
 			field.DocLines = fn.Docs.Lines
 		}
 
-		if filter(field) {
+		if !strings.HasPrefix(field.Name, "_") {
 			if isMutation(fn.Name) {
 				mutationFields = append(mutationFields, field)
 			} else {

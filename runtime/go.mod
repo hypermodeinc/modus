@@ -11,7 +11,6 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.79.4
 	github.com/aws/aws-sdk-go-v2/service/sts v1.33.19
 	github.com/buger/jsonparser v1.1.1
-	github.com/chewxy/math32 v1.11.1
 	github.com/dgraph-io/dgo/v240 v240.2.0
 	github.com/docker/docker v28.1.1+incompatible
 	github.com/docker/go-connections v0.5.0
@@ -22,7 +21,6 @@ require (
 	github.com/goccy/go-json v0.10.5
 	github.com/gofrs/flock v0.12.1
 	github.com/golang-jwt/jwt/v5 v5.2.2
-	github.com/google/renameio/v2 v2.0.0
 	github.com/google/uuid v1.6.0
 	github.com/hypermodeinc/modus/lib/manifest v0.17.2
 	github.com/hypermodeinc/modus/lib/metadata v0.15.0
@@ -45,7 +43,6 @@ require (
 	github.com/tidwall/sjson v1.2.5
 	github.com/tochemey/goakt/v3 v3.4.4
 	github.com/twpayne/go-geom v1.6.1
-	github.com/viterin/vek v0.4.2
 	github.com/wundergraph/graphql-go-tools/execution v1.2.0
 	github.com/wundergraph/graphql-go-tools/v2 v2.0.0-rc.181
 	github.com/xo/dburl v0.23.8
@@ -98,6 +95,7 @@ require (
 	github.com/buraksezer/consistent v0.10.0 // indirect
 	github.com/cenkalti/backoff/v4 v4.3.0 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
+	github.com/chewxy/math32 v1.11.1 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/deckarep/golang-set/v2 v2.8.0 // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.4.0 // indirect
@@ -230,6 +228,7 @@ require (
 	github.com/tochemey/olric v0.2.2 // indirect
 	github.com/uber/jaeger-client-go v2.28.0+incompatible // indirect
 	github.com/viterin/partial v1.1.0 // indirect
+	github.com/viterin/vek v0.4.2 // indirect
 	github.com/vmihailenco/msgpack/v5 v5.4.1 // indirect
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	github.com/wundergraph/astjson v0.0.0-20250106123708-be463c97e083 // indirect

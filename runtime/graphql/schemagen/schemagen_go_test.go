@@ -27,15 +27,6 @@ func Test_GetGraphQLSchema_Go(t *testing.T) {
 	manifest := &manifest.Manifest{
 		Models:      map[string]manifest.ModelInfo{},
 		Connections: map[string]manifest.ConnectionInfo{},
-		Collections: map[string]manifest.CollectionInfo{
-			"collection1": {
-				SearchMethods: map[string]manifest.SearchMethodInfo{
-					"search1": {
-						Embedder: "myEmbedder",
-					},
-				},
-			},
-		},
 	}
 	manifestdata.SetManifest(manifest)
 
@@ -114,11 +105,6 @@ func Test_GetGraphQLSchema_Go(t *testing.T) {
 	md.Types.AddType("[]*testdata.Person")
 	md.Types.AddType("*[]testdata.Person")
 	md.Types.AddType("*testdata.Person")
-
-	// This should be excluded from the final schema
-	md.FnExports.AddFunction("myEmbedder").
-		WithParameter("text", "string").
-		WithResult("[]float64")
 
 	// Generated input object from the output object
 	md.FnExports.AddFunction("testObj1").
