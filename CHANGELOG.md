@@ -5,6 +5,7 @@
 ## UNRELEASED
 
 - tests: implement more extensive testing [#867](https://github.com/hypermodeinc/modus/pull/867)
+- feat: remove embedded PostgresDB [#870](https://github.com/hypermodeinc/modus/pull/870)
 
 ## 2025-05-29 - Runtime 0.18.0-alpha.4
 
