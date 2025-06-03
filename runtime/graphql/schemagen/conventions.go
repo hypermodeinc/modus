@@ -23,14 +23,7 @@ var mutationPrefixes = []string{
 }
 
 func isMutation(fnName string) bool {
-	prefix := getPrefix(fnName, mutationPrefixes)
-	if prefix == "" {
-		return false
-	}
-
-	// embedders are not mutations
-	embedders := getEmbedderFields()
-	return !embedders[fnName]
+	return getPrefix(fnName, mutationPrefixes) != ""
 }
 
 func getFieldName(fnName string) string {

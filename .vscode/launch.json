@@ -153,10 +153,6 @@
           "value": "classification"
         },
         {
-          "label": "Collections Example",
-          "value": "collections"
-        },
-        {
           "label": "Dgraph Client Example",
           "value": "dgraph"
         },

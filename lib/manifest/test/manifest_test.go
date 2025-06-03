@@ -132,26 +132,6 @@ func TestReadManifest(t *testing.T) {
 				Password: "{{NEO4J_PASSWORD}}",
 			},
 		},
-		Collections: map[string]manifest.CollectionInfo{
-			"collection1": {
-				Name: "collection1",
-				SearchMethods: map[string]manifest.SearchMethodInfo{
-					"searchMethod1": {
-						Embedder: "embedder1",
-					},
-					"searchMethod2": {
-						Embedder: "embedder1",
-						Index: manifest.IndexInfo{
-							Type: "hnsw",
-							Options: manifest.OptionsInfo{
-								EfConstruction: 100,
-								MaxLevels:      3,
-							},
-						},
-					},
-				},
-			},
-		},
 	}
 
 	actualManifest, err := manifest.ReadManifest(validManifest)

@@ -13,7 +13,6 @@ import (
 	"context"
 
 	"github.com/hypermodeinc/modus/runtime/actors"
-	"github.com/hypermodeinc/modus/runtime/collections"
 	"github.com/hypermodeinc/modus/runtime/db"
 	"github.com/hypermodeinc/modus/runtime/dgraphclient"
 	"github.com/hypermodeinc/modus/runtime/envfiles"
@@ -54,7 +53,6 @@ func Start(ctx context.Context) context.Context {
 	storage.Initialize(ctx)
 	db.Initialize(ctx)
 	db.InitModusDb(ctx)
-	collections.Initialize(ctx)
 	manifestdata.MonitorManifestFile(ctx)
 	envfiles.MonitorEnvFiles(ctx)
 	pluginmanager.Initialize(ctx)
@@ -78,7 +76,6 @@ func Stop(ctx context.Context) {
 	// If you need to change the order or add new services, be sure to test thoroughly.
 	// Unlike start, these should each block until they are fully stopped.
 
-	collections.Shutdown(ctx)
 	middleware.Shutdown()
 	sqlclient.Shutdown()
 	dgraphclient.ShutdownConns()

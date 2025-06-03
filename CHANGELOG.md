@@ -5,6 +5,7 @@
 ## UNRELEASED
 
 - feat: remove embedded PostgresDB [#870](https://github.com/hypermodeinc/modus/pull/870)
+- feat: delete collections features [#872](https://github.com/hypermodeinc/modus/pull/872)
 
 ## 2025-05-29 - Runtime 0.18.0-alpha.4
 
