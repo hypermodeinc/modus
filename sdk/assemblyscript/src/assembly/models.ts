@@ -47,8 +47,6 @@ class ModusModelFactory implements ModelFactory {
   }
 }
 
-
-@json
 export class ModelInfo {
   constructor(
     public readonly name: string,
@@ -66,8 +64,6 @@ export abstract class ModelError {
   abstract toString(): string;
 }
 
-
-@json
 export abstract class Model<TInput = unknown, TOutput = unknown> {
   static invoker: ModelInvoker | null = null;
   protected constructor(public info: ModelInfo) {}

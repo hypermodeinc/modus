@@ -16,7 +16,6 @@ import * as base64 from "as-base64/assembly";
  *
  * Reference: https://platform.openai.com/docs/api-reference/chat
  */
-@json
 export class OpenAIChatModel extends Model<OpenAIChatInput, OpenAIChatOutput> {
   /**
    * Creates an input object for the OpenAI Chat API.
