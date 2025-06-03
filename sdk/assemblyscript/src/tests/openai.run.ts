@@ -13,5 +13,4 @@ const binary = readFileSync("./build/openai.spec.wasm");
 const module = new WebAssembly.Module(binary);
 instantiate(module, {
   env: {},
-  modus_models: {},
 });
