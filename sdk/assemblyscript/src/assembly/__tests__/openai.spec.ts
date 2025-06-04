@@ -23,6 +23,7 @@ import { Model, ModelInfo } from "../models";
 
 let _get_model_name: string = "";
 let _get_model_info_out: ModelInfo | null = null;
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 let _invoke_model_name: string = "";
 let _invoke_input: string = "";
 let _invoke_model_out: string | null = null;
