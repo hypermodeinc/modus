@@ -9,10 +9,6 @@
 
 import { JSON } from "json-as";
 
-/**
- * Deprecated. Use `Map<string, JSON.Raw>` instead.
- * @deprecated
- */
 @json
 export class DynamicMap {
   private data: Map<string, JSON.Raw> = new Map<string, JSON.Raw>();
