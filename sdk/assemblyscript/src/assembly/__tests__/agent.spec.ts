@@ -41,10 +41,11 @@ mockImport("modus_agents.listAgents", (): AgentInfo[] => {
 
 mockImport(
   "modus_agents.sendMessage",
-  (// eslint-disable-next-line @typescript-eslint/no-unused-vars
-    _agentId: string,// eslint-disable-next-line @typescript-eslint/no-unused-vars
-    _msgName: string,// eslint-disable-next-line @typescript-eslint/no-unused-vars
-    _data: string | null,// eslint-disable-next-line @typescript-eslint/no-unused-vars
+  (
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    _agentId: string, // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    _msgName: string, // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    _data: string | null, // eslint-disable-next-line @typescript-eslint/no-unused-vars
     _timeout: i64,
   ): MessageResponse | null => {
     return send_message_ret;
