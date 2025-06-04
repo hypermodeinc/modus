@@ -23,6 +23,7 @@ import { Model, ModelInfo } from "../models";
 
 let _get_model_name: string = "";
 let _get_model_info_out: ModelInfo | null = null;
+let _invoke_model_name: string = "";
 let _invoke_input: string = "";
 let _invoke_model_out: string | null = null;
 
@@ -136,13 +137,5 @@ it("should invoke mocked OpenAI model", () => {
 
   expect(output.choices[0].message.content).toBe("My name is Bob.");
 });
-
-// it("should create prompt message for quote summary generation", () => {
-//   const quote = "Every person, all the events of your life are there because you have drawn them there. What you choose to do with them is up to you.";
-//   const author = "Richard Bach";
-//   const instruction = "Provide a brief, insightful summary that captures the essence and meaning of the quote in 1-2 sentences.";
-//   const prompt = "Quote: " + quote + " - " + author;
-
-// })
 
 run();
