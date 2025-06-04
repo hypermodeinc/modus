@@ -9,6 +9,7 @@
 
 import { JSON } from "json-as";
 
+
 @json
 export class DynamicMap {
   private data: Map<string, JSON.Raw> = new Map<string, JSON.Raw>();

@@ -36,9 +36,17 @@ mockImport("modus_agents.listAgents", (): AgentInfo[] => {
   return list_agents_ret;
 });
 
-mockImport("modus_agents.sendMessage", (agentId: string, msgName: string, data: string | null, timeout: i64): MessageResponse | null => {
-  return send_message_ret;
-});
+mockImport(
+  "modus_agents.sendMessage",
+  (
+    agentId: string,
+    msgName: string,
+    data: string | null,
+    timeout: i64,
+  ): MessageResponse | null => {
+    return send_message_ret;
+  },
+);
 
 it("should serialize an AgentStatus using type aliases", () => {
   const status: AgentStatus = AgentStatus.Resuming;
@@ -56,7 +64,11 @@ it("should register an agent", () => {
 });
 
 it("should start an agent", () => {
-  start_agent_ret = new AgentInfo("d1086e837bkp4ltjm150", "TaskManager", "starting");
+  start_agent_ret = new AgentInfo(
+    "d1086e837bkp4ltjm150",
+    "TaskManager",
+    "starting",
+  );
   const agent = agents.start("TaskManager");
   expect(agent.id).toBe("d1086e837bkp4ltjm150");
   expect(agent.name).toBe("TaskManager");
@@ -64,7 +76,9 @@ it("should start an agent", () => {
 });
 
 it("should list current agents", () => {
-  list_agents_ret = [new AgentInfo("d1086e837bkp4ltjm150", "TaskManager", "running")];
+  list_agents_ret = [
+    new AgentInfo("d1086e837bkp4ltjm150", "TaskManager", "running"),
+  ];
   const agents = listAgents();
   expect(agents.length).toBe(1);
   const agent = agents[0]!;
@@ -74,7 +88,11 @@ it("should list current agents", () => {
 });
 
 it("should stop an agent", () => {
-  stop_agent_ret = new AgentInfo("d1086e837bkp4ltjm150", "TaskManager", "terminated");
+  stop_agent_ret = new AgentInfo(
+    "d1086e837bkp4ltjm150",
+    "TaskManager",
+    "terminated",
+  );
   const agent = agents.stop("TaskManager");
   expect(agent.id).toBe("d1086e837bkp4ltjm150");
   expect(agent.name).toBe("TaskManager");
@@ -89,29 +107,40 @@ it("should list current agents", () => {
 
 it("should add a task", () => {
   send_message_ret = new MessageResponse('Task added: "Sign up for Hypermode"');
-  const res = agents.sendMessage("d1086e837bkp4ltjm150", "addTask", 'Sign up for Hypermode');
+  const res = agents.sendMessage(
+    "d1086e837bkp4ltjm150",
+    "addTask",
+    "Sign up for Hypermode",
+  );
   expect(res).toBe('Task added: "Sign up for Hypermode"');
 });
 
 it("should complete a task", () => {
-  send_message_ret = new MessageResponse('Task completed: "Sign up for Hypermode"');
-  const res = agents.sendMessage("d1086e837bkp4ltjm150", "completeTask", 'Sign up for Hypermode');
+  send_message_ret = new MessageResponse(
+    'Task completed: "Sign up for Hypermode"',
+  );
+  const res = agents.sendMessage(
+    "d1086e837bkp4ltjm150",
+    "completeTask",
+    "Sign up for Hypermode",
+  );
   expect(res).toBe('Task completed: "Sign up for Hypermode"');
 });
 
 it("should list tasks", () => {
-  send_message_ret = new MessageResponse('[x] Sign up for Hypermode');
+  send_message_ret = new MessageResponse("[x] Sign up for Hypermode");
   const res = agents.sendMessage("d1086e837bkp4ltjm150", "list");
-  expect(res).toBe('[x] Sign up for Hypermode');
+  expect(res).toBe("[x] Sign up for Hypermode");
 });
 
-it ("should get statistics for tasks", () => {
-  send_message_ret = new MessageResponse('Tasks: 1/1 completed');
+it("should get statistics for tasks", () => {
+  send_message_ret = new MessageResponse("Tasks: 1/1 completed");
   const res = agents.sendMessage("d1086e837bkp4ltjm150", "stats");
-  expect(res).toBe('Tasks: 1/1 completed');
+  expect(res).toBe("Tasks: 1/1 completed");
 });
 
 run();
+
 
 @json
 class MessageResponse {
