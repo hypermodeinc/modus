@@ -91,18 +91,25 @@ export function generateTextWithTools(prompt: string): string {
         // NOTE: A future release of Modus may simplify this process.
         let toolMsg: ToolMessage<string>;
         const fnName = tc.function.name;
-        if (fnName === "getCurrentTime") {
-          const args = JSON.parse<Map<string, string>>(tc.function.arguments);
-          const result = getCurrentTime(args.get("tz"));
-          toolMsg = new ToolMessage(result, tc.id);
-        } else if (fnName === "getUserTimeZone") {
-          const timeZone = getUserTimeZone();
-          toolMsg = new ToolMessage(timeZone, tc.id);
-        } else if (fnName === "getCurrentTimeInUserTimeZone") {
-          const result = getCurrentTimeInUserTimeZone();
-          toolMsg = new ToolMessage(result, tc.id);
-        } else {
-          throw new Error(`Unknown tool call: ${tc.function.name}`);
+        switch (fnName) {
+          case "getCurrentTime": {
+            const args = JSON.parse<Map<string, string>>(tc.function.arguments);
+            const result = getCurrentTime(args.get("tz"));
+            toolMsg = new ToolMessage(result, tc.id);
+            break;
+          }
+          case "getUserTimeZone": {
+            const timeZone = getUserTimeZone();
+            toolMsg = new ToolMessage(timeZone, tc.id);
+            break;
+          }
+          case "getCurrentTimeInUserTimeZone": {
+            const result = getCurrentTimeInUserTimeZone();
+            toolMsg = new ToolMessage(result, tc.id);
+            break;
+          }
+          default:
+            throw new Error(`Unknown tool call: ${tc.function.name}`);
         }
 
         // Add the tool's response to the conversation.

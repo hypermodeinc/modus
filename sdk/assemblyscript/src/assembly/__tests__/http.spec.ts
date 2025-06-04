@@ -15,14 +15,19 @@ import { JSON } from "json-as";
 mockImport(
   "modus_system.logMessage",
   (level: string, message: string): void => {
-    if (level === "debug") {
-      console.debug(message);
-    } else if (level === "info") {
-      console.info(message);
-    } else if (level === "warning") {
-      console.warn(message);
-    } else if (level === "error") {
-      console.error(message);
+    switch (level) {
+      case "debug":
+        console.debug(message);
+        break;
+      case "info":
+        console.info(message);
+        break;
+      case "warning":
+        console.warn(message);
+        break;
+      case "error":
+        console.error(message);
+        break;
     }
   },
 );
