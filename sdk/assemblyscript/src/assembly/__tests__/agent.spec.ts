@@ -16,19 +16,22 @@ import { TaskManagerAgent } from "./src/taskagent";
 
 let start_agent_ret: AgentInfo | null = null;
 let stop_agent_ret: AgentInfo | null = null;
-let get_agent_info_ret: AgentInfo | null = null;
+const get_agent_info_ret: AgentInfo | null = null;
 let list_agents_ret: AgentInfo[] = [];
 let send_message_ret: MessageResponse | null = null;
 
-mockImport("modus_agents.startAgent", (name: string): AgentInfo => {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+mockImport("modus_agents.startAgent", (_name: string): AgentInfo => {
   return start_agent_ret!;
 });
 
-mockImport("modus_agents.stopAgent", (name: string): AgentInfo => {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+mockImport("modus_agents.stopAgent", (_name: string): AgentInfo => {
   return stop_agent_ret!;
 });
 
-mockImport("modus_agents.getAgentInfo", (name: string): AgentInfo => {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+mockImport("modus_agents.getAgentInfo", (_name: string): AgentInfo => {
   return get_agent_info_ret!;
 });
 
@@ -38,11 +41,11 @@ mockImport("modus_agents.listAgents", (): AgentInfo[] => {
 
 mockImport(
   "modus_agents.sendMessage",
-  (
-    agentId: string,
-    msgName: string,
-    data: string | null,
-    timeout: i64,
+  (// eslint-disable-next-line @typescript-eslint/no-unused-vars
+    _agentId: string,// eslint-disable-next-line @typescript-eslint/no-unused-vars
+    _msgName: string,// eslint-disable-next-line @typescript-eslint/no-unused-vars
+    _data: string | null,// eslint-disable-next-line @typescript-eslint/no-unused-vars
+    _timeout: i64,
   ): MessageResponse | null => {
     return send_message_ret;
   },

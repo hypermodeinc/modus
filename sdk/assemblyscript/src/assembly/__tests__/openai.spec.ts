@@ -7,7 +7,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { expect, it, log, mockImport, run } from "as-test";
+import { expect, it, mockImport, run } from "as-test";
 import { JSON } from "json-as";
 
 import {
@@ -23,7 +23,6 @@ import { Model, ModelInfo } from "../models";
 
 let _get_model_name: string = "";
 let _get_model_info_out: ModelInfo | null = null;
-let _invoke_model_name: string = "";
 let _invoke_input: string = "";
 let _invoke_model_out: string | null = null;
 
