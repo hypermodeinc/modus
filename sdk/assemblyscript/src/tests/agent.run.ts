@@ -13,4 +13,5 @@ const binary = readFileSync("./build/agent.spec.wasm");
 const module = new WebAssembly.Module(binary);
 instantiate(module, {
   env: {},
+  modus_models: {},
 });
