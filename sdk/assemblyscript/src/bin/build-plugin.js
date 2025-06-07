@@ -94,9 +94,9 @@ async function validatePackageJson() {
   // Verify dependencies for the plugin.
   // Note: This is a minimal set of dependencies required for the plugin to build correctly.
   // The versions may be lower than the latest available, or the ones used by our library.
-  verifyPackageInstalled(pkgJson, "assemblyscript", "0.27.34", true);
+  verifyPackageInstalled(pkgJson, "assemblyscript", "0.28.2", true);
   verifyPackageInstalled(pkgJson, "typescript", "5.8.0", true);
-  verifyPackageInstalled(pkgJson, "json-as", "1.0.0", false);
+  verifyPackageInstalled(pkgJson, "json-as", "1.1.14", false);
 }
 
 async function validateAsJson() {

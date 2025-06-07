@@ -92,20 +92,21 @@ export class CounterAgent extends Agent {
     // You can either handle the message here, or pass it to another method or function.
     // If you don't have any response to send back, return null.
 
-    // A "count" message just returns the current count.
-    if (name == "count") {
-      return this.count.toString();
-    }
+    switch (name) {
+      case "count":
+        // A "count" message just returns the current count.
+        return this.count.toString();
 
-    // An "increment" message increments the count and returns the new count.
-    // If the message has data, it is used as the increment value. Otherwise it defaults to 1.
-    if (name == "increment") {
-      if (data != null) {
-        this.count += i32.parse(data);
-      } else {
-        this.count++;
+      case "increment": {
+        // An "increment" message increments the count and returns the new count.
+        // If the message has data, it is used as the increment value. Otherwise it defaults to 1.
+        if (data != null) {
+          this.count += i32.parse(data);
+        } else {
+          this.count++;
+        }
+        return this.count.toString();
       }
-      return this.count.toString();
     }
 
     return null;
