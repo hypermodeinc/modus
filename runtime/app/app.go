@@ -20,7 +20,7 @@ import (
 )
 
 var mu = &sync.RWMutex{}
-var config *AppConfig
+var config *AppConfig = NewAppConfig()
 var shuttingDown = false
 
 func Initialize() {
