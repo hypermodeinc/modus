@@ -109,6 +109,7 @@ func updateManifest(t *testing.T, jsonManifest []byte) func() {
 func TestMain(m *testing.M) {
 	// setup config
 	cfg := app.NewAppConfig().
+		WithEnvironment("dev").
 		WithAppPath(testPluginsPath).
 		WithRefreshInterval(refreshPluginInterval).
 		WithPort(httpListenPort)
