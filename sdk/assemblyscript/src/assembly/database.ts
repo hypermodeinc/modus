@@ -252,15 +252,15 @@ export class Location {
 
   @deserializer
   private deserialize(data: string): Location {
-    if (
-      data.length < 7 ||
-      data.charAt(0) != '"' ||
-      data.charAt(data.length - 1) != '"'
-    ) {
-      throw new Error("Invalid Location string");
-    }
+    data = data.trim();
+    const end = data.length - 1;
+    if (data.length < 7 || data.charAt(0) != '"' || data.charAt(end) != '"')
+      throw new Error(
+        "Failed to parse Location string. Expected quotes but found none.",
+      );
 
-    const p = parsePointString(data.substring(1, data.length - 1));
+    const p = parsePointString(data.slice(1, end).trim());
+
     if (p.length == 0) {
       throw new Error("Invalid Location string");
     }
@@ -274,22 +274,24 @@ export class Location {
 function parsePointString(data: string): f64[] {
   // Convert WKT point to Postgres format
   // "POINT (x y)" -> "(x, y)"
-  if (data.startsWith("POINT (") && data.endsWith(")")) {
-    data = data.substring(6, data.length).replace(" ", ",");
+  if (data.startsWith("POINT (")) {
+    data = data.slice(6).trim().replace(" ", ",");
   }
 
-  if (!data.startsWith("(") || !data.endsWith(")")) {
+  const end = data.length - 1;
+
+  if (data.charAt(0) != "(" || data.charAt(end) != ")") {
     console.error(`Invalid Point string: "${data}"`);
     return [];
   }
 
-  const parts = data.substring(1, data.length - 1).split(",");
+  const parts = data.slice(1, end).split(",");
   if (parts.length != 2) {
     console.error(`Invalid Point string: "${data}"`);
     return [];
   }
 
-  const x = parseFloat(parts[0].trim());
-  const y = parseFloat(parts[1].trim());
+  const x = f64.parse(parts[0].trim());
+  const y = f64.parse(parts[1].trim());
   return [x, y];
 }

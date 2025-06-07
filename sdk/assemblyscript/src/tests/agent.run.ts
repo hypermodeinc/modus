@@ -8,9 +8,10 @@
  */
 
 import { readFileSync } from "fs";
-import { instantiate } from "../build/openai.spec.js";
-const binary = readFileSync("./build/openai.spec.wasm");
+import { instantiate } from "../build/agent.spec.js";
+const binary = readFileSync("./build/agent.spec.wasm");
 const module = new WebAssembly.Module(binary);
 instantiate(module, {
   env: {},
+  modus_models: {},
 });
