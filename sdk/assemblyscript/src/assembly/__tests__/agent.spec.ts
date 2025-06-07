@@ -52,6 +52,12 @@ mockImport(
   },
 );
 
+mockImport(
+  "modus_agents.publishEvent",
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  (agentId: string, eventName: string, eventData: string | null): void => {},
+);
+
 it("should serialize an AgentStatus using type aliases", () => {
   const status: AgentStatus = AgentStatus.Resuming;
   expect(JSON.stringify(status)).toBe('"' + AgentStatus.Resuming + '"');
@@ -85,7 +91,7 @@ it("should list current agents", () => {
   ];
   const agents = listAgents();
   expect(agents.length).toBe(1);
-  const agent = agents[0]!;
+  const agent = agents[0];
   expect(agent.id).toBe("d1086e837bkp4ltjm150");
   expect(agent.name).toBe("TaskManager");
   expect(agent.status).toBe("running");

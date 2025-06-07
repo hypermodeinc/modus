@@ -16,7 +16,6 @@ import (
 
 	"github.com/hypermodeinc/modus/runtime/actors"
 	"github.com/hypermodeinc/modus/runtime/app"
-	"github.com/hypermodeinc/modus/runtime/utils"
 )
 
 var healthHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -27,7 +26,7 @@ var healthHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request
 	// custom format the JSON response for easy readability
 
 	w.WriteHeader(http.StatusOK)
-	utils.WriteJsonContentHeader(w)
+	w.Header().Set("Content-Type", "application/json")
 	_, _ = w.Write([]byte(`{
   "status": "ok",
   "environment": "` + env + `",

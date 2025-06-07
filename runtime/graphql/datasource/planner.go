@@ -12,21 +12,22 @@ package datasource
 import (
 	"bytes"
 	"context"
-	"fmt"
 	"slices"
+	"strings"
 
 	"github.com/hypermodeinc/modus/runtime/logger"
 	"github.com/hypermodeinc/modus/runtime/utils"
+	"github.com/tidwall/gjson"
 
 	"github.com/wundergraph/graphql-go-tools/v2/pkg/ast"
 	"github.com/wundergraph/graphql-go-tools/v2/pkg/engine/plan"
 	"github.com/wundergraph/graphql-go-tools/v2/pkg/engine/resolve"
 )
 
-type HypDSPlanner struct {
+type modusDataSourcePlanner struct {
 	id        int
 	ctx       context.Context
-	config    HypDSConfig
+	config    plan.DataSourceConfiguration[ModusDataSourceConfig]
 	visitor   *plan.Visitor
 	variables resolve.Variables
 	fields    map[int]fieldInfo
@@ -46,6 +47,7 @@ type fieldInfo struct {
 	Fields     []fieldInfo `json:"fields,omitempty"`
 	IsMapType  bool        `json:"isMapType,omitempty"`
 	fieldRefs  []int       `json:"-"`
+	depth      int         `json:"-"`
 }
 
 func (t *fieldInfo) AliasOrName() string {
@@ -55,23 +57,23 @@ func (t *fieldInfo) AliasOrName() string {
 	return t.Name
 }
 
-func (p *HypDSPlanner) SetID(id int) {
+func (p *modusDataSourcePlanner) SetID(id int) {
 	p.id = id
 }
 
-func (p *HypDSPlanner) ID() (id int) {
+func (p *modusDataSourcePlanner) ID() (id int) {
 	return p.id
 }
 
-func (p *HypDSPlanner) UpstreamSchema(dataSourceConfig plan.DataSourceConfiguration[HypDSConfig]) (*ast.Document, bool) {
+func (p *modusDataSourcePlanner) UpstreamSchema(dataSourceConfig plan.DataSourceConfiguration[ModusDataSourceConfig]) (*ast.Document, bool) {
 	return nil, false
 }
 
-func (p *HypDSPlanner) DownstreamResponseFieldAlias(downstreamFieldRef int) (alias string, exists bool) {
+func (p *modusDataSourcePlanner) DownstreamResponseFieldAlias(downstreamFieldRef int) (alias string, exists bool) {
 	return
 }
 
-func (p *HypDSPlanner) DataSourcePlanningBehavior() plan.DataSourcePlanningBehavior {
+func (p *modusDataSourcePlanner) DataSourcePlanningBehavior() plan.DataSourcePlanningBehavior {
 	return plan.DataSourcePlanningBehavior{
 		// This needs to be true, so we can distinguish results for multiple function calls in the same operation.
 		// Example:
@@ -88,31 +90,39 @@ func (p *HypDSPlanner) DataSourcePlanningBehavior() plan.DataSourcePlanningBehav
 	}
 }
 
-func (p *HypDSPlanner) Register(visitor *plan.Visitor, configuration plan.DataSourceConfiguration[HypDSConfig], dspc plan.DataSourcePlannerConfiguration) error {
+func (p *modusDataSourcePlanner) Register(visitor *plan.Visitor, configuration plan.DataSourceConfiguration[ModusDataSourceConfig], dspc plan.DataSourcePlannerConfiguration) error {
 	p.visitor = visitor
 	visitor.Walker.RegisterEnterDocumentVisitor(p)
 	visitor.Walker.RegisterEnterFieldVisitor(p)
 	visitor.Walker.RegisterLeaveDocumentVisitor(p)
-	p.config = HypDSConfig(configuration.CustomConfiguration())
+	p.config = configuration
+
 	return nil
 }
 
-func (p *HypDSPlanner) EnterDocument(operation, definition *ast.Document) {
+func (p *modusDataSourcePlanner) EnterDocument(operation, definition *ast.Document) {
 	p.fields = make(map[int]fieldInfo, len(operation.Fields))
 }
 
-func (p *HypDSPlanner) EnterField(ref int) {
+func (p *modusDataSourcePlanner) EnterField(ref int) {
+	ds := p.config.(plan.DataSource)
+	config := p.config.CustomConfiguration()
 
 	// Capture information about every field in the operation.
 	f := p.captureField(ref)
 	p.fields[ref] = *f
 
-	// Capture only the fields that represent function calls.
-	if p.currentNodeIsFunctionCall() {
-
+	// Capture input data from only the fields that represent function calls or event subscriptions.
+	// These fields are identified by their depth (3), and the fact that they have
+	// a parent type that is a root node in the data source configuration.
+	//
+	// The depth is 3 because the tree structure of the GraphQL operation looks like this:
+	//   0: root node (query, mutation, or subscription)
+	//   1: selection set node
+	//   2: this field's node
+	if f.depth == 3 && ds.HasRootNode(f.ParentType, f.Name) {
 		p.template.fieldInfo = f
-		p.template.functionName = p.config.FieldsToFunctions[f.Name]
-
+		p.template.functionName = config.FieldsToFunctions[f.Name]
 		if err := p.captureInputData(ref); err != nil {
 			logger.Err(p.ctx, err).Msg("Error capturing input data.")
 			return
@@ -120,12 +130,12 @@ func (p *HypDSPlanner) EnterField(ref int) {
 	}
 }
 
-func (p *HypDSPlanner) LeaveDocument(operation, definition *ast.Document) {
+func (p *modusDataSourcePlanner) LeaveDocument(operation, definition *ast.Document) {
 	// Stitch the captured fields together to form a tree.
 	p.stitchFields(p.template.fieldInfo)
 }
 
-func (p *HypDSPlanner) stitchFields(f *fieldInfo) {
+func (p *modusDataSourcePlanner) stitchFields(f *fieldInfo) {
 	if f == nil || len(f.fieldRefs) == 0 {
 		return
 	}
@@ -138,30 +148,15 @@ func (p *HypDSPlanner) stitchFields(f *fieldInfo) {
 	}
 }
 
-func (p *HypDSPlanner) currentNodeIsFunctionCall() bool {
-	if p.visitor.Walker.CurrentKind != ast.NodeKindField {
-		return false
-	}
-
-	enclosingTypeDef := p.visitor.Walker.EnclosingTypeDefinition
-	if enclosingTypeDef.Kind != ast.NodeKindObjectTypeDefinition {
-		return false
-	}
-
-	// TODO: This works, but it's a hack. We should find a better way to determine if the field is a function call.
-	// The previous approach of root node testing worked for queries, but not for mutations.
-	// The enclosing type name should not be relevant.
-	enclosingTypeName := p.visitor.Definition.ObjectTypeDefinitionNameString(enclosingTypeDef.Ref)
-	return enclosingTypeName == "Query" || enclosingTypeName == "Mutation"
-}
-
-func (p *HypDSPlanner) captureField(ref int) *fieldInfo {
+func (p *modusDataSourcePlanner) captureField(ref int) *fieldInfo {
 	operation := p.visitor.Operation
 	definition := p.visitor.Definition
 	walker := p.visitor.Walker
+	config := p.config.CustomConfiguration()
 
 	f := &fieldInfo{
 		ref:   ref,
+		depth: walker.Depth,
 		Name:  operation.FieldNameString(ref),
 		Alias: operation.FieldAliasString(ref),
 	}
@@ -170,7 +165,7 @@ func (p *HypDSPlanner) captureField(ref int) *fieldInfo {
 	if ok {
 		f.TypeName = definition.FieldDefinitionTypeNameString(def)
 		f.ParentType = walker.EnclosingTypeDefinition.NameString(definition)
-		f.IsMapType = slices.Contains(p.config.MapTypes, f.TypeName)
+		f.IsMapType = slices.Contains(config.MapTypes, f.TypeName)
 	}
 
 	if operation.FieldHasSelections(ref) {
@@ -183,7 +178,7 @@ func (p *HypDSPlanner) captureField(ref int) *fieldInfo {
 	return f
 }
 
-func (p *HypDSPlanner) captureInputData(fieldRef int) error {
+func (p *modusDataSourcePlanner) captureInputData(fieldRef int) error {
 	operation := p.visitor.Operation
 	variables := resolve.NewVariables()
 	var buf bytes.Buffer
@@ -224,29 +219,48 @@ func (p *HypDSPlanner) captureInputData(fieldRef int) error {
 	return nil
 }
 
-func (p *HypDSPlanner) ConfigureFetch() resolve.FetchConfiguration {
+func (p *modusDataSourcePlanner) getInputTemplate() (string, error) {
+
 	fieldInfoJson, err := utils.JsonSerialize(p.template.fieldInfo)
 	if err != nil {
-		logger.Error(p.ctx).Err(err).Msg("Error serializing json while configuring graphql fetch.")
-		return resolve.FetchConfiguration{}
-	}
-
-	functionNameJson, err := utils.JsonSerialize(p.template.functionName)
-	if err != nil {
-		logger.Error(p.ctx).Err(err).Msg("Error serializing json while configuring graphql fetch.")
-		return resolve.FetchConfiguration{}
+		return "", err
 	}
 
 	// Note: we have to build the rest of the template manually, because the data field may
 	// contain placeholders for variables, such as $$0$$ which are not valid in JSON.
-	// They are replaced with the actual values by the time Load is called.
-	inputTemplate := fmt.Sprintf(`{"field":%s,"function":%s,"data":%s}`, fieldInfoJson, functionNameJson, p.template.data)
+	// They are replaced with the actual values when the input is rendered.
+
+	b := &strings.Builder{}
+	b.WriteString(`{"field":`)
+	b.Write(fieldInfoJson)
+
+	if len(p.template.functionName) > 0 {
+		b.WriteString(`,"function":`)
+		b.Write(gjson.AppendJSONString(nil, p.template.functionName))
+	}
+
+	b.WriteString(`,"data":`)
+	b.Write(p.template.data)
+
+	b.WriteByte('}')
+
+	return b.String(), nil
+}
+
+func (p *modusDataSourcePlanner) ConfigureFetch() resolve.FetchConfiguration {
+	input, err := p.getInputTemplate()
+	if err != nil {
+		logger.Error(p.ctx).Err(err).Msg("Error creating input template for Modus data source.")
+		return resolve.FetchConfiguration{}
+	}
+
+	config := p.config.CustomConfiguration()
 
 	return resolve.FetchConfiguration{
-		Input:     inputTemplate,
+		Input:     input,
 		Variables: p.variables,
-		DataSource: &ModusDataSource{
-			WasmHost: p.config.WasmHost,
+		DataSource: &functionsDataSource{
+			WasmHost: config.WasmHost,
 		},
 		PostProcessing: resolve.PostProcessingConfiguration{
 			SelectResponseDataPath:   []string{"data"},
@@ -255,6 +269,20 @@ func (p *HypDSPlanner) ConfigureFetch() resolve.FetchConfiguration {
 	}
 }
 
-func (p *HypDSPlanner) ConfigureSubscription() plan.SubscriptionConfiguration {
-	panic("subscription not implemented")
+func (p *modusDataSourcePlanner) ConfigureSubscription() plan.SubscriptionConfiguration {
+	input, err := p.getInputTemplate()
+	if err != nil {
+		logger.Error(p.ctx).Err(err).Msg("Error creating input template for Modus data source.")
+		return plan.SubscriptionConfiguration{}
+	}
+
+	return plan.SubscriptionConfiguration{
+		Input:      input,
+		Variables:  p.variables,
+		DataSource: &eventsDataSource{},
+		PostProcessing: resolve.PostProcessingConfiguration{
+			SelectResponseDataPath:   []string{"data"},
+			SelectResponseErrorsPath: []string{"errors"},
+		},
+	}
 }

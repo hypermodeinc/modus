@@ -79,12 +79,17 @@ func NewWasmHost(ctx context.Context, registrations ...func(WasmHost) error) Was
 }
 
 func GetWasmHost(ctx context.Context) WasmHost {
-	host, ok := ctx.Value(utils.WasmHostContextKey).(WasmHost)
+	host, ok := TryGetWasmHost(ctx)
 	if !ok {
 		logger.Fatal(ctx).Msg("WASM Host not found in context.")
 		return nil
 	}
 	return host
+}
+
+func TryGetWasmHost(ctx context.Context) (WasmHost, bool) {
+	host, ok := ctx.Value(utils.WasmHostContextKey).(WasmHost)
+	return host, ok
 }
 
 func (host *wasmHost) Close(ctx context.Context) {

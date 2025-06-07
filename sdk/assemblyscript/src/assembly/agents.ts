@@ -51,6 +51,10 @@ export function sendMessage(
   if (response == null) {
     throw new Error("Failed to send message to agent.");
   }
+  if (response.error) {
+    throw new Error(response.error!);
+  }
+
   return response.data;
 }
 
@@ -67,5 +71,6 @@ export function sendMessageAsync(
 }
 
 class MessageResponse {
-  data!: string | null;
+  data: string | null = null;
+  error: string | null = null;
 }

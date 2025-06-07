@@ -7,6 +7,7 @@
 - tests: implement more extensive testing [#867](https://github.com/hypermodeinc/modus/pull/867)
 - feat: remove embedded PostgresDB [#870](https://github.com/hypermodeinc/modus/pull/870)
 - feat: delete collections features [#872](https://github.com/hypermodeinc/modus/pull/872)
+- feat: stream agent events via subscriptions [#875](https://github.com/hypermodeinc/modus/pull/875)
 
 ## 2025-05-29 - Runtime 0.18.0-alpha.4
 

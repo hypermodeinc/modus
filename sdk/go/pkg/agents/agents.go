@@ -15,12 +15,21 @@ import (
 	"time"
 
 	"github.com/hypermodeinc/modus/sdk/go/pkg/console"
+	"github.com/hypermodeinc/modus/sdk/go/pkg/utils"
 )
 
+// AgentInfo contains information about an agent.
 type AgentInfo struct {
 	Id     string
 	Name   string
 	Status string
+}
+
+// AgentEvent is an interface that represents an event emitted by an agent.
+// Custom agent events should implement this interface.
+type AgentEvent interface {
+	// EventName returns the type of the event.
+	EventName() string
 }
 
 type AgentStatus = string
@@ -260,8 +269,21 @@ func (a *AgentBase) OnReceiveMessage(msgName string, data *string) (*string, err
 	return nil, nil
 }
 
+// Publishes an event from this agent to any subscribers.
+func (a *AgentBase) PublishEvent(event AgentEvent) error {
+	bytes, err := utils.JsonSerialize(event)
+	if err != nil {
+		return fmt.Errorf("failed to serialize event data: %w", err)
+	}
+	data := string(bytes)
+	name := event.EventName()
+	hostPublishEvent(activeAgentId, &name, &data)
+	return nil
+}
+
 type MessageResponse struct {
-	data *string
+	data  *string
+	error *string
 }
 
 type message struct {
@@ -338,6 +360,9 @@ func sendMessage(agentId string, m message) (*string, error) {
 	response := hostSendMessage(&agentId, &m.name, m.data, int64(m.timeout))
 	if response == nil {
 		return nil, errors.New("failed to send message to agent")
+	}
+	if response.error != nil {
+		return nil, errors.New(*response.error)
 	}
 
 	return response.data, nil
