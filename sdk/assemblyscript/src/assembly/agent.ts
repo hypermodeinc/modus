@@ -9,6 +9,7 @@
 
 import { AgentStatus } from "./enums";
 import * as utils from "./utils";
+import { JSON } from "json-as";
 
 const agents = new Map<string, Agent>();
 let activeAgent: Agent | null = null;
@@ -87,6 +88,14 @@ export abstract class Agent {
   onReceiveMessage(msgName: string, data: string | null): string | null {
     return null;
   }
+
+  /**
+   * Publishes an event from this agent to any subscribers.
+   */
+  publishEvent(event: AgentEvent): void {
+    const data = JSON.stringify(event);
+    hostPublishEvent(this.id, event.eventName, data);
+  }
 }
 
 /**
@@ -113,6 +122,14 @@ declare function hostGetAgentInfo(agentId: string): AgentInfo;
 // @ts-expect-error: decorator
 @external("modus_agents", "listAgents")
 declare function hostListAgents(): AgentInfo[];
+
+// @ts-expect-error: decorator
+@external("modus_agents", "publishEvent")
+declare function hostPublishEvent(
+  agentId: string,
+  eventName: string,
+  eventData: string | null,
+): void;
 
 /**
  * Starts an agent with the given name.
@@ -269,5 +286,29 @@ export class AgentInfo {
     this.id = id;
     this.name = name;
     this.status = status;
+  }
+}
+
+/**
+ * Base class for agent events.
+ * Custom agent events should extend this class.
+ */
+@json
+export class AgentEvent {
+  /**
+   * The name of the event.
+   */
+  @omit
+  readonly eventName: string;
+
+  /**
+   * Creates a new agent event.
+   * @param eventName The name of the event.
+   */
+  constructor(eventName: string) {
+    if (eventName == "") {
+      throw new Error("Event name cannot be empty.");
+    }
+    this.eventName = eventName;
   }
 }

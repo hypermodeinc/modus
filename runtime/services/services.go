@@ -53,11 +53,11 @@ func Start(ctx context.Context) context.Context {
 	storage.Initialize(ctx)
 	db.Initialize(ctx)
 	db.InitModusDb(ctx)
-	manifestdata.MonitorManifestFile(ctx)
-	envfiles.MonitorEnvFiles(ctx)
-	pluginmanager.Initialize(ctx)
-	graphql.Initialize()
 	actors.Initialize(ctx)
+	graphql.Initialize()
+	envfiles.MonitorEnvFiles(ctx)
+	manifestdata.MonitorManifestFile(ctx)
+	pluginmanager.Initialize(ctx)
 
 	return ctx
 }

@@ -72,7 +72,7 @@ func Activate(ctx context.Context, plugin *plugins.Plugin) error {
 	return nil
 }
 
-func generateSchema(ctx context.Context, md *metadata.Metadata) (*gql.Schema, *datasource.HypDSConfig, error) {
+func generateSchema(ctx context.Context, md *metadata.Metadata) (*gql.Schema, *datasource.ModusDataSourceConfig, error) {
 	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
 
@@ -94,7 +94,7 @@ func generateSchema(ctx context.Context, md *metadata.Metadata) (*gql.Schema, *d
 		return nil, nil, err
 	}
 
-	cfg := &datasource.HypDSConfig{
+	cfg := &datasource.ModusDataSourceConfig{
 		WasmHost:          wasmhost.GetWasmHost(ctx),
 		FieldsToFunctions: generated.FieldsToFunctions,
 		MapTypes:          generated.MapTypes,
@@ -103,7 +103,7 @@ func generateSchema(ctx context.Context, md *metadata.Metadata) (*gql.Schema, *d
 	return schema, cfg, nil
 }
 
-func getDatasourceConfig(ctx context.Context, schema *gql.Schema, cfg *datasource.HypDSConfig) (plan.DataSourceConfiguration[datasource.HypDSConfig], error) {
+func getDatasourceConfig(ctx context.Context, schema *gql.Schema, cfg *datasource.ModusDataSourceConfig) (plan.DataSourceConfiguration[datasource.ModusDataSourceConfig], error) {
 	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
 
@@ -112,6 +112,9 @@ func getDatasourceConfig(ctx context.Context, schema *gql.Schema, cfg *datasourc
 
 	mutationTypeName := schema.MutationTypeName()
 	mutationFieldNames := getTypeFields(ctx, schema, mutationTypeName)
+
+	subscriptionTypeName := schema.SubscriptionTypeName()
+	subscriptionFieldNames := getTypeFields(ctx, schema, subscriptionTypeName)
 
 	rootNodes := []plan.TypeField{
 		{
@@ -122,16 +125,24 @@ func getDatasourceConfig(ctx context.Context, schema *gql.Schema, cfg *datasourc
 			TypeName:   mutationTypeName,
 			FieldNames: mutationFieldNames,
 		},
+		{
+			TypeName:   subscriptionTypeName,
+			FieldNames: subscriptionFieldNames,
+		},
 	}
 
 	childNodes := []plan.TypeField{}
 	childNodes = append(childNodes, getChildNodes(queryFieldNames, schema, queryTypeName)...)
 	childNodes = append(childNodes, getChildNodes(mutationFieldNames, schema, mutationTypeName)...)
+	childNodes = append(childNodes, getChildNodes(subscriptionFieldNames, schema, subscriptionTypeName)...)
+
+	metadata := &plan.DataSourceMetadata{RootNodes: rootNodes, ChildNodes: childNodes}
+	cfg.Metadata = metadata
 
 	return plan.NewDataSourceConfiguration(
-		datasource.DataSourceName,
-		datasource.NewHypDSFactory(ctx),
-		&plan.DataSourceMetadata{RootNodes: rootNodes, ChildNodes: childNodes},
+		"Modus",
+		datasource.NewModusDataSourceFactory(ctx),
+		metadata,
 		*cfg,
 	)
 }
@@ -154,7 +165,7 @@ func getChildNodes(fieldNames []string, schema *gql.Schema, typeName string) []p
 	return childNodes
 }
 
-func makeEngine(ctx context.Context, schema *gql.Schema, datasourceConfig plan.DataSourceConfiguration[datasource.HypDSConfig]) (*engine.ExecutionEngine, error) {
+func makeEngine(ctx context.Context, schema *gql.Schema, datasourceConfig plan.DataSourceConfiguration[datasource.ModusDataSourceConfig]) (*engine.ExecutionEngine, error) {
 	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
 

@@ -55,7 +55,7 @@ func endpointsHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	utils.WriteJsonContentHeader(w)
+	w.Header().Set("Content-Type", "application/json")
 	j, _ := utils.JsonSerialize(endpoints)
 	_, _ = w.Write(j)
 }
@@ -70,7 +70,7 @@ func inferenceHistoryHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	utils.WriteJsonContentHeader(w)
+	w.Header().Set("Content-Type", "application/json")
 	j, err := utils.JsonSerialize(inferences)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

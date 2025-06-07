@@ -27,45 +27,37 @@ import (
 	"github.com/wundergraph/graphql-go-tools/v2/pkg/engine/resolve"
 )
 
-const DataSourceName = "ModusDataSource"
-
 type callInfo struct {
 	FieldInfo    fieldInfo      `json:"field"`
-	FunctionName string         `json:"function"`
+	FunctionName string         `json:"function,omitempty"`
 	Parameters   map[string]any `json:"data"`
 }
 
-type ModusDataSource struct {
+type functionsDataSource struct {
 	WasmHost wasmhost.WasmHost
 }
 
-func (ds *ModusDataSource) Load(ctx context.Context, input []byte, out *bytes.Buffer) error {
-
-	// Parse the input to get the function call info
+func (ds *functionsDataSource) Load(ctx context.Context, input []byte, out *bytes.Buffer) error {
 	var ci callInfo
-	err := utils.JsonDeserialize(input, &ci)
-	if err != nil {
+	if err := utils.JsonDeserialize(input, &ci); err != nil {
 		return fmt.Errorf("error parsing input: %w", err)
 	}
 
-	// Load the data
-	result, gqlErrors, err := ds.callFunction(ctx, &ci)
+	result, gqlErrors, fnErr := ds.callFunction(ctx, &ci)
 
-	// Write the response
-	err = writeGraphQLResponse(ctx, out, result, gqlErrors, err, &ci)
-	if err != nil {
-		logger.Error(ctx).Err(err).Msg("Error creating GraphQL response.")
+	if err := writeGraphQLResponse(ctx, out, result, gqlErrors, fnErr, &ci); err != nil {
+		return fmt.Errorf("error creating GraphQL response: %w", err)
 	}
 
-	return err
+	return nil
 }
 
-func (*ModusDataSource) LoadWithFiles(ctx context.Context, input []byte, files []*httpclient.FileUpload, out *bytes.Buffer) (err error) {
+func (*functionsDataSource) LoadWithFiles(ctx context.Context, input []byte, files []*httpclient.FileUpload, out *bytes.Buffer) (err error) {
 	// See https://github.com/wundergraph/graphql-go-tools/pull/758
 	panic("not implemented")
 }
 
-func (ds *ModusDataSource) callFunction(ctx context.Context, callInfo *callInfo) (any, []resolve.GraphQLError, error) {
+func (ds *functionsDataSource) callFunction(ctx context.Context, callInfo *callInfo) (any, []resolve.GraphQLError, error) {
 
 	// Handle special case for __typename on root Query or Mutation
 	if callInfo.FieldInfo.Name == "__typename" {

@@ -70,6 +70,22 @@ func GetGraphQLSchema(ctx context.Context, md *metadata.Metadata) (*GraphQLSchem
 		fieldsToFunctions[f.Name] = f.Function
 	}
 
+	// TODO: the subscription probably should only be added if there is at least one agent defined.
+	// For now it is hardcoded to always be present.
+	buf.WriteString(`
+scalar JSON
+
+type AgentEvent {
+  name: String!
+  data: JSON
+  timestamp: String
+}
+
+type Subscription {
+  agentEvent(agentId: String!): AgentEvent!
+}
+`)
+
 	return &GraphQLSchema{
 		Schema:            buf.String(),
 		FieldsToFunctions: fieldsToFunctions,

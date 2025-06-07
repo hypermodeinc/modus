@@ -17,26 +17,26 @@ import (
 	"github.com/wundergraph/graphql-go-tools/v2/pkg/engine/plan"
 )
 
-func NewHypDSFactory(ctx context.Context) plan.PlannerFactory[HypDSConfig] {
-	return &hypDSFactory{
+func NewModusDataSourceFactory(ctx context.Context) plan.PlannerFactory[ModusDataSourceConfig] {
+	return &modusDataSourceFactory{
 		ctx: ctx,
 	}
 }
 
-type hypDSFactory struct {
+type modusDataSourceFactory struct {
 	ctx context.Context
 }
 
-func (f *hypDSFactory) Planner(logger abstractlogger.Logger) plan.DataSourcePlanner[HypDSConfig] {
-	return &HypDSPlanner{
+func (f *modusDataSourceFactory) Planner(logger abstractlogger.Logger) plan.DataSourcePlanner[ModusDataSourceConfig] {
+	return &modusDataSourcePlanner{
 		ctx: f.ctx,
 	}
 }
 
-func (f *hypDSFactory) Context() context.Context {
+func (f *modusDataSourceFactory) Context() context.Context {
 	return f.ctx
 }
 
-func (f *hypDSFactory) UpstreamSchema(dataSourceConfig plan.DataSourceConfiguration[HypDSConfig]) (*ast.Document, bool) {
+func (f *modusDataSourceFactory) UpstreamSchema(dataSourceConfig plan.DataSourceConfiguration[ModusDataSourceConfig]) (*ast.Document, bool) {
 	return nil, false
 }

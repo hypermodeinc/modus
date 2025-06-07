@@ -4,7 +4,7 @@
  * See the LICENSE file that accompanied this code for further details.
  */
 
-import { Agent } from "@hypermode/modus-sdk-as";
+import { Agent, AgentEvent } from "@hypermode/modus-sdk-as";
 
 /**
  * This is a very simple agent that is used to demonstrate how Modus Agents work.
@@ -50,9 +50,7 @@ export class CounterAgent extends Agent {
   // If you don't need to do anything special when the agent starts, then you can omit it.
   // It can be used to initialize state, retrieve data, etc.
   // This is a good place to set up any listeners or subscriptions.
-  onInitialize(): void {
-    console.info("Counter agent started");
-  }
+  onInitialize(): void {}
 
   // When the agent is suspended, this method is automatically called.  Implementing it is optional.
   // If you don't need to do anything special when the agent is suspended, then you can omit it.
@@ -64,15 +62,11 @@ export class CounterAgent extends Agent {
   // Note that the agent may be suspended and resumed multiple times during its lifetime,
   // but the Modus Runtime will automatically save and restore the state of the agent,
   // so you don't need to worry about that here.
-  onSuspend(): void {
-    console.info("Counter agent suspended");
-  }
+  onSuspend(): void {}
 
   // When the agent is resumed, this method is automatically called.  Implementing it is optional.
   // If you don't need to do anything special when the agent is resumed, then you can omit it.
-  onResume(): void {
-    console.info("Counter agent resumed");
-  }
+  onResume(): void {}
 
   // When the agent is terminated, this method is automatically called.  Implementing it is optional.
   // It can be used to send final data somewhere, such as a database or an API.
@@ -80,9 +74,7 @@ export class CounterAgent extends Agent {
   // Note that resources are automatically cleaned up when the agent is terminated,
   // so you don't need to worry about that here.
   // Once an agent is terminated, it cannot be resumed.
-  onTerminate(): void {
-    console.info("Counter agent terminated");
-  }
+  onTerminate(): void {}
 
   // This method is called when the agent receives a message.
   // This is how agents update their state and share data.
@@ -105,10 +97,22 @@ export class CounterAgent extends Agent {
         } else {
           this.count++;
         }
+
+        // publish an event to subscribers
+        this.publishEvent(new CountUpdated(this.count));
+
         return this.count.toString();
       }
     }
 
     return null;
+  }
+}
+
+
+@json
+class CountUpdated extends AgentEvent {
+  constructor(public count: i32) {
+    super("countUpdated");
   }
 }

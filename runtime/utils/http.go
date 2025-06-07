@@ -128,7 +128,3 @@ func PostHttp[TResult any](ctx context.Context, url string, payload any, beforeS
 		EndTime:   endTime,
 	}, err
 }
-
-func WriteJsonContentHeader(w http.ResponseWriter) {
-	w.Header().Set("Content-Type", "application/json")
-}
