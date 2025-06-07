@@ -16,7 +16,8 @@
       "Date=wasi_Date"
     ],
     "exportStart": "_initialize",
-    "exportRuntime": true
+    "exportRuntime": true,
+    "disableWarning": [228]
   },
   "targets": {
     "debug": {
