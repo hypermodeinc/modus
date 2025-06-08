@@ -23,10 +23,10 @@ var healthHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request
 	ver := app.VersionNumber()
 	agents := actors.ListLocalAgents()
 
-	// custom format the JSON response for easy readability
-
-	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+
+	// custom format the JSON response for easy readability
 	_, _ = w.Write([]byte(`{
   "status": "ok",
   "environment": "` + env + `",
