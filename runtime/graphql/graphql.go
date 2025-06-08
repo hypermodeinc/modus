@@ -132,6 +132,7 @@ func handleGraphQLRequest(w http.ResponseWriter, r *http.Request) {
 		msg := "Failed to determine operation type from GraphQL request."
 		logger.Err(ctx, err).Msg(msg)
 		http.Error(w, msg, http.StatusBadRequest)
+		return
 	} else if operationType == gql.OperationTypeSubscription {
 		if !isSSERequest(r) {
 			msg := "Subscriptions use SSE (Server-Sent Events). Requests must accept 'text/event-stream' for SSE responses."
