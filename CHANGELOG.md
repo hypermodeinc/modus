@@ -2,10 +2,20 @@
 
 # Change Log
 
-## UNRELEASED
+## 2025-06-09 - Runtime 0.18.0-alpha.5
+
+- feat: remove embedded PostgresDB [#870](https://github.com/hypermodeinc/modus/pull/870)
+- feat: delete collections features [#872](https://github.com/hypermodeinc/modus/pull/872)
+- feat: stream agent events via subscriptions [#875](https://github.com/hypermodeinc/modus/pull/875)
+
+## 2025-06-09 - Go SDK 0.18.0-alpha.5
+
+- feat: delete collections features [#872](https://github.com/hypermodeinc/modus/pull/872)
+- feat: stream agent events via subscriptions [#875](https://github.com/hypermodeinc/modus/pull/875)
+
+## 2025-06-09 - AssemblyScript SDK 0.18.0-alpha.4
 
 - tests: implement more extensive testing [#867](https://github.com/hypermodeinc/modus/pull/867)
-- feat: remove embedded PostgresDB [#870](https://github.com/hypermodeinc/modus/pull/870)
 - feat: delete collections features [#872](https://github.com/hypermodeinc/modus/pull/872)
 - feat: stream agent events via subscriptions [#875](https://github.com/hypermodeinc/modus/pull/875)
 
