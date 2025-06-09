@@ -22,6 +22,9 @@ import (
 
 func main() {
 
+	// Initialize the app configuration (command-line flags, etc.)
+	app.Initialize()
+
 	// Create the main background context
 	ctx := context.Background()
 

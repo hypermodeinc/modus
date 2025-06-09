@@ -11,6 +11,9 @@ package actors
 
 import (
 	"context"
+	"fmt"
+	"os"
+	"strconv"
 	"time"
 
 	"github.com/hypermodeinc/modus/runtime/db"
@@ -20,30 +23,61 @@ import (
 	"github.com/hypermodeinc/modus/runtime/wasmhost"
 
 	goakt "github.com/tochemey/goakt/v3/actor"
+	goakt_static "github.com/tochemey/goakt/v3/discovery/static"
+	goakt_remote "github.com/tochemey/goakt/v3/remote"
+	"github.com/travisjeffery/go-dynaport"
 )
 
 var _actorSystem goakt.ActorSystem
 
 func Initialize(ctx context.Context) {
 
-	actorLogger := newActorLogger(logger.Get(ctx))
-
-	actorSystem, err := goakt.NewActorSystem("modus",
-		goakt.WithLogger(actorLogger),
+	opts := []goakt.Option{
+		goakt.WithLogger(newActorLogger(logger.Get(ctx))),
 		goakt.WithCoordinatedShutdown(beforeShutdown),
-		goakt.WithPassivationDisabled(),            // TODO: enable passivation. Requires a persistence store in production for agent state.
-		goakt.WithActorInitTimeout(10*time.Second), // TODO: adjust this value, or make it configurable
-		goakt.WithActorInitMaxRetries(1))           // TODO: adjust this value, or make it configurable
+		goakt.WithPubSub(),
+		goakt.WithPassivation(time.Second * 10),      // TODO: adjust this value, or make it configurable
+		goakt.WithActorInitTimeout(10 * time.Second), // TODO: adjust this value, or make it configurable
+		goakt.WithActorInitMaxRetries(1),             // TODO: adjust this value, or make it configurable
+	}
 
-	if err != nil {
+	// NOTE: we're not relying on cluster mode yet.  The below code block is for future use and testing purposes only.
+	if clusterMode, _ := strconv.ParseBool(os.Getenv("MODUS_USE_CLUSTER_MODE")); clusterMode {
+		// TODO: static discovery should really only be used for local development and testing.
+		// In production, we should use a more robust discovery mechanism, such as Kubernetes or NATS.
+		// See https://tochemey.gitbook.io/goakt/features/service-discovery
+
+		// We just get three random ports for now.
+		// In prod, these will need to be configured so they are consistent across all nodes.
+		ports := dynaport.Get(3)
+		var gossip_port = ports[0]
+		var peers_port = ports[1]
+		var remoting_port = ports[2]
+
+		disco := goakt_static.NewDiscovery(&goakt_static.Config{
+			Hosts: []string{
+				fmt.Sprintf("localhost:%d", gossip_port),
+			},
+		})
+
+		opts = append(opts,
+			goakt.WithRemote(goakt_remote.NewConfig("localhost", remoting_port)),
+			goakt.WithCluster(goakt.NewClusterConfig().
+				WithDiscovery(disco).
+				WithDiscoveryPort(gossip_port).
+				WithPeersPort(peers_port).
+				WithKinds(&wasmAgentActor{}, &subscriptionActor{}),
+			),
+		)
+	}
+
+	if actorSystem, err := goakt.NewActorSystem("modus", opts...); err != nil {
 		logger.Fatal(ctx).Err(err).Msg("Failed to create actor system.")
-	}
-
-	if err := actorSystem.Start(ctx); err != nil {
+	} else if err := actorSystem.Start(ctx); err != nil {
 		logger.Fatal(ctx).Err(err).Msg("Failed to start actor system.")
+	} else {
+		_actorSystem = actorSystem
 	}
-
-	_actorSystem = actorSystem
 
 	logger.Info(ctx).Msg("Actor system started.")
 
@@ -64,7 +98,8 @@ func loadAgentActors(ctx context.Context, plugin *plugins.Plugin) error {
 	}
 
 	// spawn actors for agents with state in the database, that are not already running
-	// TODO: when we scale out with GoAkt cluster mode, we'll need to decide which node is responsible for spawning the actor
+	// TODO: when we scale out to allow more nodes in the cluster, we'll need to decide
+	// which node is responsible for spawning each actor.
 	agents, err := db.QueryActiveAgents(ctx)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Failed to query agents from database.")
@@ -73,7 +108,7 @@ func loadAgentActors(ctx context.Context, plugin *plugins.Plugin) error {
 	host := wasmhost.GetWasmHost(ctx)
 	for _, agent := range agents {
 		if !runningAgents[agent.Id] {
-			spawnActorForAgent(host, plugin, agent.Id, agent.Name, true, &agent.Data)
+			spawnActorForAgentAsync(host, plugin, agent.Id, agent.Name, true, &agent.Data)
 		}
 	}
 

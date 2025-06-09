@@ -91,7 +91,7 @@ func handleGraphQLRequest(w http.ResponseWriter, r *http.Request) {
 	if engine == nil {
 		msg := "There is no active GraphQL schema.  Please load a Modus plugin."
 		logger.Warn(ctx).Msg(msg)
-		utils.WriteJsonContentHeader(w)
+		w.Header().Set("Content-Type", "application/json")
 		if ok, _ := gqlRequest.IsIntrospectionQuery(); ok {
 			fmt.Fprint(w, `{"data":{"__schema":{"types":[]}}}`)
 		} else {
@@ -125,10 +125,51 @@ func handleGraphQLRequest(w http.ResponseWriter, r *http.Request) {
 		options = append(options, eng.WithRequestTraceOptions(traceOpts))
 	}
 
-	// Execute the GraphQL operation
+	// Prepare the result writer
+	streaming := false
 	resultWriter := gql.NewEngineResultWriter()
-	if err := engine.Execute(ctx, &gqlRequest, &resultWriter, options...); err != nil {
+	if operationType, err := gqlRequest.OperationType(); err != nil {
+		msg := "Failed to determine operation type from GraphQL request."
+		logger.Err(ctx, err).Msg(msg)
+		http.Error(w, msg, http.StatusBadRequest)
+		return
+	} else if operationType == gql.OperationTypeSubscription {
+		if !isSSERequest(r) {
+			msg := "Subscriptions use SSE (Server-Sent Events). Requests must accept 'text/event-stream' for SSE responses."
+			logger.Warn(ctx).Msg(msg)
+			http.Error(w, msg, http.StatusBadRequest)
+			return
+		}
 
+		flusher := w.(http.Flusher)
+		streaming = true
+
+		// We're following the GraphQL SSE draft spec for subscriptions.  References:
+		//   https://the-guild.dev/graphql/sse
+		//   https://github.com/enisdenjo/graphql-sse/blob/master/PROTOCOL.md
+		//
+		// Clients should be implemented similar to these examples:
+		//   https://the-guild.dev/graphql/sse/recipes#client-usage
+
+		h := w.Header()
+		h.Set("Content-Type", "text/event-stream")
+		h.Set("Cache-Control", "no-cache")
+		h.Set("Connection", "keep-alive")
+
+		// note: this event isn't in the graphql-sse draft spec, but is helpful to indicate the connection is established,
+		// when testing, and doesn't interfere with the graphql events.
+		fmt.Fprint(w, "event: ack\ndata: \n\n")
+		flusher.Flush()
+
+		resultWriter.SetFlushCallback(func(data []byte) {
+			// graphql subscription data and errors are pushed over a "next" event, per the graphql-sse draft spec.
+			fmt.Fprintf(w, "event: next\ndata: %s\n\n", data)
+			flusher.Flush()
+		})
+	}
+
+	// Execute the GraphQL operation
+	if err := engine.Execute(ctx, &gqlRequest, &resultWriter, options...); err != nil {
 		if report, ok := err.(operationreport.Report); ok {
 			if len(report.InternalErrors) > 0 {
 				// Log internal errors, but don't return them to the client
@@ -141,8 +182,15 @@ func handleGraphQLRequest(w http.ResponseWriter, r *http.Request) {
 
 		if requestErrors := graphqlerrors.RequestErrorsFromError(err); len(requestErrors) > 0 {
 			// TODO: we should capture metrics here
-			utils.WriteJsonContentHeader(w)
-			_, _ = requestErrors.WriteResponse(w)
+
+			if streaming {
+				fmt.Fprint(w, "event: next\ndata: ")
+				_, _ = requestErrors.WriteResponse(w)
+				fmt.Fprint(w, "\n\nevent: complete\ndata: \n\n")
+			} else {
+				w.Header().Set("Content-Type", "application/json")
+				_, _ = requestErrors.WriteResponse(w)
+			}
 
 			// NOTE: We only log these in dev, to avoid a bad actor spamming the logs in prod.
 			if app.IsDevEnvironment() {
@@ -159,12 +207,17 @@ func handleGraphQLRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if streaming {
+		// In case the connection is still open, we send a final "complete" event, per the graphql-sse draft spec.
+		fmt.Fprint(w, "event: complete\ndata: \n\n")
+		return
+	}
+
 	if response, err := addOutputToResponse(resultWriter.Bytes(), xsync.ToPlainMap(output)); err != nil {
 		msg := "Failed to add function output to response."
 		logger.Err(ctx, err).Msg(msg)
 		http.Error(w, fmt.Sprintf("%s\n%v", msg, err), http.StatusInternalServerError)
 	} else {
-		utils.WriteJsonContentHeader(w)
 
 		// An introspection query will always return a Query type, but if only mutations were defined,
 		// the fields of the Query type will be null.  That will fail the introspection query, so we need
@@ -179,6 +232,7 @@ func handleGraphQLRequest(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
+		w.Header().Set("Content-Type", "application/json")
 		_, _ = w.Write(response)
 	}
 }
@@ -235,4 +289,15 @@ func addOutputToResponse(response []byte, output map[string]wasmhost.ExecutionIn
 	}
 
 	return response, nil
+}
+
+func isSSERequest(r *http.Request) bool {
+	for _, accept := range r.Header.Values("Accept") {
+		for value := range strings.SplitSeq(accept, ",") {
+			if strings.EqualFold(strings.TrimSpace(strings.SplitN(value, ";", 2)[0]), "text/event-stream") {
+				return true
+			}
+		}
+	}
+	return false
 }

@@ -20,6 +20,7 @@ var SendMessageCallStack = testutils.NewCallStack()
 var StopAgentCallStack = testutils.NewCallStack()
 var GetAgentInfoCallStack = testutils.NewCallStack()
 var ListAgentsCallStack = testutils.NewCallStack()
+var PublishEventCallStack = testutils.NewCallStack()
 
 func hostStartAgent(agentName *string) *AgentInfo {
 	StartAgentCallStack.Push(agentName)
@@ -77,4 +78,8 @@ func hostListAgents() *[]AgentInfo {
 		{Id: "abc123", Name: "Counter", Status: AgentStatusRunning},
 		{Id: "def456", Name: "Logger", Status: AgentStatusRunning},
 	}
+}
+
+func hostPublishEvent(agentId, eventName, eventData *string) {
+	PublishEventCallStack.Push(agentId, eventName, eventData)
 }

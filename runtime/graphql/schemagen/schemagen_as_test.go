@@ -322,6 +322,18 @@ type StringStringPair {
   key: String!
   value: String!
 }
+
+scalar JSON
+
+type AgentEvent {
+  name: String!
+  data: JSON
+  timestamp: String
+}
+
+type Subscription {
+  agentEvent(agentId: String!): AgentEvent!
+}
 `[1:]
 
 	require.Nil(t, err)

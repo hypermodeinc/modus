@@ -20,10 +20,10 @@ import (
 )
 
 var mu = &sync.RWMutex{}
-var config *AppConfig
+var config *AppConfig = NewAppConfig()
 var shuttingDown = false
 
-func init() {
+func Initialize() {
 	// Set the global color mode
 	SetOutputColorMode()
 
