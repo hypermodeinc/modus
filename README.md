@@ -140,6 +140,8 @@ to the authors and teams of our core dependencies:
 - Jens Neuse, Stefan Avram, and the rest of the team at [Wundergraph](https://wundergraph.com/).
   Modus uses Wundergraph's [GraphQL Go Tools](https://github.com/wundergraph/graphql-go-tools)
   library to process incoming GraphQL API requests.
+- Arsene Gandote, author [GoAkt](https://github.com/Tochemey/goakt). Modus uses GoAkt as the
+  [actor model](https://en.wikipedia.org/wiki/Actor_model) framework that powers Modus Agents.
 - Max Graey, Daniel Wirtz, and other contributors to the
   [AssemblyScript](https://www.assemblyscript.org/) project. Modus chose AssemblyScript as one of
   its core languages because it is ideal for web developers getting started with Web Assembly.
