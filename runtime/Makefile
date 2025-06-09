@@ -21,7 +21,7 @@ tidy:
 
 .PHONY: build-explorer
 build-explorer:
-	cd explorer/content && npm install && npm run build
+	cd explorer/content && npm ci && npm run build
 
 .PHONY: build
 build: build-explorer
@@ -42,7 +42,7 @@ build-testdata: build-testdata-assemblyscript build-testdata-golang
 
 .PHONY: build-testdata-assemblyscript
 build-testdata-assemblyscript:
-	cd languages/assemblyscript/testdata && npm install && npm run build
+	cd languages/assemblyscript/testdata && npm ci && npm run build
 
 .PHONY: build-testdata-golang
 build-testdata-golang:
@@ -62,7 +62,8 @@ test-race: build-testdata
 
 .PHONY: build-integration-testdata
 build-integration-testdata:
-	cd ../sdk/assemblyscript/examples/postgresql && npm install && npm run build
+	cd ../sdk/assemblyscript/src && npm ci
+	cd ../sdk/assemblyscript/examples/postgresql && npm ci && npm run build
 	cp ../sdk/assemblyscript/examples/postgresql/build/postgresql-example.wasm ./integration_tests/testdata
 
 .PHONY: test-integration
