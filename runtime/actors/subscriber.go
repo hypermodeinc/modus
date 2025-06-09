@@ -37,15 +37,21 @@ func SubscribeForAgentEvents(ctx context.Context, agentId string, update func(da
 		return fmt.Errorf("agent %s is %s, cannot subscribe to events", agentId, a.Status)
 	}
 
-	// Spawn a subscription actor that is bound to the graphql subscription on this node.
-	// It needs to be long-lived, because it will need to stay alive as long as the client is connected.
-	// It cannot be relocated to another node, because it is bound to http request of the GraphQL subscription on this node.
-	// It cannot be spawned as a child of the agent actor, because the subscription needs to be maintained even if the agent actor is suspended.
-
+	if update == nil {
+		update = func(data []byte) {}
+	}
+	if done == nil {
+		done = func() {}
+	}
 	actor := &subscriptionActor{
 		update: update,
 		done:   done,
 	}
+
+	// Spawn a subscription actor that is bound to the graphql subscription on this node.
+	// It needs to be long-lived, because it will need to stay alive as long as the client is connected.
+	// It cannot be relocated to another node, because it is bound to http request of the GraphQL subscription on this node.
+	// It cannot be spawned as a child of the agent actor, because the subscription needs to be maintained even if the agent actor is suspended.
 
 	actorName := "subscription-" + xid.New().String()
 	subActor, err := _actorSystem.Spawn(ctx, actorName, actor, goakt.WithLongLived(), goakt.WithRelocationDisabled())
