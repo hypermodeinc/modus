@@ -21,7 +21,7 @@ tidy:
 
 .PHONY: build-explorer
 build-explorer:
-	cd explorer/content && npm install && npm run build
+	cd explorer/content && npm ci && npm run build
 
 .PHONY: build
 build: build-explorer
@@ -42,26 +42,32 @@ build-testdata: build-testdata-assemblyscript build-testdata-golang
 
 .PHONY: build-testdata-assemblyscript
 build-testdata-assemblyscript:
-	cd languages/assemblyscript/testdata && npm install && npm run build
+	cd languages/assemblyscript/testdata && npm ci && npm run build
 
 .PHONY: build-testdata-golang
 build-testdata-golang:
 	cd languages/golang/testdata && ./build.sh
 
 .PHONY: test
-test:
+test: build-testdata
 	go test ./...
 
 .PHONY: test-no-cache
-test-no-cache:
+test-no-cache: build-testdata
 	go test -count=1 ./...
 
 .PHONY: test-race
-test-race:
+test-race: build-testdata
 	go test -race ./...
 
+.PHONY: build-integration-testdata
+build-integration-testdata:
+	cd ../sdk/assemblyscript/src && npm ci
+	cd ../sdk/assemblyscript/examples/postgresql && npm ci && npm run build
+	cp ../sdk/assemblyscript/examples/postgresql/build/postgresql-example.wasm ./integration_tests/testdata
+
 .PHONY: test-integration
-test-integration:
+test-integration: build-integration-testdata
 	go test -race -tags=integration -count=1 ./integration_tests/...
 
 .PHONY: test-ci
@@ -70,7 +76,7 @@ test-ci:
 	go test -v -race 2>&1 ./... | go-junit-report -set-exit-code -iocopy -out report.xml
 
 .PHONY: test-integration-ci
-test-integration-ci:
+test-integration-ci: build-integration-testdata
 	go install github.com/jstemmer/go-junit-report/v2@latest
 	go test -tags integration -v -race 2>&1 ./integration_tests/... | go-junit-report -set-exit-code -iocopy -out report.xml
 
