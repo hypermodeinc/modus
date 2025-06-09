@@ -70,7 +70,6 @@ jobs:
         with:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           apiToken: ${{ secrets.CLOUDFLARE_TOKEN }}
-          wranglerVersion: 3.83.0
           workingDirectory: cli
           preCommands: |
             cat install.sh
