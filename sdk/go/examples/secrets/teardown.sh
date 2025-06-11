@@ -3,7 +3,7 @@
 set -ex
 
 KIND_CLUSTER=modus
-KIND=$(which kind)
+KIND=$(command -v kind)
 
 # delete kind cluster
 ${KIND} delete cluster --name "${KIND_CLUSTER}"
