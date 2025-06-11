@@ -10,10 +10,6 @@ import (
 	"github.com/hypermodeinc/modus/sdk/go/pkg/secrets"
 )
 
-func GetSecretValue(name string) string {
-	value, err := secrets.GetSecretValue(name)
-	if err != nil {
-		return ""
-	}
-	return value
+func GetSecretValue(name string) (string, error) {
+	return secrets.GetSecretValue(name)
 }

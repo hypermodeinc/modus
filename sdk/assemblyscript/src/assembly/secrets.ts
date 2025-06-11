@@ -7,6 +7,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import * as utils from "./utils";
+
 // @ts-expect-error: decorator
 @external("modus_secrets", "getSecretValue")
 declare function hostGetSecretValue(name: string): string;
@@ -17,8 +19,8 @@ declare function hostGetSecretValue(name: string): string;
  */
 export function getSecretValue(name: string): string {
   const result = hostGetSecretValue(name);
-  if (!result || result.length === 0) {
-    throw new Error(`Secret not found: ${name}`);
+  if (utils.resultIsInvalid(result)) {
+    throw new Error("Secret not found");
   }
   return result;
 }

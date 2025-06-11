@@ -18,7 +18,7 @@ import (
 func init() {
 	const module_name = "modus_secrets"
 
-	registerHostFunction(module_name, "getSecretValue", secrets.GetSecretValue,
+	registerHostFunction(module_name, "getSecretValue", secrets.GetAppSecretValue,
 		withStartingMessage("Starting secret lookup."),
 		withCompletedMessage("Completed secret lookup."),
 		withCancelledMessage("Cancelled secret lookup."),

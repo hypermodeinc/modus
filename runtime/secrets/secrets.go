@@ -51,6 +51,20 @@ func GetSecretValue(ctx context.Context, name string) (string, error) {
 	return provider.getSecretValue(ctx, name)
 }
 
+// GetAppSecretValue retrieves a secret value for the user's Modus app.
+// It is invoked via the GetSecretValue API in the Modus SDK, which invokes
+// this function as a host function.  Note that app secrets distinguished
+// from other secrets by being prefixed with "MODUS_APP_", which prevents
+// exposing sensitive runtime secrets like "MODUS_DB" to the user.
+func GetAppSecretValue(ctx context.Context, name string) (*string, error) {
+	secretName := "MODUS_APP_" + name
+	value, err := provider.getSecretValue(ctx, secretName)
+	if err != nil {
+		return nil, err
+	}
+	return &value, nil
+}
+
 func GetConnectionSecrets(ctx context.Context, connection manifest.ConnectionInfo) (map[string]string, error) {
 	return provider.getConnectionSecrets(ctx, connection)
 }
