@@ -19,6 +19,7 @@ import (
 
 	"github.com/fatih/color"
 	"github.com/hypermodeinc/modus/lib/manifest"
+	"github.com/hypermodeinc/modus/runtime/app"
 	"github.com/hypermodeinc/modus/runtime/logger"
 	"github.com/hypermodeinc/modus/runtime/utils"
 )
@@ -34,7 +35,11 @@ type secretsProvider interface {
 }
 
 func Initialize(ctx context.Context) {
-	provider = &localSecretsProvider{}
+	if app.Config().UseKubernetesSecret() {
+		provider = &kubernetesSecretsProvider{}
+	} else {
+		provider = &localSecretsProvider{}
+	}
 	provider.initialize(ctx)
 }
 
