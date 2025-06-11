@@ -172,7 +172,7 @@ func setAgentState(data *string) {
 //go:export _modus_agent_handle_event
 func handleEvent(action string) {
 	if activeAgent == nil {
-		console.Errorf("No active agent to process %s even action.", action)
+		console.Errorf("No active agent to process %s event action.", action)
 		return
 	}
 	agent := *activeAgent
