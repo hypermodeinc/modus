@@ -87,7 +87,8 @@ func (a *wasmAgentActor) updateStatus(ctx context.Context, status AgentStatus) e
 	}
 
 	data := fmt.Sprintf(`{"status":"%s"}`, a.status)
-	if err := PublishAgentEvent(ctx, a.agentId, agentStatusEventName, &data); err != nil {
+	createdAt := time.Now().Format(time.RFC3339Nano)
+	if err := PublishAgentEvent(ctx, a.agentId, agentStatusEventName, &data, &createdAt); err != nil {
 		return fmt.Errorf("error publishing agent status event: %w", err)
 	}
 
