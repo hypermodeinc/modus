@@ -67,12 +67,16 @@ func StartAgent(ctx context.Context, agentName string) (*AgentInfo, error) {
 
 	agentId := xid.New().String()
 	host := wasmhost.GetWasmHost(ctx)
-	spawnActorForAgentAsync(host, plugin, agentId, agentName, true)
+	pid, err := spawnActorForAgent(host, plugin, agentId, agentName, true)
+	if err != nil {
+		return nil, fmt.Errorf("error spawning actor for agent %s: %w", agentId, err)
+	}
 
+	actor := pid.Actor().(*wasmAgentActor)
 	info := &AgentInfo{
-		Id:     agentId,
-		Name:   agentName,
-		Status: AgentStatusStarting,
+		Id:     actor.agentId,
+		Name:   actor.agentName,
+		Status: actor.status,
 	}
 
 	return info, nil
