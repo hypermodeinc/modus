@@ -26,6 +26,16 @@ export function startCounterAgent(): AgentInfo {
 }
 
 /**
+ * Starts a counter agent with an initial count value,
+ * and returns info including its ID and status.
+ */
+export function startCounterAgentWithData(initialCount: i32): AgentInfo {
+  const info = agents.start("Counter");
+  updateCountAsync(info.id, initialCount);
+  return info;
+}
+
+/**
  * Stops the specified agent by ID, returning its status info.
  * This will terminate the agent, and it cannot be resumed or restarted.
  * However, a new agent with the same name can be started at any time.
