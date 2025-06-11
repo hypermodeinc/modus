@@ -82,15 +82,6 @@ func StartAgent(ctx context.Context, agentName string) (*AgentInfo, error) {
 	return info, nil
 }
 
-func spawnActorForAgentAsync(host wasmhost.WasmHost, plugin *plugins.Plugin, agentId, agentName string, initializing bool) {
-	// We spawn the actor in a goroutine to avoid blocking while the actor is being spawned.
-	// This allows many agents to be spawned in parallel, if needed.
-	// Errors are logged but not returned, as the actor system will handle them.
-	go func() {
-		_, _ = spawnActorForAgent(host, plugin, agentId, agentName, initializing)
-	}()
-}
-
 func spawnActorForAgent(host wasmhost.WasmHost, plugin *plugins.Plugin, agentId, agentName string, initializing bool) (*goakt.PID, error) {
 	// The actor needs to spawn in its own context, so we don't pass one in to this function.
 	// If we did, then when the original context was cancelled or completed, the actor initialization would be cancelled too.

@@ -93,11 +93,13 @@ func loadAgentActors(ctx context.Context, plugin *plugins.Plugin) error {
 	runningAgents := make(map[string]bool, len(actors))
 	for _, pid := range actors {
 		if actor, ok := pid.Actor().(*wasmAgentActor); ok {
-			runningAgents[actor.agentId] = true
-			actor.plugin = plugin
-			if err := pid.Restart(ctx); err != nil {
-				logger.Err(ctx, err).Msgf("Failed to restart actor for agent %s.", actor.agentId)
-			}
+			go func() {
+				runningAgents[actor.agentId] = true
+				actor.plugin = plugin
+				if err := pid.Restart(ctx); err != nil {
+					logger.Err(ctx, err).Msgf("Failed to restart actor for agent %s.", actor.agentId)
+				}
+			}()
 		}
 	}
 
@@ -112,7 +114,11 @@ func loadAgentActors(ctx context.Context, plugin *plugins.Plugin) error {
 	host := wasmhost.GetWasmHost(ctx)
 	for _, agent := range agents {
 		if !runningAgents[agent.Id] {
-			spawnActorForAgentAsync(host, plugin, agent.Id, agent.Name, false)
+			go func() {
+				if _, err := spawnActorForAgent(host, plugin, agent.Id, agent.Name, false); err != nil {
+					logger.Err(ctx, err).Msgf("Failed to spawn actor for agent %s.", agent.Id)
+				}
+			}()
 		}
 	}
 
