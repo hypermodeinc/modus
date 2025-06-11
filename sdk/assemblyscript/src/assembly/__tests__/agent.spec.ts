@@ -54,8 +54,16 @@ mockImport(
 
 mockImport(
   "modus_agents.publishEvent",
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  (agentId: string, eventName: string, eventData: string | null): void => {},
+  (
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    agentId: string,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    eventName: string,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    eventData: string | null,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    createdAt: string,
+  ): void => {},
 );
 
 it("should serialize an AgentStatus using type aliases", () => {

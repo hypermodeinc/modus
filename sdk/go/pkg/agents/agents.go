@@ -290,15 +290,17 @@ func (a *AgentBase) OnReceiveMessage(msgName string, data *string) (*string, err
 	return nil, nil
 }
 
-// Publishes an event from this agent to any subscribers.
 func (a *AgentBase) PublishEvent(event AgentEvent) error {
+	createdAt := time.Now().Format(time.RFC3339Nano)
+
 	bytes, err := utils.JsonSerialize(event)
 	if err != nil {
 		return fmt.Errorf("failed to serialize event data: %w", err)
 	}
 	data := string(bytes)
 	name := event.EventName()
-	hostPublishEvent(activeAgentId, &name, &data)
+
+	hostPublishEvent(activeAgentId, &name, &data, &createdAt)
 	return nil
 }
 

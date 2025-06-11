@@ -47,7 +47,7 @@ func init() {
 
 	registerHostFunction(module_name, "publishEvent", actors.PublishAgentEvent,
 		withErrorMessage("Error publishing agent event."),
-		withMessageDetail(func(agentId, eventName string, eventData *string) string {
+		withMessageDetail(func(agentId, eventName string, eventData *string, createdAt *string) string {
 			return fmt.Sprintf("AgentId: %s, EventName: %s", agentId, eventName)
 		}))
 }

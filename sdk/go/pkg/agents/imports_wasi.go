@@ -83,4 +83,4 @@ func hostListAgents() *[]AgentInfo {
 
 //go:noescape
 //go:wasmimport modus_agents publishEvent
-func hostPublishEvent(agentId, eventName, eventData *string)
+func hostPublishEvent(agentId, eventName, eventData, createdAt *string)

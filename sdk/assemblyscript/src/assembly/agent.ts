@@ -93,8 +93,10 @@ export abstract class Agent {
    * Publishes an event from this agent to any subscribers.
    */
   publishEvent(event: AgentEvent): void {
+    const createdAt = new Date().toISOString();
+
     const data = JSON.stringify(event);
-    hostPublishEvent(this.id, event.eventName, data);
+    hostPublishEvent(this.id, event.eventName, data, createdAt);
   }
 }
 
@@ -129,6 +131,7 @@ declare function hostPublishEvent(
   agentId: string,
   eventName: string,
   eventData: string | null,
+  createdAt: string,
 ): void;
 
 /**

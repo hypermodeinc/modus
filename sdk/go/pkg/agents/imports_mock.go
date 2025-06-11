@@ -80,6 +80,6 @@ func hostListAgents() *[]AgentInfo {
 	}
 }
 
-func hostPublishEvent(agentId, eventName, eventData *string) {
-	PublishEventCallStack.Push(agentId, eventName, eventData)
+func hostPublishEvent(agentId, eventName, eventData, createdAt *string) {
+	PublishEventCallStack.Push(agentId, eventName, eventData, createdAt)
 }

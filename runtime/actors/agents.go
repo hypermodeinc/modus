@@ -229,7 +229,17 @@ func SendAgentMessage(ctx context.Context, agentId string, msgName string, data 
 	}
 }
 
-func PublishAgentEvent(ctx context.Context, agentId, eventName string, eventData *string) error {
+func PublishAgentEvent(ctx context.Context, agentId, eventName string, eventData *string, createdAt *string) error {
+	var createdTime time.Time
+	var err error
+	if createdAt != nil {
+		createdTime, err = time.Parse(time.RFC3339Nano, *createdAt)
+		if err != nil {
+			return fmt.Errorf("error parsing created timestamp: %w", err)
+		}
+	} else {
+		createdTime = time.Now()
+	}
 
 	var data any
 	if eventData != nil {
@@ -246,7 +256,7 @@ func PublishAgentEvent(ctx context.Context, agentId, eventName string, eventData
 	event := &messages.AgentEventMessage{
 		Name:      eventName,
 		Data:      dataValue,
-		Timestamp: timestamppb.Now(),
+		Timestamp: timestamppb.New(createdTime),
 	}
 
 	eventMsg, err := anypb.New(event)
