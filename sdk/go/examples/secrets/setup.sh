@@ -22,7 +22,8 @@ fi
 
 # install kubectl
 if [[ -z ${KUBECTL} ]]; then
-	curl -OL "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/$(go env GOARCH)/kubectl"
+	ARCH=$(go env GOARCH)
+	curl -OL "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/${ARCH}/kubectl"
 	chmod +x ./kubectl
 	mv ./kubectl "${KUBECTL_PATH}"
 	KUBECTL=$(command -v kubectl)
