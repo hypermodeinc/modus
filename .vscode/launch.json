@@ -181,6 +181,10 @@
           "value": "postgresql"
         },
         {
+          "label": "Secrets Example",
+          "value": "secrets"
+        },
+        {
           "label": "Simple Example",
           "value": "simple"
         },

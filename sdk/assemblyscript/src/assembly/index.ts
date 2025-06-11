@@ -40,6 +40,9 @@ export { utils };
 import * as localtime from "./localtime";
 export { localtime };
 
+import * as secrets from "./secrets";
+export { secrets };
+
 export * from "./dynamicmap";
 export * from "./enums";
 
