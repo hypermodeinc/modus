@@ -189,12 +189,13 @@ export function listAgents(): AgentInfo[] {
 }
 
 /**
- * The Modus Runtime will call this function to activate an agent.
- * It is not intended to be called from user code.
+ * The Modus Runtime will call this function to set the active agent.
+ * This is called after the wasm module instance is loaded, regardless of whether
+ * the agent is newly started or resumed from a suspended state.
  */
-export function activateAgent(name: string, id: string, reloading: bool): void {
+export function activateAgent(name: string, id: string): void {
   if (activeAgent != null) {
-    throw new Error("Another agent is already active.");
+    throw new Error("Another agent is already active in this module instance.");
   }
 
   if (!agents.has(name)) {
@@ -203,28 +204,6 @@ export function activateAgent(name: string, id: string, reloading: bool): void {
 
   activeAgent = agents.get(name);
   activeAgentId = id;
-
-  if (reloading) {
-    activeAgent!.onResume();
-  } else {
-    activeAgent!.onInitialize();
-  }
-}
-
-/**
- * The Modus Runtime will call this function to shutdown an agent.
- * It is not intended to be called from user code.
- */
-export function shutdownAgent(suspending: bool): void {
-  if (!activeAgent) {
-    throw new Error("No active agent to shut down.");
-  }
-
-  if (suspending) {
-    activeAgent!.onSuspend();
-  } else {
-    activeAgent!.onTerminate();
-  }
 }
 
 /**
@@ -250,8 +229,39 @@ export function setAgentState(data: string | null): void {
 }
 
 /**
+ * The Modus Runtime will call this function when an agent event occurs.
+ * Events are part of the agent's lifecycle, managed by the Modus Runtime.
+ */
+export function handleEvent(action: string): void {
+  if (!activeAgent) {
+    throw new Error(`No active agent to process ${action} event action.`);
+  }
+
+  switch (action) {
+    case "initialize":
+      activeAgent!.onInitialize();
+      break;
+
+    case "suspend":
+      activeAgent!.onSuspend();
+      break;
+
+    case "resume":
+      activeAgent!.onResume();
+      break;
+
+    case "terminate":
+      activeAgent!.onTerminate();
+      break;
+
+    default:
+      throw new Error(`Unknown agent event action: ${action}`);
+  }
+}
+
+/**
  * The Modus Runtime will call this function when an agent receives a message.
- * It is not intended to be called from user code.
+ * Messages are user-defined and can be sent from API functions or other agents.
  */
 export function handleMessage(
   msgName: string,

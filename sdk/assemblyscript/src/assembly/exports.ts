@@ -13,7 +13,7 @@
 
 export {
   activateAgent as _modus_agent_activate,
-  shutdownAgent as _modus_agent_shutdown,
+  handleEvent as _modus_agent_handle_event,
   handleMessage as _modus_agent_handle_message,
   getAgentState as _modus_agent_get_state,
   setAgentState as _modus_agent_set_state,

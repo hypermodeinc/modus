@@ -44,6 +44,15 @@ const (
 	AgentStatusTerminated AgentStatus = "terminated"
 )
 
+type agentEventAction = string
+
+const (
+	agentEventActionInitialize agentEventAction = "initialize"
+	agentEventActionSuspend    agentEventAction = "suspend"
+	agentEventActionResume     agentEventAction = "resume"
+	agentEventActionTerminate  agentEventAction = "terminate"
+)
+
 var agents = make(map[string]Agent)
 var activeAgent *Agent
 var activeAgentId *string
@@ -68,9 +77,18 @@ func Start(name string) (AgentInfo, error) {
 // Stops an agent with the given ID and returns its status info.
 // This will terminate the agent, and it cannot be resumed or restarted.
 func Stop(agentId string) (AgentInfo, error) {
+	if len(agentId) == 0 {
+		return AgentInfo{}, errors.New("invalid agent ID")
+	}
+
+	if info := hostGetAgentInfo(&agentId); info == nil {
+		return AgentInfo{}, fmt.Errorf("agent %s not found", agentId)
+	}
+
 	if info := hostStopAgent(&agentId); info != nil {
 		return *info, nil
 	}
+
 	return AgentInfo{}, fmt.Errorf("failed to stop agent %s", agentId)
 }
 
@@ -101,59 +119,28 @@ func ListAll() ([]AgentInfo, error) {
 // Assigning them to discard variables avoids "unused" linting errors.
 var (
 	_ = activateAgent
-	_ = shutdownAgent
+	_ = handleEvent
+	_ = handleMessage
 	_ = getAgentState
 	_ = setAgentState
-	_ = handleMessage
 )
 
-// The Modus Runtime will call this function to activate an agent.
+// The Modus Runtime will call this function to set the active agent.
+// This is called after the wasm module instance is loaded, regardless of whether
+// the agent is newly started or resumed from a suspended state.
 //
 //go:export _modus_agent_activate
-func activateAgent(name, id string, reloading bool) {
+func activateAgent(name, id string) {
 	if activeAgent != nil {
-		console.Error("Another agent is already active.")
+		console.Error("Another agent is already active in this module instance.")
 		return
 	}
 
 	if agent, ok := agents[name]; !ok {
 		console.Errorf("Agent %s not found.", name)
-		return
 	} else {
 		activeAgent = &agent
 		activeAgentId = &id
-
-		if reloading {
-			if err := agent.OnResume(); err != nil {
-				console.Errorf("Error reloading agent %s: %v", name, err)
-			}
-		} else {
-			if err := agent.OnInitialize(); err != nil {
-				console.Errorf("Error starting agent %s: %v", name, err)
-			}
-		}
-	}
-}
-
-// The Modus Runtime will call this function to shutdown an agent.
-//
-//go:export _modus_agent_shutdown
-func shutdownAgent(suspending bool) {
-	if activeAgent == nil {
-		console.Error("No active agent to shutdown.")
-		return
-	}
-
-	if suspending {
-		if err := (*activeAgent).OnSuspend(); err != nil {
-			console.Errorf("Error suspending agent %s: %v", (*activeAgent).Name(), err)
-			return
-		}
-	} else {
-		if err := (*activeAgent).OnTerminate(); err != nil {
-			console.Errorf("Error stopping agent %s: %v", (*activeAgent).Name(), err)
-			return
-		}
 	}
 }
 
@@ -179,7 +166,41 @@ func setAgentState(data *string) {
 	(*activeAgent).SetState(data)
 }
 
+// The Modus Runtime will call this function when an agent event occurs.
+// Events are part of the agent's lifecycle, managed by the Modus Runtime.
+//
+//go:export _modus_agent_handle_event
+func handleEvent(action string) {
+	if activeAgent == nil {
+		console.Errorf("No active agent to process %s event action.", action)
+		return
+	}
+	agent := *activeAgent
+
+	switch action {
+	case agentEventActionInitialize:
+		if err := (agent).OnInitialize(); err != nil {
+			console.Errorf("Error initializing agent %s: %v", agent.Name(), err)
+		}
+	case agentEventActionSuspend:
+		if err := agent.OnSuspend(); err != nil {
+			console.Errorf("Error suspending agent %s: %v", agent.Name(), err)
+		}
+	case agentEventActionResume:
+		if err := agent.OnResume(); err != nil {
+			console.Errorf("Error resuming agent %s: %v", agent.Name(), err)
+		}
+	case agentEventActionTerminate:
+		if err := agent.OnTerminate(); err != nil {
+			console.Errorf("Error terminating agent %s: %v", agent.Name(), err)
+		}
+	default:
+		console.Errorf("Unknown agent event action: %s", action)
+	}
+}
+
 // The Modus Runtime will call this function when an agent receives a message.
+// Messages are user-defined and can be sent from API functions or other agents.
 //
 //go:export _modus_agent_handle_message
 func handleMessage(msgName string, data *string) *string {
