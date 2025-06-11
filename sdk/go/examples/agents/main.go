@@ -30,6 +30,18 @@ func StartCounterAgent() (agents.AgentInfo, error) {
 	return agents.Start("Counter")
 }
 
+// Starts a counter agent with an initial count value,
+// and returns info including its ID and status.
+func StartCounterAgentWithData(initialCount int) (agents.AgentInfo, error) {
+	info, err := agents.Start("Counter")
+	if err != nil {
+		return agents.AgentInfo{}, err
+	}
+
+	err = UpdateCountAsync(info.Id, initialCount)
+	return info, err
+}
+
 // Stops the specified agent by ID, returning its status info.
 // This will terminate the agent, and it cannot be resumed or restarted.
 // However, a new agent with the same name can be started at any time.
