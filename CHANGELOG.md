@@ -6,6 +6,7 @@
 
 - feat: add kubernetes secrets provider and API to read secrets [#885](https://github.com/hypermodeinc/modus/pull/885)
 - feat: "start" and "stop" are now mutation prefixes [#889](https://github.com/hypermodeinc/modus/pull/889)
+- fix: start agents synchronously, and add examples setting data on start [#890](https://github.com/hypermodeinc/modus/pull/890)
 
 ## 2025-06-10 - Runtime 0.18.0-alpha.6
 
