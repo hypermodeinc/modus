@@ -76,18 +76,11 @@ type inferenceHistory struct {
 func (w *runtimePostgresWriter) GetPool(ctx context.Context) (*pgxpool.Pool, error) {
 	var initErr error
 	w.once.Do(func() {
-		var connStr string
-		var err error
-		if secrets.HasSecret("MODUS_DB") {
-			connStr, err = secrets.GetSecretValue("MODUS_DB")
-		} else if secrets.HasSecret("HYPERMODE_METADATA_DB") {
-			// fallback to old secret name
-			// TODO: remove this after the transition is complete
-			connStr, err = secrets.GetSecretValue("HYPERMODE_METADATA_DB")
-		} else {
+		if !secrets.HasSecret(ctx, "MODUS_DB") {
 			return
 		}
 
+		connStr, err := secrets.GetSecretValue(ctx, "MODUS_DB")
 		if err != nil {
 			initErr = err
 			return

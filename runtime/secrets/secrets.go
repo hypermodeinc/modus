@@ -19,6 +19,7 @@ import (
 
 	"github.com/fatih/color"
 	"github.com/hypermodeinc/modus/lib/manifest"
+	"github.com/hypermodeinc/modus/runtime/app"
 	"github.com/hypermodeinc/modus/runtime/logger"
 	"github.com/hypermodeinc/modus/runtime/utils"
 )
@@ -28,30 +29,48 @@ var errLocalAuthFailed = fmt.Errorf("local authentication failed")
 
 type secretsProvider interface {
 	initialize(ctx context.Context)
-	hasSecret(name string) bool
-	getSecretValue(name string) (string, error)
-	getConnectionSecrets(connection manifest.ConnectionInfo) (map[string]string, error)
+	hasSecret(ctx context.Context, name string) bool
+	getSecretValue(ctx context.Context, name string) (string, error)
+	getConnectionSecrets(ctx context.Context, connection manifest.ConnectionInfo) (map[string]string, error)
 }
 
 func Initialize(ctx context.Context) {
-	provider = &localSecretsProvider{}
+	if app.Config().UseKubernetesSecret() {
+		provider = &kubernetesSecretsProvider{}
+	} else {
+		provider = &localSecretsProvider{}
+	}
 	provider.initialize(ctx)
 }
 
-func HasSecret(name string) bool {
-	return provider.hasSecret(name)
+func HasSecret(ctx context.Context, name string) bool {
+	return provider.hasSecret(ctx, name)
 }
 
-func GetSecretValue(name string) (string, error) {
-	return provider.getSecretValue(name)
+func GetSecretValue(ctx context.Context, name string) (string, error) {
+	return provider.getSecretValue(ctx, name)
 }
 
-func GetConnectionSecrets(connection manifest.ConnectionInfo) (map[string]string, error) {
-	return provider.getConnectionSecrets(connection)
+// GetAppSecretValue retrieves a secret value for the user's Modus app.
+// It is invoked via the GetSecretValue API in the Modus SDK, which invokes
+// this function as a host function.  Note that app secrets distinguished
+// from other secrets by being prefixed with "MODUS_APP_", which prevents
+// exposing sensitive runtime secrets like "MODUS_DB" to the user.
+func GetAppSecretValue(ctx context.Context, name string) (*string, error) {
+	secretName := "MODUS_APP_" + name
+	value, err := provider.getSecretValue(ctx, secretName)
+	if err != nil {
+		return nil, err
+	}
+	return &value, nil
 }
 
-func GetConnectionSecret(connection manifest.ConnectionInfo, secretName string) (string, error) {
-	secrets, err := GetConnectionSecrets(connection)
+func GetConnectionSecrets(ctx context.Context, connection manifest.ConnectionInfo) (map[string]string, error) {
+	return provider.getConnectionSecrets(ctx, connection)
+}
+
+func GetConnectionSecret(ctx context.Context, connection manifest.ConnectionInfo, secretName string) (string, error) {
+	secrets, err := GetConnectionSecrets(ctx, connection)
 	if err != nil {
 		return "", err
 	}
@@ -70,7 +89,7 @@ func ApplySecretsToHttpRequest(ctx context.Context, connection *manifest.HTTPCon
 	defer span.Finish()
 
 	// get secrets for the connection
-	secrets, err := GetConnectionSecrets(connection)
+	secrets, err := GetConnectionSecrets(ctx, connection)
 	if err != nil {
 		return err
 	}
@@ -116,7 +135,7 @@ func ApplySecretsToString(ctx context.Context, connection manifest.ConnectionInf
 	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
 
-	secrets, err := GetConnectionSecrets(connection)
+	secrets, err := GetConnectionSecrets(ctx, connection)
 	if err != nil {
 		return "", err
 	}

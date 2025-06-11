@@ -18,14 +18,16 @@ import (
 )
 
 type AppConfig struct {
-	environment     string
-	port            int
-	appPath         string
-	useAwsStorage   bool
-	s3Bucket        string
-	s3Path          string
-	refreshInterval time.Duration
-	useJsonLogging  bool
+	environment          string
+	port                 int
+	appPath              string
+	useAwsStorage        bool
+	s3Bucket             string
+	s3Path               string
+	useKubernetesSecret  bool
+	kubernetesSecretName string
+	refreshInterval      time.Duration
+	useJsonLogging       bool
 }
 
 func (c *AppConfig) Environment() string {
@@ -50,6 +52,14 @@ func (c *AppConfig) S3Bucket() string {
 
 func (c *AppConfig) S3Path() string {
 	return c.s3Path
+}
+
+func (c *AppConfig) UseKubernetesSecret() bool {
+	return c.useKubernetesSecret
+}
+
+func (c *AppConfig) KubernetesSecretName() string {
+	return c.kubernetesSecretName
 }
 
 func (c *AppConfig) RefreshInterval() time.Duration {
@@ -125,6 +135,9 @@ func CreateAppConfig() *AppConfig {
 	fs.BoolVar(&cfg.useAwsStorage, "useAwsStorage", cfg.useAwsStorage, "Use AWS S3 for storage instead of the local filesystem.")
 	fs.StringVar(&cfg.s3Bucket, "s3bucket", cfg.s3Bucket, "The S3 bucket to use, if using AWS storage.")
 	fs.StringVar(&cfg.s3Path, "s3path", cfg.s3Path, "The path within the S3 bucket to use, if using AWS storage.")
+
+	fs.BoolVar(&cfg.useKubernetesSecret, "useKubernetesSecret", cfg.useKubernetesSecret, "Use Kubernetes secrets for reading secrets.")
+	fs.StringVar(&cfg.kubernetesSecretName, "kubernetesSecretName", cfg.kubernetesSecretName, "The Kubernetes secret to read from, if using Kubernetes secrets.")
 
 	fs.DurationVar(&cfg.refreshInterval, "refresh", cfg.refreshInterval, "The refresh interval to reload any changes.")
 	fs.BoolVar(&cfg.useJsonLogging, "jsonlogs", cfg.useJsonLogging, "Use JSON format for logging.")

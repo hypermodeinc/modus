@@ -24,7 +24,7 @@ type localSecretsProvider struct {
 func (sp *localSecretsProvider) initialize(ctx context.Context) {
 }
 
-func (sp *localSecretsProvider) getConnectionSecrets(connection manifest.ConnectionInfo) (map[string]string, error) {
+func (sp *localSecretsProvider) getConnectionSecrets(ctx context.Context, connection manifest.ConnectionInfo) (map[string]string, error) {
 	prefix := "MODUS_" + strings.ToUpper(strings.ReplaceAll(connection.ConnectionName(), "-", "_")) + "_"
 	secrets := make(map[string]string)
 	for _, e := range os.Environ() {
@@ -37,7 +37,7 @@ func (sp *localSecretsProvider) getConnectionSecrets(connection manifest.Connect
 	return secrets, nil
 }
 
-func (sp *localSecretsProvider) getSecretValue(name string) (string, error) {
+func (sp *localSecretsProvider) getSecretValue(ctx context.Context, name string) (string, error) {
 	v := os.Getenv(name)
 	if v == "" {
 		return "", fmt.Errorf("environment variable %s was not found", name)
@@ -46,6 +46,6 @@ func (sp *localSecretsProvider) getSecretValue(name string) (string, error) {
 	return v, nil
 }
 
-func (sp *localSecretsProvider) hasSecret(name string) bool {
+func (sp *localSecretsProvider) hasSecret(ctx context.Context, name string) bool {
 	return os.Getenv(name) != ""
 }

@@ -22,5 +22,6 @@ use (
 	./sdk/go/examples/textgeneration
 	./sdk/go/examples/time
 	./sdk/go/examples/vectors
+	./sdk/go/examples/secrets
 	./sdk/go/templates/default
 )
