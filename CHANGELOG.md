@@ -2,7 +2,15 @@
 
 # Change Log
 
-## UNRELEASED
+## 2025-06-10 - Runtime 0.18.0-alpha.6
+
+- fix: address agent lifecycle issues [#881](https://github.com/hypermodeinc/modus/pull/881)
+
+## 2025-06-10 - Go SDK 0.18.0-alpha.6
+
+- fix: address agent lifecycle issues [#881](https://github.com/hypermodeinc/modus/pull/881)
+
+## 2025-06-10 - AssemblyScript SDK 0.18.0-alpha.5
 
 - fix: address agent lifecycle issues [#881](https://github.com/hypermodeinc/modus/pull/881)
 
