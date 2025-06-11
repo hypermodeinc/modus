@@ -155,10 +155,6 @@ func handleGraphQLRequest(w http.ResponseWriter, r *http.Request) {
 		h.Set("Content-Type", "text/event-stream")
 		h.Set("Cache-Control", "no-cache")
 		h.Set("Connection", "keep-alive")
-
-		// note: this event isn't in the graphql-sse draft spec, but is helpful to indicate the connection is established,
-		// when testing, and doesn't interfere with the graphql events.
-		fmt.Fprint(w, "event: ack\ndata: \n\n")
 		flusher.Flush()
 
 		resultWriter.SetFlushCallback(func(data []byte) {
