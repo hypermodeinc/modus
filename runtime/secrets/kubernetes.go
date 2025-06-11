@@ -83,8 +83,7 @@ func (sp *kubernetesSecretsProvider) initialize(ctx context.Context) {
 		Msg("Kubernetes secrets provider initialized.")
 }
 
-func (sp *kubernetesSecretsProvider) getConnectionSecrets(connection manifest.ConnectionInfo) (map[string]string, error) {
-	ctx := context.Background()
+func (sp *kubernetesSecretsProvider) getConnectionSecrets(ctx context.Context, connection manifest.ConnectionInfo) (map[string]string, error) {
 	secrets := make(map[string]string)
 
 	if sp.k8sClient == nil || sp.secretName == "" {
@@ -109,8 +108,7 @@ func (sp *kubernetesSecretsProvider) getConnectionSecrets(connection manifest.Co
 	return secrets, nil
 }
 
-func (sp *kubernetesSecretsProvider) getSecretValue(name string) (string, error) {
-	ctx := context.Background()
+func (sp *kubernetesSecretsProvider) getSecretValue(ctx context.Context, name string) (string, error) {
 	if sp.k8sClient == nil || sp.secretName == "" {
 		return "", fmt.Errorf("Kubernetes client or secret name not initialized")
 	}
@@ -129,8 +127,7 @@ func (sp *kubernetesSecretsProvider) getSecretValue(name string) (string, error)
 	return string(v), nil
 }
 
-func (sp *kubernetesSecretsProvider) hasSecret(name string) bool {
-	ctx := context.Background()
+func (sp *kubernetesSecretsProvider) hasSecret(ctx context.Context, name string) bool {
 	if sp.k8sClient == nil || sp.secretName == "" {
 		return false
 	}

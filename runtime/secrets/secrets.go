@@ -29,9 +29,9 @@ var errLocalAuthFailed = fmt.Errorf("local authentication failed")
 
 type secretsProvider interface {
 	initialize(ctx context.Context)
-	hasSecret(name string) bool
-	getSecretValue(name string) (string, error)
-	getConnectionSecrets(connection manifest.ConnectionInfo) (map[string]string, error)
+	hasSecret(ctx context.Context, name string) bool
+	getSecretValue(ctx context.Context, name string) (string, error)
+	getConnectionSecrets(ctx context.Context, connection manifest.ConnectionInfo) (map[string]string, error)
 }
 
 func Initialize(ctx context.Context) {
@@ -43,20 +43,20 @@ func Initialize(ctx context.Context) {
 	provider.initialize(ctx)
 }
 
-func HasSecret(name string) bool {
-	return provider.hasSecret(name)
+func HasSecret(ctx context.Context, name string) bool {
+	return provider.hasSecret(ctx, name)
 }
 
-func GetSecretValue(name string) (string, error) {
-	return provider.getSecretValue(name)
+func GetSecretValue(ctx context.Context, name string) (string, error) {
+	return provider.getSecretValue(ctx, name)
 }
 
-func GetConnectionSecrets(connection manifest.ConnectionInfo) (map[string]string, error) {
-	return provider.getConnectionSecrets(connection)
+func GetConnectionSecrets(ctx context.Context, connection manifest.ConnectionInfo) (map[string]string, error) {
+	return provider.getConnectionSecrets(ctx, connection)
 }
 
-func GetConnectionSecret(connection manifest.ConnectionInfo, secretName string) (string, error) {
-	secrets, err := GetConnectionSecrets(connection)
+func GetConnectionSecret(ctx context.Context, connection manifest.ConnectionInfo, secretName string) (string, error) {
+	secrets, err := GetConnectionSecrets(ctx, connection)
 	if err != nil {
 		return "", err
 	}
@@ -75,7 +75,7 @@ func ApplySecretsToHttpRequest(ctx context.Context, connection *manifest.HTTPCon
 	defer span.Finish()
 
 	// get secrets for the connection
-	secrets, err := GetConnectionSecrets(connection)
+	secrets, err := GetConnectionSecrets(ctx, connection)
 	if err != nil {
 		return err
 	}
@@ -121,7 +121,7 @@ func ApplySecretsToString(ctx context.Context, connection manifest.ConnectionInf
 	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
 
-	secrets, err := GetConnectionSecrets(connection)
+	secrets, err := GetConnectionSecrets(ctx, connection)
 	if err != nil {
 		return "", err
 	}
