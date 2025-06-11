@@ -10,23 +10,22 @@ KUBECTL_VERSION=v1.32.3
 KUBECTL_PATH=/usr/local/bin/kubectl
 
 set +e
-KIND=$(which kind)
-KUBECTL=$(which kubectl)
-GH=$(which gh)
+KIND=$(command -v kind)
+KUBECTL=$(command -v kubectl)
 set -e
 
 # install kind
 if [[ -z ${KIND} ]]; then
 	go install sigs.k8s.io/kind@"${KIND_VERSION}"
-	KIND=$(which kind)
+	KIND=$(command -v kind)
 fi
 
 # install kubectl
 if [[ -z ${KUBECTL} ]]; then
-	curl -OL https://dl.k8s.io/release/"${KUBECTL_VERSION}"/bin/linux/$(go env GOARCH)/kubectl
+	curl -OL "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/$(go env GOARCH)/kubectl"
 	chmod +x ./kubectl
 	mv ./kubectl "${KUBECTL_PATH}"
-	KUBECTL=$(which kubectl)
+	KUBECTL=$(command -v kubectl)
 fi
 
 # setup kind cluster configuration
