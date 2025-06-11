@@ -8,6 +8,7 @@ package main
 
 import (
 	"strconv"
+	"time"
 
 	"github.com/hypermodeinc/modus/sdk/go/pkg/agents"
 )
@@ -60,8 +61,16 @@ func GetCount(agentId string) (int, error) {
 }
 
 // Increments the count of the specified agent by 1 and returns the new count.
-func UpdateCount(agentId string) (int, error) {
-	count, err := agents.SendMessage(agentId, "increment")
+func UpdateCount(agentId string, qty *int) (int, error) {
+	var count *string
+	var err error
+
+	if qty == nil {
+		count, err = agents.SendMessage(agentId, "increment", agents.WithTimeout(20*time.Second))
+	} else {
+		count, err = agents.SendMessage(agentId, "increment", agents.WithData(strconv.Itoa(*qty)), agents.WithTimeout(20*time.Second))
+	}
+
 	if err != nil {
 		return 0, err
 	}
@@ -73,6 +82,10 @@ func UpdateCount(agentId string) (int, error) {
 
 // Increments the count of the specified agent by the specified quantity.
 // This is an asynchronous operation and does not return a value.
-func UpdateCountAsync(agentId string, qty int) error {
-	return agents.SendMessageAsync(agentId, "increment", agents.WithData(strconv.Itoa(qty)))
+func UpdateCountAsync(agentId string, qty *int) error {
+	if qty == nil {
+		return agents.SendMessageAsync(agentId, "increment", agents.WithData(strconv.Itoa(*qty)))
+	} else {
+		return agents.SendMessageAsync(agentId, "increment")
+	}
 }

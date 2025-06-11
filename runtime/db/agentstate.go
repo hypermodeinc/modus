@@ -14,7 +14,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/hypermodeinc/modus/runtime/logger"
 	"github.com/hypermodeinc/modus/runtime/utils"
 
 	"github.com/hypermodeinc/modusgraph"
@@ -38,6 +37,14 @@ func WriteAgentState(ctx context.Context, state AgentState) error {
 	}
 }
 
+func UpdateAgentStatus(ctx context.Context, id string, status string) error {
+	if useModusDB() {
+		return updateAgentStatusInModusDB(ctx, id, status)
+	} else {
+		return updateAgentStatusInPostgresDB(ctx, id, status)
+	}
+}
+
 func GetAgentState(ctx context.Context, id string) (*AgentState, error) {
 	if useModusDB() {
 		return getAgentStateFromModusDB(ctx, id)
@@ -58,15 +65,27 @@ func writeAgentStateToModusDB(ctx context.Context, state AgentState) error {
 	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
 
-	if GlobalModusDbEngine == nil {
-		logger.Warn(ctx).Msg("ModusDB engine is not available. Agent state will not be saved.")
-		return nil
-	}
-
 	gid, _, _, err := modusgraph.Upsert(ctx, GlobalModusDbEngine, state)
 	state.Gid = gid
 
 	return err
+}
+
+func updateAgentStatusInModusDB(ctx context.Context, id string, status string) error {
+	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+	defer span.Finish()
+
+	// TODO: this should just be an update in a single operation
+
+	state, err := getAgentStateFromModusDB(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	state.Status = status
+	state.UpdatedAt = time.Now().UTC().Format(time.RFC3339)
+
+	return writeAgentStateToModusDB(ctx, *state)
 }
 
 func getAgentStateFromModusDB(ctx context.Context, id string) (*AgentState, error) {
@@ -122,6 +141,24 @@ func writeAgentStateToPostgresDB(ctx context.Context, state AgentState) error {
 		_, err := tx.Exec(ctx, query, state.Id, state.Name, state.Status, state.Data, state.UpdatedAt)
 		if err != nil {
 			return fmt.Errorf("failed to write agent state: %w", err)
+		}
+		return nil
+	})
+
+	return err
+}
+
+func updateAgentStatusInPostgresDB(ctx context.Context, id string, status string) error {
+	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+	defer span.Finish()
+
+	const query = "UPDATE agents SET status = $2, updated = $3 WHERE id = $1"
+	now := time.Now().UTC()
+
+	err := WithTx(ctx, func(tx pgx.Tx) error {
+		_, err := tx.Exec(ctx, query, id, status, now)
+		if err != nil {
+			return fmt.Errorf("failed to update agent status: %w", err)
 		}
 		return nil
 	})

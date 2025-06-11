@@ -23,7 +23,6 @@ import (
 
 	wasm "github.com/tetratelabs/wazero/api"
 	goakt "github.com/tochemey/goakt/v3/actor"
-	"github.com/tochemey/goakt/v3/goaktpb"
 )
 
 type wasmAgentActor struct {
@@ -34,43 +33,26 @@ type wasmAgentActor struct {
 	host         wasmhost.WasmHost
 	module       wasm.Module
 	buffers      utils.OutputBuffers
-	initialState *string
-}
-
-func newWasmAgentActor(agentId, agentName string, host wasmhost.WasmHost, plugin *plugins.Plugin) *wasmAgentActor {
-	return &wasmAgentActor{
-		agentId:   agentId,
-		agentName: agentName,
-		host:      host,
-		plugin:    plugin,
-	}
+	initializing bool
+	terminating  bool
 }
 
 func (a *wasmAgentActor) PreStart(ac *goakt.Context) error {
 	ctx := a.newContext()
 
-	switch a.status {
-	case AgentStatusStarting:
-		logger.Info(ctx).Msg("Starting agent.")
-	case AgentStatusResuming:
-		logger.Info(ctx).Msg("Resuming agent.")
-	case AgentStatusSuspended:
-		// note, don't call updateStatus here, because we can't publish an event yet
-		a.status = AgentStatusResuming
-		logger.Info(ctx).Msg("Resuming agent.")
-	default:
-		return fmt.Errorf("invalid agent status for actor PreStart: %s", a.status)
+	if err := a.activateAgent(ctx); err != nil {
+		return fmt.Errorf("error activating agent: %w", err)
 	}
 
-	if err := a.saveState(ctx); err != nil {
-		logger.Err(ctx, err).Msg("Error saving agent state.")
-	}
-
-	a.buffers = utils.NewOutputBuffers()
-	if mod, err := a.host.GetModuleInstance(ctx, a.plugin, a.buffers); err != nil {
-		return err
+	if a.initializing {
+		if err := a.startAgent(ctx); err != nil {
+			return fmt.Errorf("error starting agent: %w", err)
+		}
+		a.initializing = false
 	} else {
-		a.module = mod
+		if err := a.resumeAgent(ctx); err != nil {
+			return fmt.Errorf("error resuming agent: %w", err)
+		}
 	}
 
 	return nil
@@ -80,58 +62,36 @@ func (a *wasmAgentActor) PostStop(ac *goakt.Context) error {
 	ctx := a.newContext()
 	defer a.module.Close(ctx)
 
-	switch a.status {
-	case AgentStatusRunning:
-		a.updateStatus(ctx, AgentStatusSuspending)
-		logger.Info(ctx).Msg("Suspending agent.")
-	case AgentStatusSuspending:
-		logger.Info(ctx).Msg("Suspending agent.")
-	case AgentStatusStopping:
-		logger.Info(ctx).Msg("Stopping agent.")
-
-	default:
-		return fmt.Errorf("invalid agent status for actor PostStop: %s", a.status)
-	}
-
-	if err := a.saveState(ctx); err != nil {
-		logger.Err(ctx, err).Msg("Error saving agent state.")
-	}
-
-	start := time.Now()
-
-	if err := a.shutdownAgent(ctx); err != nil {
-		logger.Err(ctx, err).Msg("Error shutting down agent.")
-		return err
-	}
-
-	duration := time.Since(start)
-	switch a.status {
-	case AgentStatusSuspending:
-		a.updateStatus(ctx, AgentStatusSuspended)
-		if err := a.saveState(ctx); err != nil {
-			return err
+	if a.terminating {
+		if err := a.stopAgent(ctx); err != nil {
+			return fmt.Errorf("error stopping agent: %w", err)
 		}
-		logger.Info(ctx).Msg("Agent suspended successfully.")
-	case AgentStatusStopping:
-		a.updateStatus(ctx, AgentStatusTerminated)
-		if err := a.saveState(ctx); err != nil {
-			return err
+	} else {
+		if err := a.suspendAgent(ctx); err != nil {
+			return fmt.Errorf("error suspending agent: %w", err)
 		}
-		logger.Info(ctx).Dur("duration_ms", duration).Msg("Agent terminated successfully.")
-	default:
-		return fmt.Errorf("invalid agent status for actor PostStop: %s", a.status)
 	}
 
 	return nil
 }
 
-func (a *wasmAgentActor) updateStatus(ctx context.Context, status AgentStatus) {
-	// set the agent status (this is the important part)
+func (a *wasmAgentActor) updateStatus(ctx context.Context, status AgentStatus) error {
+	if a.status == status {
+		return nil
+	}
+
 	a.status = status
 
-	// try to publish an event, but it's ok if it fails
+	if err := db.UpdateAgentStatus(ctx, a.agentId, status); err != nil {
+		return fmt.Errorf("error updating agent status in database: %w", err)
+	}
+
 	data := fmt.Sprintf(`{"status":"%s"}`, a.status)
-	_ = PublishAgentEvent(ctx, a.agentId, agentStatusEventName, &data)
+	if err := PublishAgentEvent(ctx, a.agentId, agentStatusEventName, &data); err != nil {
+		return fmt.Errorf("error publishing agent status event: %w", err)
+	}
+
+	return nil
 }
 
 func (a *wasmAgentActor) saveState(ctx context.Context) error {
@@ -151,7 +111,24 @@ func (a *wasmAgentActor) saveState(ctx context.Context) error {
 		Data:      data,
 		UpdatedAt: time.Now().UTC().Format(time.RFC3339),
 	}); err != nil {
-		return fmt.Errorf("error saving state to database: %w", err)
+		return fmt.Errorf("error saving agent state to database: %w", err)
+	}
+
+	return nil
+}
+
+func (a *wasmAgentActor) restoreState(ctx context.Context) error {
+	if a.module == nil {
+		return fmt.Errorf("module is not initialized")
+	}
+
+	data, err := db.GetAgentState(ctx, a.agentId)
+	if err != nil {
+		return fmt.Errorf("error getting agent state from database: %w", err)
+	}
+
+	if err := a.setAgentState(ctx, &data.Data); err != nil {
+		return fmt.Errorf("error setting agent state: %w", err)
 	}
 
 	return nil
@@ -160,34 +137,9 @@ func (a *wasmAgentActor) saveState(ctx context.Context) error {
 func (a *wasmAgentActor) Receive(rc *goakt.ReceiveContext) {
 	ctx := a.newContext()
 
+	// NOTE: GoAkt will send a goaktpb.PostStart message, but we don't need to do anything with it.
+
 	switch msg := rc.Message().(type) {
-	case *goaktpb.PostStart:
-
-		if err := a.activateAgent(ctx); err != nil {
-			logger.Err(ctx, err).Msg("Error activating agent.")
-			rc.Err(err)
-			return
-		}
-
-		if a.status == AgentStatusResuming {
-			if err := a.setAgentState(ctx, a.initialState); err != nil {
-				logger.Warn(ctx).Err(err).Msg("Unable to restore agent state.")
-			}
-			a.initialState = nil
-		}
-
-		if a.status == AgentStatusResuming {
-			logger.Info(ctx).Msg("Agent resumed successfully.")
-		} else {
-			logger.Info(ctx).Msg("Agent started successfully.")
-		}
-
-		a.updateStatus(ctx, AgentStatusRunning)
-		if err := a.saveState(ctx); err != nil {
-			logger.Err(ctx, err).Msg("Error saving agent state.")
-			rc.Err(err)
-			return
-		}
 
 	case *messages.AgentRequestMessage:
 
@@ -254,30 +206,107 @@ func (a *wasmAgentActor) newContext() context.Context {
 
 func (a *wasmAgentActor) activateAgent(ctx context.Context) error {
 
+	a.buffers = utils.NewOutputBuffers()
+	if mod, err := a.host.GetModuleInstance(ctx, a.plugin, a.buffers); err != nil {
+		return fmt.Errorf("error getting module instance in actor pre-start: %w", err)
+	} else {
+		a.module = mod
+	}
+
 	fnInfo, err := a.host.GetFunctionInfo("_modus_agent_activate")
 	if err != nil {
 		return err
 	}
 
 	params := map[string]any{
-		"name":      a.agentName,
-		"id":        a.agentId,
-		"reloading": a.status == AgentStatusResuming,
+		"name": a.agentName,
+		"id":   a.agentId,
 	}
 
 	_, err = a.host.CallFunctionInModule(ctx, a.module, a.buffers, fnInfo, params)
 	return err
 }
 
-func (a *wasmAgentActor) shutdownAgent(ctx context.Context) error {
+func (a *wasmAgentActor) startAgent(ctx context.Context) error {
+	logger.Info(ctx).Msg("Starting agent.")
+	if err := a.saveState(ctx); err != nil {
+		return err
+	}
+	if err := a.updateStatus(ctx, AgentStatusStarting); err != nil {
+		return err
+	}
+	if err := a.callEventHandler(ctx, agentEventActionInitialize); err != nil {
+		return err
+	}
+	if err := a.updateStatus(ctx, AgentStatusRunning); err != nil {
+		return err
+	}
+	logger.Info(ctx).Msg("Agent started successfully.")
+	return nil
+}
 
-	fnInfo, err := a.host.GetFunctionInfo("_modus_agent_shutdown")
+func (a *wasmAgentActor) resumeAgent(ctx context.Context) error {
+	logger.Info(ctx).Msg("Resuming agent.")
+	if err := a.updateStatus(ctx, AgentStatusResuming); err != nil {
+		return err
+	}
+	if err := a.restoreState(ctx); err != nil {
+		return err
+	}
+	if err := a.callEventHandler(ctx, agentEventActionResume); err != nil {
+		return err
+	}
+	if err := a.updateStatus(ctx, AgentStatusRunning); err != nil {
+		return err
+	}
+	logger.Info(ctx).Msg("Agent resumed successfully.")
+	return nil
+}
+
+func (a *wasmAgentActor) suspendAgent(ctx context.Context) error {
+	logger.Info(ctx).Msg("Suspending agent.")
+	if err := a.updateStatus(ctx, AgentStatusSuspending); err != nil {
+		return err
+	}
+	if err := a.callEventHandler(ctx, agentEventActionSuspend); err != nil {
+		return err
+	}
+	if err := a.saveState(ctx); err != nil {
+		return err
+	}
+	if err := a.updateStatus(ctx, AgentStatusSuspended); err != nil {
+		return err
+	}
+	logger.Info(ctx).Msg("Agent suspended successfully.")
+	return nil
+}
+
+func (a *wasmAgentActor) stopAgent(ctx context.Context) error {
+	logger.Info(ctx).Msg("Stopping agent.")
+	if err := a.updateStatus(ctx, AgentStatusStopping); err != nil {
+		return err
+	}
+	if err := a.callEventHandler(ctx, agentEventActionTerminate); err != nil {
+		return err
+	}
+	if err := a.saveState(ctx); err != nil {
+		return err
+	}
+	if err := a.updateStatus(ctx, AgentStatusTerminated); err != nil {
+		return err
+	}
+	logger.Info(ctx).Msg("Agent stopped successfully.")
+	return nil
+}
+
+func (a *wasmAgentActor) callEventHandler(ctx context.Context, action agentEventAction) error {
+	fnInfo, err := a.host.GetFunctionInfo("_modus_agent_handle_event")
 	if err != nil {
 		return err
 	}
 
 	params := map[string]any{
-		"suspending": a.status == AgentStatusSuspending,
+		"action": action,
 	}
 
 	_, err = a.host.CallFunctionInModule(ctx, a.module, a.buffers, fnInfo, params)
@@ -323,56 +352,4 @@ func (a *wasmAgentActor) setAgentState(ctx context.Context, data *string) error 
 
 	_, err = a.host.CallFunctionInModule(ctx, a.module, a.buffers, fnInfo, params)
 	return err
-}
-
-func (a *wasmAgentActor) reloadModule(ctx context.Context, plugin *plugins.Plugin) error {
-
-	// the context may not have these values set
-	ctx = context.WithValue(ctx, utils.PluginContextKey, a.plugin)
-	ctx = context.WithValue(ctx, utils.AgentIdContextKey, a.agentId)
-	ctx = context.WithValue(ctx, utils.AgentNameContextKey, a.agentName)
-
-	logger.Info(ctx).Msg("Reloading module for agent.")
-
-	a.updateStatus(ctx, AgentStatusSuspending)
-	if err := a.shutdownAgent(ctx); err != nil {
-		logger.Err(ctx, err).Msg("Error shutting down agent.")
-		return err
-	}
-
-	// get the current state and close the module instance
-	state, err := a.getAgentState(ctx)
-	if err != nil {
-		logger.Err(ctx, err).Msg("Error getting agent state.")
-		return err
-	}
-	a.module.Close(ctx)
-	a.updateStatus(ctx, AgentStatusSuspended)
-
-	// create a new module instance and assign it to the actor
-	a.plugin = plugin
-	a.buffers = utils.NewOutputBuffers()
-	mod, err := a.host.GetModuleInstance(ctx, a.plugin, a.buffers)
-	if err != nil {
-		return err
-	}
-	a.module = mod
-
-	// activate the agent in the new module instance
-	a.updateStatus(ctx, AgentStatusResuming)
-	if err := a.activateAgent(ctx); err != nil {
-		logger.Err(ctx, err).Msg("Error reloading agent.")
-		return err
-	}
-
-	// restore the state in the new module instance
-	if err := a.setAgentState(ctx, state); err != nil {
-		logger.Err(ctx, err).Msg("Error setting agent state.")
-		return err
-	}
-
-	a.updateStatus(ctx, AgentStatusRunning)
-	logger.Info(ctx).Msg("Agent reloaded module successfully.")
-
-	return nil
 }

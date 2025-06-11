@@ -36,9 +36,12 @@ func Initialize(ctx context.Context) {
 		goakt.WithLogger(newActorLogger(logger.Get(ctx))),
 		goakt.WithCoordinatedShutdown(beforeShutdown),
 		goakt.WithPubSub(),
-		goakt.WithPassivation(time.Second * 10),      // TODO: adjust this value, or make it configurable
 		goakt.WithActorInitTimeout(10 * time.Second), // TODO: adjust this value, or make it configurable
 		goakt.WithActorInitMaxRetries(1),             // TODO: adjust this value, or make it configurable
+
+		// for now, keep passivation disabled so that agents can perform long-running tasks without the actor stopping.
+		// TODO: figure out how to deal with this better
+		goakt.WithPassivationDisabled(),
 	}
 
 	// NOTE: we're not relying on cluster mode yet.  The below code block is for future use and testing purposes only.
@@ -85,14 +88,15 @@ func Initialize(ctx context.Context) {
 }
 
 func loadAgentActors(ctx context.Context, plugin *plugins.Plugin) error {
-	// reload modules for actors that are already running
+	// restart actors that are already running, giving them the new plugin instance
 	actors := _actorSystem.Actors()
 	runningAgents := make(map[string]bool, len(actors))
 	for _, pid := range actors {
 		if actor, ok := pid.Actor().(*wasmAgentActor); ok {
 			runningAgents[actor.agentId] = true
-			if err := actor.reloadModule(ctx, plugin); err != nil {
-				return err
+			actor.plugin = plugin
+			if err := pid.Restart(ctx); err != nil {
+				logger.Err(ctx, err).Msgf("Failed to restart actor for agent %s.", actor.agentId)
 			}
 		}
 	}
@@ -108,7 +112,7 @@ func loadAgentActors(ctx context.Context, plugin *plugins.Plugin) error {
 	host := wasmhost.GetWasmHost(ctx)
 	for _, agent := range agents {
 		if !runningAgents[agent.Id] {
-			spawnActorForAgentAsync(host, plugin, agent.Id, agent.Name, true, &agent.Data)
+			spawnActorForAgentAsync(host, plugin, agent.Id, agent.Name, false)
 		}
 	}
 

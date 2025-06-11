@@ -126,6 +126,7 @@
     "mydb",
     "mydgraph",
     "nanos",
+    "Nanosleep",
     "Nanotime",
     "neo4jclient",
     "nobuild",
