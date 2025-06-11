@@ -2,17 +2,9 @@
 
 # Change Log
 
-## 2025-06-11 - Runtime 0.18.0-alpha.7
+## UNRELEASED
 
-- feat: add kubernetes as a secrets provider, add host function to read secrets [#885](https://github.com/hypermodeinc/modus/pull/885)
-
-## 2025-06-11 - Go SDK 0.18.0-alpha.7
-
-- feat: add kubernetes as a secrets provider, add host function to read secrets [#885](https://github.com/hypermodeinc/modus/pull/885)
-
-## 2025-06-11 - AssemblyScript SDK 0.18.0-alpha.6
-
-- feat: add kubernetes as a secrets provider, add host function to read secrets [#885](https://github.com/hypermodeinc/modus/pull/885)
+- feat: add kubernetes secrets provider and API to read secrets [#885](https://github.com/hypermodeinc/modus/pull/885)
 
 ## 2025-06-10 - Runtime 0.18.0-alpha.6
 
