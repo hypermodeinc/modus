@@ -180,7 +180,8 @@ func ensureAgentReady(ctx context.Context, agentId string) (*AgentInfo, *goakt.P
 		info, pid, err := getAgentInfo(ctx, agentId)
 
 		if pid != nil {
-			if actor := pid.Actor().(*wasmAgentActor); actor.status == AgentStatusRunning {
+			actor := pid.Actor().(*wasmAgentActor)
+			if actor.status == AgentStatusRunning {
 				return info, pid, nil
 			}
 			lastErr = fmt.Errorf("agent %s not ready (status: %s)", agentId, actor.status)
@@ -215,6 +216,9 @@ func ensureAgentReady(ctx context.Context, agentId string) (*AgentInfo, *goakt.P
 				// Other statuses - don't retry
 				return info, nil, fmt.Errorf("agent %s is %s, but not found in local actor system", agentId, info.Status)
 			}
+		} else if err != nil {
+			// Handle the error from getAgentInfo
+			lastErr = err
 		} else {
 			// Agent doesn't exist at all - permanent failure
 			return nil, nil, fmt.Errorf("agent %s not found", agentId)
