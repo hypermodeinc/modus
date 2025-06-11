@@ -161,9 +161,12 @@ func getModuleConfig(ctx context.Context, buffers utils.OutputBuffers, plugin *p
 	cfg := wazero.NewModuleConfig().
 		WithName("").
 		WithStartFunctions(plugin.StartFunction).
-		WithSysWalltime().WithSysNanotime().
+		WithSysWalltime().
+		WithSysNanotime().
+		WithSysNanosleep().
 		WithRandSource(rand.Reader).
-		WithStdout(wOut).WithStderr(wErr).
+		WithStdout(wOut).
+		WithStderr(wErr).
 		WithEnv("TZ", timeZone).
 		WithEnv("CLAIMS", jwtClaims)
 
