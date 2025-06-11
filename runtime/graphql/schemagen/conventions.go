@@ -20,6 +20,7 @@ var mutationPrefixes = []string{
 	"post", "patch", "put", "delete",
 	"add", "update", "insert", "upsert",
 	"create", "edit", "save", "remove", "alter", "modify",
+	"start", "stop",
 }
 
 func isMutation(fnName string) bool {
