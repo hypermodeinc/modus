@@ -257,7 +257,8 @@ func PublishAgentEvent(ctx context.Context, agentId, eventName string, eventData
 
 	topicActor := _actorSystem.TopicActor()
 
-	if pid, err := getActorPid(ctx, agentId); err == nil {
+	pid, err := getActorPid(ctx, agentId)
+	if err == nil {
 		return pid.Tell(ctx, topicActor, pubMsg)
 	}
 
