@@ -43,7 +43,7 @@ export async function installRuntime(version: string) {
 
   const tempDir = os.tmpdir();
   let osPlatform = os.platform().toString();
-  let osArch = os.arch();
+  let osArch = os.arch().toString();
   if (osPlatform === "win32") osPlatform = "windows";
   if (osArch === "x64") osArch = "amd64";
 

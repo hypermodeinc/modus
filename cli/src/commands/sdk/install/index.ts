@@ -72,7 +72,8 @@ export default class SDKInstallCommand extends BaseCommand {
       sdks.push({ sdk, version });
     }
 
-    const runtimes = await this.getRuntimeVersions(sdks, flags.prerelease);
+    const runtimePrerelease = flags.prerelease || (!!args.version && vi.isPrerelease(args.version));
+    const runtimes = await this.getRuntimeVersions(sdks, runtimePrerelease);
     for (const runtimeVersion of runtimes) {
       await this.installRuntime(runtimeVersion, flags.force);
     }

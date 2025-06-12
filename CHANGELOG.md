@@ -2,6 +2,10 @@
 
 # Change Log
 
+## 2025-06-12 CLI 0.18.1
+
+- fix: repair runtime prerelease matching bug and update dependencies [#894](https://github.com/hypermodeinc/modus/pull/894)
+
 ## 2025-06-11 - Runtime 0.18.0-alpha.7
 
 - feat: add kubernetes secrets provider and API to read secrets [#885](https://github.com/hypermodeinc/modus/pull/885)
