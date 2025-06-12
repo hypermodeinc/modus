@@ -2,13 +2,21 @@
 
 # Change Log
 
-## UNRELEASED
+## 2025-06-11 - Runtime 0.18.0-alpha.7
 
 - feat: add kubernetes secrets provider and API to read secrets [#885](https://github.com/hypermodeinc/modus/pull/885)
 - feat: "start" and "stop" are now mutation prefixes [#889](https://github.com/hypermodeinc/modus/pull/889)
 - fix: start agents synchronously, and add examples setting data on start [#890](https://github.com/hypermodeinc/modus/pull/890)
 - fix: resolve deadlocks related to open inbound http connections [#891](https://github.com/hypermodeinc/modus/pull/891)
 - fix: use millisecond precision in timestamps [#892](https://github.com/hypermodeinc/modus/pull/892)
+
+## 2025-06-11 - Go SDK 0.18.0-alpha.7
+
+- feat: add kubernetes secrets provider and API to read secrets [#885](https://github.com/hypermodeinc/modus/pull/885)
+
+## 2025-06-11 - AssemblyScript SDK 0.18.0-alpha.6
+
+- feat: add kubernetes secrets provider and API to read secrets [#885](https://github.com/hypermodeinc/modus/pull/885)
 
 ## 2025-06-10 - Runtime 0.18.0-alpha.6
 
