@@ -375,7 +375,7 @@ func writeInferenceHistoryToModusDb(ctx context.Context, batch []inferenceHistor
 			ModelHash:  data.model.Hash(),
 			Input:      string(input),
 			Output:     string(output),
-			StartedAt:  data.start.Format(time.RFC3339),
+			StartedAt:  data.start.Format(utils.TimeFormat),
 			DurationMs: data.end.Sub(data.start).Milliseconds(),
 			Function:   funcStr,
 			Plugin: Plugin{

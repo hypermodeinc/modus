@@ -102,7 +102,7 @@ func (a *subscriptionActor) Receive(rc *goakt.ReceiveContext) {
 		event := &agentEvent{
 			Name:      msg.Name,
 			Data:      msg.Data,
-			Timestamp: msg.Timestamp.AsTime().Format(time.RFC3339),
+			Timestamp: msg.Timestamp.AsTime().Format(utils.TimeFormat),
 		}
 		if data, err := utils.JsonSerialize(event); err != nil {
 			rc.Err(fmt.Errorf("failed to serialize agent event message: %w", err))
