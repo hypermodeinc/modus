@@ -108,6 +108,7 @@ func startHttpServer(ctx context.Context, mux http.Handler, addresses ...string)
 	for _, server := range servers {
 		shutdownCtx, shutdownRelease := context.WithTimeout(ctx, shutdownTimeout)
 		defer shutdownRelease()
+		server.RegisterOnShutdown(graphql.CancelSubscriptions)
 		if err := server.Shutdown(shutdownCtx); err != nil {
 			logger.Fatal(ctx).Err(err).Msg("HTTP server shutdown error.")
 		}

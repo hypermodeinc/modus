@@ -26,6 +26,7 @@ import (
 	"github.com/hypermodeinc/modus/runtime/utils"
 	"github.com/hypermodeinc/modus/runtime/wasmhost"
 	"github.com/puzpuzpuz/xsync/v4"
+	"github.com/rs/xid"
 
 	"github.com/tidwall/gjson"
 	"github.com/tidwall/sjson"
@@ -37,6 +38,16 @@ import (
 )
 
 var GraphQLRequestHandler = http.HandlerFunc(handleGraphQLRequest)
+
+var cancelFuncs = xsync.NewMap[string, context.CancelFunc]()
+
+func CancelSubscriptions() {
+	cancelFuncs.Range(func(key string, cancel context.CancelFunc) bool {
+		cancel()
+		return true
+	})
+	cancelFuncs.Clear()
+}
 
 func Initialize() {
 	// The GraphQL engine's Activate function should be called when a plugin is loaded.
@@ -162,6 +173,12 @@ func handleGraphQLRequest(w http.ResponseWriter, r *http.Request) {
 			fmt.Fprintf(w, "event: next\ndata: %s\n\n", data)
 			flusher.Flush()
 		})
+
+		id := xid.New().String()
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithCancel(ctx)
+		cancelFuncs.Store(id, cancel)
+		defer cancelFuncs.Delete(id)
 	}
 
 	// Execute the GraphQL operation
