@@ -83,7 +83,7 @@ func updateAgentStatusInModusDB(ctx context.Context, id string, status string) e
 	}
 
 	state.Status = status
-	state.UpdatedAt = time.Now().UTC().Format(time.RFC3339)
+	state.UpdatedAt = time.Now().UTC().Format(utils.TimeFormat)
 
 	return writeAgentStateToModusDB(ctx, *state)
 }
@@ -179,7 +179,7 @@ func getAgentStateFromPostgresDB(ctx context.Context, id string) (*AgentState, e
 		if err := row.Scan(&a.Id, &a.Name, &a.Status, &a.Data, &ts); err != nil {
 			return fmt.Errorf("failed to get agent state: %w", err)
 		}
-		a.UpdatedAt = ts.UTC().Format(time.RFC3339)
+		a.UpdatedAt = ts.UTC().Format(utils.TimeFormat)
 		return nil
 	})
 
@@ -210,7 +210,7 @@ func queryActiveAgentsFromPostgresDB(ctx context.Context) ([]AgentState, error) 
 			if err := rows.Scan(&a.Id, &a.Name, &a.Status, &a.Data, &ts); err != nil {
 				return err
 			}
-			a.UpdatedAt = ts.UTC().Format(time.RFC3339)
+			a.UpdatedAt = ts.UTC().Format(utils.TimeFormat)
 			results = append(results, a)
 		}
 		if err := rows.Err(); err != nil {
