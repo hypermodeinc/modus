@@ -145,3 +145,7 @@ func Err(ctx context.Context, err error) *zerolog.Event {
 func Fatal(ctx context.Context) *zerolog.Event {
 	return Get(ctx).Fatal()
 }
+
+func Warnf(msg string, v ...any) {
+	log.Warn().Msgf(msg, v...)
+}

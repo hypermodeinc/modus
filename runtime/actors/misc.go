@@ -1,0 +1,53 @@
+/*
+ * Copyright 2025 Hypermode Inc.
+ * Licensed under the terms of the Apache License, Version 2.0
+ * See the LICENSE file that accompanied this code for further details.
+ *
+ * SPDX-FileCopyrightText: 2025 Hypermode Inc. <hello@hypermode.com>
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+package actors
+
+import (
+	"context"
+	"fmt"
+	"time"
+
+	goakt "github.com/tochemey/goakt/v3/actor"
+	"github.com/tochemey/goakt/v3/address"
+
+	"google.golang.org/protobuf/proto"
+)
+
+var _noSenderAddress = address.NoSender()
+
+// TODO: I would expect these to be built into GoAkt but couldn't find them.
+
+// Sends a message to an actor identified by its name.
+// Uses either Tell or RemoteTell based on whether the actor is local or remote.
+func tell(ctx context.Context, actorName string, message proto.Message) error {
+	addr, pid, err := _actorSystem.ActorOf(ctx, actorName)
+	if err != nil {
+		return err
+	} else if pid != nil {
+		return goakt.Tell(ctx, pid, message)
+	} else if addr != nil {
+		return _remoting.RemoteTell(ctx, _noSenderAddress, addr, message)
+	}
+	return fmt.Errorf("failed to get address or PID for actor %s", actorName)
+}
+
+// Sends a message to an actor identified by its name, then waits for a response within the timeout duration.
+// Uses either Ask or RemoteAsk based on whether the actor is local or remote.
+func ask(ctx context.Context, actorName string, message proto.Message, timeout time.Duration) (response proto.Message, err error) {
+	addr, pid, err := _actorSystem.ActorOf(ctx, actorName)
+	if err != nil {
+		return nil, err
+	} else if pid != nil {
+		return goakt.Ask(ctx, pid, message, timeout)
+	} else if addr != nil {
+		return _remoting.RemoteAsk(ctx, _noSenderAddress, addr, message, timeout)
+	}
+	return nil, fmt.Errorf("failed to get address or PID for actor %s", actorName)
+}
