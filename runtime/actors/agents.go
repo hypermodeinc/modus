@@ -93,7 +93,9 @@ func spawnActorForAgent(host wasmhost.WasmHost, plugin *plugins.Plugin, agentId,
 	ctx := actor.newContext()
 
 	actorName := getActorName(agentId)
-	_, err := _actorSystem.Spawn(ctx, actorName, actor)
+	_, err := _actorSystem.Spawn(ctx, actorName, actor,
+		goakt.WithLongLived(), // don't passivate
+	)
 	return err
 }
 
@@ -246,11 +248,8 @@ func PublishAgentEvent(ctx context.Context, agentId, eventName string, eventData
 
 	// publish anonymously if the actor is not found (we should avoid this)
 	if errors.Is(err, goakt.ErrActorNotFound) {
-		// For now, we use the topic actor directly to publish the message.
-		// See https://github.com/Tochemey/goakt/pull/761
-		// TODO: use goakt.Tell after it's fixed
 		logger.Warn(ctx).Str("event", eventName).Any("data", eventData).Msg("Agent actor not found. Publishing event anonymously.")
-		return topicActor.Tell(ctx, topicActor, pubMsg)
+		return goakt.Tell(ctx, topicActor, pubMsg)
 	}
 
 	return err

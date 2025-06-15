@@ -42,7 +42,7 @@ require (
 	github.com/tetratelabs/wazero v1.9.0
 	github.com/tidwall/gjson v1.18.0
 	github.com/tidwall/sjson v1.2.5
-	github.com/tochemey/goakt/v3 v3.5.1
+	github.com/tochemey/goakt/v3 v3.6.0
 	github.com/travisjeffery/go-dynaport v1.0.0
 	github.com/twpayne/go-geom v1.6.1
 	github.com/wundergraph/graphql-go-tools/execution v1.3.1
@@ -224,7 +224,7 @@ require (
 	github.com/prometheus/statsd_exporter v0.28.0 // indirect
 	github.com/r3labs/sse/v2 v2.8.1 // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 // indirect
-	github.com/redis/go-redis/v9 v9.9.0 // indirect
+	github.com/redis/go-redis/v9 v9.10.0 // indirect
 	github.com/reugn/go-quartz v0.14.0 // indirect
 	github.com/ryanuber/go-glob v1.0.0 // indirect
 	github.com/sagikazarmark/locafero v0.7.0 // indirect

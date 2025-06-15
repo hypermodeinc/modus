@@ -36,10 +36,6 @@ func Initialize(ctx context.Context) {
 		goakt.WithPubSub(),
 		goakt.WithActorInitTimeout(10 * time.Second), // TODO: adjust this value, or make it configurable
 		goakt.WithActorInitMaxRetries(1),             // TODO: adjust this value, or make it configurable
-
-		// For now, keep passivation disabled so that agents can perform long-running tasks without the actor stopping.
-		// TODO: Revisit this after https://github.com/Tochemey/goakt/issues/764 is resolved.
-		goakt.WithPassivationDisabled(),
 	}
 	opts = append(opts, clusterOptions()...)
 
