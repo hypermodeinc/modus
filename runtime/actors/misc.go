@@ -47,7 +47,11 @@ func ask(ctx context.Context, actorName string, message proto.Message, timeout t
 	} else if pid != nil {
 		return goakt.Ask(ctx, pid, message, timeout)
 	} else if addr != nil {
-		return _remoting.RemoteAsk(ctx, _noSenderAddress, addr, message, timeout)
+		response, err := _remoting.RemoteAsk(ctx, _noSenderAddress, addr, message, timeout)
+		if err != nil {
+			return nil, err
+		}
+		return response.UnmarshalNew()
 	}
 	return nil, fmt.Errorf("failed to get address or PID for actor %s", actorName)
 }
