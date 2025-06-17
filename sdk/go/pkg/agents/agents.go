@@ -12,6 +12,7 @@ package agents
 import (
 	"errors"
 	"fmt"
+	"math"
 	"time"
 
 	"github.com/hypermodeinc/modus/sdk/go/pkg/console"
@@ -333,13 +334,14 @@ func WithTimeout(timeout time.Duration) messageOption {
 }
 
 // SendMessage sends a message to the specified agent and waits for a response.
-// The message is sent synchronously and the function will block until a response is received or the timeout is reached.
-// The timeout can be set using the WithTimeout option, and defaults to 10 seconds if not set.
 // Data can be sent with the message using the WithData option.
+// The message is sent synchronously and the function will block until a response is received or the timeout is reached.
+// The timeout can be set using the WithTimeout option. If there is no timeout set, it will wait indefinitely until a
+// response is received, or until calling function is cancelled.
 func SendMessage(agentId, msgName string, options ...messageOption) (*string, error) {
 	m := &message{
 		name:    msgName,
-		timeout: 10 * time.Second,
+		timeout: math.MaxInt64, // default to no timeout (wait indefinitely)
 	}
 
 	for _, opt := range options {
@@ -350,9 +352,9 @@ func SendMessage(agentId, msgName string, options ...messageOption) (*string, er
 }
 
 // SendMessageAsync sends a message to the specified agent without waiting for a response.
-// The message is sent asynchronously and the function will return immediately.
 // Data can be sent with the message using the WithData option.
-// The timeout is ignored for asynchronous messages and is always set to 0.
+// The message is sent asynchronously and the function will return immediately.
+// The WithTimeout option is ignored for asynchronous messages, as they do not wait for a response.
 func SendMessageAsync(agentId, msgName string, options ...messageOption) error {
 	m := &message{
 		name: msgName,
