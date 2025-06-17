@@ -2,6 +2,10 @@
 
 # Change Log
 
+## UNRELEASED
+
+- fix: default send message to have no timeout [#896](https://github.com/hypermodeinc/modus/pull/896)
+
 ## 2025-06-12 CLI 0.18.1
 
 - fix: repair runtime prerelease matching bug and update dependencies [#894](https://github.com/hypermodeinc/modus/pull/894)

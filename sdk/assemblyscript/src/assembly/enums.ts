@@ -7,15 +7,18 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-export enum Duration {
-  zero = 0,
-  nanosecond = 1,
-  microsecond = 1000 * Duration.nanosecond,
-  millisecond = 1000 * Duration.microsecond,
-  second = 1000 * Duration.millisecond,
-  minute = 60 * Duration.second,
-  hour = 60 * Duration.minute,
+// eslint-disable-next-line @typescript-eslint/no-namespace
+export namespace Duration {
+  export const zero = 0;
+  export const nanosecond = 1;
+  export const microsecond = 1000 * Duration.nanosecond;
+  export const millisecond = 1000 * Duration.microsecond;
+  export const second = 1000 * Duration.millisecond;
+  export const minute = 60 * Duration.second;
+  export const hour = 60 * Duration.minute;
+  export const maxValue = i64.MAX_VALUE;
 }
+export type Duration = i64;
 
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace AgentStatus {

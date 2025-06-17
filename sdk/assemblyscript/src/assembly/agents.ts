@@ -27,15 +27,17 @@ declare function hostSendMessage(
 ): MessageResponse;
 
 /**
- * Sends a message to an agent, and waits for a response.
+ * Sends a message to the specified agent and waits for a response.
  * The data is optional and can be null.
- * The timeout is in seconds and defaults to 10 seconds.
+ * The message is sent synchronously and the function will block until a response is received or the timeout is reached.
+ * If there is no timeout set (or set to Duration.maxValue), it will wait indefinitely until a response is received,
+ * or until calling function is cancelled.
  */
 export function sendMessage(
   agentId: string,
   msgName: string,
   data: string | null = null,
-  timeout: Duration = 10 * Duration.second,
+  timeout: Duration = Duration.maxValue,
 ): string | null {
   if (timeout < 0) {
     throw new Error("Timeout must be a zero or positive value.");
@@ -59,8 +61,9 @@ export function sendMessage(
 }
 
 /**
- * Sends a message to an agent without waiting for a response.
+ * Sends a message to the specified agent without waiting for a response.
  * The data is optional and can be null.
+ * The message is sent asynchronously and the function will return immediately.
  */
 export function sendMessageAsync(
   agentId: string,
