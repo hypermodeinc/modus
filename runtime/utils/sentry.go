@@ -155,9 +155,7 @@ func sentryAddExtras(event *sentry.Event) {
 		event.Extra = make(map[string]any)
 	}
 
-	// Capture the k8s namespace environment variable.
-	ns := os.Getenv("NAMESPACE")
-	if ns != "" {
+	if ns := app.KubernetesNamespace(); ns != "" && ns != "default" {
 		event.Extra["namespace"] = ns
 	}
 }

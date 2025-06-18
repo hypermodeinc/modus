@@ -30,6 +30,10 @@ func GetRegisteredPlugins() []*plugins.Plugin {
 	return globalPluginRegistry.GetAll()
 }
 
+func GetPluginByName(name string) *plugins.Plugin {
+	return globalPluginRegistry.GetByName(name)
+}
+
 type pluginRegistry struct {
 	idRevIndex map[*plugins.Plugin]string
 	idIndex    map[string]*plugins.Plugin

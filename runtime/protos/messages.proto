@@ -7,18 +7,28 @@ option go_package = "github.com/hypermodeinc/modus/runtime/messages";
 import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";
 
-message AgentRequestMessage {
+message AgentRequest {
     string name = 1;
     optional string data = 2;
     bool respond = 3;
 }
 
-message AgentResponseMessage {
+message AgentResponse {
     optional string data = 1;
 }
 
-message AgentEventMessage {
+message AgentEvent {
     string name = 1;
     optional google.protobuf.Value data = 2;
     google.protobuf.Timestamp timestamp = 3;
 }
+
+message AgentInfoRequest {}
+
+message AgentInfoResponse {
+    string name = 1;
+    string status = 2;
+}
+
+message RestartAgent {}
+message ShutdownAgent {}

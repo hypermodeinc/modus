@@ -59,6 +59,11 @@ func Initialize() *zerolog.Logger {
 				"agent_id",
 				"execution_id",
 				"duration_ms",
+				"cluster_mode",
+				"cluster_host",
+				"discovery_port",
+				"remoting_port",
+				"peers_port",
 			}
 		} else {
 			consoleWriter.TimeFormat = "2006-01-02 15:04:05.000 -07:00"
@@ -144,4 +149,28 @@ func Err(ctx context.Context, err error) *zerolog.Event {
 
 func Fatal(ctx context.Context) *zerolog.Event {
 	return Get(ctx).Fatal()
+}
+
+func Debugf(msg string, v ...any) {
+	log.Debug().Msgf(msg, v...)
+}
+
+func Infof(msg string, v ...any) {
+	log.Info().Msgf(msg, v...)
+}
+
+func Warnf(msg string, v ...any) {
+	log.Warn().Msgf(msg, v...)
+}
+
+func Errorf(msg string, v ...any) {
+	log.Error().Msgf(msg, v...)
+}
+
+func Fatalf(msg string, v ...any) {
+	log.Fatal().Msgf(msg, v...)
+}
+
+func Errf(err error, msg string, v ...any) {
+	log.Err(err).Msgf(msg, v...)
 }

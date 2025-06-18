@@ -33,7 +33,7 @@ type AgentEvent interface {
 	EventName() string
 }
 
-type AgentStatus = string
+type AgentStatus string
 
 const (
 	AgentStatusStarting   AgentStatus = "starting"
@@ -45,7 +45,7 @@ const (
 	AgentStatusTerminated AgentStatus = "terminated"
 )
 
-type agentEventAction = string
+type agentEventAction string
 
 const (
 	agentEventActionInitialize agentEventAction = "initialize"
@@ -178,7 +178,7 @@ func handleEvent(action string) {
 	}
 	agent := *activeAgent
 
-	switch action {
+	switch agentEventAction(action) {
 	case agentEventActionInitialize:
 		if err := (agent).OnInitialize(); err != nil {
 			console.Errorf("Error initializing agent %s: %v", agent.Name(), err)

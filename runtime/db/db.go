@@ -110,7 +110,7 @@ var _useModusDB bool
 
 func useModusDB() bool {
 	_useModusDBOnce.Do(func() {
-		s := os.Getenv("MODUS_DB_USE_MODUSDB")
+		s := os.Getenv("MODUS_USE_MODUSDB")
 		if s != "" {
 			if value, err := strconv.ParseBool(s); err == nil {
 				_useModusDB = value

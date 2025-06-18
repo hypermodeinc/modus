@@ -1,6 +1,6 @@
 module github.com/hypermodeinc/modus/runtime
 
-go 1.24.3
+go 1.24.4
 
 // trunk-ignore-all(osv-scanner/GHSA-9w9f-6mg8-jp7w): not affected by bleve vulnerability
 
@@ -42,7 +42,7 @@ require (
 	github.com/tetratelabs/wazero v1.9.0
 	github.com/tidwall/gjson v1.18.0
 	github.com/tidwall/sjson v1.2.5
-	github.com/tochemey/goakt/v3 v3.5.1
+	github.com/tochemey/goakt/v3 v3.6.1
 	github.com/travisjeffery/go-dynaport v1.0.0
 	github.com/twpayne/go-geom v1.6.1
 	github.com/wundergraph/graphql-go-tools/execution v1.3.1
@@ -206,6 +206,9 @@ require (
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/mschoch/smat v0.2.0 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
+	github.com/nats-io/nats.go v1.43.0 // indirect
+	github.com/nats-io/nkeys v0.4.11 // indirect
+	github.com/nats-io/nuid v1.0.1 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.1.0 // indirect
 	github.com/panjf2000/ants/v2 v2.11.3 // indirect
@@ -221,7 +224,7 @@ require (
 	github.com/prometheus/statsd_exporter v0.28.0 // indirect
 	github.com/r3labs/sse/v2 v2.8.1 // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 // indirect
-	github.com/redis/go-redis/v9 v9.9.0 // indirect
+	github.com/redis/go-redis/v9 v9.10.0 // indirect
 	github.com/reugn/go-quartz v0.14.0 // indirect
 	github.com/ryanuber/go-glob v1.0.0 // indirect
 	github.com/sagikazarmark/locafero v0.7.0 // indirect

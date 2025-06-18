@@ -59,22 +59,29 @@ func SubscribeForAgentEvents(ctx context.Context, agentId string, update func(da
 		return fmt.Errorf("failed to spawn subscription actor: %w", err)
 	}
 
-	subMsg := &goaktpb.Subscribe{
-		Topic: getAgentTopic(agentId),
-	}
+	topic := getAgentTopic(agentId)
+	subscribe := &goaktpb.Subscribe{Topic: topic}
 
-	if err := subActor.Tell(ctx, _actorSystem.TopicActor(), subMsg); err != nil {
+	if err := subActor.Tell(ctx, _actorSystem.TopicActor(), subscribe); err != nil {
 		return fmt.Errorf("failed to subscribe to topic: %w", err)
 	}
 
-	// When the context is done, we will stop the subscription actor.
+	// When the context is done, we will unsubscribe and stop the subscription actor.
 	// For example, the GraphQL subscription is closed or the client disconnects.
 	go func() {
 		<-ctx.Done()
 
-		// a new context is needed because the original context is already done
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		// reset cancellation because the original context is already done
+		ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), time.Second)
 		defer cancel()
+
+		logger.Debug(ctx).Msgf("Unsubscribing from topic %s and shutting down subscription actor %s", topic, subActor.Name())
+
+		unsubscribe := &goaktpb.Unsubscribe{Topic: topic}
+		if err := subActor.Tell(ctx, _actorSystem.TopicActor(), unsubscribe); err != nil {
+			logger.Err(ctx, err).Msg("Failed to unsubscribe from topic")
+		}
+
 		if err := subActor.Shutdown(ctx); err != nil {
 			logger.Err(ctx, err).Msg("Failed to shut down subscription actor")
 		}
@@ -98,7 +105,7 @@ func (a *subscriptionActor) PostStop(ac *goakt.Context) error {
 }
 
 func (a *subscriptionActor) Receive(rc *goakt.ReceiveContext) {
-	if msg, ok := rc.Message().(*messages.AgentEventMessage); ok {
+	if msg, ok := rc.Message().(*messages.AgentEvent); ok {
 		event := &agentEvent{
 			Name:      msg.Name,
 			Data:      msg.Data,
@@ -111,7 +118,7 @@ func (a *subscriptionActor) Receive(rc *goakt.ReceiveContext) {
 		}
 
 		if msg.Name == agentStatusEventName {
-			status := msg.Data.GetStructValue().Fields["status"].GetStringValue()
+			status := AgentStatus(msg.Data.GetStructValue().Fields["status"].GetStringValue())
 			if status == AgentStatusTerminated {
 				rc.Shutdown()
 			}

@@ -14,6 +14,7 @@ import (
 	"path"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"sync"
 
 	"github.com/fatih/color"
@@ -93,4 +94,14 @@ func ModusHomeDir() string {
 		modusHome = filepath.Join(userHome, ".modus")
 	}
 	return modusHome
+}
+
+func KubernetesNamespace() string {
+	if ns := os.Getenv("NAMESPACE"); ns != "" {
+		return ns
+	}
+	if data, err := os.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/namespace"); err == nil {
+		return strings.TrimSpace(string(data))
+	}
+	return "default"
 }

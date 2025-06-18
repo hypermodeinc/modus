@@ -19,6 +19,29 @@
       ]
     },
     {
+      "name": "Debug Modus Runtime (cluster mode)",
+      "type": "go",
+      "request": "launch",
+      "mode": "auto",
+      "program": "${workspaceFolder}/runtime",
+      "env": {
+        "FORCE_COLOR": "1",
+        "MODUS_ENV": "dev",
+        "MODUS_CLUSTER_MODE": "NATS",
+        "MODUS_CLUSTER_NATS_URL": "nats://localhost:4222",
+        "MODUS_DEBUG_ACTORS": "true",
+        "MODUS_DEBUG": "true",
+        "MODUS_USE_MODUSDB": "false",
+        "MODUS_DB": "postgresql://postgres:postgres@localhost:5432/modus?sslmode=disable" // checkov:skip=CKV_SECRET_4
+      },
+      "args": [
+        "--port=${input:httpServerPort}",
+        "--refresh=1s",
+        "--appPath",
+        "${workspaceFolder}/sdk/${input:appLanguage}/examples/${input:exampleApp}/build"
+      ]
+    },
+    {
       "name": "Debug Modus Runtime (input path)",
       "type": "go",
       "request": "launch",
@@ -225,6 +248,12 @@
       "type": "promptString",
       "description": "Enter the S3 storage folder name",
       "default": "shared"
+    },
+    {
+      "id": "httpServerPort",
+      "type": "promptString",
+      "description": "Enter the HTTP server port",
+      "default": "8686"
     }
   ]
 }

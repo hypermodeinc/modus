@@ -28,7 +28,7 @@ func hostStartAgent(agentName *string) *AgentInfo {
 	return &AgentInfo{
 		Id:     "abc123",
 		Name:   *agentName,
-		Status: AgentStatusStarting,
+		Status: string(AgentStatusStarting),
 	}
 }
 
@@ -51,7 +51,7 @@ func hostStopAgent(agentId *string) *AgentInfo {
 		return &AgentInfo{
 			Id:     "abc123",
 			Name:   "Counter",
-			Status: AgentStatusStopping,
+			Status: string(AgentStatusStopping),
 		}
 	}
 	return nil
@@ -64,7 +64,7 @@ func hostGetAgentInfo(agentId *string) *AgentInfo {
 		return &AgentInfo{
 			Id:     "abc123",
 			Name:   "Counter",
-			Status: AgentStatusRunning,
+			Status: string(AgentStatusRunning),
 		}
 	}
 
@@ -75,8 +75,8 @@ func hostListAgents() *[]AgentInfo {
 	ListAgentsCallStack.Push()
 
 	return &[]AgentInfo{
-		{Id: "abc123", Name: "Counter", Status: AgentStatusRunning},
-		{Id: "def456", Name: "Logger", Status: AgentStatusRunning},
+		{Id: "abc123", Name: "Counter", Status: string(AgentStatusRunning)},
+		{Id: "def456", Name: "Logger", Status: string(AgentStatusRunning)},
 	}
 }
 
