@@ -2,9 +2,16 @@
 
 # Change Log
 
-## UNRELEASED
+## 2025-06-18 - Runtime 0.18.0-alpha.8
 
 - feat: cluster mode [#895](https://github.com/hypermodeinc/modus/pull/895)
+
+## 2025-06-18 - Go SDK 0.18.0-alpha.8
+
+- fix: default send message to have no timeout [#896](https://github.com/hypermodeinc/modus/pull/896)
+
+## 2025-06-18 - AssemblyScript SDK 0.18.0-alpha.7
+
 - fix: default send message to have no timeout [#896](https://github.com/hypermodeinc/modus/pull/896)
 
 ## 2025-06-12 CLI 0.18.1
