@@ -98,11 +98,6 @@ func loadAgentActors(ctx context.Context, plugin *plugins.Plugin) error {
 func beforeShutdown(ctx context.Context) {
 	logger.Info(ctx).Msg("Actor system shutting down...")
 
-	if _actorSystem.InCluster() {
-		// TODO: if we're the last node in the cluster, we should continue to shut down agents
-		return
-	}
-
 	// stop all agent actors before shutdown so they can suspend properly
 	for _, pid := range _actorSystem.Actors() {
 		if _, ok := pid.Actor().(*wasmAgentActor); ok {
