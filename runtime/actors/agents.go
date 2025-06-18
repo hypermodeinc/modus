@@ -136,7 +136,8 @@ func GetAgentInfo(ctx context.Context, agentId string) (*AgentInfo, error) {
 	actorName := getActorName(agentId)
 	request := &messages.AgentInfoRequest{}
 
-	response, err := ask(ctx, actorName, request, defaultAskTimeout)
+	// We first try to ask the actor for its info.  Use a short timeout to avoid blocking indefinitely.
+	response, err := ask(ctx, actorName, request, 500*time.Millisecond)
 	if err == nil {
 		msg := response.(*messages.AgentInfoResponse)
 		return &AgentInfo{
@@ -146,9 +147,9 @@ func GetAgentInfo(ctx context.Context, agentId string) (*AgentInfo, error) {
 		}, nil
 	}
 
-	// If the actor is not found, we can check the database for the agent state.
-	// This is useful for agents that are terminated or suspended.
-	if errors.Is(err, goakt.ErrActorNotFound) {
+	// If the actor is not found, or if the request timed out, we can check the database for the agent state.
+	// This is useful for agents that are terminated or suspended, or just busy processing another request.
+	if errors.Is(err, goakt.ErrActorNotFound) || errors.Is(err, goakt.ErrRequestTimeout) {
 		return getAgentInfoFromDatabase(ctx, agentId)
 	}
 

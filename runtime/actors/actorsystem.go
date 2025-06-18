@@ -23,8 +23,6 @@ import (
 	goakt "github.com/tochemey/goakt/v3/actor"
 )
 
-const defaultAskTimeout = 10 * time.Second
-
 var _actorSystem goakt.ActorSystem
 
 func Initialize(ctx context.Context) {
