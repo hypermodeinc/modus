@@ -29,7 +29,7 @@ func (s *eventsDataSource) Start(rc *resolve.Context, input []byte, updater reso
 		// TODO: investigate this further.
 		errMsg, _ := utils.JsonSerialize(err.Error())
 		updater.Update(fmt.Appendf(nil, `{"errors":[{"message":%s}]}`, errMsg))
-		updater.Done()
+		updater.Close(resolve.SubscriptionCloseKindDownstreamServiceError)
 	}
 	return nil
 }
@@ -61,7 +61,7 @@ func startEventsDataSource(rc *resolve.Context, input []byte, updater resolve.Su
 		func(data []byte) {
 			updater.Update(fmt.Appendf(nil, `{"data":{"%s":%s}}`, fieldName, data))
 		},
-		updater.Done,
+		updater.Complete,
 	)
 }
 
