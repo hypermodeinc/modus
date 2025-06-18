@@ -188,6 +188,9 @@ func (a *wasmAgentActor) handleAgentRequest(ctx context.Context, rc *goakt.Recei
 				return err
 			}
 		}
+		// responding will cancel the context when finished, so we need to ensure
+		// that the context used for the remainder of this function is not cancelled.
+		ctx = context.WithoutCancel(ctx)
 		rc.Response(response)
 	}
 
