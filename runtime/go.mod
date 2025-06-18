@@ -42,7 +42,7 @@ require (
 	github.com/tetratelabs/wazero v1.9.0
 	github.com/tidwall/gjson v1.18.0
 	github.com/tidwall/sjson v1.2.5
-	github.com/tochemey/goakt/v3 v3.6.1
+	github.com/tochemey/goakt/v3 v3.6.2
 	github.com/travisjeffery/go-dynaport v1.0.0
 	github.com/twpayne/go-geom v1.6.1
 	github.com/wundergraph/graphql-go-tools/execution v1.3.1
@@ -290,7 +290,7 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	k8s.io/apiextensions-apiserver v0.33.0 // indirect
 	k8s.io/klog/v2 v2.130.1 // indirect
-	k8s.io/kube-openapi v0.0.0-20250318190949-c8a335a9a2ff // indirect
+	k8s.io/kube-openapi v0.0.0-20250610211856-8b98d1ed966a // indirect
 	k8s.io/utils v0.0.0-20250604170112-4c0f3b243397 // indirect
 	rogchap.com/v8go v0.9.0 // indirect
 	sigs.k8s.io/json v0.0.0-20241014173422-cfa47c3a1cc8 // indirect
