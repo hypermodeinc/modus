@@ -67,8 +67,7 @@ func (a *wasmAgentActor) PreStart(ac *goakt.Context) error {
 }
 
 func (a *wasmAgentActor) Receive(rc *goakt.ReceiveContext) {
-	ctx := a.newContext()
-	ctx = context.WithValue(ctx, pidContextKey{}, rc.Self())
+	ctx := a.augmentContext(rc.Context(), rc.Self())
 
 	switch msg := rc.Message().(type) {
 
@@ -262,12 +261,22 @@ func (a *wasmAgentActor) restoreState(ctx context.Context) error {
 	return nil
 }
 
-func (a *wasmAgentActor) newContext() context.Context {
-	ctx := context.Background()
-	ctx = context.WithValue(ctx, utils.WasmHostContextKey, a.host)
-	ctx = context.WithValue(ctx, utils.PluginContextKey, a.plugin)
-	ctx = context.WithValue(ctx, utils.AgentIdContextKey, a.agentId)
-	ctx = context.WithValue(ctx, utils.AgentNameContextKey, a.agentName)
+func (a *wasmAgentActor) augmentContext(ctx context.Context, pid *goakt.PID) context.Context {
+	if ctx.Value(utils.WasmHostContextKey) == nil {
+		ctx = context.WithValue(ctx, utils.WasmHostContextKey, a.host)
+	}
+	if ctx.Value(utils.PluginContextKey) == nil {
+		ctx = context.WithValue(ctx, utils.PluginContextKey, a.plugin)
+	}
+	if ctx.Value(utils.AgentIdContextKey) == nil {
+		ctx = context.WithValue(ctx, utils.AgentIdContextKey, a.agentId)
+	}
+	if ctx.Value(utils.AgentNameContextKey) == nil {
+		ctx = context.WithValue(ctx, utils.AgentNameContextKey, a.agentName)
+	}
+	if ctx.Value(pidContextKey{}) == nil {
+		ctx = context.WithValue(ctx, pidContextKey{}, pid)
+	}
 	return ctx
 }
 
