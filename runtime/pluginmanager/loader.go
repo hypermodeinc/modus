@@ -149,8 +149,8 @@ func unloadPlugin(ctx context.Context, filename string) error {
 	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
 
-	p := globalPluginRegistry.GetByFile(filename)
-	if p == nil {
+	p, found := globalPluginRegistry.GetByFile(filename)
+	if !found {
 		return fmt.Errorf("plugin not found: %s", filename)
 	}
 

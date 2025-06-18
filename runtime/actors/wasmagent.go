@@ -12,64 +12,194 @@ package actors
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/hypermodeinc/modus/runtime/db"
 	"github.com/hypermodeinc/modus/runtime/logger"
 	"github.com/hypermodeinc/modus/runtime/messages"
+	"github.com/hypermodeinc/modus/runtime/pluginmanager"
 	"github.com/hypermodeinc/modus/runtime/plugins"
 	"github.com/hypermodeinc/modus/runtime/utils"
 	"github.com/hypermodeinc/modus/runtime/wasmhost"
 
 	wasm "github.com/tetratelabs/wazero/api"
 	goakt "github.com/tochemey/goakt/v3/actor"
+	"github.com/tochemey/goakt/v3/goaktpb"
 )
 
 type wasmAgentActor struct {
 	agentId      string
 	agentName    string
 	status       AgentStatus
+	pluginName   string
 	plugin       *plugins.Plugin
 	host         wasmhost.WasmHost
 	module       wasm.Module
 	buffers      utils.OutputBuffers
 	initializing bool
-	terminating  bool
 }
 
 func (a *wasmAgentActor) PreStart(ac *goakt.Context) error {
-	ctx := a.newContext()
+	ctx := ac.Context()
+	a.buffers = utils.NewOutputBuffers()
+
+	wasmExt := ac.Extension(wasmExtensionId).(*wasmExtension)
+	a.host = wasmExt.host
+
+	if id, ok := strings.CutPrefix(ac.ActorName(), "agent-"); ok {
+		a.agentId = id
+	} else {
+		return fmt.Errorf("actor name %s does not start with 'agent-'", ac.ActorName())
+	}
+
+	if info, err := getAgentInfo(ac); err != nil {
+		return err
+	} else {
+		a.agentName = info.AgentName
+		a.pluginName = info.PluginName
+	}
 
 	if err := a.activateAgent(ctx); err != nil {
 		return fmt.Errorf("error activating agent: %w", err)
 	}
-
-	if a.initializing {
-		if err := a.startAgent(ctx); err != nil {
-			return fmt.Errorf("error starting agent: %w", err)
-		}
-		a.initializing = false
-	} else {
-		if err := a.resumeAgent(ctx); err != nil {
-			return fmt.Errorf("error resuming agent: %w", err)
-		}
-	}
-
 	return nil
 }
 
-func (a *wasmAgentActor) PostStop(ac *goakt.Context) error {
-	ctx := a.newContext()
-	defer a.module.Close(ctx)
+func (a *wasmAgentActor) Receive(rc *goakt.ReceiveContext) {
+	ctx := a.augmentContext(rc.Context(), rc.Self())
 
-	if a.terminating {
-		if err := a.stopAgent(ctx); err != nil {
-			return fmt.Errorf("error stopping agent: %w", err)
+	switch msg := rc.Message().(type) {
+
+	case *messages.AgentRequest:
+		if err := a.handleAgentRequest(ctx, rc, msg); err != nil {
+			rc.Err(err)
 		}
-	} else {
+
+	case *goaktpb.PostStart:
+		if a.initializing {
+			if err := a.startAgent(ctx); err != nil {
+				rc.Err(fmt.Errorf("error starting agent: %w", err))
+			}
+			a.initializing = false
+		} else {
+			if err := a.resumeAgent(ctx); err != nil {
+				rc.Err(fmt.Errorf("error resuming agent: %w", err))
+			}
+		}
+
+	case *messages.AgentInfoRequest:
+		rc.Response(&messages.AgentInfoResponse{
+			Name:   a.agentName,
+			Status: string(a.status),
+		})
+
+	case *messages.RestartAgent:
+		if a.status != AgentStatusRunning {
+			logger.Warn(ctx).Msgf("Agent is not %s, cannot restart now.", a.status)
+			return
+		}
 		if err := a.suspendAgent(ctx); err != nil {
-			return fmt.Errorf("error suspending agent: %w", err)
+			rc.Err(fmt.Errorf("error suspending agent: %w", err))
+			return
 		}
+		if err := a.deactivateAgent(ctx); err != nil {
+			rc.Err(fmt.Errorf("error deactivating agent: %w", err))
+			return
+		}
+		if err := a.activateAgent(ctx); err != nil {
+			rc.Err(fmt.Errorf("error reactivating agent: %w", err))
+			return
+		}
+		if err := a.resumeAgent(ctx); err != nil {
+			rc.Err(fmt.Errorf("error resuming agent: %w", err))
+			return
+		}
+
+	case *messages.ShutdownAgent:
+		if a.status == AgentStatusStopping {
+			logger.Warn(ctx).Msg("Agent is already stopping, cannot shutdown again.")
+			return
+		}
+		if err := a.stopAgent(ctx); err != nil {
+			rc.Err(fmt.Errorf("error stopping agent: %w", err))
+		}
+		rc.Shutdown()
+
+	default:
+		logger.Warn(ctx).Msgf("Unhandled message type %T in wasm agent actor.", msg)
+		rc.Unhandled()
+	}
+}
+
+func (a *wasmAgentActor) PostStop(ac *goakt.Context) error {
+	ctx := ac.Context()
+
+	// suspend the agent if it's not already suspended or terminated
+	if a.status != AgentStatusSuspended && a.status != AgentStatusTerminated {
+		if err := a.suspendAgent(ctx); err != nil {
+			logger.Err(ctx, err).Msg("Error suspending agent.")
+			// don't return on error - we'll still try to deactivate the agent
+		}
+	}
+
+	// deactivate the agent to clean up resources
+	if err := a.deactivateAgent(ctx); err != nil {
+		return fmt.Errorf("error deactivating agent: %w", err)
+	}
+	return nil
+}
+
+func (a *wasmAgentActor) handleAgentRequest(ctx context.Context, rc *goakt.ReceiveContext, msg *messages.AgentRequest) error {
+	if a.status != AgentStatusRunning {
+		return fmt.Errorf("cannot process message because agent is %s", a.status)
+	}
+
+	logger.Info(ctx).Str("msg_name", msg.Name).Msg("Received message.")
+	start := time.Now()
+
+	fnInfo, err := a.host.GetFunctionInfo("_modus_agent_handle_message")
+	if err != nil {
+		return err
+	}
+
+	params := map[string]any{
+		"msgName": msg.Name,
+		"data":    msg.Data,
+	}
+
+	execInfo, err := a.host.CallFunctionInModule(ctx, a.module, a.buffers, fnInfo, params)
+	if err != nil {
+		return err
+	}
+
+	if msg.Respond {
+		result := execInfo.Result()
+		response := &messages.AgentResponse{}
+		if result != nil {
+			switch result := result.(type) {
+			case string:
+				response.Data = &result
+			case *string:
+				response.Data = result
+			default:
+				err := fmt.Errorf("unexpected result type: %T", result)
+				logger.Err(ctx, err).Msg("Error handling message.")
+				return err
+			}
+		}
+		// responding will cancel the context when finished, so we need to ensure
+		// that the context used for the remainder of this function is not cancelled.
+		ctx = context.WithoutCancel(ctx)
+		rc.Response(response)
+	}
+
+	duration := time.Since(start)
+	logger.Info(ctx).Str("msg_name", msg.Name).Dur("duration_ms", duration).Msg("Message handled successfully.")
+
+	// save the state after handling the message to ensure the state is up to date in case of hard termination
+	if err := a.saveState(ctx); err != nil {
+		logger.Err(ctx, err).Msg("Error saving agent state.")
 	}
 
 	return nil
@@ -82,7 +212,7 @@ func (a *wasmAgentActor) updateStatus(ctx context.Context, status AgentStatus) e
 
 	a.status = status
 
-	if err := db.UpdateAgentStatus(ctx, a.agentId, status); err != nil {
+	if err := db.UpdateAgentStatus(ctx, a.agentId, string(status)); err != nil {
 		return fmt.Errorf("error updating agent status in database: %w", err)
 	}
 
@@ -107,7 +237,7 @@ func (a *wasmAgentActor) saveState(ctx context.Context) error {
 	if err := db.WriteAgentState(ctx, db.AgentState{
 		Id:        a.agentId,
 		Name:      a.agentName,
-		Status:    a.status,
+		Status:    string(a.status),
 		Data:      data,
 		UpdatedAt: time.Now().UTC().Format(utils.TimeFormat),
 	}); err != nil {
@@ -134,81 +264,35 @@ func (a *wasmAgentActor) restoreState(ctx context.Context) error {
 	return nil
 }
 
-func (a *wasmAgentActor) Receive(rc *goakt.ReceiveContext) {
-	ctx := a.newContext()
-
-	// NOTE: GoAkt will send a goaktpb.PostStart message, but we don't need to do anything with it.
-
-	switch msg := rc.Message().(type) {
-
-	case *messages.AgentRequestMessage:
-
-		logger.Info(ctx).Str("msg_name", msg.Name).Msg("Received message.")
-		start := time.Now()
-
-		fnInfo, err := a.host.GetFunctionInfo("_modus_agent_handle_message")
-		if err != nil {
-			rc.Err(err)
-			return
-		}
-
-		params := map[string]any{
-			"msgName": msg.Name,
-			"data":    msg.Data,
-		}
-
-		execInfo, err := a.host.CallFunctionInModule(ctx, a.module, a.buffers, fnInfo, params)
-		if err != nil {
-			rc.Err(err)
-			return
-		}
-
-		if msg.Respond {
-			result := execInfo.Result()
-			response := &messages.AgentResponseMessage{}
-			if result != nil {
-				switch result := result.(type) {
-				case string:
-					response.Data = &result
-				case *string:
-					response.Data = result
-				default:
-					err := fmt.Errorf("unexpected result type: %T", result)
-					logger.Err(ctx, err).Msg("Error handling message.")
-					rc.Err(err)
-					return
-				}
-			}
-			rc.Response(response)
-		}
-
-		duration := time.Since(start)
-		logger.Info(ctx).Str("msg_name", msg.Name).Dur("duration_ms", duration).Msg("Message handled successfully.")
-
-		// save the state after handling the message to ensure the state is up to date in case of hard termination
-		if err := a.saveState(ctx); err != nil {
-			logger.Err(ctx, err).Msg("Error saving agent state.")
-		}
-
-	default:
-		rc.Unhandled()
+func (a *wasmAgentActor) augmentContext(ctx context.Context, pid *goakt.PID) context.Context {
+	if ctx.Value(utils.WasmHostContextKey) == nil {
+		ctx = context.WithValue(ctx, utils.WasmHostContextKey, a.host)
 	}
-}
-
-func (a *wasmAgentActor) newContext() context.Context {
-	ctx := context.Background()
-	ctx = context.WithValue(ctx, utils.WasmHostContextKey, a.host)
-	ctx = context.WithValue(ctx, utils.PluginContextKey, a.plugin)
-	ctx = context.WithValue(ctx, utils.AgentIdContextKey, a.agentId)
-	ctx = context.WithValue(ctx, utils.AgentNameContextKey, a.agentName)
+	if ctx.Value(utils.PluginContextKey) == nil {
+		ctx = context.WithValue(ctx, utils.PluginContextKey, a.plugin)
+	}
+	if ctx.Value(utils.AgentIdContextKey) == nil {
+		ctx = context.WithValue(ctx, utils.AgentIdContextKey, a.agentId)
+	}
+	if ctx.Value(utils.AgentNameContextKey) == nil {
+		ctx = context.WithValue(ctx, utils.AgentNameContextKey, a.agentName)
+	}
+	if ctx.Value(pidContextKey{}) == nil {
+		ctx = context.WithValue(ctx, pidContextKey{}, pid)
+	}
 	return ctx
 }
 
 func (a *wasmAgentActor) activateAgent(ctx context.Context) error {
 
-	a.buffers = utils.NewOutputBuffers()
+	if plugin, found := pluginmanager.GetPluginByName(a.pluginName); found {
+		a.plugin = plugin
+	} else {
+		return fmt.Errorf("plugin %s not found", a.pluginName)
+	}
+
 	if mod, err := a.host.GetModuleInstance(ctx, a.plugin, a.buffers); err != nil {
-		return fmt.Errorf("error getting module instance in actor pre-start: %w", err)
+		return err
 	} else {
 		a.module = mod
 	}
@@ -225,6 +309,14 @@ func (a *wasmAgentActor) activateAgent(ctx context.Context) error {
 
 	_, err = a.host.CallFunctionInModule(ctx, a.module, a.buffers, fnInfo, params)
 	return err
+}
+
+func (a *wasmAgentActor) deactivateAgent(ctx context.Context) error {
+	if err := a.module.Close(ctx); err != nil {
+		return err
+	}
+	a.module = nil
+	return nil
 }
 
 func (a *wasmAgentActor) startAgent(ctx context.Context) error {
@@ -352,4 +444,40 @@ func (a *wasmAgentActor) setAgentState(ctx context.Context, data *string) error 
 
 	_, err = a.host.CallFunctionInModule(ctx, a.module, a.buffers, fnInfo, params)
 	return err
+}
+
+const agentInfoDependencyId = "agent-info"
+
+type wasmAgentInfo struct {
+	AgentName  string `json:"agent"`
+	PluginName string `json:"plugin"`
+}
+
+func (*wasmAgentInfo) ID() string {
+	return agentInfoDependencyId
+}
+
+func (info *wasmAgentInfo) MarshalBinary() ([]byte, error) {
+	jsonBytes, err := utils.JsonSerialize(info)
+	if err != nil {
+		return nil, fmt.Errorf("error serializing agent info to JSON: %w", err)
+	}
+	return jsonBytes, nil
+}
+
+func (info *wasmAgentInfo) UnmarshalBinary(data []byte) error {
+	if err := utils.JsonDeserialize(data, info); err != nil {
+		return fmt.Errorf("error deserializing agent info from JSON: %w", err)
+	}
+	return nil
+}
+
+func getAgentInfo(ac *goakt.Context) (*wasmAgentInfo, error) {
+	deps := ac.Dependencies()
+	for _, dep := range deps {
+		if dep.ID() == agentInfoDependencyId {
+			return dep.(*wasmAgentInfo), nil
+		}
+	}
+	return nil, fmt.Errorf("agent info dependency not found")
 }

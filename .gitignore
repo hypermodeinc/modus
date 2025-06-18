@@ -1,6 +1,9 @@
 # Ignore macOS system files
 .DS_Store
 
+# Ignore VS Code workspace files
+*.code-workspace
+
 # Ignore environment variable files
 .env
 .env.*

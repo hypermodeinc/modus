@@ -11,73 +11,41 @@ package actors
 
 import (
 	"context"
-	"fmt"
-	"os"
-	"strconv"
 	"time"
 
 	"github.com/hypermodeinc/modus/runtime/db"
 	"github.com/hypermodeinc/modus/runtime/logger"
+	"github.com/hypermodeinc/modus/runtime/messages"
 	"github.com/hypermodeinc/modus/runtime/pluginmanager"
 	"github.com/hypermodeinc/modus/runtime/plugins"
 	"github.com/hypermodeinc/modus/runtime/wasmhost"
 
 	goakt "github.com/tochemey/goakt/v3/actor"
-	goakt_static "github.com/tochemey/goakt/v3/discovery/static"
-	goakt_remote "github.com/tochemey/goakt/v3/remote"
-	"github.com/travisjeffery/go-dynaport"
 )
 
 var _actorSystem goakt.ActorSystem
 
 func Initialize(ctx context.Context) {
 
+	wasmExt := &wasmExtension{
+		host: wasmhost.GetWasmHost(ctx),
+	}
+
 	opts := []goakt.Option{
 		goakt.WithLogger(newActorLogger(logger.Get(ctx))),
-		goakt.WithCoordinatedShutdown(beforeShutdown),
 		goakt.WithPubSub(),
 		goakt.WithActorInitTimeout(10 * time.Second), // TODO: adjust this value, or make it configurable
 		goakt.WithActorInitMaxRetries(1),             // TODO: adjust this value, or make it configurable
-
-		// for now, keep passivation disabled so that agents can perform long-running tasks without the actor stopping.
-		// TODO: figure out how to deal with this better
-		goakt.WithPassivationDisabled(),
+		goakt.WithExtensions(wasmExt),
 	}
-
-	// NOTE: we're not relying on cluster mode yet.  The below code block is for future use and testing purposes only.
-	if clusterMode, _ := strconv.ParseBool(os.Getenv("MODUS_USE_CLUSTER_MODE")); clusterMode {
-		// TODO: static discovery should really only be used for local development and testing.
-		// In production, we should use a more robust discovery mechanism, such as Kubernetes or NATS.
-		// See https://tochemey.gitbook.io/goakt/features/service-discovery
-
-		// We just get three random ports for now.
-		// In prod, these will need to be configured so they are consistent across all nodes.
-		ports := dynaport.Get(3)
-		var gossip_port = ports[0]
-		var peers_port = ports[1]
-		var remoting_port = ports[2]
-
-		disco := goakt_static.NewDiscovery(&goakt_static.Config{
-			Hosts: []string{
-				fmt.Sprintf("localhost:%d", gossip_port),
-			},
-		})
-
-		opts = append(opts,
-			goakt.WithRemote(goakt_remote.NewConfig("localhost", remoting_port)),
-			goakt.WithCluster(goakt.NewClusterConfig().
-				WithDiscovery(disco).
-				WithDiscoveryPort(gossip_port).
-				WithPeersPort(peers_port).
-				WithKinds(&wasmAgentActor{}, &subscriptionActor{}),
-			),
-		)
-	}
+	opts = append(opts, clusterOptions(ctx)...)
 
 	if actorSystem, err := goakt.NewActorSystem("modus", opts...); err != nil {
 		logger.Fatal(ctx).Err(err).Msg("Failed to create actor system.")
 	} else if err := actorSystem.Start(ctx); err != nil {
 		logger.Fatal(ctx).Err(err).Msg("Failed to start actor system.")
+	} else if err := actorSystem.Inject(&wasmAgentInfo{}); err != nil {
+		logger.Fatal(ctx).Err(err).Msg("Failed to inject wasm agent info into actor system.")
 	} else {
 		_actorSystem = actorSystem
 	}
@@ -88,46 +56,59 @@ func Initialize(ctx context.Context) {
 }
 
 func loadAgentActors(ctx context.Context, plugin *plugins.Plugin) error {
-	// restart actors that are already running, giving them the new plugin instance
+	// restart local actors that are already running, which will reload the plugin
 	actors := _actorSystem.Actors()
-	runningAgents := make(map[string]bool, len(actors))
+	localAgents := make(map[string]bool, len(actors))
 	for _, pid := range actors {
-		go func(f_ctx context.Context, f_pid *goakt.PID) {
-			if actor, ok := f_pid.Actor().(*wasmAgentActor); ok {
-				runningAgents[actor.agentId] = true
-				actor.plugin = plugin
-				if err := f_pid.Restart(f_ctx); err != nil {
-					logger.Err(f_ctx, err).Msgf("Failed to restart actor for agent %s.", actor.agentId)
-				}
+		if a, ok := pid.Actor().(*wasmAgentActor); ok {
+			localAgents[a.agentId] = true
+			if err := goakt.Tell(ctx, pid, &messages.RestartAgent{}); err != nil {
+				logger.Err(ctx, err).Str("agent_id", a.agentId).Msg("Failed to send restart agent message to actor.")
 			}
-		}(ctx, pid)
+		}
 	}
 
 	// spawn actors for agents with state in the database, that are not already running
-	// TODO: when we scale out to allow more nodes in the cluster, we'll need to decide
-	// which node is responsible for spawning each actor.
+	// check both locally and on remote nodes in the cluster
 	agents, err := db.QueryActiveAgents(ctx)
 	if err != nil {
 		logger.Err(ctx, err).Msg("Failed to query agents from database.")
 		return err
 	}
-	host := wasmhost.GetWasmHost(ctx)
 	for _, agent := range agents {
-		if !runningAgents[agent.Id] {
-			go func(f_ctx context.Context, agentId string, agentName string) {
-				if _, err := spawnActorForAgent(host, plugin, agentId, agentName, false); err != nil {
+		if !localAgents[agent.Id] {
+			if _actorSystem.InCluster() {
+				actorName := getActorName(agent.Id)
+				if _, err := _actorSystem.RemoteActor(ctx, actorName); err == nil {
+					// found actor in cluster, no need to spawn it again
+					continue
+				}
+			}
+			go func(f_ctx context.Context, pluginName, agentId, agentName string) {
+				if err := spawnActorForAgent(f_ctx, pluginName, agentId, agentName, false); err != nil {
 					logger.Err(f_ctx, err).Msgf("Failed to spawn actor for agent %s.", agentId)
 				}
-			}(ctx, agent.Id, agent.Name)
+			}(ctx, plugin.Name(), agent.Id, agent.Name)
 		}
 	}
 
 	return nil
 }
 
-func beforeShutdown(ctx context.Context) error {
+func beforeShutdown(ctx context.Context) {
 	logger.Info(ctx).Msg("Actor system shutting down...")
-	return nil
+
+	// stop all agent actors before shutdown so they can suspend properly
+	for _, pid := range _actorSystem.Actors() {
+		if _, ok := pid.Actor().(*wasmAgentActor); ok {
+
+			// pass the pid so it can be used during shutdown as an event sender
+			ctx := context.WithValue(ctx, pidContextKey{}, pid)
+			if err := pid.Shutdown(ctx); err != nil {
+				logger.Err(ctx, err).Msgf("Failed to shutdown actor %s.", pid.Name())
+			}
+		}
+	}
 }
 
 func Shutdown(ctx context.Context) {
@@ -135,9 +116,21 @@ func Shutdown(ctx context.Context) {
 		return
 	}
 
+	beforeShutdown(ctx)
+
 	if err := _actorSystem.Stop(ctx); err != nil {
 		logger.Err(ctx, err).Msg("Failed to shutdown actor system.")
 	}
 
 	logger.Info(ctx).Msg("Actor system shutdown complete.")
+}
+
+const wasmExtensionId = "wasm"
+
+type wasmExtension struct {
+	host wasmhost.WasmHost
+}
+
+func (w *wasmExtension) ID() string {
+	return wasmExtensionId
 }

@@ -30,6 +30,10 @@ func GetRegisteredPlugins() []*plugins.Plugin {
 	return globalPluginRegistry.GetAll()
 }
 
+func GetPluginByName(name string) (*plugins.Plugin, bool) {
+	return globalPluginRegistry.GetByName(name)
+}
+
 type pluginRegistry struct {
 	idRevIndex map[*plugins.Plugin]string
 	idIndex    map[string]*plugins.Plugin
@@ -105,24 +109,18 @@ func (pr *pluginRegistry) GetById(id string) *plugins.Plugin {
 	return nil
 }
 
-func (pr *pluginRegistry) GetByName(name string) *plugins.Plugin {
+func (pr *pluginRegistry) GetByName(name string) (*plugins.Plugin, bool) {
 	pr.mutex.RLock()
 	defer pr.mutex.RUnlock()
 
-	if plugin, found := pr.nameIndex[name]; found {
-		return plugin
-	}
-
-	return nil
+	plugin, found := pr.nameIndex[name]
+	return plugin, found
 }
 
-func (pr *pluginRegistry) GetByFile(filename string) *plugins.Plugin {
+func (pr *pluginRegistry) GetByFile(filename string) (*plugins.Plugin, bool) {
 	pr.mutex.RLock()
 	defer pr.mutex.RUnlock()
 
-	if plugin, found := pr.fileIndex[filename]; found {
-		return plugin
-	}
-
-	return nil
+	plugin, found := pr.fileIndex[filename]
+	return plugin, found
 }

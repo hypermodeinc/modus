@@ -20,15 +20,18 @@ import (
 	"github.com/hypermodeinc/modus/runtime/messages"
 	"github.com/hypermodeinc/modus/runtime/plugins"
 	"github.com/hypermodeinc/modus/runtime/utils"
-	"github.com/hypermodeinc/modus/runtime/wasmhost"
 
-	"github.com/rs/xid"
 	goakt "github.com/tochemey/goakt/v3/actor"
 	"github.com/tochemey/goakt/v3/goaktpb"
+
+	"github.com/rs/xid"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/anypb"
 	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
+
+type pidContextKey struct{}
 
 type AgentInfo struct {
 	Id     string      `json:"id"`
@@ -36,7 +39,7 @@ type AgentInfo struct {
 	Status AgentStatus `json:"status"`
 }
 
-type AgentStatus = string
+type AgentStatus string
 
 const (
 	AgentStatusStarting   AgentStatus = "starting"
@@ -50,7 +53,7 @@ const (
 
 const agentStatusEventName = "agentStatusUpdated"
 
-type agentEventAction = string
+type agentEventAction string
 
 const (
 	agentEventActionInitialize agentEventAction = "initialize"
@@ -66,97 +69,91 @@ func StartAgent(ctx context.Context, agentName string) (*AgentInfo, error) {
 	}
 
 	agentId := xid.New().String()
-	host := wasmhost.GetWasmHost(ctx)
-	pid, err := spawnActorForAgent(host, plugin, agentId, agentName, true)
-	if err != nil {
+	if err := spawnActorForAgent(ctx, plugin.Name(), agentId, agentName, true); err != nil {
 		return nil, fmt.Errorf("error spawning actor for agent %s: %w", agentId, err)
 	}
 
-	actor := pid.Actor().(*wasmAgentActor)
-	info := &AgentInfo{
-		Id:     actor.agentId,
-		Name:   actor.agentName,
-		Status: actor.status,
-	}
-
-	return info, nil
+	return GetAgentInfo(ctx, agentId)
 }
 
-func spawnActorForAgent(host wasmhost.WasmHost, plugin *plugins.Plugin, agentId, agentName string, initializing bool) (*goakt.PID, error) {
-	// The actor needs to spawn in its own context, so we don't pass one in to this function.
-	// If we did, then when the original context was cancelled or completed, the actor initialization would be cancelled too.
-	ctx := context.Background()
-	ctx = context.WithValue(ctx, utils.WasmHostContextKey, host)
-	ctx = context.WithValue(ctx, utils.PluginContextKey, plugin)
+func spawnActorForAgent(ctx context.Context, pluginName, agentId, agentName string, initializing bool) error {
+
+	ctx = context.WithoutCancel(ctx)
 	ctx = context.WithValue(ctx, utils.AgentIdContextKey, agentId)
 	ctx = context.WithValue(ctx, utils.AgentNameContextKey, agentName)
 
 	actor := &wasmAgentActor{
-		agentId:      agentId,
-		agentName:    agentName,
-		host:         host,
-		plugin:       plugin,
+		// this only works because we always spawn locally the first time
 		initializing: initializing,
 	}
 
 	actorName := getActorName(agentId)
-	pid, err := _actorSystem.Spawn(ctx, actorName, actor)
-	if err != nil {
-		logger.Err(ctx, err).Msg("Error spawning actor for agent.")
-	}
-	return pid, err
+	_, err := _actorSystem.Spawn(ctx, actorName, actor,
+		goakt.WithLongLived(),
+		goakt.WithDependencies(&wasmAgentInfo{
+			AgentName:  agentName,
+			PluginName: pluginName,
+		}),
+	)
+	return err
 }
 
 func StopAgent(ctx context.Context, agentId string) (*AgentInfo, error) {
-	info, pid, err := ensureAgentReady(ctx, agentId)
-	if pid == nil && info != nil {
-		return info, nil
-	} else if err != nil {
-		return nil, err
-	}
-
-	// shut down the actor, which will then stop the agent
-	actor := pid.Actor().(*wasmAgentActor)
-	if actor.status != AgentStatusStopping && actor.status != AgentStatusTerminated {
-		actor.terminating = true
-		if err := pid.Shutdown(ctx); err != nil {
+	actorName := getActorName(agentId)
+	if err := tell(ctx, actorName, &messages.ShutdownAgent{}); err != nil {
+		if !errors.Is(err, goakt.ErrActorNotFound) {
 			return nil, fmt.Errorf("error stopping agent %s: %w", agentId, err)
 		}
 	}
 
-	return &AgentInfo{
-		Id:     actor.agentId,
-		Name:   actor.agentName,
-		Status: actor.status,
-	}, nil
+	// Don't ask the actor, because it might already be stopped.
+	info, err := getAgentInfoFromDatabase(ctx, agentId)
+	if err != nil {
+		return nil, err
+	}
+
+	// If the agent is not yet terminated, we'll send back "stopping"
+	// so we don't have to wait for the actor to be stopped synchronously.
+	if info.Status != AgentStatusTerminated {
+		info.Status = AgentStatusStopping
+	}
+	return info, nil
+
+}
+
+func getAgentInfoFromDatabase(ctx context.Context, agentId string) (*AgentInfo, error) {
+	if agent, e := db.GetAgentState(ctx, agentId); e == nil {
+		return &AgentInfo{
+			Id:     agent.Id,
+			Name:   agent.Name,
+			Status: AgentStatus(agent.Status),
+		}, nil
+	}
+	return nil, fmt.Errorf("agent %s not found", agentId)
 }
 
 func GetAgentInfo(ctx context.Context, agentId string) (*AgentInfo, error) {
-	info, _, err := getAgentInfo(ctx, agentId)
-	return info, err
-}
+	actorName := getActorName(agentId)
+	request := &messages.AgentInfoRequest{}
 
-func getAgentInfo(ctx context.Context, agentId string) (*AgentInfo, *goakt.PID, error) {
-	pid, err := getActorPid(ctx, agentId)
-	if errors.Is(err, goakt.ErrActorNotFound) {
-		if agent, e := db.GetAgentState(ctx, agentId); e == nil {
-			return &AgentInfo{
-				Id:     agent.Id,
-				Name:   agent.Name,
-				Status: agent.Status,
-			}, nil, nil
-		}
-		return nil, nil, fmt.Errorf("agent %s not found", agentId)
-	} else if err != nil {
-		return nil, nil, err
+	// We first try to ask the actor for its info.  Use a short timeout to avoid blocking indefinitely.
+	response, err := ask(ctx, actorName, request, 500*time.Millisecond)
+	if err == nil {
+		msg := response.(*messages.AgentInfoResponse)
+		return &AgentInfo{
+			Id:     agentId,
+			Name:   msg.Name,
+			Status: AgentStatus(msg.Status),
+		}, nil
 	}
 
-	actor := pid.Actor().(*wasmAgentActor)
-	return &AgentInfo{
-		Id:     actor.agentId,
-		Name:   actor.agentName,
-		Status: actor.status,
-	}, pid, nil
+	// If the actor is not found, or if the request timed out, we can check the database for the agent state.
+	// This is useful for agents that are terminated or suspended, or just busy processing another request.
+	if errors.Is(err, goakt.ErrActorNotFound) || errors.Is(err, goakt.ErrRequestTimeout) {
+		return getAgentInfoFromDatabase(ctx, agentId)
+	}
+
+	return nil, fmt.Errorf("error getting agent info: %w", err)
 }
 
 type agentMessageResponse struct {
@@ -164,63 +161,43 @@ type agentMessageResponse struct {
 	Error *string
 }
 
-func ensureAgentReady(ctx context.Context, agentId string) (*AgentInfo, *goakt.PID, error) {
-	info, pid, err := getAgentInfo(ctx, agentId)
-	if pid != nil {
-		return info, pid, nil
-	}
-	if info == nil {
-		return info, nil, err
-	}
+func newAgentMessageDataResponse(data *string) *agentMessageResponse {
+	return &agentMessageResponse{Data: data}
+}
 
-	switch info.Status {
-	case AgentStatusSuspended:
-		// the actor is suspended, so we can try to resume it
-		host := wasmhost.GetWasmHost(ctx)
-		plugin, ok := plugins.GetPluginFromContext(ctx)
-		if !ok {
-			return info, nil, fmt.Errorf("no plugin found in context for agent %s", agentId)
-		}
-		pid, err := spawnActorForAgent(host, plugin, agentId, info.Name, false)
-		return info, pid, err
-	case AgentStatusTerminated:
-		return info, nil, fmt.Errorf("agent %s is terminated", agentId)
-	default:
-		// this means the agent is running on another node - TODO: handle this somehow
-		return info, nil, fmt.Errorf("agent %s is %s, but not found in local actor system", agentId, info.Status)
-	}
+func newAgentMessageErrorResponse(errMsg string) *agentMessageResponse {
+	return &agentMessageResponse{Error: &errMsg}
 }
 
 func SendAgentMessage(ctx context.Context, agentId string, msgName string, data *string, timeout int64) (*agentMessageResponse, error) {
+	actorName := getActorName(agentId)
 
-	_, pid, err := ensureAgentReady(ctx, agentId)
-	if err != nil {
-		e := err.Error()
-		return &agentMessageResponse{Error: &e}, err
-	}
-
-	msg := &messages.AgentRequestMessage{
+	msg := &messages.AgentRequest{
 		Name:    msgName,
 		Data:    data,
 		Respond: timeout > 0,
 	}
 
+	var err error
+	var res proto.Message
 	if timeout == 0 {
-		if err := goakt.Tell(ctx, pid, msg); err != nil {
-			return nil, fmt.Errorf("error sending message to agent %s: %w", pid.ID(), err)
-		}
-		return &agentMessageResponse{}, nil
-	}
-
-	res, err := goakt.Ask(ctx, pid, msg, time.Duration(timeout))
-	if err != nil {
-		return nil, fmt.Errorf("error sending message to agent %s: %w", pid.ID(), err)
-	}
-
-	if response, ok := res.(*messages.AgentResponseMessage); ok {
-		return &agentMessageResponse{Data: response.Data}, nil
+		err = tell(ctx, actorName, msg)
 	} else {
-		return nil, fmt.Errorf("unexpected response type: %T", res)
+		res, err = ask(ctx, actorName, msg, time.Duration(timeout))
+	}
+
+	if errors.Is(err, goakt.ErrActorNotFound) {
+		return newAgentMessageErrorResponse("agent not found"), nil
+	} else if err != nil {
+		return nil, fmt.Errorf("error sending message to agent: %w", err)
+	}
+
+	if res == nil {
+		return newAgentMessageDataResponse(nil), nil
+	} else if response, ok := res.(*messages.AgentResponse); ok {
+		return newAgentMessageDataResponse(response.Data), nil
+	} else {
+		return nil, fmt.Errorf("unexpected agent response type: %T", res)
 	}
 }
 
@@ -238,7 +215,7 @@ func PublishAgentEvent(ctx context.Context, agentId, eventName string, eventData
 		return fmt.Errorf("error creating event data value: %w", err)
 	}
 
-	event := &messages.AgentEventMessage{
+	event := &messages.AgentEvent{
 		Name:      eventName,
 		Data:      dataValue,
 		Timestamp: timestamppb.Now(),
@@ -257,17 +234,22 @@ func PublishAgentEvent(ctx context.Context, agentId, eventName string, eventData
 
 	topicActor := _actorSystem.TopicActor()
 
-	pid, err := getActorPid(ctx, agentId)
-	if err == nil {
+	// if the pid is in context, we're being called as a host function
+	if pid, ok := ctx.Value(pidContextKey{}).(*goakt.PID); ok {
 		return pid.Tell(ctx, topicActor, pubMsg)
 	}
 
-	// publish anonymously if the actor is not found
+	// otherwise, we try to get the actor PID for the agent (we should avoid this)
+	pid, err := _actorSystem.LocalActor(getActorName(agentId))
+	if err == nil {
+		logger.Warn(ctx).Str("event", eventName).Any("data", eventData).Msg("Agent actor not in context. Using lookup to publish event.")
+		return pid.Tell(ctx, topicActor, pubMsg)
+	}
+
+	// publish anonymously if the actor is not found (we should avoid this)
 	if errors.Is(err, goakt.ErrActorNotFound) {
-		// For now, we use the topic actor directly to publish the message.
-		// See https://github.com/Tochemey/goakt/pull/761
-		// TODO: use goakt.Tell after it's fixed
-		return topicActor.Tell(ctx, topicActor, pubMsg)
+		logger.Warn(ctx).Str("event", eventName).Any("data", eventData).Msg("Agent actor not found. Publishing event anonymously.")
+		return goakt.Tell(ctx, topicActor, pubMsg)
 	}
 
 	return err
@@ -281,20 +263,6 @@ func getAgentTopic(agentId string) string {
 	return getActorName(agentId) + ".events"
 }
 
-func getActorPid(ctx context.Context, agentId string) (*goakt.PID, error) {
-	if _, err := xid.FromString(agentId); err != nil {
-		return nil, fmt.Errorf("invalid agent ID format: %s", agentId)
-	}
-
-	actorName := getActorName(agentId)
-	_, pid, err := _actorSystem.ActorOf(ctx, actorName)
-	if err == nil {
-		return pid, nil
-	}
-
-	return nil, fmt.Errorf("error getting actor for agent %s: %w", agentId, err)
-}
-
 func ListActiveAgents(ctx context.Context) ([]AgentInfo, error) {
 	agents, err := db.QueryActiveAgents(ctx)
 	if err != nil {
@@ -306,7 +274,7 @@ func ListActiveAgents(ctx context.Context) ([]AgentInfo, error) {
 		results = append(results, AgentInfo{
 			Id:     agent.Id,
 			Name:   agent.Name,
-			Status: agent.Status,
+			Status: AgentStatus(agent.Status),
 		})
 	}
 

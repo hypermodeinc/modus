@@ -4,6 +4,7 @@
 
 ## UNRELEASED
 
+- feat: cluster mode [#895](https://github.com/hypermodeinc/modus/pull/895)
 - fix: default send message to have no timeout [#896](https://github.com/hypermodeinc/modus/pull/896)
 
 ## 2025-06-12 CLI 0.18.1
