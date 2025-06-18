@@ -273,7 +273,12 @@ func (a *wasmAgentActor) newContext() context.Context {
 
 func (a *wasmAgentActor) activateAgent(ctx context.Context) error {
 
-	a.plugin = pluginmanager.GetPluginByName(a.pluginName)
+	if plugin, found := pluginmanager.GetPluginByName(a.pluginName); found {
+		a.plugin = plugin
+	} else {
+		return fmt.Errorf("plugin %s not found", a.pluginName)
+	}
+
 	if mod, err := a.host.GetModuleInstance(ctx, a.plugin, a.buffers); err != nil {
 		return err
 	} else {
