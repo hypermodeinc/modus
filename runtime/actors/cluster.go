@@ -63,7 +63,13 @@ func clusterOptions(ctx context.Context) []goakt.Option {
 		})
 
 	case clusterModeKubernetes:
-		namespace := app.KubernetesNamespace()
+		namespace, ok := app.KubernetesNamespace()
+		if !ok {
+			logger.Fatal(ctx).
+				Msg("Kubernetes cluster mode enabled, but a Kubernetes namespace was not found. Ensure running in a Kubernetes environment.")
+			return nil
+		}
+
 		logger.Info(ctx).
 			Str("namespace", namespace).
 			Msg("Using Kubernetes for node discovery.")

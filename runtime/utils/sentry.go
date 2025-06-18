@@ -155,7 +155,7 @@ func sentryAddExtras(event *sentry.Event) {
 		event.Extra = make(map[string]any)
 	}
 
-	if ns := app.KubernetesNamespace(); ns != "" && ns != "default" {
+	if ns, ok := app.KubernetesNamespace(); ok {
 		event.Extra["namespace"] = ns
 	}
 }

@@ -96,12 +96,12 @@ func ModusHomeDir() string {
 	return modusHome
 }
 
-func KubernetesNamespace() string {
+func KubernetesNamespace() (string, bool) {
 	if ns := os.Getenv("NAMESPACE"); ns != "" {
-		return ns
+		return ns, true
 	}
 	if data, err := os.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/namespace"); err == nil {
-		return strings.TrimSpace(string(data))
+		return strings.TrimSpace(string(data)), true
 	}
-	return "default"
+	return "", false
 }
