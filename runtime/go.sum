@@ -202,8 +202,6 @@ github.com/decred/dcrd/dcrec/secp256k1/v4 v4.4.0 h1:NMZiJj8QnKe1LgsbDayM4UoHwbvw
 github.com/decred/dcrd/dcrec/secp256k1/v4 v4.4.0/go.mod h1:ZXNYxsqcloTdSy/rNShjYzMhyjf0LaoftYK0p+A3h40=
 github.com/dgraph-io/badger/v4 v4.7.0 h1:Q+J8HApYAY7UMpL8d9owqiB+odzEc0zn/aqOD9jhc6Y=
 github.com/dgraph-io/badger/v4 v4.7.0/go.mod h1:He7TzG3YBy3j4f5baj5B7Zl2XyfNe5bl4Udl0aPemVA=
-github.com/dgraph-io/dgo/v240 v240.2.0 h1:dX7CCx7OSPl38GQ7Pa6jUB1RN21tyNlYpjNFgOsqp7k=
-github.com/dgraph-io/dgo/v240 v240.2.0/go.mod h1:CyEuwJgQ8NoNjWbj2ZnvVFPixe5akCbWPR1O0fHpQ+U=
 github.com/dgraph-io/dgo/v250 v250.0.0-preview4 h1:DkS6iFI6RwStXRzQxT5v8b6NLqqHQi0xKSK6FvcEwYo=
 github.com/dgraph-io/dgo/v250 v250.0.0-preview4/go.mod h1:6nnKW4tYiai9xI6NSCrxaBgUGG1YI/+KlY+Tc7smqXY=
 github.com/dgraph-io/gqlgen v0.13.2 h1:TNhndk+eHKj5qE7BenKKSYdSIdOGhLqxR1rCiMso9KM=
