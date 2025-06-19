@@ -16,22 +16,23 @@ import (
 
 	"github.com/hypermodeinc/modus/runtime/utils"
 
-	"github.com/hypermodeinc/modusgraph"
 	"github.com/jackc/pgx/v5"
 )
 
 type AgentState struct {
-	Gid       uint64 `json:"gid,omitempty"`
-	Id        string `json:"id" db:"constraint=unique"`
-	Name      string `json:"name"`
-	Status    string `json:"status"`
-	Data      string `json:"data,omitempty"`
-	UpdatedAt string `json:"updated"`
+	Id        string    `json:"id" dgraph:"index(exact) unique upsert"`
+	Name      string    `json:"name" dgraph:"index(exact, term)"`
+	Status    string    `json:"status" dgraph:"index(exact)"`
+	Data      string    `json:"data,omitempty"`
+	UpdatedAt time.Time `json:"updated,omitzero" dgraph:"index(hour)"`
+
+	UID   string   `json:"uid"`
+	DType []string `json:"dgraph.type,omitempty"`
 }
 
 func WriteAgentState(ctx context.Context, state AgentState) error {
 	if useModusDB() {
-		return writeAgentStateToModusDB(ctx, state)
+		return writeAgentStateToModusDB(ctx, &state)
 	} else {
 		return writeAgentStateToPostgresDB(ctx, state)
 	}
@@ -53,7 +54,7 @@ func GetAgentState(ctx context.Context, id string) (*AgentState, error) {
 	}
 }
 
-func QueryActiveAgents(ctx context.Context) ([]AgentState, error) {
+func QueryActiveAgents(ctx context.Context) ([]*AgentState, error) {
 	if useModusDB() {
 		return queryActiveAgentsFromModusDB(ctx)
 	} else {
@@ -61,21 +62,22 @@ func QueryActiveAgents(ctx context.Context) ([]AgentState, error) {
 	}
 }
 
-func writeAgentStateToModusDB(ctx context.Context, state AgentState) error {
+// writeAgentStateToModusDB writes an agent state to the modusGraph database.
+func writeAgentStateToModusDB(ctx context.Context, state *AgentState) error {
 	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
 
-	gid, _, _, err := modusgraph.Upsert(ctx, GlobalModusDbEngine, state)
-	state.Gid = gid
-
-	return err
+	client, err := GetClient()
+	if err != nil {
+		return err
+	}
+	return client.Upsert(ctx, state)
 }
 
+// updateAgentStatusInModusDB updates the status of an agent in the modusGraph database.
 func updateAgentStatusInModusDB(ctx context.Context, id string, status string) error {
 	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
-
-	// TODO: this should just be an update in a single operation
 
 	state, err := getAgentStateFromModusDB(ctx, id)
 	if err != nil {
@@ -83,51 +85,52 @@ func updateAgentStatusInModusDB(ctx context.Context, id string, status string) e
 	}
 
 	state.Status = status
-	state.UpdatedAt = time.Now().UTC().Format(utils.TimeFormat)
+	state.UpdatedAt = time.Now().UTC()
 
-	return writeAgentStateToModusDB(ctx, *state)
+	return writeAgentStateToModusDB(ctx, state)
 }
 
+// getAgentStateFromModusDB queries the modusGraph database for a specific agent state
+// by ID. It returns the agent state if found, or an error if not found.
 func getAgentStateFromModusDB(ctx context.Context, id string) (*AgentState, error) {
 	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
 
-	_, result, err := modusgraph.Get[AgentState](ctx, GlobalModusDbEngine, modusgraph.ConstrainedField{
-		Key:   "id",
-		Value: id,
-	})
+	client, err := GetClient()
+	if err != nil {
+		return nil, err
+	}
+
+	state := &AgentState{}
+	err = client.Query(ctx, state).
+		Filter(`eq(id, $1)`, id).
+		Node()
 	if err != nil {
 		return nil, fmt.Errorf("failed to query agent state: %w", err)
 	}
-
-	return &result, nil
+	return state, nil
 }
 
-func queryActiveAgentsFromModusDB(ctx context.Context) ([]AgentState, error) {
+// queryActiveAgentsFromModusDB queries the modusGraph database for active agents
+// (those with a status other than "terminated"). Agents are ordered by updated time.
+// TODO: add pagination support
+func queryActiveAgentsFromModusDB(ctx context.Context) ([]*AgentState, error) {
 	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
 
-	_, results, err := modusgraph.Query[AgentState](ctx, GlobalModusDbEngine, modusgraph.QueryParams{
-		Filter: &modusgraph.Filter{
-			Not: &modusgraph.Filter{
-				Field: "status",
-				String: modusgraph.StringPredicate{
-					Equals: "terminated",
-				},
-			},
-		},
-		// TODO: Sorting gives a dgraph error. Why?
-		// Sorting: &modusgraph.Sorting{
-		// 	OrderDescField: "updated",
-		// 	OrderDescFirst: true,
-		// },
-	})
-
+	client, err := GetClient()
+	if err != nil {
+		return nil, err
+	}
+	states := []*AgentState{}
+	err = client.Query(ctx, &states).
+		Filter(`not(eq(status, "terminated"))`).
+		OrderDesc("updated").
+		Nodes()
 	if err != nil {
 		return nil, fmt.Errorf("failed to query agent state: %w", err)
 	}
-
-	return results, nil
+	return states, nil
 }
 
 func writeAgentStateToPostgresDB(ctx context.Context, state AgentState) error {
@@ -179,7 +182,6 @@ func getAgentStateFromPostgresDB(ctx context.Context, id string) (*AgentState, e
 		if err := row.Scan(&a.Id, &a.Name, &a.Status, &a.Data, &ts); err != nil {
 			return fmt.Errorf("failed to get agent state: %w", err)
 		}
-		a.UpdatedAt = ts.UTC().Format(utils.TimeFormat)
 		return nil
 	})
 
@@ -190,14 +192,14 @@ func getAgentStateFromPostgresDB(ctx context.Context, id string) (*AgentState, e
 	return &a, nil
 }
 
-func queryActiveAgentsFromPostgresDB(ctx context.Context) ([]AgentState, error) {
+func queryActiveAgentsFromPostgresDB(ctx context.Context) ([]*AgentState, error) {
 	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
 
 	const query = "SELECT id, name, status, data, updated FROM agents " +
 		"WHERE status != 'terminated' ORDER BY updated DESC"
 
-	results := make([]AgentState, 0)
+	results := make([]*AgentState, 0)
 	err := WithTx(ctx, func(tx pgx.Tx) error {
 		rows, err := tx.Query(ctx, query)
 		if err != nil {
@@ -210,8 +212,7 @@ func queryActiveAgentsFromPostgresDB(ctx context.Context) ([]AgentState, error) 
 			if err := rows.Scan(&a.Id, &a.Name, &a.Status, &a.Data, &ts); err != nil {
 				return err
 			}
-			a.UpdatedAt = ts.UTC().Format(utils.TimeFormat)
-			results = append(results, a)
+			results = append(results, &a)
 		}
 		if err := rows.Err(); err != nil {
 			return err
