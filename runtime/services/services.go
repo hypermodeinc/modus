@@ -52,7 +52,7 @@ func Start(ctx context.Context) context.Context {
 	secrets.Initialize(ctx)
 	storage.Initialize(ctx)
 	db.Initialize(ctx)
-	db.InitModusDb(ctx)
+	db.InitModusDb(ctx, "")
 	actors.Initialize(ctx)
 	graphql.Initialize()
 	envfiles.MonitorEnvFiles(ctx)
