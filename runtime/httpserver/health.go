@@ -21,7 +21,7 @@ import (
 var healthHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 	env := app.Config().Environment()
 	ver := app.VersionNumber()
-	agents := actors.ListLocalAgents()
+	agents := actors.ListLocalAgents(r.Context())
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
