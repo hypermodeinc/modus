@@ -12,8 +12,11 @@ package actors
 import (
 	"context"
 	"fmt"
+	"os"
+	"strconv"
 	"time"
 
+	"github.com/hypermodeinc/modus/runtime/logger"
 	goakt "github.com/tochemey/goakt/v3/actor"
 
 	"google.golang.org/protobuf/proto"
@@ -49,4 +52,20 @@ func ask(ctx context.Context, actorName string, message proto.Message, timeout t
 		return response.UnmarshalNew()
 	}
 	return nil, fmt.Errorf("failed to get address or PID for actor %s", actorName)
+}
+
+// Retrieves an integer value from an environment variable.
+func getIntFromEnv(envVar string, defaultValue int) int {
+	str := os.Getenv(envVar)
+	if str == "" {
+		return defaultValue
+	}
+
+	value, err := strconv.Atoi(str)
+	if err != nil || value <= 0 {
+		logger.Warnf("Invalid value for %s. Using %d instead.", envVar, defaultValue)
+		return defaultValue
+	}
+
+	return value
 }

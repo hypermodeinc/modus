@@ -11,6 +11,7 @@ package actors
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/hypermodeinc/modus/runtime/db"
@@ -33,6 +34,7 @@ func Initialize(ctx context.Context) {
 
 	opts := []goakt.Option{
 		goakt.WithLogger(newActorLogger(logger.Get(ctx))),
+		goakt.WithCoordinatedShutdown(beforeShutdown),
 		goakt.WithPubSub(),
 		goakt.WithActorInitTimeout(10 * time.Second), // TODO: adjust this value, or make it configurable
 		goakt.WithActorInitMaxRetries(1),             // TODO: adjust this value, or make it configurable
@@ -49,6 +51,8 @@ func Initialize(ctx context.Context) {
 	} else {
 		_actorSystem = actorSystem
 	}
+
+	waitForClusterSync()
 
 	logger.Info(ctx).Msg("Actor system started.")
 
@@ -70,53 +74,75 @@ func loadAgentActors(ctx context.Context, plugin *plugins.Plugin) error {
 
 	// spawn actors for agents with state in the database, that are not already running
 	// check both locally and on remote nodes in the cluster
+	logger.Debug(ctx).Msg("Restoring agent actors from database.")
 	agents, err := db.QueryActiveAgents(ctx)
 	if err != nil {
-		logger.Err(ctx, err).Msg("Failed to query agents from database.")
-		return err
+		return fmt.Errorf("failed to query active agents: %w", err)
 	}
+	inCluster := _actorSystem.InCluster()
 	for _, agent := range agents {
 		if !localAgents[agent.Id] {
-			if _actorSystem.InCluster() {
+			if inCluster {
 				actorName := getActorName(agent.Id)
-				if _, err := _actorSystem.RemoteActor(ctx, actorName); err == nil {
-					// found actor in cluster, no need to spawn it again
+				if exists, err := _actorSystem.ActorExists(ctx, actorName); err != nil {
+					logger.Err(ctx, err).Msgf("Failed to check if actor %s exists in cluster.", actorName)
+				} else if exists {
+					// if the actor already exists in the cluster, skip spawning it
 					continue
 				}
 			}
-			go func(f_ctx context.Context, pluginName, agentId, agentName string) {
-				if err := spawnActorForAgent(f_ctx, pluginName, agentId, agentName, false); err != nil {
-					logger.Err(f_ctx, err).Msgf("Failed to spawn actor for agent %s.", agentId)
-				}
-			}(ctx, plugin.Name(), agent.Id, agent.Name)
+			if err := spawnActorForAgent(ctx, plugin.Name(), agent.Id, agent.Name, false); err != nil {
+				logger.Err(ctx, err).Msgf("Failed to spawn actor for agent %s.", agent.Id)
+			}
 		}
 	}
 
 	return nil
 }
 
-func beforeShutdown(ctx context.Context) {
+func beforeShutdown(ctx context.Context) error {
+	_actorSystem.Logger().(*actorLogger).shuttingDown = true
 	logger.Info(ctx).Msg("Actor system shutting down...")
+	actors := _actorSystem.Actors()
 
-	// stop all agent actors before shutdown so they can suspend properly
-	for _, pid := range _actorSystem.Actors() {
-		if _, ok := pid.Actor().(*wasmAgentActor); ok {
+	// Suspend all local running agent actors first, which allows them to gracefully stop and persist their state.
+	// In cluster mode, this will also allow the actor to resume on another node after this node shuts down.
+	for _, pid := range actors {
+		if actor, ok := pid.Actor().(*wasmAgentActor); ok && pid.IsRunning() {
+			if actor.status == AgentStatusRunning {
+				ctx := actor.augmentContext(ctx, pid)
+				if err := actor.suspendAgent(ctx); err != nil {
+					logger.Err(ctx, err).Str("agent_id", actor.agentId).Msg("Failed to suspend agent actor.")
+				}
+			}
+		}
+	}
 
-			// pass the pid so it can be used during shutdown as an event sender
-			ctx := context.WithValue(ctx, pidContextKey{}, pid)
+	// Then shut down subscription actors.  They will have received the suspend message already.
+	for _, pid := range actors {
+		if _, ok := pid.Actor().(*subscriptionActor); ok && pid.IsRunning() {
 			if err := pid.Shutdown(ctx); err != nil {
 				logger.Err(ctx, err).Msgf("Failed to shutdown actor %s.", pid.Name())
 			}
 		}
 	}
+
+	waitForClusterSync()
+
+	// then allow the actor system to continue with its shutdown process
+	return nil
+}
+
+func waitForClusterSync() {
+	if clusterEnabled() {
+		time.Sleep(peerSyncInterval() * 2)
+	}
 }
 
 func Shutdown(ctx context.Context) {
 	if _actorSystem == nil {
-		return
+		logger.Fatal(ctx).Msg("Actor system is not initialized, cannot shutdown.")
 	}
-
-	beforeShutdown(ctx)
 
 	if err := _actorSystem.Stop(ctx); err != nil {
 		logger.Err(ctx, err).Msg("Failed to shutdown actor system.")

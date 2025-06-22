@@ -2,6 +2,10 @@
 
 # Change Log
 
+## 2025-06-21 - Runtime 0.18.0-alpha.9
+
+- fix: improve cluster resiliency [#900](https://github.com/hypermodeinc/modus/pull/900)
+
 ## 2025-06-18 - Runtime 0.18.0-alpha.8
 
 - feat: cluster mode [#895](https://github.com/hypermodeinc/modus/pull/895)
