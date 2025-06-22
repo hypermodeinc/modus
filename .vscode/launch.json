@@ -29,7 +29,7 @@
         "MODUS_ENV": "dev",
         "MODUS_CLUSTER_MODE": "NATS",
         "MODUS_CLUSTER_NATS_URL": "nats://localhost:4222",
-        "MODUS_DEBUG_ACTORS": "true",
+        // "MODUS_DEBUG_ACTORS": "true",
         "MODUS_DEBUG": "true",
         "MODUS_USE_MODUSDB": "false",
         "MODUS_DB": "postgresql://postgres:postgres@localhost:5432/modus?sslmode=disable" // checkov:skip=CKV_SECRET_4

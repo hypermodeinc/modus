@@ -13,8 +13,8 @@ import (
 	"context"
 	"net/url"
 	"os"
-	"strconv"
 	"strings"
+	"time"
 
 	"github.com/hypermodeinc/modus/runtime/app"
 	"github.com/hypermodeinc/modus/runtime/logger"
@@ -95,12 +95,18 @@ func clusterOptions(ctx context.Context) []goakt.Option {
 		remotingHost = "0.0.0.0"
 	}
 
+	readTimeout := time.Duration(getIntFromEnv("MODUS_CLUSTER_READ_TIMEOUT_SECONDS", 2)) * time.Second
+	writeTimeout := time.Duration(getIntFromEnv("MODUS_CLUSTER_WRITE_TIMEOUT_SECONDS", 2)) * time.Second
+
 	return []goakt.Option{
+		goakt.WithPeerStateLoopInterval(peerSyncInterval()),
 		goakt.WithRemote(remote.NewConfig(remotingHost, remotingPort)),
 		goakt.WithCluster(goakt.NewClusterConfig().
 			WithDiscovery(disco).
 			WithDiscoveryPort(discoveryPort).
 			WithPeersPort(peersPort).
+			WithReadTimeout(readTimeout).
+			WithWriteTimeout(writeTimeout).
 			WithKinds(&wasmAgentActor{}, &subscriptionActor{}),
 		),
 	}
@@ -145,6 +151,10 @@ func clusterMode() goaktClusterMode {
 	return parseClusterMode(os.Getenv("MODUS_CLUSTER_MODE"))
 }
 
+func clusterEnabled() bool {
+	return clusterMode() != clusterModeNone
+}
+
 func clusterNatsUrl() string {
 	const envVar = "MODUS_CLUSTER_NATS_URL"
 	const defaultNatsUrl = "nats://localhost:4222"
@@ -171,7 +181,8 @@ func clusterHost() string {
 	}
 
 	if app.IsDevEnvironment() {
-		return "localhost"
+		// Note, forcing IPv4 here avoids memberlist attempting to bind to IPv6 that we're not listening on.
+		return "127.0.0.1"
 	} else {
 		// this hack gets the same IP that the remoting system would bind to by default
 		rc := remote.NewConfig("0.0.0.0", 0)
@@ -182,33 +193,18 @@ func clusterHost() string {
 
 func clusterPorts() (discoveryPort, remotingPort, peersPort int) {
 
-	// Get default ports dynamically
+	// Get default ports dynamically, but use environment variables if set
 	ports := dynaport.Get(3)
-	discoveryPort = ports[0]
-	remotingPort = ports[1]
-	peersPort = ports[2]
-
-	// Override with environment variables if set
-	discoveryPort = getPortFromEnv("MODUS_CLUSTER_DISCOVERY_PORT", discoveryPort)
-	remotingPort = getPortFromEnv("MODUS_CLUSTER_REMOTING_PORT", remotingPort)
-	peersPort = getPortFromEnv("MODUS_CLUSTER_PEERS_PORT", peersPort)
+	discoveryPort = getIntFromEnv("MODUS_CLUSTER_DISCOVERY_PORT", ports[0])
+	remotingPort = getIntFromEnv("MODUS_CLUSTER_REMOTING_PORT", ports[1])
+	peersPort = getIntFromEnv("MODUS_CLUSTER_PEERS_PORT", ports[2])
 
 	return
 }
 
-func getPortFromEnv(envVar string, defaultPort int) int {
-	portStr := os.Getenv(envVar)
-	if portStr == "" {
-		return defaultPort
-	}
-
-	port, err := strconv.Atoi(portStr)
-	if err != nil || port <= 0 {
-		logger.Warnf("Invalid value for %s. Using %d instead.", envVar, defaultPort)
-		return defaultPort
-	}
-
-	return port
+func peerSyncInterval() time.Duration {
+	// we use a tight sync interval by default, to ensure quick peer discovery
+	return time.Duration(getIntFromEnv("MODUS_CLUSTER_PEER_SYNC_MS", 500)) * time.Millisecond
 }
 
 func getPodLabels() map[string]string {

@@ -13,6 +13,8 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"slices"
+	"strings"
 
 	"github.com/hypermodeinc/modus/runtime/logger"
 	"github.com/hypermodeinc/modus/runtime/utils"
@@ -20,54 +22,82 @@ import (
 	actorLog "github.com/tochemey/goakt/v3/log"
 )
 
+// some messages are ignored during shutdown because they are expected
+var shutdownIgnoredMessages = []string{
+	"Failed to acquire semaphore: context canceled",
+	" is down. modus is going to shutdown.",
+}
+
 func newActorLogger(logger *zerolog.Logger) *actorLogger {
 
 	var minLevel zerolog.Level
 	if utils.EnvVarFlagEnabled("MODUS_DEBUG_ACTORS") {
 		minLevel = zerolog.DebugLevel
 	} else {
-		// goakt info level is too noisy, so default to show only errors
-		minLevel = zerolog.ErrorLevel
+		// goakt info level is too noisy, so default to show warnings and above
+		minLevel = zerolog.WarnLevel
 	}
 
 	l := logger.Level(minLevel).With().Str("component", "actors").Logger()
-	return &actorLogger{&l}
+	return &actorLogger{logger: &l}
 }
 
 type actorLogger struct {
-	logger *zerolog.Logger
+	logger       *zerolog.Logger
+	paused       bool
+	shuttingDown bool
+}
+
+func (al *actorLogger) Pause() {
+	al.paused = true
+}
+
+func (al *actorLogger) Resume() {
+	al.paused = false
+}
+
+func (al *actorLogger) writeToLog(level zerolog.Level, msg string) {
+	if al.paused {
+		return
+	}
+	if al.shuttingDown && slices.ContainsFunc(shutdownIgnoredMessages, func(s string) bool {
+		return strings.Contains(msg, s)
+	}) {
+		return
+	}
+	al.logger.WithLevel(level).Msg(msg)
 }
 
 func (al *actorLogger) Debug(v ...any) {
-	al.logger.Debug().Msg(fmt.Sprint(v...))
+	al.writeToLog(zerolog.DebugLevel, fmt.Sprint(v...))
 }
 
 func (al *actorLogger) Debugf(format string, v ...any) {
-	al.logger.Debug().Msgf(format, v...)
+	al.writeToLog(zerolog.DebugLevel, fmt.Sprintf(format, v...))
 }
 
 func (al *actorLogger) Info(v ...any) {
-	al.logger.Info().Msg(fmt.Sprint(v...))
+	al.writeToLog(zerolog.InfoLevel, fmt.Sprint(v...))
 }
 
 func (al *actorLogger) Infof(format string, v ...any) {
-	al.logger.Info().Msgf(format, v...)
+	al.writeToLog(zerolog.InfoLevel, fmt.Sprintf(format, v...))
 }
 
 func (al *actorLogger) Warn(v ...any) {
-	al.logger.Warn().Msg(fmt.Sprint(v...))
+	al.writeToLog(zerolog.WarnLevel, fmt.Sprint(v...))
 }
 
 func (al *actorLogger) Warnf(format string, v ...any) {
-	al.logger.Warn().Msgf(format, v...)
+	al.writeToLog(zerolog.WarnLevel, fmt.Sprintf(format, v...))
 }
 
 func (al *actorLogger) Error(v ...any) {
-	al.logger.Error().Msg(fmt.Sprint(v...))
+	al.writeToLog(zerolog.ErrorLevel, fmt.Sprint(v...))
 }
 
 func (al *actorLogger) Errorf(format string, v ...any) {
-	al.logger.Error().Msgf(format, v...)
+	al.writeToLog(zerolog.ErrorLevel, fmt.Sprintf(format, v...))
 }
 
 func (al *actorLogger) Fatal(v ...any) {
