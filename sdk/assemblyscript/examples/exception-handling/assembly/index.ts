@@ -47,7 +47,7 @@ export function testCatching(shouldThrow: boolean): string {
 
 export function parseI8OrFallback(s: string, fallback: i8): i8 {
   try {
-    let n = i8.parse(s)
+    let n = i8.parse(s);
     return n;
   } catch (_) {
     return fallback;
