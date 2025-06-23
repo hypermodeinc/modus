@@ -76,6 +76,10 @@ func startActorSystem(ctx context.Context, actorSystem goakt.ActorSystem) error 
 			retryInterval *= 2 // Exponential backoff
 			continue
 		}
+
+		// important: wait for the actor system to sync with the cluster before proceeding
+		waitForClusterSync()
+
 		return nil
 	}
 
@@ -98,12 +102,10 @@ func loadAgentActors(ctx context.Context, plugin *plugins.Plugin) error {
 		}
 	}
 
-	// do this next part in a goroutine to avoid blocking the cluster engine startup
+	// spawn actors for agents with state in the database, that are not already running
+	// check both locally and on remote nodes in the cluster
+	// do this in a goroutine to avoid blocking the cluster engine startup
 	go func() {
-		waitForClusterSync()
-
-		// spawn actors for agents with state in the database, that are not already running
-		// check both locally and on remote nodes in the cluster
 		logger.Debug(ctx).Msg("Restoring agent actors from database.")
 		agents, err := db.QueryActiveAgents(ctx)
 		if err != nil {
@@ -167,9 +169,11 @@ func beforeShutdown(ctx context.Context) error {
 	return nil
 }
 
+// Waits for the peer sync interval to pass, allowing time for the actor system to synchronize its
+// list of actors with the remote nodes in the cluster.
 func waitForClusterSync() {
 	if clusterEnabled() {
-		time.Sleep(nodesSyncInterval())
+		time.Sleep(peerSyncInterval())
 	}
 }
 

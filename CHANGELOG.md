@@ -2,6 +2,10 @@
 
 # Change Log
 
+## 2025-06-23 - Runtime 0.18.0-alpha.11
+
+- fix: adjust cluster sync settings and delays [#902](https://github.com/hypermodeinc/modus/pull/902)
+
 ## 2025-06-22 - Runtime 0.18.0-alpha.10
 
 - fix: more cluster resiliency improvements [#901](https://github.com/hypermodeinc/modus/pull/901)
