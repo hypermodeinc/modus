@@ -55,27 +55,15 @@ func clusterOptions(ctx context.Context) []goakt.Option {
 		logger.Fatal(ctx).Err(err).Msg("Failed to create cluster discovery provider.")
 	}
 
-	var remotingHost string
-	if app.IsDevEnvironment() {
-		// only bind to localhost in development
-		remotingHost = "127.0.0.1"
-	} else {
-		// otherwise bind to all interfaces
-		remotingHost = "0.0.0.0"
-	}
-
-	readTimeout := getDurationFromEnv("MODUS_CLUSTER_READ_TIMEOUT_SECONDS", 2, time.Second)
-	writeTimeout := getDurationFromEnv("MODUS_CLUSTER_WRITE_TIMEOUT_SECONDS", 2, time.Second)
-
 	return []goakt.Option{
-		goakt.WithRemote(remote.NewConfig(remotingHost, remotingPort)),
+		goakt.WithRemote(remote.NewConfig(remotingHost(), remotingPort)),
 		goakt.WithCluster(goakt.NewClusterConfig().
 			WithDiscovery(disco).
 			WithDiscoveryPort(discoveryPort).
 			WithPeersPort(peersPort).
-			WithReadTimeout(readTimeout).
-			WithWriteTimeout(writeTimeout).
-			// WithPartitionCount(3).
+			WithReadTimeout(readTimeout()).
+			WithWriteTimeout(writeTimeout()).
+			WithPartitionCount(partitionCount()).
 			WithClusterStateSyncInterval(nodesSyncInterval()).
 			WithPeersStateSyncInterval(peerSyncInterval()).
 			WithKinds(&wasmAgentActor{}, &subscriptionActor{}),
@@ -162,6 +150,18 @@ func clusterHost() string {
 	}
 }
 
+// remotingHost returns the host address to bind the remoting system to.
+func remotingHost() string {
+	// only bind to localhost in development
+	if app.IsDevEnvironment() {
+		return "127.0.0.1"
+	}
+
+	// otherwise bind to all interfaces
+	return "0.0.0.0"
+}
+
+// clusterPorts returns the ports used for discovery, remoting, and peer communication in the cluster.
 func clusterPorts() (discoveryPort, remotingPort, peersPort int) {
 
 	// Get default ports dynamically, but use environment variables if set
@@ -173,17 +173,45 @@ func clusterPorts() (discoveryPort, remotingPort, peersPort int) {
 	return
 }
 
-// peerSyncInterval returns the interval at which the cluster peers sync their list of actors across the cluster.
+// peerSyncInterval returns the interval at which the actor system will sync its list of actors to other nodes across the cluster.
 // We use a tight sync interval of 1 second by default, to ensure quick peer discovery as agents are added or removed.
+//
+// This value is also used for a sleep both on system startup and when spawning a new agent actor,
+// so it needs to be low enough to not be noticed by the user.
 func peerSyncInterval() time.Duration {
 	return getDurationFromEnv("MODUS_CLUSTER_PEER_SYNC_SECONDS", 1, time.Second)
 }
 
-// nodesSyncInterval returns the interval at which the cluster syncs the list of active nodes across the cluster.
-// On each interval, discovery will be triggered to find new nodes and update the cluster state.
+// nodesSyncInterval returns the interval at which the cluster forces a resync of the list of active nodes across the cluster.
+// This matters only with regard to nodes going down unexpectedly, as other nodes in the cluster will not be aware of the change until the next sync.
+// It does not affect anything if a node is gracefully shut down, as that will be communicated immediately during the shutdown process.
+//
+// On each interval, the node will sync its list of nodes with the cluster, and update its local state accordingly.
 // The default is 10 seconds, which is a reasonable balance between responsiveness and network overhead.
 func nodesSyncInterval() time.Duration {
 	return getDurationFromEnv("MODUS_CLUSTER_NODES_SYNC_SECONDS", 10, time.Second)
+}
+
+// partitionCount returns the number of partitions the cluster will use for actor distribution.
+// It must be a prime number to work properly with the actor system's hashing algorithm.
+// It must be greater than the number of nodes in the cluster, but not too large to avoid excessive overhead.
+// In testing, 23 is the highest that works well with the other default timing constraints.
+// We'll use a slightly lower default of 13, which is still a prime number and should work well for most clusters.
+// The GoAkt default is 271, but this has been found to lead to other errors in practice.
+func partitionCount() uint64 {
+	return uint64(getIntFromEnv("MODUS_CLUSTER_PARTITION_COUNT", 13))
+}
+
+// readTimeout returns the duration to wait for a cluster read operation before timing out.
+// The default is 1 second, which should usually not need to be changed.
+func readTimeout() time.Duration {
+	return getDurationFromEnv("MODUS_CLUSTER_READ_TIMEOUT_SECONDS", 1, time.Second)
+}
+
+// writeTimeout returns the duration to wait for a cluster write operation before timing out.
+// The default is 1 second, which should usually not need to be changed.
+func writeTimeout() time.Duration {
+	return getDurationFromEnv("MODUS_CLUSTER_WRITE_TIMEOUT_SECONDS", 1, time.Second)
 }
 
 func getPodLabels() map[string]string {
