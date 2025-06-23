@@ -78,7 +78,7 @@ func startActorSystem(ctx context.Context, actorSystem goakt.ActorSystem) error 
 		}
 
 		// important: wait for the actor system to sync with the cluster before proceeding
-		waitForClusterSync()
+		waitForClusterSync(ctx)
 
 		return nil
 	}
@@ -170,10 +170,14 @@ func beforeShutdown(ctx context.Context) error {
 }
 
 // Waits for the peer sync interval to pass, allowing time for the actor system to synchronize its
-// list of actors with the remote nodes in the cluster.
-func waitForClusterSync() {
+// list of actors with the remote nodes in the cluster.  Cancels early if the context is done.
+func waitForClusterSync(ctx context.Context) {
 	if clusterEnabled() {
-		time.Sleep(peerSyncInterval())
+		select {
+		case <-time.After(peerSyncInterval()):
+		case <-ctx.Done():
+			logger.Warn(context.WithoutCancel(ctx)).Msg("Context cancelled while waiting for cluster sync.")
+		}
 	}
 }
 

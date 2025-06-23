@@ -104,7 +104,8 @@ func spawnActorForAgent(ctx context.Context, pluginName, agentId, agentName stri
 	// Important: Wait for the actor system to sync with the cluster before proceeding.
 	// This ensures consistency across the cluster, so we don't accidentally spawn the same actor multiple times.
 	// GoAkt does not resolve such inconsistencies automatically, so we need to handle this manually.
-	waitForClusterSync()
+	// A short sync time should not be noticeable by the user.
+	waitForClusterSync(ctx)
 
 	return err
 }
