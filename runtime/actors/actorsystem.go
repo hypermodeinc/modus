@@ -136,7 +136,6 @@ func beforeShutdown(ctx context.Context) error {
 	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
 
-	_actorSystem.Logger().(*actorLogger).shuttingDown = true
 	logger.Info(ctx).Msg("Actor system shutting down...")
 	actors := _actorSystem.Actors()
 
