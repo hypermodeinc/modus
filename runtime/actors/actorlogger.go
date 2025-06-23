@@ -38,8 +38,14 @@ type actorLogger struct {
 	logger *zerolog.Logger
 }
 
+var ignoredMessages = map[string]bool{
+	"Failed to acquire semaphore: context canceled": true, // normal during shutdown
+}
+
 func (al *actorLogger) writeToLog(level zerolog.Level, msg string) {
-	al.logger.WithLevel(level).Msg(msg)
+	if !ignoredMessages[msg] {
+		al.logger.WithLevel(level).Msg(msg)
+	}
 }
 
 func (al *actorLogger) Debug(v ...any) {
