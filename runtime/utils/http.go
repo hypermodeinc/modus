@@ -114,8 +114,10 @@ func PostHttp[TResult any](ctx context.Context, url string, payload any, beforeS
 		case []byte:
 			result = any(content).(TResult)
 		case string:
+			content = SanitizeUTF8(content)
 			result = any(string(content)).(TResult)
 		default:
+			content = SanitizeUTF8(content)
 			if err := JsonDeserialize(content, &result); err != nil {
 				return nil, fmt.Errorf("error deserializing response: %w", err)
 			}

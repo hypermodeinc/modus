@@ -11,6 +11,7 @@ package utils
 
 import (
 	"unicode/utf16"
+	"unicode/utf8"
 	"unsafe"
 )
 
@@ -43,4 +44,33 @@ func EncodeUTF16(str string) []byte {
 	ptr := unsafe.Pointer(&words[0])
 	bytes := unsafe.Slice((*byte)(ptr), len(words)*2)
 	return bytes
+}
+
+// SanitizeUTF8 removes invalid UTF-8 sequences from a byte slice.
+// It skips over any byte that is a null byte (0) or a single-byte character
+// that is not part of a valid UTF-8 sequence.
+// It returns a new byte slice containing only valid UTF-8 characters.
+func SanitizeUTF8(s []byte) []byte {
+	// This is adapted from bytes.ToValidUTF8
+	b := make([]byte, 0, len(s))
+	for i := 0; i < len(s); {
+		c := s[i]
+		if c == 0 {
+			i++
+			continue
+		}
+		if c < utf8.RuneSelf {
+			i++
+			b = append(b, c)
+			continue
+		}
+		_, wid := utf8.DecodeRune(s[i:])
+		if wid == 1 {
+			i++
+			continue
+		}
+		b = append(b, s[i:i+wid]...)
+		i += wid
+	}
+	return b
 }
