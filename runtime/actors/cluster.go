@@ -11,6 +11,8 @@ package actors
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"net/url"
 	"os"
 	"strings"
@@ -18,6 +20,7 @@ import (
 
 	"github.com/hypermodeinc/modus/runtime/app"
 	"github.com/hypermodeinc/modus/runtime/logger"
+	"github.com/hypermodeinc/modus/runtime/utils"
 
 	goakt "github.com/tochemey/goakt/v3/actor"
 	"github.com/tochemey/goakt/v3/discovery"
@@ -28,6 +31,8 @@ import (
 )
 
 func clusterOptions(ctx context.Context) []goakt.Option {
+	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+	defer span.Finish()
 
 	clusterMode := clusterMode()
 	if clusterMode == clusterModeNone {
@@ -45,45 +50,9 @@ func clusterOptions(ctx context.Context) []goakt.Option {
 		Int("peers_port", peersPort).
 		Msg("Clustering enabled.")
 
-	var disco discovery.Provider
-	switch clusterMode {
-	case clusterModeNats:
-		natsUrl := clusterNatsUrl()
-		clusterHost := clusterHost()
-		logger.Info(ctx).
-			Str("cluster_host", clusterHost).
-			Str("nats_server", natsUrl).
-			Msg("Using NATS for node discovery.")
-
-		disco = nats.NewDiscovery(&nats.Config{
-			NatsSubject:   "modus-gossip",
-			NatsServer:    natsUrl,
-			Host:          clusterHost,
-			DiscoveryPort: discoveryPort,
-		})
-
-	case clusterModeKubernetes:
-		namespace, ok := app.KubernetesNamespace()
-		if !ok {
-			logger.Fatal(ctx).
-				Msg("Kubernetes cluster mode enabled, but a Kubernetes namespace was not found. Ensure running in a Kubernetes environment.")
-			return nil
-		}
-
-		logger.Info(ctx).
-			Str("namespace", namespace).
-			Msg("Using Kubernetes for node discovery.")
-
-		disco = kubernetes.NewDiscovery(&kubernetes.Config{
-			Namespace:         namespace,
-			PodLabels:         getPodLabels(),
-			DiscoveryPortName: "discovery-port",
-			RemotingPortName:  "remoting-port",
-			PeersPortName:     "peers-port",
-		})
-
-	default:
-		panic("Unsupported cluster mode: " + clusterMode.String())
+	disco, err := newDiscoveryProvider(ctx, clusterMode, discoveryPort)
+	if err != nil {
+		logger.Fatal(ctx).Err(err).Msg("Failed to create cluster discovery provider.")
 	}
 
 	var remotingHost string
@@ -95,11 +64,10 @@ func clusterOptions(ctx context.Context) []goakt.Option {
 		remotingHost = "0.0.0.0"
 	}
 
-	readTimeout := time.Duration(getIntFromEnv("MODUS_CLUSTER_READ_TIMEOUT_SECONDS", 2)) * time.Second
-	writeTimeout := time.Duration(getIntFromEnv("MODUS_CLUSTER_WRITE_TIMEOUT_SECONDS", 2)) * time.Second
+	readTimeout := getDurationFromEnv("MODUS_CLUSTER_READ_TIMEOUT_SECONDS", 2, time.Second)
+	writeTimeout := getDurationFromEnv("MODUS_CLUSTER_WRITE_TIMEOUT_SECONDS", 2, time.Second)
 
 	return []goakt.Option{
-		goakt.WithPeerStateLoopInterval(peerSyncInterval()),
 		goakt.WithRemote(remote.NewConfig(remotingHost, remotingPort)),
 		goakt.WithCluster(goakt.NewClusterConfig().
 			WithDiscovery(disco).
@@ -107,6 +75,9 @@ func clusterOptions(ctx context.Context) []goakt.Option {
 			WithPeersPort(peersPort).
 			WithReadTimeout(readTimeout).
 			WithWriteTimeout(writeTimeout).
+			// WithPartitionCount(3).
+			WithClusterStateSyncInterval(nodesSyncInterval()).
+			WithPeersStateSyncInterval(peerSyncInterval()).
 			WithKinds(&wasmAgentActor{}, &subscriptionActor{}),
 		),
 	}
@@ -202,9 +173,17 @@ func clusterPorts() (discoveryPort, remotingPort, peersPort int) {
 	return
 }
 
+// peerSyncInterval returns the interval at which the cluster peers sync their list of actors across the cluster.
+// We use a tight sync interval of 1 second by default, to ensure quick peer discovery as agents are added or removed.
 func peerSyncInterval() time.Duration {
-	// we use a tight sync interval by default, to ensure quick peer discovery
-	return time.Duration(getIntFromEnv("MODUS_CLUSTER_PEER_SYNC_MS", 500)) * time.Millisecond
+	return getDurationFromEnv("MODUS_CLUSTER_PEER_SYNC_SECONDS", 1, time.Second)
+}
+
+// nodesSyncInterval returns the interval at which the cluster syncs the list of active nodes across the cluster.
+// On each interval, discovery will be triggered to find new nodes and update the cluster state.
+// The default is 10 seconds, which is a reasonable balance between responsiveness and network overhead.
+func nodesSyncInterval() time.Duration {
+	return getDurationFromEnv("MODUS_CLUSTER_NODES_SYNC_SECONDS", 10, time.Second)
 }
 
 func getPodLabels() map[string]string {
@@ -227,4 +206,105 @@ func getPodLabels() map[string]string {
 		"app.kubernetes.io/name":      "modus",
 		"app.kubernetes.io/component": "runtime",
 	}
+}
+
+func newDiscoveryProvider(ctx context.Context, clusterMode goaktClusterMode, discoveryPort int) (discovery.Provider, error) {
+	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+	defer span.Finish()
+
+	switch clusterMode {
+	case clusterModeNats:
+		natsUrl := clusterNatsUrl()
+		clusterHost := clusterHost()
+
+		logger.Info(ctx).
+			Str("cluster_host", clusterHost).
+			Str("nats_server", natsUrl).
+			Msg("Using NATS for node discovery.")
+
+		disco := nats.NewDiscovery(&nats.Config{
+			NatsSubject:   "modus-gossip",
+			NatsServer:    natsUrl,
+			Host:          clusterHost,
+			DiscoveryPort: discoveryPort,
+		})
+
+		return wrapProvider(ctx, disco), nil
+
+	case clusterModeKubernetes:
+		namespace, ok := app.KubernetesNamespace()
+		if !ok {
+			return nil, errors.New("Kubernetes cluster mode enabled, but namespace was not found")
+		}
+
+		logger.Info(ctx).
+			Str("namespace", namespace).
+			Msg("Using Kubernetes for node discovery.")
+
+		disco := kubernetes.NewDiscovery(&kubernetes.Config{
+			Namespace:         namespace,
+			PodLabels:         getPodLabels(),
+			DiscoveryPortName: "discovery-port",
+			RemotingPortName:  "remoting-port",
+			PeersPortName:     "peers-port",
+		})
+
+		return wrapProvider(ctx, disco), nil
+	}
+
+	return nil, fmt.Errorf("unsupported cluster mode: %s", clusterMode)
+}
+
+// wrapProvider wraps a discovery provider to add Sentry tracing to its methods.
+func wrapProvider(ctx context.Context, provider discovery.Provider) discovery.Provider {
+	if provider == nil {
+		return nil
+	}
+
+	return &providerWrapper{ctx, provider}
+}
+
+// providerWrapper is a wrapper around a discovery provider that adds Sentry tracing to its methods.
+type providerWrapper struct {
+	ctx      context.Context
+	provider discovery.Provider
+}
+
+func (w *providerWrapper) Close() error {
+	span, _ := utils.NewSentrySpanForCurrentFunc(w.ctx)
+	defer span.Finish()
+
+	return w.provider.Close()
+}
+
+func (w *providerWrapper) Deregister() error {
+	span, _ := utils.NewSentrySpanForCurrentFunc(w.ctx)
+	defer span.Finish()
+
+	return w.provider.Deregister()
+}
+
+func (w *providerWrapper) DiscoverPeers() ([]string, error) {
+	span, _ := utils.NewSentrySpanForCurrentFunc(w.ctx)
+	defer span.Finish()
+
+	return w.provider.DiscoverPeers()
+}
+
+func (w *providerWrapper) ID() string {
+	return w.provider.ID()
+}
+
+func (w *providerWrapper) Initialize() error {
+	span, _ := utils.NewSentrySpanForCurrentFunc(w.ctx)
+	defer span.Finish()
+
+	return w.provider.Initialize()
+}
+
+func (w *providerWrapper) Register() error {
+	span, _ := utils.NewSentrySpanForCurrentFunc(w.ctx)
+	defer span.Finish()
+
+	return w.provider.Register()
 }

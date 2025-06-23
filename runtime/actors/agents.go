@@ -63,6 +63,9 @@ const (
 )
 
 func StartAgent(ctx context.Context, agentName string) (*AgentInfo, error) {
+	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+	defer span.Finish()
+
 	plugin, ok := plugins.GetPluginFromContext(ctx)
 	if !ok {
 		return nil, fmt.Errorf("no plugin found in context")
@@ -77,6 +80,8 @@ func StartAgent(ctx context.Context, agentName string) (*AgentInfo, error) {
 }
 
 func spawnActorForAgent(ctx context.Context, pluginName, agentId, agentName string, initializing bool) error {
+	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+	defer span.Finish()
 
 	ctx = context.WithoutCancel(ctx)
 	ctx = context.WithValue(ctx, utils.AgentIdContextKey, agentId)
@@ -99,6 +104,9 @@ func spawnActorForAgent(ctx context.Context, pluginName, agentId, agentName stri
 }
 
 func StopAgent(ctx context.Context, agentId string) (*AgentInfo, error) {
+	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+	defer span.Finish()
+
 	actorName := getActorName(agentId)
 	if err := tell(ctx, actorName, &messages.ShutdownAgent{}); err != nil {
 		if !errors.Is(err, goakt.ErrActorNotFound) {
@@ -122,6 +130,9 @@ func StopAgent(ctx context.Context, agentId string) (*AgentInfo, error) {
 }
 
 func getAgentInfoFromDatabase(ctx context.Context, agentId string) (*AgentInfo, error) {
+	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+	defer span.Finish()
+
 	if agent, e := db.GetAgentState(ctx, agentId); e == nil {
 		return &AgentInfo{
 			Id:     agent.Id,
@@ -133,6 +144,9 @@ func getAgentInfoFromDatabase(ctx context.Context, agentId string) (*AgentInfo, 
 }
 
 func GetAgentInfo(ctx context.Context, agentId string) (*AgentInfo, error) {
+	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+	defer span.Finish()
+
 	actorName := getActorName(agentId)
 	request := &messages.AgentInfoRequest{}
 
@@ -170,6 +184,9 @@ func newAgentMessageErrorResponse(errMsg string) *agentMessageResponse {
 }
 
 func SendAgentMessage(ctx context.Context, agentId string, msgName string, data *string, timeout int64) (*agentMessageResponse, error) {
+	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+	defer span.Finish()
+
 	actorName := getActorName(agentId)
 
 	msg := &messages.AgentRequest{
@@ -202,6 +219,8 @@ func SendAgentMessage(ctx context.Context, agentId string, msgName string, data 
 }
 
 func PublishAgentEvent(ctx context.Context, agentId, eventName string, eventData *string) error {
+	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+	defer span.Finish()
 
 	var data any
 	if eventData != nil {
@@ -264,6 +283,9 @@ func getAgentTopic(agentId string) string {
 }
 
 func ListActiveAgents(ctx context.Context) ([]AgentInfo, error) {
+	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+	defer span.Finish()
+
 	agents, err := db.QueryActiveAgents(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("error listing active agents: %w", err)
@@ -281,10 +303,13 @@ func ListActiveAgents(ctx context.Context) ([]AgentInfo, error) {
 	return results, nil
 }
 
-func ListLocalAgents() []AgentInfo {
+func ListLocalAgents(ctx context.Context) []AgentInfo {
 	if _actorSystem == nil {
 		return nil
 	}
+
+	span, _ := utils.NewSentrySpanForCurrentFunc(ctx)
+	defer span.Finish()
 
 	actors := _actorSystem.Actors()
 	results := make([]AgentInfo, 0, len(actors))

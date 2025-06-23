@@ -30,6 +30,8 @@ type agentEvent struct {
 }
 
 func SubscribeForAgentEvents(ctx context.Context, agentId string, update func(data []byte), done func()) error {
+	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+	defer span.Finish()
 
 	if a, err := GetAgentInfo(ctx, agentId); err != nil {
 		return err
@@ -106,6 +108,9 @@ func (a *subscriptionActor) PostStop(ac *goakt.Context) error {
 
 func (a *subscriptionActor) Receive(rc *goakt.ReceiveContext) {
 	if msg, ok := rc.Message().(*messages.AgentEvent); ok {
+		span, _ := utils.NewSentrySpanForCurrentFunc(rc.Context())
+		defer span.Finish()
+
 		event := &agentEvent{
 			Name:      msg.Name,
 			Data:      msg.Data,

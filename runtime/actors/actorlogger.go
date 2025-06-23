@@ -13,20 +13,12 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"slices"
-	"strings"
 
 	"github.com/hypermodeinc/modus/runtime/logger"
 	"github.com/hypermodeinc/modus/runtime/utils"
 	"github.com/rs/zerolog"
 	actorLog "github.com/tochemey/goakt/v3/log"
 )
-
-// some messages are ignored during shutdown because they are expected
-var shutdownIgnoredMessages = []string{
-	"Failed to acquire semaphore: context canceled",
-	" is down. modus is going to shutdown.",
-}
 
 func newActorLogger(logger *zerolog.Logger) *actorLogger {
 
@@ -43,28 +35,10 @@ func newActorLogger(logger *zerolog.Logger) *actorLogger {
 }
 
 type actorLogger struct {
-	logger       *zerolog.Logger
-	paused       bool
-	shuttingDown bool
-}
-
-func (al *actorLogger) Pause() {
-	al.paused = true
-}
-
-func (al *actorLogger) Resume() {
-	al.paused = false
+	logger *zerolog.Logger
 }
 
 func (al *actorLogger) writeToLog(level zerolog.Level, msg string) {
-	if al.paused {
-		return
-	}
-	if al.shuttingDown && slices.ContainsFunc(shutdownIgnoredMessages, func(s string) bool {
-		return strings.Contains(msg, s)
-	}) {
-		return
-	}
 	al.logger.WithLevel(level).Msg(msg)
 }
 

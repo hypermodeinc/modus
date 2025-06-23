@@ -19,6 +19,7 @@ import (
 	"github.com/hypermodeinc/modus/runtime/messages"
 	"github.com/hypermodeinc/modus/runtime/pluginmanager"
 	"github.com/hypermodeinc/modus/runtime/plugins"
+	"github.com/hypermodeinc/modus/runtime/utils"
 	"github.com/hypermodeinc/modus/runtime/wasmhost"
 
 	goakt "github.com/tochemey/goakt/v3/actor"
@@ -27,6 +28,8 @@ import (
 var _actorSystem goakt.ActorSystem
 
 func Initialize(ctx context.Context) {
+	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+	defer span.Finish()
 
 	wasmExt := &wasmExtension{
 		host: wasmhost.GetWasmHost(ctx),
@@ -42,24 +45,47 @@ func Initialize(ctx context.Context) {
 	}
 	opts = append(opts, clusterOptions(ctx)...)
 
-	if actorSystem, err := goakt.NewActorSystem("modus", opts...); err != nil {
+	actorSystem, err := goakt.NewActorSystem("modus", opts...)
+	if err != nil {
 		logger.Fatal(ctx).Err(err).Msg("Failed to create actor system.")
-	} else if err := actorSystem.Start(ctx); err != nil {
-		logger.Fatal(ctx).Err(err).Msg("Failed to start actor system.")
-	} else if err := actorSystem.Inject(&wasmAgentInfo{}); err != nil {
-		logger.Fatal(ctx).Err(err).Msg("Failed to inject wasm agent info into actor system.")
-	} else {
-		_actorSystem = actorSystem
 	}
 
-	waitForClusterSync()
+	if err := startActorSystem(ctx, actorSystem); err != nil {
+		logger.Fatal(ctx).Err(err).Msg("Failed to start actor system.")
+	}
+
+	if err := actorSystem.Inject(&wasmAgentInfo{}); err != nil {
+		logger.Fatal(ctx).Err(err).Msg("Failed to inject wasm agent info into actor system.")
+	}
+
+	_actorSystem = actorSystem
 
 	logger.Info(ctx).Msg("Actor system started.")
 
 	pluginmanager.RegisterPluginLoadedCallback(loadAgentActors)
 }
 
+func startActorSystem(ctx context.Context, actorSystem goakt.ActorSystem) error {
+	maxRetries := getIntFromEnv("MODUS_ACTOR_SYSTEM_START_MAX_RETRIES", 5)
+	retryInterval := getDurationFromEnv("MODUS_ACTOR_SYSTEM_START_RETRY_INTERVAL_SECONDS", 2, time.Second)
+
+	for i := range maxRetries {
+		if err := actorSystem.Start(ctx); err != nil {
+			logger.Warn(ctx).Err(err).Int("attempt", i+1).Msgf("Failed to start actor system, retrying in %s...", retryInterval)
+			time.Sleep(retryInterval)
+			retryInterval *= 2 // Exponential backoff
+			continue
+		}
+		return nil
+	}
+
+	return fmt.Errorf("failed to start actor system after %d retries", maxRetries)
+}
+
 func loadAgentActors(ctx context.Context, plugin *plugins.Plugin) error {
+	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+	defer span.Finish()
+
 	// restart local actors that are already running, which will reload the plugin
 	actors := _actorSystem.Actors()
 	localAgents := make(map[string]bool, len(actors))
@@ -72,36 +98,44 @@ func loadAgentActors(ctx context.Context, plugin *plugins.Plugin) error {
 		}
 	}
 
-	// spawn actors for agents with state in the database, that are not already running
-	// check both locally and on remote nodes in the cluster
-	logger.Debug(ctx).Msg("Restoring agent actors from database.")
-	agents, err := db.QueryActiveAgents(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to query active agents: %w", err)
-	}
-	inCluster := _actorSystem.InCluster()
-	for _, agent := range agents {
-		if !localAgents[agent.Id] {
-			if inCluster {
-				actorName := getActorName(agent.Id)
-				if exists, err := _actorSystem.ActorExists(ctx, actorName); err != nil {
-					logger.Err(ctx, err).Msgf("Failed to check if actor %s exists in cluster.", actorName)
-				} else if exists {
-					// if the actor already exists in the cluster, skip spawning it
-					continue
+	// do this next part in a goroutine to avoid blocking the cluster engine startup
+	go func() {
+		waitForClusterSync()
+
+		// spawn actors for agents with state in the database, that are not already running
+		// check both locally and on remote nodes in the cluster
+		logger.Debug(ctx).Msg("Restoring agent actors from database.")
+		agents, err := db.QueryActiveAgents(ctx)
+		if err != nil {
+			logger.Err(ctx, err).Msg("Failed to query active agents from database.")
+			return
+		}
+		inCluster := _actorSystem.InCluster()
+		for _, agent := range agents {
+			if !localAgents[agent.Id] {
+				if inCluster {
+					actorName := getActorName(agent.Id)
+					if exists, err := _actorSystem.ActorExists(ctx, actorName); err != nil {
+						logger.Err(ctx, err).Msgf("Failed to check if actor %s exists in cluster.", actorName)
+					} else if exists {
+						// if the actor already exists in the cluster, skip spawning it
+						continue
+					}
+				}
+				if err := spawnActorForAgent(ctx, plugin.Name(), agent.Id, agent.Name, false); err != nil {
+					logger.Err(ctx, err).Msgf("Failed to spawn actor for agent %s.", agent.Id)
 				}
 			}
-			if err := spawnActorForAgent(ctx, plugin.Name(), agent.Id, agent.Name, false); err != nil {
-				logger.Err(ctx, err).Msgf("Failed to spawn actor for agent %s.", agent.Id)
-			}
 		}
-	}
+	}()
 
 	return nil
 }
 
 func beforeShutdown(ctx context.Context) error {
-	_actorSystem.Logger().(*actorLogger).shuttingDown = true
+	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+	defer span.Finish()
+
 	logger.Info(ctx).Msg("Actor system shutting down...")
 	actors := _actorSystem.Actors()
 
@@ -127,7 +161,7 @@ func beforeShutdown(ctx context.Context) error {
 		}
 	}
 
-	waitForClusterSync()
+	// waitForClusterSync()
 
 	// then allow the actor system to continue with its shutdown process
 	return nil
@@ -135,11 +169,14 @@ func beforeShutdown(ctx context.Context) error {
 
 func waitForClusterSync() {
 	if clusterEnabled() {
-		time.Sleep(peerSyncInterval() * 2)
+		time.Sleep(nodesSyncInterval())
 	}
 }
 
 func Shutdown(ctx context.Context) {
+	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+	defer span.Finish()
+
 	if _actorSystem == nil {
 		logger.Fatal(ctx).Msg("Actor system is not initialized, cannot shutdown.")
 	}

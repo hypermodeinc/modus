@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/hypermodeinc/modus/runtime/logger"
+	"github.com/hypermodeinc/modus/runtime/utils"
 	goakt "github.com/tochemey/goakt/v3/actor"
 
 	"google.golang.org/protobuf/proto"
@@ -25,6 +26,9 @@ import (
 // Sends a message to an actor identified by its name.
 // Uses either Tell or RemoteTell based on whether the actor is local or remote.
 func tell(ctx context.Context, actorName string, message proto.Message) error {
+	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+	defer span.Finish()
+
 	addr, pid, err := _actorSystem.ActorOf(ctx, actorName)
 	if err != nil {
 		return err
@@ -39,6 +43,9 @@ func tell(ctx context.Context, actorName string, message proto.Message) error {
 // Sends a message to an actor identified by its name, then waits for a response within the timeout duration.
 // Uses either Ask or RemoteAsk based on whether the actor is local or remote.
 func ask(ctx context.Context, actorName string, message proto.Message, timeout time.Duration) (response proto.Message, err error) {
+	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+	defer span.Finish()
+
 	addr, pid, err := _actorSystem.ActorOf(ctx, actorName)
 	if err != nil {
 		return nil, err
@@ -68,4 +75,15 @@ func getIntFromEnv(envVar string, defaultValue int) int {
 	}
 
 	return value
+}
+
+// Retrieves a duration value from an environment variable.
+func getDurationFromEnv(envVar string, defaultValue int, unit time.Duration) time.Duration {
+	intVal := getIntFromEnv(envVar, defaultValue)
+	if intVal <= 0 {
+		duration := time.Duration(defaultValue) * unit
+		logger.Warnf("Invalid value for %s. Using %s instead.", envVar, duration)
+		return duration
+	}
+	return time.Duration(intVal) * unit
 }
