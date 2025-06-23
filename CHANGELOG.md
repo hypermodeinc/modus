@@ -2,6 +2,10 @@
 
 # Change Log
 
+## 2025-06-23 - Runtime 0.18.0-alpha.12
+
+- fix: ensure valid UTF8 byte sequence in HTTP response [#904](https://github.com/hypermodeinc/modus/pull/904)
+
 ## 2025-06-23 - Runtime 0.18.0-alpha.11
 
 - fix: adjust cluster sync settings and delays [#902](https://github.com/hypermodeinc/modus/pull/902)
