@@ -2,10 +2,14 @@
 
 # Change Log
 
+## UNRELEASED
+
+- fix: update dockerfile to include legacy time zones [#909](https://github.com/hypermodeinc/modus/pull/909)
+
 ## 2025-06-23 - Runtime 0.18.0-alpha.13
 
 - fix: time zone retrieval and logging [#906](https://github.com/hypermodeinc/modus/pull/906)
-- feat: distribute actors across cluster when restoring on startup [#976](https://github.com/hypermodeinc/modus/pull/907)
+- feat: distribute actors across cluster when restoring on startup [#907](https://github.com/hypermodeinc/modus/pull/907)
 
 ## 2025-06-23 - Runtime 0.18.0-alpha.12
 
