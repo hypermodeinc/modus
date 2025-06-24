@@ -17,27 +17,23 @@ import (
 	"os"
 	"path"
 	"strings"
-	"time"
 )
 
-func loadTimeZoneInfo(tz string) (*tzInfo, error) {
+func loadTimeZoneData(tz string) ([]byte, error) {
 	tzFile := "/usr/share/zoneinfo/" + tz
 	if _, err := os.Stat(tzFile); err != nil {
-		return nil, fmt.Errorf("could not find timezone file: %v", err)
+		return nil, fmt.Errorf("could not find time zone file: %v", err)
 	}
 
-	bytes, err := os.ReadFile(tzFile)
+	data, err := os.ReadFile(tzFile)
 	if err != nil {
-		return nil, fmt.Errorf("could not read timezone file: %v", err)
+		return nil, fmt.Errorf("could not read time zone file: %v", err)
 	}
 
-	loc, err := time.LoadLocationFromTZData(tz, bytes)
-	if err != nil {
-		return nil, fmt.Errorf("could not load timezone data: %v", err)
+	if len(data) == 0 {
+		return nil, errors.New("time zone data is empty")
 	}
-
-	info := &tzInfo{loc, bytes}
-	return info, nil
+	return data, nil
 }
 
 func getSystemLocalTimeZone() (string, error) {

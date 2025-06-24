@@ -10,19 +10,18 @@
 package timezones
 
 import (
+	"context"
+	"errors"
+	"fmt"
 	"os"
 	"time"
 
 	"github.com/puzpuzpuz/xsync/v4"
 )
 
-type tzInfo struct {
-	location *time.Location
-	data     []byte
-}
-
 var systemTimeZone string
-var tzCache = *xsync.NewMap[string, *tzInfo]()
+var tzDataCache = *xsync.NewMap[string, []byte]()
+var tzLocationCache = *xsync.NewMap[string, *time.Location]()
 
 func init() {
 	if tz, err := getSystemLocalTimeZone(); err == nil {
@@ -42,48 +41,62 @@ func GetLocalTimeZone() string {
 	return systemTimeZone
 }
 
-func GetLocation(tz string) *time.Location {
+func GetLocation(ctx context.Context, tz string) (*time.Location, error) {
 	if tz == "" {
-		return nil
+		return nil, errors.New("time zone cannot be empty")
 	}
 
-	info, err := getTimeZoneInfo(tz)
+	loc, err := getTimeZoneLocation(tz)
 	if err != nil {
-		return nil
+		return nil, fmt.Errorf("failed to load time zone location for %s: %w", tz, err)
 	}
 
-	return info.location
+	return loc, nil
 }
 
-func GetTimeZoneData(tz, format string) []byte {
+func GetTimeZoneData(ctx context.Context, tz, format string) ([]byte, error) {
 	if tz == "" {
-		return nil
+		return nil, errors.New("time zone cannot be empty")
 	}
 
 	// only support tzif format for now
 	// we can expand this to support other formats as needed
 	if format != "tzif" {
-		return nil
+		return nil, fmt.Errorf("unsupported time zone format: %s", format)
 	}
 
-	info, err := getTimeZoneInfo(tz)
+	data, err := getTimeZoneData(tz)
 	if err != nil {
-		return nil
+		return nil, fmt.Errorf("failed to load time zone data for %s: %w", tz, err)
 	}
 
-	return info.data
+	return data, nil
 }
 
-func getTimeZoneInfo(tz string) (*tzInfo, error) {
-	if info, ok := tzCache.Load(tz); ok {
-		return info, nil
+func getTimeZoneLocation(tz string) (*time.Location, error) {
+	if loc, ok := tzLocationCache.Load(tz); ok {
+		return loc, nil
 	}
 
-	info, err := loadTimeZoneInfo(tz)
+	loc, err := time.LoadLocation(tz)
 	if err != nil {
 		return nil, err
 	}
 
-	tzCache.Store(tz, info)
-	return info, nil
+	tzLocationCache.Store(tz, loc)
+	return loc, nil
+}
+
+func getTimeZoneData(tz string) ([]byte, error) {
+	if data, ok := tzDataCache.Load(tz); ok {
+		return data, nil
+	}
+
+	data, err := loadTimeZoneData(tz)
+	if err != nil {
+		return nil, err
+	}
+
+	tzDataCache.Store(tz, data)
+	return data, nil
 }

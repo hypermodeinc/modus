@@ -12,8 +12,8 @@
 package timezones
 
 import (
+	"errors"
 	"fmt"
-	"time"
 	"unsafe"
 
 	_ "time/tzdata"
@@ -27,22 +27,18 @@ import (
 //go:linkname loadFromEmbeddedTZData time/tzdata.loadFromEmbeddedTZData
 func loadFromEmbeddedTZData(string) (string, error)
 
-func loadTimeZoneInfo(tz string) (*tzInfo, error) {
-
+func loadTimeZoneData(tz string) ([]byte, error) {
 	var data []byte
 	if s, err := loadFromEmbeddedTZData(tz); err != nil {
-		return nil, fmt.Errorf("could not load timezone data: %v", err)
+		return nil, fmt.Errorf("could not load time zone data: %v", err)
 	} else {
 		data = []byte(s)
 	}
 
-	loc, err := time.LoadLocationFromTZData(tz, data)
-	if err != nil {
-		return nil, fmt.Errorf("could not load timezone data: %v", err)
+	if len(data) == 0 {
+		return nil, errors.New("time zone data is empty")
 	}
-
-	info := &tzInfo{loc, data}
-	return info, nil
+	return data, nil
 }
 
 func getSystemLocalTimeZone() (string, error) {
