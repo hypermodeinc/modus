@@ -78,9 +78,8 @@ export function testCatching(shouldThrow: bool): string {
   } catch (e) {
     const err = e as Exception;
     return "Caught error: " + err.toString();
-  } finally {
-    return "Did not throw";
   }
+  return "Did not throw";
 }
 
 /**
