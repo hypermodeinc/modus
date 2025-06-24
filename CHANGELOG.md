@@ -5,6 +5,7 @@
 ## 2025-06-24 - Runtime v0.18.1
 
 - fix: subscribing to events should not be blocked by agent actor state [#910](https://github.com/hypermodeinc/modus/pull/910)
+- fix: ensure valid UTF8 byte sequence for inference history [#911](https://github.com/hypermodeinc/modus/pull/911)
 
 ## 2025-06-23 - Runtime v0.18.0
 

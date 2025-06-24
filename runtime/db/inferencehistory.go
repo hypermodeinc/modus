@@ -159,20 +159,23 @@ func getInferenceDataJson(val any) ([]byte, error) {
 
 	// If the value is a byte slice or string, it must already have been serialized as JSON.
 	// It might be formatted, but we don't care because we store in a JSONB column in Postgres,
-	// which doesn't preserve formatting.
+	// which doesn't preserve formatting. For all other types, we serialize to JSON ourselves.
+
+	var bytes []byte
 	switch t := val.(type) {
 	case []byte:
-		return t, nil
+		bytes = t
 	case string:
-		return []byte(t), nil
+		bytes = []byte(t)
+	default:
+		if b, err := utils.JsonSerialize(val); err == nil {
+			bytes = b
+		} else {
+			return nil, err
+		}
 	}
 
-	// For all other types, we serialize to JSON ourselves.
-	bytes, err := utils.JsonSerialize(val)
-	if err != nil {
-		return nil, err
-	}
-	return bytes, nil
+	return utils.SanitizeUTF8(bytes), nil
 }
 
 func WritePluginInfo(ctx context.Context, plugin *plugins.Plugin) {
