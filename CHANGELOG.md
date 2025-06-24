@@ -2,7 +2,11 @@
 
 # Change Log
 
-## 2025-06-24 - Runtime v0.18.0
+## 2025-06-24 - Runtime v0.18.1
+
+- fix: subscribing to events should not be blocked by agent actor state [#910](https://github.com/hypermodeinc/modus/pull/910)
+
+## 2025-06-23 - Runtime v0.18.0
 
 NOTE: These notes are inclusive of all preview releases in the v0.18.0 series.
 
@@ -38,7 +42,7 @@ Other items:
 - fix: time zone retrieval and logging [#906](https://github.com/hypermodeinc/modus/pull/906)
 - fix: update dockerfile to include legacy time zones [#909](https://github.com/hypermodeinc/modus/pull/909)
 
-## 2025-06-24 - Go SDK v0.18.0
+## 2025-06-23 - Go SDK v0.18.0
 
 NOTE: These notes are inclusive of all preview releases in the v0.18.0 series.
 
@@ -62,7 +66,7 @@ Other items:
 - feat: return user and chat errors in API response [#863](https://github.com/hypermodeinc/modus/pull/863)
 - feat: delete collections features [#872](https://github.com/hypermodeinc/modus/pull/872)
 
-## 2025-06-24 - AssemblyScript SDK v0.18.0
+## 2025-06-23 - AssemblyScript SDK v0.18.0
 
 NOTE: These notes are inclusive of all preview releases in the v0.18.0 series.
 

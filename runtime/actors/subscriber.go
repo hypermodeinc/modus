@@ -33,7 +33,9 @@ func SubscribeForAgentEvents(ctx context.Context, agentId string, update func(da
 	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
 
-	if a, err := GetAgentInfo(ctx, agentId); err != nil {
+	// Go directly to the database for the agent status, because we don't want subscribing to event to fail
+	// if there is any issue with the agent actor.
+	if a, err := getAgentInfoFromDatabase(ctx, agentId); err != nil {
 		return err
 	} else if a.Status == AgentStatusStopping || a.Status == AgentStatusTerminated {
 		return fmt.Errorf("agent %s is %s, cannot subscribe to events", agentId, a.Status)
