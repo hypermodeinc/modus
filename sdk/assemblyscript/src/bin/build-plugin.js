@@ -124,7 +124,7 @@ async function validateAsJson() {
   const requiredTransforms = [
     "@hypermode/modus-sdk-as/transform",
     "json-as/transform",
-    "try-as/transform"
+    "try-as/transform",
   ];
   const transforms = config?.options?.transform || [];
   for (const t of requiredTransforms) {
