@@ -55,14 +55,19 @@ func LogMessage(ctx context.Context, level, message string) {
 func GetTimeInZone(ctx context.Context, tz *string) *string {
 	now := time.Now()
 
-	var loc *time.Location
+	var zoneId string
 	if tz != nil && *tz != "" {
-		loc = timezones.GetLocation(*tz)
+		zoneId = *tz
 	} else if tz, ok := ctx.Value(utils.TimeZoneContextKey).(string); ok {
-		loc = timezones.GetLocation(tz)
+		zoneId = tz
+	} else {
+		logger.Error(ctx).Msg("Time zone not specified.")
+		return nil
 	}
 
-	if loc == nil {
+	loc, err := timezones.GetLocation(ctx, zoneId)
+	if err != nil {
+		logger.Err(ctx, err).Str("tz", zoneId).Msg("Failed to get time zone location.")
 		return nil
 	}
 
@@ -70,10 +75,19 @@ func GetTimeInZone(ctx context.Context, tz *string) *string {
 	return &s
 }
 
-func GetTimeZoneData(tz, format *string) []byte {
+func GetTimeZoneData(ctx context.Context, tz, format *string) []byte {
 	if tz == nil {
+		logger.Error(ctx).Msg("Time zone not specified.")
 		return nil
 	}
-
-	return timezones.GetTimeZoneData(*tz, *format)
+	if format == nil {
+		logger.Error(ctx).Msg("Time zone format not specified.")
+		return nil
+	}
+	data, err := timezones.GetTimeZoneData(ctx, *tz, *format)
+	if err != nil {
+		logger.Error(ctx).Err(err).Str("tz", *tz).Msg("Failed to get time zone data.")
+		return nil
+	}
+	return data
 }

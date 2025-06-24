@@ -2,6 +2,10 @@
 
 # Change Log
 
+## 2025-06-23 - Runtime 0.18.0-alpha.13
+
+- fix: time zone retrieval and logging [#906](https://github.com/hypermodeinc/modus/pull/906)
+
 ## 2025-06-23 - Runtime 0.18.0-alpha.12
 
 - fix: ensure valid UTF8 byte sequence in HTTP response [#904](https://github.com/hypermodeinc/modus/pull/904)
