@@ -97,6 +97,7 @@ async function validatePackageJson() {
   verifyPackageInstalled(pkgJson, "assemblyscript", "0.28.2", true);
   verifyPackageInstalled(pkgJson, "typescript", "5.8.0", true);
   verifyPackageInstalled(pkgJson, "json-as", "1.1.14", false);
+  verifyPackageInstalled(pkgJson, "try-as", "0.2.2", false);
 }
 
 async function validateAsJson() {
@@ -123,6 +124,7 @@ async function validateAsJson() {
   const requiredTransforms = [
     "@hypermode/modus-sdk-as/transform",
     "json-as/transform",
+    "try-as/transform"
   ];
   const transforms = config?.options?.transform || [];
   for (const t of requiredTransforms) {
