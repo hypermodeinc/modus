@@ -58,9 +58,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY --from=builder /src/runtime/modus_runtime /usr/bin/modus_runtime
 
 # update certificates and time zones every build
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
     ca-certificates \
-    tzdata \
+    tzdata tzdata-legacy \
     && rm -rf /var/lib/apt/lists/*
 
 # Switch to the custom user and set the working directory
