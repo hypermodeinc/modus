@@ -168,7 +168,7 @@ func GetAgentInfo(ctx context.Context, agentId string) (*AgentInfo, error) {
 		}, nil
 	}
 
-	// If the actor is not not responding, we can check the database for the agent state.
+	// If the actor is not responding, we can check the database for the agent state.
 	// This is useful for agents that are still starting, are terminated or suspended, or just busy processing another request.
 	if errors.Is(err, goakt.ErrActorNotFound) || errors.Is(err, goakt.ErrRequestTimeout) || errors.Is(err, goakt.ErrDead) || errors.Is(err, goakt.ErrRemoteSendFailure) {
 		return getAgentInfoFromDatabase(ctx, agentId)
