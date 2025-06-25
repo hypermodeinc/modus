@@ -2,6 +2,12 @@
 
 # Change Log
 
+NOTE: all releases may include dependency updates, not specifically mentioned
+
+## 2025-06-25 - Runtime v0.18.2
+
+- fix: validate inference history is valid json [#916](https://github.com/hypermodeinc/modus/pull/916)
+
 ## 2025-06-24 - Runtime v0.18.1
 
 - fix: subscribing to events should not be blocked by agent actor state [#910](https://github.com/hypermodeinc/modus/pull/910)
