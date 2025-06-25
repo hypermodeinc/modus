@@ -140,7 +140,6 @@ _Note: Requires Hypermode Runtime v0.5.0_
 ## 2024-03-14 - Version 0.3.0
 
 - Metadata is now included during build. [#27](https://github.com/hypermodeinc/functions-as/pull/27)
-
   - You must also add `@hypermode/functions-as/transform` to the transforms in the `asconfig.json` file. For example:
 
     ```json
