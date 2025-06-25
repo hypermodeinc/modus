@@ -255,7 +255,7 @@ func (a *wasmAgentActor) saveState(ctx context.Context) error {
 		Name:      a.agentName,
 		Status:    string(a.status),
 		Data:      data,
-		UpdatedAt: time.Now().UTC().Format(utils.TimeFormat),
+		UpdatedAt: time.Now(),
 	}); err != nil {
 		return fmt.Errorf("error saving agent state to database: %w", err)
 	}

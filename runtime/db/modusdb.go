@@ -15,41 +15,101 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"strings"
+	"sync"
 
 	"github.com/hypermodeinc/modus/runtime/app"
 	"github.com/hypermodeinc/modus/runtime/logger"
-
-	"github.com/hypermodeinc/modusgraph"
+	"github.com/hypermodeinc/modus/runtime/utils"
+	mg "github.com/hypermodeinc/modusgraph"
 )
 
-var GlobalModusDbEngine *modusgraph.Engine
+var GlobalModusDbEngine *mg.Engine
 
-func InitModusDb(ctx context.Context) {
+var (
+	client     mg.Client
+	clientLock sync.Mutex
+)
+
+// GetClient returns the global modusGraph client
+func GetClient() (mg.Client, error) {
+	clientLock.Lock()
+	defer clientLock.Unlock()
+	if client == nil {
+		return nil, errors.New("modusGraph client not initialized")
+	}
+	return client, nil
+}
+
+// InitModusDb initializes the modusGraph engine and creates
+// a global modusgraph client.
+//
+// The `uri` parameter can be either a "file://" or "dgraph://"
+// prefixed URI. The former indicates the engine will create or
+// open db files in the path following `file://`. The latter
+// indicates a Dgraph connection string to a remote Dgraph cluster.
+//
+// If `uri` is empty, the default modusGraph database file will be
+// created in the app path.
+func InitModusDb(ctx context.Context, uri string) {
 	if !useModusDB() {
 		return
 	}
 
 	var dataDir string
-	appPath := app.Config().AppPath()
-	if filepath.Base(appPath) == "build" {
-		// this keeps the data directory outside of the build directory
-		dataDir = filepath.Join(appPath, "..", ".modusdb")
-		addToGitIgnore(ctx, filepath.Dir(appPath), ".modusdb/")
+	if uri == "" {
+		dataDir = getDefaultModusFilePath(ctx)
+		dataDir = "file://" + dataDir
 	} else {
-		dataDir = filepath.Join(appPath, ".modusdb")
+		dataDir = uri
 	}
 
-	if eng, err := modusgraph.NewEngine(modusgraph.NewDefaultConfig(dataDir)); err != nil {
+	// if it's a file-based URI, create the directory if it doesn't exist
+	if strings.HasPrefix(dataDir, "file://") {
+		dir := strings.TrimPrefix(dataDir, "file://")
+		err := os.MkdirAll(dir, 0755)
+		if err != nil {
+			logger.Fatal(ctx).Err(err).Str("directory", dir).Msg("Failed to create the directory for the local modusGraph database.")
+		}
+	}
+
+	logVerbosity := 0
+	if utils.DebugModeEnabled() {
+		logVerbosity = 1
+	}
+	if utils.TraceModeEnabled() {
+		logVerbosity = 3
+	}
+
+	var err error
+	clientLock.Lock()
+	defer clientLock.Unlock()
+	client, err = mg.NewClient(dataDir,
+		mg.WithAutoSchema(true),
+		mg.WithLogger(NewZerologr(*logger.Get(ctx)).V(logVerbosity)))
+	if err != nil {
 		logger.Fatal(ctx).Err(err).Msg("Failed to initialize the local modusGraph database.")
-	} else {
-		GlobalModusDbEngine = eng
 	}
 }
 
+// CloseModusDb closes the modusGraph engine
+// and clears the global client handle
 func CloseModusDb(ctx context.Context) {
-	if GlobalModusDbEngine != nil {
-		GlobalModusDbEngine.Close()
+	clientLock.Lock()
+	defer clientLock.Unlock()
+	if client != nil {
+		client.Close()
+		client = nil
 	}
+}
+
+func getDefaultModusFilePath(ctx context.Context) string {
+	appPath := app.Config().AppPath()
+	if filepath.Base(appPath) == "build" {
+		addToGitIgnore(ctx, filepath.Dir(appPath), ".modusdb/")
+		return filepath.Join(appPath, "..", ".modusdb")
+	}
+	return filepath.Join(appPath, ".modusdb")
 }
 
 func addToGitIgnore(ctx context.Context, rootPath, contents string) {
