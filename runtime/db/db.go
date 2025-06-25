@@ -57,7 +57,9 @@ func logDbWarningOrError(ctx context.Context, err error, msg string) {
 			logger.Warn(ctx).Msgf("Database has not been configured. %s", msg)
 		}
 	} else {
-		logger.Err(ctx, err).Msg(msg)
+		// not really an error, but we log it as such
+		// but user-visible so it doesn't flag in Sentry
+		logger.Err(ctx, err).Bool("user_visible", true).Msg(msg)
 	}
 }
 
