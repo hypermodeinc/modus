@@ -4,6 +4,10 @@
 
 NOTE: all releases may include dependency updates, not specifically mentioned
 
+UNRELEASED
+
+- fix: check topic actor status before publishing events [#918](https://github.com/hypermodeinc/modus/pull/918)
+
 ## 2025-06-25 - Runtime v0.18.2
 
 - fix: validate inference history is valid json [#916](https://github.com/hypermodeinc/modus/pull/916)
