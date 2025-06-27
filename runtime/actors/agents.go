@@ -267,6 +267,12 @@ func PublishAgentEvent(ctx context.Context, agentId, eventName string, eventData
 	}
 
 	topicActor := _actorSystem.TopicActor()
+	if !topicActor.IsRunning() {
+		// If the topic actor is not running, we cannot publish the event.
+		// This can happen during shutdown if the topic actor is stopped before the agent actors.
+		logger.Warn(ctx).Str("event", eventName).Any("data", eventData).Msg("Topic actor is not running. Cannot publish event.")
+		return nil
+	}
 
 	// if the pid is in context, we're being called as a host function
 	if pid, ok := ctx.Value(pidContextKey{}).(*goakt.PID); ok {
