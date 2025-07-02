@@ -8,14 +8,16 @@ cd "$(dirname "$0")"
 cd ..
 
 cd src
-ncu -u -t minor
+# ncu -u -t minor
+npm audit fix
 npm install
 
 cd ../templates
 for template in *; do
 	if [[ -d ${template} ]]; then
 		cd "${template}"
-		ncu -u -t minor
+		# ncu -u -t minor
+		npm audit fix
 		npm install
 		cd ..
 	fi
@@ -25,7 +27,8 @@ cd ../examples
 for example in *; do
 	if [[ -d ${example} ]]; then
 		cd "${example}"
-		ncu -u -t minor
+		# ncu -u -t minor
+		npm audit fix
 		npm install
 		cd ..
 	fi
