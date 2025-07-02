@@ -45,7 +45,7 @@ require (
 	github.com/tochemey/goakt/v3 v3.6.6
 	github.com/travisjeffery/go-dynaport v1.0.0
 	github.com/twpayne/go-geom v1.6.1
-	github.com/wundergraph/graphql-go-tools/execution v1.3.2-0.20250702170050-ef03374352bf
+	github.com/wundergraph/graphql-go-tools/execution v1.3.2-0.20250702171307-a33bc8ea433e
 	github.com/wundergraph/graphql-go-tools/v2 v2.0.0-rc.194
 	github.com/xo/dburl v0.23.8
 	golang.org/x/exp v0.0.0-20250620022241-b7579e27df2b

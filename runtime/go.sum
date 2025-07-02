@@ -894,8 +894,8 @@ github.com/wundergraph/cosmo/composition-go v0.0.0-20241020204711-78f240a77c99 h
 github.com/wundergraph/cosmo/composition-go v0.0.0-20241020204711-78f240a77c99/go.mod h1:fUuOAUAXUFB/mlSkAaImGeE4A841AKR5dTMWhV4ibxI=
 github.com/wundergraph/cosmo/router v0.0.0-20240729154441-b20b00e892c6 h1:oXnHjPyl2Wes+mnCQbR0F1v0WAUOf974PdANFMA4CmI=
 github.com/wundergraph/cosmo/router v0.0.0-20240729154441-b20b00e892c6/go.mod h1:0FOIMzc1cY8c4rUczyhmI2es84HGoEJV2MIbDbiEWzg=
-github.com/wundergraph/graphql-go-tools/execution v1.3.2-0.20250702170050-ef03374352bf h1:G37q5r2dK6nWl29g90Zda8YtBmKDgSBfPRyftNpgmUQ=
-github.com/wundergraph/graphql-go-tools/execution v1.3.2-0.20250702170050-ef03374352bf/go.mod h1:W/qne08dAC/E0MrwOFBkeFujKTNFv0w8XHfJb+9Y5AM=
+github.com/wundergraph/graphql-go-tools/execution v1.3.2-0.20250702171307-a33bc8ea433e h1:GNfuqs4yd/sjbrT6zEZOaKu87U989WnNI4j4gMwUONE=
+github.com/wundergraph/graphql-go-tools/execution v1.3.2-0.20250702171307-a33bc8ea433e/go.mod h1:W/qne08dAC/E0MrwOFBkeFujKTNFv0w8XHfJb+9Y5AM=
 github.com/wundergraph/graphql-go-tools/v2 v2.0.0-rc.194 h1:qBGT+5oyo86EdTtBIIExE/TPbqa2iBkNb0HTl+kGKJQ=
 github.com/wundergraph/graphql-go-tools/v2 v2.0.0-rc.194/go.mod h1:DaBrBCMgKGd3t7zg7z11jKm+0mVJiesr/IQCRG9qgP0=
 github.com/x448/float16 v0.8.4 h1:qLwI1I70+NjRFUR3zs1JPUCgaCXSh3SW62uAKT1mSBM=
