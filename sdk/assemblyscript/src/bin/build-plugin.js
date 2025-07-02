@@ -97,7 +97,7 @@ async function validatePackageJson() {
   verifyPackageInstalled(pkgJson, "assemblyscript", "0.28.2", true);
   verifyPackageInstalled(pkgJson, "typescript", "5.8.0", true);
   verifyPackageInstalled(pkgJson, "json-as", "1.1.14", false);
-  verifyPackageInstalled(pkgJson, "try-as", "0.2.2", false);
+  verifyPackageInstalled(pkgJson, "try-as", "0.2.3", false);
 }
 
 async function validateAsJson() {
