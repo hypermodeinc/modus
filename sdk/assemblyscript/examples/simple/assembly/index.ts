@@ -4,6 +4,7 @@
  * See the LICENSE file that accompanied this code for further details.
  */
 
+import { Exception } from "try-as";
 import { Person } from "./person";
 
 /**
@@ -66,4 +67,31 @@ This is line 3 of a multi-line error message.`,
     `This is a message from a thrown error.
 This is a second line from a thrown error.`,
   );
+}
+
+/**
+ * Demonstrates catching errors using the try-as library
+ */
+export function testCatching(shouldThrow: bool): string {
+  try {
+    if (shouldThrow) throw new Error("Throw from Try Block");
+  } catch (e) {
+    const err = e as Exception;
+    return "Caught error: " + err.toString();
+  }
+  return "Did not throw";
+}
+
+/**
+ * Demonstrates catching and rethrowing errors
+ */
+export function catchAndRethrow(shouldRethrow: bool): string {
+  try {
+    throw new Error("Throw from Try Block");
+  } catch (e) {
+    const err = e as Exception;
+    console.log("Caught error: " + err.toString());
+    if (shouldRethrow) throw err;
+  }
+  return "Caught error";
 }
