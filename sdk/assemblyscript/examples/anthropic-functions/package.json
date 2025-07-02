@@ -14,7 +14,7 @@
   "dependencies": {
     "@hypermode/modus-sdk-as": "../../src",
     "json-as": "^1.1.19",
-    "try-as": "^0.2.2"
+    "try-as": "^0.2.3"
   },
   "devDependencies": {
     "@eslint/js": "^9.30.1",
