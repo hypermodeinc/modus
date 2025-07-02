@@ -25,7 +25,7 @@
     "chalk": "^5.4.1",
     "json-as": "^1.1.19",
     "semver": "^7.7.2",
-    "try-as": "^0.2.2",
+    "try-as": "^0.2.3",
     "xid-ts": "^1.1.4"
   },
   "devDependencies": {
