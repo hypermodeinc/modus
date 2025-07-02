@@ -9,11 +9,23 @@ cd ..
 echo "Tidying ."
 go mod tidy
 
-cd examples
+cd templates
+for template in *; do
+	if [[ -d ${template} ]]; then
+		cd "${template}"
+		echo "Updating templates/${template}"
+		go get -u
+		go mod tidy
+		cd ..
+	fi
+done
+
+cd ../examples
 for example in *; do
 	if [[ -d ${example} ]]; then
 		cd "${example}"
-		echo "Tidying examples/${example}"
+		echo "Updating examples/${example}"
+		go get -u
 		go mod tidy
 		cd ..
 	fi

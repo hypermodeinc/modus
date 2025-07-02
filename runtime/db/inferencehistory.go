@@ -19,6 +19,7 @@ import (
 	"github.com/hypermodeinc/modus/runtime/plugins"
 	"github.com/hypermodeinc/modus/runtime/secrets"
 	"github.com/hypermodeinc/modus/runtime/utils"
+	"github.com/tidwall/gjson"
 
 	"github.com/hypermodeinc/modusgraph"
 	"github.com/jackc/pgx/v5"
@@ -161,21 +162,27 @@ func getInferenceDataJson(val any) ([]byte, error) {
 	// It might be formatted, but we don't care because we store in a JSONB column in Postgres,
 	// which doesn't preserve formatting. For all other types, we serialize to JSON ourselves.
 
-	var bytes []byte
+	var result []byte
 	switch t := val.(type) {
 	case []byte:
-		bytes = t
+		result = t
 	case string:
-		bytes = []byte(t)
+		result = []byte(t)
 	default:
 		if b, err := utils.JsonSerialize(val); err == nil {
-			bytes = b
+			result = b
 		} else {
 			return nil, err
 		}
 	}
 
-	return utils.SanitizeUTF8(bytes), nil
+	result = utils.SanitizeUTF8(result)
+
+	if !gjson.ValidBytes(result) {
+		return nil, fmt.Errorf("invalid JSON data: %s", result)
+	}
+
+	return result, nil
 }
 
 func WritePluginInfo(ctx context.Context, plugin *plugins.Plugin) {
