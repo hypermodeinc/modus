@@ -14,12 +14,11 @@ import (
 	"runtime"
 
 	"github.com/hypermodeinc/modus/runtime/app"
+	"github.com/hypermodeinc/modus/runtime/logger"
 	"github.com/hypermodeinc/modus/runtime/utils"
 )
 
 var healthHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
 
 	data := []utils.KeyValuePair{
 		{Key: "status", Value: "ok"},
@@ -31,5 +30,14 @@ var healthHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request
 		data = append(data, utils.KeyValuePair{Key: "kubernetes_namespace", Value: ns})
 	}
 
-	_, _ = w.Write(utils.MakeJsonObject(data, true))
+	jsonBytes, err := utils.MakeJsonObject(data, true)
+	if err != nil {
+		logger.Err(r.Context(), err).Msg("Failed to serialize health check response.")
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write(jsonBytes)
 })

@@ -38,14 +38,20 @@ type KeyValuePair struct {
 }
 
 // MakeJsonObject creates a JSON object from the given key-value pairs.
-func MakeJsonObject(pairs []KeyValuePair, pretty bool) []byte {
+func MakeJsonObject(pairs []KeyValuePair, pretty bool) ([]byte, error) {
 	var buf bytes.Buffer
 
 	if pretty {
 		buf.WriteString("{\n")
 		for i, kv := range pairs {
-			keyBytes, _ := json.Marshal(kv.Key)
-			valBytes, _ := json.Marshal(kv.Value)
+			keyBytes, err := json.Marshal(kv.Key)
+			if err != nil {
+				return nil, err
+			}
+			valBytes, err := json.Marshal(kv.Value)
+			if err != nil {
+				return nil, err
+			}
 
 			buf.WriteString("  ")
 			buf.Write(keyBytes)
@@ -60,8 +66,14 @@ func MakeJsonObject(pairs []KeyValuePair, pretty bool) []byte {
 	} else {
 		buf.WriteByte('{')
 		for i, kv := range pairs {
-			keyBytes, _ := json.Marshal(kv.Key)
-			valBytes, _ := json.Marshal(kv.Value)
+			keyBytes, err := json.Marshal(kv.Key)
+			if err != nil {
+				return nil, err
+			}
+			valBytes, err := json.Marshal(kv.Value)
+			if err != nil {
+				return nil, err
+			}
 
 			buf.Write(keyBytes)
 			buf.WriteByte(':')
@@ -73,5 +85,5 @@ func MakeJsonObject(pairs []KeyValuePair, pretty bool) []byte {
 		buf.WriteByte('}')
 	}
 
-	return buf.Bytes()
+	return buf.Bytes(), nil
 }
