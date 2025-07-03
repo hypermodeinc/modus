@@ -44,13 +44,13 @@ func (stg *awsStorageProvider) initialize(ctx context.Context) {
 
 	cfg, err := config.LoadDefaultConfig(ctx)
 	if err != nil {
-		logger.Fatal(ctx).Err(err).Msg("Failed to load AWS configuration.  Exiting.")
+		logger.Fatal(ctx, err).Msg("Failed to load AWS configuration.  Exiting.")
 	}
 
 	client := sts.NewFromConfig(cfg)
 	identity, err := client.GetCallerIdentity(ctx, &sts.GetCallerIdentityInput{})
 	if err != nil {
-		logger.Fatal(ctx).Err(err).Msg("Failed to get AWS caller identity.  Exiting.")
+		logger.Fatal(ctx, err).Msg("Failed to get AWS caller identity.  Exiting.")
 	}
 
 	stg.s3Client = s3.NewFromConfig(cfg)

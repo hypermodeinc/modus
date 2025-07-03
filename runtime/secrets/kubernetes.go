@@ -54,7 +54,7 @@ func (sp *kubernetesSecretsProvider) initialize(ctx context.Context) {
 
 	cli, cache, err := newK8sClientForSecret(sp.secretNamespace, sp.secretName)
 	if err != nil {
-		logger.Fatal(ctx).Err(err).Msg("Failed to initialize Kubernetes client.")
+		logger.Fatal(ctx, err).Msg("Failed to initialize Kubernetes client.")
 	}
 	sp.k8sClient = cli
 
@@ -67,7 +67,7 @@ func (sp *kubernetesSecretsProvider) initialize(ctx context.Context) {
 	// to call the API server everytime.
 	go func() {
 		if err := cache.Start(ctx); err != nil {
-			logger.Fatal(ctx).Err(err).Msg("Failed to start Kubernetes client cache.")
+			logger.Fatal(ctx, err).Msg("Failed to start Kubernetes client cache.")
 		}
 		logger.Info(ctx).Msg("Kubernetes client cache stopped.")
 	}()

@@ -52,7 +52,7 @@ func clusterOptions(ctx context.Context) []goakt.Option {
 
 	disco, err := newDiscoveryProvider(ctx, clusterMode, discoveryPort)
 	if err != nil {
-		logger.Fatal(ctx).Err(err).Msg("Failed to create cluster discovery provider.")
+		logger.Fatal(ctx, err).Msg("Failed to create cluster discovery provider.")
 	}
 
 	return []goakt.Option{
@@ -166,9 +166,9 @@ func clusterPorts() (discoveryPort, remotingPort, peersPort int) {
 
 	// Get default ports dynamically, but use environment variables if set
 	ports := dynaport.Get(3)
-	discoveryPort = getIntFromEnv("MODUS_CLUSTER_DISCOVERY_PORT", ports[0])
-	remotingPort = getIntFromEnv("MODUS_CLUSTER_REMOTING_PORT", ports[1])
-	peersPort = getIntFromEnv("MODUS_CLUSTER_PEERS_PORT", ports[2])
+	discoveryPort = utils.GetIntFromEnv("MODUS_CLUSTER_DISCOVERY_PORT", ports[0])
+	remotingPort = utils.GetIntFromEnv("MODUS_CLUSTER_REMOTING_PORT", ports[1])
+	peersPort = utils.GetIntFromEnv("MODUS_CLUSTER_PEERS_PORT", ports[2])
 
 	return
 }
@@ -179,7 +179,7 @@ func clusterPorts() (discoveryPort, remotingPort, peersPort int) {
 // This value is also used for a sleep both on system startup and when spawning a new agent actor,
 // so it needs to be low enough to not be noticed by the user.
 func peerSyncInterval() time.Duration {
-	return getDurationFromEnv("MODUS_CLUSTER_PEER_SYNC_SECONDS", 1, time.Second)
+	return utils.GetDurationFromEnv("MODUS_CLUSTER_PEER_SYNC_SECONDS", 1, time.Second)
 }
 
 // nodesSyncInterval returns the interval at which the cluster forces a resync of the list of active nodes across the cluster.
@@ -189,7 +189,7 @@ func peerSyncInterval() time.Duration {
 // On each interval, the node will sync its list of nodes with the cluster, and update its local state accordingly.
 // The default is 10 seconds, which is a reasonable balance between responsiveness and network overhead.
 func nodesSyncInterval() time.Duration {
-	return getDurationFromEnv("MODUS_CLUSTER_NODES_SYNC_SECONDS", 10, time.Second)
+	return utils.GetDurationFromEnv("MODUS_CLUSTER_NODES_SYNC_SECONDS", 10, time.Second)
 }
 
 // partitionCount returns the number of partitions the cluster will use for actor distribution.
@@ -199,19 +199,19 @@ func nodesSyncInterval() time.Duration {
 // We'll use a slightly lower default of 13, which is still a prime number and should work well for most clusters.
 // The GoAkt default is 271, but this has been found to lead to other errors in practice.
 func partitionCount() uint64 {
-	return uint64(getIntFromEnv("MODUS_CLUSTER_PARTITION_COUNT", 13))
+	return uint64(utils.GetIntFromEnv("MODUS_CLUSTER_PARTITION_COUNT", 13))
 }
 
 // readTimeout returns the duration to wait for a cluster read operation before timing out.
 // The default is 1 second, which should usually not need to be changed.
 func readTimeout() time.Duration {
-	return getDurationFromEnv("MODUS_CLUSTER_READ_TIMEOUT_SECONDS", 1, time.Second)
+	return utils.GetDurationFromEnv("MODUS_CLUSTER_READ_TIMEOUT_SECONDS", 1, time.Second)
 }
 
 // writeTimeout returns the duration to wait for a cluster write operation before timing out.
 // The default is 1 second, which should usually not need to be changed.
 func writeTimeout() time.Duration {
-	return getDurationFromEnv("MODUS_CLUSTER_WRITE_TIMEOUT_SECONDS", 1, time.Second)
+	return utils.GetDurationFromEnv("MODUS_CLUSTER_WRITE_TIMEOUT_SECONDS", 1, time.Second)
 }
 
 func getPodLabels() map[string]string {

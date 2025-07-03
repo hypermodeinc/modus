@@ -6,7 +6,6 @@ go 1.24.4
 
 require (
 	github.com/OneOfOne/xxhash v1.2.8
-	github.com/archdx/zerolog-sentry v1.8.5
 	github.com/aws/aws-sdk-go-v2/config v1.29.17
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.82.0
 	github.com/aws/aws-sdk-go-v2/service/sts v1.34.0

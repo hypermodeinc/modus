@@ -40,7 +40,7 @@ func InitModusDb(ctx context.Context) {
 	}
 
 	if eng, err := modusgraph.NewEngine(modusgraph.NewDefaultConfig(dataDir)); err != nil {
-		logger.Fatal(ctx).Err(err).Msg("Failed to initialize the local modusGraph database.")
+		logger.Fatal(ctx, err).Msg("Failed to initialize the local modusGraph database.")
 	} else {
 		GlobalModusDbEngine = eng
 	}
@@ -58,7 +58,7 @@ func addToGitIgnore(ctx context.Context, rootPath, contents string) {
 	// if .gitignore file does not exist, create it and add contents to it
 	if _, err := os.Stat(gitIgnorePath); errors.Is(err, os.ErrNotExist) {
 		if err := os.WriteFile(gitIgnorePath, []byte(contents+"\n"), 0644); err != nil {
-			logger.Err(ctx, err).Msg("Failed to create .gitignore file.")
+			logger.Error(ctx, err).Msg("Failed to create .gitignore file.")
 		}
 		return
 	}
@@ -66,7 +66,7 @@ func addToGitIgnore(ctx context.Context, rootPath, contents string) {
 	// check if contents are already in the .gitignore file
 	file, err := os.Open(gitIgnorePath)
 	if err != nil {
-		logger.Err(ctx, err).Msg("Failed to open .gitignore file.")
+		logger.Error(ctx, err).Msg("Failed to open .gitignore file.")
 		return
 	}
 	defer file.Close()
@@ -80,11 +80,11 @@ func addToGitIgnore(ctx context.Context, rootPath, contents string) {
 	// contents are not in the file, so append them
 	file, err = os.OpenFile(gitIgnorePath, os.O_APPEND|os.O_WRONLY, 0644)
 	if err != nil {
-		logger.Err(ctx, err).Msg("Failed to open .gitignore file.")
+		logger.Error(ctx, err).Msg("Failed to open .gitignore file.")
 		return
 	}
 	defer file.Close()
 	if _, err := file.WriteString("\n" + contents + "\n"); err != nil {
-		logger.Err(ctx, err).Msg("Failed to append " + contents + " to .gitignore file.")
+		logger.Error(ctx, err).Msg("Failed to append " + contents + " to .gitignore file.")
 	}
 }

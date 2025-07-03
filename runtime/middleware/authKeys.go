@@ -71,7 +71,7 @@ func getJwksRefreshMinutes(ctx context.Context) int {
 	}
 	refreshTime, err := strconv.Atoi(refreshTimeStr)
 	if err != nil {
-		logger.Warn(ctx).Err(err).Msg("Invalid MODUS_JWKS_REFRESH_MINUTES value. Using default value of 1440 minutes.")
+		logger.Warn(ctx, err).Msg("Invalid MODUS_JWKS_REFRESH_MINUTES value. Using default value of 1440 minutes.")
 		return 1440
 	}
 	return refreshTime
@@ -90,7 +90,7 @@ func (ak *AuthKeys) worker(ctx context.Context) {
 			if keysStr != "" {
 				keys, err := jwksEndpointsJsonToKeys(ctx, keysStr)
 				if err != nil {
-					logger.Warn(ctx).Err(err).Msg("Auth JWKS public keys deserializing error")
+					logger.Warn(ctx, err).Msg("Auth JWKS public keys deserializing error")
 				} else {
 					ak.setJwksPublicKeys(keys)
 				}

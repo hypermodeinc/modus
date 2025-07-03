@@ -32,7 +32,7 @@ var healthHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request
 
 	jsonBytes, err := utils.MakeJsonObject(data, true)
 	if err != nil {
-		logger.Err(r.Context(), err).Msg("Failed to serialize health check response.")
+		logger.Error(r.Context(), err).Msg("Failed to serialize health check response.")
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}

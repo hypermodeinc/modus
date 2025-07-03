@@ -42,7 +42,7 @@ func (ds *mysqlDS) query(ctx context.Context, stmt string, params []any, execOnl
 	}
 	defer func() {
 		if err := tx.Rollback(); err != nil && err != sql.ErrTxDone {
-			logger.Warn(ctx).Err(err).Msg("Error rolling back transaction.")
+			logger.Warn(ctx, err).Msg("Error rolling back transaction.")
 			return
 		}
 	}()

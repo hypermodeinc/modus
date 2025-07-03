@@ -67,7 +67,7 @@ func GetTimeInZone(ctx context.Context, tz *string) *string {
 
 	loc, err := timezones.GetLocation(ctx, zoneId)
 	if err != nil {
-		logger.Err(ctx, err).Str("tz", zoneId).Msg("Failed to get time zone location.")
+		logger.Error(ctx, err).Str("tz", zoneId).Msg("Failed to get time zone location.")
 		return nil
 	}
 
@@ -86,7 +86,7 @@ func GetTimeZoneData(ctx context.Context, tz, format *string) []byte {
 	}
 	data, err := timezones.GetTimeZoneData(ctx, *tz, *format)
 	if err != nil {
-		logger.Error(ctx).Err(err).Str("tz", *tz).Msg("Failed to get time zone data.")
+		logger.Error(ctx, err).Str("tz", *tz).Msg("Failed to get time zone data.")
 		return nil
 	}
 	return data

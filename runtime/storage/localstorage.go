@@ -40,7 +40,7 @@ func (stg *localStorageProvider) initialize(ctx context.Context) {
 			Msg("Creating app directory.")
 		err := os.MkdirAll(stg.appPath, 0755)
 		if err != nil {
-			logger.Fatal(ctx).Err(err).
+			logger.Fatal(ctx, err).
 				Msg("Failed to create local app directory.  Exiting.")
 		}
 	} else {

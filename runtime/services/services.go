@@ -80,7 +80,6 @@ func Stop(ctx context.Context) {
 	sqlclient.Shutdown()
 	dgraphclient.ShutdownConns()
 	neo4jclient.CloseDrivers(ctx)
-	logger.Close()
 	db.Stop(ctx)
 	db.CloseModusDb(ctx)
 

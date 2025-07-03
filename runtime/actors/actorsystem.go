@@ -48,15 +48,15 @@ func Initialize(ctx context.Context) {
 
 	actorSystem, err := goakt.NewActorSystem("modus", opts...)
 	if err != nil {
-		logger.Fatal(ctx).Err(err).Msg("Failed to create actor system.")
+		logger.Fatal(ctx, err).Msg("Failed to create actor system.")
 	}
 
 	if err := startActorSystem(ctx, actorSystem); err != nil {
-		logger.Fatal(ctx).Err(err).Msg("Failed to start actor system.")
+		logger.Fatal(ctx, err).Msg("Failed to start actor system.")
 	}
 
 	if err := actorSystem.Inject(&wasmAgentInfo{}); err != nil {
-		logger.Fatal(ctx).Err(err).Msg("Failed to inject wasm agent info into actor system.")
+		logger.Fatal(ctx, err).Msg("Failed to inject wasm agent info into actor system.")
 	}
 
 	_actorSystem = actorSystem
@@ -67,12 +67,12 @@ func Initialize(ctx context.Context) {
 }
 
 func startActorSystem(ctx context.Context, actorSystem goakt.ActorSystem) error {
-	maxRetries := getIntFromEnv("MODUS_ACTOR_SYSTEM_START_MAX_RETRIES", 5)
-	retryInterval := getDurationFromEnv("MODUS_ACTOR_SYSTEM_START_RETRY_INTERVAL_SECONDS", 2, time.Second)
+	maxRetries := utils.GetIntFromEnv("MODUS_ACTOR_SYSTEM_START_MAX_RETRIES", 5)
+	retryInterval := utils.GetDurationFromEnv("MODUS_ACTOR_SYSTEM_START_RETRY_INTERVAL_SECONDS", 2, time.Second)
 
 	for i := range maxRetries {
 		if err := actorSystem.Start(ctx); err != nil {
-			logger.Warn(ctx).Err(err).Int("attempt", i+1).Msgf("Failed to start actor system, retrying in %s...", retryInterval)
+			logger.Warn(ctx, err).Int("attempt", i+1).Msgf("Failed to start actor system, retrying in %s...", retryInterval)
 			time.Sleep(retryInterval)
 			retryInterval *= 2 // Exponential backoff
 			continue
@@ -96,7 +96,7 @@ func loadAgentActors(ctx context.Context, plugin *plugins.Plugin) error {
 	for _, pid := range actors {
 		if a, ok := pid.Actor().(*wasmAgentActor); ok {
 			if err := goakt.Tell(ctx, pid, &messages.RestartAgent{}); err != nil {
-				logger.Err(ctx, err).Str("agent_id", a.agentId).Msg("Failed to send restart agent message to actor.")
+				logger.Error(ctx, err).Str("agent_id", a.agentId).Msg("Failed to send restart agent message to actor.")
 			}
 		}
 	}
@@ -104,7 +104,7 @@ func loadAgentActors(ctx context.Context, plugin *plugins.Plugin) error {
 	// do this in a goroutine to avoid blocking the cluster engine startup
 	go func() {
 		if err := restoreAgentActors(ctx, plugin.Name()); err != nil {
-			logger.Err(ctx, err).Msg("Failed to restore agent actors.")
+			logger.Error(ctx, err).Msg("Failed to restore agent actors.")
 		}
 	}()
 
@@ -133,11 +133,11 @@ func restoreAgentActors(ctx context.Context, pluginName string) error {
 	for _, agent := range agents {
 		actorName := getActorName(agent.Id)
 		if exists, err := _actorSystem.ActorExists(ctx, actorName); err != nil {
-			logger.Err(ctx, err).Msgf("Failed to check if actor %s exists.", actorName)
+			logger.Error(ctx, err).Msgf("Failed to check if actor %s exists.", actorName)
 		} else if !exists {
 			err := spawnActorForAgent(ctx, pluginName, agent.Id, agent.Name, false)
 			if err != nil {
-				logger.Err(ctx, err).Msgf("Failed to spawn actor for agent %s.", agent.Id)
+				logger.Error(ctx, err).Msgf("Failed to spawn actor for agent %s.", agent.Id)
 			}
 		}
 	}
@@ -159,7 +159,7 @@ func beforeShutdown(ctx context.Context) error {
 			if actor.status == AgentStatusRunning {
 				ctx := actor.augmentContext(ctx, pid)
 				if err := actor.suspendAgent(ctx); err != nil {
-					logger.Err(ctx, err).Str("agent_id", actor.agentId).Msg("Failed to suspend agent actor.")
+					logger.Error(ctx, err).Str("agent_id", actor.agentId).Msg("Failed to suspend agent actor.")
 				}
 			}
 		}
@@ -169,7 +169,7 @@ func beforeShutdown(ctx context.Context) error {
 	for _, pid := range actors {
 		if _, ok := pid.Actor().(*subscriptionActor); ok && pid.IsRunning() {
 			if err := pid.Shutdown(ctx); err != nil {
-				logger.Err(ctx, err).Msgf("Failed to shutdown actor %s.", pid.Name())
+				logger.Error(ctx, err).Msgf("Failed to shutdown actor %s.", pid.Name())
 			}
 		}
 	}
@@ -201,7 +201,7 @@ func Shutdown(ctx context.Context) {
 	}
 
 	if err := _actorSystem.Stop(ctx); err != nil {
-		logger.Err(ctx, err).Msg("Failed to shutdown actor system.")
+		logger.Error(ctx, err).Msg("Failed to shutdown actor system.")
 	}
 
 	logger.Info(ctx).Msg("Actor system shutdown complete.")
