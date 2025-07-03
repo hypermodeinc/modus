@@ -12,11 +12,8 @@ package actors
 import (
 	"context"
 	"fmt"
-	"os"
-	"strconv"
 	"time"
 
-	"github.com/hypermodeinc/modus/runtime/logger"
 	"github.com/hypermodeinc/modus/runtime/utils"
 	goakt "github.com/tochemey/goakt/v3/actor"
 
@@ -59,31 +56,4 @@ func ask(ctx context.Context, actorName string, message proto.Message, timeout t
 		return response.UnmarshalNew()
 	}
 	return nil, fmt.Errorf("failed to get address or PID for actor %s", actorName)
-}
-
-// Retrieves an integer value from an environment variable.
-func getIntFromEnv(envVar string, defaultValue int) int {
-	str := os.Getenv(envVar)
-	if str == "" {
-		return defaultValue
-	}
-
-	value, err := strconv.Atoi(str)
-	if err != nil || value <= 0 {
-		logger.Warnf("Invalid value for %s. Using %d instead.", envVar, defaultValue)
-		return defaultValue
-	}
-
-	return value
-}
-
-// Retrieves a duration value from an environment variable.
-func getDurationFromEnv(envVar string, defaultValue int, unit time.Duration) time.Duration {
-	intVal := getIntFromEnv(envVar, defaultValue)
-	if intVal <= 0 {
-		duration := time.Duration(defaultValue) * unit
-		logger.Warnf("Invalid value for %s. Using %s instead.", envVar, duration)
-		return duration
-	}
-	return time.Duration(intVal) * unit
 }

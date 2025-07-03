@@ -51,7 +51,7 @@ func Stop(ctx context.Context) {
 
 func logDbWarningOrError(ctx context.Context, err error, msg string) {
 	if _, ok := err.(*pgconn.ConnectError); ok {
-		logger.Warn(ctx).Err(err).Msgf("Database connection error. %s", msg)
+		logger.Warn(ctx, err).Msgf("Database connection error. %s", msg)
 	} else if errors.Is(err, errDbNotConfigured) {
 		if !useModusDB() {
 			logger.Warn(ctx).Msgf("Database has not been configured. %s", msg)
@@ -59,7 +59,7 @@ func logDbWarningOrError(ctx context.Context, err error, msg string) {
 	} else {
 		// not really an error, but we log it as such
 		// but user-visible so it doesn't flag in Sentry
-		logger.Err(ctx, err).Bool("user_visible", true).Msg(msg)
+		logger.Error(ctx, err).Bool("user_visible", true).Msg(msg)
 	}
 }
 
@@ -71,7 +71,7 @@ func Initialize(ctx context.Context) {
 	// this will initialize the pool and start the worker
 	_, err := globalRuntimePostgresWriter.GetPool(ctx)
 	if err != nil {
-		logger.Warn(ctx).Err(err).Msg("Metadata database is not available.")
+		logger.Warn(ctx, err).Msg("Metadata database is not available.")
 	}
 	go globalRuntimePostgresWriter.worker(ctx)
 }

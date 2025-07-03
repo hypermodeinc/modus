@@ -44,7 +44,7 @@ func MonitorManifestFile(ctx context.Context) {
 		}
 
 		if err := loadManifest(ctx); err != nil {
-			logger.Err(ctx, err).Str("filename", file.Name).Msg("Failed to load manifest file.")
+			logger.Error(ctx, err).Str("filename", file.Name).Msg("Failed to load manifest file.")
 			return err
 		}
 
@@ -58,7 +58,7 @@ func MonitorManifestFile(ctx context.Context) {
 		if file.Name == manifestFileName {
 			logger.Warn(ctx).Str("filename", file.Name).Msg("Manifest file removed.")
 			if err := unloadManifest(ctx); err != nil {
-				logger.Err(ctx, err).Str("filename", file.Name).Msg("Failed to unload manifest file.")
+				logger.Error(ctx, err).Str("filename", file.Name).Msg("Failed to unload manifest file.")
 				return err
 			}
 		}

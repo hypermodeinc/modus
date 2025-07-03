@@ -92,7 +92,7 @@ func handleGraphQLRequest(w http.ResponseWriter, r *http.Request) {
 
 		// NOTE: We only log these in dev, to avoid a bad actor spamming the logs in prod.
 		if app.IsDevEnvironment() {
-			logger.Warn(ctx).Err(err).Msg(msg)
+			logger.Warn(ctx, err).Msg(msg)
 		}
 		return
 	}
@@ -141,7 +141,7 @@ func handleGraphQLRequest(w http.ResponseWriter, r *http.Request) {
 	resultWriter := gql.NewEngineResultWriter()
 	if operationType, err := gqlRequest.OperationType(); err != nil {
 		msg := "Failed to determine operation type from GraphQL request."
-		logger.Err(ctx, err).Msg(msg)
+		logger.Error(ctx, err).Msg(msg)
 		http.Error(w, msg, http.StatusBadRequest)
 		return
 	} else if operationType == gql.OperationTypeSubscription {
@@ -187,7 +187,7 @@ func handleGraphQLRequest(w http.ResponseWriter, r *http.Request) {
 			if len(report.InternalErrors) > 0 {
 				// Log internal errors, but don't return them to the client
 				msg := "Failed to execute GraphQL operation."
-				logger.Err(ctx, err).Msg(msg)
+				logger.Error(ctx, err).Msg(msg)
 				http.Error(w, msg, http.StatusInternalServerError)
 				return
 			}
@@ -214,7 +214,7 @@ func handleGraphQLRequest(w http.ResponseWriter, r *http.Request) {
 			}
 		} else {
 			msg := "Failed to execute GraphQL operation."
-			logger.Err(ctx, err).Msg(msg)
+			logger.Error(ctx, err).Msg(msg)
 			http.Error(w, fmt.Sprintf("%s\n%v", msg, err), http.StatusInternalServerError)
 		}
 		return
@@ -228,7 +228,7 @@ func handleGraphQLRequest(w http.ResponseWriter, r *http.Request) {
 
 	if response, err := addOutputToResponse(resultWriter.Bytes(), xsync.ToPlainMap(output)); err != nil {
 		msg := "Failed to add function output to response."
-		logger.Err(ctx, err).Msg(msg)
+		logger.Error(ctx, err).Msg(msg)
 		http.Error(w, fmt.Sprintf("%s\n%v", msg, err), http.StatusInternalServerError)
 	} else {
 

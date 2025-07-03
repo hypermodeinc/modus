@@ -10,6 +10,7 @@
 package utils
 
 import (
+	"strings"
 	"unicode/utf16"
 	"unicode/utf8"
 	"unsafe"
@@ -73,4 +74,12 @@ func SanitizeUTF8(s []byte) []byte {
 		i += wid
 	}
 	return b
+}
+
+func TrimStringBefore(s string, sep string) string {
+	parts := strings.SplitN(s, sep, 2)
+	if len(parts) == 2 {
+		return parts[1]
+	}
+	return s
 }

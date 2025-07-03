@@ -124,7 +124,7 @@ func (p *modusDataSourcePlanner) EnterField(ref int) {
 		p.template.fieldInfo = f
 		p.template.functionName = config.FieldsToFunctions[f.Name]
 		if err := p.captureInputData(ref); err != nil {
-			logger.Err(p.ctx, err).Msg("Error capturing input data.")
+			logger.Error(p.ctx, err).Msg("Error capturing input data.")
 			return
 		}
 	}
@@ -250,7 +250,7 @@ func (p *modusDataSourcePlanner) getInputTemplate() (string, error) {
 func (p *modusDataSourcePlanner) ConfigureFetch() resolve.FetchConfiguration {
 	input, err := p.getInputTemplate()
 	if err != nil {
-		logger.Error(p.ctx).Err(err).Msg("Error creating input template for Modus data source.")
+		logger.Error(p.ctx, err).Msg("Error creating input template for Modus data source.")
 		return resolve.FetchConfiguration{}
 	}
 
@@ -272,7 +272,7 @@ func (p *modusDataSourcePlanner) ConfigureFetch() resolve.FetchConfiguration {
 func (p *modusDataSourcePlanner) ConfigureSubscription() plan.SubscriptionConfiguration {
 	input, err := p.getInputTemplate()
 	if err != nil {
-		logger.Error(p.ctx).Err(err).Msg("Error creating input template for Modus data source.")
+		logger.Error(p.ctx, err).Msg("Error creating input template for Modus data source.")
 		return plan.SubscriptionConfiguration{}
 	}
 

@@ -63,7 +63,7 @@ func (dc *dgraphConnector) execute(ctx context.Context, req *Request) (*Response
 		tx := dc.dgClient.NewReadOnlyTxn()
 		defer func() {
 			if err := tx.Discard(ctx); err != nil {
-				logger.Warn(ctx).Err(err).Msg("Error discarding transaction.")
+				logger.Warn(ctx, err).Msg("Error discarding transaction.")
 				return
 			}
 
@@ -86,7 +86,7 @@ func (dc *dgraphConnector) execute(ctx context.Context, req *Request) (*Response
 	tx := dc.dgClient.NewTxn()
 	defer func() {
 		if err := tx.Discard(ctx); err != nil {
-			logger.Warn(ctx).Err(err).Msg("Error discarding transaction.")
+			logger.Warn(ctx, err).Msg("Error discarding transaction.")
 			return
 		}
 

@@ -73,7 +73,7 @@ func LoadEnvFiles(ctx context.Context) error {
 		path := filepath.Join(app.Config().AppPath(), file)
 		if _, err := os.Stat(path); err == nil {
 			if err := godotenv.Load(path); err != nil {
-				logger.Warn(ctx).Err(err).Msgf("Failed to load %s file.", file)
+				logger.Warn(ctx, err).Msgf("Failed to load %s file.", file)
 			}
 			envVarsUpdated = true
 		}

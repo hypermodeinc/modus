@@ -26,7 +26,7 @@ func monitorPlugins(ctx context.Context) {
 	loadPluginFile := func(fi storage.FileInfo) error {
 		err := loadPlugin(ctx, fi.Name)
 		if err != nil {
-			logger.Err(ctx, err).
+			logger.Error(ctx, err).
 				Str("filename", fi.Name).
 				Msg("Failed to load plugin.")
 		}
@@ -39,7 +39,7 @@ func monitorPlugins(ctx context.Context) {
 	sm.Removed = func(fi storage.FileInfo) error {
 		err := unloadPlugin(ctx, fi.Name)
 		if err != nil {
-			logger.Err(ctx, err).
+			logger.Error(ctx, err).
 				Str("filename", fi.Name).
 				Msg("Failed to unload plugin.")
 		}

@@ -16,9 +16,11 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"time"
 	"unsafe"
 
 	"github.com/google/uuid"
+	"github.com/rs/zerolog/log"
 )
 
 func NilIf[T any](condition bool, val T) *T {
@@ -44,14 +46,6 @@ func DebugModeEnabled() bool {
 
 func TraceModeEnabled() bool {
 	return EnvVarFlagEnabled("MODUS_TRACE")
-}
-
-func TrimStringBefore(s string, sep string) string {
-	parts := strings.SplitN(s, sep, 2)
-	if len(parts) == 2 {
-		return parts[1]
-	}
-	return s
 }
 
 func GenerateUUIDv7() string {
@@ -142,4 +136,47 @@ func GetStructFieldValue(rs reflect.Value, fieldName string, caseInsensitive boo
 	}
 
 	return rf.Interface(), nil
+}
+
+// Retrieves an integer value from an environment variable.
+func GetIntFromEnv(envVar string, defaultValue int) int {
+	str := os.Getenv(envVar)
+	if str == "" {
+		return defaultValue
+	}
+
+	value, err := strconv.Atoi(str)
+	if err != nil {
+		log.Warn().Msgf("Invalid value for %s. Using %d instead.", envVar, defaultValue)
+		return defaultValue
+	}
+
+	return value
+}
+
+// Retrieves a decimal value from an environment variable.
+func GetFloatFromEnv(envVar string, defaultValue float64) float64 {
+	str := os.Getenv(envVar)
+	if str == "" {
+		return defaultValue
+	}
+
+	value, err := strconv.ParseFloat(str, 64)
+	if err != nil {
+		log.Warn().Msgf("Invalid value for %s. Using %f instead.", envVar, defaultValue)
+		return defaultValue
+	}
+
+	return value
+}
+
+// Retrieves a duration value from an environment variable.
+func GetDurationFromEnv(envVar string, defaultValue int, unit time.Duration) time.Duration {
+	intVal := GetIntFromEnv(envVar, defaultValue)
+	if intVal < 0 {
+		duration := time.Duration(defaultValue) * unit
+		log.Warn().Msgf("Invalid value for %s. Using %s instead.", envVar, duration)
+		return duration
+	}
+	return time.Duration(intVal) * unit
 }

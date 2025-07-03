@@ -11,7 +11,6 @@ package logger
 
 import (
 	"context"
-	"io"
 	"os"
 	"sync"
 	"time"
@@ -19,16 +18,11 @@ import (
 	"github.com/hypermodeinc/modus/runtime/app"
 	"github.com/hypermodeinc/modus/runtime/utils"
 
-	zls "github.com/archdx/zerolog-sentry"
-	"github.com/getsentry/sentry-go"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
 
-var zlsCloser io.Closer
-
 func Initialize() *zerolog.Logger {
-	var writer io.Writer
 	if app.Config().UseJsonLogging() {
 		// In JSON mode, we'll log UTC with millisecond precision.
 		// Note that Go uses this specific value for its formatting exemplars.
@@ -36,7 +30,7 @@ func Initialize() *zerolog.Logger {
 		zerolog.TimestampFunc = func() time.Time {
 			return time.Now().UTC()
 		}
-		writer = os.Stderr
+		log.Logger = log.Logger.Output(os.Stderr)
 	} else {
 		// In console mode, we can use local time and be a bit prettier.
 		// We'll still log with millisecond precision.
@@ -69,7 +63,7 @@ func Initialize() *zerolog.Logger {
 			consoleWriter.TimeFormat = "2006-01-02 15:04:05.000 -07:00"
 		}
 
-		writer = consoleWriter
+		log.Logger = log.Logger.Output(consoleWriter)
 	}
 
 	// Log the runtime version to every log line, except in development.
@@ -79,22 +73,7 @@ func Initialize() *zerolog.Logger {
 			Logger()
 	}
 
-	// Use zerolog-sentry to route error, fatal, and panic logs to Sentry.
-	zlsWriter, err := zls.NewWithHub(sentry.CurrentHub(), zls.WithBreadcrumbs())
-	if err != nil {
-		logger := log.Logger.Output(writer)
-		logger.Fatal().Err(err).Msg("Failed to initialize Sentry logger.")
-	}
-	zlsCloser = zlsWriter // so we can close it later, which flushes Sentry events
-	log.Logger = log.Logger.Output(zerolog.MultiLevelWriter(writer, zlsWriter))
-
 	return &log.Logger
-}
-
-func Close() {
-	if zlsCloser != nil {
-		zlsCloser.Close()
-	}
 }
 
 var adapters []func(context.Context, zerolog.Context) zerolog.Context
@@ -135,20 +114,67 @@ func Info(ctx context.Context) *zerolog.Event {
 	return Get(ctx).Info()
 }
 
-func Warn(ctx context.Context) *zerolog.Event {
-	return Get(ctx).Warn()
+func Warn(ctx context.Context, errs ...error) *zerolog.Event {
+	switch len(errs) {
+	case 0:
+		return Get(ctx).Warn()
+	case 1:
+		err := errs[0]
+		if err == nil {
+			return Get(ctx).Warn()
+		}
+		utils.CaptureWarning(ctx, err)
+		return Get(ctx).Warn().Err(err)
+	default:
+		for _, err := range errs {
+			if err != nil {
+				utils.CaptureWarning(ctx, err)
+			}
+		}
+		return Get(ctx).Warn().Errs("errors", errs)
+	}
 }
 
-func Error(ctx context.Context) *zerolog.Event {
-	return Get(ctx).Error()
+func Error(ctx context.Context, errs ...error) *zerolog.Event {
+	switch len(errs) {
+	case 0:
+		return Get(ctx).Error()
+	case 1:
+		err := errs[0]
+		if err == nil {
+			return Get(ctx).Error()
+		}
+		utils.CaptureError(ctx, err)
+		return Get(ctx).Err(err)
+	default:
+		for _, err := range errs {
+			if err != nil {
+				utils.CaptureError(ctx, err)
+			}
+		}
+		return Get(ctx).Error().Errs("errors", errs)
+	}
 }
 
-func Err(ctx context.Context, err error) *zerolog.Event {
-	return Get(ctx).Err(err)
-}
-
-func Fatal(ctx context.Context) *zerolog.Event {
-	return Get(ctx).Fatal()
+func Fatal(ctx context.Context, errs ...error) *zerolog.Event {
+	switch len(errs) {
+	case 0:
+		return Get(ctx).Fatal()
+	case 1:
+		err := errs[0]
+		if err == nil {
+			return Get(ctx).Fatal()
+		}
+		utils.CaptureError(ctx, err)
+		return Get(ctx).Fatal().Err(err)
+	default:
+		for _, err := range errs {
+			if err != nil {
+				utils.CaptureError(ctx, err)
+			}
+		}
+		return Get(ctx).Fatal().Errs("errors", errs)
+	}
 }
 
 func Debugf(msg string, v ...any) {

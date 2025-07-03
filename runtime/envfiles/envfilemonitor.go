@@ -23,7 +23,7 @@ func MonitorEnvFiles(ctx context.Context) {
 		if len(errors) == 0 {
 			err := LoadEnvFiles(ctx)
 			if err != nil {
-				logger.Err(ctx, err).Msg("Failed to load env files.")
+				logger.Error(ctx, err).Msg("Failed to load env files.")
 			}
 		}
 	}

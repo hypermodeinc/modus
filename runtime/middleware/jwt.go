@@ -47,9 +47,9 @@ func initKeys(ctx context.Context) {
 		keys, err := publicPemKeysJsonToKeys(publicPemKeysJson)
 		if err != nil {
 			if app.IsDevEnvironment() {
-				logger.Fatal(ctx).Err(err).Msg("Auth PEM public keys deserializing error")
+				logger.Fatal(ctx, err).Msg("Auth PEM public keys deserializing error")
 			}
-			logger.Error(ctx).Err(err).Msg("Auth PEM public keys deserializing error")
+			logger.Error(ctx, err).Msg("Auth PEM public keys deserializing error")
 			return
 		}
 		globalAuthKeys.setPemPublicKeys(keys)
@@ -58,9 +58,9 @@ func initKeys(ctx context.Context) {
 		keys, err := jwksEndpointsJsonToKeys(ctx, jwksEndpointsJson)
 		if err != nil {
 			if app.IsDevEnvironment() {
-				logger.Fatal(ctx).Err(err).Msg("Auth JWKS public keys deserializing error")
+				logger.Fatal(ctx, err).Msg("Auth JWKS public keys deserializing error")
 			}
-			logger.Error(ctx).Err(err).Msg("Auth JWKS public keys deserializing error")
+			logger.Error(ctx, err).Msg("Auth JWKS public keys deserializing error")
 			return
 		}
 		globalAuthKeys.setJwksPublicKeys(keys)
@@ -94,7 +94,7 @@ func HandleJWT(next http.Handler) http.Handler {
 				}
 				token, _, err := jwtParser.ParseUnverified(tokenStr, jwt.MapClaims{})
 				if err != nil {
-					logger.Warn(ctx).Err(err).Msg("Error parsing JWT token. Continuing since running in development")
+					logger.Warn(ctx, err).Msg("Error parsing JWT token. Continuing since running in development")
 					next.ServeHTTP(w, r)
 					return
 				}
@@ -160,7 +160,7 @@ func HandleJWT(next http.Handler) http.Handler {
 func addClaimsToContext(ctx context.Context, claims jwt.MapClaims) context.Context {
 	claimsJson, err := utils.JsonSerialize(claims)
 	if err != nil {
-		logger.Error(ctx).Err(err).Msg("JWT claims serialization error")
+		logger.Error(ctx, err).Msg("JWT claims serialization error")
 		return ctx
 	}
 	return context.WithValue(ctx, jwtClaims, string(claimsJson))

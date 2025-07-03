@@ -15,6 +15,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/getsentry/sentry-go"
 	"github.com/hypermodeinc/modus/runtime/db"
 	"github.com/hypermodeinc/modus/runtime/logger"
 	"github.com/hypermodeinc/modus/runtime/messages"
@@ -37,11 +38,15 @@ type wasmAgentActor struct {
 	host         wasmhost.WasmHost
 	module       wasm.Module
 	buffers      utils.OutputBuffers
+	sentryHub    *sentry.Hub
 	initializing bool
 }
 
 func (a *wasmAgentActor) PreStart(ac *goakt.Context) error {
 	ctx := ac.Context()
+
+	a.sentryHub = sentry.CurrentHub().Clone()
+	ctx = sentry.SetHubOnContext(ctx, a.sentryHub)
 
 	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
@@ -139,13 +144,14 @@ func (a *wasmAgentActor) Receive(rc *goakt.ReceiveContext) {
 
 func (a *wasmAgentActor) PostStop(ac *goakt.Context) error {
 	ctx := ac.Context()
+	ctx = sentry.SetHubOnContext(ctx, a.sentryHub)
 	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
 	defer span.Finish()
 
 	// suspend the agent if it's not already suspended or terminated
 	if a.status != AgentStatusSuspended && a.status != AgentStatusTerminated {
 		if err := a.suspendAgent(ctx); err != nil {
-			logger.Err(ctx, err).Msg("Error suspending agent.")
+			logger.Error(ctx, err).Msg("Error suspending agent.")
 			// don't return on error - we'll still try to deactivate the agent
 		}
 	}
@@ -194,7 +200,7 @@ func (a *wasmAgentActor) handleAgentRequest(ctx context.Context, rc *goakt.Recei
 				response.Data = result
 			default:
 				err := fmt.Errorf("unexpected result type: %T", result)
-				logger.Err(ctx, err).Msg("Error handling message.")
+				logger.Error(ctx, err).Msg("Error handling message.")
 				return err
 			}
 		}
@@ -209,7 +215,7 @@ func (a *wasmAgentActor) handleAgentRequest(ctx context.Context, rc *goakt.Recei
 
 	// save the state after handling the message to ensure the state is up to date in case of hard termination
 	if err := a.saveState(ctx); err != nil {
-		logger.Err(ctx, err).Msg("Error saving agent state.")
+		logger.Error(ctx, err).Msg("Error saving agent state.")
 	}
 
 	return nil
@@ -298,6 +304,9 @@ func (a *wasmAgentActor) augmentContext(ctx context.Context, pid *goakt.PID) con
 	}
 	if ctx.Value(pidContextKey{}) == nil {
 		ctx = context.WithValue(ctx, pidContextKey{}, pid)
+	}
+	if !sentry.HasHubOnContext(ctx) {
+		ctx = sentry.SetHubOnContext(ctx, a.sentryHub)
 	}
 	return ctx
 }

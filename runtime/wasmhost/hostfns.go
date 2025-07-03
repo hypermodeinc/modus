@@ -208,7 +208,9 @@ func (host *wasmHost) newHostFunction(modName, funcName string, fn any, opts ...
 		// Log any panics that occur in the host function
 		defer func() {
 			if r := recover(); r != nil {
-				logger.Err(ctx, utils.ConvertToError(r)).Str("host_function", fullName).Msg("Panic in host function.")
+				err := utils.ConvertToError(r)
+				logger.Error(ctx, err).Str("host_function", fullName).Msg("Panic in host function.")
+				utils.CaptureError(ctx, err)
 				if utils.DebugModeEnabled() {
 					debug.PrintStack()
 				}
@@ -248,7 +250,7 @@ func (host *wasmHost) newHostFunction(modName, funcName string, fn any, opts ...
 			params = append(params, rvParam.Interface())
 		}
 		if err := decodeParams(ctx, wa, plan, stack, params); err != nil {
-			logger.Err(ctx, err).Str("host_function", fullName).Any("data", params).Msg("Error decoding input parameters.")
+			logger.Error(ctx, err).Str("host_function", fullName).Any("data", params).Msg("Error decoding input parameters.")
 			return
 		}
 
@@ -316,7 +318,7 @@ func (host *wasmHost) newHostFunction(modName, funcName string, fn any, opts ...
 		// Encode the results (if there are any) and write them to the stack
 		if len(results) > 0 {
 			if err := encodeResults(ctx, wa, plan, stack, results); err != nil {
-				logger.Err(ctx, err).Str("host_function", fullName).Any("data", results).Msg("Error encoding results.")
+				logger.Error(ctx, err).Str("host_function", fullName).Any("data", results).Msg("Error encoding results.")
 			}
 		}
 	})
@@ -512,7 +514,7 @@ func callHostFunction(ctx context.Context, fn func() error, msgs hfMessages) {
 		}
 	} else if err != nil {
 		if msgs.msgError != "" {
-			l := logger.Err(ctx, err).Bool("user_visible", true).Dur("duration_ms", duration)
+			l := logger.Error(ctx, err).Bool("user_visible", true).Dur("duration_ms", duration)
 			if msgs.msgDetail != "" {
 				l.Str("detail", msgs.msgDetail)
 			}

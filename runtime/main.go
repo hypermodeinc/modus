@@ -37,12 +37,12 @@ func main() {
 
 	err := envfiles.LoadEnvFiles(ctx)
 	if err != nil {
-		log.Warn().Err(err).Msg("Failed to load environment files.")
+		logger.Warn(ctx, err).Msg("Failed to load environment files.")
 	}
 
 	// Initialize Sentry (if enabled)
-	utils.InitSentry()
-	defer utils.FlushSentryEvents()
+	utils.InitializeSentry()
+	defer utils.FinalizeSentry()
 
 	// Get the main handler for the HTTP server before starting the services,
 	// so it can register the endpoints as the manifest is loaded.

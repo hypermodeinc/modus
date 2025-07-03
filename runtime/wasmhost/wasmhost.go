@@ -54,7 +54,7 @@ func NewWasmHost(ctx context.Context, registrations ...func(WasmHost) error) Was
 	wasi.MustInstantiate(ctx, runtime)
 
 	if err := instantiateEnvHostFunctions(ctx, runtime); err != nil {
-		logger.Fatal(ctx).Err(err).Msg("Failed to instantiate env host functions.")
+		logger.Fatal(ctx, err).Msg("Failed to instantiate env host functions.")
 		return nil
 	}
 
@@ -65,13 +65,13 @@ func NewWasmHost(ctx context.Context, registrations ...func(WasmHost) error) Was
 
 	for _, reg := range registrations {
 		if err := reg(host); err != nil {
-			logger.Fatal(ctx).Err(err).Msg("Failed to apply a registration to the WASM host.")
+			logger.Fatal(ctx, err).Msg("Failed to apply a registration to the WASM host.")
 			return nil
 		}
 	}
 
 	if err := host.instantiateHostFunctions(ctx); err != nil {
-		logger.Fatal(ctx).Err(err).Msg("Failed to instantiate host functions.")
+		logger.Fatal(ctx, err).Msg("Failed to instantiate host functions.")
 		return nil
 	}
 
@@ -94,7 +94,7 @@ func TryGetWasmHost(ctx context.Context) (WasmHost, bool) {
 
 func (host *wasmHost) Close(ctx context.Context) {
 	if err := host.runtime.Close(ctx); err != nil {
-		logger.Err(ctx, err).Msg("Failed to cleanly close the WASM runtime.")
+		logger.Error(ctx, err).Msg("Failed to cleanly close the WASM runtime.")
 	}
 }
 

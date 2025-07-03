@@ -87,7 +87,7 @@ func (host *wasmHost) CallFunction(ctx context.Context, fnInfo functions.Functio
 
 	mod, err := host.GetModuleInstance(ctx, plugin, buffers)
 	if err != nil {
-		logger.Err(ctx, err).Msg("Error getting module instance.")
+		logger.Error(ctx, err).Msg("Error getting module instance.")
 		return nil, err
 	}
 	defer mod.Close(ctx)
@@ -168,7 +168,7 @@ func (host *wasmHost) CallFunctionInModule(ctx context.Context, mod wasm.Module,
 			Msg("Function execution was canceled.")
 	} else if errors.Is(err, utils.ErrUserError) {
 		// If we specifically wrapped an error with ErrUserError, then we want to log it as a user-visible error.
-		logger.Err(ctx, err).
+		logger.Error(ctx, err).
 			Str("function", fnName).
 			Dur("duration_ms", duration).
 			Bool("user_visible", true).
@@ -180,7 +180,7 @@ func (host *wasmHost) CallFunctionInModule(ctx context.Context, mod wasm.Module,
 		}
 		// NOTE: Errors of this type should not be user-visible, as they were caused by some Runtime issue, not the user's code.
 		// This will also ensure the error is reported to Sentry.
-		logger.Err(ctx, err).
+		logger.Error(ctx, err).
 			Str("function", fnName).
 			Dur("duration_ms", duration).
 			Msg("Error while executing function.")

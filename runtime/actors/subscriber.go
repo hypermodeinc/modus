@@ -83,11 +83,11 @@ func SubscribeForAgentEvents(ctx context.Context, agentId string, update func(da
 
 		unsubscribe := &goaktpb.Unsubscribe{Topic: topic}
 		if err := subActor.Tell(ctx, _actorSystem.TopicActor(), unsubscribe); err != nil {
-			logger.Err(ctx, err).Msg("Failed to unsubscribe from topic")
+			logger.Error(ctx, err).Msg("Failed to unsubscribe from topic")
 		}
 
 		if err := subActor.Shutdown(ctx); err != nil {
-			logger.Err(ctx, err).Msg("Failed to shut down subscription actor")
+			logger.Error(ctx, err).Msg("Failed to shut down subscription actor")
 		}
 	}()
 

@@ -11,7 +11,6 @@ package utils
 
 import (
 	"context"
-	"log"
 	"os"
 	"runtime"
 	"strings"
@@ -20,13 +19,14 @@ import (
 	"github.com/hypermodeinc/modus/runtime/app"
 
 	"github.com/getsentry/sentry-go"
+	"github.com/rs/zerolog/log"
 )
 
 var sentryInitialized bool
 
 var rootSourcePath = app.GetRootSourcePath()
 
-func InitSentry() {
+func InitializeSentry() {
 
 	// Don't initialize Sentry when running in debug mode.
 	if DebugModeEnabled() {
@@ -69,18 +69,18 @@ func InitSentry() {
 		// That way we can trace performance issues in the runtime itself, and let Sentry correlate them with
 		// any errors that may have occurred.
 		EnableTracing:    true,
-		TracesSampleRate: 1.0,
+		TracesSampleRate: GetFloatFromEnv("SENTRY_TRACES_SAMPLE_RATE", 0.2),
 	})
 	if err != nil {
-		// We don't have our logger yet, so just log to stderr.
-		log.Fatalf("sentry.Init: %s", err)
+		log.Fatal().Err(err).Msg("Failed to initialize Sentry.")
 	}
 
 	sentryInitialized = true
 }
 
-func FlushSentryEvents() {
+func FinalizeSentry() {
 	if sentryInitialized {
+		sentry.Recover()
 		sentry.Flush(5 * time.Second)
 	}
 }
@@ -99,11 +99,11 @@ func NewSentrySpan(ctx context.Context, funcName string) (*sentry.Span, context.
 	if tx := sentry.TransactionFromContext(ctx); tx == nil {
 		tx = sentry.StartTransaction(ctx, funcName, sentry.WithOpName("function"))
 		return tx, tx.Context()
-	} else {
-		span := sentry.StartSpan(ctx, "function")
-		span.Description = funcName
-		return span, span.Context()
 	}
+
+	span := sentry.StartSpan(ctx, "function")
+	span.Description = funcName
+	return span, span.Context()
 }
 
 func getFuncName(skip int) string {
@@ -158,4 +158,29 @@ func sentryAddExtras(event *sentry.Event) {
 	if ns, ok := app.KubernetesNamespace(); ok {
 		event.Extra["namespace"] = ns
 	}
+}
+
+func CaptureError(ctx context.Context, err error) {
+	if !sentryInitialized || err == nil {
+		return
+	}
+	_ = sentryHub(ctx).CaptureException(err)
+}
+
+func CaptureWarning(ctx context.Context, err error) {
+	if !sentryInitialized || err == nil {
+		return
+	}
+
+	hub := sentryHub(ctx)
+	event := hub.Client().EventFromException(err, sentry.LevelWarning)
+	_ = hub.CaptureEvent(event)
+}
+
+func sentryHub(ctx context.Context) *sentry.Hub {
+	if hub := sentry.GetHubFromContext(ctx); hub != nil {
+		return hub
+	}
+
+	return sentry.CurrentHub()
 }

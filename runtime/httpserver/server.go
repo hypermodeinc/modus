@@ -30,6 +30,8 @@ import (
 	"github.com/hypermodeinc/modus/runtime/metrics"
 	"github.com/hypermodeinc/modus/runtime/middleware"
 
+	sentryhttp "github.com/getsentry/sentry-go/http"
+
 	"github.com/fatih/color"
 	"github.com/rs/cors"
 )
@@ -39,6 +41,8 @@ var itemColor = color.New(color.FgHiBlue)
 var urlColor = color.New(color.FgHiCyan)
 var noticeColor = color.New(color.FgGreen, color.Italic)
 var warningColor = color.New(color.FgYellow)
+
+var sentryHandler = sentryhttp.New(sentryhttp.Options{})
 
 // ShutdownTimeout is the time to wait for the server to shutdown gracefully.
 const shutdownTimeout = 5 * time.Second
@@ -81,7 +85,7 @@ func startHttpServer(ctx context.Context, mux http.Handler, addresses ...string)
 			err := server.ListenAndServe()
 			app.SetShuttingDown()
 			if err != nil && !errors.Is(err, http.ErrServerClosed) {
-				logger.Fatal(ctx).Err(err).Msg("HTTP server error.  Exiting.")
+				logger.Fatal(ctx, err).Msg("HTTP server error.  Exiting.")
 			}
 			shutdownChan <- true
 		}()
@@ -110,7 +114,7 @@ func startHttpServer(ctx context.Context, mux http.Handler, addresses ...string)
 		defer shutdownRelease()
 		server.RegisterOnShutdown(graphql.CancelSubscriptions)
 		if err := server.Shutdown(shutdownCtx); err != nil {
-			logger.Fatal(ctx).Err(err).Msg("HTTP server shutdown error.")
+			logger.Fatal(ctx, err).Msg("HTTP server shutdown error.")
 		}
 	}
 
@@ -230,8 +234,14 @@ func GetMainHandler(options ...func(map[string]http.Handler)) http.Handler {
 		return nil
 	})
 
+	// The mux is the main HTTP handler for the server.
+	var handler http.Handler = mux
+
+	// Add Sentry error handling middleware.
+	handler = sentryHandler.Handle(handler)
+
 	// Restrict the HTTP methods for all handlers to GET and POST.
-	handler := restrictHttpMethods(mux)
+	handler = restrictHttpMethods(handler)
 
 	// Add CORS support to all endpoints.
 	// The default options allow all origins and methods.
@@ -240,8 +250,11 @@ func GetMainHandler(options ...func(map[string]http.Handler)) http.Handler {
 	c := cors.New(cors.Options{
 		AllowedHeaders: []string{"*"},
 	})
+	handler = c.Handler(handler)
 
-	return c.Handler(handler)
+	// Any additional middleware can be added here.
+
+	return handler
 }
 
 func restrictHttpMethods(next http.Handler) http.Handler {

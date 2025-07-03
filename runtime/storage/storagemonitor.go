@@ -54,7 +54,7 @@ func (sm *StorageMonitor) Start(ctx context.Context) {
 			if err != nil {
 				// Don't stop watching. We'll just try again on the next cycle.
 				if !loggedError {
-					logger.Err(ctx, err).Msgf("Failed to list %s files.", sm.patterns)
+					logger.Error(ctx, err).Msgf("Failed to list %s files.", sm.patterns)
 					loggedError = true
 				}
 				continue

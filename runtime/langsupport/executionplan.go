@@ -80,9 +80,11 @@ func (plan *executionPlan) InvokeFunction(ctx context.Context, wa WasmAdapter, p
 	defer func() {
 		if r := recover(); r != nil {
 			err = utils.ConvertToError(r)
+			utils.CaptureError(ctx, err)
 			if utils.DebugModeEnabled() {
 				debug.PrintStack()
 			}
+
 		}
 	}()
 
