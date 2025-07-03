@@ -97,6 +97,10 @@ func ModusHomeDir() string {
 }
 
 func KubernetesNamespace() (string, bool) {
+	return kubernetesNamespace()
+}
+
+var kubernetesNamespace = sync.OnceValues(func() (string, bool) {
 	if ns := os.Getenv("NAMESPACE"); ns != "" {
 		return ns, true
 	}
@@ -104,4 +108,4 @@ func KubernetesNamespace() (string, bool) {
 		return strings.TrimSpace(string(data)), true
 	}
 	return "", false
-}
+})

@@ -10,43 +10,34 @@
 package httpserver
 
 import (
-	"encoding/json"
-	"fmt"
 	"net/http"
+	"runtime"
 
-	"github.com/hypermodeinc/modus/runtime/actors"
 	"github.com/hypermodeinc/modus/runtime/app"
+	"github.com/hypermodeinc/modus/runtime/logger"
+	"github.com/hypermodeinc/modus/runtime/utils"
 )
 
 var healthHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-	env := app.Config().Environment()
-	ver := app.VersionNumber()
-	agents := actors.ListLocalAgents(r.Context())
+
+	data := []utils.KeyValuePair{
+		{Key: "status", Value: "ok"},
+		{Key: "environment", Value: app.Config().Environment()},
+		{Key: "app_version", Value: app.VersionNumber()},
+		{Key: "go_version", Value: runtime.Version()},
+	}
+	if ns, ok := app.KubernetesNamespace(); ok {
+		data = append(data, utils.KeyValuePair{Key: "kubernetes_namespace", Value: ns})
+	}
+
+	jsonBytes, err := utils.MakeJsonObject(data, true)
+	if err != nil {
+		logger.Err(r.Context(), err).Msg("Failed to serialize health check response.")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-
-	// custom format the JSON response for easy readability
-	_, _ = w.Write([]byte(`{
-  "status": "ok",
-  "environment": "` + env + `",
-  "version": "` + ver + `",
-`))
-
-	if len(agents) == 0 {
-		_, _ = w.Write([]byte(`  "agents": []` + "\n"))
-	} else {
-		_, _ = w.Write([]byte(`  "agents": [` + "\n"))
-		for i, agent := range agents {
-			if i > 0 {
-				_, _ = w.Write([]byte(",\n"))
-			}
-			name, _ := json.Marshal(agent.Name)
-			_, _ = w.Write(fmt.Appendf(nil, `    {"id": "%s", "name": %s, "status": "%s"}`, agent.Id, name, agent.Status))
-		}
-		_, _ = w.Write([]byte("\n  ]\n"))
-	}
-
-	_, _ = w.Write([]byte("}\n"))
-
+	_, _ = w.Write(jsonBytes)
 })
