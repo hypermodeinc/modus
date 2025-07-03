@@ -31,3 +31,47 @@ func JsonDeserialize(data []byte, v any) error {
 	dec.UseNumber()
 	return dec.Decode(v)
 }
+
+type KeyValuePair struct {
+	Key   string
+	Value any
+}
+
+// MakeJsonObject creates a JSON object from the given key-value pairs.
+func MakeJsonObject(pairs []KeyValuePair, pretty bool) []byte {
+	var buf bytes.Buffer
+
+	if pretty {
+		buf.WriteString("{\n")
+		for i, kv := range pairs {
+			keyBytes, _ := json.Marshal(kv.Key)
+			valBytes, _ := json.Marshal(kv.Value)
+
+			buf.WriteString("  ")
+			buf.Write(keyBytes)
+			buf.WriteString(": ")
+			buf.Write(valBytes)
+			if i < len(pairs)-1 {
+				buf.WriteByte(',')
+			}
+			buf.WriteByte('\n')
+		}
+		buf.WriteString("}\n")
+	} else {
+		buf.WriteByte('{')
+		for i, kv := range pairs {
+			keyBytes, _ := json.Marshal(kv.Key)
+			valBytes, _ := json.Marshal(kv.Value)
+
+			buf.Write(keyBytes)
+			buf.WriteByte(':')
+			buf.Write(valBytes)
+			if i < len(pairs)-1 {
+				buf.WriteByte(',')
+			}
+		}
+		buf.WriteByte('}')
+	}
+
+	return buf.Bytes()
+}

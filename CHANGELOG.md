@@ -8,6 +8,7 @@ NOTE: all releases may include dependency updates, not specifically mentioned
 
 - feat: integrate try-as library [#912](https://github.com/hypermodeinc/modus/pull/912)
 - fix: check topic actor status before publishing events [#918](https://github.com/hypermodeinc/modus/pull/918)
+- feat: update health endpoint [#924](https://github.com/hypermodeinc/modus/pull/924)
 
 ## 2025-06-25 - Runtime v0.18.2
 

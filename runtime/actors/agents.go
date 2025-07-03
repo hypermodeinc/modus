@@ -323,27 +323,3 @@ func ListActiveAgents(ctx context.Context) ([]AgentInfo, error) {
 
 	return results, nil
 }
-
-func ListLocalAgents(ctx context.Context) []AgentInfo {
-	if _actorSystem == nil {
-		return nil
-	}
-
-	span, _ := utils.NewSentrySpanForCurrentFunc(ctx)
-	defer span.Finish()
-
-	actors := _actorSystem.Actors()
-	results := make([]AgentInfo, 0, len(actors))
-
-	for _, pid := range actors {
-		if actor, ok := pid.Actor().(*wasmAgentActor); ok {
-			results = append(results, AgentInfo{
-				Id:     actor.agentId,
-				Name:   actor.agentName,
-				Status: actor.status,
-			})
-		}
-	}
-
-	return results
-}
