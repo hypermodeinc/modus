@@ -7,12 +7,12 @@ go 1.24.4
 require (
 	github.com/OneOfOne/xxhash v1.2.8
 	github.com/aws/aws-sdk-go-v2/config v1.29.17
-	github.com/aws/aws-sdk-go-v2/service/s3 v1.82.0
+	github.com/aws/aws-sdk-go-v2/service/s3 v1.83.0
 	github.com/aws/aws-sdk-go-v2/service/sts v1.34.0
 	github.com/buger/jsonparser v1.1.1
 	github.com/cespare/xxhash/v2 v2.3.0
 	github.com/dgraph-io/dgo/v240 v240.2.0
-	github.com/docker/docker v28.3.0+incompatible
+	github.com/docker/docker v28.3.1+incompatible
 	github.com/docker/go-connections v0.5.0
 	github.com/fatih/color v1.18.0
 	github.com/getsentry/sentry-go v0.34.0
@@ -44,8 +44,8 @@ require (
 	github.com/tochemey/goakt/v3 v3.7.0
 	github.com/travisjeffery/go-dynaport v1.0.0
 	github.com/twpayne/go-geom v1.6.1
-	github.com/wundergraph/graphql-go-tools/execution v1.3.2-0.20250702171307-a33bc8ea433e
-	github.com/wundergraph/graphql-go-tools/v2 v2.0.0-rc.194
+	github.com/wundergraph/graphql-go-tools/execution v1.4.0
+	github.com/wundergraph/graphql-go-tools/v2 v2.0.0-rc.198
 	github.com/xo/dburl v0.23.8
 	golang.org/x/exp v0.0.0-20250620022241-b7579e27df2b
 	golang.org/x/sys v0.33.0
