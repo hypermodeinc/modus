@@ -39,7 +39,7 @@ func Initialize(ctx context.Context) {
 
 	opts := []goakt.Option{
 		goakt.WithLogger(newActorLogger(logger.Get(ctx))),
-		goakt.WithCoordinatedShutdown(beforeShutdown),
+		goakt.WithCoordinatedShutdown(&shutdownHook{}),
 		goakt.WithPubSub(),
 		goakt.WithActorInitTimeout(10 * time.Second), // TODO: adjust this value, or make it configurable
 		goakt.WithActorInitMaxRetries(1),             // TODO: adjust this value, or make it configurable
@@ -160,43 +160,6 @@ func restoreAgentActors(ctx context.Context, pluginName string) error {
 	return nil
 }
 
-func beforeShutdown(ctx context.Context) error {
-	span, ctx := sentryutils.NewSpanForCurrentFunc(ctx)
-	defer span.Finish()
-
-	logger.Info(ctx).Msg("Actor system shutting down...")
-	actors := _actorSystem.Actors()
-
-	// Suspend all local running agent actors first, which allows them to gracefully stop and persist their state.
-	// In cluster mode, this will also allow the actor to resume on another node after this node shuts down.
-	for _, pid := range actors {
-		if actor, ok := pid.Actor().(*wasmAgentActor); ok && pid.IsRunning() {
-			if actor.status == AgentStatusRunning {
-				ctx := actor.augmentContext(ctx, pid)
-				if err := actor.suspendAgent(ctx); err != nil {
-					const msg = "Failed to suspend agent actor."
-					sentryutils.CaptureError(ctx, err, msg, sentryutils.WithData("agent_id", actor.agentId))
-					logger.Error(ctx, err).Str("agent_id", actor.agentId).Msg(msg)
-				}
-			}
-		}
-	}
-
-	// Then shut down subscription actors. They will have received the suspend message already.
-	for _, pid := range actors {
-		if a, ok := pid.Actor().(*subscriptionActor); ok && pid.IsRunning() {
-			if err := pid.Shutdown(ctx); err != nil {
-				const msg = "Failed to shut down subscription actor."
-				sentryutils.CaptureError(ctx, err, msg, sentryutils.WithData("agent_id", a.agentId))
-				logger.Error(ctx, err).Str("agent_id", a.agentId).Msg(msg)
-			}
-		}
-	}
-
-	// Then allow the actor system to continue with its shutdown process.
-	return nil
-}
-
 // Waits for the peer sync interval to pass, allowing time for the actor system to synchronize its
 // list of actors with the remote nodes in the cluster. Cancels early if the context is done.
 func waitForClusterSync(ctx context.Context) {
@@ -236,4 +199,51 @@ type wasmExtension struct {
 
 func (w *wasmExtension) ID() string {
 	return wasmExtensionId
+}
+
+type shutdownHook struct {
+}
+
+func (sh *shutdownHook) Execute(ctx context.Context, actorSystem goakt.ActorSystem) error {
+	span, ctx := sentryutils.NewSpanForCurrentFunc(ctx)
+	defer span.Finish()
+
+	logger.Info(ctx).Msg("Actor system shutting down...")
+	actors := actorSystem.Actors()
+
+	// Suspend all local running agent actors first, which allows them to gracefully stop and persist their state.
+	// In cluster mode, this will also allow the actor to resume on another node after this node shuts down.
+	for _, pid := range actors {
+		if actor, ok := pid.Actor().(*wasmAgentActor); ok && pid.IsRunning() {
+			if actor.status == AgentStatusRunning {
+				ctx := actor.augmentContext(ctx, pid)
+				if err := actor.suspendAgent(ctx); err != nil {
+					const msg = "Failed to suspend agent actor."
+					sentryutils.CaptureError(ctx, err, msg, sentryutils.WithData("agent_id", actor.agentId))
+					logger.Error(ctx, err).Str("agent_id", actor.agentId).Msg(msg)
+				}
+			}
+		}
+	}
+
+	// Then shut down subscription actors. They will have received the suspend message already.
+	for _, pid := range actors {
+		if a, ok := pid.Actor().(*subscriptionActor); ok && pid.IsRunning() {
+			if err := pid.Shutdown(ctx); err != nil {
+				const msg = "Failed to shut down subscription actor."
+				sentryutils.CaptureError(ctx, err, msg, sentryutils.WithData("agent_id", a.agentId))
+				logger.Error(ctx, err).Str("agent_id", a.agentId).Msg(msg)
+			}
+		}
+	}
+
+	// Then allow the actor system to continue with its shutdown process.
+	return nil
+}
+
+func (sh *shutdownHook) Recovery() *goakt.ShutdownHookRecovery {
+	return goakt.NewShutdownHookRecovery(
+		goakt.WithShutdownHookRetry(2, 2*time.Second),
+		goakt.WithShutdownHookRecoveryStrategy(goakt.ShouldRetryAndSkip),
+	)
 }
