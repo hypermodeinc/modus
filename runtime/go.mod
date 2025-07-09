@@ -12,10 +12,10 @@ require (
 	github.com/buger/jsonparser v1.1.1
 	github.com/cespare/xxhash/v2 v2.3.0
 	github.com/dgraph-io/dgo/v240 v240.2.0
-	github.com/docker/docker v28.3.1+incompatible
+	github.com/docker/docker v28.3.2+incompatible
 	github.com/docker/go-connections v0.5.0
 	github.com/fatih/color v1.18.0
-	github.com/getsentry/sentry-go v0.34.0
+	github.com/getsentry/sentry-go v0.34.1
 	github.com/go-sql-driver/mysql v1.9.3
 	github.com/go-viper/mapstructure/v2 v2.3.0
 	github.com/goccy/go-json v0.10.5
@@ -45,7 +45,7 @@ require (
 	github.com/travisjeffery/go-dynaport v1.0.0
 	github.com/twpayne/go-geom v1.6.1
 	github.com/wundergraph/graphql-go-tools/execution v1.4.0
-	github.com/wundergraph/graphql-go-tools/v2 v2.0.0-rc.198
+	github.com/wundergraph/graphql-go-tools/v2 v2.0.0-rc.202
 	github.com/xo/dburl v0.23.8
 	golang.org/x/exp v0.0.0-20250620022241-b7579e27df2b
 	golang.org/x/sys v0.34.0
