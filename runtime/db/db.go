@@ -19,7 +19,7 @@ import (
 
 	"github.com/hypermodeinc/modus/runtime/app"
 	"github.com/hypermodeinc/modus/runtime/logger"
-	"github.com/hypermodeinc/modus/runtime/utils"
+	"github.com/hypermodeinc/modus/runtime/sentryutils"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -49,16 +49,15 @@ func Stop(ctx context.Context) {
 	pool.Close()
 }
 
-func logDbWarningOrError(ctx context.Context, err error, msg string) {
+func logDbError(ctx context.Context, err error, msg string) {
+	sentryutils.CaptureError(ctx, err, msg)
 	if _, ok := err.(*pgconn.ConnectError); ok {
-		logger.Warn(ctx, err).Msgf("Database connection error. %s", msg)
+		logger.Error(ctx, err).Msgf("Database connection error. %s", msg)
 	} else if errors.Is(err, errDbNotConfigured) {
 		if !useModusDB() {
-			logger.Warn(ctx).Msgf("Database has not been configured. %s", msg)
+			logger.Error(ctx).Msgf("Database has not been configured. %s", msg)
 		}
 	} else {
-		// not really an error, but we log it as such
-		// but user-visible so it doesn't flag in Sentry
 		logger.Error(ctx, err).Bool("user_visible", true).Msg(msg)
 	}
 }
@@ -86,7 +85,7 @@ func GetTx(ctx context.Context) (pgx.Tx, error) {
 }
 
 func WithTx(ctx context.Context, fn func(pgx.Tx) error) error {
-	span, ctx := utils.NewSentrySpanForCallingFunc(ctx)
+	span, ctx := sentryutils.NewSpanForCallingFunc(ctx)
 	defer span.Finish()
 
 	tx, err := GetTx(ctx)

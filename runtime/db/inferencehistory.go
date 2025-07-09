@@ -190,7 +190,7 @@ func WritePluginInfo(ctx context.Context, plugin *plugins.Plugin) {
 	if useModusDB() {
 		err := writePluginInfoToModusdb(ctx, plugin)
 		if err != nil {
-			logDbWarningOrError(ctx, err, "Plugin info not written to modusgraph.")
+			logDbError(ctx, err, "Plugin info not written to modusgraph.")
 		}
 		return
 	}
@@ -245,7 +245,7 @@ ON CONFLICT (build_id) DO NOTHING`,
 	})
 
 	if err != nil {
-		logDbWarningOrError(ctx, err, "Plugin info not written to database.")
+		logDbError(ctx, err, "Plugin info not written to database.")
 	}
 }
 
@@ -312,7 +312,7 @@ func WriteInferenceHistoryToDB(ctx context.Context, batch []inferenceHistory) {
 	if useModusDB() {
 		err := writeInferenceHistoryToModusDb(ctx, batch)
 		if err != nil {
-			logDbWarningOrError(ctx, err, "Inference history not written to modusgraph.")
+			logDbError(ctx, err, "Inference history not written to modusgraph.")
 		}
 		return
 	}
@@ -355,7 +355,7 @@ VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 	})
 
 	if err != nil {
-		logDbWarningOrError(ctx, err, "Inference history not written to database.")
+		logDbError(ctx, err, "Inference history not written to database.")
 	}
 }
 

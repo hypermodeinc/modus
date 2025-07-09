@@ -13,13 +13,14 @@ import (
 	"context"
 
 	"github.com/hypermodeinc/modus/runtime/logger"
+	"github.com/hypermodeinc/modus/runtime/sentryutils"
 	"github.com/hypermodeinc/modus/runtime/utils"
 
 	"github.com/rs/zerolog"
 )
 
 func InitWasmHost(ctx context.Context, registrations ...func(WasmHost) error) WasmHost {
-	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+	span, ctx := sentryutils.NewSpanForCurrentFunc(ctx)
 	defer span.Finish()
 
 	configureLogger()

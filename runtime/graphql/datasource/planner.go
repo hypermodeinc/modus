@@ -16,6 +16,7 @@ import (
 	"strings"
 
 	"github.com/hypermodeinc/modus/runtime/logger"
+	"github.com/hypermodeinc/modus/runtime/sentryutils"
 	"github.com/hypermodeinc/modus/runtime/utils"
 	"github.com/tidwall/gjson"
 
@@ -124,7 +125,9 @@ func (p *modusDataSourcePlanner) EnterField(ref int) {
 		p.template.fieldInfo = f
 		p.template.functionName = config.FieldsToFunctions[f.Name]
 		if err := p.captureInputData(ref); err != nil {
-			logger.Error(p.ctx, err).Msg("Error capturing input data.")
+			const msg = "Error capturing graphql input data."
+			sentryutils.CaptureError(p.ctx, err, msg)
+			logger.Error(p.ctx, err).Msg(msg)
 			return
 		}
 	}
@@ -250,7 +253,9 @@ func (p *modusDataSourcePlanner) getInputTemplate() (string, error) {
 func (p *modusDataSourcePlanner) ConfigureFetch() resolve.FetchConfiguration {
 	input, err := p.getInputTemplate()
 	if err != nil {
-		logger.Error(p.ctx, err).Msg("Error creating input template for Modus data source.")
+		const msg = "Error creating input template for graphql data source."
+		sentryutils.CaptureError(p.ctx, err, msg)
+		logger.Error(p.ctx, err).Msg(msg)
 		return resolve.FetchConfiguration{}
 	}
 
@@ -272,7 +277,9 @@ func (p *modusDataSourcePlanner) ConfigureFetch() resolve.FetchConfiguration {
 func (p *modusDataSourcePlanner) ConfigureSubscription() plan.SubscriptionConfiguration {
 	input, err := p.getInputTemplate()
 	if err != nil {
-		logger.Error(p.ctx, err).Msg("Error creating input template for Modus data source.")
+		const msg = "Error creating input template for graphql data source."
+		sentryutils.CaptureError(p.ctx, err, msg)
+		logger.Error(p.ctx, err).Msg(msg)
 		return plan.SubscriptionConfiguration{}
 	}
 

@@ -14,6 +14,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/hypermodeinc/modus/runtime/sentryutils"
 	"github.com/hypermodeinc/modus/runtime/utils"
 
 	"github.com/hypermodeinc/modusgraph"
@@ -62,7 +63,7 @@ func QueryActiveAgents(ctx context.Context) ([]AgentState, error) {
 }
 
 func writeAgentStateToModusDB(ctx context.Context, state AgentState) error {
-	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+	span, ctx := sentryutils.NewSpanForCurrentFunc(ctx)
 	defer span.Finish()
 
 	gid, _, _, err := modusgraph.Upsert(ctx, GlobalModusDbEngine, state)
@@ -72,7 +73,7 @@ func writeAgentStateToModusDB(ctx context.Context, state AgentState) error {
 }
 
 func updateAgentStatusInModusDB(ctx context.Context, id string, status string) error {
-	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+	span, ctx := sentryutils.NewSpanForCurrentFunc(ctx)
 	defer span.Finish()
 
 	// TODO: this should just be an update in a single operation
@@ -89,7 +90,7 @@ func updateAgentStatusInModusDB(ctx context.Context, id string, status string) e
 }
 
 func getAgentStateFromModusDB(ctx context.Context, id string) (*AgentState, error) {
-	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+	span, ctx := sentryutils.NewSpanForCurrentFunc(ctx)
 	defer span.Finish()
 
 	_, result, err := modusgraph.Get[AgentState](ctx, GlobalModusDbEngine, modusgraph.ConstrainedField{
@@ -104,7 +105,7 @@ func getAgentStateFromModusDB(ctx context.Context, id string) (*AgentState, erro
 }
 
 func queryActiveAgentsFromModusDB(ctx context.Context) ([]AgentState, error) {
-	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+	span, ctx := sentryutils.NewSpanForCurrentFunc(ctx)
 	defer span.Finish()
 
 	_, results, err := modusgraph.Query[AgentState](ctx, GlobalModusDbEngine, modusgraph.QueryParams{
@@ -131,7 +132,7 @@ func queryActiveAgentsFromModusDB(ctx context.Context) ([]AgentState, error) {
 }
 
 func writeAgentStateToPostgresDB(ctx context.Context, state AgentState) error {
-	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+	span, ctx := sentryutils.NewSpanForCurrentFunc(ctx)
 	defer span.Finish()
 
 	const query = "INSERT INTO agents (id, name, status, data, updated) VALUES ($1, $2, $3, $4, $5) " +
@@ -149,7 +150,7 @@ func writeAgentStateToPostgresDB(ctx context.Context, state AgentState) error {
 }
 
 func updateAgentStatusInPostgresDB(ctx context.Context, id string, status string) error {
-	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+	span, ctx := sentryutils.NewSpanForCurrentFunc(ctx)
 	defer span.Finish()
 
 	const query = "UPDATE agents SET status = $2, updated = $3 WHERE id = $1"
@@ -167,7 +168,7 @@ func updateAgentStatusInPostgresDB(ctx context.Context, id string, status string
 }
 
 func getAgentStateFromPostgresDB(ctx context.Context, id string) (*AgentState, error) {
-	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+	span, ctx := sentryutils.NewSpanForCurrentFunc(ctx)
 	defer span.Finish()
 
 	const query = "SELECT id, name, status, data, updated FROM agents WHERE id = $1"
@@ -191,7 +192,7 @@ func getAgentStateFromPostgresDB(ctx context.Context, id string) (*AgentState, e
 }
 
 func queryActiveAgentsFromPostgresDB(ctx context.Context) ([]AgentState, error) {
-	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+	span, ctx := sentryutils.NewSpanForCurrentFunc(ctx)
 	defer span.Finish()
 
 	const query = "SELECT id, name, status, data, updated FROM agents " +

@@ -20,6 +20,7 @@ import (
 	"github.com/hypermodeinc/modus/runtime/messages"
 	"github.com/hypermodeinc/modus/runtime/pluginmanager"
 	"github.com/hypermodeinc/modus/runtime/plugins"
+	"github.com/hypermodeinc/modus/runtime/sentryutils"
 	"github.com/hypermodeinc/modus/runtime/utils"
 	"github.com/hypermodeinc/modus/runtime/wasmhost"
 
@@ -29,7 +30,7 @@ import (
 var _actorSystem goakt.ActorSystem
 
 func Initialize(ctx context.Context) {
-	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+	span, ctx := sentryutils.NewSpanForCurrentFunc(ctx)
 	defer span.Finish()
 
 	wasmExt := &wasmExtension{
@@ -48,15 +49,21 @@ func Initialize(ctx context.Context) {
 
 	actorSystem, err := goakt.NewActorSystem("modus", opts...)
 	if err != nil {
-		logger.Fatal(ctx, err).Msg("Failed to create actor system.")
+		const msg = "Failed to create actor system."
+		sentryutils.CaptureError(ctx, err, msg)
+		logger.Fatal(ctx, err).Msg(msg)
 	}
 
 	if err := startActorSystem(ctx, actorSystem); err != nil {
-		logger.Fatal(ctx, err).Msg("Failed to start actor system.")
+		const msg = "Failed to start actor system."
+		sentryutils.CaptureError(ctx, err, msg)
+		logger.Fatal(ctx, err).Msg(msg)
 	}
 
 	if err := actorSystem.Inject(&wasmAgentInfo{}); err != nil {
-		logger.Fatal(ctx, err).Msg("Failed to inject wasm agent info into actor system.")
+		const msg = "Failed to inject wasm agent info into actor system."
+		sentryutils.CaptureError(ctx, err, msg)
+		logger.Fatal(ctx, err).Msg(msg)
 	}
 
 	_actorSystem = actorSystem
@@ -88,7 +95,7 @@ func startActorSystem(ctx context.Context, actorSystem goakt.ActorSystem) error 
 }
 
 func loadAgentActors(ctx context.Context, plugin *plugins.Plugin) error {
-	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+	span, ctx := sentryutils.NewSpanForCurrentFunc(ctx)
 	defer span.Finish()
 
 	// restart local actors that are already running, which will reload the plugin
@@ -96,7 +103,9 @@ func loadAgentActors(ctx context.Context, plugin *plugins.Plugin) error {
 	for _, pid := range actors {
 		if a, ok := pid.Actor().(*wasmAgentActor); ok {
 			if err := goakt.Tell(ctx, pid, &messages.RestartAgent{}); err != nil {
-				logger.Error(ctx, err).Str("agent_id", a.agentId).Msg("Failed to send restart agent message to actor.")
+				const msg = "Failed to send restart agent message to actor."
+				sentryutils.CaptureError(ctx, err, msg, sentryutils.WithData("agent_id", a.agentId))
+				logger.Error(ctx, err).Str("agent_id", a.agentId).Msg(msg)
 			}
 		}
 	}
@@ -104,7 +113,9 @@ func loadAgentActors(ctx context.Context, plugin *plugins.Plugin) error {
 	// do this in a goroutine to avoid blocking the cluster engine startup
 	go func() {
 		if err := restoreAgentActors(ctx, plugin.Name()); err != nil {
-			logger.Error(ctx, err).Msg("Failed to restore agent actors.")
+			const msg = "Failed to restore agent actors."
+			sentryutils.CaptureError(ctx, err, msg)
+			logger.Error(ctx, err).Msg(msg)
 		}
 	}()
 
@@ -113,7 +124,7 @@ func loadAgentActors(ctx context.Context, plugin *plugins.Plugin) error {
 
 // restoreAgentActors spawn actors for agents with state in the database, that are not already running
 func restoreAgentActors(ctx context.Context, pluginName string) error {
-	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+	span, ctx := sentryutils.NewSpanForCurrentFunc(ctx)
 	defer span.Finish()
 
 	logger.Debug(ctx).Msg("Restoring agent actors from database.")
@@ -133,11 +144,15 @@ func restoreAgentActors(ctx context.Context, pluginName string) error {
 	for _, agent := range agents {
 		actorName := getActorName(agent.Id)
 		if exists, err := _actorSystem.ActorExists(ctx, actorName); err != nil {
-			logger.Error(ctx, err).Msgf("Failed to check if actor %s exists.", actorName)
+			const msg = "Failed to check if agent actor exists."
+			sentryutils.CaptureError(ctx, err, msg, sentryutils.WithData("agent_id", agent.Id))
+			logger.Error(ctx, err).Str("agent_id", agent.Id).Msg(msg)
 		} else if !exists {
 			err := spawnActorForAgent(ctx, pluginName, agent.Id, agent.Name, false)
 			if err != nil {
-				logger.Error(ctx, err).Msgf("Failed to spawn actor for agent %s.", agent.Id)
+				const msg = "Failed to spawn actor for agent."
+				sentryutils.CaptureError(ctx, err, msg, sentryutils.WithData("agent_id", agent.Id))
+				logger.Error(ctx, err).Str("agent_id", agent.Id).Msg(msg)
 			}
 		}
 	}
@@ -146,7 +161,7 @@ func restoreAgentActors(ctx context.Context, pluginName string) error {
 }
 
 func beforeShutdown(ctx context.Context) error {
-	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+	span, ctx := sentryutils.NewSpanForCurrentFunc(ctx)
 	defer span.Finish()
 
 	logger.Info(ctx).Msg("Actor system shutting down...")
@@ -159,29 +174,31 @@ func beforeShutdown(ctx context.Context) error {
 			if actor.status == AgentStatusRunning {
 				ctx := actor.augmentContext(ctx, pid)
 				if err := actor.suspendAgent(ctx); err != nil {
-					logger.Error(ctx, err).Str("agent_id", actor.agentId).Msg("Failed to suspend agent actor.")
+					const msg = "Failed to suspend agent actor."
+					sentryutils.CaptureError(ctx, err, msg, sentryutils.WithData("agent_id", actor.agentId))
+					logger.Error(ctx, err).Str("agent_id", actor.agentId).Msg(msg)
 				}
 			}
 		}
 	}
 
-	// Then shut down subscription actors.  They will have received the suspend message already.
+	// Then shut down subscription actors. They will have received the suspend message already.
 	for _, pid := range actors {
-		if _, ok := pid.Actor().(*subscriptionActor); ok && pid.IsRunning() {
+		if a, ok := pid.Actor().(*subscriptionActor); ok && pid.IsRunning() {
 			if err := pid.Shutdown(ctx); err != nil {
-				logger.Error(ctx, err).Msgf("Failed to shutdown actor %s.", pid.Name())
+				const msg = "Failed to shut down subscription actor."
+				sentryutils.CaptureError(ctx, err, msg, sentryutils.WithData("agent_id", a.agentId))
+				logger.Error(ctx, err).Str("agent_id", a.agentId).Msg(msg)
 			}
 		}
 	}
 
-	// waitForClusterSync()
-
-	// then allow the actor system to continue with its shutdown process
+	// Then allow the actor system to continue with its shutdown process.
 	return nil
 }
 
 // Waits for the peer sync interval to pass, allowing time for the actor system to synchronize its
-// list of actors with the remote nodes in the cluster.  Cancels early if the context is done.
+// list of actors with the remote nodes in the cluster. Cancels early if the context is done.
 func waitForClusterSync(ctx context.Context) {
 	if clusterEnabled() {
 		select {
@@ -193,15 +210,19 @@ func waitForClusterSync(ctx context.Context) {
 }
 
 func Shutdown(ctx context.Context) {
-	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+	span, ctx := sentryutils.NewSpanForCurrentFunc(ctx)
 	defer span.Finish()
 
 	if _actorSystem == nil {
-		logger.Fatal(ctx).Msg("Actor system is not initialized, cannot shutdown.")
+		const msg = "Actor system is not initialized, cannot shutdown."
+		sentryutils.CaptureError(ctx, nil, msg)
+		logger.Fatal(ctx).Msg(msg)
 	}
 
 	if err := _actorSystem.Stop(ctx); err != nil {
-		logger.Error(ctx, err).Msg("Failed to shutdown actor system.")
+		const msg = "Failed to shutdown actor system."
+		sentryutils.CaptureError(ctx, err, msg)
+		logger.Error(ctx, err).Msg(msg)
 	}
 
 	logger.Info(ctx).Msg("Actor system shutdown complete.")

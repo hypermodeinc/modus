@@ -17,6 +17,7 @@ import (
 	"github.com/hypermodeinc/modus/runtime/langsupport"
 	"github.com/hypermodeinc/modus/runtime/languages"
 	"github.com/hypermodeinc/modus/runtime/logger"
+	"github.com/hypermodeinc/modus/runtime/sentryutils"
 	"github.com/hypermodeinc/modus/runtime/utils"
 
 	"github.com/tetratelabs/wazero"
@@ -34,7 +35,7 @@ type Plugin struct {
 }
 
 func NewPlugin(ctx context.Context, cm wazero.CompiledModule, filename string, md *metadata.Metadata) (*Plugin, error) {
-	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+	span, ctx := sentryutils.NewSpanForCurrentFunc(ctx)
 	defer span.Finish()
 
 	language, err := languages.GetLanguageForSDK(md.SDK)

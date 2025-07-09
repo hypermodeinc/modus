@@ -14,7 +14,9 @@ import (
 	"fmt"
 	"runtime/debug"
 
+	"github.com/getsentry/sentry-go"
 	"github.com/hypermodeinc/modus/lib/metadata"
+	"github.com/hypermodeinc/modus/runtime/sentryutils"
 	"github.com/hypermodeinc/modus/runtime/utils"
 
 	wasm "github.com/tetratelabs/wazero/api"
@@ -27,10 +29,11 @@ type ExecutionPlan interface {
 	ResultHandlers() []TypeHandler
 	UseResultIndirection() bool
 	HasDefaultParameters() bool
+	PluginName() string
 	InvokeFunction(ctx context.Context, wa WasmAdapter, parameters map[string]any) (result any, err error)
 }
 
-func NewExecutionPlan(fnDef wasm.FunctionDefinition, fnMeta *metadata.Function, paramHandlers, resultHandlers []TypeHandler, indirectResultSize uint32) ExecutionPlan {
+func NewExecutionPlan(fnDef wasm.FunctionDefinition, fnMeta *metadata.Function, paramHandlers, resultHandlers []TypeHandler, indirectResultSize uint32, pluginName string) ExecutionPlan {
 	hasDefaultParameters := false
 	for _, p := range fnMeta.Parameters {
 		if p.Default != nil {
@@ -39,7 +42,7 @@ func NewExecutionPlan(fnDef wasm.FunctionDefinition, fnMeta *metadata.Function, 
 		}
 	}
 
-	return &executionPlan{fnDef, fnMeta, paramHandlers, resultHandlers, indirectResultSize, hasDefaultParameters}
+	return &executionPlan{fnDef, fnMeta, paramHandlers, resultHandlers, indirectResultSize, hasDefaultParameters, pluginName}
 }
 
 type executionPlan struct {
@@ -49,6 +52,7 @@ type executionPlan struct {
 	resultHandlers       []TypeHandler
 	indirectResultSize   uint32
 	hasDefaultParameters bool
+	pluginName           string
 }
 
 func (p *executionPlan) FnDefinition() wasm.FunctionDefinition {
@@ -75,21 +79,34 @@ func (p *executionPlan) HasDefaultParameters() bool {
 	return p.hasDefaultParameters
 }
 
+func (p *executionPlan) PluginName() string {
+	return p.pluginName
+}
+
 func (plan *executionPlan) InvokeFunction(ctx context.Context, wa WasmAdapter, parameters map[string]any) (result any, err error) {
+	span, ctx := sentryutils.NewSpanForCurrentFunc(ctx)
+	defer span.Finish()
+
+	fnName := plan.FnMetadata().Name
+	fullName := plan.PluginName() + "." + fnName
+
+	scope, done := sentryutils.NewScope(ctx)
+	defer done()
+	sentryutils.AddTextBreadcrumbToScope(scope, "Starting wasm function: "+fullName)
+	defer sentryutils.AddTextBreadcrumbToScope(scope, "Finished wasm function: "+fullName)
+
 	// Recover from panics and convert them to errors
 	defer func() {
 		if r := recover(); r != nil {
-			err = utils.ConvertToError(r)
-			utils.CaptureError(ctx, err)
+			sentryutils.Recover(ctx, r)
+			err = utils.ConvertToError(r) // return the error to the caller
 			if utils.DebugModeEnabled() {
 				debug.PrintStack()
 			}
-
 		}
 	}()
 
 	// Get the wasm function
-	fnName := plan.FnMetadata().Name
 	fn := wa.GetFunction(fnName)
 	if fn == nil {
 		return nil, fmt.Errorf("function %s not found in wasm module", fnName)
@@ -115,7 +132,10 @@ func (plan *executionPlan) InvokeFunction(ctx context.Context, wa WasmAdapter, p
 	}
 
 	// Call the function
-	res, err := fn.Call(ctx, params...)
+	fnSpan := sentry.StartSpan(ctx, "wasm_function")
+	fnSpan.Description = fullName
+	res, err := fn.Call(span.Context(), params...)
+	fnSpan.Finish()
 	if err != nil {
 		return nil, err
 	}

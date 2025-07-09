@@ -21,7 +21,7 @@ import (
 	"github.com/hypermodeinc/modus/lib/manifest"
 	"github.com/hypermodeinc/modus/runtime/app"
 	"github.com/hypermodeinc/modus/runtime/logger"
-	"github.com/hypermodeinc/modus/runtime/utils"
+	"github.com/hypermodeinc/modus/runtime/sentryutils"
 )
 
 var provider secretsProvider
@@ -85,7 +85,7 @@ func GetConnectionSecret(ctx context.Context, connection manifest.ConnectionInfo
 // ApplySecretsToHttpRequest evaluates the given request and replaces any placeholders
 // present in the query parameters and headers with their secret values for the given connection.
 func ApplySecretsToHttpRequest(ctx context.Context, connection *manifest.HTTPConnectionInfo, req *http.Request) error {
-	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+	span, ctx := sentryutils.NewSpanForCurrentFunc(ctx)
 	defer span.Finish()
 
 	// get secrets for the connection
@@ -132,7 +132,7 @@ func ApplyAuthToLocalHypermodeModelRequest(ctx context.Context, connection manif
 // ApplySecretsToString evaluates the given string and replaces any placeholders
 // present in the string with their secret values for the given connection.
 func ApplySecretsToString(ctx context.Context, connection manifest.ConnectionInfo, str string) (string, error) {
-	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+	span, ctx := sentryutils.NewSpanForCurrentFunc(ctx)
 	defer span.Finish()
 
 	secrets, err := GetConnectionSecrets(ctx, connection)

@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/hypermodeinc/modus/runtime/logger"
+	"github.com/hypermodeinc/modus/runtime/sentryutils"
 	"github.com/hypermodeinc/modus/runtime/timezones"
 	"github.com/hypermodeinc/modus/runtime/utils"
 )
@@ -61,13 +62,17 @@ func GetTimeInZone(ctx context.Context, tz *string) *string {
 	} else if tz, ok := ctx.Value(utils.TimeZoneContextKey).(string); ok {
 		zoneId = tz
 	} else {
-		logger.Error(ctx).Msg("Time zone not specified.")
+		const msg = "Time zone not specified."
+		sentryutils.CaptureError(ctx, nil, msg)
+		logger.Error(ctx).Msg(msg)
 		return nil
 	}
 
 	loc, err := timezones.GetLocation(ctx, zoneId)
 	if err != nil {
-		logger.Error(ctx, err).Str("tz", zoneId).Msg("Failed to get time zone location.")
+		const msg = "Failed to get time zone location."
+		sentryutils.CaptureError(ctx, err, msg, sentryutils.WithData("tz", zoneId))
+		logger.Error(ctx, err).Str("tz", zoneId).Msg(msg)
 		return nil
 	}
 
@@ -77,16 +82,22 @@ func GetTimeInZone(ctx context.Context, tz *string) *string {
 
 func GetTimeZoneData(ctx context.Context, tz, format *string) []byte {
 	if tz == nil {
-		logger.Error(ctx).Msg("Time zone not specified.")
+		const msg = "Time zone not specified."
+		sentryutils.CaptureError(ctx, nil, msg)
+		logger.Error(ctx).Msg(msg)
 		return nil
 	}
 	if format == nil {
-		logger.Error(ctx).Msg("Time zone format not specified.")
+		const msg = "Time zone format not specified."
+		sentryutils.CaptureError(ctx, nil, msg)
+		logger.Error(ctx).Msg(msg)
 		return nil
 	}
 	data, err := timezones.GetTimeZoneData(ctx, *tz, *format)
 	if err != nil {
-		logger.Error(ctx, err).Str("tz", *tz).Msg("Failed to get time zone data.")
+		const msg = "Failed to get time zone data."
+		sentryutils.CaptureError(ctx, err, msg, sentryutils.WithData("tz", *tz), sentryutils.WithData("format", *format))
+		logger.Error(ctx, err).Str("tz", *tz).Str("format", *format).Msg(msg)
 		return nil
 	}
 	return data

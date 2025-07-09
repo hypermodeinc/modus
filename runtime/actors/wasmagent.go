@@ -21,6 +21,7 @@ import (
 	"github.com/hypermodeinc/modus/runtime/messages"
 	"github.com/hypermodeinc/modus/runtime/pluginmanager"
 	"github.com/hypermodeinc/modus/runtime/plugins"
+	"github.com/hypermodeinc/modus/runtime/sentryutils"
 	"github.com/hypermodeinc/modus/runtime/utils"
 	"github.com/hypermodeinc/modus/runtime/wasmhost"
 
@@ -48,7 +49,7 @@ func (a *wasmAgentActor) PreStart(ac *goakt.Context) error {
 	a.sentryHub = sentry.CurrentHub().Clone()
 	ctx = sentry.SetHubOnContext(ctx, a.sentryHub)
 
-	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+	span, ctx := sentryutils.NewSpanForCurrentFunc(ctx)
 	defer span.Finish()
 
 	wasmExt := ac.Extension(wasmExtensionId).(*wasmExtension)
@@ -76,7 +77,7 @@ func (a *wasmAgentActor) PreStart(ac *goakt.Context) error {
 
 func (a *wasmAgentActor) Receive(rc *goakt.ReceiveContext) {
 	ctx := a.augmentContext(rc.Context(), rc.Self())
-	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+	span, ctx := sentryutils.NewSpanForCurrentFunc(ctx)
 	defer span.Finish()
 
 	switch msg := rc.Message().(type) {
@@ -145,13 +146,15 @@ func (a *wasmAgentActor) Receive(rc *goakt.ReceiveContext) {
 func (a *wasmAgentActor) PostStop(ac *goakt.Context) error {
 	ctx := ac.Context()
 	ctx = sentry.SetHubOnContext(ctx, a.sentryHub)
-	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+	span, ctx := sentryutils.NewSpanForCurrentFunc(ctx)
 	defer span.Finish()
 
 	// suspend the agent if it's not already suspended or terminated
 	if a.status != AgentStatusSuspended && a.status != AgentStatusTerminated {
 		if err := a.suspendAgent(ctx); err != nil {
-			logger.Error(ctx, err).Msg("Error suspending agent.")
+			const msg = "Error suspending agent."
+			sentryutils.CaptureError(ctx, err, msg, sentryutils.WithData("agent_id", a.agentId))
+			logger.Error(ctx, err).Str("agent_id", a.agentId).Msg(msg)
 			// don't return on error - we'll still try to deactivate the agent
 		}
 	}
@@ -164,7 +167,7 @@ func (a *wasmAgentActor) PostStop(ac *goakt.Context) error {
 }
 
 func (a *wasmAgentActor) handleAgentRequest(ctx context.Context, rc *goakt.ReceiveContext, msg *messages.AgentRequest) error {
-	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+	span, ctx := sentryutils.NewSpanForCurrentFunc(ctx)
 	defer span.Finish()
 
 	if a.status != AgentStatusRunning {
@@ -200,7 +203,11 @@ func (a *wasmAgentActor) handleAgentRequest(ctx context.Context, rc *goakt.Recei
 				response.Data = result
 			default:
 				err := fmt.Errorf("unexpected result type: %T", result)
-				logger.Error(ctx, err).Msg("Error handling message.")
+				const errMsg = "Error handling message."
+				sentryutils.CaptureError(ctx, err, errMsg,
+					sentryutils.WithData("agent_id", a.agentId),
+					sentryutils.WithData("msg_name", msg.Name))
+				logger.Error(ctx, err).Str("agent_id", a.agentId).Str("msg_name", msg.Name).Msg(errMsg)
 				return err
 			}
 		}
@@ -215,7 +222,9 @@ func (a *wasmAgentActor) handleAgentRequest(ctx context.Context, rc *goakt.Recei
 
 	// save the state after handling the message to ensure the state is up to date in case of hard termination
 	if err := a.saveState(ctx); err != nil {
-		logger.Error(ctx, err).Msg("Error saving agent state.")
+		const errMsg = "Error saving agent state."
+		sentryutils.CaptureError(ctx, err, errMsg, sentryutils.WithData("agent_id", a.agentId))
+		logger.Error(ctx, err).Str("agent_id", a.agentId).Msg(errMsg)
 	}
 
 	return nil
@@ -226,7 +235,7 @@ func (a *wasmAgentActor) updateStatus(ctx context.Context, status AgentStatus) e
 		return nil
 	}
 
-	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+	span, ctx := sentryutils.NewSpanForCurrentFunc(ctx)
 	defer span.Finish()
 
 	a.status = status
@@ -244,7 +253,7 @@ func (a *wasmAgentActor) updateStatus(ctx context.Context, status AgentStatus) e
 }
 
 func (a *wasmAgentActor) saveState(ctx context.Context) error {
-	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+	span, ctx := sentryutils.NewSpanForCurrentFunc(ctx)
 	defer span.Finish()
 
 	var data string
@@ -270,7 +279,7 @@ func (a *wasmAgentActor) saveState(ctx context.Context) error {
 }
 
 func (a *wasmAgentActor) restoreState(ctx context.Context) error {
-	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+	span, ctx := sentryutils.NewSpanForCurrentFunc(ctx)
 	defer span.Finish()
 
 	if a.module == nil {
@@ -312,7 +321,7 @@ func (a *wasmAgentActor) augmentContext(ctx context.Context, pid *goakt.PID) con
 }
 
 func (a *wasmAgentActor) activateAgent(ctx context.Context) error {
-	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+	span, ctx := sentryutils.NewSpanForCurrentFunc(ctx)
 	defer span.Finish()
 
 	if plugin, found := pluginmanager.GetPluginByName(a.pluginName); found {
@@ -342,7 +351,7 @@ func (a *wasmAgentActor) activateAgent(ctx context.Context) error {
 }
 
 func (a *wasmAgentActor) deactivateAgent(ctx context.Context) error {
-	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+	span, ctx := sentryutils.NewSpanForCurrentFunc(ctx)
 	defer span.Finish()
 
 	if err := a.module.Close(ctx); err != nil {
@@ -353,7 +362,7 @@ func (a *wasmAgentActor) deactivateAgent(ctx context.Context) error {
 }
 
 func (a *wasmAgentActor) startAgent(ctx context.Context) error {
-	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+	span, ctx := sentryutils.NewSpanForCurrentFunc(ctx)
 	defer span.Finish()
 
 	logger.Info(ctx).Msg("Starting agent.")
@@ -374,7 +383,7 @@ func (a *wasmAgentActor) startAgent(ctx context.Context) error {
 }
 
 func (a *wasmAgentActor) resumeAgent(ctx context.Context) error {
-	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+	span, ctx := sentryutils.NewSpanForCurrentFunc(ctx)
 	defer span.Finish()
 
 	logger.Info(ctx).Msg("Resuming agent.")
@@ -395,7 +404,7 @@ func (a *wasmAgentActor) resumeAgent(ctx context.Context) error {
 }
 
 func (a *wasmAgentActor) suspendAgent(ctx context.Context) error {
-	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+	span, ctx := sentryutils.NewSpanForCurrentFunc(ctx)
 	defer span.Finish()
 
 	logger.Info(ctx).Msg("Suspending agent.")
@@ -416,7 +425,7 @@ func (a *wasmAgentActor) suspendAgent(ctx context.Context) error {
 }
 
 func (a *wasmAgentActor) stopAgent(ctx context.Context) error {
-	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+	span, ctx := sentryutils.NewSpanForCurrentFunc(ctx)
 	defer span.Finish()
 
 	logger.Info(ctx).Msg("Stopping agent.")
@@ -437,7 +446,7 @@ func (a *wasmAgentActor) stopAgent(ctx context.Context) error {
 }
 
 func (a *wasmAgentActor) callEventHandler(ctx context.Context, action agentEventAction) error {
-	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+	span, ctx := sentryutils.NewSpanForCurrentFunc(ctx)
 	defer span.Finish()
 
 	fnInfo, err := a.host.GetFunctionInfo("_modus_agent_handle_event")
@@ -454,7 +463,7 @@ func (a *wasmAgentActor) callEventHandler(ctx context.Context, action agentEvent
 }
 
 func (a *wasmAgentActor) getAgentState(ctx context.Context) (*string, error) {
-	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+	span, ctx := sentryutils.NewSpanForCurrentFunc(ctx)
 	defer span.Finish()
 
 	fnInfo, err := a.host.GetFunctionInfo("_modus_agent_get_state")
@@ -483,7 +492,7 @@ func (a *wasmAgentActor) getAgentState(ctx context.Context) (*string, error) {
 }
 
 func (a *wasmAgentActor) setAgentState(ctx context.Context, data *string) error {
-	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+	span, ctx := sentryutils.NewSpanForCurrentFunc(ctx)
 	defer span.Finish()
 
 	fnInfo, err := a.host.GetFunctionInfo("_modus_agent_set_state")

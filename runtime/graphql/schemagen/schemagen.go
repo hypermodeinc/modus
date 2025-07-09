@@ -21,6 +21,7 @@ import (
 	"github.com/hypermodeinc/modus/lib/metadata"
 	"github.com/hypermodeinc/modus/runtime/langsupport"
 	"github.com/hypermodeinc/modus/runtime/languages"
+	"github.com/hypermodeinc/modus/runtime/sentryutils"
 	"github.com/hypermodeinc/modus/runtime/utils"
 )
 
@@ -31,7 +32,7 @@ type GraphQLSchema struct {
 }
 
 func GetGraphQLSchema(ctx context.Context, md *metadata.Metadata) (*GraphQLSchema, error) {
-	span, _ := utils.NewSentrySpanForCurrentFunc(ctx)
+	span, _ := sentryutils.NewSpanForCurrentFunc(ctx)
 	defer span.Finish()
 
 	lang, err := languages.GetLanguageForSDK(md.SDK)

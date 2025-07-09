@@ -19,6 +19,7 @@ import (
 	"github.com/hypermodeinc/modus/runtime/logger"
 	"github.com/hypermodeinc/modus/runtime/messages"
 	"github.com/hypermodeinc/modus/runtime/plugins"
+	"github.com/hypermodeinc/modus/runtime/sentryutils"
 	"github.com/hypermodeinc/modus/runtime/utils"
 
 	goakt "github.com/tochemey/goakt/v3/actor"
@@ -63,7 +64,7 @@ const (
 )
 
 func StartAgent(ctx context.Context, agentName string) (*AgentInfo, error) {
-	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+	span, ctx := sentryutils.NewSpanForCurrentFunc(ctx)
 	defer span.Finish()
 
 	plugin, ok := plugins.GetPluginFromContext(ctx)
@@ -80,7 +81,7 @@ func StartAgent(ctx context.Context, agentName string) (*AgentInfo, error) {
 }
 
 func spawnActorForAgent(ctx context.Context, pluginName, agentId, agentName string, initializing bool) error {
-	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+	span, ctx := sentryutils.NewSpanForCurrentFunc(ctx)
 	defer span.Finish()
 
 	ctx = context.WithoutCancel(ctx)
@@ -111,7 +112,7 @@ func spawnActorForAgent(ctx context.Context, pluginName, agentId, agentName stri
 }
 
 func StopAgent(ctx context.Context, agentId string) (*AgentInfo, error) {
-	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+	span, ctx := sentryutils.NewSpanForCurrentFunc(ctx)
 	defer span.Finish()
 
 	actorName := getActorName(agentId)
@@ -137,7 +138,7 @@ func StopAgent(ctx context.Context, agentId string) (*AgentInfo, error) {
 }
 
 func getAgentInfoFromDatabase(ctx context.Context, agentId string) (*AgentInfo, error) {
-	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+	span, ctx := sentryutils.NewSpanForCurrentFunc(ctx)
 	defer span.Finish()
 
 	if agent, e := db.GetAgentState(ctx, agentId); e == nil {
@@ -151,7 +152,7 @@ func getAgentInfoFromDatabase(ctx context.Context, agentId string) (*AgentInfo, 
 }
 
 func GetAgentInfo(ctx context.Context, agentId string) (*AgentInfo, error) {
-	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+	span, ctx := sentryutils.NewSpanForCurrentFunc(ctx)
 	defer span.Finish()
 
 	actorName := getActorName(agentId)
@@ -199,7 +200,7 @@ func newAgentMessageErrorResponse(errMsg string) *agentMessageResponse {
 }
 
 func SendAgentMessage(ctx context.Context, agentId string, msgName string, data *string, timeout int64) (*agentMessageResponse, error) {
-	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+	span, ctx := sentryutils.NewSpanForCurrentFunc(ctx)
 	defer span.Finish()
 
 	actorName := getActorName(agentId)
@@ -234,7 +235,7 @@ func SendAgentMessage(ctx context.Context, agentId string, msgName string, data 
 }
 
 func PublishAgentEvent(ctx context.Context, agentId, eventName string, eventData *string) error {
-	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+	span, ctx := sentryutils.NewSpanForCurrentFunc(ctx)
 	defer span.Finish()
 
 	var data any
@@ -304,7 +305,7 @@ func getAgentTopic(agentId string) string {
 }
 
 func ListActiveAgents(ctx context.Context) ([]AgentInfo, error) {
-	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+	span, ctx := sentryutils.NewSpanForCurrentFunc(ctx)
 	defer span.Finish()
 
 	agents, err := db.QueryActiveAgents(ctx)

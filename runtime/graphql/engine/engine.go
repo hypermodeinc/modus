@@ -24,6 +24,7 @@ import (
 	"github.com/hypermodeinc/modus/runtime/graphql/schemagen"
 	"github.com/hypermodeinc/modus/runtime/logger"
 	"github.com/hypermodeinc/modus/runtime/plugins"
+	"github.com/hypermodeinc/modus/runtime/sentryutils"
 	"github.com/hypermodeinc/modus/runtime/utils"
 	"github.com/hypermodeinc/modus/runtime/wasmhost"
 
@@ -50,7 +51,7 @@ func setEngine(engine *engine.ExecutionEngine) {
 }
 
 func Activate(ctx context.Context, plugin *plugins.Plugin) error {
-	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+	span, ctx := sentryutils.NewSpanForCurrentFunc(ctx)
 	defer span.Finish()
 
 	schema, cfg, err := generateSchema(ctx, plugin.Metadata)
@@ -73,7 +74,7 @@ func Activate(ctx context.Context, plugin *plugins.Plugin) error {
 }
 
 func generateSchema(ctx context.Context, md *metadata.Metadata) (*gql.Schema, *datasource.ModusDataSourceConfig, error) {
-	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+	span, ctx := sentryutils.NewSpanForCurrentFunc(ctx)
 	defer span.Finish()
 
 	generated, err := schemagen.GetGraphQLSchema(ctx, md)
@@ -104,7 +105,7 @@ func generateSchema(ctx context.Context, md *metadata.Metadata) (*gql.Schema, *d
 }
 
 func getDatasourceConfig(ctx context.Context, schema *gql.Schema, cfg *datasource.ModusDataSourceConfig) (plan.DataSourceConfiguration[datasource.ModusDataSourceConfig], error) {
-	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+	span, ctx := sentryutils.NewSpanForCurrentFunc(ctx)
 	defer span.Finish()
 
 	queryTypeName := schema.QueryTypeName()
@@ -166,7 +167,7 @@ func getChildNodes(fieldNames []string, schema *gql.Schema, typeName string) []p
 }
 
 func makeEngine(ctx context.Context, schema *gql.Schema, datasourceConfig plan.DataSourceConfiguration[datasource.ModusDataSourceConfig]) (*engine.ExecutionEngine, error) {
-	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+	span, ctx := sentryutils.NewSpanForCurrentFunc(ctx)
 	defer span.Finish()
 
 	engineConfig := engine.NewConfiguration(schema)
@@ -183,7 +184,7 @@ func makeEngine(ctx context.Context, schema *gql.Schema, datasourceConfig plan.D
 }
 
 func getTypeFields(ctx context.Context, s *gql.Schema, typeName string) []string {
-	span, _ := utils.NewSentrySpanForCurrentFunc(ctx)
+	span, _ := sentryutils.NewSpanForCurrentFunc(ctx)
 	defer span.Finish()
 
 	doc := s.Document()

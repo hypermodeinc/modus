@@ -16,8 +16,8 @@ import (
 	"github.com/hypermodeinc/modus/runtime/envfiles"
 	"github.com/hypermodeinc/modus/runtime/httpserver"
 	"github.com/hypermodeinc/modus/runtime/logger"
+	"github.com/hypermodeinc/modus/runtime/sentryutils"
 	"github.com/hypermodeinc/modus/runtime/services"
-	"github.com/hypermodeinc/modus/runtime/utils"
 )
 
 func main() {
@@ -41,8 +41,8 @@ func main() {
 	}
 
 	// Initialize Sentry (if enabled)
-	utils.InitializeSentry()
-	defer utils.FinalizeSentry()
+	sentryutils.InitializeSentry()
+	defer sentryutils.CloseSentry()
 
 	// Get the main handler for the HTTP server before starting the services,
 	// so it can register the endpoints as the manifest is loaded.

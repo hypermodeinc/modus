@@ -17,7 +17,7 @@ import (
 	"github.com/hypermodeinc/modus/lib/manifest"
 	"github.com/hypermodeinc/modus/runtime/app"
 	"github.com/hypermodeinc/modus/runtime/logger"
-	"github.com/hypermodeinc/modus/runtime/utils"
+	"github.com/hypermodeinc/modus/runtime/sentryutils"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -37,24 +37,32 @@ type kubernetesSecretsProvider struct {
 }
 
 func (sp *kubernetesSecretsProvider) initialize(ctx context.Context) {
-	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+	span, ctx := sentryutils.NewSpanForCurrentFunc(ctx)
 	defer span.Finish()
 
 	fullName := app.Config().KubernetesSecretName()
 	if fullName == "" {
-		logger.Fatal(ctx).Msg("A Kubernetes secret name is required when using Kubernetes secrets. Exiting.")
+		const msg = "A Kubernetes secret name is required when using Kubernetes secrets. Exiting."
+		sentryutils.CaptureError(ctx, nil, msg)
+		logger.Fatal(ctx).Msg(msg)
 	}
 
 	parts := strings.SplitN(fullName, "/", 2)
 	if len(parts) != 2 || parts[0] == "" || parts[1] == "" {
-		logger.Fatal(ctx).Str("input", fullName).Msg("Kubernetes secret name must be in the format <namespace>/<name>")
+		const msg = "Kubernetes secret name must be in the format <namespace>/<name>"
+		sentryutils.CaptureError(ctx, nil, msg, sentryutils.WithData("input", fullName))
+		logger.Fatal(ctx).Str("input", fullName).Msg(msg)
 	}
 	sp.secretNamespace = parts[0]
 	sp.secretName = parts[1]
 
 	cli, cache, err := newK8sClientForSecret(sp.secretNamespace, sp.secretName)
 	if err != nil {
-		logger.Fatal(ctx, err).Msg("Failed to initialize Kubernetes client.")
+		const msg = "Failed to initialize Kubernetes client."
+		sentryutils.CaptureError(ctx, err, msg,
+			sentryutils.WithData("namespace", sp.secretNamespace),
+			sentryutils.WithData("name", sp.secretName))
+		logger.Fatal(ctx, err).Msg(msg)
 	}
 	sp.k8sClient = cli
 
@@ -67,14 +75,22 @@ func (sp *kubernetesSecretsProvider) initialize(ctx context.Context) {
 	// to call the API server everytime.
 	go func() {
 		if err := cache.Start(ctx); err != nil {
-			logger.Fatal(ctx, err).Msg("Failed to start Kubernetes client cache.")
+			const msg = "Failed to start Kubernetes client cache."
+			sentryutils.CaptureError(ctx, err, msg,
+				sentryutils.WithData("namespace", sp.secretNamespace),
+				sentryutils.WithData("name", sp.secretName))
+			logger.Fatal(ctx, err).Msg(msg)
 		}
 		logger.Info(ctx).Msg("Kubernetes client cache stopped.")
 	}()
 
 	// Wait for initial cache sync
 	if !cache.WaitForCacheSync(ctx) {
-		logger.Fatal(ctx).Msg("Failed to sync Kubernetes client cache.")
+		const msg = "Failed to sync Kubernetes client cache."
+		sentryutils.CaptureError(ctx, nil, msg,
+			sentryutils.WithData("namespace", sp.secretNamespace),
+			sentryutils.WithData("name", sp.secretName))
+		logger.Fatal(ctx).Msg(msg)
 	}
 
 	logger.Info(ctx).

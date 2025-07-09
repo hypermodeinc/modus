@@ -16,6 +16,7 @@ import (
 
 	"github.com/hypermodeinc/modus/runtime/logger"
 	"github.com/hypermodeinc/modus/runtime/messages"
+	"github.com/hypermodeinc/modus/runtime/sentryutils"
 	"github.com/hypermodeinc/modus/runtime/utils"
 
 	"github.com/rs/xid"
@@ -30,7 +31,7 @@ type agentEvent struct {
 }
 
 func SubscribeForAgentEvents(ctx context.Context, agentId string, update func(data []byte), done func()) error {
-	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+	span, ctx := sentryutils.NewSpanForCurrentFunc(ctx)
 	defer span.Finish()
 
 	// Go directly to the database for the agent status, because we don't want subscribing to events to fail
@@ -48,8 +49,9 @@ func SubscribeForAgentEvents(ctx context.Context, agentId string, update func(da
 		done = func() {}
 	}
 	actor := &subscriptionActor{
-		update: update,
-		done:   done,
+		agentId: agentId,
+		update:  update,
+		done:    done,
 	}
 
 	// Spawn a subscription actor that is bound to the graphql subscription on this node.
@@ -83,11 +85,15 @@ func SubscribeForAgentEvents(ctx context.Context, agentId string, update func(da
 
 		unsubscribe := &goaktpb.Unsubscribe{Topic: topic}
 		if err := subActor.Tell(ctx, _actorSystem.TopicActor(), unsubscribe); err != nil {
-			logger.Error(ctx, err).Msg("Failed to unsubscribe from topic")
+			const msg = "Failed to unsubscribe from topic"
+			sentryutils.CaptureError(ctx, err, msg, sentryutils.WithData("agent_id", agentId))
+			logger.Error(ctx, err).Str("agent_id", agentId).Msg(msg)
 		}
 
 		if err := subActor.Shutdown(ctx); err != nil {
-			logger.Error(ctx, err).Msg("Failed to shut down subscription actor")
+			const msg = "Failed to shut down subscription actor"
+			sentryutils.CaptureError(ctx, err, msg, sentryutils.WithData("agent_id", agentId))
+			logger.Error(ctx, err).Str("agent_id", agentId).Msg(msg)
 		}
 	}()
 
@@ -95,8 +101,9 @@ func SubscribeForAgentEvents(ctx context.Context, agentId string, update func(da
 }
 
 type subscriptionActor struct {
-	update func(data []byte)
-	done   func()
+	agentId string
+	update  func(data []byte)
+	done    func()
 }
 
 func (a *subscriptionActor) PreStart(ac *goakt.Context) error {
@@ -110,7 +117,7 @@ func (a *subscriptionActor) PostStop(ac *goakt.Context) error {
 
 func (a *subscriptionActor) Receive(rc *goakt.ReceiveContext) {
 	if msg, ok := rc.Message().(*messages.AgentEvent); ok {
-		span, _ := utils.NewSentrySpanForCurrentFunc(rc.Context())
+		span, _ := sentryutils.NewSpanForCurrentFunc(rc.Context())
 		defer span.Finish()
 
 		event := &agentEvent{
