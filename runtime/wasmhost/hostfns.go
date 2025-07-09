@@ -20,6 +20,7 @@ import (
 	"github.com/hypermodeinc/modus/runtime/langsupport"
 	"github.com/hypermodeinc/modus/runtime/logger"
 	"github.com/hypermodeinc/modus/runtime/plugins"
+	"github.com/hypermodeinc/modus/runtime/sentryutils"
 	"github.com/hypermodeinc/modus/runtime/utils"
 
 	wasm "github.com/tetratelabs/wazero/api"
@@ -202,15 +203,21 @@ func (host *wasmHost) newHostFunction(modName, funcName string, fn any, opts ...
 
 	// Make the host function wrapper
 	hf.function = wasm.GoModuleFunc(func(ctx context.Context, mod wasm.Module, stack []uint64) {
-		span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+		span, ctx := sentryutils.NewSpanForCurrentFunc(ctx)
 		defer span.Finish()
+
+		scope, done := sentryutils.NewScope(ctx)
+		defer done()
+		sentryutils.AddTextBreadcrumbToScope(scope, "Starting host function: "+fullName)
+		defer sentryutils.AddTextBreadcrumbToScope(scope, "Finished host function: "+fullName)
 
 		// Log any panics that occur in the host function
 		defer func() {
 			if r := recover(); r != nil {
+				sentryutils.Recover(ctx, r)
 				err := utils.ConvertToError(r)
 				logger.Error(ctx, err).Str("host_function", fullName).Msg("Panic in host function.")
-				utils.CaptureError(ctx, err)
+
 				if utils.DebugModeEnabled() {
 					debug.PrintStack()
 				}
@@ -220,14 +227,18 @@ func (host *wasmHost) newHostFunction(modName, funcName string, fn any, opts ...
 		// Get the plugin of the function that invoked this host function
 		plugin, ok := plugins.GetPluginFromContext(ctx)
 		if !ok {
-			logger.Error(ctx).Str("host_function", fullName).Msg("Plugin not found in context.")
+			const msg = "Plugin not found in context."
+			sentryutils.CaptureError(ctx, nil, msg, sentryutils.WithData("host_function", fullName))
+			logger.Error(ctx).Str("host_function", fullName).Msg(msg)
 			return
 		}
 
 		// Get the execution plan for the host function
 		plan, ok := plugin.ExecutionPlans[fullName]
 		if !ok {
-			logger.Error(ctx).Str("host_function", fullName).Msg("Execution plan not found.")
+			const msg = "Execution plan not found."
+			sentryutils.CaptureError(ctx, nil, msg, sentryutils.WithData("host_function", fullName))
+			logger.Error(ctx).Str("host_function", fullName).Msg(msg)
 			return
 		}
 
@@ -250,7 +261,11 @@ func (host *wasmHost) newHostFunction(modName, funcName string, fn any, opts ...
 			params = append(params, rvParam.Interface())
 		}
 		if err := decodeParams(ctx, wa, plan, stack, params); err != nil {
-			logger.Error(ctx, err).Str("host_function", fullName).Any("data", params).Msg("Error decoding input parameters.")
+			const msg = "Error decoding input parameters."
+			sentryutils.CaptureError(ctx, err, msg,
+				sentryutils.WithData("host_function", fullName),
+				sentryutils.WithData("data", params))
+			logger.Error(ctx, err).Str("host_function", fullName).Any("data", params).Msg(msg)
 			return
 		}
 
@@ -318,7 +333,11 @@ func (host *wasmHost) newHostFunction(modName, funcName string, fn any, opts ...
 		// Encode the results (if there are any) and write them to the stack
 		if len(results) > 0 {
 			if err := encodeResults(ctx, wa, plan, stack, results); err != nil {
-				logger.Error(ctx, err).Str("host_function", fullName).Any("data", results).Msg("Error encoding results.")
+				const msg = "Error encoding results."
+				sentryutils.CaptureError(ctx, err, msg,
+					sentryutils.WithData("host_function", fullName),
+					sentryutils.WithData("data", results))
+				logger.Error(ctx, err).Str("host_function", fullName).Any("data", results).Msg(msg)
 			}
 		}
 	})
@@ -327,7 +346,7 @@ func (host *wasmHost) newHostFunction(modName, funcName string, fn any, opts ...
 }
 
 func (host *wasmHost) instantiateHostFunctions(ctx context.Context) error {
-	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+	span, ctx := sentryutils.NewSpanForCurrentFunc(ctx)
 	defer span.Finish()
 
 	hostFnsByModule := make(map[string][]*hostFunction)

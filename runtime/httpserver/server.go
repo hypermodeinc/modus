@@ -29,6 +29,7 @@ import (
 	"github.com/hypermodeinc/modus/runtime/manifestdata"
 	"github.com/hypermodeinc/modus/runtime/metrics"
 	"github.com/hypermodeinc/modus/runtime/middleware"
+	"github.com/hypermodeinc/modus/runtime/sentryutils"
 
 	sentryhttp "github.com/getsentry/sentry-go/http"
 
@@ -85,7 +86,9 @@ func startHttpServer(ctx context.Context, mux http.Handler, addresses ...string)
 			err := server.ListenAndServe()
 			app.SetShuttingDown()
 			if err != nil && !errors.Is(err, http.ErrServerClosed) {
-				logger.Fatal(ctx, err).Msg("HTTP server error.  Exiting.")
+				const msg = "HTTP server error.  Exiting."
+				sentryutils.CaptureError(ctx, err, msg)
+				logger.Fatal(ctx, err).Msg(msg)
 			}
 			shutdownChan <- true
 		}()
@@ -114,7 +117,9 @@ func startHttpServer(ctx context.Context, mux http.Handler, addresses ...string)
 		defer shutdownRelease()
 		server.RegisterOnShutdown(graphql.CancelSubscriptions)
 		if err := server.Shutdown(shutdownCtx); err != nil {
-			logger.Fatal(ctx, err).Msg("HTTP server shutdown error.")
+			const msg = "HTTP server shutdown error."
+			sentryutils.CaptureError(ctx, err, msg)
+			logger.Fatal(ctx, err).Msg(msg)
 		}
 	}
 

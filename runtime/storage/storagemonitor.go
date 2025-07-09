@@ -11,10 +11,12 @@ package storage
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/hypermodeinc/modus/runtime/app"
 	"github.com/hypermodeinc/modus/runtime/logger"
+	"github.com/hypermodeinc/modus/runtime/sentryutils"
 )
 
 type StorageMonitor struct {
@@ -54,7 +56,9 @@ func (sm *StorageMonitor) Start(ctx context.Context) {
 			if err != nil {
 				// Don't stop watching. We'll just try again on the next cycle.
 				if !loggedError {
-					logger.Error(ctx, err).Msgf("Failed to list %s files.", sm.patterns)
+					msg := fmt.Sprintf("Failed to list files matching patterns: %v", sm.patterns)
+					sentryutils.CaptureError(ctx, err, msg)
+					logger.Error(ctx, err).Msg(msg)
 					loggedError = true
 				}
 				continue

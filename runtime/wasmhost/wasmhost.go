@@ -21,6 +21,7 @@ import (
 	"github.com/hypermodeinc/modus/runtime/logger"
 	"github.com/hypermodeinc/modus/runtime/middleware"
 	"github.com/hypermodeinc/modus/runtime/plugins"
+	"github.com/hypermodeinc/modus/runtime/sentryutils"
 	"github.com/hypermodeinc/modus/runtime/timezones"
 	"github.com/hypermodeinc/modus/runtime/utils"
 
@@ -54,7 +55,9 @@ func NewWasmHost(ctx context.Context, registrations ...func(WasmHost) error) Was
 	wasi.MustInstantiate(ctx, runtime)
 
 	if err := instantiateEnvHostFunctions(ctx, runtime); err != nil {
-		logger.Fatal(ctx, err).Msg("Failed to instantiate env host functions.")
+		const msg = "Failed to instantiate env host functions."
+		sentryutils.CaptureError(ctx, err, msg)
+		logger.Fatal(ctx, err).Msg(msg)
 		return nil
 	}
 
@@ -65,13 +68,17 @@ func NewWasmHost(ctx context.Context, registrations ...func(WasmHost) error) Was
 
 	for _, reg := range registrations {
 		if err := reg(host); err != nil {
-			logger.Fatal(ctx, err).Msg("Failed to apply a registration to the WASM host.")
+			const msg = "Failed to apply a registration to the WASM host."
+			sentryutils.CaptureError(ctx, err, msg)
+			logger.Fatal(ctx, err).Msg(msg)
 			return nil
 		}
 	}
 
 	if err := host.instantiateHostFunctions(ctx); err != nil {
-		logger.Fatal(ctx, err).Msg("Failed to instantiate host functions.")
+		const msg = "Failed to instantiate host functions."
+		sentryutils.CaptureError(ctx, err, msg)
+		logger.Fatal(ctx, err).Msg(msg)
 		return nil
 	}
 
@@ -81,7 +88,9 @@ func NewWasmHost(ctx context.Context, registrations ...func(WasmHost) error) Was
 func GetWasmHost(ctx context.Context) WasmHost {
 	host, ok := TryGetWasmHost(ctx)
 	if !ok {
-		logger.Fatal(ctx).Msg("WASM Host not found in context.")
+		const msg = "WASM Host not found in context."
+		sentryutils.CaptureError(ctx, nil, msg)
+		logger.Fatal(ctx).Msg(msg)
 		return nil
 	}
 	return host
@@ -94,7 +103,9 @@ func TryGetWasmHost(ctx context.Context) (WasmHost, bool) {
 
 func (host *wasmHost) Close(ctx context.Context) {
 	if err := host.runtime.Close(ctx); err != nil {
-		logger.Error(ctx, err).Msg("Failed to cleanly close the WASM runtime.")
+		const msg = "Failed to cleanly close the WASM runtime."
+		sentryutils.CaptureError(ctx, err, msg)
+		logger.Error(ctx, err).Msg(msg)
 	}
 }
 
@@ -108,7 +119,7 @@ func (host *wasmHost) GetFunctionRegistry() functions.FunctionRegistry {
 
 // Gets a module instance for the given plugin, used for a single invocation.
 func (host *wasmHost) GetModuleInstance(ctx context.Context, plugin *plugins.Plugin, buffers utils.OutputBuffers) (wasm.Module, error) {
-	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+	span, ctx := sentryutils.NewSpanForCurrentFunc(ctx)
 	defer span.Finish()
 
 	cfg := getModuleConfig(ctx, buffers, plugin)
@@ -121,7 +132,7 @@ func (host *wasmHost) GetModuleInstance(ctx context.Context, plugin *plugins.Plu
 }
 
 func (host *wasmHost) CompileModule(ctx context.Context, bytes []byte) (wazero.CompiledModule, error) {
-	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+	span, ctx := sentryutils.NewSpanForCurrentFunc(ctx)
 	defer span.Finish()
 
 	cm, err := host.runtime.CompileModule(ctx, bytes)

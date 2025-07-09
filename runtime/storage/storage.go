@@ -14,7 +14,7 @@ import (
 	"time"
 
 	"github.com/hypermodeinc/modus/runtime/app"
-	"github.com/hypermodeinc/modus/runtime/utils"
+	"github.com/hypermodeinc/modus/runtime/sentryutils"
 )
 
 var provider storageProvider
@@ -32,7 +32,7 @@ type FileInfo struct {
 }
 
 func Initialize(ctx context.Context) {
-	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+	span, ctx := sentryutils.NewSpanForCurrentFunc(ctx)
 	defer span.Finish()
 
 	if app.Config().UseAwsStorage() {
@@ -49,7 +49,7 @@ func ListFiles(ctx context.Context, patterns ...string) ([]FileInfo, error) {
 }
 
 func GetFileContents(ctx context.Context, name string) ([]byte, error) {
-	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+	span, ctx := sentryutils.NewSpanForCurrentFunc(ctx)
 	defer span.Finish()
 
 	return provider.getFileContents(ctx, name)

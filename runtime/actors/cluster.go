@@ -20,6 +20,7 @@ import (
 
 	"github.com/hypermodeinc/modus/runtime/app"
 	"github.com/hypermodeinc/modus/runtime/logger"
+	"github.com/hypermodeinc/modus/runtime/sentryutils"
 	"github.com/hypermodeinc/modus/runtime/utils"
 
 	goakt "github.com/tochemey/goakt/v3/actor"
@@ -31,7 +32,7 @@ import (
 )
 
 func clusterOptions(ctx context.Context) []goakt.Option {
-	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+	span, ctx := sentryutils.NewSpanForCurrentFunc(ctx)
 	defer span.Finish()
 
 	clusterMode := clusterMode()
@@ -52,7 +53,9 @@ func clusterOptions(ctx context.Context) []goakt.Option {
 
 	disco, err := newDiscoveryProvider(ctx, clusterMode, discoveryPort)
 	if err != nil {
-		logger.Fatal(ctx, err).Msg("Failed to create cluster discovery provider.")
+		const msg = "Failed to create cluster discovery provider."
+		sentryutils.CaptureError(ctx, err, msg, sentryutils.WithData("cluster_mode", clusterMode.String()))
+		logger.Fatal(ctx, err).Msg(msg)
 	}
 
 	return []goakt.Option{
@@ -237,7 +240,7 @@ func getPodLabels() map[string]string {
 }
 
 func newDiscoveryProvider(ctx context.Context, clusterMode goaktClusterMode, discoveryPort int) (discovery.Provider, error) {
-	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+	span, ctx := sentryutils.NewSpanForCurrentFunc(ctx)
 	defer span.Finish()
 
 	switch clusterMode {
@@ -299,21 +302,21 @@ type providerWrapper struct {
 }
 
 func (w *providerWrapper) Close() error {
-	span, _ := utils.NewSentrySpanForCurrentFunc(w.ctx)
+	span, _ := sentryutils.NewSpanForCurrentFunc(w.ctx)
 	defer span.Finish()
 
 	return w.provider.Close()
 }
 
 func (w *providerWrapper) Deregister() error {
-	span, _ := utils.NewSentrySpanForCurrentFunc(w.ctx)
+	span, _ := sentryutils.NewSpanForCurrentFunc(w.ctx)
 	defer span.Finish()
 
 	return w.provider.Deregister()
 }
 
 func (w *providerWrapper) DiscoverPeers() ([]string, error) {
-	span, _ := utils.NewSentrySpanForCurrentFunc(w.ctx)
+	span, _ := sentryutils.NewSpanForCurrentFunc(w.ctx)
 	defer span.Finish()
 
 	return w.provider.DiscoverPeers()
@@ -324,14 +327,14 @@ func (w *providerWrapper) ID() string {
 }
 
 func (w *providerWrapper) Initialize() error {
-	span, _ := utils.NewSentrySpanForCurrentFunc(w.ctx)
+	span, _ := sentryutils.NewSpanForCurrentFunc(w.ctx)
 	defer span.Finish()
 
 	return w.provider.Initialize()
 }
 
 func (w *providerWrapper) Register() error {
-	span, _ := utils.NewSentrySpanForCurrentFunc(w.ctx)
+	span, _ := sentryutils.NewSpanForCurrentFunc(w.ctx)
 	defer span.Finish()
 
 	return w.provider.Register()

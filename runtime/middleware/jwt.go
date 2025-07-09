@@ -19,6 +19,7 @@ import (
 	"github.com/hypermodeinc/modus/runtime/app"
 	"github.com/hypermodeinc/modus/runtime/envfiles"
 	"github.com/hypermodeinc/modus/runtime/logger"
+	"github.com/hypermodeinc/modus/runtime/sentryutils"
 	"github.com/hypermodeinc/modus/runtime/utils"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -46,10 +47,13 @@ func initKeys(ctx context.Context) {
 	if publicPemKeysJson != "" {
 		keys, err := publicPemKeysJsonToKeys(publicPemKeysJson)
 		if err != nil {
+			const msg = "Auth PEM public keys deserializing error"
+			sentryutils.CaptureError(ctx, err, msg)
 			if app.IsDevEnvironment() {
-				logger.Fatal(ctx, err).Msg("Auth PEM public keys deserializing error")
+				logger.Fatal(ctx, err).Msg(msg)
+			} else {
+				logger.Error(ctx, err).Msg(msg)
 			}
-			logger.Error(ctx, err).Msg("Auth PEM public keys deserializing error")
 			return
 		}
 		globalAuthKeys.setPemPublicKeys(keys)
@@ -57,10 +61,13 @@ func initKeys(ctx context.Context) {
 	if jwksEndpointsJson != "" {
 		keys, err := jwksEndpointsJsonToKeys(ctx, jwksEndpointsJson)
 		if err != nil {
+			const msg = "Auth JWKS public keys deserializing error"
+			sentryutils.CaptureError(ctx, err, msg)
 			if app.IsDevEnvironment() {
-				logger.Fatal(ctx, err).Msg("Auth JWKS public keys deserializing error")
+				logger.Fatal(ctx, err).Msg(msg)
+			} else {
+				logger.Error(ctx, err).Msg(msg)
 			}
-			logger.Error(ctx, err).Msg("Auth JWKS public keys deserializing error")
 			return
 		}
 		globalAuthKeys.setJwksPublicKeys(keys)
@@ -160,7 +167,9 @@ func HandleJWT(next http.Handler) http.Handler {
 func addClaimsToContext(ctx context.Context, claims jwt.MapClaims) context.Context {
 	claimsJson, err := utils.JsonSerialize(claims)
 	if err != nil {
-		logger.Error(ctx, err).Msg("JWT claims serialization error")
+		const msg = "JWT claims serialization error"
+		sentryutils.CaptureError(ctx, err, msg)
+		logger.Error(ctx, err).Msg(msg)
 		return ctx
 	}
 	return context.WithValue(ctx, jwtClaims, string(claimsJson))

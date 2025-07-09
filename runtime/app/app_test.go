@@ -11,22 +11,12 @@ package app_test
 
 import (
 	"os"
-	"path"
 	"testing"
 
 	"github.com/fatih/color"
 	"github.com/hypermodeinc/modus/runtime/app"
 )
 
-func TestGetRootSourcePath(t *testing.T) {
-	cwd, _ := os.Getwd()
-	expectedPath := path.Dir(cwd) + "/"
-	actualPath := app.GetRootSourcePath()
-
-	if actualPath != expectedPath {
-		t.Errorf("Expected path: %s, but got: %s", expectedPath, actualPath)
-	}
-}
 func TestIsShuttingDown(t *testing.T) {
 	if app.IsShuttingDown() {
 		t.Errorf("Expected initial state to be not shutting down")

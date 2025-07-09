@@ -15,8 +15,8 @@ import (
 
 	"github.com/hypermodeinc/modus/lib/manifest"
 	"github.com/hypermodeinc/modus/runtime/logger"
+	"github.com/hypermodeinc/modus/runtime/sentryutils"
 	"github.com/hypermodeinc/modus/runtime/storage"
-	"github.com/hypermodeinc/modus/runtime/utils"
 )
 
 const manifestFileName = "modus.json"
@@ -44,7 +44,9 @@ func MonitorManifestFile(ctx context.Context) {
 		}
 
 		if err := loadManifest(ctx); err != nil {
-			logger.Error(ctx, err).Str("filename", file.Name).Msg("Failed to load manifest file.")
+			const msg = "Failed to load manifest file."
+			sentryutils.CaptureError(ctx, err, msg, sentryutils.WithData("filename", file.Name))
+			logger.Error(ctx, err).Str("filename", file.Name).Msg(msg)
 			return err
 		}
 
@@ -58,7 +60,9 @@ func MonitorManifestFile(ctx context.Context) {
 		if file.Name == manifestFileName {
 			logger.Warn(ctx).Str("filename", file.Name).Msg("Manifest file removed.")
 			if err := unloadManifest(ctx); err != nil {
-				logger.Error(ctx, err).Str("filename", file.Name).Msg("Failed to unload manifest file.")
+				const msg = "Failed to unload manifest file."
+				sentryutils.CaptureError(ctx, err, msg, sentryutils.WithData("filename", file.Name))
+				logger.Error(ctx, err).Str("filename", file.Name).Msg(msg)
 				return err
 			}
 		}
@@ -68,7 +72,7 @@ func MonitorManifestFile(ctx context.Context) {
 }
 
 func loadManifest(ctx context.Context) error {
-	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+	span, ctx := sentryutils.NewSpanForCurrentFunc(ctx)
 	defer span.Finish()
 
 	bytes, err := storage.GetFileContents(ctx, manifestFileName)

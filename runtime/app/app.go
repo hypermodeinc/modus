@@ -11,9 +11,7 @@ package app
 
 import (
 	"os"
-	"path"
 	"path/filepath"
-	"runtime"
 	"strings"
 	"sync"
 
@@ -74,17 +72,6 @@ func SetShuttingDown() {
 	mu.Lock()
 	defer mu.Unlock()
 	shuttingDown = true
-}
-
-// GetRootSourcePath returns the root path of the source code.
-// It is used to trim the paths in stack traces when included in utils.
-func GetRootSourcePath() string {
-	_, filename, _, ok := runtime.Caller(0)
-	if !ok {
-		return ""
-	}
-
-	return path.Dir(path.Dir(filename)) + "/"
 }
 
 func ModusHomeDir() string {

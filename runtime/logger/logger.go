@@ -123,14 +123,8 @@ func Warn(ctx context.Context, errs ...error) *zerolog.Event {
 		if err == nil {
 			return Get(ctx).Warn()
 		}
-		utils.CaptureWarning(ctx, err)
 		return Get(ctx).Warn().Err(err)
 	default:
-		for _, err := range errs {
-			if err != nil {
-				utils.CaptureWarning(ctx, err)
-			}
-		}
 		return Get(ctx).Warn().Errs("errors", errs)
 	}
 }
@@ -144,14 +138,8 @@ func Error(ctx context.Context, errs ...error) *zerolog.Event {
 		if err == nil {
 			return Get(ctx).Error()
 		}
-		utils.CaptureError(ctx, err)
 		return Get(ctx).Err(err)
 	default:
-		for _, err := range errs {
-			if err != nil {
-				utils.CaptureError(ctx, err)
-			}
-		}
 		return Get(ctx).Error().Errs("errors", errs)
 	}
 }
@@ -165,14 +153,8 @@ func Fatal(ctx context.Context, errs ...error) *zerolog.Event {
 		if err == nil {
 			return Get(ctx).Fatal()
 		}
-		utils.CaptureError(ctx, err)
 		return Get(ctx).Fatal().Err(err)
 	default:
-		for _, err := range errs {
-			if err != nil {
-				utils.CaptureError(ctx, err)
-			}
-		}
 		return Get(ctx).Fatal().Errs("errors", errs)
 	}
 }

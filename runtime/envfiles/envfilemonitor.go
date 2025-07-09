@@ -13,6 +13,7 @@ import (
 	"context"
 
 	"github.com/hypermodeinc/modus/runtime/logger"
+	"github.com/hypermodeinc/modus/runtime/sentryutils"
 	"github.com/hypermodeinc/modus/runtime/storage"
 )
 
@@ -23,7 +24,9 @@ func MonitorEnvFiles(ctx context.Context) {
 		if len(errors) == 0 {
 			err := LoadEnvFiles(ctx)
 			if err != nil {
-				logger.Error(ctx, err).Msg("Failed to load env files.")
+				const msg = "Failed to load env files."
+				sentryutils.CaptureError(ctx, err, msg)
+				logger.Error(ctx, err).Msg(msg)
 			}
 		}
 	}

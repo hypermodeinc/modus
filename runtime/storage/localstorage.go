@@ -19,6 +19,7 @@ import (
 
 	"github.com/hypermodeinc/modus/runtime/app"
 	"github.com/hypermodeinc/modus/runtime/logger"
+	"github.com/hypermodeinc/modus/runtime/sentryutils"
 
 	"github.com/gofrs/flock"
 )
@@ -31,7 +32,9 @@ func (stg *localStorageProvider) initialize(ctx context.Context) {
 
 	stg.appPath = app.Config().AppPath()
 	if stg.appPath == "" {
-		logger.Fatal(ctx).Msg("The -appPath command line argument is required.  Exiting.")
+		const msg = "The -appPath command line argument is required.  Exiting."
+		sentryutils.CaptureError(ctx, nil, msg)
+		logger.Fatal(ctx).Msg(msg)
 	}
 
 	if _, err := os.Stat(stg.appPath); os.IsNotExist(err) {
@@ -40,8 +43,10 @@ func (stg *localStorageProvider) initialize(ctx context.Context) {
 			Msg("Creating app directory.")
 		err := os.MkdirAll(stg.appPath, 0755)
 		if err != nil {
-			logger.Fatal(ctx, err).
-				Msg("Failed to create local app directory.  Exiting.")
+			const msg = "Failed to create local app directory.  Exiting."
+			sentryutils.CaptureError(ctx, err, msg,
+				sentryutils.WithData("path", stg.appPath))
+			logger.Fatal(ctx, err).Msg(msg)
 		}
 	} else {
 		logger.Info(ctx).

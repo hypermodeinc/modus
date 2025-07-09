@@ -15,8 +15,11 @@ import (
 
 	"github.com/hypermodeinc/modus/runtime/app"
 	"github.com/hypermodeinc/modus/runtime/logger"
+	"github.com/hypermodeinc/modus/runtime/sentryutils"
 	"github.com/hypermodeinc/modus/runtime/utils"
 )
+
+const msg = "Failed to serialize health check response."
 
 var healthHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
@@ -32,7 +35,9 @@ var healthHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request
 
 	jsonBytes, err := utils.MakeJsonObject(data, true)
 	if err != nil {
-		logger.Error(r.Context(), err).Msg("Failed to serialize health check response.")
+		var ctx = r.Context()
+		logger.Error(ctx, err).Msg(msg)
+		sentryutils.CaptureError(ctx, err, msg)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}

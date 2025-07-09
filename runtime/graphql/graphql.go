@@ -22,6 +22,7 @@ import (
 	"github.com/hypermodeinc/modus/runtime/logger"
 	"github.com/hypermodeinc/modus/runtime/manifestdata"
 	"github.com/hypermodeinc/modus/runtime/pluginmanager"
+	"github.com/hypermodeinc/modus/runtime/sentryutils"
 	"github.com/hypermodeinc/modus/runtime/timezones"
 	"github.com/hypermodeinc/modus/runtime/utils"
 	"github.com/hypermodeinc/modus/runtime/wasmhost"
@@ -141,6 +142,7 @@ func handleGraphQLRequest(w http.ResponseWriter, r *http.Request) {
 	resultWriter := gql.NewEngineResultWriter()
 	if operationType, err := gqlRequest.OperationType(); err != nil {
 		msg := "Failed to determine operation type from GraphQL request."
+		sentryutils.CaptureError(ctx, err, msg)
 		logger.Error(ctx, err).Msg(msg)
 		http.Error(w, msg, http.StatusBadRequest)
 		return
@@ -187,6 +189,7 @@ func handleGraphQLRequest(w http.ResponseWriter, r *http.Request) {
 			if len(report.InternalErrors) > 0 {
 				// Log internal errors, but don't return them to the client
 				msg := "Failed to execute GraphQL operation."
+				sentryutils.CaptureError(ctx, err, msg)
 				logger.Error(ctx, err).Msg(msg)
 				http.Error(w, msg, http.StatusInternalServerError)
 				return
@@ -214,6 +217,7 @@ func handleGraphQLRequest(w http.ResponseWriter, r *http.Request) {
 			}
 		} else {
 			msg := "Failed to execute GraphQL operation."
+			sentryutils.CaptureError(ctx, err, msg)
 			logger.Error(ctx, err).Msg(msg)
 			http.Error(w, fmt.Sprintf("%s\n%v", msg, err), http.StatusInternalServerError)
 		}
@@ -228,6 +232,7 @@ func handleGraphQLRequest(w http.ResponseWriter, r *http.Request) {
 
 	if response, err := addOutputToResponse(resultWriter.Bytes(), xsync.ToPlainMap(output)); err != nil {
 		msg := "Failed to add function output to response."
+		sentryutils.CaptureError(ctx, err, msg)
 		logger.Error(ctx, err).Msg(msg)
 		http.Error(w, fmt.Sprintf("%s\n%v", msg, err), http.StatusInternalServerError)
 	} else {

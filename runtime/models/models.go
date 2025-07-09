@@ -22,6 +22,7 @@ import (
 	"github.com/hypermodeinc/modus/runtime/httpclient"
 	"github.com/hypermodeinc/modus/runtime/manifestdata"
 	"github.com/hypermodeinc/modus/runtime/secrets"
+	"github.com/hypermodeinc/modus/runtime/sentryutils"
 	"github.com/hypermodeinc/modus/runtime/utils"
 )
 
@@ -64,7 +65,7 @@ func InvokeModel(ctx context.Context, modelName string, input string) (string, e
 }
 
 func PostToModelEndpoint[TResult any](ctx context.Context, model *manifest.ModelInfo, payload any) (TResult, error) {
-	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+	span, ctx := sentryutils.NewSpanForCurrentFunc(ctx)
 	defer span.Finish()
 
 	connInfo, err := httpclient.GetHttpConnectionInfo(model.Connection)

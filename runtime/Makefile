@@ -1,6 +1,6 @@
 EXECUTABLE := modus_runtime
 VERSION := $(shell git describe --tags --always --match 'runtime/*' | sed 's/^runtime\///')
-LDFLAGS := -s -w -X github.com/hypermodeinc/modus/runtime/app.version=$(VERSION)
+LDFLAGS := -X github.com/hypermodeinc/modus/runtime/app.version=$(VERSION)
 
 ifneq ($(OS), Windows_NT)
 	OS := $(shell uname -s)

@@ -17,7 +17,7 @@ import (
 
 	"github.com/hypermodeinc/modus/runtime/app"
 	"github.com/hypermodeinc/modus/runtime/logger"
-	"github.com/hypermodeinc/modus/runtime/utils"
+	"github.com/hypermodeinc/modus/runtime/sentryutils"
 
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
@@ -31,7 +31,7 @@ type awsStorageProvider struct {
 }
 
 func (stg *awsStorageProvider) initialize(ctx context.Context) {
-	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+	span, ctx := sentryutils.NewSpanForCurrentFunc(ctx)
 	defer span.Finish()
 
 	appConfig := app.Config()
@@ -39,18 +39,24 @@ func (stg *awsStorageProvider) initialize(ctx context.Context) {
 	stg.s3Path = appConfig.S3Path()
 
 	if stg.s3Bucket == "" {
-		logger.Fatal(ctx).Msg("An S3 bucket is required when using AWS storage.  Exiting.")
+		const msg = "An S3 bucket is required when using AWS storage.  Exiting."
+		sentryutils.CaptureError(ctx, nil, msg)
+		logger.Fatal(ctx).Msg(msg)
 	}
 
 	cfg, err := config.LoadDefaultConfig(ctx)
 	if err != nil {
-		logger.Fatal(ctx, err).Msg("Failed to load AWS configuration.  Exiting.")
+		const msg = "Failed to load AWS configuration.  Exiting."
+		sentryutils.CaptureError(ctx, err, msg)
+		logger.Fatal(ctx, err).Msg(msg)
 	}
 
 	client := sts.NewFromConfig(cfg)
 	identity, err := client.GetCallerIdentity(ctx, &sts.GetCallerIdentityInput{})
 	if err != nil {
-		logger.Fatal(ctx, err).Msg("Failed to get AWS caller identity.  Exiting.")
+		const msg = "Failed to get AWS caller identity.  Exiting."
+		sentryutils.CaptureError(ctx, err, msg)
+		logger.Fatal(ctx, err).Msg(msg)
 	}
 
 	stg.s3Client = s3.NewFromConfig(cfg)

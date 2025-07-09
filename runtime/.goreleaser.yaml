@@ -24,8 +24,6 @@ builds:
       - arm64
     mod_timestamp: "{{ .CommitTimestamp }}"
     ldflags:
-      - -s
-      - -w
       - -X github.com/hypermodeinc/modus/runtime/app.version={{.Version}}
       - >-
         {{- if eq .Os "windows"}}

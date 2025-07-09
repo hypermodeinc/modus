@@ -17,8 +17,8 @@ import (
 	"github.com/hypermodeinc/modus/runtime/db"
 	"github.com/hypermodeinc/modus/runtime/logger"
 	"github.com/hypermodeinc/modus/runtime/plugins"
+	"github.com/hypermodeinc/modus/runtime/sentryutils"
 	"github.com/hypermodeinc/modus/runtime/storage"
-	"github.com/hypermodeinc/modus/runtime/utils"
 	"github.com/hypermodeinc/modus/runtime/wasmhost"
 )
 
@@ -26,9 +26,9 @@ func monitorPlugins(ctx context.Context) {
 	loadPluginFile := func(fi storage.FileInfo) error {
 		err := loadPlugin(ctx, fi.Name)
 		if err != nil {
-			logger.Error(ctx, err).
-				Str("filename", fi.Name).
-				Msg("Failed to load plugin.")
+			const msg = "Failed to load plugin."
+			sentryutils.CaptureError(ctx, err, msg, sentryutils.WithData("filename", fi.Name))
+			logger.Error(ctx, err).Str("filename", fi.Name).Msg(msg)
 		}
 		return err
 	}
@@ -39,9 +39,9 @@ func monitorPlugins(ctx context.Context) {
 	sm.Removed = func(fi storage.FileInfo) error {
 		err := unloadPlugin(ctx, fi.Name)
 		if err != nil {
-			logger.Error(ctx, err).
-				Str("filename", fi.Name).
-				Msg("Failed to unload plugin.")
+			const msg = "Failed to unload plugin."
+			sentryutils.CaptureError(ctx, err, msg, sentryutils.WithData("filename", fi.Name))
+			logger.Error(ctx, err).Str("filename", fi.Name).Msg(msg)
 		}
 		return err
 	}
@@ -49,7 +49,7 @@ func monitorPlugins(ctx context.Context) {
 }
 
 func loadPlugin(ctx context.Context, filename string) error {
-	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+	span, ctx := sentryutils.NewSpanForCurrentFunc(ctx)
 	defer span.Finish()
 
 	// Load the binary content of the plugin.
@@ -68,9 +68,9 @@ func loadPlugin(ctx context.Context, filename string) error {
 	// Get the metadata for the plugin.
 	md, err := metadata.GetMetadataFromWasm(bytes)
 	if err == metadata.ErrMetadataNotFound {
-		logger.Error(ctx).
-			Bool("user_visible", true).
-			Msg("Metadata not found.  Please recompile using the latest version of the Modus SDK.")
+		const msg = "Metadata not found.  Please recompile using the latest version of the Modus SDK."
+		sentryutils.CaptureError(ctx, err, msg)
+		logger.Error(ctx).Bool("user_visible", true).Msg(msg)
 		return err
 	} else if err != nil {
 		return err
@@ -146,7 +146,7 @@ func logPluginLoaded(ctx context.Context, plugin *plugins.Plugin) {
 }
 
 func unloadPlugin(ctx context.Context, filename string) error {
-	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+	span, ctx := sentryutils.NewSpanForCurrentFunc(ctx)
 	defer span.Finish()
 
 	p, found := globalPluginRegistry.GetByFile(filename)

@@ -20,6 +20,7 @@ import (
 	"github.com/hypermodeinc/modus/runtime/functions"
 	"github.com/hypermodeinc/modus/runtime/logger"
 	"github.com/hypermodeinc/modus/runtime/metrics"
+	"github.com/hypermodeinc/modus/runtime/sentryutils"
 	"github.com/hypermodeinc/modus/runtime/utils"
 
 	"github.com/rs/xid"
@@ -77,7 +78,7 @@ func (host *wasmHost) CallFunctionByName(ctx context.Context, fnName string, par
 }
 
 func (host *wasmHost) CallFunction(ctx context.Context, fnInfo functions.FunctionInfo, parameters map[string]any) (ExecutionInfo, error) {
-	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+	span, ctx := sentryutils.NewSpanForCurrentFunc(ctx)
 	defer span.Finish()
 
 	plugin := fnInfo.Plugin()
@@ -87,7 +88,6 @@ func (host *wasmHost) CallFunction(ctx context.Context, fnInfo functions.Functio
 
 	mod, err := host.GetModuleInstance(ctx, plugin, buffers)
 	if err != nil {
-		logger.Error(ctx, err).Msg("Error getting module instance.")
 		return nil, err
 	}
 	defer mod.Close(ctx)
@@ -96,7 +96,7 @@ func (host *wasmHost) CallFunction(ctx context.Context, fnInfo functions.Functio
 }
 
 func (host *wasmHost) CallFunctionInModule(ctx context.Context, mod wasm.Module, buffers utils.OutputBuffers, fnInfo functions.FunctionInfo, parameters map[string]any) (ExecutionInfo, error) {
-	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+	span, ctx := sentryutils.NewSpanForCurrentFunc(ctx)
 	defer span.Finish()
 
 	executionId := xid.New().String()
@@ -179,7 +179,7 @@ func (host *wasmHost) CallFunctionInModule(ctx context.Context, mod wasm.Module,
 			fmt.Fprintln(os.Stderr, err)
 		}
 		// NOTE: Errors of this type should not be user-visible, as they were caused by some Runtime issue, not the user's code.
-		// This will also ensure the error is reported to Sentry.
+		sentryutils.CaptureError(ctx, err, "Error while executing function.", sentryutils.WithData("function", fnName))
 		logger.Error(ctx, err).
 			Str("function", fnName).
 			Dur("duration_ms", duration).

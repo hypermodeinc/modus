@@ -15,7 +15,7 @@ import (
 
 	"github.com/hypermodeinc/modus/lib/metadata"
 	"github.com/hypermodeinc/modus/runtime/langsupport"
-	"github.com/hypermodeinc/modus/runtime/utils"
+	"github.com/hypermodeinc/modus/runtime/sentryutils"
 
 	wasm "github.com/tetratelabs/wazero/api"
 )
@@ -98,7 +98,7 @@ func (p *planner) GetHandler(ctx context.Context, typeName string) (langsupport.
 }
 
 func (p *planner) GetPlan(ctx context.Context, fnMeta *metadata.Function, fnDef wasm.FunctionDefinition) (langsupport.ExecutionPlan, error) {
-	span, ctx := utils.NewSentrySpanForCurrentFunc(ctx)
+	span, ctx := sentryutils.NewSpanForCurrentFunc(ctx)
 	defer span.Finish()
 
 	paramHandlers := make([]langsupport.TypeHandler, len(fnMeta.Parameters))
@@ -124,7 +124,8 @@ func (p *planner) GetPlan(ctx context.Context, fnMeta *metadata.Function, fnDef 
 		return nil, err
 	}
 
-	plan := langsupport.NewExecutionPlan(fnDef, fnMeta, paramHandlers, resultHandlers, indirectResultSize)
+	pluginName := p.metadata.Plugin
+	plan := langsupport.NewExecutionPlan(fnDef, fnMeta, paramHandlers, resultHandlers, indirectResultSize, pluginName)
 	return plan, nil
 }
 
