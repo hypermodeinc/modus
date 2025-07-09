@@ -48,7 +48,7 @@ require (
 	github.com/wundergraph/graphql-go-tools/v2 v2.0.0-rc.198
 	github.com/xo/dburl v0.23.8
 	golang.org/x/exp v0.0.0-20250620022241-b7579e27df2b
-	golang.org/x/sys v0.33.0
+	golang.org/x/sys v0.34.0
 	google.golang.org/grpc v1.73.0
 	google.golang.org/protobuf v1.36.6
 	k8s.io/api v0.33.2
