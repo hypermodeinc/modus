@@ -57,6 +57,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # copy runtime binary from the build phase
 COPY --from=builder /src/runtime/modus_runtime /usr/bin/modus_runtime
 
+# copy the runtime source code to the container (for Sentry source context)
+# keep only go source files and remove tests
+COPY ./runtime /src/runtime/
+COPY ./lib /src/lib/
+RUN find /src -type f ! -name '*.go' -delete && \
+    find /src -type f -name '*_test.go' -delete && \
+    find /src -type d -name '*test*' -exec rm -rf {} +
+
 # update certificates and time zones every build
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
     ca-certificates \
