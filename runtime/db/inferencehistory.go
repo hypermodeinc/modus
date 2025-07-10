@@ -15,7 +15,6 @@ import (
 	"time"
 
 	"github.com/hypermodeinc/modus/lib/manifest"
-	"github.com/hypermodeinc/modus/runtime/metrics"
 	"github.com/hypermodeinc/modus/runtime/plugins"
 	"github.com/hypermodeinc/modus/runtime/secrets"
 	"github.com/hypermodeinc/modus/runtime/utils"
@@ -26,12 +25,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-var globalRuntimePostgresWriter *runtimePostgresWriter = &runtimePostgresWriter{
-	dbpool: nil,
-	buffer: make(chan inferenceHistory, chanSize),
-	quit:   make(chan struct{}),
-	done:   make(chan struct{}),
-}
+var globalRuntimePostgresWriter *runtimePostgresWriter = &runtimePostgresWriter{}
 
 type Plugin struct {
 	Gid        uint64 `json:"gid,omitempty"`
@@ -58,9 +52,6 @@ type Inference struct {
 	Plugin     Plugin `json:"plugin"`
 }
 
-const batchSize = 100
-const chanSize = 10000
-
 const pluginsTable = "plugins"
 const inferencesTable = "inferences"
 
@@ -74,7 +65,7 @@ type inferenceHistory struct {
 	function *string
 }
 
-func (w *runtimePostgresWriter) GetPool(ctx context.Context) (*pgxpool.Pool, error) {
+func (w *runtimePostgresWriter) getPool(ctx context.Context) (*pgxpool.Pool, error) {
 	var initErr error
 	w.once.Do(func() {
 		if !secrets.HasSecret(ctx, "MODUS_DB") {
@@ -100,47 +91,6 @@ func (w *runtimePostgresWriter) GetPool(ctx context.Context) (*pgxpool.Pool, err
 		return nil, initErr
 	} else {
 		return nil, errDbNotConfigured
-	}
-}
-
-func (w *runtimePostgresWriter) Write(data inferenceHistory) {
-	select {
-	case w.buffer <- data:
-	default:
-		metrics.DroppedInferencesNum.Inc()
-	}
-}
-
-func (w *runtimePostgresWriter) worker(ctx context.Context) {
-	var batchIndex int
-	var batch [batchSize]inferenceHistory
-	timer := time.NewTimer(inferenceRefresherInterval)
-	defer timer.Stop()
-
-	for {
-		select {
-		case data := <-w.buffer:
-			batch[batchIndex] = data
-			batchIndex++
-			if batchIndex == batchSize {
-				WriteInferenceHistoryToDB(ctx, batch[:batchSize])
-				batchIndex = 0
-
-				// we need to drain the timer channel to prevent the timer from firing
-				if !timer.Stop() {
-					<-timer.C
-				}
-				timer.Reset(inferenceRefresherInterval)
-			}
-		case <-timer.C:
-			WriteInferenceHistoryToDB(ctx, batch[:batchIndex])
-			batchIndex = 0
-			timer.Reset(inferenceRefresherInterval)
-		case <-w.quit:
-			WriteInferenceHistoryToDB(ctx, batch[:batchIndex])
-			close(w.done)
-			return
-		}
 	}
 }
 
@@ -186,16 +136,38 @@ func getInferenceDataJson(val any) ([]byte, error) {
 }
 
 func WritePluginInfo(ctx context.Context, plugin *plugins.Plugin) {
-
+	var err error
 	if useModusDB() {
-		err := writePluginInfoToModusdb(ctx, plugin)
-		if err != nil {
-			logDbError(ctx, err, "Plugin info not written to modusgraph.")
-		}
-		return
+		err = writePluginInfoToModusDB(ctx, plugin)
+	} else {
+		err = writePluginInfoToPostgresDB(ctx, plugin)
 	}
 
-	err := WithTx(ctx, func(tx pgx.Tx) error {
+	if err != nil {
+		logDbError(ctx, err, "Plugin info not written to database.")
+	}
+}
+
+func writePluginInfoToModusDB(ctx context.Context, plugin *plugins.Plugin) error {
+	if globalModusDbEngine == nil {
+		return nil
+	}
+	_, _, err := modusgraph.Create(ctx, globalModusDbEngine, Plugin{
+		Id:         plugin.Id,
+		Name:       plugin.Metadata.Name(),
+		Version:    plugin.Metadata.Version(),
+		Language:   plugin.Language.Name(),
+		SdkVersion: plugin.Metadata.SdkVersion(),
+		BuildId:    plugin.Metadata.BuildId,
+		BuildTime:  plugin.Metadata.BuildTime,
+		GitRepo:    plugin.Metadata.GitRepo,
+		GitCommit:  plugin.Metadata.GitCommit,
+	})
+	return err
+}
+
+func writePluginInfoToPostgresDB(ctx context.Context, plugin *plugins.Plugin) error {
+	return WithTx(ctx, func(tx pgx.Tx) error {
 
 		// Check if the plugin is already in the database
 		// If so, update the ID to match
@@ -243,28 +215,6 @@ ON CONFLICT (build_id) DO NOTHING`,
 
 		return nil
 	})
-
-	if err != nil {
-		logDbError(ctx, err, "Plugin info not written to database.")
-	}
-}
-
-func writePluginInfoToModusdb(ctx context.Context, plugin *plugins.Plugin) error {
-	if GlobalModusDbEngine == nil {
-		return nil
-	}
-	_, _, err := modusgraph.Create[Plugin](ctx, GlobalModusDbEngine, Plugin{
-		Id:         plugin.Id,
-		Name:       plugin.Metadata.Name(),
-		Version:    plugin.Metadata.Version(),
-		Language:   plugin.Language.Name(),
-		SdkVersion: plugin.Metadata.SdkVersion(),
-		BuildId:    plugin.Metadata.BuildId,
-		BuildTime:  plugin.Metadata.BuildTime,
-		GitRepo:    plugin.Metadata.GitRepo,
-		GitCommit:  plugin.Metadata.GitCommit,
-	})
-	return err
 }
 
 func getPluginId(ctx context.Context, tx pgx.Tx, buildId string) (string, error) {
@@ -293,7 +243,7 @@ func WriteInferenceHistory(ctx context.Context, model *manifest.ModelInfo, input
 		function = &functionName
 	}
 
-	globalRuntimePostgresWriter.Write(inferenceHistory{
+	data := inferenceHistory{
 		model:    model,
 		input:    input,
 		output:   output,
@@ -301,116 +251,99 @@ func WriteInferenceHistory(ctx context.Context, model *manifest.ModelInfo, input
 		end:      end,
 		pluginId: pluginId,
 		function: function,
-	})
-}
-
-func WriteInferenceHistoryToDB(ctx context.Context, batch []inferenceHistory) {
-	if len(batch) == 0 {
-		return
 	}
 
+	var err error
 	if useModusDB() {
-		err := writeInferenceHistoryToModusDb(ctx, batch)
-		if err != nil {
-			logDbError(ctx, err, "Inference history not written to modusgraph.")
-		}
-		return
+		err = writeInferenceHistoryToModusDB(ctx, data)
+	} else {
+		err = writeInferenceHistoryToPostgresDB(ctx, data)
 	}
-
-	err := WithTx(ctx, func(tx pgx.Tx) error {
-		b := &pgx.Batch{}
-		for _, data := range batch {
-			input, output, err := data.getJson()
-			if err != nil {
-				return err
-			}
-			query := fmt.Sprintf(`INSERT INTO %s
-(id, model_hash, input, output, started_at, duration_ms, plugin_id, function)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-`, inferencesTable)
-			args := []any{
-				utils.GenerateUUIDv7(),
-				data.model.Hash(),
-				input,
-				output,
-				data.start,
-				data.end.Sub(data.start).Milliseconds(),
-				data.pluginId,
-				data.function,
-			}
-			b.Queue(query, args...)
-		}
-
-		br := tx.SendBatch(ctx, b)
-		defer br.Close()
-
-		for range batch {
-			_, err := br.Exec()
-			if err != nil {
-				return err
-			}
-		}
-
-		return nil
-	})
 
 	if err != nil {
 		logDbError(ctx, err, "Inference history not written to database.")
 	}
 }
 
-func writeInferenceHistoryToModusDb(ctx context.Context, batch []inferenceHistory) error {
-	if GlobalModusDbEngine == nil {
+func writeInferenceHistoryToModusDB(ctx context.Context, data inferenceHistory) error {
+	if globalModusDbEngine == nil {
 		return nil
 	}
-	for _, data := range batch {
+
+	input, output, err := data.getJson()
+	if err != nil {
+		return err
+	}
+
+	var funcStr string
+	var pluginId string
+	if data.function != nil {
+		funcStr = *data.function
+	}
+	if data.pluginId != nil {
+		pluginId = *data.pluginId
+	}
+
+	_, _, err = modusgraph.Create(ctx, globalModusDbEngine, Inference{
+		Id:         utils.GenerateUUIDv7(),
+		ModelHash:  data.model.Hash(),
+		Input:      string(input),
+		Output:     string(output),
+		StartedAt:  data.start.Format(utils.TimeFormat),
+		DurationMs: data.end.Sub(data.start).Milliseconds(),
+		Function:   funcStr,
+		Plugin: Plugin{
+			Id: pluginId,
+		},
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func writeInferenceHistoryToPostgresDB(ctx context.Context, data inferenceHistory) error {
+	return WithTx(ctx, func(tx pgx.Tx) error {
 		input, output, err := data.getJson()
 		if err != nil {
 			return err
 		}
-		var funcStr string
-		var pluginId string
-		if data.function == nil {
-			funcStr = ""
-		} else {
-			funcStr = *data.function
+		query := fmt.Sprintf(`INSERT INTO %s
+(id, model_hash, input, output, started_at, duration_ms, plugin_id, function)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+`, inferencesTable)
+		args := []any{
+			utils.GenerateUUIDv7(),
+			data.model.Hash(),
+			input,
+			output,
+			data.start,
+			data.end.Sub(data.start).Milliseconds(),
+			data.pluginId,
+			data.function,
 		}
-		if data.pluginId == nil {
-			pluginId = ""
-		} else {
-			pluginId = *data.pluginId
-		}
-		_, _, err = modusgraph.Create[Inference](ctx, GlobalModusDbEngine, Inference{
-			Id:         utils.GenerateUUIDv7(),
-			ModelHash:  data.model.Hash(),
-			Input:      string(input),
-			Output:     string(output),
-			StartedAt:  data.start.Format(utils.TimeFormat),
-			DurationMs: data.end.Sub(data.start).Milliseconds(),
-			Function:   funcStr,
-			Plugin: Plugin{
-				Id: pluginId,
-			},
-		})
-		if err != nil {
+
+		if _, err := tx.Exec(ctx, query, args...); err != nil {
 			return err
 		}
-	}
-	return nil
+
+		return nil
+	})
 }
 
 func QueryPlugins(ctx context.Context) ([]Plugin, error) {
-	if GlobalModusDbEngine == nil {
+	if globalModusDbEngine == nil {
 		return nil, nil
 	}
-	_, plugins, err := modusgraph.Query[Plugin](ctx, GlobalModusDbEngine, modusgraph.QueryParams{})
+	_, plugins, err := modusgraph.Query[Plugin](ctx, globalModusDbEngine, modusgraph.QueryParams{})
 	return plugins, err
 }
 
 func QueryInferences(ctx context.Context) ([]Inference, error) {
-	if GlobalModusDbEngine == nil {
+	if globalModusDbEngine == nil {
 		return nil, nil
 	}
-	_, inferences, err := modusgraph.Query[Inference](ctx, GlobalModusDbEngine, modusgraph.QueryParams{})
+	_, inferences, err := modusgraph.Query[Inference](ctx, globalModusDbEngine, modusgraph.QueryParams{})
 	return inferences, err
 }

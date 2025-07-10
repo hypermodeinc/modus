@@ -66,7 +66,7 @@ func writeAgentStateToModusDB(ctx context.Context, state AgentState) error {
 	span, ctx := sentryutils.NewSpanForCurrentFunc(ctx)
 	defer span.Finish()
 
-	gid, _, _, err := modusgraph.Upsert(ctx, GlobalModusDbEngine, state)
+	gid, _, _, err := modusgraph.Upsert(ctx, globalModusDbEngine, state)
 	state.Gid = gid
 
 	return err
@@ -93,7 +93,7 @@ func getAgentStateFromModusDB(ctx context.Context, id string) (*AgentState, erro
 	span, ctx := sentryutils.NewSpanForCurrentFunc(ctx)
 	defer span.Finish()
 
-	_, result, err := modusgraph.Get[AgentState](ctx, GlobalModusDbEngine, modusgraph.ConstrainedField{
+	_, result, err := modusgraph.Get[AgentState](ctx, globalModusDbEngine, modusgraph.ConstrainedField{
 		Key:   "id",
 		Value: id,
 	})
@@ -108,7 +108,7 @@ func queryActiveAgentsFromModusDB(ctx context.Context) ([]AgentState, error) {
 	span, ctx := sentryutils.NewSpanForCurrentFunc(ctx)
 	defer span.Finish()
 
-	_, results, err := modusgraph.Query[AgentState](ctx, GlobalModusDbEngine, modusgraph.QueryParams{
+	_, results, err := modusgraph.Query[AgentState](ctx, globalModusDbEngine, modusgraph.QueryParams{
 		Filter: &modusgraph.Filter{
 			Not: &modusgraph.Filter{
 				Field: "status",
