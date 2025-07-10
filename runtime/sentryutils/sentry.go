@@ -209,11 +209,16 @@ func Recover(ctx context.Context, r any) {
 
 func CaptureError(ctx context.Context, err error, msg string, opts ...func(event *sentry.Event)) {
 	hub := ActiveHub(ctx)
+	client := hub.Client()
+	if client == nil {
+		return
+	}
+
 	var event *sentry.Event
 	if err == nil {
-		event = hub.Client().EventFromMessage(msg, sentry.LevelError)
+		event = client.EventFromMessage(msg, sentry.LevelError)
 	} else {
-		event = hub.Client().EventFromException(err, sentry.LevelError)
+		event = client.EventFromException(err, sentry.LevelError)
 		event.Message = msg
 	}
 	for _, opt := range opts {
@@ -224,11 +229,16 @@ func CaptureError(ctx context.Context, err error, msg string, opts ...func(event
 
 func CaptureWarning(ctx context.Context, err error, msg string, opts ...func(event *sentry.Event)) {
 	hub := ActiveHub(ctx)
+	client := hub.Client()
+	if client == nil {
+		return
+	}
+
 	var event *sentry.Event
 	if err == nil {
-		event = hub.Client().EventFromMessage(msg, sentry.LevelWarning)
+		event = client.EventFromMessage(msg, sentry.LevelWarning)
 	} else {
-		event = hub.Client().EventFromException(err, sentry.LevelWarning)
+		event = client.EventFromException(err, sentry.LevelWarning)
 		event.Message = msg
 	}
 	for _, opt := range opts {
