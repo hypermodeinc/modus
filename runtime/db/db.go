@@ -15,7 +15,6 @@ import (
 	"os"
 	"strconv"
 	"sync"
-	"time"
 
 	"github.com/hypermodeinc/modus/runtime/app"
 	"github.com/hypermodeinc/modus/runtime/logger"
@@ -28,24 +27,16 @@ import (
 
 var errDbNotConfigured = errors.New("database not configured")
 
-const inferenceRefresherInterval = 5 * time.Second
-
 type runtimePostgresWriter struct {
 	dbpool *pgxpool.Pool
-	buffer chan inferenceHistory
-	quit   chan struct{}
-	done   chan struct{}
 	once   sync.Once
 }
 
 func Stop(ctx context.Context) {
-	pool, _ := globalRuntimePostgresWriter.GetPool(ctx)
+	pool, _ := globalRuntimePostgresWriter.getPool(ctx)
 	if pool == nil {
 		return
 	}
-
-	close(globalRuntimePostgresWriter.quit)
-	<-globalRuntimePostgresWriter.done
 	pool.Close()
 }
 
@@ -67,16 +58,14 @@ func Initialize(ctx context.Context) {
 		return
 	}
 
-	// this will initialize the pool and start the worker
-	_, err := globalRuntimePostgresWriter.GetPool(ctx)
+	_, err := globalRuntimePostgresWriter.getPool(ctx)
 	if err != nil {
 		logger.Warn(ctx, err).Msg("Metadata database is not available.")
 	}
-	go globalRuntimePostgresWriter.worker(ctx)
 }
 
 func GetTx(ctx context.Context) (pgx.Tx, error) {
-	pool, err := globalRuntimePostgresWriter.GetPool(ctx)
+	pool, err := globalRuntimePostgresWriter.getPool(ctx)
 	if err != nil {
 		return nil, err
 	}

@@ -24,7 +24,7 @@ import (
 	"github.com/hypermodeinc/modusgraph"
 )
 
-var GlobalModusDbEngine *modusgraph.Engine
+var globalModusDbEngine *modusgraph.Engine
 
 func InitModusDb(ctx context.Context) {
 	if !useModusDB() {
@@ -50,13 +50,13 @@ func InitModusDb(ctx context.Context) {
 		sentryutils.CaptureError(ctx, err, msg)
 		logger.Fatal(ctx, err).Msg(msg)
 	} else {
-		GlobalModusDbEngine = eng
+		globalModusDbEngine = eng
 	}
 }
 
 func CloseModusDb(ctx context.Context) {
-	if GlobalModusDbEngine != nil {
-		GlobalModusDbEngine.Close()
+	if globalModusDbEngine != nil {
+		globalModusDbEngine.Close()
 	}
 }
 

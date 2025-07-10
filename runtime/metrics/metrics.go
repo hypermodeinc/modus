@@ -98,13 +98,6 @@ var (
 		},
 		[]string{"function_name"},
 	)
-
-	DroppedInferencesNum = prometheus.NewCounter(
-		prometheus.CounterOpts{
-			Name: "runtime_dropped_inferences_num",
-			Help: "Number of dropped inference requests",
-		},
-	)
 )
 
 func init() {
@@ -116,7 +109,6 @@ func init() {
 		FunctionExecutionsNum,
 		FunctionExecutionDurationMilliseconds,
 		FunctionExecutionDurationMillisecondsSummary,
-		DroppedInferencesNum,
 	)
 }
 
