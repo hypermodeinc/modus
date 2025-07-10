@@ -36,7 +36,7 @@ COPY --from=node-builder /src/dist ./explorer/content/dist
 
 # build the runtime binary
 ARG TARGETOS TARGETARCH RUNTIME_RELEASE_VERSION
-RUN GOOS=$TARGETOS GOARCH=$TARGETARCH go build -o modus_runtime -ldflags "-s -w -X github.com/hypermodeinc/modus/runtime/app.version=$RUNTIME_RELEASE_VERSION" .
+RUN GOOS=$TARGETOS GOARCH=$TARGETARCH go build -o modus_runtime -ldflags "-X github.com/hypermodeinc/modus/runtime/app.version=$RUNTIME_RELEASE_VERSION" .
 
 # build the container image
 FROM ubuntu:24.04
