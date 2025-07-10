@@ -7,7 +7,8 @@ NOTE: all releases may include dependency updates, not specifically mentioned
 ## UNRELEASED
 
 - feat: integrate try-as library [#912](https://github.com/hypermodeinc/modus/pull/912)
-- feat: improve sentry usage [#931](https://github.com/hypermodeinc/modus/pull/931)
+- feat: improve sentry usage [#931](https://github.com/hypermodeinc/modus/pull/931) [#937](https://github.com/hypermodeinc/modus/pull/937)
+- fix: write inference history directly [#938](https://github.com/hypermodeinc/modus/pull/938)
 
 ## 2025-07-03 - Runtime v0.18.3
 
