@@ -26,31 +26,20 @@ import (
 
 const max_breadcrumbs = 100
 
+// NOTE: If this code is moved, adjust these constants accordingly.
+const thisPackageDepth = 1 // root is 0
+const thisPackagePath = "github.com/hypermodeinc/modus/runtime/sentryutils"
+
 var rootSourcePath = func() string {
-	pc, filename, _, ok := runtime.Caller(0)
+	_, filename, _, ok := runtime.Caller(0)
 	if !ok {
 		return ""
 	}
-
-	callerName := runtime.FuncForPC(pc).Name()
-	depth := strings.Count(callerName, "/") + 1
-	s := filename
-	for range depth {
-		s = path.Dir(s)
+	dir := path.Dir(filename)
+	for range thisPackageDepth {
+		dir = path.Dir(dir)
 	}
-	return s + "/"
-}()
-
-var thisPackagePath = func() string {
-	pc, _, _, ok := runtime.Caller(0)
-	if !ok {
-		return ""
-	}
-
-	callerName := runtime.FuncForPC(pc).Name()
-	i := max(strings.LastIndexByte(callerName, '/'), 0)
-	j := strings.IndexByte(callerName[i:], '.')
-	return callerName[0 : i+j]
+	return dir + "/"
 }()
 
 func InitializeSentry() {

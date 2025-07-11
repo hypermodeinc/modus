@@ -7,6 +7,7 @@ NOTE: all releases may include dependency updates, not specifically mentioned
 ## UNRELEASED
 
 - feat: integrate try-as library [#912](https://github.com/hypermodeinc/modus/pull/912)
+- fix: sentry source context [#940](https://github.com/hypermodeinc/modus/pull/940)
 
 ## 2025-07-09 - Runtime v0.18.4
 
