@@ -26,15 +26,19 @@ export default class RunCommand extends BaseCommand {
       aliases: ["pre"],
       description: "Use a prerelease version of the Modus runtime. Not needed if specifying a runtime version.",
     }),
-    "no-build": Flags.boolean({
-      aliases: ["nobuild"],
-      description: "Don't build the app before running (or when watching for changes)",
+    build: Flags.boolean({
+      char: "b",
+      description: "Build the app before running (or when watching for changes)",
       default: true,
     }),
     watch: Flags.boolean({
-      aliases: ["w"],
+      char: "w",
       description: "Watch app code for changes",
-      default: true,
+      default: false,
+    }),
+    delay: Flags.integer({
+      description: "Delay (in milliseconds) between file change detection and rebuild",
+      default: 500,
     }),
   };
 
@@ -43,6 +47,12 @@ export default class RunCommand extends BaseCommand {
   static examples = ["modus run", "modus run ./my-app", "modus run ./my-app --no-watch"];
 
   async run(): Promise<void> {
-    DevCommand.run(this.argv);
+    const { flags } = await this.parse(RunCommand);
+    const argv = this.argv.filter((arg) => arg != "--watch" && arg != "-w" && arg != "--build" && arg != "-b");
+
+    if (!flags.watch) argv.push("--no-watch");
+    if (!flags.build) argv.push("--no-build");
+
+    await DevCommand.run(argv);
   }
 }
