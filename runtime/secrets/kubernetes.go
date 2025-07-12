@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/go-logr/zerologr"
 	"github.com/hypermodeinc/modus/lib/manifest"
 	"github.com/hypermodeinc/modus/runtime/app"
 	"github.com/hypermodeinc/modus/runtime/logger"
@@ -52,7 +53,7 @@ func (sp *kubernetesSecretsProvider) initialize(ctx context.Context) {
 	sp.secretNamespace = parts[0]
 	sp.secretName = parts[1]
 
-	cli, cache, err := newK8sClientForSecret(sp.secretNamespace, sp.secretName)
+	cli, cache, err := newK8sClientForSecret(ctx, sp.secretNamespace, sp.secretName)
 	if err != nil {
 		const msg = "Failed to initialize Kubernetes client."
 		sentryutils.CaptureError(ctx, err, msg,
@@ -157,11 +158,13 @@ func (sp *kubernetesSecretsProvider) hasSecret(ctx context.Context, name string)
 
 // newK8sClientForSecret creates a new Kubernetes client that watches
 // only a single secret `name` in namespace `ns`.
-func newK8sClientForSecret(ns, name string) (client.Client, pkgcache.Cache, error) {
+func newK8sClientForSecret(ctx context.Context, ns, name string) (client.Client, pkgcache.Cache, error) {
 	scheme := runtime.NewScheme()
 	if err := clientgoscheme.AddToScheme(scheme); err != nil {
 		return nil, nil, err
 	}
+
+	ctrl.SetLogger(zerologr.New(logger.Get(ctx)))
 
 	cl, err := cluster.New(ctrl.GetConfigOrDie(), func(clusterOptions *cluster.Options) {
 		clusterOptions.Scheme = scheme
