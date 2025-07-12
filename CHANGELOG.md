@@ -8,6 +8,7 @@ NOTE: all releases may include dependency updates, not specifically mentioned
 
 - feat: integrate try-as library [#912](https://github.com/hypermodeinc/modus/pull/912)
 - fix: sentry source context [#940](https://github.com/hypermodeinc/modus/pull/940)
+- fix: connect kubernetes logger [#945](https://github.com/hypermodeinc/modus/pull/945)
 
 ## 2025-07-09 - Runtime v0.18.4
 
