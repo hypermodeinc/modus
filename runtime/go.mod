@@ -16,6 +16,7 @@ require (
 	github.com/docker/go-connections v0.5.0
 	github.com/fatih/color v1.18.0
 	github.com/getsentry/sentry-go v0.34.1
+	github.com/go-logr/zerologr v1.2.3
 	github.com/go-sql-driver/mysql v1.9.3
 	github.com/go-viper/mapstructure/v2 v2.3.0
 	github.com/goccy/go-json v0.10.5
