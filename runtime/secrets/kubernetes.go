@@ -9,6 +9,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/go-logr/zerologr"
 	"github.com/hypermodeinc/modus/lib/manifest"
@@ -26,6 +27,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/cluster"
 )
+
+var cacheSyncTimeout = 10 * time.Second
 
 type kubernetesSecretsProvider struct {
 	k8sClient       client.Client
@@ -53,7 +56,10 @@ func (sp *kubernetesSecretsProvider) initialize(ctx context.Context) {
 	sp.secretNamespace = parts[0]
 	sp.secretName = parts[1]
 
-	cli, cache, err := newK8sClientForSecret(ctx, sp.secretNamespace, sp.secretName)
+	// Important to hook up the logger so we see any logs from the controller-runtime package.
+	ctrl.SetLogger(zerologr.New(logger.Get(ctx)))
+
+	cli, cache, err := newK8sClientForSecret(sp.secretNamespace, sp.secretName)
 	if err != nil {
 		const msg = "Failed to initialize Kubernetes client."
 		sentryutils.CaptureError(ctx, err, msg,
@@ -69,7 +75,7 @@ func (sp *kubernetesSecretsProvider) initialize(ctx context.Context) {
 	// See: https://kubernetes.io/docs/reference/using-api/api-concepts/#efficient-detection-of-changes
 	//
 	// This cache is then used by k8sClient.Get(), so that it does not need
-	// to call the API server everytime.
+	// to call the API server every time.
 	go func() {
 		if err := cache.Start(ctx); err != nil {
 			const msg = "Failed to start Kubernetes client cache."
@@ -81,8 +87,10 @@ func (sp *kubernetesSecretsProvider) initialize(ctx context.Context) {
 		logger.Info(ctx).Msg("Kubernetes client cache stopped.")
 	}()
 
-	// Wait for initial cache sync
-	if !cache.WaitForCacheSync(ctx) {
+	// Wait for initial cache sync - but not indefinitely.
+	waitCtx, cancel := context.WithTimeout(ctx, cacheSyncTimeout)
+	defer cancel()
+	if !cache.WaitForCacheSync(waitCtx) {
 		const msg = "Failed to sync Kubernetes client cache."
 		sentryutils.CaptureError(ctx, nil, msg,
 			sentryutils.WithData("namespace", sp.secretNamespace),
@@ -158,20 +166,25 @@ func (sp *kubernetesSecretsProvider) hasSecret(ctx context.Context, name string)
 
 // newK8sClientForSecret creates a new Kubernetes client that watches
 // only a single secret `name` in namespace `ns`.
-func newK8sClientForSecret(ctx context.Context, ns, name string) (client.Client, pkgcache.Cache, error) {
+func newK8sClientForSecret(ns, name string) (client.Client, pkgcache.Cache, error) {
 	scheme := runtime.NewScheme()
 	if err := clientgoscheme.AddToScheme(scheme); err != nil {
 		return nil, nil, err
 	}
 
-	ctrl.SetLogger(zerologr.New(logger.Get(ctx)))
+	cfg, err := ctrl.GetConfig()
+	if err != nil {
+		return nil, nil, err
+	}
 
-	cl, err := cluster.New(ctrl.GetConfigOrDie(), func(clusterOptions *cluster.Options) {
+	cl, err := cluster.New(cfg, func(clusterOptions *cluster.Options) {
 		clusterOptions.Scheme = scheme
-		clusterOptions.Cache.DefaultNamespaces = make(map[string]pkgcache.Config)
+
 		// Only cache the one secret we need, so we don't waste memory space
-		clusterOptions.Cache.DefaultNamespaces[ns] = pkgcache.Config{
-			FieldSelector: fields.OneTermEqualSelector(metav1.ObjectNameField, name),
+		clusterOptions.Cache.DefaultNamespaces = map[string]pkgcache.Config{
+			ns: {
+				FieldSelector: fields.OneTermEqualSelector(metav1.ObjectNameField, name),
+			},
 		}
 	})
 	if err != nil {
