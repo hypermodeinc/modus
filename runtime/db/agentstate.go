@@ -182,7 +182,7 @@ func getAgentStateFromPostgresDB(ctx context.Context, id string) (*AgentState, e
 	err := WithTx(ctx, func(tx pgx.Tx) error {
 		row := tx.QueryRow(ctx, query, id)
 		if err := row.Scan(&a.Id, &a.Name, &a.Status, &a.Data, &ts); err != nil {
-			if err == pgx.ErrNoRows {
+			if errors.Is(err, pgx.ErrNoRows) {
 				return ErrAgentNotFound
 			}
 			return fmt.Errorf("failed to get agent state: %w", err)
