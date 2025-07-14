@@ -19,7 +19,7 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-var ErrAgentNotFound = fmt.Errorf("agent not found")
+var ErrAgentNotFound = errors.New("agent not found")
 
 type AgentState struct {
 	Gid       uint64 `json:"gid,omitempty"`
