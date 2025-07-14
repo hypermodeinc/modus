@@ -8,6 +8,10 @@ NOTE: all releases may include dependency updates, not specifically mentioned
 
 - feat: integrate try-as library [#912](https://github.com/hypermodeinc/modus/pull/912)
 
+## 2025-07-14 - Runtime v0.18.6
+
+- feat: restore agents on demand [#949](https://github.com/hypermodeinc/modus/pull/949)
+
 ## 2025-07-12 - Runtime v0.18.5
 
 - fix: sentry source context [#940](https://github.com/hypermodeinc/modus/pull/940)

@@ -8,10 +8,9 @@ package actors
 import (
 	"context"
 	"fmt"
-	"math/rand/v2"
+	"sync"
 	"time"
 
-	"github.com/hypermodeinc/modus/runtime/db"
 	"github.com/hypermodeinc/modus/runtime/logger"
 	"github.com/hypermodeinc/modus/runtime/messages"
 	"github.com/hypermodeinc/modus/runtime/pluginmanager"
@@ -82,7 +81,13 @@ func startActorSystem(ctx context.Context, actorSystem goakt.ActorSystem) error 
 		}
 
 		// important: wait for the actor system to sync with the cluster before proceeding
-		waitForClusterSync(ctx)
+		if clusterEnabled() {
+			select {
+			case <-time.After(peerSyncInterval()):
+			case <-ctx.Done():
+				logger.Warn(context.WithoutCancel(ctx)).Msg("Context cancelled while waiting for cluster sync.")
+			}
+		}
 
 		return nil
 	}
@@ -106,66 +111,7 @@ func loadAgentActors(ctx context.Context, plugin *plugins.Plugin) error {
 		}
 	}
 
-	// do this in a goroutine to avoid blocking the cluster engine startup
-	go func() {
-		if err := restoreAgentActors(ctx, plugin.Name()); err != nil {
-			const msg = "Failed to restore agent actors."
-			sentryutils.CaptureError(ctx, err, msg)
-			logger.Error(ctx, err).Msg(msg)
-		}
-	}()
-
 	return nil
-}
-
-// restoreAgentActors spawn actors for agents with state in the database, that are not already running
-func restoreAgentActors(ctx context.Context, pluginName string) error {
-	span, ctx := sentryutils.NewSpanForCurrentFunc(ctx)
-	defer span.Finish()
-
-	logger.Debug(ctx).Msg("Restoring agent actors from database.")
-
-	// query the database for active agents
-	agents, err := db.QueryActiveAgents(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to query active agents from database: %w", err)
-	}
-
-	// shuffle the agents to help distribute the load across the cluster when multiple nodes are starting simultaneously
-	rand.Shuffle(len(agents), func(i, j int) {
-		agents[i], agents[j] = agents[j], agents[i]
-	})
-
-	// spawn actors for each agent that is not already running
-	for _, agent := range agents {
-		actorName := getActorName(agent.Id)
-		if exists, err := _actorSystem.ActorExists(ctx, actorName); err != nil {
-			const msg = "Failed to check if agent actor exists."
-			sentryutils.CaptureError(ctx, err, msg, sentryutils.WithData("agent_id", agent.Id))
-			logger.Error(ctx, err).Str("agent_id", agent.Id).Msg(msg)
-		} else if !exists {
-			err := spawnActorForAgent(ctx, pluginName, agent.Id, agent.Name, false)
-			if err != nil {
-				const msg = "Failed to spawn actor for agent."
-				sentryutils.CaptureError(ctx, err, msg, sentryutils.WithData("agent_id", agent.Id))
-				logger.Error(ctx, err).Str("agent_id", agent.Id).Msg(msg)
-			}
-		}
-	}
-
-	return nil
-}
-
-// Waits for the peer sync interval to pass, allowing time for the actor system to synchronize its
-// list of actors with the remote nodes in the cluster. Cancels early if the context is done.
-func waitForClusterSync(ctx context.Context) {
-	if clusterEnabled() {
-		select {
-		case <-time.After(peerSyncInterval()):
-		case <-ctx.Done():
-			logger.Warn(context.WithoutCancel(ctx)).Msg("Context cancelled while waiting for cluster sync.")
-		}
-	}
 }
 
 func Shutdown(ctx context.Context) {
@@ -209,29 +155,25 @@ func (sh *shutdownHook) Execute(ctx context.Context, actorSystem goakt.ActorSyst
 
 	// Suspend all local running agent actors first, which allows them to gracefully stop and persist their state.
 	// In cluster mode, this will also allow the actor to resume on another node after this node shuts down.
+	// We use goroutines and a wait group to do this concurrently.
+	var wg sync.WaitGroup
 	for _, pid := range actors {
 		if actor, ok := pid.Actor().(*wasmAgentActor); ok && pid.IsRunning() {
 			if actor.status == AgentStatusRunning {
-				ctx := actor.augmentContext(ctx, pid)
-				if err := actor.suspendAgent(ctx); err != nil {
-					const msg = "Failed to suspend agent actor."
-					sentryutils.CaptureError(ctx, err, msg, sentryutils.WithData("agent_id", actor.agentId))
-					logger.Error(ctx, err).Str("agent_id", actor.agentId).Msg(msg)
-				}
+				wg.Add(1)
+				go func() {
+					defer wg.Done()
+					ctx := actor.augmentContext(ctx, pid)
+					if err := actor.suspendAgent(ctx); err != nil {
+						const msg = "Failed to suspend agent actor."
+						sentryutils.CaptureError(ctx, err, msg, sentryutils.WithData("agent_id", actor.agentId))
+						logger.Error(ctx, err).Str("agent_id", actor.agentId).Msg(msg)
+					}
+				}()
 			}
 		}
 	}
-
-	// Then shut down subscription actors. They will have received the suspend message already.
-	for _, pid := range actors {
-		if a, ok := pid.Actor().(*subscriptionActor); ok && pid.IsRunning() {
-			if err := pid.Shutdown(ctx); err != nil {
-				const msg = "Failed to shut down subscription actor."
-				sentryutils.CaptureError(ctx, err, msg, sentryutils.WithData("agent_id", a.agentId))
-				logger.Error(ctx, err).Str("agent_id", a.agentId).Msg(msg)
-			}
-		}
-	}
+	wg.Wait()
 
 	// Then allow the actor system to continue with its shutdown process.
 	return nil

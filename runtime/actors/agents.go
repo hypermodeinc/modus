@@ -98,12 +98,6 @@ func spawnActorForAgent(ctx context.Context, pluginName, agentId, agentName stri
 		}),
 	)
 
-	// Important: Wait for the actor system to sync with the cluster before proceeding.
-	// This ensures consistency across the cluster, so we don't accidentally spawn the same actor multiple times.
-	// GoAkt does not resolve such inconsistencies automatically, so we need to handle this manually.
-	// A short sync time should not be noticeable by the user.
-	waitForClusterSync(ctx)
-
 	return err
 }
 
@@ -208,26 +202,58 @@ func SendAgentMessage(ctx context.Context, agentId string, msgName string, data 
 	}
 
 	var err error
-	var res proto.Message
-	if timeout == 0 {
-		err = tell(ctx, actorName, msg)
-	} else {
-		res, err = ask(ctx, actorName, msg, time.Duration(timeout))
+	const maxRetries = 3
+	for attempt := 1; attempt <= maxRetries; attempt++ {
+
+		var res proto.Message
+		if timeout == 0 {
+			err = tell(ctx, actorName, msg)
+		} else {
+			res, err = ask(ctx, actorName, msg, time.Duration(timeout))
+		}
+
+		if err == nil {
+			if res == nil {
+				return newAgentMessageDataResponse(nil), nil
+			} else if response, ok := res.(*messages.AgentResponse); ok {
+				return newAgentMessageDataResponse(response.Data), nil
+			} else {
+				return nil, fmt.Errorf("unexpected agent response type: %T", res)
+			}
+		}
+
+		if errors.Is(err, goakt.ErrActorNotFound) {
+			state, err := db.GetAgentState(ctx, agentId)
+			if err != nil {
+				return nil, fmt.Errorf("error getting agent state for %s: %w", agentId, err)
+			}
+			if state == nil {
+				return newAgentMessageErrorResponse("agent not found"), nil
+			}
+
+			switch AgentStatus(state.Status) {
+			case AgentStatusStopping, AgentStatusTerminated:
+				return newAgentMessageErrorResponse("agent is no longer available"), nil
+			}
+
+			// Restart the agent actor locally if it is not running.
+			var pluginName string
+			if plugin, ok := plugins.GetPluginFromContext(ctx); !ok {
+				return nil, fmt.Errorf("no plugin found in context")
+			} else {
+				pluginName = plugin.Name()
+			}
+			agentName := state.Name
+			if err := spawnActorForAgent(ctx, pluginName, agentId, agentName, false); err != nil {
+				return nil, fmt.Errorf("error spawning actor for agent %s: %w", agentId, err)
+			}
+
+			// Retry sending the message to the agent actor.
+			continue
+		}
 	}
 
-	if errors.Is(err, goakt.ErrActorNotFound) {
-		return newAgentMessageErrorResponse("agent not found"), nil
-	} else if err != nil {
-		return nil, fmt.Errorf("error sending message to agent: %w", err)
-	}
-
-	if res == nil {
-		return newAgentMessageDataResponse(nil), nil
-	} else if response, ok := res.(*messages.AgentResponse); ok {
-		return newAgentMessageDataResponse(response.Data), nil
-	} else {
-		return nil, fmt.Errorf("unexpected agent response type: %T", res)
-	}
+	return nil, fmt.Errorf("error sending message to agent: %w", err)
 }
 
 func PublishAgentEvent(ctx context.Context, agentId, eventName string, eventData *string) error {
