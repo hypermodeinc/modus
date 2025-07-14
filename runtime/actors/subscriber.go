@@ -68,6 +68,8 @@ func SubscribeForAgentEvents(ctx context.Context, agentId string, update func(da
 		return fmt.Errorf("failed to subscribe to topic: %w", err)
 	}
 
+	logger.Debug(ctx).Msgf("Subscribed to topic %s with subscription actor %s", topic, subActor.Name())
+
 	// When the context is done, we will unsubscribe and stop the subscription actor.
 	// For example, the GraphQL subscription is closed or the client disconnects.
 	go func() {
