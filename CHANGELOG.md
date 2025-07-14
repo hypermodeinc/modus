@@ -11,6 +11,7 @@ NOTE: all releases may include dependency updates, not specifically mentioned
 ## 2025-07-14 - Runtime v0.18.6
 
 - feat: restore agents on demand [#949](https://github.com/hypermodeinc/modus/pull/949)
+- fix: handle agent not found [#951](https://github.com/hypermodeinc/modus/pull/951)
 
 ## 2025-07-12 - Runtime v0.18.5
 

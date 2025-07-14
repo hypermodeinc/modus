@@ -224,11 +224,10 @@ func SendAgentMessage(ctx context.Context, agentId string, msgName string, data 
 
 		if errors.Is(err, goakt.ErrActorNotFound) {
 			state, err := db.GetAgentState(ctx, agentId)
-			if err != nil {
+			if errors.Is(err, db.ErrAgentNotFound) {
+				return newAgentMessageErrorResponse(fmt.Sprintf("agent %s not found", agentId)), nil
+			} else if err != nil {
 				return nil, fmt.Errorf("error getting agent state for %s: %w", agentId, err)
-			}
-			if state == nil {
-				return newAgentMessageErrorResponse("agent not found"), nil
 			}
 
 			switch AgentStatus(state.Status) {

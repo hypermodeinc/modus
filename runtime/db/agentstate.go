@@ -7,6 +7,7 @@ package db
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -14,8 +15,11 @@ import (
 	"github.com/hypermodeinc/modus/runtime/utils"
 
 	"github.com/hypermodeinc/modusgraph"
+	mg_utils "github.com/hypermodeinc/modusgraph/api/apiutils"
 	"github.com/jackc/pgx/v5"
 )
+
+var ErrAgentNotFound = fmt.Errorf("agent not found")
 
 type AgentState struct {
 	Gid       uint64 `json:"gid,omitempty"`
@@ -93,6 +97,10 @@ func getAgentStateFromModusDB(ctx context.Context, id string) (*AgentState, erro
 		Key:   "id",
 		Value: id,
 	})
+	if errors.Is(err, mg_utils.ErrNoObjFound) {
+		return nil, ErrAgentNotFound
+	}
+
 	if err != nil {
 		return nil, fmt.Errorf("failed to query agent state: %w", err)
 	}
@@ -174,6 +182,9 @@ func getAgentStateFromPostgresDB(ctx context.Context, id string) (*AgentState, e
 	err := WithTx(ctx, func(tx pgx.Tx) error {
 		row := tx.QueryRow(ctx, query, id)
 		if err := row.Scan(&a.Id, &a.Name, &a.Status, &a.Data, &ts); err != nil {
+			if err == pgx.ErrNoRows {
+				return ErrAgentNotFound
+			}
 			return fmt.Errorf("failed to get agent state: %w", err)
 		}
 		a.UpdatedAt = ts.UTC().Format(utils.TimeFormat)
