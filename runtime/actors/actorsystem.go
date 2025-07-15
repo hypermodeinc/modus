@@ -163,7 +163,6 @@ func (sh *shutdownHook) Execute(ctx context.Context, actorSystem goakt.ActorSyst
 				wg.Add(1)
 				go func() {
 					defer wg.Done()
-					ctx := actor.augmentContext(ctx, pid)
 					if err := actor.suspendAgent(ctx); err != nil {
 						const msg = "Failed to suspend agent actor."
 						sentryutils.CaptureError(ctx, err, msg, sentryutils.WithData("agent_id", actor.agentId))

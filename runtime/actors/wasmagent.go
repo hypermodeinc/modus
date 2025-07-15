@@ -27,6 +27,7 @@ import (
 )
 
 type wasmAgentActor struct {
+	pid          *goakt.PID
 	agentId      string
 	agentName    string
 	status       AgentStatus
@@ -84,6 +85,8 @@ func (a *wasmAgentActor) Receive(rc *goakt.ReceiveContext) {
 		}
 
 	case *goaktpb.PostStart:
+		a.pid = rc.Self()
+
 		if a.initializing {
 			if err := a.startAgent(ctx); err != nil {
 				rc.Err(fmt.Errorf("error starting agent: %w", err))
@@ -140,7 +143,7 @@ func (a *wasmAgentActor) Receive(rc *goakt.ReceiveContext) {
 }
 
 func (a *wasmAgentActor) PostStop(ac *goakt.Context) error {
-	ctx := ac.Context()
+	ctx := a.augmentContext(ac.Context(), a.pid)
 	ctx = sentry.SetHubOnContext(ctx, a.sentryHub)
 	span, ctx := sentryutils.NewSpanForCurrentFunc(ctx)
 	defer span.Finish()

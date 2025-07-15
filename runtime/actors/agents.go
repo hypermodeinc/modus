@@ -20,6 +20,7 @@ import (
 
 	goakt "github.com/tochemey/goakt/v3/actor"
 	"github.com/tochemey/goakt/v3/goaktpb"
+	"github.com/tochemey/goakt/v3/passivation"
 
 	"github.com/rs/xid"
 	"google.golang.org/protobuf/proto"
@@ -89,14 +90,22 @@ func spawnActorForAgent(ctx context.Context, pluginName, agentId, agentName stri
 		initializing: initializing,
 	}
 
+	agentIdleTimeout := utils.GetDurationFromEnv("MODUS_AGENT_IDLE_TIMEOUT_SECONDS", 2, time.Second)
+	var agentPassivationStrategy = passivation.NewTimeBasedStrategy(agentIdleTimeout)
+
 	actorName := getActorName(agentId)
 	_, err := _actorSystem.Spawn(ctx, actorName, actor,
-		goakt.WithLongLived(),
+		goakt.WithPassivationStrategy(agentPassivationStrategy),
 		goakt.WithDependencies(&wasmAgentInfo{
 			AgentName:  agentName,
 			PluginName: pluginName,
 		}),
 	)
+
+	if err != nil {
+		sentryutils.CaptureError(ctx, err, "Error spawning agent actor",
+			sentryutils.WithData("agent_id", agentId))
+	}
 
 	return err
 }
@@ -195,6 +204,52 @@ func SendAgentMessage(ctx context.Context, agentId string, msgName string, data 
 
 	actorName := getActorName(agentId)
 
+	// Pause passivation to ensure the actor is not passivated while processing the message.
+	if err := tell(ctx, actorName, &goaktpb.PausePassivation{}); errors.Is(err, goakt.ErrActorNotFound) {
+		state, err := db.GetAgentState(ctx, agentId)
+		if errors.Is(err, db.ErrAgentNotFound) {
+			return newAgentMessageErrorResponse(fmt.Sprintf("agent %s not found", agentId)), nil
+		} else if err != nil {
+			return nil, fmt.Errorf("error getting agent state for %s: %w", agentId, err)
+		}
+
+		switch AgentStatus(state.Status) {
+		case AgentStatusStopping, AgentStatusTerminated:
+			return newAgentMessageErrorResponse("agent is no longer available"), nil
+		}
+
+		// Restart the agent actor locally if it is not running.
+		var pluginName string
+		if plugin, ok := plugins.GetPluginFromContext(ctx); ok {
+			pluginName = plugin.Name()
+		} else {
+			return nil, errors.New("no plugin found in context")
+		}
+		agentName := state.Name
+		if err := spawnActorForAgent(ctx, pluginName, agentId, agentName, false); err != nil {
+			return nil, fmt.Errorf("error spawning actor for agent %s: %w", agentId, err)
+		}
+
+		// Try again.
+		if err := tell(ctx, actorName, &goaktpb.PausePassivation{}); err != nil {
+			return nil, fmt.Errorf("error sending message to agent: %w", err)
+		}
+	} else if err != nil {
+		sentryutils.CaptureError(ctx, err, "Error pausing passivation for agent",
+			sentryutils.WithData("agent_id", agentId))
+		return nil, fmt.Errorf("error sending message to agent: %w", err)
+	}
+
+	defer func() {
+		// Resume passivation after the message is sent.
+		if err := tell(ctx, actorName, &goaktpb.ResumePassivation{}); err != nil {
+			const msg = "Error resuming passivation after sending message to agent."
+			logger.Error(ctx, err).Str("agent_id", agentId).Msg(msg)
+			sentryutils.CaptureError(ctx, err, msg,
+				sentryutils.WithData("agent_id", agentId))
+		}
+	}()
+
 	msg := &messages.AgentRequest{
 		Name:    msgName,
 		Data:    data,
@@ -202,53 +257,20 @@ func SendAgentMessage(ctx context.Context, agentId string, msgName string, data 
 	}
 
 	var err error
-	const maxRetries = 3
-	for attempt := 1; attempt <= maxRetries; attempt++ {
+	var res proto.Message
+	if timeout == 0 {
+		err = tell(ctx, actorName, msg)
+	} else {
+		res, err = ask(ctx, actorName, msg, time.Duration(timeout))
+	}
 
-		var res proto.Message
-		if timeout == 0 {
-			err = tell(ctx, actorName, msg)
+	if err == nil {
+		if res == nil {
+			return newAgentMessageDataResponse(nil), nil
+		} else if response, ok := res.(*messages.AgentResponse); ok {
+			return newAgentMessageDataResponse(response.Data), nil
 		} else {
-			res, err = ask(ctx, actorName, msg, time.Duration(timeout))
-		}
-
-		if err == nil {
-			if res == nil {
-				return newAgentMessageDataResponse(nil), nil
-			} else if response, ok := res.(*messages.AgentResponse); ok {
-				return newAgentMessageDataResponse(response.Data), nil
-			} else {
-				return nil, fmt.Errorf("unexpected agent response type: %T", res)
-			}
-		}
-
-		if errors.Is(err, goakt.ErrActorNotFound) {
-			state, err := db.GetAgentState(ctx, agentId)
-			if errors.Is(err, db.ErrAgentNotFound) {
-				return newAgentMessageErrorResponse(fmt.Sprintf("agent %s not found", agentId)), nil
-			} else if err != nil {
-				return nil, fmt.Errorf("error getting agent state for %s: %w", agentId, err)
-			}
-
-			switch AgentStatus(state.Status) {
-			case AgentStatusStopping, AgentStatusTerminated:
-				return newAgentMessageErrorResponse("agent is no longer available"), nil
-			}
-
-			// Restart the agent actor locally if it is not running.
-			var pluginName string
-			if plugin, ok := plugins.GetPluginFromContext(ctx); !ok {
-				return nil, fmt.Errorf("no plugin found in context")
-			} else {
-				pluginName = plugin.Name()
-			}
-			agentName := state.Name
-			if err := spawnActorForAgent(ctx, pluginName, agentId, agentName, false); err != nil {
-				return nil, fmt.Errorf("error spawning actor for agent %s: %w", agentId, err)
-			}
-
-			// Retry sending the message to the agent actor.
-			continue
+			return nil, fmt.Errorf("unexpected agent response type: %T", res)
 		}
 	}
 
