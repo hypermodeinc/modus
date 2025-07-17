@@ -46,14 +46,14 @@ require (
 	github.com/travisjeffery/go-dynaport v1.0.0
 	github.com/twpayne/go-geom v1.6.1
 	github.com/wundergraph/graphql-go-tools/execution v1.4.0
-	github.com/wundergraph/graphql-go-tools/v2 v2.0.0-rc.204
+	github.com/wundergraph/graphql-go-tools/v2 v2.0.0-rc.205
 	github.com/xo/dburl v0.23.8
 	golang.org/x/exp v0.0.0-20250711185948-6ae5c78190dc
 	golang.org/x/sys v0.34.0
 	google.golang.org/grpc v1.73.0
 	google.golang.org/protobuf v1.36.6
 	k8s.io/api v0.33.2
-	k8s.io/apimachinery v0.33.2
+	k8s.io/apimachinery v0.33.3
 	k8s.io/client-go v0.33.2
 	sigs.k8s.io/controller-runtime v0.21.0
 )
