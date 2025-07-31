@@ -6,9 +6,9 @@ go 1.24.5
 
 require (
 	github.com/OneOfOne/xxhash v1.2.8
-	github.com/aws/aws-sdk-go-v2/config v1.29.18
-	github.com/aws/aws-sdk-go-v2/service/s3 v1.84.1
-	github.com/aws/aws-sdk-go-v2/service/sts v1.34.1
+	github.com/aws/aws-sdk-go-v2/config v1.30.0
+	github.com/aws/aws-sdk-go-v2/service/s3 v1.85.0
+	github.com/aws/aws-sdk-go-v2/service/sts v1.35.0
 	github.com/buger/jsonparser v1.1.1
 	github.com/cespare/xxhash/v2 v2.3.0
 	github.com/dgraph-io/dgo/v240 v240.2.0
@@ -25,7 +25,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/hypermodeinc/modus/lib/manifest v0.17.2
 	github.com/hypermodeinc/modus/lib/metadata v0.15.0
-	github.com/hypermodeinc/modusgraph v0.1.0
+	github.com/hypermodeinc/modusgraph v0.2.0
 	github.com/jackc/pgx/v5 v5.7.5
 	github.com/jensneuse/abstractlogger v0.0.4
 	github.com/joho/godotenv v1.5.1
@@ -42,15 +42,15 @@ require (
 	github.com/tetratelabs/wazero v1.9.0
 	github.com/tidwall/gjson v1.18.0
 	github.com/tidwall/sjson v1.2.5
-	github.com/tochemey/goakt/v3 v3.7.2
+	github.com/tochemey/goakt/v3 v3.8.0
 	github.com/travisjeffery/go-dynaport v1.0.0
 	github.com/twpayne/go-geom v1.6.1
 	github.com/wundergraph/graphql-go-tools/execution v1.4.0
-	github.com/wundergraph/graphql-go-tools/v2 v2.0.0-rc.208
+	github.com/wundergraph/graphql-go-tools/v2 v2.0.0-rc.212
 	github.com/xo/dburl v0.23.8
 	golang.org/x/exp v0.0.0-20250718183923-645b1fa84792
 	golang.org/x/sys v0.34.0
-	google.golang.org/grpc v1.74.1
+	google.golang.org/grpc v1.74.2
 	google.golang.org/protobuf v1.36.6
 	k8s.io/api v0.33.3
 	k8s.io/apimachinery v0.33.3
