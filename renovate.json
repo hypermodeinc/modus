@@ -1,5 +1,0 @@
-{
-  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["github>hypermodeinc/renovate-config"],
-  "ignoreDeps": ["github.com/hypermodeinc/modusgraph"]
-}
