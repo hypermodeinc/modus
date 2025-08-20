@@ -22,15 +22,7 @@ func tell(ctx context.Context, actorName string, message proto.Message) error {
 	span, ctx := sentryutils.NewSpanForCurrentFunc(ctx)
 	defer span.Finish()
 
-	addr, pid, err := _actorSystem.ActorOf(ctx, actorName)
-	if err != nil {
-		return err
-	} else if pid != nil {
-		return goakt.Tell(ctx, pid, message)
-	} else if addr != nil {
-		return goakt.NoSender.RemoteTell(ctx, addr, message)
-	}
-	return fmt.Errorf("failed to get address or PID for actor %s", actorName)
+	return goakt.NoSender.SendAsync(ctx, actorName, message)
 }
 
 // Sends a message to an actor identified by its name, then waits for a response within the timeout duration.
@@ -39,17 +31,6 @@ func ask(ctx context.Context, actorName string, message proto.Message, timeout t
 	span, ctx := sentryutils.NewSpanForCurrentFunc(ctx)
 	defer span.Finish()
 
-	addr, pid, err := _actorSystem.ActorOf(ctx, actorName)
-	if err != nil {
-		return nil, err
-	} else if pid != nil {
-		return goakt.Ask(ctx, pid, message, timeout)
-	} else if addr != nil {
-		response, err := goakt.NoSender.RemoteAsk(ctx, addr, message, timeout)
-		if err != nil {
-			return nil, err
-		}
-		return response.UnmarshalNew()
-	}
-	return nil, fmt.Errorf("failed to get address or PID for actor %s", actorName)
+	
+	return  goakt.NoSender.SendSync(ctx, addr, message, timeout)
 }
