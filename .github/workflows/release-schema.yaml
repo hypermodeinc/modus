@@ -11,7 +11,7 @@ jobs:
     name: Release
     runs-on: warp-ubuntu-latest-x64-2x
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: "${{ github.ref_name }}"
       - name: Push to R2 Bucket

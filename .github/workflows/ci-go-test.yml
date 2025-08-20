@@ -27,7 +27,7 @@ jobs:
       dirs: ${{ steps.get-dirs.outputs.dirs }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Search for go.mod files
         id: get-dirs
         run: >
@@ -48,7 +48,7 @@ jobs:
       run:
         working-directory: ${{ matrix.dir }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
