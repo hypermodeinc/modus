@@ -16,7 +16,7 @@ jobs:
       - name: Validate version
         if: ${{ !startsWith(github.ref_name, 'sdk/go/v') }}
         run: echo "Modus Go SDK version must start with `sdk/go/v`" && exit 1
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: "${{ github.ref_name }}"
       - name: Parse SDK Version

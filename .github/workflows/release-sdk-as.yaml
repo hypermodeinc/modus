@@ -19,7 +19,7 @@ jobs:
         if: ${{ !startsWith(github.ref_name, 'sdk/assemblyscript/v') }}
         run:
           echo "Modus AssemblyScript SDK version must start with `sdk/assemblyscript/v`" && exit 1
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: "${{ github.ref_name }}"
       - name: Parse SDK Version

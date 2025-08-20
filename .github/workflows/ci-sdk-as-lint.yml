@@ -23,7 +23,7 @@ jobs:
       dirs: ${{ steps.get-dirs.outputs.dirs }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Find Examples
         id: get-dirs
         run: >
@@ -41,7 +41,7 @@ jobs:
         working-directory: sdk/assemblyscript/src
     steps:
       - name: Checkout Source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
@@ -66,7 +66,7 @@ jobs:
         working-directory: ${{ matrix.dir }}
     steps:
       - name: Checkout Source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Setup Node
         uses: actions/setup-node@v4
         with:

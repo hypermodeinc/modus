@@ -16,7 +16,7 @@ jobs:
       - name: Validate version
         if: ${{ !startsWith(github.ref_name, 'runtime/v') }}
         run: echo "Modus Runtime version must start with 'runtime/v'" && exit 1
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
           ref: "${{ github.ref_name }}"
