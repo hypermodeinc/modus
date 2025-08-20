@@ -32,5 +32,5 @@ func ask(ctx context.Context, actorName string, message proto.Message, timeout t
 	defer span.Finish()
 
 	
-	return  goakt.NoSender.SendSync(ctx, addr, message, timeout)
+	return  goakt.NoSender.SendSync(ctx, actorName, message, timeout)
 }
