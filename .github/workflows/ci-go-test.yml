@@ -40,7 +40,7 @@ jobs:
   go-test:
     needs: get-dirs
     name: test
-    runs-on: warp-ubuntu-latest-x64-4x
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         dir: ${{ fromJson(needs.get-dirs.outputs.dirs) }}

@@ -60,7 +60,7 @@ jobs:
   release-install-script:
     needs: release
     name: Release Install Script
-    runs-on: warp-ubuntu-latest-x64-2x
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
         with:

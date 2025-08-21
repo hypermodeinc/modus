@@ -6,7 +6,7 @@ permissions:
   contents: read
 jobs:
   release-info:
-    runs-on: warp-ubuntu-latest-x64-2x
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
         with:

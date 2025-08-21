@@ -20,8 +20,8 @@ jobs:
   build:
     name: Build ${{ matrix.os }}
     runs-on:
-      "${{ matrix.os == 'linux' && 'warp-ubuntu-latest-x64-4x' || matrix.os == 'macos' &&
-      'warp-macos-15-arm64-6x' || 'warp-windows-latest-x64-8x' }}"
+      "${{ matrix.os == 'linux' && 'ubuntu-latest' || matrix.os == 'macos' && 'macos-15' ||
+      'windows-latest' }}"
 
     strategy:
       fail-fast: false
