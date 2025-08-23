@@ -1,8 +1,8 @@
 module my-modus-app
 
-go 1.23.1
+go 1.24.0
 
-toolchain go1.24.6
+toolchain go1.25.0
 
 require github.com/hypermodeinc/modus/sdk/go v0.18.0
 

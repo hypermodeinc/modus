@@ -1,8 +1,8 @@
 module github.com/hypermodeinc/modus/sdk/go
 
-go 1.23.1
+go 1.24.0
 
-toolchain go1.24.6
+toolchain go1.25.0
 
 require (
 	github.com/hypermodeinc/modus/lib/manifest v0.17.2
@@ -15,7 +15,7 @@ require (
 	github.com/rs/xid v1.6.0
 	github.com/tidwall/gjson v1.18.0
 	github.com/tidwall/sjson v1.2.5
-	golang.org/x/exp v0.0.0-20250718183923-645b1fa84792
+	golang.org/x/exp v0.0.0-20250819193227-8b4c13bb791b
 	golang.org/x/mod v0.27.0
 	golang.org/x/tools v0.36.0
 )
