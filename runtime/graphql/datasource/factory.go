@@ -36,3 +36,20 @@ func (f *modusDataSourceFactory) Context() context.Context {
 func (f *modusDataSourceFactory) UpstreamSchema(dataSourceConfig plan.DataSourceConfiguration[ModusDataSourceConfig]) (*ast.Document, bool) {
 	return nil, false
 }
+
+func (f *modusDataSourceFactory) PlanningBehavior() plan.DataSourcePlanningBehavior {
+	return plan.DataSourcePlanningBehavior{
+		// This needs to be true, so we can distinguish results for multiple function calls in the same operation.
+		// Example:
+		// query SayHello {
+		//     a: sayHello(name: "Sam")
+		//     b: sayHello(name: "Bob")
+		// }
+		// In this case, the Load function will be called twice, once for "a" and once for "b",
+		// and the alias will be used in the return value to distinguish the results.
+		OverrideFieldPathFromAlias: true,
+
+		// This ensures that the __typename field is visited so we can include it in the response when requested.
+		AllowPlanningTypeName: true,
+	}
+}
