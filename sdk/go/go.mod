@@ -2,7 +2,7 @@ module github.com/hypermodeinc/modus/sdk/go
 
 go 1.23.1
 
-toolchain go1.24.6
+toolchain go1.25.0
 
 require (
 	github.com/hypermodeinc/modus/lib/manifest v0.17.2
