@@ -1,6 +1,6 @@
 module github.com/hypermodeinc/modus/runtime
 
-go 1.24.5
+go 1.25.0
 
 // trunk-ignore-all(osv-scanner/GHSA-9w9f-6mg8-jp7w): not affected by bleve vulnerability
 
