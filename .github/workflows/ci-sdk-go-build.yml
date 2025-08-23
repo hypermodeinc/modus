@@ -84,6 +84,6 @@ jobs:
       - name: Setup TinyGo
         uses: acifani/setup-tinygo@v2
         with:
-          tinygo-version: 0.38.0
+          tinygo-version: 0.39.0
       - name: Build Program
         run: ./build.sh
