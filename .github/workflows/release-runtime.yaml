@@ -11,7 +11,7 @@ permissions:
 jobs:
   release:
     name: Release
-    runs-on: warp-ubuntu-latest-x64-4x
+    runs-on: ubuntu-latest
     steps:
       - name: Validate version
         if: ${{ !startsWith(github.ref_name, 'runtime/v') }}
