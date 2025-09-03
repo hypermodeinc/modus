@@ -52,7 +52,7 @@ export default class BuildCommand extends BaseCommand {
     process.env.FORCE_COLOR = chalk.level.toString();
 
     if (!(await vi.sdkVersionIsInstalled(app.sdk, app.sdkVersion))) {
-      await SDKInstallCommand.run([app.sdk, app.sdkVersion, "--no-logo"]);
+      await SDKInstallCommand.run([app.sdk, app.sdkVersion, "--no-runtime", "--no-logo"]);
     }
 
     const results = await withSpinner("Building " + app.name, async () => {
