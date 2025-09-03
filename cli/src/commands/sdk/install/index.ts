@@ -42,6 +42,10 @@ export default class SDKInstallCommand extends BaseCommand {
       default: false,
       description: "Install a prerelease version (used with 'latest' version)",
     }),
+    "no-runtime": Flags.boolean({
+      default: false,
+      description: "Skip Modus runtime installation (for CI/CD)",
+    }),
   };
 
   async run(): Promise<void> {
@@ -68,10 +72,12 @@ export default class SDKInstallCommand extends BaseCommand {
       sdks.push({ sdk, version });
     }
 
-    const runtimePrerelease = flags.prerelease || (!!args.version && vi.isPrerelease(args.version));
-    const runtimes = await this.getRuntimeVersions(sdks, runtimePrerelease);
-    for (const runtimeVersion of runtimes) {
-      await this.installRuntime(runtimeVersion, flags.force);
+    if (!flags["no-runtime"]) {
+      const runtimePrerelease = flags.prerelease || (!!args.version && vi.isPrerelease(args.version));
+      const runtimes = await this.getRuntimeVersions(sdks, runtimePrerelease);
+      for (const runtimeVersion of runtimes) {
+        await this.installRuntime(runtimeVersion, flags.force);
+      }
     }
 
     this.log();

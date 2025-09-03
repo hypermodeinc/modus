@@ -29,29 +29,29 @@
     "prepack": "npm i && npm run build && oclif manifest"
   },
   "dependencies": {
-    "@inquirer/prompts": "^7.5.3",
+    "@inquirer/prompts": "^7.8.4",
     "@oclif/core": "^4",
     "@scarf/scarf": "^1.4.0",
-    "chalk": "^5.4.1",
+    "chalk": "^5.6.0",
     "chokidar": "^4.0.3",
     "gradient-string": "^3.0.0",
-    "ky": "^1.8.1",
-    "open": "^10.1.2",
+    "ky": "^1.9.1",
+    "open": "^10.2.0",
     "ora": "^8.2.0",
-    "picomatch": "^4.0.2",
+    "picomatch": "^4.0.3",
     "semver": "^7.7.2"
   },
   "devDependencies": {
-    "@eslint/js": "^9.28.0",
+    "@eslint/js": "^9.34.0",
     "@oclif/test": "^4",
     "@types/node": "^24",
-    "@types/picomatch": "^4.0.0",
-    "@types/semver": "^7.7.0",
-    "eslint": "^9.28.0",
+    "@types/picomatch": "^4.0.2",
+    "@types/semver": "^7.7.1",
+    "eslint": "^9.34.0",
     "oclif": "^4",
     "ts-node": "^10",
-    "typescript": "^5.8.3",
-    "typescript-eslint": "^8.34.0"
+    "typescript": "^5.9.2",
+    "typescript-eslint": "^8.42.0"
   },
   "files": [
     "/bin",

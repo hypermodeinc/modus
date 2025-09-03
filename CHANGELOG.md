@@ -8,6 +8,10 @@ NOTE: all releases may include dependency updates, not specifically mentioned
 
 - feat: integrate try-as library [#912](https://github.com/hypermodeinc/modus/pull/912)
 
+## 2025-09-03 CLI v0.18.2
+
+- fix: skip runtime installation during build [#971](https://github.com/hypermodeinc/modus/pull/971)
+
 ## 2025-07-15 - Runtime v0.18.7
 
 - feat: agent passivation [#952](https://github.com/hypermodeinc/modus/pull/952)
