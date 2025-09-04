@@ -19,12 +19,16 @@ tidy:
 	go mod tidy -v
 	go fmt ./...
 
+.PHONY: copy-db-migrations
+copy-db-migrations:
+	cp db/migrations/*.sql ../tools/modus-dbmigrate/migrations/
+
 .PHONY: build-explorer
 build-explorer:
 	cd explorer/content && npm ci && npm run build
 
 .PHONY: build
-build: build-explorer
+build: build-explorer copy-db-migrations
 	go build -o $(EXECUTABLE) -ldflags "$(LDFLAGS)" .
 
 .PHONY: run
