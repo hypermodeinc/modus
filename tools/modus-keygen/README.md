@@ -9,8 +9,9 @@ binary.
 
 You can run it in one of two ways:
 
-- Clone this repo, then from the `/tools/keygen` directory, run the utility via: `go run .`
-- Install it with `go install github.com/hypermodeinc/modus/tools/keygen@latest` then run `keygen`
+- Clone this repo, then from the `/tools/modus-keygen` directory, run the utility via: `go run .`
+- Install it with `go install github.com/hypermodeinc/modus/tools/modus-keygen@latest` then run
+  `modus-keygen`
 
 The keygen tool will print the following items to stdout:
 
