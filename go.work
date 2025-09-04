@@ -24,5 +24,6 @@ use (
 	./sdk/go/examples/time
 	./sdk/go/examples/vectors
 	./sdk/go/templates/default
+	./tools/modus-dbmigrate
 	./tools/modus-keygen
 )
