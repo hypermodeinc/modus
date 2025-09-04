@@ -4,11 +4,15 @@ This is a small utility that will generate keys and tokens for use with Modus.
 
 ## Usage
 
-You must have Go installed locally. We currently do not release this tool as a binary.
+You must have Go v1.25 or newer installed locally. We currently do not release this tool as a
+binary.
 
-From the `/tools/keygen` directory, run the utility via: `go run .`
+You can run it in one of two ways:
 
-The output will contain the following:
+- Clone this repo, then from the `/tools/keygen` directory, run the utility via: `go run .`
+- Install it with `go install github.com/hypermodeinc/modus/tools/keygen@latest` then run `keygen`
+
+The keygen tool will print the following items to stdout:
 
 - A JSON encoded object containing an RSA public key, suitable for passing to `MODUS_PEMS`
 - A JWT token that is signed with that key, having a 1 year expiration date and no other claims,
