@@ -43,7 +43,7 @@ jobs:
       - name: Checkout Source
         uses: actions/checkout@v5
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: ">=22"
       - name: Install dependencies
@@ -68,7 +68,7 @@ jobs:
       - name: Checkout Source
         uses: actions/checkout@v5
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: ">=22"
       - name: Install source dependencies
