@@ -24,5 +24,5 @@ use (
 	./sdk/go/examples/time
 	./sdk/go/examples/vectors
 	./sdk/go/templates/default
-	./tools/keygen
+	./tools/modus-keygen
 )
