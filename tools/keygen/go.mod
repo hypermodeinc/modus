@@ -1,4 +1,4 @@
-module keygen
+module github.com/hypermodeinc/modus/tools/keygen
 
 go 1.25.0
 
