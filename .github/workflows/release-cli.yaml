@@ -27,7 +27,7 @@ jobs:
           echo "cli_version=$(echo '${{ github.ref_name }}' | cut -d'/' -f 2)" >> $GITHUB_OUTPUT
           echo "npm_tag=$(echo '${{ github.ref_name }}' | cut -d'/' -f 2 | sed -E 's/^[^-]+-([a-zA-Z]+).*/\1/ ; s/v.*/latest/')" >> $GITHUB_OUTPUT
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: ">=22"
           registry-url: https://registry.npmjs.org
